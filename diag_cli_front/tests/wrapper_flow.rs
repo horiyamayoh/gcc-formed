@@ -69,6 +69,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(
         trace["version_summary"]["wrapper_version"].as_str(),
@@ -115,6 +116,34 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     assert_eq!(trace["child_exit"]["code"].as_i64(), Some(1));
     assert!(trace["child_exit"]["signal"].is_null());
     assert_eq!(trace["child_exit"]["success"].as_bool(), Some(false));
+    assert_eq!(
+        trace["fingerprint_summary"]["raw"].as_str().map(str::len),
+        Some(64)
+    );
+    assert_eq!(
+        trace["fingerprint_summary"]["normalized"]
+            .as_str()
+            .map(str::len),
+        Some(64)
+    );
+    assert_eq!(
+        trace["fingerprint_summary"]["family"]
+            .as_str()
+            .map(str::len),
+        Some(64)
+    );
+    assert_eq!(trace["redaction_status"]["class"], "restricted");
+    assert_eq!(
+        trace["redaction_status"]["local_only"].as_bool(),
+        Some(true)
+    );
+    assert!(
+        trace["redaction_status"]["normalized_artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact.as_str() == Some("ir.analysis.json"))
+    );
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
         Some("parsed")
@@ -430,6 +459,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "passthrough");
+    assert_eq!(trace["wrapper_verdict"], "passthrough_fallback");
     assert_eq!(trace["fallback_reason"], "hard_conflict");
     assert_eq!(
         trace["environment_summary"]["backend_version"].as_str(),
@@ -451,6 +481,23 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
     assert!(trace["timing"]["render_ms"].is_null());
     assert_eq!(trace["child_exit"]["code"].as_i64(), Some(1));
     assert!(trace["child_exit"]["signal"].is_null());
+    assert_eq!(
+        trace["fingerprint_summary"]["raw"].as_str().map(str::len),
+        Some(64)
+    );
+    assert!(trace["fingerprint_summary"]["normalized"].is_null());
+    assert!(trace["fingerprint_summary"]["family"].is_null());
+    assert_eq!(trace["redaction_status"]["class"], "restricted");
+    assert_eq!(
+        trace["redaction_status"]["local_only"].as_bool(),
+        Some(true)
+    );
+    assert!(
+        trace["redaction_status"]["normalized_artifacts"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
         Some("skipped")

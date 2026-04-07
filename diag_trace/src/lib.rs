@@ -56,6 +56,8 @@ pub struct TraceEnvelope {
     pub selected_profile: String,
     pub support_tier: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub wrapper_verdict: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub version_summary: Option<TraceVersionSummary>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub environment_summary: Option<TraceEnvironmentSummary>,
@@ -67,6 +69,10 @@ pub struct TraceEnvelope {
     pub child_exit: Option<TraceChildExit>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parser_result_summary: Option<TraceParserResultSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fingerprint_summary: Option<TraceFingerprintSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redaction_status: Option<TraceRedactionStatus>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
     pub fallback_reason: Option<String>,
@@ -128,6 +134,23 @@ pub struct TraceParserResultSummary {
     pub diagnostic_count: usize,
     pub integrity_issue_count: usize,
     pub capture_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceFingerprintSummary {
+    pub raw: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub normalized: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub family: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceRedactionStatus {
+    pub class: String,
+    pub local_only: bool,
+    #[serde(default)]
+    pub normalized_artifacts: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -458,12 +481,15 @@ mod tests {
             selected_mode: "render".to_string(),
             selected_profile: "default".to_string(),
             support_tier: "a".to_string(),
+            wrapper_verdict: None,
             version_summary: None,
             environment_summary: None,
             capabilities: None,
             timing: None,
             child_exit: None,
             parser_result_summary: None,
+            fingerprint_summary: None,
+            redaction_status: None,
             decision_log: Vec::new(),
             fallback_reason: None,
             warning_messages: Vec::new(),

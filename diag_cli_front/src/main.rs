@@ -15,9 +15,9 @@ use diag_render::{
 };
 use diag_trace::{
     BuildManifest, RetentionPolicy, TraceArtifactRef, TraceCapabilities, TraceChildExit,
-    TraceEnvelope, TraceEnvironmentSummary, TraceParserResultSummary, TraceTiming,
-    TraceVersionSummary, WrapperPaths, build_target_triple, default_build_manifest,
-    secure_private_file, trace_id, write_trace, write_trace_at,
+    TraceEnvelope, TraceEnvironmentSummary, TraceFingerprintSummary, TraceParserResultSummary,
+    TraceRedactionStatus, TraceTiming, TraceVersionSummary, WrapperPaths, build_target_triple,
+    default_build_manifest, secure_private_file, trace_id, write_trace, write_trace_at,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -243,6 +243,10 @@ fn maybe_write_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        wrapper_verdict: Some(trace_wrapper_verdict(
+            mode_decision.mode,
+            mode_decision.fallback_reason,
+        )),
         version_summary: Some(trace_version_summary()),
         environment_summary: Some(trace_environment_summary(
             backend,
@@ -257,6 +261,11 @@ fn maybe_write_trace(
         }),
         child_exit: Some(trace_child_exit(&capture.exit_status)),
         parser_result_summary: Some(parsed_parser_result_summary(document)),
+        fingerprint_summary: trace_fingerprint_summary_from_document(document),
+        redaction_status: Some(trace_redaction_status(
+            mode_decision.mode,
+            retained_trace_dir.is_some(),
+        )),
         decision_log: mode_decision.decision_log.clone(),
         fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: document
@@ -301,6 +310,10 @@ fn maybe_write_passthrough_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        wrapper_verdict: Some(trace_wrapper_verdict(
+            mode_decision.mode,
+            mode_decision.fallback_reason,
+        )),
         version_summary: Some(trace_version_summary()),
         environment_summary: Some(trace_environment_summary(
             backend,
@@ -315,6 +328,11 @@ fn maybe_write_passthrough_trace(
         }),
         child_exit: Some(trace_child_exit(&capture.exit_status)),
         parser_result_summary: Some(skipped_parser_result_summary(&capture.artifacts)),
+        fingerprint_summary: Some(trace_fingerprint_summary_from_capture(capture)),
+        redaction_status: Some(trace_redaction_status(
+            mode_decision.mode,
+            retained_trace_dir.is_some(),
+        )),
         decision_log: mode_decision.decision_log.clone(),
         fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: Vec::new(),
@@ -444,6 +462,17 @@ fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
     }
 }
 
+fn trace_wrapper_verdict(mode: ExecutionMode, fallback_reason: Option<&str>) -> String {
+    match mode {
+        ExecutionMode::Render => "rendered".to_string(),
+        ExecutionMode::Shadow => "shadow_observed".to_string(),
+        ExecutionMode::Passthrough => match fallback_reason {
+            Some("explicit_passthrough") => "passthrough_requested".to_string(),
+            _ => "passthrough_fallback".to_string(),
+        },
+    }
+}
+
 fn parsed_parser_result_summary(document: &DiagnosticDocument) -> TraceParserResultSummary {
     TraceParserResultSummary {
         status: "parsed".to_string(),
@@ -463,6 +492,44 @@ fn skipped_parser_result_summary(
         diagnostic_count: 0,
         integrity_issue_count: 0,
         capture_count: captures.len(),
+    }
+}
+
+fn trace_fingerprint_summary_from_document(
+    document: &DiagnosticDocument,
+) -> Option<TraceFingerprintSummary> {
+    document
+        .fingerprints
+        .as_ref()
+        .map(|fingerprints| TraceFingerprintSummary {
+            raw: fingerprints.raw.clone(),
+            normalized: Some(fingerprints.structural.clone()),
+            family: Some(fingerprints.family.clone()),
+        })
+}
+
+fn trace_fingerprint_summary_from_capture(capture: &CaptureOutcome) -> TraceFingerprintSummary {
+    TraceFingerprintSummary {
+        raw: diag_core::fingerprint_for(&capture.stderr_bytes),
+        normalized: None,
+        family: None,
+    }
+}
+
+fn trace_redaction_status(
+    mode: ExecutionMode,
+    retained_trace_dir_exists: bool,
+) -> TraceRedactionStatus {
+    TraceRedactionStatus {
+        class: "restricted".to_string(),
+        local_only: true,
+        normalized_artifacts: if retained_trace_dir_exists
+            && !matches!(mode, ExecutionMode::Passthrough)
+        {
+            vec!["ir.analysis.json".to_string()]
+        } else {
+            Vec::new()
+        },
     }
 }
 
