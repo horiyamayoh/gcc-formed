@@ -1,6 +1,8 @@
 use diag_backend_probe::ProbeResult;
 use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, ToolInfo};
-use diag_trace::{RetentionPolicy, WrapperPaths, should_retain};
+use diag_trace::{
+    RetentionPolicy, WrapperPaths, secure_private_dir, secure_private_file, should_retain,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::env;
@@ -141,6 +143,9 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     };
 
     let status = child.wait()?;
+    if let Some(path) = sarif_path.as_ref().filter(|path| path.exists()) {
+        secure_private_file(path)?;
+    }
     let stderr_bytes = match stderr_handle {
         Some(handle) => handle
             .join()
@@ -157,12 +162,19 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
             fs::remove_dir_all(&trace_dir)?;
         }
         fs::create_dir_all(&trace_dir)?;
-        fs::write(trace_dir.join("stderr.raw"), &stderr_bytes)?;
+        secure_private_dir(&trace_dir)?;
+        let retained_stderr = trace_dir.join("stderr.raw");
+        fs::write(&retained_stderr, &stderr_bytes)?;
+        secure_private_file(&retained_stderr)?;
         if let Some(sarif) = sarif_path.as_ref().filter(|path| path.exists()) {
-            fs::copy(sarif, trace_dir.join("diagnostics.sarif"))?;
+            let retained_sarif = trace_dir.join("diagnostics.sarif");
+            fs::copy(sarif, &retained_sarif)?;
+            secure_private_file(&retained_sarif)?;
         }
         if invocation_path.exists() {
-            fs::copy(&invocation_path, trace_dir.join("invocation.json"))?;
+            let retained_invocation = trace_dir.join("invocation.json");
+            fs::copy(&invocation_path, &retained_invocation)?;
+            secure_private_file(&retained_invocation)?;
         }
         Some(trace_dir)
     } else {
@@ -299,6 +311,7 @@ fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
     );
     let path = root.join(unique);
     fs::create_dir_all(&path)?;
+    secure_private_dir(&path)?;
     Ok(path)
 }
 
@@ -375,7 +388,8 @@ fn collect_wrapper_env() -> BTreeMap<String, String> {
 
 fn write_invocation_record(path: &Path, record: &InvocationRecord) -> Result<(), std::io::Error> {
     let json = serde_json::to_vec_pretty(record).map_err(std::io::Error::other)?;
-    fs::write(path, json)
+    fs::write(path, json)?;
+    secure_private_file(path)
 }
 
 fn status_to_info(status: ExitStatus) -> ExitStatusInfo {

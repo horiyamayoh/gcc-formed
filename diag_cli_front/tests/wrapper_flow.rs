@@ -107,6 +107,25 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     assert!(retained_dir.join("diagnostics.sarif").exists());
     assert!(retained_dir.join("invocation.json").exists());
     assert!(retained_dir.join("trace.json").exists());
+    #[cfg(unix)]
+    {
+        assert_private_dir(&retained_dir);
+        assert_private_file(&trace_root.join("trace.json"));
+        assert_private_file(&retained_dir.join("stderr.raw"));
+        assert_private_file(&retained_dir.join("diagnostics.sarif"));
+        assert_private_file(&retained_dir.join("invocation.json"));
+        assert_private_file(&retained_dir.join("trace.json"));
+
+        let runtime_temp_dir = fs::read_dir(&runtime_root)
+            .unwrap()
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .find(|path| path.is_dir())
+            .unwrap();
+        assert_private_dir(&runtime_temp_dir);
+        assert_private_file(&runtime_temp_dir.join("diagnostics.sarif"));
+        assert_private_file(&runtime_temp_dir.join("invocation.json"));
+    }
 
     let invocation: Value =
         serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
@@ -359,6 +378,22 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
         .filter_map(|line| line.split_once('='))
         .map(|(key, value)| (key.to_string(), value.to_string()))
         .collect()
+}
+
+#[cfg(unix)]
+fn assert_private_dir(path: &std::path::Path) {
+    assert_eq!(
+        fs::metadata(path).unwrap().permissions().mode() & 0o777,
+        0o700
+    );
+}
+
+#[cfg(unix)]
+fn assert_private_file(path: &std::path::Path) {
+    assert_eq!(
+        fs::metadata(path).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
 }
 
 fn fixture(version: &str) -> TempDir {

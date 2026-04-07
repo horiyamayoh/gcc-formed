@@ -187,7 +187,7 @@ pub fn build_target_triple() -> &'static str {
 }
 
 #[cfg(unix)]
-fn secure_private_dir(path: &Path) -> Result<(), std::io::Error> {
+pub fn secure_private_dir(path: &Path) -> Result<(), std::io::Error> {
     use std::os::unix::fs::PermissionsExt;
 
     let metadata = fs::metadata(path)?;
@@ -197,7 +197,22 @@ fn secure_private_dir(path: &Path) -> Result<(), std::io::Error> {
 }
 
 #[cfg(not(unix))]
-fn secure_private_dir(_path: &Path) -> Result<(), std::io::Error> {
+pub fn secure_private_dir(_path: &Path) -> Result<(), std::io::Error> {
+    Ok(())
+}
+
+#[cfg(unix)]
+pub fn secure_private_file(path: &Path) -> Result<(), std::io::Error> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let metadata = fs::metadata(path)?;
+    let mut permissions = metadata.permissions();
+    permissions.set_mode(0o600);
+    fs::set_permissions(path, permissions)
+}
+
+#[cfg(not(unix))]
+pub fn secure_private_file(_path: &Path) -> Result<(), std::io::Error> {
     Ok(())
 }
 
@@ -232,13 +247,16 @@ pub fn write_trace(
 pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
+        secure_private_dir(parent)?;
     }
     fs::write(path, serde_json::to_vec_pretty(trace)?)?;
+    secure_private_file(path)?;
     Ok(())
 }
 
 pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), TraceError> {
     fs::write(path, serde_json::to_vec_pretty(manifest)?)?;
+    secure_private_file(path)?;
     Ok(())
 }
 
@@ -372,5 +390,51 @@ mod tests {
         assert_eq!(paths.runtime_root, PathBuf::from("/custom/runtime-root"));
         assert_eq!(paths.trace_root, PathBuf::from("/custom/trace-root"));
         assert_eq!(paths.install_root, PathBuf::from("/custom/install-root"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn writes_private_trace_and_manifest_files() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&temp).unwrap();
+        let trace_path = temp.join("trace.json");
+        let manifest_path = temp.join("manifest.json");
+        let trace = TraceEnvelope {
+            trace_id: "trace-1".to_string(),
+            selected_mode: "render".to_string(),
+            selected_profile: "default".to_string(),
+            support_tier: "a".to_string(),
+            capabilities: None,
+            timing: None,
+            decision_log: Vec::new(),
+            fallback_reason: None,
+            warning_messages: Vec::new(),
+            artifacts: Vec::new(),
+        };
+
+        write_trace_at(&trace_path, &trace).unwrap();
+        write_manifest(
+            &manifest_path,
+            &default_build_manifest("lock".to_string(), "vendor".to_string()),
+        )
+        .unwrap();
+
+        assert_eq!(
+            fs::metadata(&trace_path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(
+            fs::metadata(&manifest_path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(temp).unwrap();
     }
 }
