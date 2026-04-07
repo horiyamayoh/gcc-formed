@@ -45,20 +45,21 @@
 ## 開発開始
 
 ```bash
+rustup target add x86_64-unknown-linux-musl
 cargo xtask check
 cargo xtask replay --root corpus
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
 cargo xtask vendor --output-dir vendor
-cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed
-cargo xtask package --binary target/debug/gcc-formed --target-triple x86_64-unknown-linux-gnu
+cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
+cargo xtask package --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed --target-triple x86_64-unknown-linux-musl
 ```
 
 生成された control dir を使って install / rollback / uninstall を検証する最小例:
 
 ```bash
-control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-gnu
-install_root="$HOME/.local/opt/cc-formed/x86_64-unknown-linux-gnu"
+control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-musl
+install_root="$HOME/.local/opt/cc-formed/x86_64-unknown-linux-musl"
 bin_dir="$HOME/.local/bin"
 
 cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
@@ -71,11 +72,11 @@ cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode
 
 ```bash
 signing_private_key="$PWD/release-signing.key"
-control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-gnu
+control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-musl
 
 cargo xtask package \
-  --binary target/debug/gcc-formed \
-  --target-triple x86_64-unknown-linux-gnu \
+  --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed \
+  --target-triple x86_64-unknown-linux-musl \
   --signing-private-key "$signing_private_key"
 
 signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
@@ -100,10 +101,10 @@ immutable release repository と exact pin install を検証する最小例:
 repo_root="$PWD/.release-repo"
 
 cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root"
-cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel canary
-cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel stable
-cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable
-cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable --install-root "$install_root" --bin-dir "$bin_dir"
+cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel canary
+cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel stable
+cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable
+cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable --install-root "$install_root" --bin-dir "$bin_dir"
 ```
 
 CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` を取り出し、`--expected-signing-key-id ...` を追加する。
@@ -112,7 +113,7 @@ system-wide layout を pseudo-root で検証する最小例:
 
 ```bash
 system_root="$PWD/.system-root"
-install_root="$system_root/opt/cc-formed/x86_64-unknown-linux-gnu"
+install_root="$system_root/opt/cc-formed/x86_64-unknown-linux-musl"
 bin_dir="$system_root/usr/local/bin"
 
 cargo xtask install \
@@ -122,7 +123,7 @@ cargo xtask install \
   --expected-signing-key-id "$signing_key_id"
 ```
 
-本命の production artifact は引き続き `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。
+`cargo xtask package` は clean git worktree を前提とする。本命の production artifact は `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。
 
 ## 実装に入る順序
 

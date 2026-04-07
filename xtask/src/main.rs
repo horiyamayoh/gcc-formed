@@ -50,6 +50,8 @@ enum Commands {
         vendor_dir: PathBuf,
         #[arg(long, default_value = "gcc-formed")]
         bin: String,
+        #[arg(long)]
+        target_triple: Option<String>,
     },
     InstallRelease {
         #[arg(long)]
@@ -288,6 +290,7 @@ struct ReleaseResolveOutput {
 struct HermeticReleaseOptions {
     vendor_dir: PathBuf,
     bin: String,
+    target_triple: Option<String>,
 }
 
 #[derive(Debug)]
@@ -295,6 +298,7 @@ struct HermeticReleaseOutput {
     vendor_dir: PathBuf,
     vendor_hash: String,
     bin: String,
+    target_triple: Option<String>,
     target_dir: PathBuf,
 }
 
@@ -444,14 +448,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             run("cargo", &["fmt", "--check"])?;
             run("cargo", &["test", "--workspace"])?;
         }
-        Commands::HermeticReleaseCheck { vendor_dir, bin } => {
-            let check = run_hermetic_release_check(HermeticReleaseOptions { vendor_dir, bin })?;
+        Commands::HermeticReleaseCheck {
+            vendor_dir,
+            bin,
+            target_triple,
+        } => {
+            let check = run_hermetic_release_check(HermeticReleaseOptions {
+                vendor_dir,
+                bin,
+                target_triple,
+            })?;
             println!(
                 "{}",
                 serde_json::to_string_pretty(&serde_json::json!({
                     "vendor_dir": check.vendor_dir,
                     "vendor_hash": check.vendor_hash,
                     "bin": check.bin,
+                    "target_triple": check.target_triple,
                     "target_dir": check.target_dir,
                 }))?
             );
@@ -1954,13 +1967,14 @@ fn run_hermetic_release_check_at(
     options: &HermeticReleaseOptions,
 ) -> Result<HermeticReleaseOutput, Box<dyn std::error::Error>> {
     let vendor_dir = canonicalize_existing_path(workspace_root, &options.vendor_dir, "vendor dir")?;
+    let hermetic_target_dir = workspace_root.join("target/hermetic-release");
     let cargo_home = tempfile::Builder::new()
         .prefix("gcc-formed-cargo-home-")
         .tempdir_in(workspace_root)?;
     let config_path = cargo_home.path().join("config.toml");
     fs::write(
         &config_path,
-        vendored_source_config(&vendor_dir, &workspace_root.join("target/hermetic-release"))?,
+        vendored_source_config(&vendor_dir, &hermetic_target_dir)?,
     )?;
     let status = Command::new("cargo")
         .current_dir(workspace_root)
@@ -1968,6 +1982,15 @@ fn run_hermetic_release_check_at(
         .arg("--locked")
         .arg("--offline")
         .arg("--release")
+        .arg("--target-dir")
+        .arg(&hermetic_target_dir)
+        .args(
+            options
+                .target_triple
+                .as_ref()
+                .map(|target| vec!["--target".to_string(), target.clone()])
+                .unwrap_or_default(),
+        )
         .arg("--bin")
         .arg(&options.bin)
         .env("CARGO_HOME", cargo_home.path())
@@ -1979,7 +2002,8 @@ fn run_hermetic_release_check_at(
         vendor_dir: vendor_dir.clone(),
         vendor_hash: hash_vendor_dir(&vendor_dir)?,
         bin: options.bin.clone(),
-        target_dir: workspace_root.join("target/hermetic-release"),
+        target_triple: options.target_triple.clone(),
+        target_dir: hermetic_target_dir,
     })
 }
 
@@ -3506,7 +3530,12 @@ mod tests {
     fn init_minimal_cargo_project() -> (tempfile::TempDir, PathBuf) {
         let sandbox = tempfile::tempdir().unwrap();
         let root = sandbox.path().join("mini");
+        fs::create_dir_all(root.join(".cargo")).unwrap();
         fs::create_dir_all(root.join("src")).unwrap();
+        write_file(
+            &root.join(".cargo/config.toml"),
+            b"[build]\ntarget-dir = \"target\"\n",
+        );
         write_file(
             &root.join("Cargo.toml"),
             b"[package]\nname = \"mini\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n",
@@ -3678,12 +3707,47 @@ mod tests {
             &HermeticReleaseOptions {
                 vendor_dir: PathBuf::from("vendor"),
                 bin: "mini".to_string(),
+                target_triple: None,
             },
         )
         .unwrap();
         assert_eq!(hermetic.bin, "mini");
         assert_eq!(hermetic.vendor_hash, vendor.vendor_hash);
+        assert_eq!(hermetic.target_triple, None);
         assert!(hermetic.target_dir.join("release/mini").exists());
+    }
+
+    #[test]
+    fn hermetic_release_check_supports_musl_target_for_minimal_project() {
+        let (_sandbox, root) = init_minimal_cargo_project();
+        run_vendor_at(
+            &root,
+            &VendorOptions {
+                output_dir: PathBuf::from("vendor"),
+            },
+        )
+        .unwrap();
+
+        let hermetic = run_hermetic_release_check_at(
+            &root,
+            &HermeticReleaseOptions {
+                vendor_dir: PathBuf::from("vendor"),
+                bin: "mini".to_string(),
+                target_triple: Some("x86_64-unknown-linux-musl".to_string()),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            hermetic.target_triple.as_deref(),
+            Some("x86_64-unknown-linux-musl")
+        );
+        assert!(
+            hermetic
+                .target_dir
+                .join("x86_64-unknown-linux-musl/release/mini")
+                .exists()
+        );
     }
 
     #[test]
