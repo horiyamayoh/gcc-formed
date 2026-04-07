@@ -4,7 +4,10 @@ use diag_capture_runtime::{
     CaptureOutcome, CaptureRequest, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
     trace_sanitized_env_keys,
 };
-use diag_core::{DiagnosticDocument, DocumentCompleteness, LanguageMode, RunInfo, WrapperSurface};
+use diag_core::{
+    DiagnosticDocument, DocumentCompleteness, LanguageMode, RunInfo, SnapshotKind, WrapperSurface,
+    snapshot_json,
+};
 use diag_enrich::enrich_document;
 use diag_render::{
     DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest, SourceExcerptPolicy,
@@ -13,8 +16,8 @@ use diag_render::{
 use diag_trace::{
     BuildManifest, RetentionPolicy, TraceArtifactRef, TraceCapabilities, TraceChildExit,
     TraceEnvelope, TraceEnvironmentSummary, TraceParserResultSummary, TraceTiming,
-    TraceVersionSummary, WrapperPaths, build_target_triple, default_build_manifest, trace_id,
-    write_trace, write_trace_at,
+    TraceVersionSummary, WrapperPaths, build_target_triple, default_build_manifest,
+    secure_private_file, trace_id, write_trace, write_trace_at,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -232,6 +235,9 @@ fn maybe_write_trace(
     {
         return Ok(());
     }
+    if let Some(dir) = retained_trace_dir {
+        write_retained_normalized_ir(dir, document)?;
+    }
     let trace = TraceEnvelope {
         trace_id: document.run.invocation_id.clone(),
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
@@ -355,6 +361,13 @@ fn build_trace_artifact_refs_for_captures(
                 path: Some(invocation),
             });
         }
+        let normalized_ir = dir.join("ir.analysis.json");
+        if normalized_ir.exists() {
+            refs.push(TraceArtifactRef {
+                id: "ir.analysis.json".to_string(),
+                path: Some(normalized_ir),
+            });
+        }
         refs.push(TraceArtifactRef {
             id: "trace.json".to_string(),
             path: Some(dir.join("trace.json")),
@@ -455,6 +468,17 @@ fn skipped_parser_result_summary(
 
 fn document_completeness_label(completeness: &DocumentCompleteness) -> String {
     format!("{completeness:?}").to_lowercase()
+}
+
+fn write_retained_normalized_ir(
+    retained_trace_dir: &Path,
+    document: &DiagnosticDocument,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let path = retained_trace_dir.join("ir.analysis.json");
+    let payload = snapshot_json(document, SnapshotKind::AnalysisIncluded)?;
+    fs::write(&path, payload)?;
+    secure_private_file(&path)?;
+    Ok(())
 }
 
 fn handle_wrapper_introspection(

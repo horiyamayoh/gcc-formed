@@ -152,6 +152,13 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             .as_array()
             .unwrap()
             .iter()
+            .any(|artifact| artifact["id"].as_str() == Some("ir.analysis.json"))
+    );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
             .any(|artifact| artifact["id"].as_str() == Some("trace.json"))
     );
 
@@ -164,6 +171,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     assert!(retained_dir.join("stderr.raw").exists());
     assert!(retained_dir.join("diagnostics.sarif").exists());
     assert!(retained_dir.join("invocation.json").exists());
+    assert!(retained_dir.join("ir.analysis.json").exists());
     assert!(retained_dir.join("trace.json").exists());
     #[cfg(unix)]
     {
@@ -172,6 +180,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         assert_private_file(&retained_dir.join("stderr.raw"));
         assert_private_file(&retained_dir.join("diagnostics.sarif"));
         assert_private_file(&retained_dir.join("invocation.json"));
+        assert_private_file(&retained_dir.join("ir.analysis.json"));
         assert_private_file(&retained_dir.join("trace.json"));
 
         let runtime_temp_dir = fs::read_dir(&runtime_root)
@@ -213,6 +222,25 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             .unwrap();
     assert_eq!(retained_trace["selected_mode"], "render");
     assert_eq!(retained_trace["capabilities"]["stream_kind"], "pipe");
+
+    let normalized_ir: Value =
+        serde_json::from_str(&fs::read_to_string(retained_dir.join("ir.analysis.json")).unwrap())
+            .unwrap();
+    assert_eq!(normalized_ir["document_id"].as_str(), Some("<document>"));
+    assert_eq!(
+        normalized_ir["run"]["invocation_id"].as_str(),
+        Some("<invocation>")
+    );
+    assert_eq!(normalized_ir["run"]["cwd_display"].as_str(), Some("<cwd>"));
+    assert_eq!(
+        normalized_ir["producer"]["version"].as_str(),
+        Some("<normalized>")
+    );
+    assert!(normalized_ir["run"]["primary_tool"]["version"].is_null());
+    assert_eq!(
+        normalized_ir["captures"][1]["external_ref"].as_str(),
+        Some("<capture:diagnostics.sarif>")
+    );
 }
 
 #[test]
@@ -435,6 +463,13 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
             .iter()
             .any(|artifact| artifact["id"].as_str() == Some("invocation.json"))
     );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|artifact| artifact["id"].as_str() != Some("ir.analysis.json"))
+    );
 
     let retained_dir = fs::read_dir(&trace_root)
         .unwrap()
@@ -445,6 +480,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
     assert!(retained_dir.join("stderr.raw").exists());
     assert!(retained_dir.join("invocation.json").exists());
     assert!(retained_dir.join("trace.json").exists());
+    assert!(!retained_dir.join("ir.analysis.json").exists());
     assert!(
         fs::read_to_string(retained_dir.join("stderr.raw"))
             .unwrap()
