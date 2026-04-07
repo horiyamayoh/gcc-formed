@@ -58,7 +58,8 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
 
     let explicit_mode = parsed.mode.or(config.runtime.mode);
     let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
-    let mode = select_mode(backend.support_tier, explicit_mode, hard_conflict);
+    let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
+    let mode = mode_decision.mode;
     let profile = parsed
         .profile
         .or(config.render.profile)
@@ -128,7 +129,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
             &document,
             &parsed,
             &backend,
-            mode,
+            &mode_decision,
             profile,
             capture.retained_trace_dir.as_ref(),
         )?;
@@ -159,7 +160,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         &document,
         &parsed,
         &backend,
-        mode,
+        &mode_decision,
         profile,
         capture.retained_trace_dir.as_ref(),
     )?;
@@ -187,7 +188,7 @@ fn maybe_write_trace(
     document: &DiagnosticDocument,
     parsed: &ParsedArgs,
     backend: &diag_backend_probe::ProbeResult,
-    mode: ExecutionMode,
+    mode_decision: &ModeDecision,
     profile: RenderProfile,
     retained_trace_dir: Option<&PathBuf>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -201,30 +202,52 @@ fn maybe_write_trace(
     }
     let trace = TraceEnvelope {
         trace_id: document.run.invocation_id.clone(),
-        selected_mode: format!("{mode:?}").to_lowercase(),
+        selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
-        fallback_reason: if matches!(mode, ExecutionMode::Passthrough) {
-            Some("passthrough".to_string())
-        } else {
-            None
-        },
+        decision_log: mode_decision.decision_log.clone(),
+        fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: document
             .integrity_issues
             .iter()
             .map(|issue| issue.message.clone())
             .collect(),
-        artifacts: document
-            .captures
-            .iter()
-            .map(|capture| TraceArtifactRef {
-                id: capture.id.clone(),
-                path: capture.external_ref.as_ref().map(PathBuf::from),
-            })
-            .collect(),
+        artifacts: build_trace_artifact_refs(
+            document,
+            retained_trace_dir.map(|path| path.as_path()),
+        ),
     };
     write_trace(paths, &trace, "trace.json")?;
     Ok(())
+}
+
+fn build_trace_artifact_refs(
+    document: &DiagnosticDocument,
+    retained_trace_dir: Option<&Path>,
+) -> Vec<TraceArtifactRef> {
+    let mut refs = document
+        .captures
+        .iter()
+        .map(|capture| TraceArtifactRef {
+            id: capture.id.clone(),
+            path: retained_trace_dir.and_then(|dir| {
+                let candidate = dir.join(&capture.id);
+                candidate.exists().then_some(candidate)
+            }),
+        })
+        .collect::<Vec<_>>();
+
+    if let Some(dir) = retained_trace_dir {
+        let invocation = dir.join("invocation.json");
+        if invocation.exists() {
+            refs.push(TraceArtifactRef {
+                id: "invocation.json".to_string(),
+                path: Some(invocation),
+            });
+        }
+    }
+
+    refs
 }
 
 fn handle_wrapper_introspection(
@@ -407,25 +430,83 @@ fn select_mode(
     tier: SupportTier,
     requested: Option<ExecutionMode>,
     hard_conflict: bool,
-) -> ExecutionMode {
+) -> ModeDecision {
+    let mut decision_log = vec![format!("support_tier={:?}", tier).to_lowercase()];
     if hard_conflict {
-        return ExecutionMode::Passthrough;
+        decision_log.push("hard_conflict=diagnostic_sink_override".to_string());
+        return ModeDecision {
+            mode: ExecutionMode::Passthrough,
+            fallback_reason: Some("hard_conflict"),
+            decision_log,
+        };
     }
     if let Some(ExecutionMode::Passthrough) = requested {
-        return ExecutionMode::Passthrough;
+        decision_log.push("requested_mode=passthrough".to_string());
+        return ModeDecision {
+            mode: ExecutionMode::Passthrough,
+            fallback_reason: Some("explicit_passthrough"),
+            decision_log,
+        };
     }
-    match tier {
-        SupportTier::A => requested.unwrap_or(ExecutionMode::Render),
+    let mode = match tier {
+        SupportTier::A => {
+            decision_log.push(format!(
+                "tier_a_mode={}",
+                format!("{:?}", requested.unwrap_or(ExecutionMode::Render)).to_lowercase()
+            ));
+            requested.unwrap_or(ExecutionMode::Render)
+        }
         SupportTier::B => match requested {
-            Some(ExecutionMode::Shadow) => ExecutionMode::Shadow,
-            _ => ExecutionMode::Passthrough,
+            Some(ExecutionMode::Shadow) => {
+                decision_log.push("tier_b_mode=shadow_raw_only".to_string());
+                ExecutionMode::Shadow
+            }
+            Some(ExecutionMode::Render) => {
+                decision_log.push("tier_b_render_unsupported=passthrough".to_string());
+                ExecutionMode::Passthrough
+            }
+            None => {
+                decision_log.push("tier_b_default=passthrough".to_string());
+                ExecutionMode::Passthrough
+            }
+            Some(ExecutionMode::Passthrough) => ExecutionMode::Passthrough,
         },
-        SupportTier::C => ExecutionMode::Passthrough,
+        SupportTier::C => {
+            decision_log.push("tier_c_mode=passthrough_only".to_string());
+            ExecutionMode::Passthrough
+        }
+    };
+
+    let fallback_reason = match mode {
+        ExecutionMode::Passthrough => match tier {
+            SupportTier::A => None,
+            SupportTier::B => Some(match requested {
+                Some(ExecutionMode::Render) => "tier_b_render_unsupported",
+                Some(ExecutionMode::Shadow) => unreachable!(),
+                Some(ExecutionMode::Passthrough) => "explicit_passthrough",
+                None => "tier_b_default",
+            }),
+            SupportTier::C => Some("tier_c_only"),
+        },
+        ExecutionMode::Render | ExecutionMode::Shadow => None,
+    };
+
+    ModeDecision {
+        mode,
+        fallback_reason,
+        decision_log,
     }
 }
 
 fn os_to_string(value: &OsString) -> String {
     value.to_string_lossy().into_owned()
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ModeDecision {
+    mode: ExecutionMode,
+    fallback_reason: Option<&'static str>,
+    decision_log: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -668,4 +749,35 @@ where
     value
         .map(|value| parse_retention_policy(&value).map_err(serde::de::Error::custom))
         .transpose()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn selects_passthrough_with_reason_for_hard_conflict() {
+        let decision = select_mode(SupportTier::A, None, true);
+        assert_eq!(decision.mode, ExecutionMode::Passthrough);
+        assert_eq!(decision.fallback_reason, Some("hard_conflict"));
+        assert!(
+            decision
+                .decision_log
+                .iter()
+                .any(|entry| entry == "hard_conflict=diagnostic_sink_override")
+        );
+    }
+
+    #[test]
+    fn keeps_tier_b_shadow_without_fallback_reason() {
+        let decision = select_mode(SupportTier::B, Some(ExecutionMode::Shadow), false);
+        assert_eq!(decision.mode, ExecutionMode::Shadow);
+        assert_eq!(decision.fallback_reason, None);
+        assert!(
+            decision
+                .decision_log
+                .iter()
+                .any(|entry| entry == "tier_b_mode=shadow_raw_only")
+        );
+    }
 }

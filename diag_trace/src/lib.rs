@@ -54,6 +54,8 @@ pub struct TraceEnvelope {
     pub selected_mode: String,
     pub selected_profile: String,
     pub support_tier: String,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub decision_log: Vec<String>,
     pub fallback_reason: Option<String>,
     pub warning_messages: Vec<String>,
     pub artifacts: Vec<TraceArtifactRef>,

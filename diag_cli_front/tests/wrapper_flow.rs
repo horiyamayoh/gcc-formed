@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
+use serde_json::Value;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use tempfile::TempDir;
@@ -40,6 +41,81 @@ fn falls_back_to_passthrough_with_fake_gcc13_backend() {
             "main.c:4:1: error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains("help:").not());
+}
+
+#[test]
+fn retains_trace_bundle_with_invocation_record_and_decision_log() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+    let state_root = temp.path().join("state-root");
+    let runtime_root = temp.path().join("runtime-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .env("FORMED_STATE_DIR", &state_root)
+        .env("FORMED_RUNTIME_DIR", &runtime_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure();
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert!(trace["fallback_reason"].is_null());
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("tier_a_mode=render"))
+    );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["id"].as_str() == Some("invocation.json"))
+    );
+
+    let retained_dir = fs::read_dir(&trace_root)
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| path.is_dir())
+        .unwrap();
+    assert!(retained_dir.join("stderr.raw").exists());
+    assert!(retained_dir.join("diagnostics.sarif").exists());
+    assert!(retained_dir.join("invocation.json").exists());
+
+    let invocation: Value =
+        serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
+            .unwrap();
+    let expected_backend_path = fs::canonicalize(&backend).unwrap().display().to_string();
+    let expected_cwd = temp.path().display().to_string();
+    assert_eq!(invocation["selected_mode"], "render");
+    assert_eq!(
+        invocation["backend_path"].as_str(),
+        Some(expected_backend_path.as_str())
+    );
+    assert_eq!(invocation["cwd"].as_str(), Some(expected_cwd.as_str()));
+    assert!(
+        invocation["argv"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|arg| arg.as_str() == Some("-c"))
+    );
+    assert!(invocation["argv"].as_array().unwrap().iter().any(|arg| {
+        arg.as_str()
+            .is_some_and(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
+    }));
 }
 
 fn fixture(version: &str) -> TempDir {

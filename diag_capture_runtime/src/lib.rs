@@ -2,6 +2,8 @@ use diag_backend_probe::ProbeResult;
 use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, ToolInfo};
 use diag_trace::{RetentionPolicy, WrapperPaths, should_retain};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::io::{Read, Write};
@@ -54,6 +56,17 @@ pub enum CaptureError {
     Spawn,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+struct InvocationRecord {
+    backend_path: String,
+    argv: Vec<String>,
+    selected_mode: ExecutionMode,
+    cwd: String,
+    sarif_path: Option<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    wrapper_env: BTreeMap<String, String>,
+}
+
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
@@ -75,6 +88,11 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
             sanitize_sarif_path(sarif_path)
         )));
     }
+    let invocation_path = temp_dir_path.join("invocation.json");
+    write_invocation_record(
+        &invocation_path,
+        &build_invocation_record(request, &final_args, sarif_path.as_deref()),
+    )?;
     command.args(final_args);
 
     let stderr_mode = match request.mode {
@@ -134,6 +152,9 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         fs::write(trace_dir.join("stderr.raw"), &stderr_bytes)?;
         if let Some(sarif) = sarif_path.as_ref().filter(|path| path.exists()) {
             fs::copy(sarif, trace_dir.join("diagnostics.sarif"))?;
+        }
+        if invocation_path.exists() {
+            fs::copy(&invocation_path, trace_dir.join("invocation.json"))?;
         }
         Some(trace_dir)
     } else {
@@ -251,6 +272,50 @@ fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
     Ok(path)
 }
 
+fn build_invocation_record(
+    request: &CaptureRequest,
+    final_args: &[OsString],
+    sarif_path: Option<&Path>,
+) -> InvocationRecord {
+    InvocationRecord {
+        backend_path: request.backend.resolved_path.display().to_string(),
+        argv: final_args
+            .iter()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect(),
+        selected_mode: request.mode,
+        cwd: request.cwd.display().to_string(),
+        sarif_path: sarif_path.map(|path| path.display().to_string()),
+        wrapper_env: collect_wrapper_env(),
+    }
+}
+
+fn collect_wrapper_env() -> BTreeMap<String, String> {
+    const KEYS: &[&str] = &[
+        "FORMED_BACKEND_GCC",
+        "FORMED_CACHE_DIR",
+        "FORMED_CONFIG_DIR",
+        "FORMED_CONFIG_FILE",
+        "FORMED_INSTALL_ROOT",
+        "FORMED_RUNTIME_DIR",
+        "FORMED_STATE_DIR",
+        "FORMED_TRACE_DIR",
+    ];
+
+    let mut env_subset = BTreeMap::new();
+    for key in KEYS {
+        if let Some(value) = env::var_os(key) {
+            env_subset.insert((*key).to_string(), value.to_string_lossy().into_owned());
+        }
+    }
+    env_subset
+}
+
+fn write_invocation_record(path: &Path, record: &InvocationRecord) -> Result<(), std::io::Error> {
+    let json = serde_json::to_vec_pretty(record).map_err(std::io::Error::other)?;
+    fs::write(path, json)
+}
+
 fn status_to_info(status: ExitStatus) -> ExitStatusInfo {
     #[cfg(unix)]
     {
@@ -314,6 +379,53 @@ mod tests {
                 .as_deref()
                 .unwrap()
                 .contains("stderr")
+        );
+    }
+
+    #[test]
+    fn builds_invocation_record_with_selected_mode_and_sarif() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![OsString::from("-c"), OsString::from("src/main.c")],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            retention: RetentionPolicy::Always,
+            paths: WrapperPaths {
+                config_path: PathBuf::from("/tmp/config.toml"),
+                cache_root: PathBuf::from("/tmp/cache"),
+                state_root: PathBuf::from("/tmp/state"),
+                runtime_root: PathBuf::from("/tmp/runtime"),
+                trace_root: PathBuf::from("/tmp/traces"),
+                install_root: PathBuf::from("/tmp/install"),
+            },
+            inject_sarif: true,
+        };
+
+        let record = build_invocation_record(
+            &request,
+            &[
+                OsString::from("-c"),
+                OsString::from("src/main.c"),
+                OsString::from(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file=/tmp/runtime/diagnostics.sarif",
+                ),
+            ],
+            Some(Path::new("/tmp/runtime/diagnostics.sarif")),
+        );
+
+        assert_eq!(record.selected_mode, ExecutionMode::Render);
+        assert_eq!(record.backend_path, "/usr/bin/gcc");
+        assert_eq!(record.cwd, "/tmp/project");
+        assert_eq!(
+            record.sarif_path.as_deref(),
+            Some("/tmp/runtime/diagnostics.sarif")
+        );
+        assert!(record.argv.iter().any(|arg| arg == "-c"));
+        assert!(
+            record
+                .argv
+                .iter()
+                .any(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
         );
     }
 }
