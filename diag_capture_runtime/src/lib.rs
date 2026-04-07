@@ -63,8 +63,18 @@ struct InvocationRecord {
     selected_mode: ExecutionMode,
     cwd: String,
     sarif_path: Option<String>,
+    #[serde(skip_serializing_if = "child_env_policy_is_empty", default)]
+    child_env_policy: ChildEnvPolicy,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     wrapper_env: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+struct ChildEnvPolicy {
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    set: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    unset: Vec<String>,
 }
 
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
@@ -80,6 +90,8 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     command.current_dir(&request.cwd);
     command.stdin(Stdio::inherit());
     command.stdout(Stdio::inherit());
+    let child_env_policy = child_env_policy(request.mode);
+    apply_child_env_policy(&mut command, &child_env_policy);
 
     let mut final_args = request.args.clone();
     if let Some(sarif_path) = sarif_path.as_ref() {
@@ -91,7 +103,12 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     let invocation_path = temp_dir_path.join("invocation.json");
     write_invocation_record(
         &invocation_path,
-        &build_invocation_record(request, &final_args, sarif_path.as_deref()),
+        &build_invocation_record(
+            request,
+            &final_args,
+            sarif_path.as_deref(),
+            child_env_policy,
+        ),
     )?;
     command.args(final_args);
 
@@ -276,6 +293,7 @@ fn build_invocation_record(
     request: &CaptureRequest,
     final_args: &[OsString],
     sarif_path: Option<&Path>,
+    child_env_policy: ChildEnvPolicy,
 ) -> InvocationRecord {
     InvocationRecord {
         backend_path: request.backend.resolved_path.display().to_string(),
@@ -286,8 +304,39 @@ fn build_invocation_record(
         selected_mode: request.mode,
         cwd: request.cwd.display().to_string(),
         sarif_path: sarif_path.map(|path| path.display().to_string()),
+        child_env_policy,
         wrapper_env: collect_wrapper_env(),
     }
+}
+
+fn child_env_policy(mode: ExecutionMode) -> ChildEnvPolicy {
+    let mut policy = ChildEnvPolicy::default();
+    if matches!(mode, ExecutionMode::Render) {
+        policy
+            .set
+            .insert("LC_MESSAGES".to_string(), "C".to_string());
+    }
+    if matches!(mode, ExecutionMode::Render | ExecutionMode::Shadow) {
+        policy.unset = vec![
+            "EXPERIMENTAL_SARIF_SOCKET".to_string(),
+            "GCC_DIAGNOSTICS_LOG".to_string(),
+            "GCC_EXTRA_DIAGNOSTIC_OUTPUT".to_string(),
+        ];
+    }
+    policy
+}
+
+fn apply_child_env_policy(command: &mut Command, policy: &ChildEnvPolicy) {
+    for (key, value) in &policy.set {
+        command.env(key, value);
+    }
+    for key in &policy.unset {
+        command.env_remove(key);
+    }
+}
+
+fn child_env_policy_is_empty(policy: &ChildEnvPolicy) -> bool {
+    policy.set.is_empty() && policy.unset.is_empty()
 }
 
 fn collect_wrapper_env() -> BTreeMap<String, String> {
@@ -411,6 +460,7 @@ mod tests {
                 ),
             ],
             Some(Path::new("/tmp/runtime/diagnostics.sarif")),
+            child_env_policy(ExecutionMode::Render),
         );
 
         assert_eq!(record.selected_mode, ExecutionMode::Render);
@@ -427,5 +477,45 @@ mod tests {
                 .iter()
                 .any(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
         );
+        assert_eq!(
+            record
+                .child_env_policy
+                .set
+                .get("LC_MESSAGES")
+                .map(String::as_str),
+            Some("C")
+        );
+    }
+
+    #[test]
+    fn render_mode_sets_locale_and_unsets_conflicting_diagnostic_env() {
+        let policy = child_env_policy(ExecutionMode::Render);
+        assert_eq!(policy.set.get("LC_MESSAGES").map(String::as_str), Some("C"));
+        assert!(policy.unset.iter().any(|key| key == "GCC_DIAGNOSTICS_LOG"));
+        assert!(
+            policy
+                .unset
+                .iter()
+                .any(|key| key == "GCC_EXTRA_DIAGNOSTIC_OUTPUT")
+        );
+        assert!(
+            policy
+                .unset
+                .iter()
+                .any(|key| key == "EXPERIMENTAL_SARIF_SOCKET")
+        );
+    }
+
+    #[test]
+    fn shadow_mode_only_unsets_conflicting_diagnostic_env() {
+        let policy = child_env_policy(ExecutionMode::Shadow);
+        assert!(policy.set.is_empty());
+        assert_eq!(policy.unset.len(), 3);
+    }
+
+    #[test]
+    fn passthrough_mode_preserves_environment() {
+        let policy = child_env_policy(ExecutionMode::Passthrough);
+        assert!(child_env_policy_is_empty(&policy));
     }
 }

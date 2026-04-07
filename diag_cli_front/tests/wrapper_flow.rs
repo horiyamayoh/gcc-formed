@@ -1,6 +1,7 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use tempfile::TempDir;
@@ -182,6 +183,91 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     assert!(report["warnings"].as_array().unwrap().is_empty());
 }
 
+#[test]
+fn render_mode_sanitizes_child_diagnostic_environment() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+    let runtime_root = temp.path().join("runtime-root");
+    let env_dump = temp.path().join("child-env.txt");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .env("FORMED_RUNTIME_DIR", &runtime_root)
+        .env("FORMED_TEST_ENV_DUMP", &env_dump)
+        .env("LC_ALL", "ja_JP.UTF-8")
+        .env("LC_MESSAGES", "ja_JP.UTF-8")
+        .env("LC_CTYPE", "en_US.UTF-8")
+        .env("GCC_DIAGNOSTICS_LOG", "/tmp/diag.log")
+        .env("GCC_EXTRA_DIAGNOSTIC_OUTPUT", "fixits")
+        .env("EXPERIMENTAL_SARIF_SOCKET", "/tmp/sarif.sock")
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure();
+
+    let env_dump = parse_env_dump(&fs::read_to_string(&env_dump).unwrap());
+    assert_eq!(
+        env_dump.get("LC_ALL").map(String::as_str),
+        Some("ja_JP.UTF-8")
+    );
+    assert_eq!(env_dump.get("LC_MESSAGES").map(String::as_str), Some("C"));
+    assert_eq!(
+        env_dump.get("LC_CTYPE").map(String::as_str),
+        Some("en_US.UTF-8")
+    );
+    assert_eq!(
+        env_dump.get("GCC_DIAGNOSTICS_LOG").map(String::as_str),
+        Some("__unset__")
+    );
+    assert_eq!(
+        env_dump
+            .get("GCC_EXTRA_DIAGNOSTIC_OUTPUT")
+            .map(String::as_str),
+        Some("__unset__")
+    );
+    assert_eq!(
+        env_dump
+            .get("EXPERIMENTAL_SARIF_SOCKET")
+            .map(String::as_str),
+        Some("__unset__")
+    );
+
+    let retained_dir = fs::read_dir(&trace_root)
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| path.is_dir())
+        .unwrap();
+    let invocation: Value =
+        serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
+            .unwrap();
+    assert_eq!(
+        invocation["child_env_policy"]["set"]["LC_MESSAGES"].as_str(),
+        Some("C")
+    );
+    assert!(
+        invocation["child_env_policy"]["unset"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|value| value.as_str() == Some("GCC_DIAGNOSTICS_LOG"))
+    );
+}
+
+fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
+    contents
+        .lines()
+        .filter_map(|line| line.split_once('='))
+        .map(|(key, value)| (key.to_string(), value.to_string()))
+        .collect()
+}
+
 fn fixture(version: &str) -> TempDir {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("main.c"), "int main(void) { return 0 }\n").unwrap();
@@ -222,6 +308,16 @@ if [[ -n "$sarif" ]]; then
   ]
 }}
 JSON
+fi
+if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
+  {{
+    printf 'LC_ALL=%s\n' "${{LC_ALL-__unset__}}"
+    printf 'LC_MESSAGES=%s\n' "${{LC_MESSAGES-__unset__}}"
+    printf 'LC_CTYPE=%s\n' "${{LC_CTYPE-__unset__}}"
+    printf 'GCC_DIAGNOSTICS_LOG=%s\n' "${{GCC_DIAGNOSTICS_LOG-__unset__}}"
+    printf 'GCC_EXTRA_DIAGNOSTIC_OUTPUT=%s\n' "${{GCC_EXTRA_DIAGNOSTIC_OUTPUT-__unset__}}"
+    printf 'EXPERIMENTAL_SARIF_SOCKET=%s\n' "${{EXPERIMENTAL_SARIF_SOCKET-__unset__}}"
+  }} >"${{FORMED_TEST_ENV_DUMP}}"
 fi
 echo "main.c:4:1: error: expected ';' before '}}' token" >&2
 exit 1
