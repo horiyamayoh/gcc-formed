@@ -25,6 +25,7 @@
 - `cargo xtask package` により release artifact / control file の最小セットを生成できる
 - `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証できる
 - `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
+- `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -38,7 +39,7 @@
 - `diag_trace`: XDG path、trace bundle、build manifest
 - `diag_testkit`: corpus fixture loader と validation
 - `diag_cli_front`: `gcc-formed` wrapper CLI
-- `xtask`: `check`, `replay`, `snapshot`, `bench-smoke`, `self-check`
+- `xtask`: `check`, `replay`, `snapshot`, `bench-smoke`, `self-check`, `package`, `install`, `rollback`, `uninstall`, `vendor`, `hermetic-release-check`, `release-publish`, `release-promote`, `release-resolve`, `install-release`
 
 ## 開発開始
 
@@ -64,6 +65,20 @@ cargo xtask install --control-dir "$control_dir" --install-root "$install_root" 
 cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --version 0.1.0
 cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
 ```
+
+immutable release repository と exact pin install を検証する最小例:
+
+```bash
+repo_root="$PWD/.release-repo"
+
+cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root"
+cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel canary
+cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel stable
+cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable
+cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable --install-root "$install_root" --bin-dir "$bin_dir"
+```
+
+CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。
 
 ## 実装に入る順序
 

@@ -13,6 +13,7 @@ use diag_testkit::{
     ExpectedFallback, Fixture, RenderProfileExpectations, discover, family_counts, validate_fixture,
 };
 use diag_trace::{BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, build_manifest_for_target};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -47,6 +48,22 @@ enum Commands {
         #[arg(long, default_value = "gcc-formed")]
         bin: String,
     },
+    InstallRelease {
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        target_triple: String,
+        #[arg(long)]
+        install_root: PathBuf,
+        #[arg(long)]
+        bin_dir: PathBuf,
+        #[arg(long)]
+        channel: Option<String>,
+        #[arg(long)]
+        version: Option<String>,
+        #[arg(long)]
+        expected_primary_sha256: Option<String>,
+    },
     Install {
         #[arg(long)]
         control_dir: PathBuf,
@@ -68,6 +85,32 @@ enum Commands {
         release_channel: String,
         #[arg(long, default_value = "gcc15_primary")]
         support_tier: String,
+    },
+    ReleasePromote {
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        target_triple: String,
+        #[arg(long)]
+        version: String,
+        #[arg(long)]
+        channel: String,
+    },
+    ReleasePublish {
+        #[arg(long)]
+        control_dir: PathBuf,
+        #[arg(long)]
+        repository_root: PathBuf,
+    },
+    ReleaseResolve {
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        target_triple: String,
+        #[arg(long)]
+        channel: Option<String>,
+        #[arg(long)]
+        version: Option<String>,
     },
     Rollback {
         #[arg(long)]
@@ -173,6 +216,61 @@ struct VendorOutput {
 }
 
 #[derive(Debug, Clone)]
+struct ReleasePublishOptions {
+    control_dir: PathBuf,
+    repository_root: PathBuf,
+}
+
+#[derive(Debug)]
+struct ReleasePublishOutput {
+    repository_root: PathBuf,
+    target_triple: String,
+    version: String,
+    control_dir: PathBuf,
+    release_metadata_path: PathBuf,
+    primary_archive_sha256: String,
+}
+
+#[derive(Debug, Clone)]
+struct ReleasePromoteOptions {
+    repository_root: PathBuf,
+    target_triple: String,
+    version: String,
+    channel: String,
+}
+
+#[derive(Debug)]
+struct ReleasePromoteOutput {
+    repository_root: PathBuf,
+    target_triple: String,
+    version: String,
+    channel: String,
+    channel_metadata_path: PathBuf,
+    primary_archive_sha256: String,
+}
+
+#[derive(Debug, Clone)]
+struct ReleaseResolveOptions {
+    repository_root: PathBuf,
+    target_triple: String,
+    channel: Option<String>,
+    version: Option<String>,
+}
+
+#[derive(Debug)]
+struct ReleaseResolveOutput {
+    repository_root: PathBuf,
+    target_triple: String,
+    requested_channel: Option<String>,
+    resolved_version: String,
+    control_dir: PathBuf,
+    primary_archive: PathBuf,
+    primary_archive_sha256: String,
+    manifest_sha256: String,
+    shasums_sha256: String,
+}
+
+#[derive(Debug, Clone)]
 struct HermeticReleaseOptions {
     vendor_dir: PathBuf,
     bin: String,
@@ -199,6 +297,29 @@ struct InstallOutput {
     bin_dir: PathBuf,
     installed_version: String,
     previous_version: Option<String>,
+    current_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+struct InstallReleaseOptions {
+    repository_root: PathBuf,
+    target_triple: String,
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+    channel: Option<String>,
+    version: Option<String>,
+    expected_primary_sha256: Option<String>,
+}
+
+#[derive(Debug)]
+struct InstallReleaseOutput {
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+    installed_version: String,
+    previous_version: Option<String>,
+    requested_channel: Option<String>,
+    resolved_version: String,
+    primary_archive_sha256: String,
     current_path: PathBuf,
 }
 
@@ -240,6 +361,46 @@ enum UninstallMode {
     PurgeInstall,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum ReleaseSelector<'a> {
+    Channel(&'a str),
+    Version(&'a str),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PublishedRelease {
+    product_name: String,
+    product_version: String,
+    target_triple: String,
+    support_tier: String,
+    artifact_release_channel: String,
+    control_dir: String,
+    primary_archive_path: String,
+    primary_archive_sha256: String,
+    debug_archive_path: String,
+    debug_archive_sha256: String,
+    source_archive_path: String,
+    source_archive_sha256: String,
+    manifest_path: String,
+    manifest_sha256: String,
+    build_info_path: String,
+    build_info_sha256: String,
+    shasums_path: String,
+    shasums_sha256: String,
+    published_unix_ts: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ReleaseChannelPointer {
+    channel: String,
+    target_triple: String,
+    version: String,
+    primary_archive_sha256: String,
+    manifest_sha256: String,
+    shasums_sha256: String,
+    promoted_unix_ts: u64,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
@@ -256,6 +417,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "vendor_hash": check.vendor_hash,
                     "bin": check.bin,
                     "target_dir": check.target_dir,
+                }))?
+            );
+        }
+        Commands::InstallRelease {
+            repository_root,
+            target_triple,
+            install_root,
+            bin_dir,
+            channel,
+            version,
+            expected_primary_sha256,
+        } => {
+            let install = run_install_release(InstallReleaseOptions {
+                repository_root,
+                target_triple,
+                install_root,
+                bin_dir,
+                channel,
+                version,
+                expected_primary_sha256,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "install_root": install.install_root,
+                    "bin_dir": install.bin_dir,
+                    "installed_version": install.installed_version,
+                    "previous_version": install.previous_version,
+                    "requested_channel": install.requested_channel,
+                    "resolved_version": install.resolved_version,
+                    "primary_archive_sha256": install.primary_archive_sha256,
+                    "current_path": install.current_path,
                 }))?
             );
         }
@@ -306,6 +499,77 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "manifest_path": package.manifest_path,
                     "build_info_path": package.build_info_path,
                     "shasums_path": package.shasums_path,
+                }))?
+            );
+        }
+        Commands::ReleasePromote {
+            repository_root,
+            target_triple,
+            version,
+            channel,
+        } => {
+            let promote = run_release_promote(ReleasePromoteOptions {
+                repository_root,
+                target_triple,
+                version,
+                channel,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repository_root": promote.repository_root,
+                    "target_triple": promote.target_triple,
+                    "version": promote.version,
+                    "channel": promote.channel,
+                    "channel_metadata_path": promote.channel_metadata_path,
+                    "primary_archive_sha256": promote.primary_archive_sha256,
+                }))?
+            );
+        }
+        Commands::ReleasePublish {
+            control_dir,
+            repository_root,
+        } => {
+            let publish = run_release_publish(ReleasePublishOptions {
+                control_dir,
+                repository_root,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repository_root": publish.repository_root,
+                    "target_triple": publish.target_triple,
+                    "version": publish.version,
+                    "control_dir": publish.control_dir,
+                    "release_metadata_path": publish.release_metadata_path,
+                    "primary_archive_sha256": publish.primary_archive_sha256,
+                }))?
+            );
+        }
+        Commands::ReleaseResolve {
+            repository_root,
+            target_triple,
+            channel,
+            version,
+        } => {
+            let release = run_release_resolve(ReleaseResolveOptions {
+                repository_root,
+                target_triple,
+                channel,
+                version,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "repository_root": release.repository_root,
+                    "target_triple": release.target_triple,
+                    "requested_channel": release.requested_channel,
+                    "resolved_version": release.resolved_version,
+                    "control_dir": release.control_dir,
+                    "primary_archive": release.primary_archive,
+                    "primary_archive_sha256": release.primary_archive_sha256,
+                    "manifest_sha256": release.manifest_sha256,
+                    "shasums_sha256": release.shasums_sha256,
                 }))?
             );
         }
@@ -1410,6 +1674,204 @@ fn run_vendor_at(
     })
 }
 
+fn run_release_publish(
+    options: ReleasePublishOptions,
+) -> Result<ReleasePublishOutput, Box<dyn std::error::Error>> {
+    run_release_publish_at(&std::env::current_dir()?, &options)
+}
+
+fn run_release_publish_at(
+    base_dir: &Path,
+    options: &ReleasePublishOptions,
+) -> Result<ReleasePublishOutput, Box<dyn std::error::Error>> {
+    let control_dir = canonicalize_existing_path(base_dir, &options.control_dir, "control dir")?;
+    let repository_root = resolve_workspace_path(base_dir, &options.repository_root);
+    let manifest = read_build_manifest(&control_dir.join("manifest.json"))?;
+    verify_shasums(&control_dir, &control_dir.join("SHA256SUMS"))?;
+
+    let version_name = version_dir_name(&manifest.product_version);
+    let version_root = release_version_root(
+        &repository_root,
+        &manifest.artifact_target_triple,
+        &manifest.product_version,
+    );
+    if version_root.exists() {
+        return Err(format!(
+            "immutable release version already published: {}",
+            version_root.display()
+        )
+        .into());
+    }
+    let target_root = release_target_root(&repository_root, &manifest.artifact_target_triple);
+    fs::create_dir_all(target_root.join("versions"))?;
+    fs::create_dir_all(target_root.join("channels"))?;
+
+    let copied_control_dir = version_root.join("control");
+    copy_dir_recursive(&control_dir, &copied_control_dir)?;
+    verify_shasums(&copied_control_dir, &copied_control_dir.join("SHA256SUMS"))?;
+
+    let primary_archive = find_primary_archive(&copied_control_dir)?;
+    let debug_archive = find_release_archive_by_suffix(&copied_control_dir, ".debug.tar.gz")?;
+    let source_archive = find_release_archive_by_suffix(&copied_control_dir, "-source.tar.gz")?;
+    let manifest_path = copied_control_dir.join("manifest.json");
+    let build_info_path = copied_control_dir.join("build-info.txt");
+    let shasums_path = copied_control_dir.join("SHA256SUMS");
+
+    let release = PublishedRelease {
+        product_name: manifest.product_name.clone(),
+        product_version: manifest.product_version.clone(),
+        target_triple: manifest.artifact_target_triple.clone(),
+        support_tier: manifest.support_tier_declaration.clone(),
+        artifact_release_channel: manifest.release_channel.clone(),
+        control_dir: relative_display(&version_root, &copied_control_dir)?,
+        primary_archive_path: relative_display(&version_root, &primary_archive)?,
+        primary_archive_sha256: sha256_file(&primary_archive)?,
+        debug_archive_path: relative_display(&version_root, &debug_archive)?,
+        debug_archive_sha256: sha256_file(&debug_archive)?,
+        source_archive_path: relative_display(&version_root, &source_archive)?,
+        source_archive_sha256: sha256_file(&source_archive)?,
+        manifest_path: relative_display(&version_root, &manifest_path)?,
+        manifest_sha256: sha256_file(&manifest_path)?,
+        build_info_path: relative_display(&version_root, &build_info_path)?,
+        build_info_sha256: sha256_file(&build_info_path)?,
+        shasums_path: relative_display(&version_root, &shasums_path)?,
+        shasums_sha256: sha256_file(&shasums_path)?,
+        published_unix_ts: unix_timestamp_secs()?,
+    };
+    let release_metadata_path = version_root.join("release.json");
+    fs::write(&release_metadata_path, serde_json::to_vec_pretty(&release)?)?;
+
+    Ok(ReleasePublishOutput {
+        repository_root,
+        target_triple: manifest.artifact_target_triple,
+        version: version_name.trim_start_matches('v').to_string(),
+        control_dir: copied_control_dir,
+        release_metadata_path,
+        primary_archive_sha256: release.primary_archive_sha256,
+    })
+}
+
+fn run_release_promote(
+    options: ReleasePromoteOptions,
+) -> Result<ReleasePromoteOutput, Box<dyn std::error::Error>> {
+    run_release_promote_at(&std::env::current_dir()?, &options)
+}
+
+fn run_release_promote_at(
+    base_dir: &Path,
+    options: &ReleasePromoteOptions,
+) -> Result<ReleasePromoteOutput, Box<dyn std::error::Error>> {
+    ensure_operations_channel(&options.channel)?;
+    let repository_root = resolve_workspace_path(base_dir, &options.repository_root);
+    let release =
+        verify_published_release(&repository_root, &options.target_triple, &options.version)?;
+    let channel_metadata_path = release_channel_root(&repository_root, &options.target_triple)
+        .join(format!("{}.json", options.channel));
+    fs::create_dir_all(
+        channel_metadata_path
+            .parent()
+            .unwrap_or_else(|| Path::new(".")),
+    )?;
+    let pointer = ReleaseChannelPointer {
+        channel: options.channel.clone(),
+        target_triple: options.target_triple.clone(),
+        version: release.product_version.clone(),
+        primary_archive_sha256: release.primary_archive_sha256.clone(),
+        manifest_sha256: release.manifest_sha256.clone(),
+        shasums_sha256: release.shasums_sha256.clone(),
+        promoted_unix_ts: unix_timestamp_secs()?,
+    };
+    fs::write(&channel_metadata_path, serde_json::to_vec_pretty(&pointer)?)?;
+    Ok(ReleasePromoteOutput {
+        repository_root,
+        target_triple: options.target_triple.clone(),
+        version: release.product_version,
+        channel: options.channel.clone(),
+        channel_metadata_path,
+        primary_archive_sha256: release.primary_archive_sha256,
+    })
+}
+
+fn run_release_resolve(
+    options: ReleaseResolveOptions,
+) -> Result<ReleaseResolveOutput, Box<dyn std::error::Error>> {
+    run_release_resolve_at(&std::env::current_dir()?, &options)
+}
+
+fn run_release_resolve_at(
+    base_dir: &Path,
+    options: &ReleaseResolveOptions,
+) -> Result<ReleaseResolveOutput, Box<dyn std::error::Error>> {
+    let repository_root = resolve_workspace_path(base_dir, &options.repository_root);
+    let selector = release_selector(options.channel.as_deref(), options.version.as_deref())?;
+    let (requested_channel, release) =
+        resolve_published_release(&repository_root, &options.target_triple, selector)?;
+    let version_root = release_version_root(
+        &repository_root,
+        &options.target_triple,
+        &release.product_version,
+    );
+    Ok(ReleaseResolveOutput {
+        repository_root,
+        target_triple: options.target_triple.clone(),
+        requested_channel,
+        resolved_version: release.product_version.clone(),
+        control_dir: version_root.join(&release.control_dir),
+        primary_archive: version_root.join(&release.primary_archive_path),
+        primary_archive_sha256: release.primary_archive_sha256,
+        manifest_sha256: release.manifest_sha256,
+        shasums_sha256: release.shasums_sha256,
+    })
+}
+
+fn run_install_release(
+    options: InstallReleaseOptions,
+) -> Result<InstallReleaseOutput, Box<dyn std::error::Error>> {
+    run_install_release_at(&std::env::current_dir()?, &options)
+}
+
+fn run_install_release_at(
+    base_dir: &Path,
+    options: &InstallReleaseOptions,
+) -> Result<InstallReleaseOutput, Box<dyn std::error::Error>> {
+    let repository_root = resolve_workspace_path(base_dir, &options.repository_root);
+    let selector = release_selector(options.channel.as_deref(), options.version.as_deref())?;
+    let (requested_channel, release) =
+        resolve_published_release(&repository_root, &options.target_triple, selector)?;
+    if let Some(expected_sha) = options.expected_primary_sha256.as_deref() {
+        if release.primary_archive_sha256 != expected_sha {
+            return Err(format!(
+                "release checksum mismatch: expected {expected_sha}, got {}",
+                release.primary_archive_sha256
+            )
+            .into());
+        }
+    }
+    let install = run_install_at(
+        base_dir,
+        &InstallOptions {
+            control_dir: release_version_root(
+                &repository_root,
+                &options.target_triple,
+                &release.product_version,
+            )
+            .join(&release.control_dir),
+            install_root: options.install_root.clone(),
+            bin_dir: options.bin_dir.clone(),
+        },
+    )?;
+    Ok(InstallReleaseOutput {
+        install_root: install.install_root,
+        bin_dir: install.bin_dir,
+        installed_version: install.installed_version,
+        previous_version: install.previous_version,
+        requested_channel,
+        resolved_version: release.product_version,
+        primary_archive_sha256: release.primary_archive_sha256,
+        current_path: install.current_path,
+    })
+}
+
 fn run_hermetic_release_check(
     options: HermeticReleaseOptions,
 ) -> Result<HermeticReleaseOutput, Box<dyn std::error::Error>> {
@@ -1779,6 +2241,57 @@ fn resolve_workspace_path(workspace_root: &Path, path: &Path) -> PathBuf {
     }
 }
 
+fn release_target_root(repository_root: &Path, target_triple: &str) -> PathBuf {
+    repository_root.join("targets").join(target_triple)
+}
+
+fn release_channel_root(repository_root: &Path, target_triple: &str) -> PathBuf {
+    release_target_root(repository_root, target_triple).join("channels")
+}
+
+fn release_version_root(repository_root: &Path, target_triple: &str, version: &str) -> PathBuf {
+    release_target_root(repository_root, target_triple)
+        .join("versions")
+        .join(version_dir_name(version))
+}
+
+fn release_selector<'a>(
+    channel: Option<&'a str>,
+    version: Option<&'a str>,
+) -> Result<ReleaseSelector<'a>, Box<dyn std::error::Error>> {
+    match (channel, version) {
+        (Some(_), Some(_)) => Err("specify either --channel or --version, not both".into()),
+        (Some(channel), None) => {
+            ensure_operations_channel(channel)?;
+            Ok(ReleaseSelector::Channel(channel))
+        }
+        (None, Some(version)) => Ok(ReleaseSelector::Version(version)),
+        (None, None) => Err("specify one of --channel or --version".into()),
+    }
+}
+
+fn ensure_operations_channel(channel: &str) -> Result<(), Box<dyn std::error::Error>> {
+    match channel {
+        "canary" | "beta" | "stable" => Ok(()),
+        _ => Err(format!("unsupported operations channel: {channel}").into()),
+    }
+}
+
+fn relative_display(root: &Path, path: &Path) -> Result<String, Box<dyn std::error::Error>> {
+    Ok(path
+        .strip_prefix(root)
+        .map_err(|_| format!("{} is not under {}", path.display(), root.display()))?
+        .display()
+        .to_string()
+        .replace('\\', "/"))
+}
+
+fn unix_timestamp_secs() -> Result<u64, Box<dyn std::error::Error>> {
+    Ok(std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_secs())
+}
+
 fn artifact_slug_for_target(target_triple: &str) -> String {
     let descriptor = diag_trace::describe_target(target_triple);
     format!(
@@ -1995,6 +2508,130 @@ fn render_sha256sums(paths: &[&Path]) -> Result<String, Box<dyn std::error::Erro
     Ok(lines.join("\n") + "\n")
 }
 
+fn read_json_file<T>(path: &Path) -> Result<T, Box<dyn std::error::Error>>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    Ok(serde_json::from_str(&fs::read_to_string(path)?)?)
+}
+
+fn read_published_release(
+    version_root: &Path,
+) -> Result<PublishedRelease, Box<dyn std::error::Error>> {
+    read_json_file(&version_root.join("release.json"))
+}
+
+fn read_release_channel_pointer(
+    repository_root: &Path,
+    target_triple: &str,
+    channel: &str,
+) -> Result<ReleaseChannelPointer, Box<dyn std::error::Error>> {
+    read_json_file(
+        &release_channel_root(repository_root, target_triple).join(format!("{channel}.json")),
+    )
+}
+
+fn verify_published_release(
+    repository_root: &Path,
+    target_triple: &str,
+    version: &str,
+) -> Result<PublishedRelease, Box<dyn std::error::Error>> {
+    let version_root = release_version_root(repository_root, target_triple, version);
+    if !version_root.exists() {
+        return Err(format!("published version not found: {}", version_root.display()).into());
+    }
+    let release = read_published_release(&version_root)?;
+    if release.target_triple != target_triple {
+        return Err(format!(
+            "published release target mismatch: expected {target_triple}, got {}",
+            release.target_triple
+        )
+        .into());
+    }
+    let control_dir = version_root.join(&release.control_dir);
+    verify_shasums(&control_dir, &version_root.join(&release.shasums_path))?;
+
+    let primary_archive = version_root.join(&release.primary_archive_path);
+    let manifest_path = version_root.join(&release.manifest_path);
+    let shasums_path = version_root.join(&release.shasums_path);
+    if sha256_file(&primary_archive)? != release.primary_archive_sha256 {
+        return Err(format!(
+            "published primary archive checksum drifted: {}",
+            primary_archive.display()
+        )
+        .into());
+    }
+    if sha256_file(&manifest_path)? != release.manifest_sha256 {
+        return Err(format!(
+            "published manifest checksum drifted: {}",
+            manifest_path.display()
+        )
+        .into());
+    }
+    if sha256_file(&shasums_path)? != release.shasums_sha256 {
+        return Err(format!(
+            "published shasums checksum drifted: {}",
+            shasums_path.display()
+        )
+        .into());
+    }
+    Ok(release)
+}
+
+fn resolve_published_release(
+    repository_root: &Path,
+    target_triple: &str,
+    selector: ReleaseSelector<'_>,
+) -> Result<(Option<String>, PublishedRelease), Box<dyn std::error::Error>> {
+    match selector {
+        ReleaseSelector::Version(version) => Ok((
+            None,
+            verify_published_release(repository_root, target_triple, version)?,
+        )),
+        ReleaseSelector::Channel(channel) => {
+            let pointer = read_release_channel_pointer(repository_root, target_triple, channel)?;
+            if pointer.target_triple != target_triple {
+                return Err(format!(
+                    "channel target mismatch: expected {target_triple}, got {}",
+                    pointer.target_triple
+                )
+                .into());
+            }
+            if pointer.channel != channel {
+                return Err(format!(
+                    "channel pointer mismatch: expected {channel}, got {}",
+                    pointer.channel
+                )
+                .into());
+            }
+            let release =
+                verify_published_release(repository_root, target_triple, &pointer.version)?;
+            if pointer.primary_archive_sha256 != release.primary_archive_sha256 {
+                return Err(format!(
+                    "channel pointer primary checksum mismatch for {}",
+                    pointer.channel
+                )
+                .into());
+            }
+            if pointer.manifest_sha256 != release.manifest_sha256 {
+                return Err(format!(
+                    "channel pointer manifest checksum mismatch for {}",
+                    pointer.channel
+                )
+                .into());
+            }
+            if pointer.shasums_sha256 != release.shasums_sha256 {
+                return Err(format!(
+                    "channel pointer shasums checksum mismatch for {}",
+                    pointer.channel
+                )
+                .into());
+            }
+            Ok((Some(channel.to_string()), release))
+        }
+    }
+}
+
 fn vendored_source_config(
     vendor_dir: &Path,
     target_dir: &Path,
@@ -2090,6 +2727,35 @@ fn find_primary_archive(control_dir: &Path) -> Result<PathBuf, Box<dyn std::erro
         .into()),
         _ => Err(format!(
             "control dir contained multiple primary archives: {}",
+            control_dir.display()
+        )
+        .into()),
+    }
+}
+
+fn find_release_archive_by_suffix(
+    control_dir: &Path,
+    suffix: &str,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let mut archives = fs::read_dir(control_dir)?
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| {
+            path.file_name()
+                .and_then(|value| value.to_str())
+                .map(|name| name.ends_with(suffix))
+                .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+    archives.sort();
+    match archives.as_slice() {
+        [archive] => Ok(archive.clone()),
+        [] => Err(format!(
+            "control dir did not contain an archive ending with `{suffix}`: {}",
+            control_dir.display()
+        )
+        .into()),
+        _ => Err(format!(
+            "control dir contained multiple archives ending with `{suffix}`: {}",
             control_dir.display()
         )
         .into()),
@@ -2808,6 +3474,279 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.to_string().contains("references missing file"));
+    }
+
+    #[test]
+    fn release_publish_promote_and_resolve_keep_same_bits() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        let repository_root = sandbox.path().join("release-repo");
+
+        let publish = run_release_publish_at(
+            &repo_root,
+            &ReleasePublishOptions {
+                control_dir: package.control_dir.clone(),
+                repository_root: repository_root.clone(),
+            },
+        )
+        .unwrap();
+        let canary = run_release_promote_at(
+            &repo_root,
+            &ReleasePromoteOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                version: "0.1.0".to_string(),
+                channel: "canary".to_string(),
+            },
+        )
+        .unwrap();
+        let stable = run_release_promote_at(
+            &repo_root,
+            &ReleasePromoteOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                version: "0.1.0".to_string(),
+                channel: "stable".to_string(),
+            },
+        )
+        .unwrap();
+        let resolved = run_release_resolve_at(
+            &repo_root,
+            &ReleaseResolveOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                channel: Some("stable".to_string()),
+                version: None,
+            },
+        )
+        .unwrap();
+
+        let published = read_published_release(&release_version_root(
+            &repository_root,
+            "x86_64-unknown-linux-gnu",
+            "0.1.0",
+        ))
+        .unwrap();
+        let stable_pointer =
+            read_release_channel_pointer(&repository_root, "x86_64-unknown-linux-gnu", "stable")
+                .unwrap();
+
+        assert_eq!(publish.version, "0.1.0");
+        assert_eq!(
+            canary.primary_archive_sha256,
+            publish.primary_archive_sha256
+        );
+        assert_eq!(
+            stable.primary_archive_sha256,
+            publish.primary_archive_sha256
+        );
+        assert_eq!(resolved.resolved_version, "0.1.0");
+        assert_eq!(
+            resolved.primary_archive_sha256,
+            publish.primary_archive_sha256
+        );
+        assert_eq!(
+            published.primary_archive_sha256,
+            publish.primary_archive_sha256
+        );
+        assert_eq!(stable_pointer.version, "0.1.0");
+        assert_eq!(
+            stable_pointer.primary_archive_sha256,
+            published.primary_archive_sha256
+        );
+        assert!(resolved.control_dir.exists());
+        assert!(resolved.primary_archive.exists());
+    }
+
+    #[test]
+    fn install_release_supports_exact_version_and_checksum_pin() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        let repository_root = sandbox.path().join("release-repo");
+        run_release_publish_at(
+            &repo_root,
+            &ReleasePublishOptions {
+                control_dir: package.control_dir,
+                repository_root: repository_root.clone(),
+            },
+        )
+        .unwrap();
+        run_release_promote_at(
+            &repo_root,
+            &ReleasePromoteOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                version: "0.1.0".to_string(),
+                channel: "stable".to_string(),
+            },
+        )
+        .unwrap();
+        let resolved = run_release_resolve_at(
+            &repo_root,
+            &ReleaseResolveOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                channel: Some("stable".to_string()),
+                version: None,
+            },
+        )
+        .unwrap();
+
+        let install_root = sandbox
+            .path()
+            .join("install")
+            .join("x86_64-unknown-linux-gnu");
+        let bin_dir = sandbox.path().join("bin");
+        let install = run_install_release_at(
+            &repo_root,
+            &InstallReleaseOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                install_root: install_root.clone(),
+                bin_dir: bin_dir.clone(),
+                channel: None,
+                version: Some("0.1.0".to_string()),
+                expected_primary_sha256: Some(resolved.primary_archive_sha256.clone()),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(install.requested_channel, None);
+        assert_eq!(install.resolved_version, "0.1.0");
+        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(
+            install.primary_archive_sha256,
+            resolved.primary_archive_sha256
+        );
+        assert_eq!(
+            current_version_name(&install_root).unwrap().as_deref(),
+            Some("v0.1.0")
+        );
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+    }
+
+    #[test]
+    fn install_release_from_channel_reports_exact_installed_version() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        let repository_root = sandbox.path().join("release-repo");
+        run_release_publish_at(
+            &repo_root,
+            &ReleasePublishOptions {
+                control_dir: package.control_dir,
+                repository_root: repository_root.clone(),
+            },
+        )
+        .unwrap();
+        run_release_promote_at(
+            &repo_root,
+            &ReleasePromoteOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                version: "0.1.0".to_string(),
+                channel: "stable".to_string(),
+            },
+        )
+        .unwrap();
+
+        let install = run_install_release_at(
+            &repo_root,
+            &InstallReleaseOptions {
+                repository_root: repository_root.clone(),
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                install_root: sandbox
+                    .path()
+                    .join("channel-install")
+                    .join("x86_64-unknown-linux-gnu"),
+                bin_dir: sandbox.path().join("channel-bin"),
+                channel: Some("stable".to_string()),
+                version: None,
+                expected_primary_sha256: None,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(install.requested_channel.as_deref(), Some("stable"));
+        assert_eq!(install.resolved_version, "0.1.0");
+        assert_eq!(install.installed_version, "0.1.0");
+    }
+
+    #[test]
+    fn install_release_rejects_mismatched_pinned_checksum() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        let repository_root = sandbox.path().join("release-repo");
+        run_release_publish_at(
+            &repo_root,
+            &ReleasePublishOptions {
+                control_dir: package.control_dir,
+                repository_root: repository_root.clone(),
+            },
+        )
+        .unwrap();
+
+        let error = run_install_release_at(
+            &repo_root,
+            &InstallReleaseOptions {
+                repository_root,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                install_root: sandbox
+                    .path()
+                    .join("install")
+                    .join("x86_64-unknown-linux-gnu"),
+                bin_dir: sandbox.path().join("bin"),
+                channel: None,
+                version: Some("0.1.0".to_string()),
+                expected_primary_sha256: Some("deadbeef".to_string()),
+            },
+        )
+        .unwrap_err();
+
+        assert!(error.to_string().contains("release checksum mismatch"));
     }
 
     #[test]

@@ -54,6 +54,30 @@ jobs:
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
+      - name: Release repository promote and pin smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-gnu"
+          repo_root="$RUNNER_TEMP/gcc-formed-release-repo"
+          resolved_json="$RUNNER_TEMP/gcc-formed-stable-release.json"
+          install_root="$RUNNER_TEMP/gcc-formed-release/x86_64-unknown-linux-gnu"
+          bin_dir="$RUNNER_TEMP/gcc-formed-release-bin"
+
+          cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root"
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel canary
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --channel stable
+          cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable > "$resolved_json"
+          primary_sha="$(python3 - "$resolved_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["primary_archive_sha256"])
+PY
+)"
+          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --version 0.1.0 --expected-primary-sha256 "$primary_sha" --install-root "$install_root" --bin-dir "$bin_dir"
+          "$bin_dir/gcc-formed" --formed-version
+          cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: Dependency and license gate
         run: |
           cargo install cargo-deny --locked
