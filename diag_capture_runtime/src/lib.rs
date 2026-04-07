@@ -10,6 +10,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::thread;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -43,6 +44,7 @@ pub struct CaptureOutcome {
     pub stderr_bytes: Vec<u8>,
     pub sarif_path: Option<PathBuf>,
     pub temp_dir: PathBuf,
+    pub capture_duration_ms: u64,
     pub retained: bool,
     pub retained_trace_dir: Option<PathBuf>,
     pub artifacts: Vec<CaptureArtifact>,
@@ -78,6 +80,7 @@ struct ChildEnvPolicy {
 }
 
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
+    let capture_started = Instant::now();
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
     let sarif_path = if request.inject_sarif {
@@ -185,6 +188,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         stderr_bytes,
         sarif_path,
         temp_dir: temp_dir_path,
+        capture_duration_ms: capture_started.elapsed().as_millis() as u64,
         retained,
         retained_trace_dir,
         artifacts,

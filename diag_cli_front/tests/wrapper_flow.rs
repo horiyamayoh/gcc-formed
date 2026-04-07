@@ -70,6 +70,11 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
     assert!(trace["fallback_reason"].is_null());
+    assert_eq!(trace["capabilities"]["stream_kind"], "pipe");
+    assert_eq!(trace["capabilities"]["ansi_color"], false);
+    assert!(trace["timing"]["capture_ms"].as_u64().is_some());
+    assert!(trace["timing"]["render_ms"].as_u64().is_some());
+    assert!(trace["timing"]["total_ms"].as_u64().is_some());
     assert!(
         trace["decision_log"]
             .as_array()
@@ -84,6 +89,13 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             .iter()
             .any(|artifact| artifact["id"].as_str() == Some("invocation.json"))
     );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["id"].as_str() == Some("trace.json"))
+    );
 
     let retained_dir = fs::read_dir(&trace_root)
         .unwrap()
@@ -94,6 +106,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     assert!(retained_dir.join("stderr.raw").exists());
     assert!(retained_dir.join("diagnostics.sarif").exists());
     assert!(retained_dir.join("invocation.json").exists());
+    assert!(retained_dir.join("trace.json").exists());
 
     let invocation: Value =
         serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
@@ -117,6 +130,12 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         arg.as_str()
             .is_some_and(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
     }));
+
+    let retained_trace: Value =
+        serde_json::from_str(&fs::read_to_string(retained_dir.join("trace.json")).unwrap())
+            .unwrap();
+    assert_eq!(retained_trace["selected_mode"], "render");
+    assert_eq!(retained_trace["capabilities"]["stream_kind"], "pipe");
 }
 
 #[test]

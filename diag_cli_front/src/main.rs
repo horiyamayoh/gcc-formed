@@ -8,8 +8,9 @@ use diag_render::{
     StreamKind, TypeDisplayPolicy, WarningVisibility, render,
 };
 use diag_trace::{
-    BuildManifest, RetentionPolicy, TraceArtifactRef, TraceEnvelope, WrapperPaths,
-    build_target_triple, default_build_manifest, trace_id, write_trace,
+    BuildManifest, RetentionPolicy, TraceArtifactRef, TraceCapabilities, TraceEnvelope,
+    TraceTiming, WrapperPaths, build_target_triple, default_build_manifest, trace_id, write_trace,
+    write_trace_at,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -19,6 +20,7 @@ use std::fs;
 use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
+use std::time::Instant;
 
 fn main() -> ExitCode {
     match real_main() {
@@ -31,6 +33,7 @@ fn main() -> ExitCode {
 }
 
 fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
+    let wrapper_started = Instant::now();
     let argv0 = env::args()
         .next()
         .unwrap_or_else(|| "gcc-formed".to_string());
@@ -61,10 +64,11 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
     let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
     let mode = mode_decision.mode;
+    let capabilities = detect_capabilities();
     let profile = parsed
         .profile
         .or(config.render.profile)
-        .unwrap_or_else(detect_profile);
+        .unwrap_or_else(|| detect_profile_from_capabilities(&capabilities));
     let debug_refs = parsed
         .debug_refs
         .or(config.render.debug_refs)
@@ -132,16 +136,21 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
             &backend,
             &mode_decision,
             profile,
+            &capabilities,
+            capture.capture_duration_ms,
+            None,
+            wrapper_started.elapsed().as_millis() as u64,
             capture.retained_trace_dir.as_ref(),
         )?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
 
+    let render_started = Instant::now();
     let render_result = render(RenderRequest {
         document: document.clone(),
         profile,
-        capabilities: detect_capabilities(),
+        capabilities: capabilities.clone(),
         cwd: Some(cwd),
         path_policy: config
             .render
@@ -152,6 +161,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         type_display_policy: TypeDisplayPolicy::CompactSafe,
         source_excerpt_policy: SourceExcerptPolicy::Auto,
     })?;
+    let render_duration_ms = render_started.elapsed().as_millis() as u64;
     let mut stderr = std::io::stderr().lock();
     stderr.write_all(render_result.text.as_bytes())?;
     stderr.write_all(b"\n")?;
@@ -163,6 +173,10 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         &backend,
         &mode_decision,
         profile,
+        &capabilities,
+        capture.capture_duration_ms,
+        Some(render_duration_ms),
+        wrapper_started.elapsed().as_millis() as u64,
         capture.retained_trace_dir.as_ref(),
     )?;
     cleanup_capture(&capture)?;
@@ -191,6 +205,10 @@ fn maybe_write_trace(
     backend: &diag_backend_probe::ProbeResult,
     mode_decision: &ModeDecision,
     profile: RenderProfile,
+    capabilities: &RenderCapabilities,
+    capture_duration_ms: u64,
+    render_duration_ms: Option<u64>,
+    total_duration_ms: u64,
     retained_trace_dir: Option<&PathBuf>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if retained_trace_dir.is_none()
@@ -206,6 +224,12 @@ fn maybe_write_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        capabilities: Some(trace_capabilities(capabilities)),
+        timing: Some(TraceTiming {
+            capture_ms: capture_duration_ms,
+            render_ms: render_duration_ms,
+            total_ms: total_duration_ms,
+        }),
         decision_log: mode_decision.decision_log.clone(),
         fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: document
@@ -218,6 +242,9 @@ fn maybe_write_trace(
             retained_trace_dir.map(|path| path.as_path()),
         ),
     };
+    if let Some(dir) = retained_trace_dir {
+        write_trace_at(&dir.join("trace.json"), &trace)?;
+    }
     write_trace(paths, &trace, "trace.json")?;
     Ok(())
 }
@@ -246,9 +273,24 @@ fn build_trace_artifact_refs(
                 path: Some(invocation),
             });
         }
+        refs.push(TraceArtifactRef {
+            id: "trace.json".to_string(),
+            path: Some(dir.join("trace.json")),
+        });
     }
 
     refs
+}
+
+fn trace_capabilities(capabilities: &RenderCapabilities) -> TraceCapabilities {
+    TraceCapabilities {
+        stream_kind: format!("{:?}", capabilities.stream_kind).to_lowercase(),
+        width_columns: capabilities.width_columns,
+        ansi_color: capabilities.ansi_color,
+        unicode: capabilities.unicode,
+        hyperlinks: capabilities.hyperlinks,
+        interactive: capabilities.interactive,
+    }
 }
 
 fn handle_wrapper_introspection(
@@ -484,8 +526,7 @@ fn detect_capabilities() -> RenderCapabilities {
     }
 }
 
-fn detect_profile() -> RenderProfile {
-    let capabilities = detect_capabilities();
+fn detect_profile_from_capabilities(capabilities: &RenderCapabilities) -> RenderProfile {
     match capabilities.stream_kind {
         StreamKind::CiLog => RenderProfile::Ci,
         StreamKind::Tty if capabilities.interactive => RenderProfile::Default,

@@ -55,11 +55,33 @@ pub struct TraceEnvelope {
     pub selected_mode: String,
     pub selected_profile: String,
     pub support_tier: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capabilities: Option<TraceCapabilities>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<TraceTiming>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
     pub fallback_reason: Option<String>,
     pub warning_messages: Vec<String>,
     pub artifacts: Vec<TraceArtifactRef>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceCapabilities {
+    pub stream_kind: String,
+    pub width_columns: Option<usize>,
+    pub ansi_color: bool,
+    pub unicode: bool,
+    pub hyperlinks: bool,
+    pub interactive: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceTiming {
+    pub capture_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub render_ms: Option<u64>,
+    pub total_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,8 +225,16 @@ pub fn write_trace(
 ) -> Result<PathBuf, TraceError> {
     paths.ensure_dirs()?;
     let path = paths.trace_root.join(trace_name);
-    fs::write(&path, serde_json::to_vec_pretty(trace)?)?;
+    write_trace_at(&path, trace)?;
     Ok(path)
+}
+
+pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceError> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, serde_json::to_vec_pretty(trace)?)?;
+    Ok(())
 }
 
 pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), TraceError> {
