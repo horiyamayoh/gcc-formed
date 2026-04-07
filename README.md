@@ -23,7 +23,7 @@
 - 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
 - `cargo xtask package` により release artifact / control file の最小セットを生成でき、必要なら `SHA256SUMS.sig` を Ed25519 で付与できる
-- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証でき、署名付き release は signing key id pin でも検証できる
+- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証でき、署名付き release は signing key id と trusted signing public key sha256 pin の両方で検証できる
 - `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
 - `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
 - `/opt/cc-formed/...` + `/usr/local/bin` 相当の system-wide layout も pseudo-root smoke で検証している
@@ -68,7 +68,7 @@ cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --versi
 cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
 ```
 
-署名付き release を作って signing key id pin で検証する最小例:
+署名付き release を作って signing key id + trusted public key sha256 pin で検証する最小例:
 
 ```bash
 signing_private_key="$PWD/release-signing.key"
@@ -88,11 +88,23 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
 PY
 )"
 
+signing_public_key_sha256="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
+import hashlib
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    envelope = json.load(handle)
+    print(hashlib.sha256(bytes.fromhex(envelope["public_key_hex"])).hexdigest())
+PY
+)"
+
 cargo xtask install \
   --control-dir "$control_dir" \
   --install-root "$install_root" \
   --bin-dir "$bin_dir" \
-  --expected-signing-key-id "$signing_key_id"
+  --expected-signing-key-id "$signing_key_id" \
+  --expected-signing-public-key-sha256 "$signing_public_key_sha256"
 ```
 
 immutable release repository と exact pin install を検証する最小例:
@@ -107,7 +119,7 @@ cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_6
 cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable --install-root "$install_root" --bin-dir "$bin_dir"
 ```
 
-CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` を取り出し、`--expected-signing-key-id ...` を追加する。
+CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` と `signing_public_key_sha256` を取り出し、`--expected-signing-key-id ... --expected-signing-public-key-sha256 ...` を追加する。local smoke では `SHA256SUMS.sig` から計算してもよいが、production CI は trusted public key sha256 を artifact 外で pin する。
 
 system-wide layout を pseudo-root で検証する最小例:
 
@@ -120,7 +132,8 @@ cargo xtask install \
   --control-dir "$control_dir" \
   --install-root "$install_root" \
   --bin-dir "$bin_dir" \
-  --expected-signing-key-id "$signing_key_id"
+  --expected-signing-key-id "$signing_key_id" \
+  --expected-signing-public-key-sha256 "$signing_public_key_sha256"
 ```
 
 `cargo xtask package` は clean git worktree を前提とする。本命の production artifact は `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。

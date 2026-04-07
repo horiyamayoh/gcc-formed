@@ -50,6 +50,7 @@ jobs:
       - name: Release install smoke
         if: matrix.gcc_image == 'gcc:15'
         run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/gcc-formed/bin"
@@ -61,12 +62,13 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     print(json.load(handle)["key_id"])
 PY
 )"
-          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id"
+          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: System-wide layout smoke
         if: matrix.gcc_image == 'gcc:15'
         run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/system-root/opt/cc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/system-root/usr/local/bin"
@@ -78,12 +80,13 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     print(json.load(handle)["key_id"])
 PY
 )"
-          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id"
+          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: Release repository promote and pin smoke
         if: matrix.gcc_image == 'gcc:15'
         run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           repo_root="$RUNNER_TEMP/gcc-formed-release-repo"
           resolved_json="$RUNNER_TEMP/gcc-formed-stable-release.json"
@@ -110,7 +113,7 @@ with open(sys.argv[1], "r", encoding="utf-8") as handle:
     print(json.load(handle)["signing_key_id"])
 PY
 )"
-          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --install-root "$install_root" --bin-dir "$bin_dir"
+          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: Dependency and license gate
