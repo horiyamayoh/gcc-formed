@@ -23,6 +23,7 @@
 - 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
 - `cargo xtask package` により release artifact / control file の最小セットを生成できる
+- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証できる
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -46,6 +47,19 @@ cargo xtask replay --root corpus
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
 cargo xtask package --binary target/debug/gcc-formed --target-triple x86_64-unknown-linux-gnu
+```
+
+生成された control dir を使って install / rollback / uninstall を検証する最小例:
+
+```bash
+control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-gnu
+install_root="$HOME/.local/opt/cc-formed/x86_64-unknown-linux-gnu"
+bin_dir="$HOME/.local/bin"
+
+cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
+"$bin_dir/gcc-formed" --formed-version
+cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --version 0.1.0
+cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
 ```
 
 ## 実装に入る順序

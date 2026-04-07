@@ -32,6 +32,14 @@ jobs:
           --target-triple x86_64-unknown-linux-gnu
           --release-channel stable
           --support-tier gcc15_primary
+      - name: Release install smoke
+        run: |
+          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-gnu"
+          install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-gnu"
+          bin_dir="$RUNNER_TEMP/gcc-formed/bin"
+          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
+          "$bin_dir/gcc-formed" --formed-version
+          cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: Dependency and license gate
         run: |
           cargo install cargo-deny --locked

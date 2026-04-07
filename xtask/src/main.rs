@@ -41,6 +41,14 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    Install {
+        #[arg(long)]
+        control_dir: PathBuf,
+        #[arg(long)]
+        install_root: PathBuf,
+        #[arg(long)]
+        bin_dir: PathBuf,
+    },
     Package {
         #[arg(long)]
         binary: PathBuf,
@@ -54,6 +62,28 @@ enum Commands {
         release_channel: String,
         #[arg(long, default_value = "gcc15_primary")]
         support_tier: String,
+    },
+    Rollback {
+        #[arg(long)]
+        install_root: PathBuf,
+        #[arg(long)]
+        bin_dir: PathBuf,
+        #[arg(long)]
+        version: String,
+    },
+    Uninstall {
+        #[arg(long)]
+        install_root: PathBuf,
+        #[arg(long)]
+        bin_dir: PathBuf,
+        #[arg(long, value_enum)]
+        mode: UninstallMode,
+        #[arg(long)]
+        version: Option<String>,
+        #[arg(long)]
+        state_root: Option<PathBuf>,
+        #[arg(long)]
+        purge_state: bool,
     },
     Replay {
         #[arg(long, default_value = "corpus")]
@@ -121,12 +151,87 @@ struct PackageOutput {
     shasums_path: PathBuf,
 }
 
+#[derive(Debug, Clone)]
+struct InstallOptions {
+    control_dir: PathBuf,
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+}
+
+#[derive(Debug)]
+struct InstallOutput {
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+    installed_version: String,
+    previous_version: Option<String>,
+    current_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+struct RollbackOptions {
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+    version: String,
+}
+
+#[derive(Debug)]
+struct RollbackOutput {
+    install_root: PathBuf,
+    active_version: String,
+    current_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+struct UninstallOptions {
+    install_root: PathBuf,
+    bin_dir: PathBuf,
+    mode: UninstallMode,
+    version: Option<String>,
+    state_root: Option<PathBuf>,
+    purge_state: bool,
+}
+
+#[derive(Debug)]
+struct UninstallOutput {
+    install_root: PathBuf,
+    removed_versions: Vec<String>,
+    removed_launchers: Vec<String>,
+    purged_state: bool,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum, PartialEq, Eq)]
+enum UninstallMode {
+    RemoveVersion,
+    PurgeInstall,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Check => {
             run("cargo", &["fmt", "--check"])?;
             run("cargo", &["test", "--workspace"])?;
+        }
+        Commands::Install {
+            control_dir,
+            install_root,
+            bin_dir,
+        } => {
+            let install = run_install(InstallOptions {
+                control_dir,
+                install_root,
+                bin_dir,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "install_root": install.install_root,
+                    "bin_dir": install.bin_dir,
+                    "installed_version": install.installed_version,
+                    "previous_version": install.previous_version,
+                    "current_path": install.current_path,
+                }))?
+            );
         }
         Commands::Package {
             binary,
@@ -154,6 +259,51 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "manifest_path": package.manifest_path,
                     "build_info_path": package.build_info_path,
                     "shasums_path": package.shasums_path,
+                }))?
+            );
+        }
+        Commands::Rollback {
+            install_root,
+            bin_dir,
+            version,
+        } => {
+            let rollback = run_rollback(RollbackOptions {
+                install_root,
+                bin_dir,
+                version,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "install_root": rollback.install_root,
+                    "active_version": rollback.active_version,
+                    "current_path": rollback.current_path,
+                }))?
+            );
+        }
+        Commands::Uninstall {
+            install_root,
+            bin_dir,
+            mode,
+            version,
+            state_root,
+            purge_state,
+        } => {
+            let uninstall = run_uninstall(UninstallOptions {
+                install_root,
+                bin_dir,
+                mode,
+                version,
+                state_root,
+                purge_state,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "install_root": uninstall.install_root,
+                    "removed_versions": uninstall.removed_versions,
+                    "removed_launchers": uninstall.removed_launchers,
+                    "purged_state": uninstall.purged_state,
                 }))?
             );
         }
@@ -1160,6 +1310,179 @@ fn run_package(options: PackageOptions) -> Result<PackageOutput, Box<dyn std::er
     run_package_at(&workspace_root(), &options)
 }
 
+fn run_install(options: InstallOptions) -> Result<InstallOutput, Box<dyn std::error::Error>> {
+    run_install_at(&std::env::current_dir()?, &options)
+}
+
+fn run_install_at(
+    base_dir: &Path,
+    options: &InstallOptions,
+) -> Result<InstallOutput, Box<dyn std::error::Error>> {
+    let control_dir = canonicalize_existing_path(base_dir, &options.control_dir, "control dir")?;
+    let install_root = resolve_workspace_path(base_dir, &options.install_root);
+    let bin_dir = resolve_workspace_path(base_dir, &options.bin_dir);
+    let control_manifest = read_build_manifest(&control_dir.join("manifest.json"))?;
+    ensure_target_aware_install_root(&install_root, &control_manifest.artifact_target_triple)?;
+    verify_shasums(&control_dir, &control_dir.join("SHA256SUMS"))?;
+
+    let archive_path = find_primary_archive(&control_dir)?;
+    let install_parent = install_root
+        .parent()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| base_dir.to_path_buf());
+    fs::create_dir_all(&install_parent)?;
+    let staging = tempfile::Builder::new()
+        .prefix("gcc-formed-install-")
+        .tempdir_in(&install_parent)?;
+    extract_tar_archive(&archive_path, staging.path())?;
+    let extracted_root = extracted_payload_root(staging.path(), &archive_path)?;
+    let staged_manifest = read_build_manifest(&extracted_root.join("manifest.json"))?;
+    verify_manifest_alignment(&control_manifest, &staged_manifest)?;
+    verify_payload_checksums(&extracted_root, &staged_manifest)?;
+    run_staged_self_check(
+        &extracted_root.join("bin/gcc-formed"),
+        &install_root,
+        staging.path(),
+    )?;
+
+    let version_name = version_dir_name(&staged_manifest.product_version);
+    let version_root = install_root.join(&version_name);
+    if version_root.exists() {
+        return Err(format!("version already installed at {}", version_root.display()).into());
+    }
+    fs::create_dir_all(&install_root)?;
+    let previous_version = current_version_name(&install_root)?;
+    ensure_launcher_symlinks(&bin_dir, &install_root)?;
+    fs::rename(&extracted_root, &version_root)?;
+    swap_symlink(
+        &install_root.join("current"),
+        Path::new(&version_name),
+        true,
+    )?;
+    assert_binary_reports_version(
+        &version_root.join("bin/gcc-formed"),
+        &staged_manifest.product_version,
+    )?;
+
+    Ok(InstallOutput {
+        install_root,
+        bin_dir: bin_dir.clone(),
+        installed_version: staged_manifest.product_version,
+        previous_version,
+        current_path: bin_dir.join("gcc-formed"),
+    })
+}
+
+fn run_rollback(options: RollbackOptions) -> Result<RollbackOutput, Box<dyn std::error::Error>> {
+    run_rollback_at(&std::env::current_dir()?, &options)
+}
+
+fn run_rollback_at(
+    base_dir: &Path,
+    options: &RollbackOptions,
+) -> Result<RollbackOutput, Box<dyn std::error::Error>> {
+    let install_root = resolve_workspace_path(base_dir, &options.install_root);
+    let bin_dir = resolve_workspace_path(base_dir, &options.bin_dir);
+    let version_name = version_dir_name(&options.version);
+    let version_root = install_root.join(&version_name);
+    if !version_root.exists() {
+        return Err(format!("rollback target not installed: {}", version_root.display()).into());
+    }
+    ensure_launcher_symlinks(&bin_dir, &install_root)?;
+    assert_binary_reports_version(
+        &version_root.join("bin/gcc-formed"),
+        version_name.trim_start_matches('v'),
+    )?;
+    swap_symlink(
+        &install_root.join("current"),
+        Path::new(&version_name),
+        true,
+    )?;
+    assert_binary_reports_version(
+        &bin_dir.join("gcc-formed"),
+        version_name.trim_start_matches('v'),
+    )?;
+
+    Ok(RollbackOutput {
+        install_root,
+        active_version: version_name.trim_start_matches('v').to_string(),
+        current_path: bin_dir.join("gcc-formed"),
+    })
+}
+
+fn run_uninstall(options: UninstallOptions) -> Result<UninstallOutput, Box<dyn std::error::Error>> {
+    run_uninstall_at(&std::env::current_dir()?, &options)
+}
+
+fn run_uninstall_at(
+    base_dir: &Path,
+    options: &UninstallOptions,
+) -> Result<UninstallOutput, Box<dyn std::error::Error>> {
+    let install_root = resolve_workspace_path(base_dir, &options.install_root);
+    let bin_dir = resolve_workspace_path(base_dir, &options.bin_dir);
+    let state_root = options
+        .state_root
+        .as_ref()
+        .map(|path| resolve_workspace_path(base_dir, path));
+    if options.purge_state && !matches!(options.mode, UninstallMode::PurgeInstall) {
+        return Err("--purge-state is only supported with purge-install".into());
+    }
+
+    let mut removed_versions = Vec::new();
+    let mut removed_launchers = Vec::new();
+
+    match options.mode {
+        UninstallMode::RemoveVersion => {
+            let version = options
+                .version
+                .as_ref()
+                .ok_or("remove-version requires --version")?;
+            let version_name = version_dir_name(version);
+            if current_version_name(&install_root)?.as_deref() == Some(version_name.as_str()) {
+                return Err(format!(
+                    "refusing to remove active version `{}`; rollback or purge-install first",
+                    version_name
+                )
+                .into());
+            }
+            let version_root = install_root.join(&version_name);
+            if !version_root.exists() {
+                return Err(format!("version not installed: {}", version_root.display()).into());
+            }
+            fs::remove_dir_all(&version_root)?;
+            removed_versions.push(version_name.trim_start_matches('v').to_string());
+        }
+        UninstallMode::PurgeInstall => {
+            for version_dir in installed_versions(&install_root)? {
+                fs::remove_dir_all(install_root.join(&version_dir))?;
+                removed_versions.push(version_dir.trim_start_matches('v').to_string());
+            }
+            let current_link = install_root.join("current");
+            remove_path_if_exists(&current_link)?;
+            removed_launchers = remove_managed_launchers(&bin_dir, &install_root)?;
+            if install_root.exists() && fs::read_dir(&install_root)?.next().is_none() {
+                fs::remove_dir(&install_root)?;
+            }
+        }
+    }
+
+    let mut purged_state = false;
+    if options.purge_state {
+        let state_root = state_root.ok_or("--purge-state requires --state-root")?;
+        if state_root.exists() {
+            fs::remove_dir_all(&state_root)?;
+        }
+        purged_state = true;
+    }
+
+    Ok(UninstallOutput {
+        install_root,
+        removed_versions,
+        removed_launchers,
+        purged_state,
+    })
+}
+
 fn run_package_at(
     workspace_root: &Path,
     options: &PackageOptions,
@@ -1530,6 +1853,407 @@ fn render_sha256sums(paths: &[&Path]) -> Result<String, Box<dyn std::error::Erro
     Ok(lines.join("\n") + "\n")
 }
 
+fn read_build_manifest(path: &Path) -> Result<BuildManifest, Box<dyn std::error::Error>> {
+    Ok(serde_json::from_str(&fs::read_to_string(path)?)?)
+}
+
+fn ensure_target_aware_install_root(
+    install_root: &Path,
+    target_triple: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let includes_target = install_root
+        .components()
+        .any(|component| component.as_os_str() == target_triple);
+    if includes_target {
+        Ok(())
+    } else {
+        Err(format!(
+            "install root must include target triple `{target_triple}`: {}",
+            install_root.display()
+        )
+        .into())
+    }
+}
+
+fn verify_shasums(
+    control_dir: &Path,
+    shasums_path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string(shasums_path)?;
+    if contents.trim().is_empty() {
+        return Err(format!("checksum file is empty: {}", shasums_path.display()).into());
+    }
+    for line in contents.lines().filter(|line| !line.trim().is_empty()) {
+        let (sha256, relative) = line
+            .split_once("  ")
+            .ok_or_else(|| format!("invalid SHA256SUMS line `{line}`"))?;
+        let artifact_path = control_dir.join(relative);
+        if !artifact_path.exists() {
+            return Err(format!(
+                "checksum entry references missing file: {}",
+                artifact_path.display()
+            )
+            .into());
+        }
+        let actual = sha256_file(&artifact_path)?;
+        if actual != sha256 {
+            return Err(format!(
+                "checksum mismatch for {}: expected {sha256}, got {actual}",
+                artifact_path.display()
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn find_primary_archive(control_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let mut archives = fs::read_dir(control_dir)?
+        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+        .filter(|path| {
+            path.file_name()
+                .and_then(|value| value.to_str())
+                .map(|name| {
+                    name.ends_with(".tar.gz")
+                        && !name.ends_with(".debug.tar.gz")
+                        && !name.ends_with("-source.tar.gz")
+                })
+                .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+    archives.sort();
+    match archives.as_slice() {
+        [archive] => Ok(archive.clone()),
+        [] => Err(format!(
+            "control dir did not contain a primary archive: {}",
+            control_dir.display()
+        )
+        .into()),
+        _ => Err(format!(
+            "control dir contained multiple primary archives: {}",
+            control_dir.display()
+        )
+        .into()),
+    }
+}
+
+fn extract_tar_archive(
+    archive_path: &Path,
+    destination: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let status = Command::new("tar")
+        .arg("-xzf")
+        .arg(archive_path)
+        .arg("-C")
+        .arg(destination)
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("failed to extract archive {}", archive_path.display()).into())
+    }
+}
+
+fn extracted_payload_root(
+    staging_root: &Path,
+    archive_path: &Path,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let archive_name = archive_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or("archive filename was not valid UTF-8")?;
+    let root_name = archive_name
+        .strip_suffix(".tar.gz")
+        .ok_or("archive must end with .tar.gz")?;
+    let root = staging_root.join(root_name);
+    if root.exists() {
+        Ok(root)
+    } else {
+        Err(format!(
+            "archive extraction did not materialize expected root {}",
+            root.display()
+        )
+        .into())
+    }
+}
+
+fn verify_manifest_alignment(
+    control_manifest: &BuildManifest,
+    staged_manifest: &BuildManifest,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if control_manifest.product_version != staged_manifest.product_version {
+        return Err(format!(
+            "manifest version mismatch: control {}, staged {}",
+            control_manifest.product_version, staged_manifest.product_version
+        )
+        .into());
+    }
+    if control_manifest.artifact_target_triple != staged_manifest.artifact_target_triple {
+        return Err(format!(
+            "manifest target mismatch: control {}, staged {}",
+            control_manifest.artifact_target_triple, staged_manifest.artifact_target_triple
+        )
+        .into());
+    }
+    Ok(())
+}
+
+fn verify_payload_checksums(
+    stage_root: &Path,
+    manifest: &BuildManifest,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for entry in &manifest.checksums {
+        let path = stage_root.join(&entry.path);
+        if !path.exists() {
+            return Err(format!(
+                "manifest checksum references missing payload {}",
+                path.display()
+            )
+            .into());
+        }
+        let actual_sha = sha256_file(&path)?;
+        if actual_sha != entry.sha256 {
+            return Err(format!(
+                "payload checksum mismatch for {}: expected {}, got {}",
+                path.display(),
+                entry.sha256,
+                actual_sha
+            )
+            .into());
+        }
+        let size = fs::metadata(&path)?.len();
+        if size != entry.size_bytes {
+            return Err(format!(
+                "payload size mismatch for {}: expected {}, got {}",
+                path.display(),
+                entry.size_bytes,
+                size
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn run_staged_self_check(
+    binary_path: &Path,
+    install_root: &Path,
+    staging_root: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let check_root = staging_root.join("self-check");
+    let config_dir = check_root.join("config");
+    let cache_dir = check_root.join("cache");
+    let state_dir = check_root.join("state");
+    let runtime_dir = check_root.join("runtime");
+    let trace_dir = check_root.join("trace");
+    fs::create_dir_all(&check_root)?;
+    let output = Command::new(binary_path)
+        .arg("--formed-self-check")
+        .env("FORMED_INSTALL_ROOT", install_root)
+        .env("FORMED_CONFIG_FILE", config_dir.join("config.toml"))
+        .env("FORMED_CACHE_DIR", &cache_dir)
+        .env("FORMED_STATE_DIR", &state_dir)
+        .env("FORMED_RUNTIME_DIR", &runtime_dir)
+        .env("FORMED_TRACE_DIR", &trace_dir)
+        .output()?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "staged self-check failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into())
+    }
+}
+
+fn version_dir_name(version: &str) -> String {
+    if version.starts_with('v') {
+        version.to_string()
+    } else {
+        format!("v{version}")
+    }
+}
+
+fn assert_binary_reports_version(
+    binary_path: &Path,
+    expected_version: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let output = Command::new(binary_path).arg("--formed-version").output()?;
+    if !output.status.success() {
+        return Err(format!("binary failed to report version: {}", binary_path.display()).into());
+    }
+    let actual = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let expected = expected_version.trim_start_matches('v');
+    if actual == expected {
+        Ok(())
+    } else {
+        Err(format!(
+            "binary version mismatch for {}: expected {}, got {}",
+            binary_path.display(),
+            expected,
+            actual
+        )
+        .into())
+    }
+}
+
+fn current_version_name(install_root: &Path) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let current_link = install_root.join("current");
+    if fs::symlink_metadata(&current_link).is_err() {
+        return Ok(None);
+    }
+    let target = fs::read_link(&current_link)?;
+    Ok(target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .map(|value| value.to_string()))
+}
+
+fn installed_versions(install_root: &Path) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    if !install_root.exists() {
+        return Ok(Vec::new());
+    }
+    let mut versions = fs::read_dir(install_root)?
+        .filter_map(|entry| entry.ok())
+        .filter_map(|entry| {
+            let path = entry.path();
+            let name = path.file_name()?.to_str()?.to_string();
+            if path.is_dir() && name.starts_with('v') {
+                Some(name)
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    versions.sort();
+    Ok(versions)
+}
+
+fn ensure_launcher_symlinks(
+    bin_dir: &Path,
+    install_root: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    fs::create_dir_all(bin_dir)?;
+    swap_symlink(
+        &bin_dir.join("gcc-formed"),
+        &install_root.join("current/bin/gcc-formed"),
+        false,
+    )?;
+    swap_symlink(
+        &bin_dir.join("g++-formed"),
+        &install_root.join("current/bin/g++-formed"),
+        false,
+    )?;
+    Ok(())
+}
+
+fn remove_managed_launchers(
+    bin_dir: &Path,
+    install_root: &Path,
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let mut removed = Vec::new();
+    for launcher in ["gcc-formed", "g++-formed"] {
+        let path = bin_dir.join(launcher);
+        if fs::symlink_metadata(&path).is_err() {
+            continue;
+        }
+        if launcher_is_managed(&path, install_root)? {
+            remove_path_if_exists(&path)?;
+            removed.push(launcher.to_string());
+        }
+    }
+    Ok(removed)
+}
+
+fn launcher_is_managed(
+    launcher_path: &Path,
+    install_root: &Path,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    let target = fs::read_link(launcher_path)?;
+    let resolved = if target.is_absolute() {
+        target
+    } else {
+        launcher_path
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join(target)
+    };
+    Ok(resolved.starts_with(install_root))
+}
+
+fn remove_path_if_exists(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    if let Ok(metadata) = fs::symlink_metadata(path) {
+        if metadata.is_dir() && !metadata.file_type().is_symlink() {
+            fs::remove_dir_all(path)?;
+        } else {
+            fs::remove_file(path)?;
+        }
+    }
+    Ok(())
+}
+
+fn swap_symlink(
+    link_path: &Path,
+    target: &Path,
+    target_is_dir: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(parent) = link_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let link_name = link_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("link");
+    let temp_link = link_path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(format!(".{link_name}.tmp"));
+    remove_path_if_exists(&temp_link)?;
+    create_symlink(target, &temp_link, target_is_dir)?;
+    match fs::rename(&temp_link, link_path) {
+        Ok(()) => Ok(()),
+        Err(_) => {
+            remove_path_if_exists(link_path)?;
+            fs::rename(&temp_link, link_path)?;
+            Ok(())
+        }
+    }
+}
+
+#[cfg(unix)]
+fn create_symlink(
+    target: &Path,
+    link_path: &Path,
+    _target_is_dir: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    std::os::unix::fs::symlink(target, link_path)?;
+    Ok(())
+}
+
+#[cfg(windows)]
+fn create_symlink(
+    target: &Path,
+    link_path: &Path,
+    target_is_dir: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if target_is_dir {
+        std::os::windows::fs::symlink_dir(target, link_path)?;
+    } else {
+        std::os::windows::fs::symlink_file(target, link_path)?;
+    }
+    Ok(())
+}
+
+#[cfg(not(any(unix, windows)))]
+fn create_symlink(
+    _target: &Path,
+    _link_path: &Path,
+    _target_is_dir: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    Err("symlink operations are unsupported on this platform".into())
+}
+
 fn report_failures(mode: &str, failures: &[VerificationFailure]) {
     eprintln!("mode: {mode}");
     eprintln!("failed fixture count: {}", failures.len());
@@ -1633,7 +2357,13 @@ mod tests {
         );
     }
 
-    fn init_release_repo() -> (tempfile::TempDir, PathBuf, PathBuf) {
+    fn fake_wrapper_script(version: &str) -> String {
+        format!(
+            "#!/bin/sh\nif [ \"$1\" = \"--formed-version\" ]; then\n  printf '%s\\n' \"{version}\"\nelif [ \"$1\" = \"--formed-self-check\" ]; then\n  printf '%s\\n' '{{\"binary\":\"ok\"}}'\nelse\n  printf '%s\\n' \"packaged-{version}\"\nfi\n"
+        )
+    }
+
+    fn init_release_repo(version: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
         let sandbox = tempfile::tempdir().unwrap();
         let repo_root = sandbox.path().join("repo");
         let binary_root = sandbox.path().join("binary");
@@ -1652,7 +2382,7 @@ mod tests {
         write_file(&repo_root.join("src/main.rs"), b"fn main() {}\n");
 
         let binary_path = binary_root.join("gcc-formed");
-        write_file(&binary_path, b"#!/bin/sh\necho packaged\n");
+        write_file(&binary_path, fake_wrapper_script(version).as_bytes());
         make_executable(&binary_path);
 
         run_command(&repo_root, "git", &["init", "-q", "-b", "main"]);
@@ -1670,7 +2400,7 @@ mod tests {
 
     #[test]
     fn package_smoke_emits_release_artifacts() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -1744,7 +2474,7 @@ mod tests {
 
     #[test]
     fn package_rejects_dirty_worktree() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
         write_file(&repo_root.join("dirty.txt"), b"untracked\n");
 
         let error = run_package_at(
@@ -1764,7 +2494,7 @@ mod tests {
 
     #[test]
     fn package_requires_release_documents() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
         fs::remove_file(repo_root.join("NOTICE")).unwrap();
         run_command(&repo_root, "git", &["add", "-u"]);
         run_command(&repo_root, "git", &["commit", "-q", "-m", "remove notice"]);
@@ -1794,5 +2524,169 @@ mod tests {
             artifact_slug_for_target("aarch64-unknown-linux-gnu"),
             "linux-aarch64-gnu"
         );
+    }
+
+    #[test]
+    fn install_smoke_verifies_archive_and_creates_current_symlink() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        let install_root = sandbox
+            .path()
+            .join("install")
+            .join("x86_64-unknown-linux-gnu");
+        let bin_dir = sandbox.path().join("bin");
+        let install = run_install_at(
+            &repo_root,
+            &InstallOptions {
+                control_dir: package.control_dir.clone(),
+                install_root: install_root.clone(),
+                bin_dir: bin_dir.clone(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.previous_version, None);
+        assert_eq!(
+            current_version_name(&install_root).unwrap().as_deref(),
+            Some("v0.1.0")
+        );
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+        assert!(install_root.join("v0.1.0/bin/gcc-formed").exists());
+        assert!(launcher_is_managed(&bin_dir.join("gcc-formed"), &install_root).unwrap());
+    }
+
+    #[test]
+    fn install_rejects_control_dir_with_bad_checksums() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+        write_file(&package.shasums_path, b"deadbeef  broken\n");
+
+        let error = run_install_at(
+            &repo_root,
+            &InstallOptions {
+                control_dir: package.control_dir,
+                install_root: sandbox
+                    .path()
+                    .join("install")
+                    .join("x86_64-unknown-linux-gnu"),
+                bin_dir: sandbox.path().join("bin"),
+            },
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("references missing file"));
+    }
+
+    #[test]
+    fn rollback_switches_current_symlink_to_requested_version() {
+        let sandbox = tempfile::tempdir().unwrap();
+        let install_root = sandbox
+            .path()
+            .join("install")
+            .join("x86_64-unknown-linux-gnu");
+        let bin_dir = sandbox.path().join("bin");
+        let v1 = install_root.join("v0.1.0/bin/gcc-formed");
+        let v2 = install_root.join("v0.1.1/bin/gcc-formed");
+        write_file(&v1, fake_wrapper_script("0.1.0").as_bytes());
+        write_file(
+            &install_root.join("v0.1.0/bin/g++-formed"),
+            fake_wrapper_script("0.1.0").as_bytes(),
+        );
+        write_file(&v2, fake_wrapper_script("0.1.1").as_bytes());
+        write_file(
+            &install_root.join("v0.1.1/bin/g++-formed"),
+            fake_wrapper_script("0.1.1").as_bytes(),
+        );
+        make_executable(&v1);
+        make_executable(&install_root.join("v0.1.0/bin/g++-formed"));
+        make_executable(&v2);
+        make_executable(&install_root.join("v0.1.1/bin/g++-formed"));
+        ensure_launcher_symlinks(&bin_dir, &install_root).unwrap();
+        swap_symlink(&install_root.join("current"), Path::new("v0.1.1"), true).unwrap();
+
+        let rollback = run_rollback_at(
+            sandbox.path(),
+            &RollbackOptions {
+                install_root: install_root.clone(),
+                bin_dir: bin_dir.clone(),
+                version: "0.1.0".to_string(),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(rollback.active_version, "0.1.0");
+        assert_eq!(
+            current_version_name(&install_root).unwrap().as_deref(),
+            Some("v0.1.0")
+        );
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+    }
+
+    #[test]
+    fn purge_uninstall_removes_install_bits_without_touching_state() {
+        let sandbox = tempfile::tempdir().unwrap();
+        let install_root = sandbox
+            .path()
+            .join("install")
+            .join("x86_64-unknown-linux-gnu");
+        let bin_dir = sandbox.path().join("bin");
+        let state_root = sandbox.path().join("state");
+        write_file(
+            &install_root.join("v0.1.0/bin/gcc-formed"),
+            fake_wrapper_script("0.1.0").as_bytes(),
+        );
+        write_file(
+            &install_root.join("v0.1.0/bin/g++-formed"),
+            fake_wrapper_script("0.1.0").as_bytes(),
+        );
+        make_executable(&install_root.join("v0.1.0/bin/gcc-formed"));
+        make_executable(&install_root.join("v0.1.0/bin/g++-formed"));
+        ensure_launcher_symlinks(&bin_dir, &install_root).unwrap();
+        swap_symlink(&install_root.join("current"), Path::new("v0.1.0"), true).unwrap();
+        write_file(&state_root.join("trace.json"), b"keep me\n");
+
+        let uninstall = run_uninstall_at(
+            sandbox.path(),
+            &UninstallOptions {
+                install_root: install_root.clone(),
+                bin_dir: bin_dir.clone(),
+                mode: UninstallMode::PurgeInstall,
+                version: None,
+                state_root: Some(state_root.clone()),
+                purge_state: false,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(uninstall.removed_versions, vec!["0.1.0".to_string()]);
+        assert!(
+            uninstall
+                .removed_launchers
+                .contains(&"gcc-formed".to_string())
+        );
+        assert!(!install_root.exists());
+        assert!(state_root.exists());
     }
 }
