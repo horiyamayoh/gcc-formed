@@ -1,16 +1,20 @@
 use diag_adapter_gcc::{ingest, producer_for_version, tool_for_backend};
 use diag_backend_probe::{ProbeCache, ResolveRequest, SupportTier};
-use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_capture};
-use diag_core::{DiagnosticDocument, LanguageMode, RunInfo, WrapperSurface};
+use diag_capture_runtime::{
+    CaptureOutcome, CaptureRequest, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
+    trace_sanitized_env_keys,
+};
+use diag_core::{DiagnosticDocument, DocumentCompleteness, LanguageMode, RunInfo, WrapperSurface};
 use diag_enrich::enrich_document;
 use diag_render::{
     DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest, SourceExcerptPolicy,
     StreamKind, TypeDisplayPolicy, WarningVisibility, render,
 };
 use diag_trace::{
-    BuildManifest, RetentionPolicy, TraceArtifactRef, TraceCapabilities, TraceEnvelope,
-    TraceTiming, WrapperPaths, build_target_triple, default_build_manifest, trace_id, write_trace,
-    write_trace_at,
+    BuildManifest, RetentionPolicy, TraceArtifactRef, TraceCapabilities, TraceChildExit,
+    TraceEnvelope, TraceEnvironmentSummary, TraceParserResultSummary, TraceTiming,
+    TraceVersionSummary, WrapperPaths, build_target_triple, default_build_manifest, trace_id,
+    write_trace, write_trace_at,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -95,15 +99,13 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     if matches!(mode, ExecutionMode::Passthrough) {
         maybe_write_passthrough_trace(
             &paths,
-            &capture.artifacts,
+            &capture,
             &parsed,
             &backend,
             &mode_decision,
             profile,
             &capabilities,
-            capture.capture_duration_ms,
             wrapper_started.elapsed().as_millis() as u64,
-            capture.retained_trace_dir.as_ref(),
         )?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
@@ -145,15 +147,14 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         maybe_write_trace(
             &paths,
             &document,
+            &capture,
             &parsed,
             &backend,
             &mode_decision,
             profile,
             &capabilities,
-            capture.capture_duration_ms,
             None,
             wrapper_started.elapsed().as_millis() as u64,
-            capture.retained_trace_dir.as_ref(),
         )?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
@@ -182,15 +183,14 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     maybe_write_trace(
         &paths,
         &document,
+        &capture,
         &parsed,
         &backend,
         &mode_decision,
         profile,
         &capabilities,
-        capture.capture_duration_ms,
         Some(render_duration_ms),
         wrapper_started.elapsed().as_millis() as u64,
-        capture.retained_trace_dir.as_ref(),
     )?;
     cleanup_capture(&capture)?;
     Ok(exit_code)
@@ -214,16 +214,16 @@ fn passthrough_inherit(
 fn maybe_write_trace(
     paths: &WrapperPaths,
     document: &DiagnosticDocument,
+    capture: &CaptureOutcome,
     parsed: &ParsedArgs,
     backend: &diag_backend_probe::ProbeResult,
     mode_decision: &ModeDecision,
     profile: RenderProfile,
     capabilities: &RenderCapabilities,
-    capture_duration_ms: u64,
     render_duration_ms: Option<u64>,
     total_duration_ms: u64,
-    retained_trace_dir: Option<&PathBuf>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let retained_trace_dir = capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
             parsed.debug_refs,
@@ -237,12 +237,20 @@ fn maybe_write_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        version_summary: Some(trace_version_summary()),
+        environment_summary: Some(trace_environment_summary(
+            backend,
+            mode_decision.mode,
+            capture,
+        )),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
-            capture_ms: capture_duration_ms,
+            capture_ms: capture.capture_duration_ms,
             render_ms: render_duration_ms,
             total_ms: total_duration_ms,
         }),
+        child_exit: Some(trace_child_exit(&capture.exit_status)),
+        parser_result_summary: Some(parsed_parser_result_summary(document)),
         decision_log: mode_decision.decision_log.clone(),
         fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: document
@@ -264,16 +272,15 @@ fn maybe_write_trace(
 
 fn maybe_write_passthrough_trace(
     paths: &WrapperPaths,
-    captures: &[diag_core::CaptureArtifact],
+    capture: &CaptureOutcome,
     parsed: &ParsedArgs,
     backend: &diag_backend_probe::ProbeResult,
     mode_decision: &ModeDecision,
     profile: RenderProfile,
     capabilities: &RenderCapabilities,
-    capture_duration_ms: u64,
     total_duration_ms: u64,
-    retained_trace_dir: Option<&PathBuf>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let retained_trace_dir = capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
             parsed.debug_refs,
@@ -288,17 +295,25 @@ fn maybe_write_passthrough_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        version_summary: Some(trace_version_summary()),
+        environment_summary: Some(trace_environment_summary(
+            backend,
+            mode_decision.mode,
+            capture,
+        )),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
-            capture_ms: capture_duration_ms,
+            capture_ms: capture.capture_duration_ms,
             render_ms: None,
             total_ms: total_duration_ms,
         }),
+        child_exit: Some(trace_child_exit(&capture.exit_status)),
+        parser_result_summary: Some(skipped_parser_result_summary(&capture.artifacts)),
         decision_log: mode_decision.decision_log.clone(),
         fallback_reason: mode_decision.fallback_reason.map(str::to_string),
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(
-            captures,
+            &capture.artifacts,
             retained_trace_dir.map(|path| path.as_path()),
         ),
     };
@@ -358,6 +373,88 @@ fn trace_capabilities(capabilities: &RenderCapabilities) -> TraceCapabilities {
         hyperlinks: capabilities.hyperlinks,
         interactive: capabilities.interactive,
     }
+}
+
+fn trace_version_summary() -> TraceVersionSummary {
+    TraceVersionSummary {
+        wrapper_version: env!("CARGO_PKG_VERSION").to_string(),
+        build_target_triple: build_target_triple().to_string(),
+        ir_spec_version: diag_core::IR_SPEC_VERSION.to_string(),
+        adapter_spec_version: diag_core::ADAPTER_SPEC_VERSION.to_string(),
+        renderer_spec_version: diag_core::RENDERER_SPEC_VERSION.to_string(),
+    }
+}
+
+fn trace_environment_summary(
+    backend: &diag_backend_probe::ProbeResult,
+    mode: ExecutionMode,
+    capture: &CaptureOutcome,
+) -> TraceEnvironmentSummary {
+    TraceEnvironmentSummary {
+        backend_path: backend.resolved_path.clone(),
+        backend_version: backend.version_string.clone(),
+        injected_flags: trace_injected_flags(capture),
+        sanitized_env_keys: trace_sanitized_env_keys(mode),
+        temp_artifact_paths: trace_temp_artifact_paths(capture),
+    }
+}
+
+fn trace_injected_flags(capture: &CaptureOutcome) -> Vec<String> {
+    capture
+        .sarif_path
+        .as_ref()
+        .map(|path| {
+            vec![format!(
+                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                path.display()
+            )]
+        })
+        .unwrap_or_default()
+}
+
+fn trace_temp_artifact_paths(capture: &CaptureOutcome) -> Vec<PathBuf> {
+    let mut paths = vec![
+        capture.temp_dir.clone(),
+        capture.temp_dir.join("invocation.json"),
+    ];
+    if let Some(sarif_path) = capture.sarif_path.as_ref() {
+        paths.push(sarif_path.clone());
+    }
+    paths
+}
+
+fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
+    TraceChildExit {
+        code: status.code,
+        signal: status.signal,
+        success: status.success,
+    }
+}
+
+fn parsed_parser_result_summary(document: &DiagnosticDocument) -> TraceParserResultSummary {
+    TraceParserResultSummary {
+        status: "parsed".to_string(),
+        document_completeness: Some(document_completeness_label(&document.document_completeness)),
+        diagnostic_count: document.diagnostics.len(),
+        integrity_issue_count: document.integrity_issues.len(),
+        capture_count: document.captures.len(),
+    }
+}
+
+fn skipped_parser_result_summary(
+    captures: &[diag_core::CaptureArtifact],
+) -> TraceParserResultSummary {
+    TraceParserResultSummary {
+        status: "skipped".to_string(),
+        document_completeness: None,
+        diagnostic_count: 0,
+        integrity_issue_count: 0,
+        capture_count: captures.len(),
+    }
+}
+
+fn document_completeness_label(completeness: &DocumentCompleteness) -> String {
+    format!("{completeness:?}").to_lowercase()
 }
 
 fn handle_wrapper_introspection(

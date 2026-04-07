@@ -56,14 +56,43 @@ pub struct TraceEnvelope {
     pub selected_profile: String,
     pub support_tier: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub version_summary: Option<TraceVersionSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub environment_summary: Option<TraceEnvironmentSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub capabilities: Option<TraceCapabilities>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<TraceTiming>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub child_exit: Option<TraceChildExit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parser_result_summary: Option<TraceParserResultSummary>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
     pub fallback_reason: Option<String>,
     pub warning_messages: Vec<String>,
     pub artifacts: Vec<TraceArtifactRef>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceVersionSummary {
+    pub wrapper_version: String,
+    pub build_target_triple: String,
+    pub ir_spec_version: String,
+    pub adapter_spec_version: String,
+    pub renderer_spec_version: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceEnvironmentSummary {
+    pub backend_path: PathBuf,
+    pub backend_version: String,
+    #[serde(default)]
+    pub injected_flags: Vec<String>,
+    #[serde(default)]
+    pub sanitized_env_keys: Vec<String>,
+    #[serde(default)]
+    pub temp_artifact_paths: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,6 +111,23 @@ pub struct TraceTiming {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub render_ms: Option<u64>,
     pub total_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceChildExit {
+    pub code: Option<i32>,
+    pub signal: Option<i32>,
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TraceParserResultSummary {
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub document_completeness: Option<String>,
+    pub diagnostic_count: usize,
+    pub integrity_issue_count: usize,
+    pub capture_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -412,8 +458,12 @@ mod tests {
             selected_mode: "render".to_string(),
             selected_profile: "default".to_string(),
             support_tier: "a".to_string(),
+            version_summary: None,
+            environment_summary: None,
             capabilities: None,
             timing: None,
+            child_exit: None,
+            parser_result_summary: None,
             decision_log: Vec::new(),
             fallback_reason: None,
             warning_messages: Vec::new(),

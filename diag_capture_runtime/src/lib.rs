@@ -352,6 +352,13 @@ fn child_env_policy(mode: ExecutionMode) -> ChildEnvPolicy {
     policy
 }
 
+pub fn trace_sanitized_env_keys(mode: ExecutionMode) -> Vec<String> {
+    let policy = child_env_policy(mode);
+    let mut keys = policy.set.into_keys().collect::<Vec<_>>();
+    keys.extend(policy.unset);
+    keys
+}
+
 fn apply_child_env_policy(command: &mut Command, policy: &ChildEnvPolicy) {
     for (key, value) in &policy.set {
         command.env(key, value);
@@ -545,5 +552,19 @@ mod tests {
     fn passthrough_mode_preserves_environment() {
         let policy = child_env_policy(ExecutionMode::Passthrough);
         assert!(child_env_policy_is_empty(&policy));
+    }
+
+    #[test]
+    fn trace_sanitized_env_keys_follow_child_policy() {
+        let render_keys = trace_sanitized_env_keys(ExecutionMode::Render);
+        assert!(render_keys.iter().any(|key| key == "LC_MESSAGES"));
+        assert!(render_keys.iter().any(|key| key == "GCC_DIAGNOSTICS_LOG"));
+
+        let shadow_keys = trace_sanitized_env_keys(ExecutionMode::Shadow);
+        assert!(!shadow_keys.iter().any(|key| key == "LC_MESSAGES"));
+        assert!(shadow_keys.iter().any(|key| key == "GCC_DIAGNOSTICS_LOG"));
+
+        let passthrough_keys = trace_sanitized_env_keys(ExecutionMode::Passthrough);
+        assert!(passthrough_keys.is_empty());
     }
 }

@@ -70,11 +70,69 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
     assert!(trace["fallback_reason"].is_null());
+    assert_eq!(
+        trace["version_summary"]["wrapper_version"].as_str(),
+        Some(env!("CARGO_PKG_VERSION"))
+    );
+    assert_eq!(
+        trace["version_summary"]["adapter_spec_version"].as_str(),
+        Some(diag_core::ADAPTER_SPEC_VERSION)
+    );
+    assert_eq!(
+        trace["environment_summary"]["backend_version"].as_str(),
+        Some("gcc (Fake) 15.2.0")
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str().is_some_and(
+                |flag| flag.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
+            ))
+    );
+    assert!(
+        trace["environment_summary"]["sanitized_env_keys"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|key| key.as_str() == Some("LC_MESSAGES"))
+    );
+    assert!(
+        trace["environment_summary"]["temp_artifact_paths"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|path| path
+                .as_str()
+                .is_some_and(|path| path.contains("runtime-root/formed-")))
+    );
     assert_eq!(trace["capabilities"]["stream_kind"], "pipe");
     assert_eq!(trace["capabilities"]["ansi_color"], false);
     assert!(trace["timing"]["capture_ms"].as_u64().is_some());
     assert!(trace["timing"]["render_ms"].as_u64().is_some());
     assert!(trace["timing"]["total_ms"].as_u64().is_some());
+    assert_eq!(trace["child_exit"]["code"].as_i64(), Some(1));
+    assert!(trace["child_exit"]["signal"].is_null());
+    assert_eq!(trace["child_exit"]["success"].as_bool(), Some(false));
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("parsed")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("complete")
+    );
+    assert!(
+        trace["parser_result_summary"]["diagnostic_count"]
+            .as_u64()
+            .unwrap()
+            >= 1
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["capture_count"].as_u64(),
+        Some(2)
+    );
     assert!(
         trace["decision_log"]
             .as_array()
@@ -327,8 +385,35 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "passthrough");
     assert_eq!(trace["fallback_reason"], "hard_conflict");
+    assert_eq!(
+        trace["environment_summary"]["backend_version"].as_str(),
+        Some("gcc (Fake) 15.2.0")
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        trace["environment_summary"]["sanitized_env_keys"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
     assert!(trace["timing"]["capture_ms"].as_u64().is_some());
     assert!(trace["timing"]["render_ms"].is_null());
+    assert_eq!(trace["child_exit"]["code"].as_i64(), Some(1));
+    assert!(trace["child_exit"]["signal"].is_null());
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("skipped")
+    );
+    assert!(trace["parser_result_summary"]["document_completeness"].is_null());
+    assert_eq!(
+        trace["parser_result_summary"]["capture_count"].as_u64(),
+        Some(1)
+    );
     assert!(
         trace["decision_log"]
             .as_array()
