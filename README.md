@@ -3,7 +3,7 @@
 - **状態**: Accepted Baseline
 - **フェーズ**: `v1alpha`
 - **日付**: 2026-04-07
-- **実装状況**: まだコードは存在せず、現時点のリポジトリは仕様書と ADR のみ
+- **実装状況**: Phase 1 MVP の Rust workspace を同梱。仕様書と ADR は実装契約の正本として維持する。
 
 `gcc-formed` は、GCC first / Linux first の C/C++ 診断 UX 基盤を定義する spec-first リポジトリである。目標は「コンパイラの生出力を prettier にすること」ではなく、wrapper・adapter・Diagnostic IR・renderer・quality gate を分離した実装可能な製品基線を固めることにある。
 
@@ -21,8 +21,30 @@
 ## 現在の基線
 
 - 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
-- 実装は未着手で、Cargo workspace、CLI、ソースコード、テストハーネスはまだ存在しない
+- 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
+
+## 実装ワークスペース
+
+- `diag_core`: Diagnostic IR、validation、canonical JSON、fingerprints
+- `diag_backend_probe`: backend discovery と support tier 判定
+- `diag_capture_runtime`: child spawn、stderr capture、SARIF sidecar 注入
+- `diag_adapter_gcc`: GCC SARIF ingest と residual text 取り込み
+- `diag_enrich`: family/ownership/headline/first action の付与
+- `diag_render`: terminal/CI/raw fallback renderer
+- `diag_trace`: XDG path、trace bundle、build manifest
+- `diag_testkit`: corpus fixture loader と validation
+- `diag_cli_front`: `gcc-formed` wrapper CLI
+- `xtask`: `check`, `replay`, `snapshot`, `bench-smoke`, `self-check`
+
+## 開発開始
+
+```bash
+cargo xtask check
+cargo xtask replay --root corpus
+cargo build --bin gcc-formed
+./target/debug/gcc-formed --formed-self-check
+```
 
 ## 実装に入る順序
 

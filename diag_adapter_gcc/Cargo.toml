@@ -1,0 +1,16 @@
+[package]
+name = "diag_adapter_gcc"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_core.workspace = true
+diag_residual_text.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

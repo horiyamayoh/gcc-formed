@@ -1,0 +1,31 @@
+[package]
+name = "diag_cli_front"
+autobins = false
+build = "build.rs"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "gcc-formed"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+diag_adapter_gcc.workspace = true
+diag_backend_probe.workspace = true
+diag_capture_runtime.workspace = true
+diag_core.workspace = true
+diag_enrich.workspace = true
+diag_render.workspace = true
+diag_trace.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+predicates.workspace = true
+tempfile.workspace = true

@@ -1,0 +1,10 @@
+[package]
+name = "diag_backend_probe"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

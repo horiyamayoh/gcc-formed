@@ -1,0 +1,12 @@
+[package]
+name = "diag_trace"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

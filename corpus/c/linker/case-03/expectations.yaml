@@ -1,0 +1,5 @@
+schema_version: 1
+fixture_id: c/linker/case-03
+support_tier: A
+expected_mode: render
+family: linker

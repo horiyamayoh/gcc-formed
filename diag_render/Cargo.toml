@@ -1,0 +1,11 @@
+[package]
+name = "diag_render"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_core.workspace = true
+serde.workspace = true
+thiserror.workspace = true

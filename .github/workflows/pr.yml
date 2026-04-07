@@ -1,0 +1,23 @@
+name: pr-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  pr-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build GCC 15 CI image
+        run: docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .
+      - name: Run local fast gate
+        run: >
+          docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:pr
+          bash -lc "cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && ./target/debug/gcc-formed --formed-self-check"
+      - name: Dependency and license gate
+        run: >
+          docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:pr
+          bash -lc "cargo install cargo-deny --locked && cargo deny check"

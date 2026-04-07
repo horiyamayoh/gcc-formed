@@ -1,0 +1,10 @@
+[package]
+name = "diag_enrich"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_core.workspace = true
+regex.workspace = true

@@ -1,0 +1,5 @@
+schema_version: 1
+fixture_id: cpp/template/case-10
+support_tier: A
+expected_mode: render
+family: template

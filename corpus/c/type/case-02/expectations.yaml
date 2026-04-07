@@ -1,0 +1,5 @@
+schema_version: 1
+fixture_id: c/type/case-02
+support_tier: A
+expected_mode: render
+family: type

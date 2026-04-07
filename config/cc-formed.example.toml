@@ -1,0 +1,15 @@
+schema_version = 1
+
+[backend]
+# gcc = "/usr/bin/gcc"
+
+[runtime]
+# mode = "render"
+
+[render]
+profile = "default"
+path_policy = "relative_to_cwd"
+debug_refs = "none"
+
+[trace]
+retention_policy = "on-wrapper-failure"
