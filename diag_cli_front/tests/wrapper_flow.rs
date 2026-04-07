@@ -279,6 +279,67 @@ fn render_mode_sanitizes_child_diagnostic_environment() {
     );
 }
 
+#[test]
+fn hard_conflict_passthrough_still_emits_trace_bundle() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+    let runtime_root = temp.path().join("runtime-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .env("FORMED_RUNTIME_DIR", &runtime_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-fdiagnostics-format=text")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("help:").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "passthrough");
+    assert_eq!(trace["fallback_reason"], "hard_conflict");
+    assert!(trace["timing"]["capture_ms"].as_u64().is_some());
+    assert!(trace["timing"]["render_ms"].is_null());
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("hard_conflict=diagnostic_sink_override"))
+    );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["id"].as_str() == Some("invocation.json"))
+    );
+
+    let retained_dir = fs::read_dir(&trace_root)
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| path.is_dir())
+        .unwrap();
+    assert!(retained_dir.join("invocation.json").exists());
+    assert!(retained_dir.join("trace.json").exists());
+
+    let invocation: Value =
+        serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
+            .unwrap();
+    assert_eq!(invocation["selected_mode"], "passthrough");
+}
+
 fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
     contents
         .lines()

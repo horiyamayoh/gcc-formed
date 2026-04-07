@@ -92,6 +92,18 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
 
     let exit_code = exit_code_from_status(&capture.exit_status);
     if matches!(mode, ExecutionMode::Passthrough) {
+        maybe_write_passthrough_trace(
+            &paths,
+            &capture.artifacts,
+            &parsed,
+            &backend,
+            &mode_decision,
+            profile,
+            &capabilities,
+            capture.capture_duration_ms,
+            wrapper_started.elapsed().as_millis() as u64,
+            capture.retained_trace_dir.as_ref(),
+        )?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -249,12 +261,66 @@ fn maybe_write_trace(
     Ok(())
 }
 
+fn maybe_write_passthrough_trace(
+    paths: &WrapperPaths,
+    captures: &[diag_core::CaptureArtifact],
+    parsed: &ParsedArgs,
+    backend: &diag_backend_probe::ProbeResult,
+    mode_decision: &ModeDecision,
+    profile: RenderProfile,
+    capabilities: &RenderCapabilities,
+    capture_duration_ms: u64,
+    total_duration_ms: u64,
+    retained_trace_dir: Option<&PathBuf>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if retained_trace_dir.is_none()
+        && !matches!(
+            parsed.debug_refs,
+            Some(DebugRefs::TraceId | DebugRefs::CaptureRef)
+        )
+    {
+        return Ok(());
+    }
+
+    let trace = TraceEnvelope {
+        trace_id: trace_id(),
+        selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
+        selected_profile: format!("{profile:?}").to_lowercase(),
+        support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        capabilities: Some(trace_capabilities(capabilities)),
+        timing: Some(TraceTiming {
+            capture_ms: capture_duration_ms,
+            render_ms: None,
+            total_ms: total_duration_ms,
+        }),
+        decision_log: mode_decision.decision_log.clone(),
+        fallback_reason: mode_decision.fallback_reason.map(str::to_string),
+        warning_messages: Vec::new(),
+        artifacts: build_trace_artifact_refs_for_captures(
+            captures,
+            retained_trace_dir.map(|path| path.as_path()),
+        ),
+    };
+
+    if let Some(dir) = retained_trace_dir {
+        write_trace_at(&dir.join("trace.json"), &trace)?;
+    }
+    write_trace(paths, &trace, "trace.json")?;
+    Ok(())
+}
+
 fn build_trace_artifact_refs(
     document: &DiagnosticDocument,
     retained_trace_dir: Option<&Path>,
 ) -> Vec<TraceArtifactRef> {
-    let mut refs = document
-        .captures
+    build_trace_artifact_refs_for_captures(&document.captures, retained_trace_dir)
+}
+
+fn build_trace_artifact_refs_for_captures(
+    captures: &[diag_core::CaptureArtifact],
+    retained_trace_dir: Option<&Path>,
+) -> Vec<TraceArtifactRef> {
+    let mut refs = captures
         .iter()
         .map(|capture| TraceArtifactRef {
             id: capture.id.clone(),
