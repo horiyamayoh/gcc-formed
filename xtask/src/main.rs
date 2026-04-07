@@ -13,6 +13,7 @@ use diag_testkit::{
     ExpectedFallback, Fixture, RenderProfileExpectations, discover, family_counts, validate_fixture,
 };
 use diag_trace::{BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, build_manifest_for_target};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -31,6 +32,8 @@ const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/linker/case-01",
     "c/partial/case-01",
 ];
+
+const SHASUMS_SIGNATURE_FILE: &str = "SHA256SUMS.sig";
 
 #[derive(Debug, Parser)]
 #[command(name = "xtask")]
@@ -63,6 +66,8 @@ enum Commands {
         version: Option<String>,
         #[arg(long)]
         expected_primary_sha256: Option<String>,
+        #[arg(long)]
+        expected_signing_key_id: Option<String>,
     },
     Install {
         #[arg(long)]
@@ -71,6 +76,8 @@ enum Commands {
         install_root: PathBuf,
         #[arg(long)]
         bin_dir: PathBuf,
+        #[arg(long)]
+        expected_signing_key_id: Option<String>,
     },
     Package {
         #[arg(long)]
@@ -85,6 +92,8 @@ enum Commands {
         release_channel: String,
         #[arg(long, default_value = "gcc15_primary")]
         support_tier: String,
+        #[arg(long)]
+        signing_private_key: Option<PathBuf>,
     },
     ReleasePromote {
         #[arg(long)]
@@ -191,6 +200,7 @@ struct PackageOptions {
     out_dir: PathBuf,
     release_channel: String,
     support_tier: String,
+    signing_private_key: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -202,6 +212,7 @@ struct PackageOutput {
     manifest_path: PathBuf,
     build_info_path: PathBuf,
     shasums_path: PathBuf,
+    shasums_signature_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -229,6 +240,7 @@ struct ReleasePublishOutput {
     control_dir: PathBuf,
     release_metadata_path: PathBuf,
     primary_archive_sha256: String,
+    signing_key_id: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -268,6 +280,8 @@ struct ReleaseResolveOutput {
     primary_archive_sha256: String,
     manifest_sha256: String,
     shasums_sha256: String,
+    signing_key_id: Option<String>,
+    shasums_signature_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -289,6 +303,7 @@ struct InstallOptions {
     control_dir: PathBuf,
     install_root: PathBuf,
     bin_dir: PathBuf,
+    expected_signing_key_id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -297,6 +312,7 @@ struct InstallOutput {
     bin_dir: PathBuf,
     installed_version: String,
     previous_version: Option<String>,
+    signing_key_id: Option<String>,
     current_path: PathBuf,
 }
 
@@ -309,6 +325,7 @@ struct InstallReleaseOptions {
     channel: Option<String>,
     version: Option<String>,
     expected_primary_sha256: Option<String>,
+    expected_signing_key_id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -320,6 +337,7 @@ struct InstallReleaseOutput {
     requested_channel: Option<String>,
     resolved_version: String,
     primary_archive_sha256: String,
+    signing_key_id: Option<String>,
     current_path: PathBuf,
 }
 
@@ -387,6 +405,12 @@ struct PublishedRelease {
     build_info_sha256: String,
     shasums_path: String,
     shasums_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    shasums_signature_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    shasums_signature_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    signing_key_id: Option<String>,
     published_unix_ts: u64,
 }
 
@@ -398,7 +422,19 @@ struct ReleaseChannelPointer {
     primary_archive_sha256: String,
     manifest_sha256: String,
     shasums_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    signing_key_id: Option<String>,
     promoted_unix_ts: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DetachedSignatureEnvelope {
+    algorithm: String,
+    key_id: String,
+    public_key_hex: String,
+    signed_path: String,
+    signed_sha256: String,
+    signature_hex: String,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -428,6 +464,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             channel,
             version,
             expected_primary_sha256,
+            expected_signing_key_id,
         } => {
             let install = run_install_release(InstallReleaseOptions {
                 repository_root,
@@ -437,6 +474,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 channel,
                 version,
                 expected_primary_sha256,
+                expected_signing_key_id,
             })?;
             println!(
                 "{}",
@@ -448,6 +486,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "requested_channel": install.requested_channel,
                     "resolved_version": install.resolved_version,
                     "primary_archive_sha256": install.primary_archive_sha256,
+                    "signing_key_id": install.signing_key_id,
                     "current_path": install.current_path,
                 }))?
             );
@@ -456,11 +495,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             control_dir,
             install_root,
             bin_dir,
+            expected_signing_key_id,
         } => {
             let install = run_install(InstallOptions {
                 control_dir,
                 install_root,
                 bin_dir,
+                expected_signing_key_id,
             })?;
             println!(
                 "{}",
@@ -469,6 +510,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "bin_dir": install.bin_dir,
                     "installed_version": install.installed_version,
                     "previous_version": install.previous_version,
+                    "signing_key_id": install.signing_key_id,
                     "current_path": install.current_path,
                 }))?
             );
@@ -480,6 +522,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             out_dir,
             release_channel,
             support_tier,
+            signing_private_key,
         } => {
             let package = run_package(PackageOptions {
                 binary,
@@ -488,6 +531,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 out_dir,
                 release_channel,
                 support_tier,
+                signing_private_key,
             })?;
             println!(
                 "{}",
@@ -499,6 +543,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "manifest_path": package.manifest_path,
                     "build_info_path": package.build_info_path,
                     "shasums_path": package.shasums_path,
+                    "shasums_signature_path": package.shasums_signature_path,
                 }))?
             );
         }
@@ -543,6 +588,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "control_dir": publish.control_dir,
                     "release_metadata_path": publish.release_metadata_path,
                     "primary_archive_sha256": publish.primary_archive_sha256,
+                    "signing_key_id": publish.signing_key_id,
                 }))?
             );
         }
@@ -570,6 +616,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "primary_archive_sha256": release.primary_archive_sha256,
                     "manifest_sha256": release.manifest_sha256,
                     "shasums_sha256": release.shasums_sha256,
+                    "signing_key_id": release.signing_key_id,
+                    "shasums_signature_path": release.shasums_signature_path,
                 }))?
             );
         }
@@ -1716,6 +1764,11 @@ fn run_release_publish_at(
     let manifest_path = copied_control_dir.join("manifest.json");
     let build_info_path = copied_control_dir.join("build-info.txt");
     let shasums_path = copied_control_dir.join("SHA256SUMS");
+    let signature_path = copied_control_dir.join(SHASUMS_SIGNATURE_FILE);
+    let signature = read_optional_detached_signature(&signature_path)?;
+    if let Some(signature) = signature.as_ref() {
+        verify_detached_signature(&shasums_path, signature, Some(&signature.key_id))?;
+    }
 
     let release = PublishedRelease {
         product_name: manifest.product_name.clone(),
@@ -1736,6 +1789,15 @@ fn run_release_publish_at(
         build_info_sha256: sha256_file(&build_info_path)?,
         shasums_path: relative_display(&version_root, &shasums_path)?,
         shasums_sha256: sha256_file(&shasums_path)?,
+        shasums_signature_path: signature
+            .as_ref()
+            .map(|_| relative_display(&version_root, &signature_path))
+            .transpose()?,
+        shasums_signature_sha256: signature
+            .as_ref()
+            .map(|_| sha256_file(&signature_path))
+            .transpose()?,
+        signing_key_id: signature.as_ref().map(|envelope| envelope.key_id.clone()),
         published_unix_ts: unix_timestamp_secs()?,
     };
     let release_metadata_path = version_root.join("release.json");
@@ -1748,6 +1810,7 @@ fn run_release_publish_at(
         control_dir: copied_control_dir,
         release_metadata_path,
         primary_archive_sha256: release.primary_archive_sha256,
+        signing_key_id: release.signing_key_id,
     })
 }
 
@@ -1779,6 +1842,7 @@ fn run_release_promote_at(
         primary_archive_sha256: release.primary_archive_sha256.clone(),
         manifest_sha256: release.manifest_sha256.clone(),
         shasums_sha256: release.shasums_sha256.clone(),
+        signing_key_id: release.signing_key_id.clone(),
         promoted_unix_ts: unix_timestamp_secs()?,
     };
     fs::write(&channel_metadata_path, serde_json::to_vec_pretty(&pointer)?)?;
@@ -1821,6 +1885,11 @@ fn run_release_resolve_at(
         primary_archive_sha256: release.primary_archive_sha256,
         manifest_sha256: release.manifest_sha256,
         shasums_sha256: release.shasums_sha256,
+        signing_key_id: release.signing_key_id.clone(),
+        shasums_signature_path: release
+            .shasums_signature_path
+            .as_ref()
+            .map(|path| version_root.join(path)),
     })
 }
 
@@ -1858,6 +1927,7 @@ fn run_install_release_at(
             .join(&release.control_dir),
             install_root: options.install_root.clone(),
             bin_dir: options.bin_dir.clone(),
+            expected_signing_key_id: options.expected_signing_key_id.clone(),
         },
     )?;
     Ok(InstallReleaseOutput {
@@ -1868,6 +1938,7 @@ fn run_install_release_at(
         requested_channel,
         resolved_version: release.product_version,
         primary_archive_sha256: release.primary_archive_sha256,
+        signing_key_id: install.signing_key_id,
         current_path: install.current_path,
     })
 }
@@ -1922,6 +1993,11 @@ fn run_install_at(
     let control_manifest = read_build_manifest(&control_dir.join("manifest.json"))?;
     ensure_target_aware_install_root(&install_root, &control_manifest.artifact_target_triple)?;
     verify_shasums(&control_dir, &control_dir.join("SHA256SUMS"))?;
+    let signing_key_id = verify_release_signature_if_present(
+        &control_dir.join("SHA256SUMS"),
+        &control_dir.join(SHASUMS_SIGNATURE_FILE),
+        options.expected_signing_key_id.as_deref(),
+    )?;
 
     let archive_path = find_primary_archive(&control_dir)?;
     let install_parent = install_root
@@ -1967,6 +2043,7 @@ fn run_install_at(
         bin_dir: bin_dir.clone(),
         installed_version: staged_manifest.product_version,
         previous_version,
+        signing_key_id,
         current_path: bin_dir.join("gcc-formed"),
     })
 }
@@ -2172,6 +2249,16 @@ fn run_package_at(
             &build_info_path,
         ])?,
     )?;
+    let shasums_signature_path =
+        if let Some(signing_private_key) = options.signing_private_key.as_ref() {
+            Some(write_detached_signature(
+                &shasums_path,
+                &control_dir.join(SHASUMS_SIGNATURE_FILE),
+                signing_private_key,
+            )?)
+        } else {
+            None
+        };
 
     Ok(PackageOutput {
         control_dir,
@@ -2181,6 +2268,7 @@ fn run_package_at(
         manifest_path,
         build_info_path,
         shasums_path,
+        shasums_signature_path,
     })
 }
 
@@ -2508,6 +2596,154 @@ fn render_sha256sums(paths: &[&Path]) -> Result<String, Box<dyn std::error::Erro
     Ok(lines.join("\n") + "\n")
 }
 
+fn write_detached_signature(
+    signed_path: &Path,
+    signature_path: &Path,
+    signing_private_key_path: &Path,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let signing_key = read_signing_key(signing_private_key_path)?;
+    let signed_bytes = fs::read(signed_path)?;
+    let verifying_key = signing_key.verifying_key();
+    let envelope = DetachedSignatureEnvelope {
+        algorithm: "ed25519".to_string(),
+        key_id: signing_key_id(&verifying_key),
+        public_key_hex: encode_hex(&verifying_key.to_bytes()),
+        signed_path: signed_path
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or("signed path filename was not valid UTF-8")?
+            .to_string(),
+        signed_sha256: sha256_bytes(&signed_bytes),
+        signature_hex: encode_hex(&signing_key.sign(&signed_bytes).to_bytes()),
+    };
+    fs::write(signature_path, serde_json::to_vec_pretty(&envelope)?)?;
+    Ok(signature_path.to_path_buf())
+}
+
+fn verify_release_signature_if_present(
+    signed_path: &Path,
+    signature_path: &Path,
+    expected_signing_key_id: Option<&str>,
+) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let signature = read_optional_detached_signature(signature_path)?;
+    match (signature, expected_signing_key_id) {
+        (None, None) => Ok(None),
+        (None, Some(expected_key_id)) => Err(format!(
+            "expected detached signature for {} with signing key `{expected_key_id}`",
+            signed_path.display()
+        )
+        .into()),
+        (Some(envelope), expected_key_id) => {
+            verify_detached_signature(signed_path, &envelope, expected_key_id)?;
+            Ok(Some(envelope.key_id))
+        }
+    }
+}
+
+fn read_optional_detached_signature(
+    signature_path: &Path,
+) -> Result<Option<DetachedSignatureEnvelope>, Box<dyn std::error::Error>> {
+    if signature_path.exists() {
+        Ok(Some(read_json_file(signature_path)?))
+    } else {
+        Ok(None)
+    }
+}
+
+fn verify_detached_signature(
+    signed_path: &Path,
+    envelope: &DetachedSignatureEnvelope,
+    expected_key_id: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if envelope.algorithm != "ed25519" {
+        return Err(format!("unsupported signature algorithm: {}", envelope.algorithm).into());
+    }
+    let expected_name = signed_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or("signed path filename was not valid UTF-8")?;
+    if envelope.signed_path != expected_name {
+        return Err(format!(
+            "detached signature targets `{}` but expected `{expected_name}`",
+            envelope.signed_path
+        )
+        .into());
+    }
+    if let Some(expected_key_id) = expected_key_id {
+        if envelope.key_id != expected_key_id {
+            return Err(format!(
+                "detached signature key mismatch: expected {expected_key_id}, got {}",
+                envelope.key_id
+            )
+            .into());
+        }
+    }
+    let public_key_bytes = decode_hex(&envelope.public_key_hex, "public key")?;
+    let public_key_bytes: [u8; 32] = public_key_bytes
+        .try_into()
+        .map_err(|_| "public key must contain exactly 32 bytes")?;
+    let verifying_key = VerifyingKey::from_bytes(&public_key_bytes)?;
+    let derived_key_id = signing_key_id(&verifying_key);
+    if derived_key_id != envelope.key_id {
+        return Err(format!(
+            "detached signature key id mismatch: expected {}, got {derived_key_id}",
+            envelope.key_id
+        )
+        .into());
+    }
+    let signed_bytes = fs::read(signed_path)?;
+    let signed_sha256 = sha256_bytes(&signed_bytes);
+    if signed_sha256 != envelope.signed_sha256 {
+        return Err(format!(
+            "detached signature digest mismatch for {}: expected {}, got {signed_sha256}",
+            signed_path.display(),
+            envelope.signed_sha256
+        )
+        .into());
+    }
+    let signature_bytes = decode_hex(&envelope.signature_hex, "signature")?;
+    let signature = Signature::from_slice(&signature_bytes)?;
+    verifying_key.verify(&signed_bytes, &signature)?;
+    Ok(())
+}
+
+fn read_signing_key(path: &Path) -> Result<SigningKey, Box<dyn std::error::Error>> {
+    let bytes = decode_hex(&fs::read_to_string(path)?, "private key")?;
+    let bytes: [u8; 32] = bytes
+        .try_into()
+        .map_err(|_| "private key must contain exactly 32 bytes")?;
+    Ok(SigningKey::from_bytes(&bytes))
+}
+
+fn signing_key_id(verifying_key: &VerifyingKey) -> String {
+    format!("ed25519:{}", &sha256_bytes(&verifying_key.to_bytes())[..16])
+}
+
+fn decode_hex(value: &str, label: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let normalized = value.trim();
+    if normalized.len() % 2 != 0 {
+        return Err(format!("{label} hex must contain an even number of characters").into());
+    }
+    let mut bytes = Vec::with_capacity(normalized.len() / 2);
+    let chars = normalized.as_bytes().chunks_exact(2);
+    for chunk in chars {
+        let pair = std::str::from_utf8(chunk)?;
+        bytes
+            .push(u8::from_str_radix(pair, 16).map_err(|error| {
+                format!("{label} hex contained invalid byte `{pair}`: {error}")
+            })?);
+    }
+    Ok(bytes)
+}
+
+fn encode_hex(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        let _ = write!(&mut output, "{byte:02x}");
+    }
+    output
+}
+
 fn read_json_file<T>(path: &Path) -> Result<T, Box<dyn std::error::Error>>
 where
     T: for<'de> Deserialize<'de>,
@@ -2575,6 +2811,32 @@ fn verify_published_release(
         )
         .into());
     }
+    match (
+        release.shasums_signature_path.as_ref(),
+        release.shasums_signature_sha256.as_ref(),
+    ) {
+        (Some(signature_path), Some(signature_sha256)) => {
+            let signature_path = version_root.join(signature_path);
+            let actual_sha256 = sha256_file(&signature_path)?;
+            if &actual_sha256 != signature_sha256 {
+                return Err(format!(
+                    "published signature checksum drifted: {}",
+                    signature_path.display()
+                )
+                .into());
+            }
+            let signature = read_json_file::<DetachedSignatureEnvelope>(&signature_path)?;
+            verify_detached_signature(
+                &shasums_path,
+                &signature,
+                release.signing_key_id.as_deref(),
+            )?;
+        }
+        (None, None) => {}
+        _ => {
+            return Err("published release signature metadata was incomplete".into());
+        }
+    }
     Ok(release)
 }
 
@@ -2623,6 +2885,13 @@ fn resolve_published_release(
             if pointer.shasums_sha256 != release.shasums_sha256 {
                 return Err(format!(
                     "channel pointer shasums checksum mismatch for {}",
+                    pointer.channel
+                )
+                .into());
+            }
+            if pointer.signing_key_id != release.signing_key_id {
+                return Err(format!(
+                    "channel pointer signing key mismatch for {}",
                     pointer.channel
                 )
                 .into());
@@ -3188,6 +3457,17 @@ mod tests {
         )
     }
 
+    fn test_signing_private_key_hex() -> &'static str {
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+    }
+
+    fn write_signing_private_key(path: &Path) {
+        write_file(
+            path,
+            format!("{}\n", test_signing_private_key_hex()).as_bytes(),
+        );
+    }
+
     fn init_release_repo(version: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
         let sandbox = tempfile::tempdir().unwrap();
         let repo_root = sandbox.path().join("repo");
@@ -3248,6 +3528,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: None,
             },
         )
         .unwrap();
@@ -3324,6 +3605,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: None,
             },
         )
         .unwrap_err();
@@ -3346,6 +3628,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: None,
             },
         )
         .unwrap_err();
@@ -3415,6 +3698,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: None,
             },
         )
         .unwrap();
@@ -3429,6 +3713,7 @@ mod tests {
                 control_dir: package.control_dir.clone(),
                 install_root: install_root.clone(),
                 bin_dir: bin_dir.clone(),
+                expected_signing_key_id: None,
             },
         )
         .unwrap();
@@ -3456,6 +3741,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: None,
             },
         )
         .unwrap();
@@ -3470,6 +3756,7 @@ mod tests {
                     .join("install")
                     .join("x86_64-unknown-linux-gnu"),
                 bin_dir: sandbox.path().join("bin"),
+                expected_signing_key_id: None,
             },
         )
         .unwrap_err();
@@ -3477,8 +3764,66 @@ mod tests {
     }
 
     #[test]
-    fn release_publish_promote_and_resolve_keep_same_bits() {
+    fn signed_package_supports_pinned_signature_verification_and_system_wide_layout() {
         let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-musl".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
+            },
+        )
+        .unwrap();
+        let signature = read_json_file::<DetachedSignatureEnvelope>(
+            package
+                .shasums_signature_path
+                .as_deref()
+                .expect("signature path missing"),
+        )
+        .unwrap();
+        let system_root = sandbox.path().join("system-root");
+        let install_root = system_root
+            .join("opt/cc-formed")
+            .join("x86_64-unknown-linux-musl");
+        let bin_dir = system_root.join("usr/local/bin");
+
+        let install = run_install_at(
+            &repo_root,
+            &InstallOptions {
+                control_dir: package.control_dir,
+                install_root: install_root.clone(),
+                bin_dir: bin_dir.clone(),
+                expected_signing_key_id: Some(signature.key_id.clone()),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            install.signing_key_id.as_deref(),
+            Some(signature.key_id.as_str())
+        );
+        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(
+            current_version_name(&install_root).unwrap().as_deref(),
+            Some("v0.1.0")
+        );
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+        assert!(bin_dir.join("gcc-formed").exists());
+        assert!(launcher_is_managed(&bin_dir.join("gcc-formed"), &install_root).unwrap());
+    }
+
+    #[test]
+    fn install_rejects_signed_release_with_wrong_key_id() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -3488,6 +3833,47 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
+            },
+        )
+        .unwrap();
+
+        let error = run_install_at(
+            &repo_root,
+            &InstallOptions {
+                control_dir: package.control_dir,
+                install_root: sandbox
+                    .path()
+                    .join("install")
+                    .join("x86_64-unknown-linux-gnu"),
+                bin_dir: sandbox.path().join("bin"),
+                expected_signing_key_id: Some("ed25519:deadbeefdeadbeef".to_string()),
+            },
+        )
+        .unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("detached signature key mismatch")
+        );
+    }
+
+    #[test]
+    fn release_publish_promote_and_resolve_keep_same_bits() {
+        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
             },
         )
         .unwrap();
@@ -3543,6 +3929,7 @@ mod tests {
                 .unwrap();
 
         assert_eq!(publish.version, "0.1.0");
+        assert!(publish.signing_key_id.is_some());
         assert_eq!(
             canary.primary_archive_sha256,
             publish.primary_archive_sha256
@@ -3565,6 +3952,14 @@ mod tests {
             stable_pointer.primary_archive_sha256,
             published.primary_archive_sha256
         );
+        assert_eq!(stable_pointer.signing_key_id, publish.signing_key_id);
+        assert_eq!(resolved.signing_key_id, publish.signing_key_id);
+        assert!(
+            resolved
+                .shasums_signature_path
+                .as_ref()
+                .is_some_and(|path| path.exists())
+        );
         assert!(resolved.control_dir.exists());
         assert!(resolved.primary_archive.exists());
     }
@@ -3572,6 +3967,8 @@ mod tests {
     #[test]
     fn install_release_supports_exact_version_and_checksum_pin() {
         let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -3581,6 +3978,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
             },
         )
         .unwrap();
@@ -3629,6 +4027,7 @@ mod tests {
                 channel: None,
                 version: Some("0.1.0".to_string()),
                 expected_primary_sha256: Some(resolved.primary_archive_sha256.clone()),
+                expected_signing_key_id: resolved.signing_key_id.clone(),
             },
         )
         .unwrap();
@@ -3640,6 +4039,7 @@ mod tests {
             install.primary_archive_sha256,
             resolved.primary_archive_sha256
         );
+        assert_eq!(install.signing_key_id, resolved.signing_key_id);
         assert_eq!(
             current_version_name(&install_root).unwrap().as_deref(),
             Some("v0.1.0")
@@ -3650,6 +4050,8 @@ mod tests {
     #[test]
     fn install_release_from_channel_reports_exact_installed_version() {
         let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -3659,6 +4061,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
             },
         )
         .unwrap();
@@ -3695,6 +4098,13 @@ mod tests {
                 channel: Some("stable".to_string()),
                 version: None,
                 expected_primary_sha256: None,
+                expected_signing_key_id: read_release_channel_pointer(
+                    &repository_root,
+                    "x86_64-unknown-linux-gnu",
+                    "stable",
+                )
+                .unwrap()
+                .signing_key_id,
             },
         )
         .unwrap();
@@ -3707,6 +4117,8 @@ mod tests {
     #[test]
     fn install_release_rejects_mismatched_pinned_checksum() {
         let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let signing_private_key = sandbox.path().join("release-signing.key");
+        write_signing_private_key(&signing_private_key);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -3716,6 +4128,7 @@ mod tests {
                 out_dir: PathBuf::from("dist"),
                 release_channel: "stable".to_string(),
                 support_tier: "gcc15_primary".to_string(),
+                signing_private_key: Some(signing_private_key),
             },
         )
         .unwrap();
@@ -3742,6 +4155,7 @@ mod tests {
                 channel: None,
                 version: Some("0.1.0".to_string()),
                 expected_primary_sha256: Some("deadbeef".to_string()),
+                expected_signing_key_id: None,
             },
         )
         .unwrap_err();

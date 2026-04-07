@@ -22,10 +22,11 @@
 
 - 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
-- `cargo xtask package` により release artifact / control file の最小セットを生成できる
-- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証できる
+- `cargo xtask package` により release artifact / control file の最小セットを生成でき、必要なら `SHA256SUMS.sig` を Ed25519 で付与できる
+- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証でき、署名付き release は signing key id pin でも検証できる
 - `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
 - `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
+- `/opt/cc-formed/...` + `/usr/local/bin` 相当の system-wide layout も pseudo-root smoke で検証している
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -66,6 +67,33 @@ cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --versi
 cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
 ```
 
+署名付き release を作って signing key id pin で検証する最小例:
+
+```bash
+signing_private_key="$PWD/release-signing.key"
+control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-gnu
+
+cargo xtask package \
+  --binary target/debug/gcc-formed \
+  --target-triple x86_64-unknown-linux-gnu \
+  --signing-private-key "$signing_private_key"
+
+signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["key_id"])
+PY
+)"
+
+cargo xtask install \
+  --control-dir "$control_dir" \
+  --install-root "$install_root" \
+  --bin-dir "$bin_dir" \
+  --expected-signing-key-id "$signing_key_id"
+```
+
 immutable release repository と exact pin install を検証する最小例:
 
 ```bash
@@ -78,7 +106,23 @@ cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_6
 cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-gnu --channel stable --install-root "$install_root" --bin-dir "$bin_dir"
 ```
 
-CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。
+CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` を取り出し、`--expected-signing-key-id ...` を追加する。
+
+system-wide layout を pseudo-root で検証する最小例:
+
+```bash
+system_root="$PWD/.system-root"
+install_root="$system_root/opt/cc-formed/x86_64-unknown-linux-gnu"
+bin_dir="$system_root/usr/local/bin"
+
+cargo xtask install \
+  --control-dir "$control_dir" \
+  --install-root "$install_root" \
+  --bin-dir "$bin_dir" \
+  --expected-signing-key-id "$signing_key_id"
+```
+
+本命の production artifact は引き続き `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。
 
 ## 実装に入る順序
 
