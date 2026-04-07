@@ -1,5 +1,5 @@
 use diag_backend_probe::ProbeResult;
-use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, ToolInfo};
+use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, ToolInfo, fingerprint_for};
 use diag_trace::{
     RetentionPolicy, WrapperPaths, secure_private_dir, secure_private_file, should_retain,
 };
@@ -65,6 +65,9 @@ pub enum CaptureError {
 struct InvocationRecord {
     backend_path: String,
     argv: Vec<String>,
+    argv_hash: String,
+    normalized_invocation: NormalizedInvocation,
+    redaction_class: String,
     selected_mode: ExecutionMode,
     cwd: String,
     sarif_path: Option<String>,
@@ -80,6 +83,22 @@ struct ChildEnvPolicy {
     set: BTreeMap<String, String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     unset: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+struct NormalizedInvocation {
+    arg_count: usize,
+    input_count: usize,
+    compile_only: bool,
+    preprocess_only: bool,
+    assemble_only: bool,
+    output_requested: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    language_override: Option<String>,
+    include_path_count: usize,
+    define_count: usize,
+    diagnostics_flag_count: usize,
+    injected_flag_count: usize,
 }
 
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
@@ -321,17 +340,83 @@ fn build_invocation_record(
     sarif_path: Option<&Path>,
     child_env_policy: ChildEnvPolicy,
 ) -> InvocationRecord {
+    let argv = final_args
+        .iter()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
     InvocationRecord {
         backend_path: request.backend.resolved_path.display().to_string(),
-        argv: final_args
-            .iter()
-            .map(|arg| arg.to_string_lossy().into_owned())
-            .collect(),
+        argv_hash: fingerprint_for(&argv),
+        normalized_invocation: normalize_invocation(&argv),
+        redaction_class: "restricted".to_string(),
+        argv,
         selected_mode: request.mode,
         cwd: request.cwd.display().to_string(),
         sarif_path: sarif_path.map(|path| path.display().to_string()),
         child_env_policy,
         wrapper_env: collect_wrapper_env(),
+    }
+}
+
+fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
+    let mut input_count = 0;
+    let mut compile_only = false;
+    let mut preprocess_only = false;
+    let mut assemble_only = false;
+    let mut output_requested = false;
+    let mut language_override = None;
+    let mut include_path_count = 0;
+    let mut define_count = 0;
+    let mut diagnostics_flag_count = 0;
+    let mut injected_flag_count = 0;
+    let mut expect_output_path = false;
+    let mut expect_language = false;
+
+    for arg in argv {
+        if expect_output_path {
+            expect_output_path = false;
+            continue;
+        }
+        if expect_language {
+            language_override = Some(arg.clone());
+            expect_language = false;
+            continue;
+        }
+
+        match arg.as_str() {
+            "-c" => compile_only = true,
+            "-E" => preprocess_only = true,
+            "-S" => assemble_only = true,
+            "-o" => {
+                output_requested = true;
+                expect_output_path = true;
+            }
+            "-x" => expect_language = true,
+            _ if arg.starts_with("-I") => include_path_count += 1,
+            _ if arg.starts_with("-D") => define_count += 1,
+            _ if arg.starts_with("-fdiagnostics-") => {
+                diagnostics_flag_count += 1;
+                if arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=") {
+                    injected_flag_count += 1;
+                }
+            }
+            _ if arg.starts_with('-') => {}
+            _ => input_count += 1,
+        }
+    }
+
+    NormalizedInvocation {
+        arg_count: argv.len(),
+        input_count,
+        compile_only,
+        preprocess_only,
+        assemble_only,
+        output_requested,
+        language_override,
+        include_path_count,
+        define_count,
+        diagnostics_flag_count,
+        injected_flag_count,
     }
 }
 
@@ -500,6 +585,8 @@ mod tests {
 
         assert_eq!(record.selected_mode, ExecutionMode::Render);
         assert_eq!(record.backend_path, "/usr/bin/gcc");
+        assert_eq!(record.argv_hash, fingerprint_for(&record.argv));
+        assert_eq!(record.redaction_class, "restricted");
         assert_eq!(record.cwd, "/tmp/project");
         assert_eq!(
             record.sarif_path.as_deref(),
@@ -512,6 +599,11 @@ mod tests {
                 .iter()
                 .any(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
         );
+        assert_eq!(record.normalized_invocation.arg_count, 3);
+        assert_eq!(record.normalized_invocation.input_count, 1);
+        assert!(record.normalized_invocation.compile_only);
+        assert_eq!(record.normalized_invocation.injected_flag_count, 1);
+        assert_eq!(record.normalized_invocation.diagnostics_flag_count, 1);
         assert_eq!(
             record
                 .child_env_policy
@@ -566,5 +658,31 @@ mod tests {
 
         let passthrough_keys = trace_sanitized_env_keys(ExecutionMode::Passthrough);
         assert!(passthrough_keys.is_empty());
+    }
+
+    #[test]
+    fn normalizes_invocation_shape_for_trace_harvesting() {
+        let normalized = normalize_invocation(&[
+            "-c".to_string(),
+            "-Iinclude".to_string(),
+            "-DDEBUG=1".to_string(),
+            "-o".to_string(),
+            "main.o".to_string(),
+            "-x".to_string(),
+            "c++".to_string(),
+            "main.cc".to_string(),
+        ]);
+
+        assert_eq!(normalized.arg_count, 8);
+        assert_eq!(normalized.input_count, 1);
+        assert!(normalized.compile_only);
+        assert!(!normalized.preprocess_only);
+        assert!(!normalized.assemble_only);
+        assert!(normalized.output_requested);
+        assert_eq!(normalized.language_override.as_deref(), Some("c++"));
+        assert_eq!(normalized.include_path_count, 1);
+        assert_eq!(normalized.define_count, 1);
+        assert_eq!(normalized.diagnostics_flag_count, 0);
+        assert_eq!(normalized.injected_flag_count, 0);
     }
 }

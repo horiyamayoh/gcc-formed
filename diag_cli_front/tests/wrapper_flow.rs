@@ -204,6 +204,8 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         invocation["backend_path"].as_str(),
         Some(expected_backend_path.as_str())
     );
+    assert_eq!(invocation["redaction_class"].as_str(), Some("restricted"));
+    assert_eq!(invocation["argv_hash"].as_str().map(str::len), Some(64));
     assert_eq!(invocation["cwd"].as_str(), Some(expected_cwd.as_str()));
     assert!(
         invocation["argv"]
@@ -216,6 +218,22 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         arg.as_str()
             .is_some_and(|arg| arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file="))
     }));
+    assert_eq!(
+        invocation["normalized_invocation"]["arg_count"].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        invocation["normalized_invocation"]["input_count"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        invocation["normalized_invocation"]["compile_only"].as_bool(),
+        Some(true)
+    );
+    assert_eq!(
+        invocation["normalized_invocation"]["injected_flag_count"].as_u64(),
+        Some(1)
+    );
 
     let retained_trace: Value =
         serde_json::from_str(&fs::read_to_string(retained_dir.join("trace.json")).unwrap())
@@ -491,6 +509,11 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())
             .unwrap();
     assert_eq!(invocation["selected_mode"], "passthrough");
+    assert_eq!(invocation["redaction_class"].as_str(), Some("restricted"));
+    assert_eq!(
+        invocation["normalized_invocation"]["injected_flag_count"].as_u64(),
+        Some(0)
+    );
 }
 
 fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
