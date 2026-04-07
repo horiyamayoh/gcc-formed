@@ -322,6 +322,13 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
             .as_array()
             .unwrap()
             .iter()
+            .any(|artifact| artifact["id"].as_str() == Some("stderr.raw"))
+    );
+    assert!(
+        trace["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
             .any(|artifact| artifact["id"].as_str() == Some("invocation.json"))
     );
 
@@ -331,8 +338,14 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         .map(|entry| entry.path())
         .find(|path| path.is_dir())
         .unwrap();
+    assert!(retained_dir.join("stderr.raw").exists());
     assert!(retained_dir.join("invocation.json").exists());
     assert!(retained_dir.join("trace.json").exists());
+    assert!(
+        fs::read_to_string(retained_dir.join("stderr.raw"))
+            .unwrap()
+            .contains("main.c:4:1: error: expected ';' before '}' token")
+    );
 
     let invocation: Value =
         serde_json::from_str(&fs::read_to_string(retained_dir.join("invocation.json")).unwrap())

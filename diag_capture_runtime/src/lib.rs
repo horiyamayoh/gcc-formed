@@ -26,6 +26,7 @@ pub struct CaptureRequest {
     pub args: Vec<OsString>,
     pub cwd: PathBuf,
     pub mode: ExecutionMode,
+    pub capture_passthrough_stderr: bool,
     pub retention: RetentionPolicy,
     pub paths: WrapperPaths,
     pub inject_sarif: bool,
@@ -116,6 +117,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     command.args(final_args);
 
     let stderr_mode = match request.mode {
+        ExecutionMode::Passthrough if request.capture_passthrough_stderr => Stdio::piped(),
         ExecutionMode::Passthrough => Stdio::inherit(),
         ExecutionMode::Render | ExecutionMode::Shadow => Stdio::piped(),
     };
@@ -123,6 +125,9 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     let mut child = command.spawn().map_err(|_| CaptureError::Spawn)?;
 
     let stderr_handle = match request.mode {
+        ExecutionMode::Passthrough if request.capture_passthrough_stderr => {
+            child.stderr.take().map(spawn_tee_reader)
+        }
         ExecutionMode::Passthrough => None,
         ExecutionMode::Render => child.stderr.take().map(|stderr| {
             thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
@@ -132,24 +137,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
                 Ok(buffer)
             })
         }),
-        ExecutionMode::Shadow => child.stderr.take().map(|stderr| {
-            thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
-                let mut reader = stderr;
-                let mut buffer = [0_u8; 4096];
-                let mut captured = Vec::new();
-                let mut tee = std::io::stderr().lock();
-                loop {
-                    let read = reader.read(&mut buffer)?;
-                    if read == 0 {
-                        break;
-                    }
-                    tee.write_all(&buffer[..read])?;
-                    tee.flush()?;
-                    captured.extend_from_slice(&buffer[..read]);
-                }
-                Ok(captured)
-            })
-        }),
+        ExecutionMode::Shadow => child.stderr.take().map(spawn_tee_reader),
     };
 
     let status = child.wait()?;
@@ -203,6 +191,27 @@ pub fn cleanup_capture(outcome: &CaptureOutcome) -> Result<(), std::io::Error> {
         fs::remove_dir_all(&outcome.temp_dir)?;
     }
     Ok(())
+}
+
+fn spawn_tee_reader(
+    stderr: std::process::ChildStderr,
+) -> thread::JoinHandle<Result<Vec<u8>, std::io::Error>> {
+    thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
+        let mut reader = stderr;
+        let mut buffer = [0_u8; 4096];
+        let mut captured = Vec::new();
+        let mut tee = std::io::stderr().lock();
+        loop {
+            let read = reader.read(&mut buffer)?;
+            if read == 0 {
+                break;
+            }
+            tee.write_all(&buffer[..read])?;
+            tee.flush()?;
+            captured.extend_from_slice(&buffer[..read]);
+        }
+        Ok(captured)
+    })
 }
 
 fn build_artifacts(
@@ -442,6 +451,7 @@ mod tests {
             args: vec![OsString::from("-c"), OsString::from("src/main.c")],
             cwd: PathBuf::from("/tmp/project"),
             mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
             retention: RetentionPolicy::Always,
             paths: WrapperPaths {
                 config_path: PathBuf::from("/tmp/config.toml"),

@@ -84,6 +84,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         args: parsed.forwarded_args.clone(),
         cwd: cwd.clone(),
         mode,
+        capture_passthrough_stderr: should_capture_passthrough_stderr(retention_policy, debug_refs),
         retention: retention_policy,
         paths: paths.clone(),
         inject_sarif: mode != ExecutionMode::Passthrough
@@ -717,6 +718,16 @@ fn os_to_string(value: &OsString) -> String {
     value.to_string_lossy().into_owned()
 }
 
+fn should_capture_passthrough_stderr(
+    retention_policy: RetentionPolicy,
+    debug_refs: DebugRefs,
+) -> bool {
+    matches!(
+        retention_policy,
+        RetentionPolicy::OnChildError | RetentionPolicy::Always
+    ) || matches!(debug_refs, DebugRefs::CaptureRef)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ModeDecision {
     mode: ExecutionMode,
@@ -1029,5 +1040,29 @@ mod tests {
 
         assert!(paths_are_separated(&separated));
         assert!(!paths_are_separated(&overlapping));
+    }
+
+    #[test]
+    fn captures_passthrough_stderr_only_when_requested() {
+        assert!(should_capture_passthrough_stderr(
+            RetentionPolicy::Always,
+            DebugRefs::None
+        ));
+        assert!(should_capture_passthrough_stderr(
+            RetentionPolicy::OnChildError,
+            DebugRefs::None
+        ));
+        assert!(should_capture_passthrough_stderr(
+            RetentionPolicy::Never,
+            DebugRefs::CaptureRef
+        ));
+        assert!(!should_capture_passthrough_stderr(
+            RetentionPolicy::Never,
+            DebugRefs::None
+        ));
+        assert!(!should_capture_passthrough_stderr(
+            RetentionPolicy::OnWrapperFailure,
+            DebugRefs::TraceId
+        ));
     }
 }
