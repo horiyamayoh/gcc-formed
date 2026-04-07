@@ -994,7 +994,9 @@ dependencies = [
  "diag_enrich",
  "diag_render",
  "diag_testkit",
+ "diag_trace",
  "serde_json",
+ "sha2",
  "tempfile",
 ]
 

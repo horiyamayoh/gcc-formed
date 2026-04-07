@@ -12,7 +12,10 @@ use diag_render::{
 use diag_testkit::{
     ExpectedFallback, Fixture, RenderProfileExpectations, discover, family_counts, validate_fixture,
 };
+use diag_trace::{BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, build_manifest_for_target};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -38,6 +41,20 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    Package {
+        #[arg(long)]
+        binary: PathBuf,
+        #[arg(long)]
+        debug_binary: Option<PathBuf>,
+        #[arg(long)]
+        target_triple: String,
+        #[arg(long, default_value = "dist")]
+        out_dir: PathBuf,
+        #[arg(long, default_value = "stable")]
+        release_channel: String,
+        #[arg(long, default_value = "gcc15_primary")]
+        support_tier: String,
+    },
     Replay {
         #[arg(long, default_value = "corpus")]
         root: PathBuf,
@@ -83,12 +100,62 @@ struct CapturedIngress {
     sarif_text: String,
 }
 
+#[derive(Debug, Clone)]
+struct PackageOptions {
+    binary: PathBuf,
+    debug_binary: Option<PathBuf>,
+    target_triple: String,
+    out_dir: PathBuf,
+    release_channel: String,
+    support_tier: String,
+}
+
+#[derive(Debug)]
+struct PackageOutput {
+    control_dir: PathBuf,
+    primary_archive: PathBuf,
+    debug_archive: PathBuf,
+    source_archive: PathBuf,
+    manifest_path: PathBuf,
+    build_info_path: PathBuf,
+    shasums_path: PathBuf,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Check => {
             run("cargo", &["fmt", "--check"])?;
             run("cargo", &["test", "--workspace"])?;
+        }
+        Commands::Package {
+            binary,
+            debug_binary,
+            target_triple,
+            out_dir,
+            release_channel,
+            support_tier,
+        } => {
+            let package = run_package(PackageOptions {
+                binary,
+                debug_binary,
+                target_triple,
+                out_dir,
+                release_channel,
+                support_tier,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "control_dir": package.control_dir,
+                    "primary_archive": package.primary_archive,
+                    "debug_archive": package.debug_archive,
+                    "source_archive": package.source_archive,
+                    "manifest_path": package.manifest_path,
+                    "build_info_path": package.build_info_path,
+                    "shasums_path": package.shasums_path,
+                }))?
+            );
         }
         Commands::Replay {
             root,
@@ -1089,6 +1156,380 @@ fn copy_dir_recursive(from: &Path, to: &Path) -> Result<(), std::io::Error> {
     Ok(())
 }
 
+fn run_package(options: PackageOptions) -> Result<PackageOutput, Box<dyn std::error::Error>> {
+    run_package_at(&workspace_root(), &options)
+}
+
+fn run_package_at(
+    workspace_root: &Path,
+    options: &PackageOptions,
+) -> Result<PackageOutput, Box<dyn std::error::Error>> {
+    ensure_clean_git_tree(workspace_root)?;
+    ensure_release_inputs(workspace_root)?;
+
+    let binary = canonicalize_existing_path(workspace_root, &options.binary, "binary")?;
+    let debug_binary = options
+        .debug_binary
+        .as_ref()
+        .map(|path| canonicalize_existing_path(workspace_root, path, "debug binary"))
+        .transpose()?
+        .unwrap_or_else(|| binary.clone());
+
+    let output_root = resolve_workspace_path(workspace_root, &options.out_dir);
+    let artifact_slug = artifact_slug_for_target(&options.target_triple);
+    let version = env!("CARGO_PKG_VERSION");
+    let package_basename = format!("{DEFAULT_PRODUCT_NAME}-v{version}-{artifact_slug}");
+    let debug_basename = format!("{package_basename}.debug");
+    let source_basename = format!("{DEFAULT_PRODUCT_NAME}-v{version}-source");
+    let control_dir = output_root.join(&package_basename);
+    if control_dir.exists() {
+        fs::remove_dir_all(&control_dir)?;
+    }
+    fs::create_dir_all(&control_dir)?;
+
+    let lockfile_hash = sha256_file(&workspace_root.join("Cargo.lock"))?;
+    let vendor_hash = hash_vendor_dir(&workspace_root.join("vendor"))?;
+    let primary_manifest = build_manifest_for_target(
+        lockfile_hash.clone(),
+        vendor_hash.clone(),
+        &options.target_triple,
+        &options.support_tier,
+        &options.release_channel,
+    );
+    let debug_manifest = build_manifest_for_target(
+        lockfile_hash,
+        vendor_hash,
+        &options.target_triple,
+        &options.support_tier,
+        &options.release_channel,
+    );
+
+    let staging = tempfile::tempdir()?;
+    let primary_root = staging.path().join(&package_basename);
+    let debug_root = staging.path().join(&debug_basename);
+
+    let primary_manifest = stage_release_payload(
+        workspace_root,
+        &primary_root,
+        &binary,
+        &primary_manifest,
+        "primary",
+    )?;
+    let _debug_manifest = stage_release_payload(
+        workspace_root,
+        &debug_root,
+        &debug_binary,
+        &debug_manifest,
+        "debug",
+    )?;
+
+    let manifest_path = control_dir.join("manifest.json");
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&primary_manifest)?,
+    )?;
+
+    let build_info_path = control_dir.join("build-info.txt");
+    fs::copy(primary_root.join("build-info.txt"), &build_info_path)?;
+
+    let primary_archive = control_dir.join(format!("{package_basename}.tar.gz"));
+    create_tar_archive(staging.path(), &package_basename, &primary_archive)?;
+    let debug_archive = control_dir.join(format!("{debug_basename}.tar.gz"));
+    create_tar_archive(staging.path(), &debug_basename, &debug_archive)?;
+
+    let source_archive = control_dir.join(format!("{source_basename}.tar.gz"));
+    create_source_archive(workspace_root, &source_archive)?;
+
+    let shasums_path = control_dir.join("SHA256SUMS");
+    fs::write(
+        &shasums_path,
+        render_sha256sums(&[
+            &primary_archive,
+            &debug_archive,
+            &source_archive,
+            &manifest_path,
+            &build_info_path,
+        ])?,
+    )?;
+
+    Ok(PackageOutput {
+        control_dir,
+        primary_archive,
+        debug_archive,
+        source_archive,
+        manifest_path,
+        build_info_path,
+        shasums_path,
+    })
+}
+
+fn workspace_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .to_path_buf()
+}
+
+fn ensure_clean_git_tree(workspace_root: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let output = Command::new("git")
+        .current_dir(workspace_root)
+        .args(["status", "--porcelain"])
+        .output()?;
+    if !output.status.success() {
+        return Err("failed to inspect git worktree state".into());
+    }
+    if !output.stdout.is_empty() {
+        return Err("release packaging requires a clean git worktree".into());
+    }
+    Ok(())
+}
+
+fn ensure_release_inputs(workspace_root: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    for relative in [
+        "README.md",
+        "RELEASE-NOTES.md",
+        "LICENSE",
+        "NOTICE",
+        "Cargo.lock",
+    ] {
+        let path = workspace_root.join(relative);
+        if !path.exists() {
+            return Err(format!("required release input missing: {}", path.display()).into());
+        }
+    }
+    Ok(())
+}
+
+fn canonicalize_existing_path(
+    workspace_root: &Path,
+    path: &Path,
+    label: &str,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let resolved = resolve_workspace_path(workspace_root, path);
+    if !resolved.exists() {
+        return Err(format!("{label} does not exist: {}", resolved.display()).into());
+    }
+    Ok(fs::canonicalize(resolved)?)
+}
+
+fn resolve_workspace_path(workspace_root: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        workspace_root.join(path)
+    }
+}
+
+fn artifact_slug_for_target(target_triple: &str) -> String {
+    let descriptor = diag_trace::describe_target(target_triple);
+    format!(
+        "{}-{}-{}",
+        descriptor.os, descriptor.arch, descriptor.libc_family
+    )
+}
+
+fn stage_release_payload(
+    workspace_root: &Path,
+    stage_root: &Path,
+    binary: &Path,
+    manifest_template: &BuildManifest,
+    archive_role: &str,
+) -> Result<BuildManifest, Box<dyn std::error::Error>> {
+    fs::create_dir_all(stage_root.join("bin"))?;
+    fs::create_dir_all(stage_root.join("share/doc/gcc-formed"))?;
+    fs::create_dir_all(stage_root.join("share/licenses/gcc-formed"))?;
+
+    copy_release_file(binary, &stage_root.join("bin/gcc-formed"))?;
+    copy_release_file(binary, &stage_root.join("bin/g++-formed"))?;
+    copy_release_file(
+        &workspace_root.join("README.md"),
+        &stage_root.join("share/doc/gcc-formed/README.md"),
+    )?;
+    copy_release_file(
+        &workspace_root.join("RELEASE-NOTES.md"),
+        &stage_root.join("share/doc/gcc-formed/RELEASE-NOTES.md"),
+    )?;
+    copy_release_file(
+        &workspace_root.join("LICENSE"),
+        &stage_root.join("share/licenses/gcc-formed/LICENSE"),
+    )?;
+    copy_release_file(
+        &workspace_root.join("NOTICE"),
+        &stage_root.join("share/licenses/gcc-formed/NOTICE"),
+    )?;
+
+    let build_info_path = stage_root.join("build-info.txt");
+    fs::write(
+        &build_info_path,
+        render_build_info(manifest_template, archive_role, binary),
+    )?;
+
+    let mut manifest = manifest_template.clone();
+    manifest.checksums = payload_checksums(stage_root)?;
+    fs::write(
+        stage_root.join("manifest.json"),
+        serde_json::to_vec_pretty(&manifest)?,
+    )?;
+
+    Ok(manifest)
+}
+
+fn copy_release_file(from: &Path, to: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(parent) = to.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::copy(from, to)?;
+    let permissions = fs::metadata(from)?.permissions();
+    fs::set_permissions(to, permissions)?;
+    Ok(())
+}
+
+fn render_build_info(manifest: &BuildManifest, archive_role: &str, binary: &Path) -> String {
+    let mut text = String::new();
+    let _ = writeln!(&mut text, "product: {}", manifest.product_name);
+    let _ = writeln!(&mut text, "version: {}", manifest.product_version);
+    let _ = writeln!(
+        &mut text,
+        "artifact target triple: {}",
+        manifest.artifact_target_triple
+    );
+    let _ = writeln!(
+        &mut text,
+        "artifact platform: {}/{}/{}",
+        manifest.artifact_os, manifest.artifact_arch, manifest.artifact_libc_family
+    );
+    let _ = writeln!(&mut text, "git commit: {}", manifest.git_commit);
+    let _ = writeln!(&mut text, "build profile: {}", manifest.build_profile);
+    let _ = writeln!(&mut text, "rustc: {}", manifest.rustc_version);
+    let _ = writeln!(&mut text, "cargo: {}", manifest.cargo_version);
+    let _ = writeln!(&mut text, "build timestamp: {}", manifest.build_timestamp);
+    let _ = writeln!(
+        &mut text,
+        "support tier: {}",
+        manifest.support_tier_declaration
+    );
+    let _ = writeln!(&mut text, "release channel: {}", manifest.release_channel);
+    let _ = writeln!(&mut text, "archive role: {archive_role}");
+    let _ = writeln!(&mut text, "binary source: {}", binary.display());
+    let _ = writeln!(&mut text, "lockfile hash: {}", manifest.lockfile_hash);
+    let _ = writeln!(&mut text, "vendor hash: {}", manifest.vendor_hash);
+    text
+}
+
+fn payload_checksums(stage_root: &Path) -> Result<Vec<ChecksumEntry>, Box<dyn std::error::Error>> {
+    let payload_paths = [
+        "bin/gcc-formed",
+        "bin/g++-formed",
+        "share/doc/gcc-formed/README.md",
+        "share/doc/gcc-formed/RELEASE-NOTES.md",
+        "share/licenses/gcc-formed/LICENSE",
+        "share/licenses/gcc-formed/NOTICE",
+        "build-info.txt",
+    ];
+    let mut checksums = Vec::new();
+    for relative in payload_paths {
+        let path = stage_root.join(relative);
+        checksums.push(ChecksumEntry {
+            path: relative.to_string(),
+            sha256: sha256_file(&path)?,
+            size_bytes: fs::metadata(path)?.len(),
+        });
+    }
+    Ok(checksums)
+}
+
+fn hash_vendor_dir(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
+    if !path.exists() {
+        return Ok("vendor-missing".to_string());
+    }
+    let mut entries = Vec::new();
+    collect_paths_for_hash(path, &mut entries)?;
+    entries.sort();
+    Ok(sha256_bytes(entries.join("\n").as_bytes()))
+}
+
+fn collect_paths_for_hash(
+    path: &Path,
+    entries: &mut Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let child = entry.path();
+        if child.is_dir() {
+            collect_paths_for_hash(&child, entries)?;
+        } else {
+            entries.push(child.display().to_string());
+        }
+    }
+    Ok(())
+}
+
+fn sha256_file(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
+    let bytes = fs::read(path)?;
+    Ok(sha256_bytes(&bytes))
+}
+
+fn sha256_bytes(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    format!("{:x}", hasher.finalize())
+}
+
+fn create_tar_archive(
+    root: &Path,
+    directory_name: &str,
+    output_path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let status = Command::new("tar")
+        .current_dir(root)
+        .arg("-czf")
+        .arg(output_path)
+        .arg(directory_name)
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!("failed to create tar archive {}", output_path.display()).into())
+    }
+}
+
+fn create_source_archive(
+    workspace_root: &Path,
+    output_path: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let status = Command::new("git")
+        .current_dir(workspace_root)
+        .arg("archive")
+        .arg("--format=tar.gz")
+        .arg(format!("--output={}", output_path.display()))
+        .arg("HEAD")
+        .status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "failed to create source archive at {}",
+            output_path.display()
+        )
+        .into())
+    }
+}
+
+fn render_sha256sums(paths: &[&Path]) -> Result<String, Box<dyn std::error::Error>> {
+    let mut lines = Vec::new();
+    for path in paths {
+        lines.push(format!(
+            "{}  {}",
+            sha256_file(path)?,
+            path.file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+        ));
+    }
+    lines.sort();
+    Ok(lines.join("\n") + "\n")
+}
+
 fn report_failures(mode: &str, failures: &[VerificationFailure]) {
     eprintln!("mode: {mode}");
     eprintln!("failed fixture count: {}", failures.len());
@@ -1153,4 +1594,205 @@ fn enforce_minimum_family_counts(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn write_file(path: &Path, contents: &[u8]) {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, contents).unwrap();
+    }
+
+    #[cfg(unix)]
+    fn make_executable(path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
+    #[cfg(not(unix))]
+    fn make_executable(_path: &Path) {}
+
+    fn run_command(root: &Path, binary: &str, args: &[&str]) {
+        let output = Command::new(binary)
+            .current_dir(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{binary} {} failed: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    fn init_release_repo() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let sandbox = tempfile::tempdir().unwrap();
+        let repo_root = sandbox.path().join("repo");
+        let binary_root = sandbox.path().join("binary");
+        fs::create_dir_all(&repo_root).unwrap();
+        fs::create_dir_all(&binary_root).unwrap();
+
+        write_file(&repo_root.join(".gitignore"), b"/dist\n");
+        write_file(&repo_root.join("README.md"), b"# gcc-formed\n");
+        write_file(
+            &repo_root.join("RELEASE-NOTES.md"),
+            b"# Release Notes\n\n- Initial release packaging smoke fixture.\n",
+        );
+        write_file(&repo_root.join("LICENSE"), b"Apache-2.0\n");
+        write_file(&repo_root.join("NOTICE"), b"gcc-formed notice\n");
+        write_file(&repo_root.join("Cargo.lock"), b"version = 3\n");
+        write_file(&repo_root.join("src/main.rs"), b"fn main() {}\n");
+
+        let binary_path = binary_root.join("gcc-formed");
+        write_file(&binary_path, b"#!/bin/sh\necho packaged\n");
+        make_executable(&binary_path);
+
+        run_command(&repo_root, "git", &["init", "-q", "-b", "main"]);
+        run_command(
+            &repo_root,
+            "git",
+            &["config", "user.email", "ci@example.com"],
+        );
+        run_command(&repo_root, "git", &["config", "user.name", "CI"]);
+        run_command(&repo_root, "git", &["add", "."]);
+        run_command(&repo_root, "git", &["commit", "-q", "-m", "initial"]);
+
+        (sandbox, repo_root, binary_path)
+    }
+
+    #[test]
+    fn package_smoke_emits_release_artifacts() {
+        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        let package = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path.clone(),
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-musl".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap();
+
+        assert!(package.primary_archive.exists());
+        assert!(package.debug_archive.exists());
+        assert!(package.source_archive.exists());
+        assert!(package.manifest_path.exists());
+        assert!(package.build_info_path.exists());
+        assert!(package.shasums_path.exists());
+
+        let manifest = serde_json::from_str::<BuildManifest>(
+            &fs::read_to_string(&package.manifest_path).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(manifest.product_name, DEFAULT_PRODUCT_NAME);
+        assert_eq!(manifest.artifact_target_triple, "x86_64-unknown-linux-musl");
+        assert_eq!(manifest.artifact_libc_family, "musl");
+        assert_eq!(manifest.release_channel, "stable");
+        assert_eq!(manifest.support_tier_declaration, "gcc15_primary");
+        assert_eq!(manifest.checksums.len(), 7);
+        assert!(
+            manifest
+                .checksums
+                .iter()
+                .any(|entry| entry.path == "bin/gcc-formed")
+        );
+
+        let shasums = fs::read_to_string(&package.shasums_path).unwrap();
+        assert!(
+            shasums.contains(
+                package
+                    .primary_archive
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .unwrap()
+            )
+        );
+        assert!(
+            shasums.contains(
+                package
+                    .source_archive
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .unwrap()
+            )
+        );
+
+        let output = Command::new("tar")
+            .args(["-tzf", &package.primary_archive.display().to_string()])
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        let listing = String::from_utf8(output.stdout).unwrap();
+        assert!(listing.contains("bin/gcc-formed"));
+        assert!(listing.contains("bin/g++-formed"));
+        assert!(listing.contains("manifest.json"));
+        assert!(listing.contains("build-info.txt"));
+        assert!(listing.contains("share/doc/gcc-formed/README.md"));
+        assert!(listing.contains("share/licenses/gcc-formed/LICENSE"));
+    }
+
+    #[test]
+    fn package_rejects_dirty_worktree() {
+        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        write_file(&repo_root.join("dirty.txt"), b"untracked\n");
+
+        let error = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("clean git worktree"));
+    }
+
+    #[test]
+    fn package_requires_release_documents() {
+        let (_sandbox, repo_root, binary_path) = init_release_repo();
+        fs::remove_file(repo_root.join("NOTICE")).unwrap();
+        run_command(&repo_root, "git", &["add", "-u"]);
+        run_command(&repo_root, "git", &["commit", "-q", "-m", "remove notice"]);
+
+        let error = run_package_at(
+            &repo_root,
+            &PackageOptions {
+                binary: binary_path,
+                debug_binary: None,
+                target_triple: "x86_64-unknown-linux-gnu".to_string(),
+                out_dir: PathBuf::from("dist"),
+                release_channel: "stable".to_string(),
+                support_tier: "gcc15_primary".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("required release input missing"));
+    }
+
+    #[test]
+    fn artifact_slug_is_platform_focused() {
+        assert_eq!(
+            artifact_slug_for_target("x86_64-unknown-linux-musl"),
+            "linux-x86_64-musl"
+        );
+        assert_eq!(
+            artifact_slug_for_target("aarch64-unknown-linux-gnu"),
+            "linux-aarch64-gnu"
+        );
+    }
 }

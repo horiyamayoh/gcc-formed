@@ -31,6 +31,15 @@ jobs:
       - name: Representative GCC 15 snapshot check
         if: matrix.gcc_image == 'gcc:15'
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+      - name: Release packaging smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: >
+          cargo build --bin gcc-formed &&
+          cargo xtask package
+          --binary target/debug/gcc-formed
+          --target-triple x86_64-unknown-linux-gnu
+          --release-channel stable
+          --support-tier gcc15_primary
       - name: Dependency and license gate
         run: |
           cargo install cargo-deny --locked

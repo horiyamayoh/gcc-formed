@@ -24,6 +24,14 @@ jobs:
           bash -lc "cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && ./target/debug/gcc-formed --formed-self-check"
       - name: Representative GCC 15 snapshot check
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+      - name: Release packaging smoke
+        run: >
+          cargo build --bin gcc-formed &&
+          cargo xtask package
+          --binary target/debug/gcc-formed
+          --target-triple x86_64-unknown-linux-gnu
+          --release-channel stable
+          --support-tier gcc15_primary
       - name: Dependency and license gate
         run: |
           cargo install cargo-deny --locked

@@ -47,6 +47,23 @@ pub struct BuildManifest {
     pub renderer_spec_version: String,
     pub support_tier_declaration: String,
     pub release_channel: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub checksums: Vec<ChecksumEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChecksumEntry {
+    pub path: String,
+    pub sha256: String,
+    pub size_bytes: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TargetDescriptor {
+    pub target_triple: String,
+    pub os: String,
+    pub arch: String,
+    pub libc_family: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -329,20 +346,56 @@ pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), Trace
     Ok(())
 }
 
-pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> BuildManifest {
+pub fn describe_target(target_triple: &str) -> TargetDescriptor {
+    let segments = target_triple.split('-').collect::<Vec<_>>();
+    let arch = segments.first().copied().unwrap_or("unknown").to_string();
+    let os = if segments.iter().any(|segment| *segment == "linux") {
+        "linux"
+    } else if segments.iter().any(|segment| *segment == "darwin") {
+        "macos"
+    } else if segments.iter().any(|segment| *segment == "windows") {
+        "windows"
+    } else {
+        "unknown"
+    }
+    .to_string();
+    let libc_family = if segments.iter().any(|segment| *segment == "musl") {
+        "musl"
+    } else if segments
+        .iter()
+        .any(|segment| *segment == "gnu" || segment.starts_with("gnu"))
+    {
+        "gnu"
+    } else if os == "macos" || os == "windows" {
+        "none"
+    } else {
+        "unknown"
+    }
+    .to_string();
+
+    TargetDescriptor {
+        target_triple: target_triple.to_string(),
+        os,
+        arch,
+        libc_family,
+    }
+}
+
+pub fn build_manifest_for_target(
+    lockfile_hash: String,
+    vendor_hash: String,
+    target_triple: &str,
+    support_tier_declaration: &str,
+    release_channel: &str,
+) -> BuildManifest {
+    let descriptor = describe_target(target_triple);
     BuildManifest {
         product_name: DEFAULT_PRODUCT_NAME.to_string(),
         product_version: env!("CARGO_PKG_VERSION").to_string(),
-        artifact_target_triple: option_env!("FORMED_TARGET")
-            .unwrap_or("unknown-target")
-            .to_string(),
-        artifact_os: env::consts::OS.to_string(),
-        artifact_arch: env::consts::ARCH.to_string(),
-        artifact_libc_family: if env::consts::OS == "linux" {
-            "gnu".to_string()
-        } else {
-            "unknown".to_string()
-        },
+        artifact_target_triple: descriptor.target_triple,
+        artifact_os: descriptor.os,
+        artifact_arch: descriptor.arch,
+        artifact_libc_family: descriptor.libc_family,
         git_commit: option_env!("FORMED_GIT_COMMIT")
             .unwrap_or("unknown")
             .to_string(),
@@ -363,11 +416,20 @@ pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> Bui
         ir_spec_version: diag_core::IR_SPEC_VERSION.to_string(),
         adapter_spec_version: ADAPTER_SPEC_VERSION.to_string(),
         renderer_spec_version: RENDERER_SPEC_VERSION.to_string(),
-        support_tier_declaration: "gcc15_primary".to_string(),
-        release_channel: option_env!("FORMED_RELEASE_CHANNEL")
-            .unwrap_or("dev")
-            .to_string(),
+        support_tier_declaration: support_tier_declaration.to_string(),
+        release_channel: release_channel.to_string(),
+        checksums: Vec::new(),
     }
+}
+
+pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> BuildManifest {
+    build_manifest_for_target(
+        lockfile_hash,
+        vendor_hash,
+        build_target_triple(),
+        "gcc15_primary",
+        option_env!("FORMED_RELEASE_CHANNEL").unwrap_or("dev"),
+    )
 }
 
 #[cfg(test)]
@@ -512,5 +574,37 @@ mod tests {
             0o600
         );
         fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[test]
+    fn target_descriptor_tracks_linux_libc_family() {
+        let musl = describe_target("x86_64-unknown-linux-musl");
+        assert_eq!(musl.os, "linux");
+        assert_eq!(musl.arch, "x86_64");
+        assert_eq!(musl.libc_family, "musl");
+
+        let gnu = describe_target("aarch64-unknown-linux-gnu");
+        assert_eq!(gnu.os, "linux");
+        assert_eq!(gnu.arch, "aarch64");
+        assert_eq!(gnu.libc_family, "gnu");
+    }
+
+    #[test]
+    fn build_manifest_for_target_infers_artifact_metadata() {
+        let manifest = build_manifest_for_target(
+            "lock".to_string(),
+            "vendor".to_string(),
+            "x86_64-unknown-linux-musl",
+            "gcc15_primary",
+            "stable",
+        );
+
+        assert_eq!(manifest.artifact_target_triple, "x86_64-unknown-linux-musl");
+        assert_eq!(manifest.artifact_os, "linux");
+        assert_eq!(manifest.artifact_arch, "x86_64");
+        assert_eq!(manifest.artifact_libc_family, "musl");
+        assert_eq!(manifest.support_tier_declaration, "gcc15_primary");
+        assert_eq!(manifest.release_channel, "stable");
+        assert!(manifest.checksums.is_empty());
     }
 }

@@ -22,6 +22,7 @@
 
 - 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
+- `cargo xtask package` により release artifact / control file の最小セットを生成できる
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -44,6 +45,7 @@ cargo xtask check
 cargo xtask replay --root corpus
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
+cargo xtask package --binary target/debug/gcc-formed --target-triple x86_64-unknown-linux-gnu
 ```
 
 ## 実装に入る順序
