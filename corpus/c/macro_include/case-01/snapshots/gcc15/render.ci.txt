@@ -1,0 +1,9 @@
+src/main.c:2:25: error: error surfaced through macro/include context
+help: inspect the user-owned macro invocation or include edge that reaches the failing line
+why: ‘missing_symbol’ undeclared (first use in this function)
+| src/main.c:2:25
+| 
+include: In file included from src/wrapper.h:1, @ src/wrapper.h
+macro: src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’ @ src/main.c
+macro: src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’ @ src/main.c
+note: each undeclared identifier is reported only once for each function it appears in

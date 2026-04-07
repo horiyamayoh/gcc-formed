@@ -1,2 +1,4 @@
-template <typename T> struct Box { T value; };
-int main() { Box<int> box{1}; return box.value; }
+template <typename T>
+void takes_same(T, T) {}
+
+int main() { takes_same(1, 2.0); }

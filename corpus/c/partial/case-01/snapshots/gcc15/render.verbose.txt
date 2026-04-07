@@ -1,0 +1,9 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: undefined reference to `missing_symbol`
+help: define the missing symbol or link the object/library that provides it
+why: main.c:(.text+0x9): undefined reference to `missing_symbol'
+linker: preserved
+error: collect2: error: ld returned 1 exit status
+help: inspect the preserved raw diagnostics for the first corrective action
+why: collect2: error: ld returned 1 exit status
+linker: preserved

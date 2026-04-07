@@ -17,13 +17,21 @@ jobs:
           - gcc:15
     steps:
       - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+          components: rustfmt
       - name: Build matrix CI image
         run: docker build --build-arg GCC_IMAGE=${{ matrix.gcc_image }} -t gcc-formed-ci:nightly -f ci/images/gcc-matrix/Dockerfile .
       - name: Run nightly matrix gate
         run: >
           docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:nightly
           bash -lc "cargo test --workspace && cargo xtask replay --root corpus && cargo xtask bench-smoke && cargo build --bin gcc-formed && ./target/debug/gcc-formed --formed-self-check"
+      - name: Representative GCC 15 snapshot check
+        if: matrix.gcc_image == 'gcc:15'
+        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
       - name: Dependency and license gate
-        run: >
-          docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:nightly
-          bash -lc "cargo install cargo-deny --locked && cargo deny check"
+        run: |
+          cargo install cargo-deny --locked
+          cargo deny check

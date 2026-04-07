@@ -1,1 +1,130 @@
-{"family":"type"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:4:22: error: passing argument 1 of ‘takes_int’ makes integer from pointer without a cast [-Werror=int-conversion]\n    4 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected ‘int’ but argument is of type ‘const char *’\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\ncc1: all warnings being treated as errors\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 520,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 554,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "1911ab0c5ac84db8b54cc30a374830d9c3063fbc7a01d36a69ea6cfcd894abe9",
+            "raw": "25608acbb5273cde16a9841d764a2e30d6d57baf7e2bbc69f03dd18333a310ba",
+            "structural": "cd200a57b20cf1666e432f8b14df0f3fdd7061d0d13184298fd2ba494d1a1d37"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 24,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.c"
+            }
+          ],
+          "message": {
+            "raw_text": "expected ‘int’ but argument is of type ‘const char *’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "ead92d7e1e0a1e27a8ce8798b96a308f564873076f136d688cb1ba8fae935100",
+        "raw": "5275cb11d9d943eb921defc9a0b10dad2ba0ab99af224fa900f9fdbff984069b",
+        "structural": "d4851c4940a07cc95940895915092705d71e8c6cec67f0ed62ec1024272e8a8b"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 22,
+          "end_column": 27,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "passing argument 1 of ‘takes_int’ makes integer from pointer without a cast"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "b86c2ec768ea228ab7bea7276e0b0efc1a700223de435a98b6ee52d073748e46",
+    "structural": "9e37f4ab6dc78b4af99844d94a6f6639280d1a4185b761a86df1daf094e837a9"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Werror",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

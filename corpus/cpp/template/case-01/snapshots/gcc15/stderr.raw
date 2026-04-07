@@ -1,0 +1,11 @@
+src/main.cpp: In function ‘int main()’:
+src/main.cpp:4:14: error: no matching function for call to ‘takes_same(int, double)’
+    4 | int main() { takes_same(1, 2.0); }
+      |              ^~~~~~~~~~
+src/main.cpp:2:6: note: candidate: ‘template<class T> void takes_same(T, T)’
+    2 | void takes_same(T, T) {}
+      |      ^~~~~~~~~~
+src/main.cpp:2:6: note:   template argument deduction/substitution failed:
+src/main.cpp:4:14: note:   deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)
+    4 | int main() { takes_same(1, 2.0); }
+      |              ^~~~~~~~~~

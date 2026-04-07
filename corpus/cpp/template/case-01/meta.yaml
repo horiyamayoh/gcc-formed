@@ -1,6 +1,16 @@
+corpus_id: cpp/template/case-01
+title: template argument deduction failure with related notes
 tags:
-- template
-- phase1
+  - template
+  - phase1
+  - representative
 ownership: curated
-provenance: generated-from-phase1-plan
+provenance: hand-authored
 reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-08'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

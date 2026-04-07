@@ -1,1 +1,221 @@
-{"family":"overload"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:5: error: no matching function for call to ‘takes(int)’\n    4 |     takes(1);\n      |     ^~~~~\nsrc/main.cpp:1:6: note: candidate: ‘void takes(int, int)’\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note:   candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate: ‘void takes(double, double)’\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note:   candidate expects 2 arguments, 1 provided\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 529,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1043,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "33efaf896c3a052ed69e49a3d02052845172aea03d7f6b96dd3a8df559fe5dd7",
+            "raw": "d969ab5c27bf332bd1936b022b31a3094d09e9314bc8bd332bd45a9eab669f0b",
+            "structural": "a8a77d255c4964e632b9fbd53fdf321af1f84f648b985f7a71eb832ee3060752"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘void takes(int, int)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "5e3ae2f6782271fd7b6a4f56af3377935395f5baeebfbaa9c596ae4e1a3ea194",
+            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
+            "structural": "9e52c6632087eba0e396735a365fad2daa19ae29775f406ac7a2699ebaca5bf5"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  candidate expects 2 arguments, 1 provided"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "812e9b1b56a91438d7f973b74123aac7946b6bbc6475bec11b07ed69104e2ab4",
+            "raw": "893436fe3ab2a20c2cee31c12a9137d23195952e93dd630504f0d1cbcae2f241",
+            "structural": "508473bee4b580a80fe6658b5c72db1c191ff8553a57e2f381894106d00872c8"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘void takes(double, double)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "5e3ae2f6782271fd7b6a4f56af3377935395f5baeebfbaa9c596ae4e1a3ea194",
+            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
+            "structural": "f1d0dd75b57e6e95fd33c56e81fd42b61cd36238b76c74a6d12ece884632cb85"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  candidate expects 2 arguments, 1 provided"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "5e0a325b9e7c6b74d49fd3a1adcaae22998ed002197dc1cbf9b03c86c1966d1d",
+        "raw": "df8c714f4cefad62b6a723bd19e8672c3e1946674dd73fe2f85b40ab3f5c372d",
+        "structural": "b3ffe203d56a0e996136ed553c76a37dc6f9f799b3969d66a203b0de0e5cdb36"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 13,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘takes(int)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "cde3077f77cd3b0baf679604ce26ca5e5586b40d1c2e6338594c4e022c279ae4",
+    "structural": "4b9fbd4ca35cd5300305828fba3fe6f7573f87362e49a0171004db473ca15974"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

@@ -2,14 +2,15 @@ use crate::excerpt::load_excerpt;
 use crate::family::summarize_context;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{DiagnosticNode, Severity};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderSessionSummary {
     pub failure_kind: String,
     pub partial_notice: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderGroupCard {
     pub group_id: String,
     pub severity: String,
@@ -22,7 +23,7 @@ pub struct RenderGroupCard {
     pub child_notes: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderViewModel {
     pub summary: RenderSessionSummary,
     pub cards: Vec<RenderGroupCard>,

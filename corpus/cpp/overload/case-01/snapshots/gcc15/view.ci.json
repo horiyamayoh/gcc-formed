@@ -1,0 +1,30 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:4:5",
+      "child_notes": [
+        "candidate: ‘void takes(int, int)’",
+        "  candidate expects 2 arguments, 1 provided",
+        "candidate: ‘void takes(double, double)’"
+      ],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "int main() {"
+          ],
+          "location": "src/main.cpp:4:5"
+        }
+      ],
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "sarif-0-0",
+      "raw_message": "no matching function for call to ‘takes(int)’",
+      "severity": "error",
+      "title": "type or overload mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

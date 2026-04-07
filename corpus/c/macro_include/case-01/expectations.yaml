@@ -2,4 +2,35 @@ schema_version: 1
 fixture_id: c/macro_include/case-01
 support_tier: A
 expected_mode: render
-family: macro_include
+semantic:
+  family: macro_include
+  severity: error
+  lead_group_any_of:
+    - sarif-0-0
+  primary_locations:
+    - path: src/main.c
+      line: 2
+      column: 25
+  first_action_required: true
+  raw_provenance_required: true
+  fallback: forbidden
+  confidence_min: medium
+render:
+  default:
+    omission_notice_required: false
+    first_screenful_max_lines: 24
+  concise:
+    omission_notice_required: false
+    first_screenful_max_lines: 14
+  verbose:
+    omission_notice_required: false
+    first_screenful_max_lines: 40
+  ci:
+    first_screenful_max_lines: 16
+    path_first_required: true
+    color_meaning_forbidden: true
+integrity:
+  allowed_issue_codes: []
+performance:
+  parse_time_ms_max: 50
+  render_time_ms_max: 40

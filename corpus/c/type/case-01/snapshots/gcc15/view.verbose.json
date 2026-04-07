@@ -1,0 +1,28 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:4:22",
+      "child_notes": [
+        "expected ‘int’ but argument is of type ‘const char *’"
+      ],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    const char *value = \"x\";"
+          ],
+          "location": "src/main.c:4:22"
+        }
+      ],
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "sarif-0-0",
+      "raw_message": "passing argument 1 of ‘takes_int’ makes integer from pointer without a cast",
+      "severity": "error",
+      "title": "type or overload mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

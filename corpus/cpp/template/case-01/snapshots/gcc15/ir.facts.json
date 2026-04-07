@@ -1,1 +1,215 @@
-{"family":"template"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:14: error: no matching function for call to ‘takes_same(int, double)’\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\nsrc/main.cpp:2:6: note: candidate: ‘template<class T> void takes_same(T, T)’\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note:   template argument deduction/substitution failed:\nsrc/main.cpp:4:14: note:   deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 600,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 933,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "3ea154fc12464372c9de59621154eea7c328a68d817d9f403164d0b9b82bc3b9",
+            "raw": "dd73fdae35ae794d617ac6f6a9c05421098ad92ed027faa7106d25143d74794a",
+            "structural": "740bd41db2469029bc763647f50245e1b2d0a58f00d7944be1bd1b4ce6e7f37d"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T> void takes_same(T, T)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "c61185edf58cc068a231944e999438047e8caad001e074fd166a71344543acb3",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "819c8d9a52ed54f5bfa5e05a92c0c28873d642730caa5b9a30fcb9f72eb4de0e"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "0a626c4ddcb7c46fdf8d182f065dae86c6452042ea72ed7684957064b655067b",
+            "raw": "e130de801835a578350dfa6668a0dfd425c17c3c2b66c436b8b1ebf0183d064b",
+            "structural": "ba8ec02962f2404fd14712d25cad5ff523006f29f4be5dafac74e24419e82ed8"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 14,
+              "end_column": 32,
+              "line": 4,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "candidate: ‘template<class T> void takes_same(T, T)’",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 14,
+              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)",
+              "line": 4,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "dbfbf391231aefcbdece1159728c9b74a2d5b127db427ea872bfe2db1cf4b797",
+        "raw": "a4a42ba9c4d2daacdfc4ae6e71dc169de1cb8b67ecc3d10611a1c16cadbac246",
+        "structural": "4863d2e084eacbb8be9db1f2edde07142b7ea2acac11b0aaa3218e6fce59838c"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 14,
+          "end_column": 32,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘takes_same(int, double)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "dfabe654d89cc887af203c3c53fbc1c42e928d282910a0a104d440373a78c508",
+    "structural": "733c5002f4c4c2666cd2e984dde4d0266d436e5364b74cdab41a5eb5f9c228ce"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

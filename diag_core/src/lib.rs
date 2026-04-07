@@ -9,6 +9,12 @@ pub const IR_SPEC_VERSION: &str = "1.0.0-alpha.1";
 pub const ADAPTER_SPEC_VERSION: &str = "v1alpha";
 pub const RENDERER_SPEC_VERSION: &str = "v1alpha";
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SnapshotKind {
+    FactsOnly,
+    AnalysisIncluded,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum DocumentCompleteness {
@@ -465,6 +471,7 @@ impl DiagnosticDocument {
         for node in &mut self.diagnostics {
             refresh_node_fingerprints(node);
         }
+        self.fingerprints = None;
         self.fingerprints = Some(FingerprintSet {
             raw: fingerprint_for(&self.diagnostics),
             structural: fingerprint_for(&canonical_snapshot_value(self)),
@@ -540,6 +547,7 @@ fn refresh_node_fingerprints(node: &mut DiagnosticNode) {
     for child in &mut node.children {
         refresh_node_fingerprints(child);
     }
+    node.fingerprints = None;
     let family_seed = node
         .analysis
         .as_ref()
@@ -574,19 +582,50 @@ pub fn canonical_snapshot_value<T: Serialize>(value: &T) -> Value {
 }
 
 pub fn normalize_for_snapshot(document: &DiagnosticDocument) -> DiagnosticDocument {
+    normalize_for_snapshot_kind(document, SnapshotKind::AnalysisIncluded)
+}
+
+pub fn normalize_for_snapshot_kind(
+    document: &DiagnosticDocument,
+    kind: SnapshotKind,
+) -> DiagnosticDocument {
     let mut copy = document.clone();
     copy.document_id = "<document>".to_string();
+    copy.schema_version = IR_SPEC_VERSION.to_string();
+    copy.producer.version = "<normalized>".to_string();
+    copy.producer.git_revision = None;
+    copy.producer.build_profile = None;
     copy.run.invocation_id = "<invocation>".to_string();
     if let Some(cwd) = copy.run.cwd_display.as_mut() {
         *cwd = "<cwd>".to_string();
     }
+    copy.run.primary_tool.version = None;
+    for tool in &mut copy.run.secondary_tools {
+        tool.version = None;
+    }
     for capture in &mut copy.captures {
         if capture.external_ref.is_some() {
-            capture.external_ref = Some("<external_ref>".to_string());
+            capture.external_ref = Some(format!("<capture:{}>", capture.id));
         }
         capture.digest_sha256 = None;
+        if let Some(tool) = capture.produced_by.as_mut() {
+            tool.version = None;
+        }
     }
+    if matches!(kind, SnapshotKind::FactsOnly) {
+        for diagnostic in &mut copy.diagnostics {
+            strip_analysis(diagnostic);
+        }
+    }
+    copy.refresh_fingerprints();
     copy
+}
+
+pub fn snapshot_json(
+    document: &DiagnosticDocument,
+    kind: SnapshotKind,
+) -> Result<String, serde_json::Error> {
+    canonical_json(&normalize_for_snapshot_kind(document, kind))
 }
 
 pub fn normalize_message(message: &str) -> String {
@@ -600,6 +639,13 @@ pub fn fingerprint_for<T: Serialize>(value: &T) -> String {
     let mut hasher = Sha256::new();
     hasher.update(payload);
     format!("{:x}", hasher.finalize())
+}
+
+fn strip_analysis(node: &mut DiagnosticNode) {
+    node.analysis = None;
+    for child in &mut node.children {
+        strip_analysis(child);
+    }
 }
 
 fn sort_value(value: Value) -> Value {
@@ -774,6 +820,21 @@ mod tests {
         let left = document.canonical_json().unwrap();
         let right = document.canonical_json().unwrap();
         assert_eq!(left, right);
+    }
+
+    #[test]
+    fn snapshot_variants_are_deterministic() {
+        let mut document = sample_document();
+        document.refresh_fingerprints();
+
+        let facts_left = snapshot_json(&document, SnapshotKind::FactsOnly).unwrap();
+        let facts_right = snapshot_json(&document, SnapshotKind::FactsOnly).unwrap();
+        let analysis = snapshot_json(&document, SnapshotKind::AnalysisIncluded).unwrap();
+
+        assert_eq!(facts_left, facts_right);
+        assert!(facts_left.contains("<document>"));
+        assert!(!facts_left.contains("syntax error"));
+        assert!(analysis.contains("syntax error"));
     }
 
     #[test]

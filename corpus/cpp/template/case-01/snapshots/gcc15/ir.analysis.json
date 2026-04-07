@@ -1,0 +1,239 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:14: error: no matching function for call to ‘takes_same(int, double)’\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\nsrc/main.cpp:2:6: note: candidate: ‘template<class T> void takes_same(T, T)’\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note:   template argument deduction/substitution failed:\nsrc/main.cpp:4:14: note:   deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 600,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 933,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "template",
+        "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed"
+          },
+          "fingerprints": {
+            "family": "18b7e8019818e0c052945310a9e7cac21d775aede776e5ba00b767e2aff23821",
+            "raw": "dd73fdae35ae794d617ac6f6a9c05421098ad92ed027faa7106d25143d74794a",
+            "structural": "27319a35a9f5a598ebcd26ef6b2c97be6bf2016aa4fdfddaa92025418b5d378f"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T> void takes_same(T, T)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed"
+          },
+          "fingerprints": {
+            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "f58a7c9344556b3e4d015cc09b3f9f9b252a6a15bf82e41f70a2c144bac4bd08"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+          },
+          "fingerprints": {
+            "family": "0a626c4ddcb7c46fdf8d182f065dae86c6452042ea72ed7684957064b655067b",
+            "raw": "e130de801835a578350dfa6668a0dfd425c17c3c2b66c436b8b1ebf0183d064b",
+            "structural": "636a2cfcaf9d93446ef66af2dd467f374a2453b5fe122d4f9652fc617bd6f75d"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 14,
+              "end_column": 32,
+              "line": 4,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "candidate: ‘template<class T> void takes_same(T, T)’",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 14,
+              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)",
+              "line": 4,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "8ff8993e6c0b7fea9789f6def43ba313930bf5fc23b15edb5a0a44fd7f86ddfd",
+        "raw": "a4a42ba9c4d2daacdfc4ae6e71dc169de1cb8b67ecc3d10611a1c16cadbac246",
+        "structural": "6b018d1d80e0b4b6b0215be588f9b06a81498994e577f377080886f476c8e123"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 14,
+          "end_column": 32,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘takes_same(int, double)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
+    "raw": "bd62de4ab1dfef9c2ff7ccb092fd037ae739d8c99c4b36cb6b1b5ad41cca5fc5",
+    "structural": "5a3ca536903e35df098a538e5ca343ff425a9873c99295d6259e32fe41e2c6ba"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

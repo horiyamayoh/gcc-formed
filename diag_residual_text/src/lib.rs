@@ -6,7 +6,7 @@ use diag_core::{
 use regex::Regex;
 use std::collections::BTreeMap;
 
-pub fn classify(stderr: &str) -> Vec<DiagnosticNode> {
+pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> {
     let mut grouped = BTreeMap::<String, Vec<String>>::new();
     let mut passthrough = Vec::new();
     let undefined_reference =
@@ -71,7 +71,7 @@ pub fn classify(stderr: &str) -> Vec<DiagnosticNode> {
     for (index, (key, lines)) in grouped.into_iter().enumerate() {
         nodes.push(group_to_node(index, &key, &lines));
     }
-    if !passthrough.is_empty() {
+    if include_passthrough && !passthrough.is_empty() {
         nodes.push(DiagnosticNode {
             id: "residual-passthrough".to_string(),
             origin: Origin::ExternalTool,
@@ -263,7 +263,7 @@ mod tests {
     #[test]
     fn groups_undefined_reference_residuals() {
         let stderr = "/usr/bin/ld: main.o: in function `main':\nmain.c:(.text+0x15): undefined reference to `foo'";
-        let nodes = classify(stderr);
+        let nodes = classify(stderr, true);
         assert!(nodes.iter().any(|node| {
             node.analysis
                 .as_ref()

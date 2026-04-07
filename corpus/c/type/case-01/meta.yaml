@@ -1,6 +1,16 @@
+corpus_id: c/type/case-01
+title: C pointer passed to int parameter under -Werror
 tags:
-- type
-- phase1
+  - type
+  - phase1
+  - representative
 ownership: curated
-provenance: generated-from-phase1-plan
+provenance: hand-authored
 reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-08'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

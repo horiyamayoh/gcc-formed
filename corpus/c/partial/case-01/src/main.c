@@ -1,1 +1,3 @@
-int main(void) { return 0; }
+extern int missing_symbol(void);
+
+int main(void) { return missing_symbol(); }

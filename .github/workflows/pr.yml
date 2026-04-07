@@ -11,13 +11,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+          components: rustfmt
       - name: Build GCC 15 CI image
         run: docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .
       - name: Run local fast gate
         run: >
           docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:pr
           bash -lc "cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && ./target/debug/gcc-formed --formed-self-check"
+      - name: Representative GCC 15 snapshot check
+        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
       - name: Dependency and license gate
-        run: >
-          docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:pr
-          bash -lc "cargo install cargo-deny --locked && cargo deny check"
+        run: |
+          cargo install cargo-deny --locked
+          cargo deny check

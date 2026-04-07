@@ -4,7 +4,7 @@ use diag_core::{
     IssueStage, Location, MessageText, NodeCompleteness, Origin, Phase, ProducerInfo, Provenance,
     ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
 };
-use diag_residual_text::classify as classify_residual;
+use diag_residual_text::classify;
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
@@ -27,13 +27,14 @@ pub fn ingest(
     producer: ProducerInfo,
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
+    let has_authoritative_sarif = sarif_path.filter(|path| path.exists()).is_some();
     let mut document = if let Some(path) = sarif_path.filter(|path| path.exists()) {
         from_sarif(path, producer, run)?
     } else {
         passthrough_document(producer, run)
     };
 
-    let residual_nodes = classify_residual(stderr_text);
+    let residual_nodes = classify(stderr_text, !has_authoritative_sarif);
     if document.diagnostics.is_empty() && residual_nodes.is_empty() && !stderr_text.is_empty() {
         document.document_completeness = DocumentCompleteness::Passthrough;
         document.diagnostics.push(passthrough_node(stderr_text));
@@ -45,6 +46,9 @@ pub fn ingest(
             document.document_completeness = DocumentCompleteness::Partial;
         }
         document.diagnostics.extend(residual_nodes);
+    }
+    if has_authoritative_sarif {
+        augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
     Ok(document)
@@ -117,6 +121,8 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
         .and_then(Value::as_str)
         .unwrap_or("compiler reported a diagnostic")
         .to_string();
+    let related_messages = related_messages(result);
+    let family_seed = combined_message_seed(&raw_text, &related_messages);
     let severity = match result.get("level").and_then(Value::as_str) {
         Some("error") => Severity::Error,
         Some("warning") => Severity::Warning,
@@ -155,9 +161,9 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
             capture_refs: vec!["diagnostics.sarif".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(infer_family(&raw_text)),
+            family: Some(infer_family(&family_seed)),
             headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
-            first_action_hint: Some(first_action_hint(&raw_text)),
+            first_action_hint: Some(first_action_hint(&family_seed)),
             confidence: Some(Confidence::Medium),
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
@@ -165,7 +171,7 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
         fingerprints: Some(FingerprintSet {
             raw: diag_core::fingerprint_for(&raw_text),
             structural: diag_core::fingerprint_for(&result),
-            family: diag_core::fingerprint_for(&infer_family(&raw_text)),
+            family: diag_core::fingerprint_for(&infer_family(&family_seed)),
         }),
     }
 }
@@ -229,34 +235,37 @@ fn parse_related_locations(
     related
         .into_iter()
         .enumerate()
-        .map(|(index, location)| DiagnosticNode {
-            id: format!("sarif-{run_index}-{result_index}-related-{index}"),
-            origin: Origin::Gcc,
-            phase: Phase::Semantic,
-            severity: Severity::Note,
-            semantic_role: SemanticRole::Supporting,
-            message: MessageText {
-                raw_text: location
-                    .get("message")
-                    .and_then(|message| message.get("text"))
-                    .and_then(Value::as_str)
-                    .unwrap_or("related location")
-                    .to_string(),
-                normalized_text: None,
-                locale: None,
-            },
-            locations: parse_locations(&serde_json::json!({ "locations": [location] })),
-            children: Vec::new(),
-            suggestions: Vec::new(),
-            context_chains: Vec::new(),
-            symbol_context: None,
-            node_completeness: NodeCompleteness::Partial,
-            provenance: Provenance {
-                source: ProvenanceSource::Compiler,
-                capture_refs: vec!["diagnostics.sarif".to_string()],
-            },
-            analysis: None,
-            fingerprints: None,
+        .map(|(index, location)| {
+            let message = location
+                .get("message")
+                .and_then(|message| message.get("text"))
+                .and_then(Value::as_str)
+                .unwrap_or("related location")
+                .to_string();
+            DiagnosticNode {
+                id: format!("sarif-{run_index}-{result_index}-related-{index}"),
+                origin: Origin::Gcc,
+                phase: infer_related_phase(&message),
+                severity: Severity::Note,
+                semantic_role: infer_related_role(&message),
+                message: MessageText {
+                    raw_text: message,
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: parse_locations(&serde_json::json!({ "locations": [location] })),
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Partial,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["diagnostics.sarif".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            }
         })
         .collect()
 }
@@ -293,6 +302,36 @@ fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
             frames: Vec::new(),
         });
     }
+    for location in result
+        .get("relatedLocations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let related_message = location
+            .get("message")
+            .and_then(|message| message.get("text"))
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        let frame = context_frame_from_related_location(related_message, location);
+        let lowered = related_message.to_lowercase();
+        if lowered.contains("template")
+            || lowered.contains("deduction/substitution")
+            || lowered.contains("deduced conflicting")
+        {
+            push_chain_frame(
+                &mut chains,
+                ContextChainKind::TemplateInstantiation,
+                frame.clone(),
+            );
+        }
+        if lowered.contains("macro") {
+            push_chain_frame(&mut chains, ContextChainKind::MacroExpansion, frame.clone());
+        }
+        if lowered.contains("include") {
+            push_chain_frame(&mut chains, ContextChainKind::Include, frame);
+        }
+    }
     chains
 }
 
@@ -318,13 +357,18 @@ fn infer_family(message: &str) -> String {
         "linker.undefined_reference".to_string()
     } else if message.contains("multiple definition") {
         "linker.multiple_definition".to_string()
-    } else if message.contains("template") {
+    } else if message.contains("template")
+        || message.contains("deduction/substitution")
+        || message.contains("deduced conflicting")
+    {
         "template".to_string()
     } else if message.contains("macro") || message.contains("include") {
         "macro_include".to_string()
     } else if message.contains("cannot convert")
         || message.contains("no matching")
         || message.contains("invalid conversion")
+        || message.contains("incompatible type")
+        || message.contains("passing argument")
     {
         "type_overload".to_string()
     } else if message.contains("expected") || message.contains("before") {
@@ -349,6 +393,180 @@ fn first_action_hint(message: &str) -> String {
             "define the missing symbol or adjust link order/library inputs".to_string()
         }
         _ => "inspect the preserved compiler diagnostics for the first corrective step".to_string(),
+    }
+}
+
+fn augment_context_chains_from_stderr(document: &mut DiagnosticDocument, stderr_text: &str) {
+    let mut include_frames = Vec::new();
+    let mut macro_frames = Vec::new();
+    for line in stderr_text.lines() {
+        let trimmed = line.trim_start();
+        if let Some(frame) = parse_include_frame(trimmed) {
+            include_frames.push(frame);
+            continue;
+        }
+        if trimmed.contains("in expansion of macro") {
+            macro_frames.push(diag_core::ContextFrame {
+                label: trimmed.to_string(),
+                path: parse_path_prefix(trimmed),
+                line: parse_line_prefix(trimmed),
+                column: parse_column_prefix(trimmed),
+            });
+        }
+    }
+    if let Some(lead) = document.diagnostics.first_mut() {
+        if !include_frames.is_empty() {
+            push_chain_frames(lead, ContextChainKind::Include, include_frames);
+        }
+        if !macro_frames.is_empty() {
+            push_chain_frames(lead, ContextChainKind::MacroExpansion, macro_frames);
+        }
+    }
+}
+
+fn parse_include_frame(line: &str) -> Option<diag_core::ContextFrame> {
+    let prefix = if let Some(value) = line.strip_prefix("In file included from ") {
+        value
+    } else {
+        line.strip_prefix("from ")?
+    };
+    let (path, line_number) = split_path_line(prefix)?;
+    Some(diag_core::ContextFrame {
+        label: line.to_string(),
+        path: Some(path.to_string()),
+        line: Some(line_number),
+        column: None,
+    })
+}
+
+fn split_path_line(value: &str) -> Option<(&str, u32)> {
+    let separator = value.rfind(':')?;
+    let path = value[..separator].trim_end_matches(',').trim();
+    let remainder = value[separator + 1..]
+        .trim_end_matches(',')
+        .trim_end_matches(':')
+        .trim();
+    Some((path, remainder.parse().ok()?))
+}
+
+fn parse_path_prefix(line: &str) -> Option<String> {
+    let first = line.split(':').next()?;
+    if first.is_empty() || first.contains(' ') {
+        None
+    } else {
+        Some(first.to_string())
+    }
+}
+
+fn parse_line_prefix(line: &str) -> Option<u32> {
+    let mut parts = line.split(':');
+    parts.next()?;
+    parts.next()?.parse().ok()
+}
+
+fn parse_column_prefix(line: &str) -> Option<u32> {
+    let mut parts = line.split(':');
+    parts.next()?;
+    parts.next()?;
+    parts.next()?.parse().ok()
+}
+
+fn push_chain_frames(
+    node: &mut DiagnosticNode,
+    kind: ContextChainKind,
+    mut frames: Vec<diag_core::ContextFrame>,
+) {
+    if let Some(existing) = node
+        .context_chains
+        .iter_mut()
+        .find(|chain| chain.kind == kind)
+    {
+        existing.frames.append(&mut frames);
+    } else {
+        node.context_chains.push(ContextChain { kind, frames });
+    }
+}
+
+fn related_messages(result: &Value) -> Vec<String> {
+    result
+        .get("relatedLocations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|location| {
+            location
+                .get("message")
+                .and_then(|message| message.get("text"))
+                .and_then(Value::as_str)
+                .map(ToString::to_string)
+        })
+        .collect()
+}
+
+fn combined_message_seed(raw_text: &str, related_messages: &[String]) -> String {
+    let mut parts = vec![raw_text.to_string()];
+    parts.extend(related_messages.iter().cloned());
+    parts.join("\n")
+}
+
+fn infer_related_role(message: &str) -> SemanticRole {
+    let lowered = message.to_lowercase();
+    if lowered.contains("candidate:") {
+        SemanticRole::Candidate
+    } else if lowered.contains("template") || lowered.contains("required from") {
+        SemanticRole::Supporting
+    } else {
+        SemanticRole::Supporting
+    }
+}
+
+fn infer_related_phase(message: &str) -> Phase {
+    let lowered = message.to_lowercase();
+    if lowered.contains("template") || lowered.contains("deduction/substitution") {
+        Phase::Instantiate
+    } else {
+        Phase::Semantic
+    }
+}
+
+fn context_frame_from_related_location(message: &str, location: &Value) -> diag_core::ContextFrame {
+    let physical = location
+        .get("physicalLocation")
+        .or_else(|| location.get("physical_location"));
+    let region = physical
+        .and_then(|physical| physical.get("region"))
+        .cloned()
+        .unwrap_or(Value::Null);
+    diag_core::ContextFrame {
+        label: message.trim().to_string(),
+        path: physical
+            .and_then(|physical| physical.get("artifactLocation"))
+            .and_then(|artifact| artifact.get("uri"))
+            .and_then(Value::as_str)
+            .map(ToString::to_string),
+        line: region
+            .get("startLine")
+            .and_then(Value::as_u64)
+            .map(|value| value as u32),
+        column: region
+            .get("startColumn")
+            .and_then(Value::as_u64)
+            .map(|value| value as u32),
+    }
+}
+
+fn push_chain_frame(
+    chains: &mut Vec<ContextChain>,
+    kind: ContextChainKind,
+    frame: diag_core::ContextFrame,
+) {
+    if let Some(existing) = chains.iter_mut().find(|chain| chain.kind == kind) {
+        existing.frames.push(frame);
+    } else {
+        chains.push(ContextChain {
+            kind,
+            frames: vec![frame],
+        });
     }
 }
 

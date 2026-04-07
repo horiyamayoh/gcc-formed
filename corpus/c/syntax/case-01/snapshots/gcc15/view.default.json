@@ -1,0 +1,26 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:13",
+      "child_notes": [],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    return 0"
+          ],
+          "location": "src/main.c:2:13"
+        }
+      ],
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "sarif-0-0",
+      "raw_message": "expected ‘;’ before ‘}’ token",
+      "severity": "error",
+      "title": "syntax error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

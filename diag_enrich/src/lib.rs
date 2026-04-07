@@ -15,7 +15,14 @@ fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
     for location in &mut node.locations {
         location.ownership = Some(classify_ownership(&location.path, cwd));
     }
-    let family = classify_family(node);
+    let derived_family = classify_family(node);
+    let family = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_ref())
+        .filter(|family| family.contains('.') && derived_family != "unknown")
+        .cloned()
+        .unwrap_or(derived_family);
     let confidence = classify_confidence(node, family.as_str());
     let headline = headline_for(node, &family);
     let first_action = first_action_for(family.as_str());
@@ -40,6 +47,12 @@ fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
 
 fn classify_family(node: &DiagnosticNode) -> String {
     let message = node.message.raw_text.to_lowercase();
+    let child_messages = node
+        .children
+        .iter()
+        .map(|child| child.message.raw_text.to_lowercase())
+        .collect::<Vec<_>>()
+        .join("\n");
     if matches!(node.phase, Phase::Link) || message.contains("undefined reference") {
         "linker".to_string()
     } else if node
@@ -47,6 +60,9 @@ fn classify_family(node: &DiagnosticNode) -> String {
         .iter()
         .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
         || message.contains("template")
+        || child_messages.contains("template")
+        || child_messages.contains("deduction/substitution")
+        || child_messages.contains("deduced conflicting")
     {
         "template".to_string()
     } else if node.context_chains.iter().any(|chain| {
@@ -56,12 +72,16 @@ fn classify_family(node: &DiagnosticNode) -> String {
         )
     }) || message.contains("macro")
         || message.contains("include")
+        || child_messages.contains("macro")
+        || child_messages.contains("include")
     {
         "macro_include".to_string()
     } else if message.contains("cannot convert")
         || message.contains("invalid conversion")
         || message.contains("no matching")
         || message.contains("candidate")
+        || message.contains("incompatible type")
+        || message.contains("passing argument")
     {
         "type_overload".to_string()
     } else if message.contains("expected")
@@ -92,6 +112,18 @@ fn headline_for(node: &DiagnosticNode, family: &str) -> String {
         "type_overload" => "type or overload mismatch".to_string(),
         "template" => "template instantiation failed".to_string(),
         "macro_include" => "error surfaced through macro/include context".to_string(),
+        "linker.undefined_reference" => node
+            .symbol_context
+            .as_ref()
+            .and_then(|symbol| symbol.primary_symbol.clone())
+            .map(|symbol| format!("undefined reference to `{symbol}`"))
+            .unwrap_or_else(|| "undefined reference reported by linker".to_string()),
+        "linker.multiple_definition" => node
+            .symbol_context
+            .as_ref()
+            .and_then(|symbol| symbol.primary_symbol.clone())
+            .map(|symbol| format!("multiple definition of `{symbol}`"))
+            .unwrap_or_else(|| "duplicate symbol definition reported by linker".to_string()),
         "linker" => node
             .symbol_context
             .as_ref()
@@ -119,6 +151,13 @@ fn first_action_for(family: &str) -> String {
             .to_string(),
         "macro_include" => {
             "inspect the user-owned macro invocation or include edge that reaches the failing line"
+                .to_string()
+        }
+        "linker.undefined_reference" => {
+            "define the missing symbol or link the object/library that provides it".to_string()
+        }
+        "linker.multiple_definition" => {
+            "remove the duplicate definition or make the symbol internal to one translation unit"
                 .to_string()
         }
         "linker" => {

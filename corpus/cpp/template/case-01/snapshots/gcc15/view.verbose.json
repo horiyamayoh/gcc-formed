@@ -1,0 +1,34 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:4:14",
+      "child_notes": [
+        "candidate: ‘template<class T> void takes_same(T, T)’",
+        "  template argument deduction/substitution failed:",
+        "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+      ],
+      "context_lines": [
+        "template: candidate: ‘template<class T> void takes_same(T, T)’ @ src/main.cpp",
+        "template: template argument deduction/substitution failed: @ src/main.cpp",
+        "template: deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’) @ src/main.cpp"
+      ],
+      "excerpts": [
+        {
+          "lines": [
+            "int main() { takes_same(1, 2.0); }"
+          ],
+          "location": "src/main.cpp:4:14"
+        }
+      ],
+      "first_action": "start from the first user-owned template frame and match template arguments",
+      "group_id": "sarif-0-0",
+      "raw_message": "no matching function for call to ‘takes_same(int, double)’",
+      "severity": "error",
+      "title": "template instantiation failed"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/main.o: in function `main':\nmain.c:(.text+0x9): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 149,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 44,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.file_format_or_relocation",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "collect2: error: ld returned 1 exit status"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
+        "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
+        "structural": "ccba536d0bd57b46efe4ca349d19c15881f700b6dc89b16ffa9134c71a7c1616"
+      },
+      "id": "residual-0",
+      "message": {
+        "raw_text": "collect2: error: ld returned 1 exit status"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.undefined_reference",
+        "first_action_hint": "define the missing symbol or link the object/library that provides it",
+        "headline": "undefined reference to `missing_symbol`"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
+        "raw": "56cc489391cab194dff5ba8b4407acbde42f3eb31fe7d26a93312c6841ffa784",
+        "structural": "533c618562f6ed4cd9465a29ab0f2ae754c373c0c3c931224015d23cbaaecf16"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "main.c:(.text+0x9): undefined reference to `missing_symbol'"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error",
+      "symbol_context": {
+        "primary_symbol": "missing_symbol"
+      }
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "21f4f3692469c9d75e0cda967ec5f6dce4efc11f7e5431aa7ab5db4604873680",
+    "raw": "67ca075e8e8a75f0d4f1030d2695d7cf6dc9532f08fe7c773d346f9fb3fb0db6",
+    "structural": "c4636cacd2dbd0244ea608931dfb6de7e924c2daa93914476c0ed2aef521d0f5"
+  },
+  "integrity_issues": [
+    {
+      "message": "SARIF contained no diagnostic results",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "severity": "warning",
+      "stage": "parse"
+    }
+  ],
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

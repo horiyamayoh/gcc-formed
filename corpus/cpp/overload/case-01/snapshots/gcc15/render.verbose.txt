@@ -1,0 +1,10 @@
+error: type or overload mismatch
+--> src/main.cpp:4:5
+help: compare the expected type and actual argument at the call site
+why: no matching function for call to ‘takes(int)’
+| src/main.cpp:4:5
+| int main() {
+note: candidate: ‘void takes(int, int)’
+note:   candidate expects 2 arguments, 1 provided
+note: candidate: ‘void takes(double, double)’
+note:   candidate expects 2 arguments, 1 provided

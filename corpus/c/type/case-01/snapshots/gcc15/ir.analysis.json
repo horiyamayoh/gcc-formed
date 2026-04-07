@@ -1,0 +1,142 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:4:22: error: passing argument 1 of ‘takes_int’ makes integer from pointer without a cast [-Werror=int-conversion]\n    4 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected ‘int’ but argument is of type ‘const char *’\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\ncc1: all warnings being treated as errors\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 520,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 554,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "syntax",
+            "first_action_hint": "fix the first parser error at the user-owned location",
+            "headline": "syntax error"
+          },
+          "fingerprints": {
+            "family": "17de17a08ba893824115ad00e6f53c48f6cb7e90efa398b80c78007f46ff338a",
+            "raw": "25608acbb5273cde16a9841d764a2e30d6d57baf7e2bbc69f03dd18333a310ba",
+            "structural": "e62a9bcf46fa9c80cbf85c2ec7be832e79811d85a4a485c4659e1f0f5b1b9c37"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 24,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.c"
+            }
+          ],
+          "message": {
+            "raw_text": "expected ‘int’ but argument is of type ‘const char *’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "9650ba719d6083ccfbcec698fc84ad17a0c3065c0579792fc9c60867e5e80f5f",
+        "raw": "5275cb11d9d943eb921defc9a0b10dad2ba0ab99af224fa900f9fdbff984069b",
+        "structural": "7f275f8bb5ae24637e8bd8673b28f0c2a0d6d673f892fecdbb265dd0bd55f711"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 22,
+          "end_column": 27,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "passing argument 1 of ‘takes_int’ makes integer from pointer without a cast"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "28d501c9c1a65711c1f50278337cb8203f68e94b77ab3444bbbfb946d415510e",
+    "structural": "3f2dfcf2e32284d5d1705e6f98cbf7329d10972ad0228e3c5a4a12acb1d92958"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Werror",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

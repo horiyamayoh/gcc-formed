@@ -1,0 +1,251 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:5: error: no matching function for call to ‘takes(int)’\n    4 |     takes(1);\n      |     ^~~~~\nsrc/main.cpp:1:6: note: candidate: ‘void takes(int, int)’\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note:   candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate: ‘void takes(double, double)’\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note:   candidate expects 2 arguments, 1 provided\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 529,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1043,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch"
+          },
+          "fingerprints": {
+            "family": "8528fecc38d2a001e73f2056067cb697c3b360e2688d4a8bc529c83985540ebc",
+            "raw": "d969ab5c27bf332bd1936b022b31a3094d09e9314bc8bd332bd45a9eab669f0b",
+            "structural": "539c49072ffcd2cadf426da786f73d94c8bc67070ede1cd8168b8f70fae7be89"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘void takes(int, int)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch"
+          },
+          "fingerprints": {
+            "family": "5782729aa68f4cda4b351e8a240102eb0611b9d0999efc3b7dfe7a14a7089d0d",
+            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
+            "structural": "c0b9f1906867dcd5bed695e087c2d4944a78591e77e8b8193fa2fa2988927bf4"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  candidate expects 2 arguments, 1 provided"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch"
+          },
+          "fingerprints": {
+            "family": "0717e61938eb9894627a8e047ca54055cf72f829853d948ed9f770ebe3d8c2a6",
+            "raw": "893436fe3ab2a20c2cee31c12a9137d23195952e93dd630504f0d1cbcae2f241",
+            "structural": "79d6770942378867cc6ff4058b953a404bb2c422bb88d0878301aa730fd99b33"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘void takes(double, double)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch"
+          },
+          "fingerprints": {
+            "family": "5782729aa68f4cda4b351e8a240102eb0611b9d0999efc3b7dfe7a14a7089d0d",
+            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
+            "structural": "e7b3cb75e30a5b2ea8f03cc90a0b5b46eb21525df914d9823eb53f1f6e566ddf"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 11,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  candidate expects 2 arguments, 1 provided"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "0034718367c7891e97cd7118a20d7b8cfd3e66a3fff75eb5b01be403b4bc8677",
+        "raw": "df8c714f4cefad62b6a723bd19e8672c3e1946674dd73fe2f85b40ab3f5c372d",
+        "structural": "3e5fde9a0846dd07ce3109df46757f5662b4e678bc10f8fbad4feed246344bed"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 13,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘takes(int)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "d4d8008ecf6d69c0556a44d5cb254dab22e3ec8b5b1bda0f295a5f364fc48f23",
+    "structural": "24e07b7c0ce294f4e3bb07baa21a9a75f3b0a24a2829734b2add2aca117af601"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

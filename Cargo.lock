@@ -285,6 +285,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
  "thiserror",
 ]
 
@@ -988,8 +989,13 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "diag_adapter_gcc",
+ "diag_core",
+ "diag_enrich",
+ "diag_render",
  "diag_testkit",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]
