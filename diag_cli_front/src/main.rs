@@ -211,7 +211,7 @@ fn passthrough_inherit(
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
         .status()?;
-    Ok(status.code().unwrap_or(1))
+    Ok(exit_code_from_process_status(&status))
 }
 
 fn maybe_write_trace(
@@ -808,6 +808,22 @@ fn exit_code_from_status(status: &diag_capture_runtime::ExitStatusInfo) -> i32 {
         .unwrap_or(1)
 }
 
+fn exit_code_from_process_status(status: &std::process::ExitStatus) -> i32 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::ExitStatusExt;
+
+        status
+            .code()
+            .or_else(|| status.signal().map(|signal| 128 + signal))
+            .unwrap_or(1)
+    }
+    #[cfg(not(unix))]
+    {
+        status.code().unwrap_or(1)
+    }
+}
+
 fn is_compiler_introspection(args: &[OsString]) -> bool {
     args.iter().any(|arg| {
         let value = os_to_string(arg);
@@ -1252,5 +1268,15 @@ mod tests {
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::TraceId
         ));
+    }
+
+    #[test]
+    fn signal_exit_status_uses_conventional_code() {
+        let status = diag_capture_runtime::ExitStatusInfo {
+            code: None,
+            signal: Some(15),
+            success: false,
+        };
+        assert_eq!(exit_code_from_status(&status), 143);
     }
 }

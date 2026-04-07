@@ -44,6 +44,42 @@ fn falls_back_to_passthrough_with_fake_gcc13_backend() {
         .stderr(predicate::str::contains("help:").not());
 }
 
+#[cfg(unix)]
+#[test]
+fn compiler_introspection_passthrough_preserves_signal_exit_code() {
+    let temp = tempfile::tempdir().unwrap();
+    let backend = temp.path().join("fake-gcc");
+    fs::write(
+        &backend,
+        r#"#!/usr/bin/env bash
+set -euo pipefail
+count_file="$(dirname "$0")/version-count"
+if [[ "${1:-}" == "--version" ]]; then
+  if [[ ! -f "$count_file" ]]; then
+    echo "gcc (Fake) 15.2.0"
+    : >"$count_file"
+    exit 0
+  fi
+  kill -s TERM $$
+fi
+exit 0
+"#,
+    )
+    .unwrap();
+    let mut permissions = fs::metadata(&backend).unwrap().permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&backend, permissions).unwrap();
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--version")
+        .assert()
+        .failure()
+        .code(143);
+}
+
 #[test]
 fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     let temp = fixture("15.2.0");
