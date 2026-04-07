@@ -31,6 +31,11 @@ jobs:
       - name: Representative GCC 15 snapshot check
         if: matrix.gcc_image == 'gcc:15'
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+      - name: Hermetic release build smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          cargo xtask vendor --output-dir vendor
+          cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed
       - name: Release packaging smoke
         if: matrix.gcc_image == 'gcc:15'
         run: >

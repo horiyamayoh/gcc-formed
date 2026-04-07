@@ -24,6 +24,10 @@ jobs:
           bash -lc "cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && ./target/debug/gcc-formed --formed-self-check"
       - name: Representative GCC 15 snapshot check
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+      - name: Hermetic release build smoke
+        run: |
+          cargo xtask vendor --output-dir vendor
+          cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed
       - name: Release packaging smoke
         run: >
           cargo build --bin gcc-formed &&

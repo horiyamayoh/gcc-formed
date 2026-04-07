@@ -24,6 +24,7 @@
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
 - `cargo xtask package` により release artifact / control file の最小セットを生成できる
 - `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証できる
+- `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -46,6 +47,8 @@ cargo xtask check
 cargo xtask replay --root corpus
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
+cargo xtask vendor --output-dir vendor
+cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed
 cargo xtask package --binary target/debug/gcc-formed --target-triple x86_64-unknown-linux-gnu
 ```
 

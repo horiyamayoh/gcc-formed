@@ -41,6 +41,12 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    HermeticReleaseCheck {
+        #[arg(long, default_value = "vendor")]
+        vendor_dir: PathBuf,
+        #[arg(long, default_value = "gcc-formed")]
+        bin: String,
+    },
     Install {
         #[arg(long)]
         control_dir: PathBuf,
@@ -84,6 +90,10 @@ enum Commands {
         state_root: Option<PathBuf>,
         #[arg(long)]
         purge_state: bool,
+    },
+    Vendor {
+        #[arg(long, default_value = "vendor")]
+        output_dir: PathBuf,
     },
     Replay {
         #[arg(long, default_value = "corpus")]
@@ -152,6 +162,31 @@ struct PackageOutput {
 }
 
 #[derive(Debug, Clone)]
+struct VendorOptions {
+    output_dir: PathBuf,
+}
+
+#[derive(Debug)]
+struct VendorOutput {
+    vendor_dir: PathBuf,
+    vendor_hash: String,
+}
+
+#[derive(Debug, Clone)]
+struct HermeticReleaseOptions {
+    vendor_dir: PathBuf,
+    bin: String,
+}
+
+#[derive(Debug)]
+struct HermeticReleaseOutput {
+    vendor_dir: PathBuf,
+    vendor_hash: String,
+    bin: String,
+    target_dir: PathBuf,
+}
+
+#[derive(Debug, Clone)]
 struct InstallOptions {
     control_dir: PathBuf,
     install_root: PathBuf,
@@ -211,6 +246,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Check => {
             run("cargo", &["fmt", "--check"])?;
             run("cargo", &["test", "--workspace"])?;
+        }
+        Commands::HermeticReleaseCheck { vendor_dir, bin } => {
+            let check = run_hermetic_release_check(HermeticReleaseOptions { vendor_dir, bin })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "vendor_dir": check.vendor_dir,
+                    "vendor_hash": check.vendor_hash,
+                    "bin": check.bin,
+                    "target_dir": check.target_dir,
+                }))?
+            );
         }
         Commands::Install {
             control_dir,
@@ -304,6 +351,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "removed_versions": uninstall.removed_versions,
                     "removed_launchers": uninstall.removed_launchers,
                     "purged_state": uninstall.purged_state,
+                }))?
+            );
+        }
+        Commands::Vendor { output_dir } => {
+            let vendor = run_vendor(VendorOptions { output_dir })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "vendor_dir": vendor.vendor_dir,
+                    "vendor_hash": vendor.vendor_hash,
                 }))?
             );
         }
@@ -1314,6 +1371,85 @@ fn run_install(options: InstallOptions) -> Result<InstallOutput, Box<dyn std::er
     run_install_at(&std::env::current_dir()?, &options)
 }
 
+fn run_vendor(options: VendorOptions) -> Result<VendorOutput, Box<dyn std::error::Error>> {
+    run_vendor_at(&workspace_root(), &options)
+}
+
+fn run_vendor_at(
+    workspace_root: &Path,
+    options: &VendorOptions,
+) -> Result<VendorOutput, Box<dyn std::error::Error>> {
+    let vendor_dir = resolve_workspace_path(workspace_root, &options.output_dir);
+    if vendor_dir.exists() {
+        fs::remove_dir_all(&vendor_dir)?;
+    }
+    fs::create_dir_all(&vendor_dir)?;
+    let output = Command::new("cargo")
+        .current_dir(workspace_root)
+        .args([
+            "vendor",
+            "--quiet",
+            "--versioned-dirs",
+            vendor_dir
+                .to_str()
+                .ok_or("vendor directory path was not valid UTF-8")?,
+        ])
+        .output()?;
+    if !output.status.success() {
+        return Err(format!(
+            "cargo vendor failed for {}: {}",
+            vendor_dir.display(),
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+    let vendor_hash = hash_vendor_dir(&vendor_dir)?;
+    Ok(VendorOutput {
+        vendor_dir,
+        vendor_hash,
+    })
+}
+
+fn run_hermetic_release_check(
+    options: HermeticReleaseOptions,
+) -> Result<HermeticReleaseOutput, Box<dyn std::error::Error>> {
+    run_hermetic_release_check_at(&workspace_root(), &options)
+}
+
+fn run_hermetic_release_check_at(
+    workspace_root: &Path,
+    options: &HermeticReleaseOptions,
+) -> Result<HermeticReleaseOutput, Box<dyn std::error::Error>> {
+    let vendor_dir = canonicalize_existing_path(workspace_root, &options.vendor_dir, "vendor dir")?;
+    let cargo_home = tempfile::Builder::new()
+        .prefix("gcc-formed-cargo-home-")
+        .tempdir_in(workspace_root)?;
+    let config_path = cargo_home.path().join("config.toml");
+    fs::write(
+        &config_path,
+        vendored_source_config(&vendor_dir, &workspace_root.join("target/hermetic-release"))?,
+    )?;
+    let status = Command::new("cargo")
+        .current_dir(workspace_root)
+        .arg("build")
+        .arg("--locked")
+        .arg("--offline")
+        .arg("--release")
+        .arg("--bin")
+        .arg(&options.bin)
+        .env("CARGO_HOME", cargo_home.path())
+        .status()?;
+    if !status.success() {
+        return Err("hermetic release build failed".into());
+    }
+    Ok(HermeticReleaseOutput {
+        vendor_dir: vendor_dir.clone(),
+        vendor_hash: hash_vendor_dir(&vendor_dir)?,
+        bin: options.bin.clone(),
+        target_dir: workspace_root.join("target/hermetic-release"),
+    })
+}
+
 fn run_install_at(
     base_dir: &Path,
     options: &InstallOptions,
@@ -1766,12 +1902,13 @@ fn hash_vendor_dir(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
         return Ok("vendor-missing".to_string());
     }
     let mut entries = Vec::new();
-    collect_paths_for_hash(path, &mut entries)?;
+    collect_paths_for_hash(path, path, &mut entries)?;
     entries.sort();
     Ok(sha256_bytes(entries.join("\n").as_bytes()))
 }
 
 fn collect_paths_for_hash(
+    root: &Path,
     path: &Path,
     entries: &mut Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -1779,9 +1916,14 @@ fn collect_paths_for_hash(
         let entry = entry?;
         let child = entry.path();
         if child.is_dir() {
-            collect_paths_for_hash(&child, entries)?;
+            collect_paths_for_hash(root, &child, entries)?;
         } else {
-            entries.push(child.display().to_string());
+            let relative = child
+                .strip_prefix(root)
+                .unwrap_or(&child)
+                .display()
+                .to_string();
+            entries.push(format!("{relative}:{}", sha256_file(&child)?));
         }
     }
     Ok(())
@@ -1851,6 +1993,23 @@ fn render_sha256sums(paths: &[&Path]) -> Result<String, Box<dyn std::error::Erro
     }
     lines.sort();
     Ok(lines.join("\n") + "\n")
+}
+
+fn vendored_source_config(
+    vendor_dir: &Path,
+    target_dir: &Path,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let vendor_dir = vendor_dir
+        .to_str()
+        .ok_or("vendor directory path was not valid UTF-8")?;
+    let target_dir = target_dir
+        .to_str()
+        .ok_or("target directory path was not valid UTF-8")?;
+    let vendor_dir = vendor_dir.replace('\\', "\\\\");
+    let target_dir = target_dir.replace('\\', "\\\\");
+    Ok(format!(
+        "[source.crates-io]\nreplace-with = \"vendored-sources\"\n\n[source.vendored-sources]\ndirectory = \"{vendor_dir}\"\n\n[build]\ntarget-dir = \"{target_dir}\"\n"
+    ))
 }
 
 fn read_build_manifest(path: &Path) -> Result<BuildManifest, Box<dyn std::error::Error>> {
@@ -2398,6 +2557,19 @@ mod tests {
         (sandbox, repo_root, binary_path)
     }
 
+    fn init_minimal_cargo_project() -> (tempfile::TempDir, PathBuf) {
+        let sandbox = tempfile::tempdir().unwrap();
+        let root = sandbox.path().join("mini");
+        fs::create_dir_all(root.join("src")).unwrap();
+        write_file(
+            &root.join("Cargo.toml"),
+            b"[package]\nname = \"mini\"\nversion = \"0.1.0\"\nedition = \"2024\"\n\n[dependencies]\n",
+        );
+        write_file(&root.join("src/main.rs"), b"fn main() {}\n");
+        run_command(&root, "cargo", &["generate-lockfile", "--offline"]);
+        (sandbox, root)
+    }
+
     #[test]
     fn package_smoke_emits_release_artifacts() {
         let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
@@ -2524,6 +2696,45 @@ mod tests {
             artifact_slug_for_target("aarch64-unknown-linux-gnu"),
             "linux-aarch64-gnu"
         );
+    }
+
+    #[test]
+    fn vendored_source_config_replaces_crates_io() {
+        let config = vendored_source_config(
+            Path::new("/tmp/vendor"),
+            Path::new("/tmp/target/hermetic-release"),
+        )
+        .unwrap();
+        assert!(config.contains("[source.crates-io]"));
+        assert!(config.contains("replace-with = \"vendored-sources\""));
+        assert!(config.contains("directory = \"/tmp/vendor\""));
+        assert!(config.contains("target-dir = \"/tmp/target/hermetic-release\""));
+    }
+
+    #[test]
+    fn vendor_and_hermetic_release_check_work_for_minimal_project() {
+        let (_sandbox, root) = init_minimal_cargo_project();
+        let vendor = run_vendor_at(
+            &root,
+            &VendorOptions {
+                output_dir: PathBuf::from("vendor"),
+            },
+        )
+        .unwrap();
+        assert!(vendor.vendor_dir.exists());
+        assert_ne!(vendor.vendor_hash, "vendor-missing");
+
+        let hermetic = run_hermetic_release_check_at(
+            &root,
+            &HermeticReleaseOptions {
+                vendor_dir: PathBuf::from("vendor"),
+                bin: "mini".to_string(),
+            },
+        )
+        .unwrap();
+        assert_eq!(hermetic.bin, "mini");
+        assert_eq!(hermetic.vendor_hash, vendor.vendor_hash);
+        assert!(hermetic.target_dir.join("release/mini").exists());
     }
 
     #[test]
