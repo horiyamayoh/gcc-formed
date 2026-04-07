@@ -118,6 +118,70 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     }));
 }
 
+#[test]
+fn self_check_reports_target_aware_paths_and_backend_status() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let home = temp.path().join("home");
+    let config_home = temp.path().join("xdg-config");
+    let cache_home = temp.path().join("xdg-cache");
+    let state_home = temp.path().join("xdg-state");
+    let runtime_dir = temp.path().join("xdg-runtime");
+    fs::create_dir_all(&home).unwrap();
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", &config_home)
+        .env("XDG_CACHE_HOME", &cache_home)
+        .env("XDG_STATE_HOME", &state_home)
+        .env("XDG_RUNTIME_DIR", &runtime_dir)
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env_remove("FORMED_INSTALL_ROOT")
+        .env_remove("FORMED_CONFIG_FILE")
+        .env_remove("FORMED_CONFIG_DIR")
+        .env_remove("FORMED_CACHE_DIR")
+        .env_remove("FORMED_STATE_DIR")
+        .env_remove("FORMED_RUNTIME_DIR")
+        .env_remove("FORMED_TRACE_DIR")
+        .current_dir(temp.path())
+        .arg("--formed-self-check")
+        .assert()
+        .success();
+
+    let report: Value = serde_json::from_slice(&assert.get_output().stdout).unwrap();
+    let target_triple = report["manifest"]["target_triple"].as_str().unwrap();
+    let expected_backend_path = fs::canonicalize(&backend).unwrap().display().to_string();
+    let expected_config_path = config_home
+        .join("cc-formed/config.toml")
+        .display()
+        .to_string();
+
+    assert_eq!(report["binary"], "ok");
+    assert_eq!(report["manifest"]["target_triple_matches_build"], true);
+    assert_eq!(report["paths"]["state_root_access"], "ok");
+    assert_eq!(report["paths"]["runtime_root_access"], "ok");
+    assert_eq!(report["paths"]["install_root_access"], "ok");
+    assert_eq!(report["paths"]["install_root_includes_target_triple"], true);
+    assert_eq!(report["paths"]["separated_from_install_root"], true);
+    assert_eq!(
+        report["paths"]["config_path"].as_str(),
+        Some(expected_config_path.as_str())
+    );
+    assert!(
+        report["paths"]["install_root"]
+            .as_str()
+            .unwrap()
+            .ends_with(target_triple)
+    );
+    assert_eq!(
+        report["backend"]["path"].as_str(),
+        Some(expected_backend_path.as_str())
+    );
+    assert_eq!(report["backend"]["support_tier"], "a");
+    assert!(report["warnings"].as_array().unwrap().is_empty());
+}
+
 fn fixture(version: &str) -> TempDir {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("main.c"), "int main(void) { return 0 }\n").unwrap();
