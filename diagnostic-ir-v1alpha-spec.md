@@ -1,12 +1,24 @@
 # gcc-formed / cc-formed Diagnostic IR v1alpha 仕様書
 
 - **文書種別**: 内部仕様書（実装契約）
-- **状態**: Proposed
+- **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **主用途**: compiler adapter / enrichment / renderer / test harness 間の共通契約
 - **想定実装**: Linux first, GCC first, 将来の Clang 拡張を阻害しない設計
-- **関連文書**: `gcc-formed-architecture-proposal.md`
+- **関連文書**:
+  - `gcc-formed-architecture-proposal.md`
+  - `implementation-bootstrap-sequence.md`
+  - `adr-initial-set/README.md`
+- **関連 ADR**:
+  - `adr-initial-set/adr-0002-diagnostic-ir-as-product-core.md`
+  - `adr-initial-set/adr-0003-structured-first-gcc-ingress.md`
+  - `adr-initial-set/adr-0009-library-plus-cli-layering.md`
+  - `adr-initial-set/adr-0010-deterministic-rule-engine-no-ai-core.md`
+  - `adr-initial-set/adr-0012-native-ir-json-as-canonical-machine-output.md`
+  - `adr-initial-set/adr-0015-source-ownership-model.md`
+  - `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
+  - `adr-initial-set/adr-0020-stability-promises.md`
 
 ---
 
@@ -565,7 +577,7 @@ JSON / YAML / CBOR 等の直列化は後続節で定義する。
 - `replacement = ""` は削除を意味する。
 - `start == end` かつ非空 `replacement` は挿入を意味する。
 - 1 つの suggestion 内で、同一ファイル上の overlapping edits は MUST NOT。  
-  （将来必要なら別 ADR で明示的に解禁する）
+  （将来必要なら supersede で明示的に解禁する）
 
 ---
 
@@ -933,7 +945,7 @@ validation は schema check ではなく、**意味論チェック**を含む。
 1. `TextEdit.range.boundary_semantics` MUST be `half_open`.
 2. 同一 suggestion 内で、同一 file 上の overlapping edit は invalid。
 3. `applicability = machine_exact` で `source = heuristic` は原則 invalid。  
-   ただし別 ADR で deterministic proof が定義された場合のみ例外。
+   ただし将来 supersede で deterministic proof が定義された場合のみ例外。
 4. `applicability = machine_exact | machine_probable` なら `confidence` SHOULD be present。
 
 ### 18.5 chain レベル
@@ -1700,30 +1712,26 @@ v1alpha で future-proofing のために予約する。
 
 ---
 
-## 31. 残る ADR 候補（この仕様の外に置くべきもの）
+## 31. ADR 対応と post-MVP backlog
 
-この仕様で決め切らず、別 ADR に分けるべき論点を明示する。
+この仕様に関わる基線判断は、以下の ADR で固定済みである。
 
 1. **GCC support tier**  
-   GCC 15+ / 13–14 / <=12 をどこまで正式サポートとするか。
+   `ADR-0004` と `ADR-0005`
 
-2. **family taxonomy v1**  
-   `analysis.family` をどこまで標準化するか。
+2. **ownership policy**  
+   `ADR-0015`
 
-3. **ownership policy**  
-   `user/vendor/system/generated` 判定ルールをどう配布するか。
+3. **trace bundle format / redaction**  
+   `ADR-0016`
 
-4. **trace bundle format**  
-   `external_ref` の実体をどう保存するか。
+4. **public machine-readable output / SARIF egress**  
+   `ADR-0012` と `ADR-0013`
 
-5. **demangler policy**  
-   どの symbol demangler をどう使うか。
+以下は v1alpha 実装契約を阻害しない post-MVP backlog とする。
 
-6. **public machine-readable export**  
-   internal IR をそのまま外へ出すか、SARIF/別 schema に変換するか。
-
-7. **redaction policy**  
-   path / argv / source excerpt をどこまで保持するか。
+1. **family taxonomy v1 の外部公開粒度**
+2. **demangler policy の製品契約化**
 
 ---
 

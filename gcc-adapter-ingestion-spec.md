@@ -1,7 +1,7 @@
 # gcc-formed GCC Adapter / Ingestion 仕様書
 
 - **文書種別**: 内部仕様書（実装契約）
-- **状態**: Proposed
+- **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **主用途**: GCC 呼び出し・診断捕捉・構造化取り込み・安全フォールバックの契約固定
@@ -9,6 +9,19 @@
 - **関連文書**:
   - `gcc-formed-architecture-proposal.md`
   - `diagnostic-ir-v1alpha-spec.md`
+  - `implementation-bootstrap-sequence.md`
+  - `adr-initial-set/README.md`
+- **関連 ADR**:
+  - `adr-initial-set/adr-0001-wrapper-first-entrypoint.md`
+  - `adr-initial-set/adr-0003-structured-first-gcc-ingress.md`
+  - `adr-initial-set/adr-0004-gcc-15-first-support-policy.md`
+  - `adr-initial-set/adr-0005-gcc-13-14-compatibility-tier.md`
+  - `adr-initial-set/adr-0006-fail-open-fallback-and-provenance.md`
+  - `adr-initial-set/adr-0011-locale-policy-english-first-reduced-fallback.md`
+  - `adr-initial-set/adr-0013-sarif-egress-scope.md`
+  - `adr-initial-set/adr-0014-linker-diagnostics-via-staged-text-adapter.md`
+  - `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
+  - `adr-initial-set/adr-0019-render-modes.md`
 
 ---
 
@@ -1284,16 +1297,36 @@ Tier A では最低 3 層の fixture を持つ。
 
 ---
 
-## 30. 仕様の外に置くべき ADR 候補
+## 30. ADR 対応と rollout backlog
 
-この仕様で固定しきらず、別 ADR にするべき論点。
+この仕様に関わる基線判断は、以下の ADR で固定済みである。
 
-1. local default mode を最初から `render` にするか、一定期間 `shadow` にするか
-2. `LC_MESSAGES=C` を default にするか
-3. retained artifact default を `never` / `on-wrapper-failure` / `on-child-error` のどれにするか
-4. Tier B experimental を製品バイナリに同梱するか
-5. raw fallback 時の user-facing 注記文面
-6. telemetry を default-off にするか
+1. support tier  
+   `ADR-0004` と `ADR-0005`
+
+2. fail-open / provenance  
+   `ADR-0006`
+
+3. locale / environment policy  
+   `ADR-0011`
+
+4. SARIF egress boundary  
+   `ADR-0013`
+
+5. linker residual handling  
+   `ADR-0014`
+
+6. retained artifact / trace / redaction  
+   `ADR-0016`
+
+7. renderer-visible mode surface  
+   `ADR-0019`
+
+以下は v1alpha の rollout backlog とし、この仕様の normative contract には含めない。
+
+1. local default mode を dogfood / shadow / render のどこから始めるか
+2. raw fallback 時の user-facing 注記の微文言
+3. Tier B experimental を製品バイナリへ同梱するか
 
 ---
 

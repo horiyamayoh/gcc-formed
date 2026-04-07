@@ -1,7 +1,7 @@
 # gcc-formed Rendering / UX Contract 仕様書
 
 - **文書種別**: 内部仕様書（実装契約）
-- **状態**: Proposed
+- **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **主用途**: Diagnostic IR から terminal / CI 向け human-readable output を生成する renderer の契約固定
@@ -10,6 +10,15 @@
   - `gcc-formed-architecture-proposal.md`
   - `diagnostic-ir-v1alpha-spec.md`
   - `gcc-adapter-ingestion-spec.md`
+  - `adr-initial-set/README.md`
+- **関連 ADR**:
+  - `adr-initial-set/adr-0002-diagnostic-ir-as-product-core.md`
+  - `adr-initial-set/adr-0006-fail-open-fallback-and-provenance.md`
+  - `adr-initial-set/adr-0010-deterministic-rule-engine-no-ai-core.md`
+  - `adr-initial-set/adr-0011-locale-policy-english-first-reduced-fallback.md`
+  - `adr-initial-set/adr-0015-source-ownership-model.md`
+  - `adr-initial-set/adr-0019-render-modes.md`
+  - `adr-initial-set/adr-0020-stability-promises.md`
 
 ---
 
@@ -1432,15 +1441,28 @@ renderer/
 
 ---
 
-## 30. 残る ADR 候補（この仕様の外に置くべきもの）
+## 30. ADR 対応と post-MVP backlog
 
-以下は関連するが、別 ADR として管理すべきである。
+この仕様に関わる基線判断は、以下の ADR で固定済みである。
 
-1. v1 の canonical label catalog を将来 localizable にするか
-2. type name compaction を renderer でやるか enrichment でやるか
+1. locale policy  
+   `ADR-0011`
+
+2. source ownership priority  
+   `ADR-0015`
+
+3. render surface / density / raw mode  
+   `ADR-0019`
+
+4. canonical label / wording / compatibility review  
+   `ADR-0020`
+
+以下は post-MVP backlog とし、v1alpha の renderer contract には含めない。
+
+1. v1 label catalog の localizable 化
+2. type name compaction を renderer と enrichment のどちらへ寄せるか
 3. hyperlink を default-on にするか
-4. raw compiler message を default で常時併記するか
-5. build-wide aggregated view をいつ導入するか
+4. build-wide aggregated view をいつ導入するか
 
 ---
 
@@ -1508,4 +1530,3 @@ renderer/
    - `profile`, `path_policy`, `debug_refs` をどの flag / config へ写像するか決める
 3. **Enrichment / Ranking 仕様書**
    - `analysis.headline`, `first_action_hint`, `group_ref` をどう生成するか固定する
-

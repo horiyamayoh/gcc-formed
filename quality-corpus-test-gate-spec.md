@@ -1,7 +1,7 @@
 # gcc-formed Quality / Corpus / Test Gate 仕様書
 
 - **文書種別**: 内部仕様書（実装契約）
-- **状態**: Proposed
+- **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **主用途**: 品質保証戦略、コーパス運用、テスト階層、CI gate、release gate、rollout readiness の契約固定
@@ -11,6 +11,18 @@
   - `diagnostic-ir-v1alpha-spec.md`
   - `gcc-adapter-ingestion-spec.md`
   - `rendering-ux-contract-spec.md`
+  - `packaging-runtime-operations-spec.md`
+  - `adr-initial-set/README.md`
+- **関連 ADR**:
+  - `adr-initial-set/adr-0004-gcc-15-first-support-policy.md`
+  - `adr-initial-set/adr-0005-gcc-13-14-compatibility-tier.md`
+  - `adr-initial-set/adr-0006-fail-open-fallback-and-provenance.md`
+  - `adr-initial-set/adr-0010-deterministic-rule-engine-no-ai-core.md`
+  - `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
+  - `adr-initial-set/adr-0017-dependency-allowlist-and-license-policy.md`
+  - `adr-initial-set/adr-0018-corpus-governance.md`
+  - `adr-initial-set/adr-0019-render-modes.md`
+  - `adr-initial-set/adr-0020-stability-promises.md`
 
 ---
 

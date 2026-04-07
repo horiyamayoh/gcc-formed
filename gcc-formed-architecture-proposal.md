@@ -1798,26 +1798,26 @@ Raw linker output
 
 以下はプロジェクト開始時に必ず書くべき ADR である。
 
-1. **ADR-001: wrapper-first を採るか**
-2. **ADR-002: SARIF/JSON を ingress に使うか**
-3. **ADR-003: SARIF を core IR にしない**
-4. **ADR-004: official support を GCC 15 first にする**
-5. **ADR-005: GCC 13–14 compatibility tier をどう扱うか**
-6. **ADR-006: fallback は fail-open にする**
-7. **ADR-007: implementation language は Rust**
-8. **ADR-008: single binary / musl 優先配布**
-9. **ADR-009: library + CLI 二層構成**
-10. **ADR-010: deterministic rule engine を採用し、AI をコアにしない**
-11. **ADR-011: locale policy（English-first / reduced mode / fallback）**
-12. **ADR-012: machine-readable output は native IR JSON を canonical とする**
-13. **ADR-013: SARIF egress の範囲（raw pass-through か enriched export か）**
-14. **ADR-014: linker diagnostics を text adapter で段階的に扱う**
-15. **ADR-015: source ownership model（user/vendor/system/generated）の定義**
-16. **ADR-016: trace bundle の内容と redaction policy**
-17. **ADR-017: dependency allowlist / license policy**
-18. **ADR-018: corpus governance（fixture 追加・sanitize・review プロセス）**
-19. **ADR-019: render modes（concise/default/verbose/raw）**
-20. **ADR-020: stability promises（CLI / config / IR schema）**
+1. **ADR-0001: wrapper-first を採るか**
+2. **ADR-0002: SARIF/JSON を ingress に使うか**
+3. **ADR-0003: SARIF を core IR にしない**
+4. **ADR-0004: official support を GCC 15 first にする**
+5. **ADR-0005: GCC 13–14 compatibility tier をどう扱うか**
+6. **ADR-0006: fallback は fail-open にする**
+7. **ADR-0007: implementation language は Rust**
+8. **ADR-0008: single binary / musl 優先配布**
+9. **ADR-0009: library + CLI 二層構成**
+10. **ADR-0010: deterministic rule engine を採用し、AI をコアにしない**
+11. **ADR-0011: locale policy（English-first / reduced mode / fallback）**
+12. **ADR-0012: machine-readable output は native IR JSON を canonical とする**
+13. **ADR-0013: SARIF egress の範囲（raw pass-through か enriched export か）**
+14. **ADR-0014: linker diagnostics を text adapter で段階的に扱う**
+15. **ADR-0015: source ownership model（user/vendor/system/generated）の定義**
+16. **ADR-0016: trace bundle の内容と redaction policy**
+17. **ADR-0017: dependency allowlist / license policy**
+18. **ADR-0018: corpus governance（fixture 追加・sanitize・review プロセス）**
+19. **ADR-0019: render modes（concise/default/verbose/raw）**
+20. **ADR-0020: stability promises（CLI / config / IR schema）**
 
 ---
 

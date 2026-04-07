@@ -1,7 +1,7 @@
 # gcc-formed Packaging / Runtime / Operations 仕様書
 
 - **文書種別**: 内部仕様書（実装契約）
-- **状態**: Proposed
+- **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
 - **対象**: `gcc-formed` / `g++-formed` / 将来の `cc-formed`
 - **主用途**: Linux first の配布・インストール・ランタイム境界・更新/ロールバック・社内運用の契約固定
@@ -12,9 +12,14 @@
   - `gcc-adapter-ingestion-spec.md`
   - `rendering-ux-contract-spec.md`
   - `quality-corpus-test-gate-spec.md`
-  - `adr-initial-set/0006-rust-as-implementation-language.md`
-  - `adr-initial-set/0007-single-binary-distribution-policy.md`
-  - `adr-initial-set/0009-default-off-telemetry-and-opt-in-trace-bundles.md`
+  - `adr-initial-set/README.md`
+- **関連 ADR**:
+  - `adr-initial-set/adr-0001-wrapper-first-entrypoint.md`
+  - `adr-initial-set/adr-0007-rust-as-implementation-language.md`
+  - `adr-initial-set/adr-0008-linux-first-single-binary-musl-distribution.md`
+  - `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
+  - `adr-initial-set/adr-0017-dependency-allowlist-and-license-policy.md`
+  - `adr-initial-set/adr-0020-stability-promises.md`
 
 ---
 
