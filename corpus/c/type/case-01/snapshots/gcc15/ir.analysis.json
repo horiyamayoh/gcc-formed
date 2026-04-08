@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:4:22: error: passing argument 1 of ‘takes_int’ makes integer from pointer without a cast [-Werror=int-conversion]\n    4 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected ‘int’ but argument is of type ‘const char *’\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\ncc1: all warnings being treated as errors\n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:5:22: error: passing argument 1 of 'takes_int' makes integer from pointer without a cast [-Wint-conversion]\n    5 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected 'int' but argument is of type 'const char *'\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 520,
+      "size_bytes": 456,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 554,
+      "size_bytes": 5060,
       "storage": "external_ref"
     }
   ],
@@ -44,9 +44,9 @@
             "headline": "syntax error"
           },
           "fingerprints": {
-            "family": "17de17a08ba893824115ad00e6f53c48f6cb7e90efa398b80c78007f46ff338a",
-            "raw": "25608acbb5273cde16a9841d764a2e30d6d57baf7e2bbc69f03dd18333a310ba",
-            "structural": "e62a9bcf46fa9c80cbf85c2ec7be832e79811d85a4a485c4659e1f0f5b1b9c37"
+            "family": "efefaca8e84052a462a5434600a2bd3afaf10a5b4d3f266efee66a2facd008cb",
+            "raw": "f848c176b8ea043baa5e0811933db4d87217a628c569eae9a751aecfb2f0a1bd",
+            "structural": "5a4c1ee4b716c863ef893a6fa0d163b339128059ef2d94390f71130bde0f52ff"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -59,7 +59,7 @@
             }
           ],
           "message": {
-            "raw_text": "expected ‘int’ but argument is of type ‘const char *’"
+            "raw_text": "expected 'int' but argument is of type 'const char *'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -75,22 +75,22 @@
         }
       ],
       "fingerprints": {
-        "family": "9650ba719d6083ccfbcec698fc84ad17a0c3065c0579792fc9c60867e5e80f5f",
-        "raw": "5275cb11d9d943eb921defc9a0b10dad2ba0ab99af224fa900f9fdbff984069b",
-        "structural": "7f275f8bb5ae24637e8bd8673b28f0c2a0d6d673f892fecdbb265dd0bd55f711"
+        "family": "6719d6502acb3bcabb9d3af991e92f528f02c56ad236bad68484d88a4e6716d9",
+        "raw": "f703d245af755a90b954c1decd48882ec4799514aed233fa9de939a083a53f35",
+        "structural": "e2a6b72e458f31c1b39a64135b4b62a0e76e0efecc30eb57fcbb8dcc2414ccb5"
       },
       "id": "sarif-0-0",
       "locations": [
         {
           "column": 22,
           "end_column": 27,
-          "line": 4,
+          "line": 5,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "passing argument 1 of ‘takes_int’ makes integer from pointer without a cast"
+        "raw_text": "passing argument 1 of 'takes_int' makes integer from pointer without a cast"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -109,8 +109,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "28d501c9c1a65711c1f50278337cb8203f68e94b77ab3444bbbfb946d415510e",
-    "structural": "3f2dfcf2e32284d5d1705e6f98cbf7329d10972ad0228e3c5a4a12acb1d92958"
+    "raw": "50bfde76f3302597358cd1adbe1335a0814f1c0e98629e08caed981d5044cc4d",
+    "structural": "14301f23e4512170a7e916e6a1041430fa3db810aaf57465cd569141a70adf09"
   },
   "producer": {
     "name": "gcc-formed",

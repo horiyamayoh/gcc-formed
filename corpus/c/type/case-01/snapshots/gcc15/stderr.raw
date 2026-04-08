@@ -1,10 +1,9 @@
-src/main.c: In function ‘main’:
-src/main.c:4:22: error: passing argument 1 of ‘takes_int’ makes integer from pointer without a cast [-Werror=int-conversion]
-    4 |     return takes_int(value);
+src/main.c: In function 'main':
+src/main.c:5:22: error: passing argument 1 of 'takes_int' makes integer from pointer without a cast [-Wint-conversion]
+    5 |     return takes_int(value);
       |                      ^~~~~
       |                      |
       |                      const char *
-src/main.c:1:19: note: expected ‘int’ but argument is of type ‘const char *’
+src/main.c:1:19: note: expected 'int' but argument is of type 'const char *'
     1 | int takes_int(int value) { return value; }
       |               ~~~~^~~~~
-cc1: all warnings being treated as errors

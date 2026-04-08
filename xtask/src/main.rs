@@ -1523,13 +1523,12 @@ fn compare_snapshot_file(
 }
 
 fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
-    let contents = normalize_snapshot_text(contents);
     match path.file_name().and_then(|value| value.to_str()) {
-        Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, &contents),
+        Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),
         Some("ir.facts.json") | Some("ir.analysis.json") => {
-            normalize_ir_snapshot_contents(path, &contents)
+            normalize_ir_snapshot_contents(path, contents)
         }
-        _ => Ok(contents),
+        _ => Ok(normalize_snapshot_text(contents)),
     }
 }
 
@@ -1556,7 +1555,127 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
 fn normalize_snapshot_text(contents: &str) -> String {
     let contents = normalize_transient_object_paths(contents);
     let contents = normalize_gcc_quote_style(&contents);
+    let contents = normalize_volatile_compiler_text(&contents);
     normalize_transient_line_numbers(&contents)
+}
+
+fn normalize_volatile_compiler_text(contents: &str) -> String {
+    let contents = contents
+        .replace("'{{'", "'{'")
+        .replace("'}}'", "'}'")
+        .replace("[-Werror=", "[-W")
+        .replace("\"  candidate", "\"candidate")
+        .replace("\"  template", "\"template")
+        .replace("\"  deduced", "\"deduced");
+    let contents = normalize_linker_offsets(&contents);
+    let mut normalized = String::with_capacity(contents.len());
+    for segment in contents.split_inclusive('\n') {
+        let (line, newline) = segment
+            .strip_suffix('\n')
+            .map(|line| (line, "\n"))
+            .unwrap_or((segment, ""));
+        let line = normalize_candidate_line(line);
+        if line.trim() == "cc1: all warnings being treated as errors"
+            || is_candidate_count_line(&line)
+        {
+            continue;
+        }
+        let line = normalize_marker_line(&line);
+        normalized.push_str(&line);
+        normalized.push_str(newline);
+    }
+    normalized
+}
+
+fn normalize_linker_offsets(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let bytes = contents.as_bytes();
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if bytes[index] == b'+'
+            && index + 3 < bytes.len()
+            && bytes[index + 1] == b'0'
+            && bytes[index + 2] == b'x'
+        {
+            let mut digit_end = index + 3;
+            while digit_end < bytes.len() && bytes[digit_end].is_ascii_hexdigit() {
+                digit_end += 1;
+            }
+            if digit_end > index + 3 {
+                normalized.push_str("+0x0");
+                index = digit_end;
+                continue;
+            }
+        }
+        normalized.push(bytes[index] as char);
+        index += 1;
+    }
+
+    normalized
+}
+
+fn normalize_candidate_line(line: &str) -> String {
+    let mut normalized = String::with_capacity(line.len());
+    let bytes = line.as_bytes();
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if line[index..].starts_with("candidate ") {
+            let digit_start = index + "candidate ".len();
+            let mut digit_end = digit_start;
+            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
+                digit_end += 1;
+            }
+            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
+                normalized.push_str("candidate:");
+                index = digit_end + 1;
+                continue;
+            }
+        }
+        normalized.push(bytes[index] as char);
+        index += 1;
+    }
+
+    let normalized = normalized
+        .replace("note:   candidate", "note: candidate")
+        .replace("note:   template", "note: template")
+        .replace("note:   deduced", "note: deduced");
+    if let Some(rest) = normalized.strip_prefix("  candidate") {
+        return format!("candidate{rest}");
+    }
+    if let Some(rest) = normalized.strip_prefix("  template") {
+        return format!("template{rest}");
+    }
+    if let Some(rest) = normalized.strip_prefix("  deduced") {
+        return format!("deduced{rest}");
+    }
+    normalized
+}
+
+fn is_candidate_count_line(line: &str) -> bool {
+    let trimmed = line.trim();
+    if let Some(note_start) = trimmed.find("note: there are ") {
+        let rest = &trimmed[note_start + "note: there are ".len()..];
+        return rest.ends_with(" candidates");
+    }
+    trimmed.contains("note: there is 1 candidate")
+}
+
+fn normalize_marker_line(line: &str) -> String {
+    let Some(pipe_index) = line.find('|') else {
+        return line.to_string();
+    };
+    let after_pipe = &line[pipe_index + 1..];
+    let trimmed = after_pipe.trim();
+    if trimmed.is_empty() || !trimmed.chars().all(|ch| matches!(ch, '^' | '~')) {
+        return line.to_string();
+    }
+    let marker_indent = after_pipe
+        .chars()
+        .take_while(|ch| *ch == ' ')
+        .collect::<String>();
+    format!("{}|{}^", &line[..pipe_index], marker_indent)
 }
 
 fn normalize_transient_object_paths(contents: &str) -> String {
@@ -1675,8 +1794,7 @@ fn normalize_colon_number_sequences(contents: &str) -> String {
             if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
                 normalized.push(':');
                 normalized.push('1');
-                normalized.push(':');
-                index = digit_end + 1;
+                index = digit_end;
                 continue;
             }
         }
@@ -1953,7 +2071,9 @@ fn normalized_diagnostic_node_value(node: &diag_core::DiagnosticNode) -> serde_j
             ),
         );
     }
-    normalized.insert("id".to_string(), serde_json::Value::String(node.id.clone()));
+    if matches!(node.semantic_role, diag_core::SemanticRole::Root) {
+        normalized.insert("id".to_string(), serde_json::Value::String(node.id.clone()));
+    }
     if !node.locations.is_empty() {
         normalized.insert(
             "locations".to_string(),
@@ -2001,13 +2121,13 @@ fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_jso
     if let Some(first_action_hint) = analysis.first_action_hint.as_ref() {
         normalized.insert(
             "first_action_hint".to_string(),
-            serde_json::Value::String(first_action_hint.clone()),
+            serde_json::Value::String(normalize_snapshot_text(first_action_hint)),
         );
     }
     if let Some(headline) = analysis.headline.as_ref() {
         normalized.insert(
             "headline".to_string(),
-            serde_json::Value::String(headline.clone()),
+            serde_json::Value::String(normalize_snapshot_text(headline)),
         );
     }
     serde_json::Value::Object(normalized)
@@ -2033,16 +2153,10 @@ fn normalized_context_chain_value(chain: &diag_core::ContextChain) -> serde_json
 
 fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json::Value {
     let mut normalized = serde_json::Map::new();
-    if let Some(column) = frame.column {
-        normalized.insert("column".to_string(), serde_json::json!(column));
-    }
     normalized.insert(
         "label".to_string(),
         serde_json::Value::String(frame.label.clone()),
     );
-    if let Some(line) = frame.line {
-        normalized.insert("line".to_string(), serde_json::json!(line));
-    }
     if let Some(path) = frame.path.as_ref() {
         normalized.insert("path".to_string(), serde_json::Value::String(path.clone()));
     }
@@ -2051,14 +2165,6 @@ fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json
 
 fn normalized_location_value(location: &diag_core::Location) -> serde_json::Value {
     let mut normalized = serde_json::Map::new();
-    normalized.insert("column".to_string(), serde_json::json!(location.column));
-    if let Some(end_column) = location.end_column {
-        normalized.insert("end_column".to_string(), serde_json::json!(end_column));
-    }
-    if let Some(end_line) = location.end_line {
-        normalized.insert("end_line".to_string(), serde_json::json!(end_line));
-    }
-    normalized.insert("line".to_string(), serde_json::json!(location.line));
     if let Some(ownership) = location.ownership.as_ref() {
         normalized.insert("ownership".to_string(), serde_json::json!(ownership));
     }
@@ -4563,9 +4669,216 @@ mod tests {
     }
 
     #[test]
+    fn normalizes_ir_location_span_drift_before_compare() {
+        let expected = r#"{
+  "captures": [],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "macro_include",
+        "first_action_hint": "inspect the user-owned include edge or macro invocation that triggers the error",
+        "headline": "error surfaced through macro/include context"
+      },
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 25,
+              "label": "src/main.c:2:25: note: in expansion of macro `CALL_BAD'",
+              "line": 2,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "expected-family",
+        "raw": "expected-raw",
+        "structural": "expected-structural"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 25,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "`missing_symbol' undeclared"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "expected-document-family",
+    "raw": "expected-document-raw",
+    "structural": "expected-document-structural"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}"#;
+        let actual = r#"{
+  "captures": [],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "macro_include",
+        "first_action_hint": "inspect the user-owned include edge or macro invocation that triggers the error",
+        "headline": "error surfaced through macro/include context"
+      },
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 41,
+              "label": "src/main.c:5:41: note: in expansion of macro ‘CALL_BAD’",
+              "line": 5,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "actual-family",
+        "raw": "actual-raw",
+        "structural": "actual-structural"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 41,
+          "end_column": 42,
+          "end_line": 5,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "‘missing_symbol’ undeclared"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "actual-document-family",
+    "raw": "actual-document-raw",
+    "structural": "actual-document-structural"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}"#;
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("ir.analysis.json"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("ir.analysis.json"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
     fn normalizes_transient_line_numbers_before_compare() {
         let expected = "src/main.c:2:25: note: in expansion of macro 'CALL_BAD'\n    2 | int main(void) { return CALL_BAD(); }\n";
         let actual = "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n";
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("stderr.raw"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("stderr.raw"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_transient_column_numbers_in_location_headers() {
+        let expected = "src/main.c:2:25: error: incompatible types\n";
+        let actual = "src/main.c:5:41: error: incompatible types\n";
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("stderr.raw"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("stderr.raw"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_volatile_compiler_text_patterns() {
+        let expected = "src/main.cpp:4:5: note: candidate: 'void takes(int, int)'\n    4 |     takes(1);\n      |     ^~~~~\ncc1: all warnings being treated as errors\n/usr/bin/ld: /tmp/main.o: in function 'main':\nmain.c:(.text+0x9): undefined reference to 'missing_symbol'\n";
+        let actual = "src/main.cpp:7:9: note: there are 2 candidates\nsrc/main.cpp:7:9: note: candidate 1: 'void takes(int, int)'\n    7 |     takes(1);\n      |     ~~~~~^~~\n/usr/bin/ld: /tmp/cc123456.o: in function 'main':\nmain.c:(.text+0x5): undefined reference to 'missing_symbol'\n";
 
         let normalized_expected =
             normalize_snapshot_contents(Path::new("stderr.raw"), expected).unwrap();

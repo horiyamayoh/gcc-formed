@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function ‘main’:\nsrc/config.h:1:20: error: ‘missing_symbol’ undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:2:25: note: in expansion of macro ‘CALL_BAD’\n    2 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:2:25: note: in expansion of macro ‘CALL_BAD’\n    2 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\n",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 766,
+      "size_bytes": 750,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 537,
+      "size_bytes": 6998,
       "storage": "external_ref"
     }
   ],
@@ -46,14 +46,14 @@
           "fingerprints": {
             "family": "b3e5a8226b9a6407178cd3d8b38bc41cf491ab3b3acfda2b9bd219454e70582b",
             "raw": "c91b56e5e757d34a800d126da4d73be41caae18e8ce701d73ad0454a29e3f6e1",
-            "structural": "b3f69bc0373f174956808c797175b0103db1379299228916d5c84413b1292bb6"
+            "structural": "631f231333b6d4b321c483e08146a85a944198908b247fae51f25a6ede672230"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
             {
               "column": 25,
               "end_column": 26,
-              "line": 2,
+              "line": 3,
               "ownership": "user",
               "path": "src/main.c"
             }
@@ -89,14 +89,14 @@
           "frames": [
             {
               "column": 25,
-              "label": "src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’",
-              "line": 2,
+              "label": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'",
+              "line": 3,
               "path": "src/main.c"
             },
             {
               "column": 25,
-              "label": "src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’",
-              "line": 2,
+              "label": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'",
+              "line": 3,
               "path": "src/main.c"
             }
           ],
@@ -104,22 +104,22 @@
         }
       ],
       "fingerprints": {
-        "family": "76eb2aa0fa61545935d2e17f7bd1b0497055a3bc492241b790c06a1e69158884",
-        "raw": "9651a22f4d76a71cbae8f143283893738c93a57064eb999cf6d104244acc59ac",
-        "structural": "69dd2837b93f0fffd752031afa907f1dfa12e008d76131f2a5a8d779e492cfce"
+        "family": "b00ae28cb4b4d6243f411603dc008defe6392244139e3547ddd171a5c9bb75bd",
+        "raw": "24ff3c191f05e40e98d68af90fdb3f9b0e50d39f0d053385f64ed53c4ca8ba2a",
+        "structural": "2d2fc9863eedb9b86c802327bda5acfaabe6801b7d57fec681939b26e13ba147"
       },
       "id": "sarif-0-0",
       "locations": [
         {
           "column": 25,
           "end_column": 26,
-          "line": 2,
+          "line": 3,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "‘missing_symbol’ undeclared (first use in this function)"
+        "raw_text": "'missing_symbol' undeclared (first use in this function)"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -138,8 +138,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "49f6dfaba8496546bdb83dc1d90b61732735a677c343cd613292d6becefc1564",
-    "structural": "3501f6d8be6e0c4db9c0364b227543e75cb892ddd39f36334753063e30b9e0c0"
+    "raw": "18d0f760eb6e34535627705ab03dca4952d813a890a91e9c6c642ffaea8184a6",
+    "structural": "7fdc664a37077f20d9b61b41fdd26896519831aa3669c3790d26f797497798b1"
   },
   "producer": {
     "name": "gcc-formed",

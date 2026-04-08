@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:5: error: no matching function for call to ‘takes(int)’\n    4 |     takes(1);\n      |     ^~~~~\nsrc/main.cpp:1:6: note: candidate: ‘void takes(int, int)’\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note:   candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate: ‘void takes(double, double)’\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note:   candidate expects 2 arguments, 1 provided\n",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:10: error: no matching function for call to 'takes(int)'\n    5 |     takes(1);\n      |     ~~~~~^~~\nsrc/main.cpp:5:10: note: there are 2 candidates\nsrc/main.cpp:1:6: note: candidate 1: 'void takes(int, int)'\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note: candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate 2: 'void takes(double, double)'\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note: candidate expects 2 arguments, 1 provided\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 529,
+      "size_bytes": 565,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1043,
+      "size_bytes": 8148,
       "storage": "external_ref"
     }
   ],
@@ -44,11 +44,11 @@
             "headline": "type or overload mismatch"
           },
           "fingerprints": {
-            "family": "8528fecc38d2a001e73f2056067cb697c3b360e2688d4a8bc529c83985540ebc",
-            "raw": "d969ab5c27bf332bd1936b022b31a3094d09e9314bc8bd332bd45a9eab669f0b",
-            "structural": "539c49072ffcd2cadf426da786f73d94c8bc67070ede1cd8168b8f70fae7be89"
+            "family": "93c072daa7c304ba8cb29dc21a5ea06685866608ffd2793a39f89e2993f59f64",
+            "raw": "2e897f47f7e9fc57915ad4836f71e1a81b1d1bb5f82aaf4d7f63da468835cd00",
+            "structural": "28ca5738135dcf229153f78ba951c78f50b9f8856b807bcbb1455f79dc6b91e0"
           },
-          "id": "sarif-0-0-related-0",
+          "id": "sarif-0-0-related-1",
           "locations": [
             {
               "column": 6,
@@ -59,7 +59,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘void takes(int, int)’"
+            "raw_text": "candidate 1: 'void takes(int, int)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -81,11 +81,11 @@
             "headline": "type or overload mismatch"
           },
           "fingerprints": {
-            "family": "5782729aa68f4cda4b351e8a240102eb0611b9d0999efc3b7dfe7a14a7089d0d",
-            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
-            "structural": "c0b9f1906867dcd5bed695e087c2d4944a78591e77e8b8193fa2fa2988927bf4"
+            "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
+            "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
+            "structural": "746fcb3e7c89a55a10786f0764260bb556bad17e639dcbcb660d935085203eeb"
           },
-          "id": "sarif-0-0-related-1",
+          "id": "sarif-0-0-related-2",
           "locations": [
             {
               "column": 6,
@@ -96,7 +96,7 @@
             }
           ],
           "message": {
-            "raw_text": "  candidate expects 2 arguments, 1 provided"
+            "raw_text": "candidate expects 2 arguments, 1 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -118,11 +118,11 @@
             "headline": "type or overload mismatch"
           },
           "fingerprints": {
-            "family": "0717e61938eb9894627a8e047ca54055cf72f829853d948ed9f770ebe3d8c2a6",
-            "raw": "893436fe3ab2a20c2cee31c12a9137d23195952e93dd630504f0d1cbcae2f241",
-            "structural": "79d6770942378867cc6ff4058b953a404bb2c422bb88d0878301aa730fd99b33"
+            "family": "607a93a0534a3a9b6c265b09d35d0790b56ae4da1ec70222df1270144d9cd7fe",
+            "raw": "92cc3ca1275ada82036ac14b8a89e196e2d725e9d85cd79e1df732938919db34",
+            "structural": "711e131cf4fe38a488d0d916a48c0dd2d7395c4dcd57cc2baddf4f4b98b10884"
           },
-          "id": "sarif-0-0-related-2",
+          "id": "sarif-0-0-related-3",
           "locations": [
             {
               "column": 6,
@@ -133,7 +133,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘void takes(double, double)’"
+            "raw_text": "candidate 2: 'void takes(double, double)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -155,11 +155,11 @@
             "headline": "type or overload mismatch"
           },
           "fingerprints": {
-            "family": "5782729aa68f4cda4b351e8a240102eb0611b9d0999efc3b7dfe7a14a7089d0d",
-            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
-            "structural": "e7b3cb75e30a5b2ea8f03cc90a0b5b46eb21525df914d9823eb53f1f6e566ddf"
+            "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
+            "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
+            "structural": "7f2bd54adacc99b8d8588df2e7aef8078e9bd81267cb9eb4d33aa8dcec481c8e"
           },
-          "id": "sarif-0-0-related-3",
+          "id": "sarif-0-0-related-4",
           "locations": [
             {
               "column": 6,
@@ -170,7 +170,7 @@
             }
           ],
           "message": {
-            "raw_text": "  candidate expects 2 arguments, 1 provided"
+            "raw_text": "candidate expects 2 arguments, 1 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -186,22 +186,22 @@
         }
       ],
       "fingerprints": {
-        "family": "0034718367c7891e97cd7118a20d7b8cfd3e66a3fff75eb5b01be403b4bc8677",
-        "raw": "df8c714f4cefad62b6a723bd19e8672c3e1946674dd73fe2f85b40ab3f5c372d",
-        "structural": "3e5fde9a0846dd07ce3109df46757f5662b4e678bc10f8fbad4feed246344bed"
+        "family": "7ceebab4d46866807b15600aad5b717cfc02866708c7252fba1099669804f4ae",
+        "raw": "473e8fef50f407fe921a63bd544d45ce34019d91f88bde2b0f2dd3020a940208",
+        "structural": "2df795ffa7261eb65ed0a78334def054102ba3c2270a76532cda3618636e8780"
       },
       "id": "sarif-0-0",
       "locations": [
         {
           "column": 5,
           "end_column": 13,
-          "line": 4,
+          "line": 5,
           "ownership": "user",
           "path": "src/main.cpp"
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘takes(int)’"
+        "raw_text": "no matching function for call to 'takes(int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -220,8 +220,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "d4d8008ecf6d69c0556a44d5cb254dab22e3ec8b5b1bda0f295a5f364fc48f23",
-    "structural": "24e07b7c0ce294f4e3bb07baa21a9a75f3b0a24a2829734b2add2aca117af601"
+    "raw": "c9732ab6ae24339f983c8fde1882ecf9402df71563d862ff025b9e9ef24f333c",
+    "structural": "7f7378d336fe04f9c8a5aba4563d20928875d4048929319387e56ae5a55f91b3"
   },
   "producer": {
     "name": "gcc-formed",

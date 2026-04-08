@@ -1,12 +1,13 @@
-src/main.cpp: In function ‘int main()’:
-src/main.cpp:4:5: error: no matching function for call to ‘takes(int)’
-    4 |     takes(1);
-      |     ^~~~~
-src/main.cpp:1:6: note: candidate: ‘void takes(int, int)’
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:10: error: no matching function for call to 'takes(int)'
+    5 |     takes(1);
+      |     ~~~~~^~~
+src/main.cpp:5:10: note: there are 2 candidates
+src/main.cpp:1:6: note: candidate 1: 'void takes(int, int)'
     1 | void takes(int, int);
       |      ^~~~~
-src/main.cpp:1:6: note:   candidate expects 2 arguments, 1 provided
-src/main.cpp:2:6: note: candidate: ‘void takes(double, double)’
+src/main.cpp:1:6: note: candidate expects 2 arguments, 1 provided
+src/main.cpp:2:6: note: candidate 2: 'void takes(double, double)'
     2 | void takes(double, double);
       |      ^~~~~
-src/main.cpp:2:6: note:   candidate expects 2 arguments, 1 provided
+src/main.cpp:2:6: note: candidate expects 2 arguments, 1 provided

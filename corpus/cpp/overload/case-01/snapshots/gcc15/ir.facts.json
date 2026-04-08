@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:5: error: no matching function for call to ‘takes(int)’\n    4 |     takes(1);\n      |     ^~~~~\nsrc/main.cpp:1:6: note: candidate: ‘void takes(int, int)’\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note:   candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate: ‘void takes(double, double)’\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note:   candidate expects 2 arguments, 1 provided\n",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:10: error: no matching function for call to 'takes(int)'\n    5 |     takes(1);\n      |     ~~~~~^~~\nsrc/main.cpp:5:10: note: there are 2 candidates\nsrc/main.cpp:1:6: note: candidate 1: 'void takes(int, int)'\n    1 | void takes(int, int);\n      |      ^~~~~\nsrc/main.cpp:1:6: note: candidate expects 2 arguments, 1 provided\nsrc/main.cpp:2:6: note: candidate 2: 'void takes(double, double)'\n    2 | void takes(double, double);\n      |      ^~~~~\nsrc/main.cpp:2:6: note: candidate expects 2 arguments, 1 provided\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 529,
+      "size_bytes": 565,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1043,
+      "size_bytes": 8148,
       "storage": "external_ref"
     }
   ],
@@ -32,11 +32,11 @@
       "children": [
         {
           "fingerprints": {
-            "family": "33efaf896c3a052ed69e49a3d02052845172aea03d7f6b96dd3a8df559fe5dd7",
-            "raw": "d969ab5c27bf332bd1936b022b31a3094d09e9314bc8bd332bd45a9eab669f0b",
-            "structural": "a8a77d255c4964e632b9fbd53fdf321af1f84f648b985f7a71eb832ee3060752"
+            "family": "5ad4f3817e5de2d2252e125ca14d8a0b63a7f00695d178be5c4f221bb4fc3649",
+            "raw": "2e897f47f7e9fc57915ad4836f71e1a81b1d1bb5f82aaf4d7f63da468835cd00",
+            "structural": "02c89b97a35d0c3facd1cff7c3c671de92be55879235012fa12a84bb3eca64e2"
           },
-          "id": "sarif-0-0-related-0",
+          "id": "sarif-0-0-related-1",
           "locations": [
             {
               "column": 6,
@@ -47,7 +47,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘void takes(int, int)’"
+            "raw_text": "candidate 1: 'void takes(int, int)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -63,11 +63,11 @@
         },
         {
           "fingerprints": {
-            "family": "5e3ae2f6782271fd7b6a4f56af3377935395f5baeebfbaa9c596ae4e1a3ea194",
-            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
-            "structural": "9e52c6632087eba0e396735a365fad2daa19ae29775f406ac7a2699ebaca5bf5"
+            "family": "27b28401b8218b9fd5b4073f8cb380d3b0e5841aac0b58d534f0032b6141f6de",
+            "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
+            "structural": "50891b6d684176504942d6ec32860cf25dc8633766754dfed3ab5001d05499d5"
           },
-          "id": "sarif-0-0-related-1",
+          "id": "sarif-0-0-related-2",
           "locations": [
             {
               "column": 6,
@@ -78,7 +78,7 @@
             }
           ],
           "message": {
-            "raw_text": "  candidate expects 2 arguments, 1 provided"
+            "raw_text": "candidate expects 2 arguments, 1 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -94,11 +94,11 @@
         },
         {
           "fingerprints": {
-            "family": "812e9b1b56a91438d7f973b74123aac7946b6bbc6475bec11b07ed69104e2ab4",
-            "raw": "893436fe3ab2a20c2cee31c12a9137d23195952e93dd630504f0d1cbcae2f241",
-            "structural": "508473bee4b580a80fe6658b5c72db1c191ff8553a57e2f381894106d00872c8"
+            "family": "d02aa10b2a09a90e1e0b143d771aaff2b98c02baa5e30a7254725fde0b246308",
+            "raw": "92cc3ca1275ada82036ac14b8a89e196e2d725e9d85cd79e1df732938919db34",
+            "structural": "f4d501ff0bd9a0e316debc6768e683a6d4c80d2da6caac98b91e3e9f5b895f93"
           },
-          "id": "sarif-0-0-related-2",
+          "id": "sarif-0-0-related-3",
           "locations": [
             {
               "column": 6,
@@ -109,7 +109,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘void takes(double, double)’"
+            "raw_text": "candidate 2: 'void takes(double, double)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -125,11 +125,11 @@
         },
         {
           "fingerprints": {
-            "family": "5e3ae2f6782271fd7b6a4f56af3377935395f5baeebfbaa9c596ae4e1a3ea194",
-            "raw": "aa81f84bd378cad5859218ca94921c94d91b8efffb4a3aa0d67958896ac9169f",
-            "structural": "f1d0dd75b57e6e95fd33c56e81fd42b61cd36238b76c74a6d12ece884632cb85"
+            "family": "27b28401b8218b9fd5b4073f8cb380d3b0e5841aac0b58d534f0032b6141f6de",
+            "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
+            "structural": "d3364d8f9346f596b17d6912858725075d0d6f0107fd97ab2581bdc50cf027d4"
           },
-          "id": "sarif-0-0-related-3",
+          "id": "sarif-0-0-related-4",
           "locations": [
             {
               "column": 6,
@@ -140,7 +140,7 @@
             }
           ],
           "message": {
-            "raw_text": "  candidate expects 2 arguments, 1 provided"
+            "raw_text": "candidate expects 2 arguments, 1 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -156,22 +156,22 @@
         }
       ],
       "fingerprints": {
-        "family": "5e0a325b9e7c6b74d49fd3a1adcaae22998ed002197dc1cbf9b03c86c1966d1d",
-        "raw": "df8c714f4cefad62b6a723bd19e8672c3e1946674dd73fe2f85b40ab3f5c372d",
-        "structural": "b3ffe203d56a0e996136ed553c76a37dc6f9f799b3969d66a203b0de0e5cdb36"
+        "family": "c47e0ac525c3e79ab237c8a5f3b8db41df626a516dcae9e0fb8335d552b4dbaf",
+        "raw": "473e8fef50f407fe921a63bd544d45ce34019d91f88bde2b0f2dd3020a940208",
+        "structural": "7cdf173c70c1592fe7f2ea0aeec92166949d76281663e55ff7884e694338a296"
       },
       "id": "sarif-0-0",
       "locations": [
         {
           "column": 5,
           "end_column": 13,
-          "line": 4,
+          "line": 5,
           "ownership": "user",
           "path": "src/main.cpp"
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘takes(int)’"
+        "raw_text": "no matching function for call to 'takes(int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -190,8 +190,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "cde3077f77cd3b0baf679604ce26ca5e5586b40d1c2e6338594c4e022c279ae4",
-    "structural": "4b9fbd4ca35cd5300305828fba3fe6f7573f87362e49a0171004db473ca15974"
+    "raw": "13955b72bd6c67e3c7b49dd1f95b5f180cad0c4e2fd5a6951a86b1958b28432c",
+    "structural": "b2ac8733d53fe73bd4c7bb7b432ed5d160cd3f55e89cc78d750cd249f047dabb"
   },
   "producer": {
     "name": "gcc-formed",

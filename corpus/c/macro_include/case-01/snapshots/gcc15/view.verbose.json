@@ -1,26 +1,26 @@
 {
   "cards": [
     {
-      "canonical_location": "src/main.c:2:25",
+      "canonical_location": "src/main.c:3:25",
       "child_notes": [
         "each undeclared identifier is reported only once for each function it appears in"
       ],
       "context_lines": [
         "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
-        "macro: src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’ @ src/main.c",
-        "macro: src/main.c:2:25: note: in expansion of macro ‘CALL_BAD’ @ src/main.c"
+        "macro: src/main.c:3:25: note: in expansion of macro 'CALL_BAD' @ src/main.c",
+        "macro: src/main.c:3:25: note: in expansion of macro 'CALL_BAD' @ src/main.c"
       ],
       "excerpts": [
         {
           "lines": [
-            ""
+            "int main(void) { return CALL_BAD(); }"
           ],
-          "location": "src/main.c:2:25"
+          "location": "src/main.c:3:25"
         }
       ],
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
       "group_id": "sarif-0-0",
-      "raw_message": "‘missing_symbol’ undeclared (first use in this function)",
+      "raw_message": "'missing_symbol' undeclared (first use in this function)",
       "severity": "error",
       "title": "error surfaced through macro/include context"
     }

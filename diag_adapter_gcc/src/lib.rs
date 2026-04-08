@@ -235,14 +235,16 @@ fn parse_related_locations(
     related
         .into_iter()
         .enumerate()
-        .map(|(index, location)| {
+        .filter_map(|(index, location)| {
             let message = location
                 .get("message")
                 .and_then(|message| message.get("text"))
                 .and_then(Value::as_str)
-                .unwrap_or("related location")
-                .to_string();
-            DiagnosticNode {
+                .map(str::to_string)?;
+            if message.trim().is_empty() || is_candidate_count_message(&message) {
+                return None;
+            }
+            Some(DiagnosticNode {
                 id: format!("sarif-{run_index}-{result_index}-related-{index}"),
                 origin: Origin::Gcc,
                 phase: infer_related_phase(&message),
@@ -265,7 +267,7 @@ fn parse_related_locations(
                 },
                 analysis: None,
                 fingerprints: None,
-            }
+            })
         })
         .collect()
 }
@@ -511,7 +513,7 @@ fn combined_message_seed(raw_text: &str, related_messages: &[String]) -> String 
 
 fn infer_related_role(message: &str) -> SemanticRole {
     let lowered = message.to_lowercase();
-    if lowered.contains("candidate:") {
+    if lowered.contains("candidate:") || is_numbered_candidate_message(&lowered) {
         SemanticRole::Candidate
     } else if lowered.contains("template") || lowered.contains("required from") {
         SemanticRole::Supporting
@@ -527,6 +529,22 @@ fn infer_related_phase(message: &str) -> Phase {
     } else {
         Phase::Semantic
     }
+}
+
+fn is_candidate_count_message(message: &str) -> bool {
+    let lowered = message.trim().to_lowercase();
+    if let Some(rest) = lowered.strip_prefix("there are ") {
+        return rest.ends_with(" candidates");
+    }
+    lowered == "there is 1 candidate"
+}
+
+fn is_numbered_candidate_message(message: &str) -> bool {
+    let Some(rest) = message.trim().strip_prefix("candidate ") else {
+        return false;
+    };
+    let digit_len = rest.chars().take_while(|ch| ch.is_ascii_digit()).count();
+    digit_len > 0 && rest[digit_len..].starts_with(':')
 }
 
 fn context_frame_from_related_location(message: &str, location: &Value) -> diag_core::ContextFrame {
@@ -693,5 +711,151 @@ mod tests {
         .unwrap();
         assert_eq!(document.diagnostics.len(), 1);
         assert_eq!(document.diagnostics[0].locations[0].path, "src/main.c");
+    }
+
+    #[test]
+    fn ignores_message_less_related_locations() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"'missing_symbol' undeclared"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":3,"startColumn":25}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":3,"startColumn":25}
+                          },
+                          "message":{"text":"each undeclared identifier is reported only once"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/wrapper.h"},
+                            "region":{"startLine":1}
+                          }
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":1}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                invocation_id: "inv".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: vec!["gcc".to_string()],
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+                secondary_tools: Vec::new(),
+                language_mode: Some(LanguageMode::C),
+                target_triple: None,
+                wrapper_mode: Some(WrapperSurface::Terminal),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics.len(), 1);
+        assert_eq!(document.diagnostics[0].children.len(), 1);
+        assert_eq!(
+            document.diagnostics[0].children[0].message.raw_text,
+            "each undeclared identifier is reported only once"
+        );
+    }
+
+    #[test]
+    fn ignores_candidate_count_related_locations() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"no matching function for call to 'takes(int)'"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":5,"startColumn":5}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":5,"startColumn":5}
+                          },
+                          "message":{"text":"there are 2 candidates"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":1,"startColumn":6}
+                          },
+                          "message":{"text":"candidate 1: 'void takes(int, int)'"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                invocation_id: "inv".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: vec!["g++".to_string()],
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                secondary_tools: Vec::new(),
+                language_mode: Some(LanguageMode::Cpp),
+                target_triple: None,
+                wrapper_mode: Some(WrapperSurface::Terminal),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics[0].children.len(), 1);
+        assert_eq!(
+            document.diagnostics[0].children[0].message.raw_text,
+            "candidate 1: 'void takes(int, int)'"
+        );
     }
 }

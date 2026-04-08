@@ -1,9 +1,9 @@
 error: type or overload mismatch
---> src/main.cpp:4:5
+--> src/main.cpp:5:5
 help: compare the expected type and actual argument at the call site
-why: no matching function for call to ‘takes(int)’
-| src/main.cpp:4:5
-| int main() {
-note: candidate: ‘void takes(int, int)’
-note:   candidate expects 2 arguments, 1 provided
-note: candidate: ‘void takes(double, double)’
+why: no matching function for call to 'takes(int)'
+| src/main.cpp:5:5
+|     takes(1);
+note: candidate 1: 'void takes(int, int)'
+note: candidate expects 2 arguments, 1 provided
+note: candidate 2: 'void takes(double, double)'

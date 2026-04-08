@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:4:22: error: passing argument 1 of ‘takes_int’ makes integer from pointer without a cast [-Werror=int-conversion]\n    4 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected ‘int’ but argument is of type ‘const char *’\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\ncc1: all warnings being treated as errors\n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:5:22: error: passing argument 1 of 'takes_int' makes integer from pointer without a cast [-Wint-conversion]\n    5 |     return takes_int(value);\n      |                      ^~~~~\n      |                      |\n      |                      const char *\nsrc/main.c:1:19: note: expected 'int' but argument is of type 'const char *'\n    1 | int takes_int(int value) { return value; }\n      |               ~~~~^~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 520,
+      "size_bytes": 456,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 554,
+      "size_bytes": 5060,
       "storage": "external_ref"
     }
   ],
@@ -32,9 +32,9 @@
       "children": [
         {
           "fingerprints": {
-            "family": "1911ab0c5ac84db8b54cc30a374830d9c3063fbc7a01d36a69ea6cfcd894abe9",
-            "raw": "25608acbb5273cde16a9841d764a2e30d6d57baf7e2bbc69f03dd18333a310ba",
-            "structural": "cd200a57b20cf1666e432f8b14df0f3fdd7061d0d13184298fd2ba494d1a1d37"
+            "family": "24f7f94a1bc76489627bdfc941f3bcf75767539ff550ec239740dc61bdf77583",
+            "raw": "f848c176b8ea043baa5e0811933db4d87217a628c569eae9a751aecfb2f0a1bd",
+            "structural": "1bcb798f7fe3a807bd18fd53a4c85cd07cd25a32cefa3fb909ffe2f43a1bdb79"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -47,7 +47,7 @@
             }
           ],
           "message": {
-            "raw_text": "expected ‘int’ but argument is of type ‘const char *’"
+            "raw_text": "expected 'int' but argument is of type 'const char *'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -63,22 +63,22 @@
         }
       ],
       "fingerprints": {
-        "family": "ead92d7e1e0a1e27a8ce8798b96a308f564873076f136d688cb1ba8fae935100",
-        "raw": "5275cb11d9d943eb921defc9a0b10dad2ba0ab99af224fa900f9fdbff984069b",
-        "structural": "d4851c4940a07cc95940895915092705d71e8c6cec67f0ed62ec1024272e8a8b"
+        "family": "df469519e7061d82181d17838bc7919c4204fc15915e9c94f460fb0ae706860a",
+        "raw": "f703d245af755a90b954c1decd48882ec4799514aed233fa9de939a083a53f35",
+        "structural": "5b368e35d7f3cb91f9ef341e3c7371d30b37601e410369cdb70980f3eee903d1"
       },
       "id": "sarif-0-0",
       "locations": [
         {
           "column": 22,
           "end_column": 27,
-          "line": 4,
+          "line": 5,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "passing argument 1 of ‘takes_int’ makes integer from pointer without a cast"
+        "raw_text": "passing argument 1 of 'takes_int' makes integer from pointer without a cast"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -97,8 +97,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "b86c2ec768ea228ab7bea7276e0b0efc1a700223de435a98b6ee52d073748e46",
-    "structural": "9e37f4ab6dc78b4af99844d94a6f6639280d1a4185b761a86df1daf094e837a9"
+    "raw": "90ae2042011b27e37aba5881dff8d0f9cd88071c56641805fa3756f3f17e3091",
+    "structural": "565778d4beda611a371fc1bdb491d240725a56a22f2eea7430a6eeeb06b0bb1f"
   },
   "producer": {
     "name": "gcc-formed",

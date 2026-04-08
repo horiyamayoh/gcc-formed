@@ -55,6 +55,23 @@ cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target
 cargo xtask package --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed --target-triple x86_64-unknown-linux-musl
 ```
 
+GitHub CI と同じ `gcc:15` snapshot gate を WSL2 の rootless Docker で再現する最小例:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y uidmap
+sudo modprobe nf_tables
+
+export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+dockerd-rootless.sh >"${HOME}/.cache/dockerd-rootless.log" 2>&1 &
+
+until docker info >/dev/null 2>&1; do sleep 1; done
+docker run --rm hello-world
+cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+```
+
+`dockerd-rootless-setuptool.sh check` が前提不足を出す場合は、その指示に従って `uidmap` と kernel module を先に揃える。systemd なしの WSL2 session では `dockerd-rootless.sh` を直接起動するのが最短。
+
 生成された control dir を使って install / rollback / uninstall を検証する最小例:
 
 ```bash
