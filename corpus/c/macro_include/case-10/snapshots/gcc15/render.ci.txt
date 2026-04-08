@@ -1,0 +1,6 @@
+src/main.c:3:40: error: error surfaced through macro/include context
+help: inspect the user-owned macro invocation or include edge that reaches the failing line
+why: 'Box' has no member named 'missing'
+| src/main.c:3:40
+| int main(void) { Box box = {1}; return READ_FIELD(box); }
+macro: src/main.c:3:40: note: in expansion of macro 'READ_FIELD' @ src/main.c

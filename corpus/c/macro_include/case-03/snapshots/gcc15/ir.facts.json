@@ -1,1 +1,159 @@
-{"family":"macro_include"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:23: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define FETCH_VALUE() missing_symbol\n      |                       ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'\n    3 | int main(void) { return FETCH_VALUE(); }\n      |                         ^~~~~~~~~~~\nsrc/config.h:1:23: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define FETCH_VALUE() missing_symbol\n      |                       ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'\n    3 | int main(void) { return FETCH_VALUE(); }\n      |                         ^~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 780,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 7007,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "b3e5a8226b9a6407178cd3d8b38bc41cf491ab3b3acfda2b9bd219454e70582b",
+            "raw": "c91b56e5e757d34a800d126da4d73be41caae18e8ce701d73ad0454a29e3f6e1",
+            "structural": "8c108e33d7a257c376ae57c4a78c0852283510283c98b9022f52c4d22959378a"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 25,
+              "end_column": 26,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.c"
+            }
+          ],
+          "message": {
+            "raw_text": "each undeclared identifier is reported only once for each function it appears in"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "label": "In file included from src/wrapper.h:1,",
+              "line": 1,
+              "path": "src/wrapper.h"
+            }
+          ],
+          "kind": "include"
+        },
+        {
+          "frames": [
+            {
+              "column": 25,
+              "label": "src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'",
+              "line": 3,
+              "path": "src/main.c"
+            },
+            {
+              "column": 25,
+              "label": "src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'",
+              "line": 3,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "029f3d88c609c6025594bae1ebbc22d88d854b6b13b1682df97259cef379e261",
+        "raw": "24ff3c191f05e40e98d68af90fdb3f9b0e50d39f0d053385f64ed53c4ca8ba2a",
+        "structural": "c73c28426de1a6b6cdc34c1753d3f6b92ec15f96c4c5e7348ec23f3ca6a1f25b"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 25,
+          "end_column": 26,
+          "line": 3,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "'missing_symbol' undeclared (first use in this function)"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "acfd8975bbf79122e73ad9b979564c45852883c5ccf9915b486e954965b7544c",
+    "structural": "aec99ba158c94e7affc1f5833a37744b3869a1f9bea5016baa83cf9f2b294a05"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

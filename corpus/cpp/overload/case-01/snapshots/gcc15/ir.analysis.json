@@ -33,7 +33,11 @@
         "confidence": "high",
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch"
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "message_contains=no matching"
+        ],
+        "rule_id": "rule.family.type_overload.message"
       },
       "children": [
         {
@@ -41,12 +45,16 @@
             "confidence": "high",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch"
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
           },
           "fingerprints": {
             "family": "93c072daa7c304ba8cb29dc21a5ea06685866608ffd2793a39f89e2993f59f64",
             "raw": "2e897f47f7e9fc57915ad4836f71e1a81b1d1bb5f82aaf4d7f63da468835cd00",
-            "structural": "28ca5738135dcf229153f78ba951c78f50b9f8856b807bcbb1455f79dc6b91e0"
+            "structural": "1fa955fe61e7e91db5bcd1b788ec011deceaae5788103fd7b77d64cf79aff778"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
@@ -78,12 +86,16 @@
             "confidence": "high",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch"
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
           },
           "fingerprints": {
             "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
             "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
-            "structural": "746fcb3e7c89a55a10786f0764260bb556bad17e639dcbcb660d935085203eeb"
+            "structural": "7b5582eafa5e0db5e41d888c5d6251cc69a104dbd93a99b31c11113db12deb72"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
@@ -115,12 +127,16 @@
             "confidence": "high",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch"
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
           },
           "fingerprints": {
             "family": "607a93a0534a3a9b6c265b09d35d0790b56ae4da1ec70222df1270144d9cd7fe",
             "raw": "92cc3ca1275ada82036ac14b8a89e196e2d725e9d85cd79e1df732938919db34",
-            "structural": "711e131cf4fe38a488d0d916a48c0dd2d7395c4dcd57cc2baddf4f4b98b10884"
+            "structural": "94ed987eb91f7d7d1c21849a2204044b7ab2e38c3fecda5e1201b33d48b0752b"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -152,12 +168,16 @@
             "confidence": "high",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch"
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
           },
           "fingerprints": {
             "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
             "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
-            "structural": "7f2bd54adacc99b8d8588df2e7aef8078e9bd81267cb9eb4d33aa8dcec481c8e"
+            "structural": "83371c43c43f099c9d6ec263ab7419541682ab963980496cb83128128f3b4f6a"
           },
           "id": "sarif-0-0-related-4",
           "locations": [
@@ -188,7 +208,7 @@
       "fingerprints": {
         "family": "7ceebab4d46866807b15600aad5b717cfc02866708c7252fba1099669804f4ae",
         "raw": "473e8fef50f407fe921a63bd544d45ce34019d91f88bde2b0f2dd3020a940208",
-        "structural": "2df795ffa7261eb65ed0a78334def054102ba3c2270a76532cda3618636e8780"
+        "structural": "97f60babff6297bbef0e9f5bdb1212b38334ecfb2471271b98c64145d3a77f3f"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -220,8 +240,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "c9732ab6ae24339f983c8fde1882ecf9402df71563d862ff025b9e9ef24f333c",
-    "structural": "7f7378d336fe04f9c8a5aba4563d20928875d4048929319387e56ae5a55f91b3"
+    "raw": "a91ff96f316508bcfb81075c89a59b075396a0d30771ae254aff08f0a01a08e7",
+    "structural": "35636afaec61134c489928c73b0c8369b4c03e4749048f6c2fb0725c7cf47eac"
   },
   "producer": {
     "name": "gcc-formed",

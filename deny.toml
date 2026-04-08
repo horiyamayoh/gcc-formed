@@ -1,6 +1,9 @@
 [graph]
 all-features = true
 
+[bans]
+multiple-versions = "warn"
+
 [licenses]
 allow = [
     "Apache-2.0",

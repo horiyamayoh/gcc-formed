@@ -9,8 +9,15 @@
       "excerpts": [],
       "first_action": "define the missing symbol or link the object/library that provides it",
       "group_id": "residual-1",
+      "matched_conditions": [
+        "phase=link",
+        "message_contains=undefined reference",
+        "existing_specific_family=linker.undefined_reference"
+      ],
       "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
       "title": "undefined reference to `missing_symbol`"
     },
     {
@@ -20,11 +27,17 @@
         "linker: preserved"
       ],
       "excerpts": [],
-      "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
       "group_id": "residual-0",
+      "matched_conditions": [
+        "phase=link",
+        "existing_specific_family=linker.file_format_or_relocation"
+      ],
       "raw_message": "collect2: error: ld returned 1 exit status",
+      "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
-      "title": "collect2: error: ld returned 1 exit status"
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "linker reported a failure"
     }
   ],
   "summary": {

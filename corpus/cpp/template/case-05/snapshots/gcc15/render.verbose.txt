@@ -1,0 +1,14 @@
+error: template instantiation failed
+--> src/main.cpp:5:5
+help: start from the first user-owned template frame and match template arguments
+why: no matching function for call to 'combine(int, const char [2])'
+| src/main.cpp:5:5
+|     combine(1, "x");
+template: candidate 1: 'template<class T> void combine(T, T)' @ src/main.cpp
+template: template argument deduction/substitution failed: @ src/main.cpp
+template: deduced conflicting types for parameter 'T' ('int' and 'const char*') @ src/main.cpp
+note: candidate 1: 'template<class T> void combine(T, T)'
+note: template argument deduction/substitution failed:
+note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')
+debug: rule_id=rule.family.template.context_or_message
+debug: matched_conditions=context=template_instantiation, child_message_contains=template, child_message_contains=deduction/substitution, child_message_contains=deduced conflicting

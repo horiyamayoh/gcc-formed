@@ -1,0 +1,148 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:18: error: expected ')' before ';' token\n    2 |     return (1 + 2;\n      |            ~     ^\n      |                  )\nsrc/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  \n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 342,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 8643,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "b9475557f45c8644921bda2f79d6409641ebf674132398f2b6496f72f6fa6642",
+        "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
+        "structural": "246a588b5fd4d055bddb957055e1cdd58dc57880af35dadebf7a8f20265ee75f"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 18,
+          "end_column": 19,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected ')' before ';' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
+        "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
+        "structural": "7f5610a078f4dc0e6f1f4fa8b19be263872432172cb303c16a8095b97e73689d"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "column": 19,
+          "end_column": 20,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected ';' before '}}' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
+    "raw": "2eeb42051f5c711bab3b9681b23cfb1f979ad7fdc8e56b331bc709c9b0db67d8",
+    "structural": "232e4fe93bf4c37ca12d3f0f63b42eeeb1120e072c16e8eb852204c16798674a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

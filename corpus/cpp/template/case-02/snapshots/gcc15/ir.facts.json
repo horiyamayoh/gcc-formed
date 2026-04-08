@@ -1,1 +1,209 @@
-{"family":"template"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'\n    6 |     expect_ptr(value);\n      |     ~~~~~~~~~~^~~~~~~\nsrc/main.cpp:6:15: note: there is 1 candidate\nsrc/main.cpp:2:6: note: candidate 1: 'template<class T> void expect_ptr(T*)'\n    2 | void expect_ptr(T*) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note: template argument deduction/substitution failed:\nsrc/main.cpp:6:15: note:   mismatched types 'T*' and 'int'\n    6 |     expect_ptr(value);\n      |     ~~~~~~~~~~^~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 550,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 7265,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "0103705c4910a8730abe75d2a3f779bf677d7e91af0a065b7accb299e983a109",
+            "raw": "28eee383a74287b5aaf69ec20781abf4bd903642dea8f63a8a30645ffe169675",
+            "structural": "3ed547a45ee8aa6662cfa2541ca0914e801e6d03706c59040e7c288433b28034"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'template<class T> void expect_ptr(T*)'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "e49ad7374130020c375fbafd1d3345dd69bcbad85ffb0fbf35f474f80b5d43b7"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 16,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "5bc82285334d9992ee8b0456d5e74edd4b8611cca6568466ac9b30c012649de6",
+            "raw": "755d18783359742e85cc127f1372d882640e206fe37cde59095ac542bf6998c2",
+            "structural": "0546a22688f5cd70e7c61afda72f0232896cd4ba8f85214dea8a39b19c3546df"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 5,
+              "end_column": 22,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  mismatched types 'T*' and 'int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "candidate 1: 'template<class T> void expect_ptr(T*)'",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "c91e539a1ac236b8ac31bca1fddde5b2b44835ef003ee6cceb3ca7f3a115b1fe",
+        "raw": "86a96b4fd554b267c32c609ad0818d8bef50e361299fdb19c7318d5a05cdab34",
+        "structural": "04d34e424ea63abe921786112ef98d14fa53ce4a1bbd8e82beaa06ae94be18d5"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 22,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to 'expect_ptr(int&)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "3d51e23aaf08cfdde758010851ccd4f048170e0be82ebf97e31fae07c738d9f1",
+    "structural": "03923788d8a53bfff029b241d40ff26ae3a3d6054d0f35dc7bf9cb7df4775f3d"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

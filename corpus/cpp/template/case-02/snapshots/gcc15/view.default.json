@@ -1,0 +1,40 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:6:5",
+      "child_notes": [
+        "candidate 1: 'template<class T> void expect_ptr(T*)'",
+        "template argument deduction/substitution failed:",
+        "  mismatched types 'T*' and 'int'"
+      ],
+      "context_lines": [
+        "template: candidate 1: 'template<class T> void expect_ptr(T*)' @ src/main.cpp",
+        "template: template argument deduction/substitution failed: @ src/main.cpp"
+      ],
+      "excerpts": [
+        {
+          "lines": [
+            "    expect_ptr(value);"
+          ],
+          "location": "src/main.cpp:6:5"
+        }
+      ],
+      "first_action": "start from the first user-owned template frame and match template arguments",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "context=template_instantiation",
+        "child_message_contains=template",
+        "child_message_contains=deduction/substitution"
+      ],
+      "raw_message": "no matching function for call to 'expect_ptr(int&)'",
+      "rule_id": "rule.family.template.context_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "template instantiation failed"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

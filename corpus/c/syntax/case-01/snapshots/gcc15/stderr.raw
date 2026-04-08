@@ -1,5 +1,5 @@
-src/main.c: In function ‘main’:
-src/main.c:2:13: error: expected ‘;’ before ‘}’ token
+src/main.c: In function 'main':
+src/main.c:2:13: error: expected ';' before '}' token
     2 |     return 0
       |             ^
       |             ;

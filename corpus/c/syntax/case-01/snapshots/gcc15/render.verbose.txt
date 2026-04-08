@@ -1,6 +1,8 @@
 error: syntax error
 --> src/main.c:2:13
 help: fix the first parser error at the user-owned location
-why: expected ‘;’ before ‘}’ token
+why: expected ';' before '}}' token
 | src/main.c:2:13
 |     return 0
+debug: rule_id=rule.family.syntax.message
+debug: matched_conditions=message_contains=expected, message_contains=before

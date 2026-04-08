@@ -1,4 +1,5 @@
 language: cpp
+standard: c++17
 target_compiler_family: gcc
 required_support_tier: A
 major_version_selector: '15'

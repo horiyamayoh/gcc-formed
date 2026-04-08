@@ -29,9 +29,9 @@ jobs:
       REPORT_ROOT: ${{ runner.temp }}/reports
       TARGET_DIR: ${{ runner.temp }}/gcc-formed-target
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@v5.0.0
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@1.94.1
         with:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
@@ -126,6 +126,61 @@ jobs:
           cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir" > "$REPORT_ROOT/release/install-release.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/install-release-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/install-release-uninstall.json"
+      - name: Release provenance manifest
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report_root = Path(os.environ["REPORT_ROOT"]) / "release"
+          report_root.mkdir(parents=True, exist_ok=True)
+
+          def load(name):
+              path = report_root / name
+              if not path.exists():
+                  return None
+              return json.loads(path.read_text(encoding="utf-8"))
+
+          payload = {
+              "workflow": "nightly-gate",
+              "matrix": {
+                  "gcc_image": os.environ.get("MATRIX_GCC_IMAGE"),
+                  "gcc_label": os.environ.get("MATRIX_GCC_LABEL"),
+                  "release_blocker": os.environ.get("MATRIX_RELEASE_BLOCKER"),
+              },
+              "github": {
+                  "repository": os.environ.get("GITHUB_REPOSITORY"),
+                  "sha": os.environ.get("GITHUB_SHA"),
+                  "ref": os.environ.get("GITHUB_REF"),
+                  "run_id": os.environ.get("GITHUB_RUN_ID"),
+                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+                  "actor": os.environ.get("GITHUB_ACTOR"),
+              },
+              "release": {
+                  "package": load("package.json"),
+                  "release_publish": load("release-publish.json"),
+                  "release_promote_canary": load("release-promote-canary.json"),
+                  "release_promote_stable": load("release-promote-stable.json"),
+                  "release_resolve_stable": load("release-resolve-stable.json"),
+                  "install": load("install.json"),
+                  "install_release": load("install-release.json"),
+                  "system_install": load("system-install.json"),
+                  "hermetic_release": load("hermetic-release.json"),
+                  "vendor": load("vendor.json"),
+                  "bench_smoke": load("bench-smoke.json"),
+              },
+          }
+          (report_root / "release-provenance.json").write_text(
+              json.dumps(payload, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+        env:
+          MATRIX_GCC_IMAGE: ${{ matrix.gcc_image }}
+          MATRIX_GCC_LABEL: ${{ matrix.gcc_label }}
+          MATRIX_RELEASE_BLOCKER: ${{ matrix.release_blocker }}
       - name: Dependency and license gate
         if: matrix.release_blocker
         run: |
@@ -133,7 +188,7 @@ jobs:
           cargo deny check > "$REPORT_ROOT/release/cargo-deny.txt"
       - name: Upload nightly artifacts
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: nightly-${{ matrix.gcc_label }}-artifacts
           path: |

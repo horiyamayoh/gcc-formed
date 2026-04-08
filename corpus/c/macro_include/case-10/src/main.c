@@ -1,2 +1,3 @@
-#define READ_COUNT(fd) (fd)
-int main(void) { return READ_COUNT(1); }
+#define READ_FIELD(item) ((item).missing)
+typedef struct { int value; } Box;
+int main(void) { Box box = {1}; return READ_FIELD(box); }

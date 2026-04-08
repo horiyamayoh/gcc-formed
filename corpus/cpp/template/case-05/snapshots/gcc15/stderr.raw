@@ -1,0 +1,12 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'
+    5 |     combine(1, "x");
+      |     ~~~~~~~^~~~~~~~
+src/main.cpp:5:12: note: there is 1 candidate
+src/main.cpp:2:6: note: candidate 1: 'template<class T> void combine(T, T)'
+    2 | void combine(T, T) {}
+      |      ^~~~~~~
+src/main.cpp:2:6: note: template argument deduction/substitution failed:
+src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')
+    5 |     combine(1, "x");
+      |     ~~~~~~~^~~~~~~~

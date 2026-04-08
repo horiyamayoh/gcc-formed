@@ -42,6 +42,22 @@ pub fn emit(
         for note in &card.child_notes {
             lines.push(format!("note: {note}"));
         }
+        if matches!(request.profile, RenderProfile::Verbose)
+            || matches!(request.debug_refs, DebugRefs::CaptureRef)
+        {
+            if let Some(rule_id) = card.rule_id.as_ref() {
+                lines.push(format!("debug: rule_id={rule_id}"));
+            }
+            if !card.matched_conditions.is_empty() {
+                lines.push(format!(
+                    "debug: matched_conditions={}",
+                    card.matched_conditions.join(", ")
+                ));
+            }
+            if let Some(suppression_reason) = card.suppression_reason.as_ref() {
+                lines.push(format!("debug: suppression_reason={suppression_reason}"));
+            }
+        }
     }
 
     if suppressed_warning_count > 0 {

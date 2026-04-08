@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:14: error: no matching function for call to ‘takes_same(int, double)’\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\nsrc/main.cpp:2:6: note: candidate: ‘template<class T> void takes_same(T, T)’\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note:   template argument deduction/substitution failed:\nsrc/main.cpp:4:14: note:   deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\n",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'\n    4 | int main() { takes_same(1, 2.0); }\n      |              ~~~~~~~~~~^~~~~~~~\nsrc/main.cpp:4:24: note: there is 1 candidate\nsrc/main.cpp:2:6: note: candidate 1: 'template<class T> void takes_same(T, T)'\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note: template argument deduction/substitution failed:\nsrc/main.cpp:4:24: note:   deduced conflicting types for parameter 'T' ('int' and 'double')\n    4 | int main() { takes_same(1, 2.0); }\n      |              ~~~~~~~~~~^~~~~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 600,
+      "size_bytes": 638,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 933,
+      "size_bytes": 7327,
       "storage": "external_ref"
     }
   ],
@@ -33,7 +33,14 @@
         "confidence": "high",
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
-        "headline": "template instantiation failed"
+        "headline": "template instantiation failed",
+        "matched_conditions": [
+          "context=template_instantiation",
+          "child_message_contains=template",
+          "child_message_contains=deduction/substitution",
+          "child_message_contains=deduced conflicting"
+        ],
+        "rule_id": "rule.family.template.context_or_message"
       },
       "children": [
         {
@@ -41,14 +48,18 @@
             "confidence": "high",
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
-            "headline": "template instantiation failed"
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template"
+            ],
+            "rule_id": "rule.family.template.context_or_message"
           },
           "fingerprints": {
-            "family": "18b7e8019818e0c052945310a9e7cac21d775aede776e5ba00b767e2aff23821",
-            "raw": "dd73fdae35ae794d617ac6f6a9c05421098ad92ed027faa7106d25143d74794a",
-            "structural": "27319a35a9f5a598ebcd26ef6b2c97be6bf2016aa4fdfddaa92025418b5d378f"
+            "family": "f36df5a97ef5bffaa01bdbf23606f6870a8e10edef391aff639637daf0da9ba2",
+            "raw": "8c90bf8f65824f06a9c0fbbec82ff5a34f7aadd2d8e9f21c9a2395032d74d2a7",
+            "structural": "fedc48af9a9d875c82fda374c4227d9cabf8a5c489e5305e3d08e70550d3939c"
           },
-          "id": "sarif-0-0-related-0",
+          "id": "sarif-0-0-related-1",
           "locations": [
             {
               "column": 6,
@@ -59,7 +70,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T> void takes_same(T, T)’"
+            "raw_text": "candidate 1: 'template<class T> void takes_same(T, T)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -78,14 +89,18 @@
             "confidence": "high",
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
-            "headline": "template instantiation failed"
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template"
+            ],
+            "rule_id": "rule.family.template.context_or_message"
           },
           "fingerprints": {
-            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "f58a7c9344556b3e4d015cc09b3f9f9b252a6a15bf82e41f70a2c144bac4bd08"
+            "family": "515ea3abe8a7c2170ea9cd2fb4f1b84e05cefe4c6004fd02177e5597407dbf27",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "705e53a338abdcb8946435ea0edb006e7f8c889d7361ac4440b98e56e9e719f6"
           },
-          "id": "sarif-0-0-related-1",
+          "id": "sarif-0-0-related-2",
           "locations": [
             {
               "column": 6,
@@ -96,7 +111,7 @@
             }
           ],
           "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
+            "raw_text": "template argument deduction/substitution failed:"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -115,14 +130,19 @@
             "confidence": "low",
             "family": "unknown",
             "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+            "headline": "  deduced conflicting types for parameter 'T' ('int' and 'double')",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
           },
           "fingerprints": {
-            "family": "0a626c4ddcb7c46fdf8d182f065dae86c6452042ea72ed7684957064b655067b",
-            "raw": "e130de801835a578350dfa6668a0dfd425c17c3c2b66c436b8b1ebf0183d064b",
-            "structural": "636a2cfcaf9d93446ef66af2dd467f374a2453b5fe122d4f9652fc617bd6f75d"
+            "family": "8e6584eeb0a8dee931b22148d36e78260dfcd7b4ada764d776d1303c42b4f45f",
+            "raw": "ff59002388b2d94cedacf3229f008ad588726751d776c6f484611e00ba9fa3b2",
+            "structural": "fbfe28789107d3d6d5d227c43882fbf56a505c155a02cc484ad4ac1220d818cb"
           },
-          "id": "sarif-0-0-related-2",
+          "id": "sarif-0-0-related-3",
           "locations": [
             {
               "column": 14,
@@ -133,7 +153,7 @@
             }
           ],
           "message": {
-            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+            "raw_text": "  deduced conflicting types for parameter 'T' ('int' and 'double')"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -153,7 +173,7 @@
           "frames": [
             {
               "column": 6,
-              "label": "candidate: ‘template<class T> void takes_same(T, T)’",
+              "label": "candidate 1: 'template<class T> void takes_same(T, T)'",
               "line": 2,
               "path": "src/main.cpp"
             },
@@ -165,7 +185,7 @@
             },
             {
               "column": 14,
-              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)",
+              "label": "deduced conflicting types for parameter 'T' ('int' and 'double')",
               "line": 4,
               "path": "src/main.cpp"
             }
@@ -174,9 +194,9 @@
         }
       ],
       "fingerprints": {
-        "family": "8ff8993e6c0b7fea9789f6def43ba313930bf5fc23b15edb5a0a44fd7f86ddfd",
-        "raw": "a4a42ba9c4d2daacdfc4ae6e71dc169de1cb8b67ecc3d10611a1c16cadbac246",
-        "structural": "6b018d1d80e0b4b6b0215be588f9b06a81498994e577f377080886f476c8e123"
+        "family": "8fe6246d386ae6dbfc61bb65715db39de4e2bb94590683cc67dd625a88a2bcb4",
+        "raw": "42ba3b1913bab82a1387c855afdd646913c284106b1d8973fdcb727c915fa98a",
+        "structural": "95d980c2d720dd49802aa2ca7128339cfe715f0faec17c905a5c842177009ac3"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -189,7 +209,7 @@
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘takes_same(int, double)’"
+        "raw_text": "no matching function for call to 'takes_same(int, double)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -208,8 +228,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
-    "raw": "bd62de4ab1dfef9c2ff7ccb092fd037ae739d8c99c4b36cb6b1b5ad41cca5fc5",
-    "structural": "5a3ca536903e35df098a538e5ca343ff425a9873c99295d6259e32fe41e2c6ba"
+    "raw": "277516cf7d2c190feb127d52bf628f2c7e524f4cddb5bfe0884af5c33d49e68c",
+    "structural": "84c02c80ee90c660d1979141f87e25275e00cf93e6f02dbf8f5da3a864e3185e"
   },
   "producer": {
     "name": "gcc-formed",

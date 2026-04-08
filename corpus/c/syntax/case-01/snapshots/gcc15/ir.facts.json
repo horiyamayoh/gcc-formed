@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:2:13: error: expected ‘;’ before ‘}’ token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            \n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:13: error: expected ';' before '}' token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            \n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 195,
+      "size_bytes": 183,
       "storage": "inline"
     },
     {
@@ -23,16 +23,16 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 459,
+      "size_bytes": 4904,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
       "fingerprints": {
-        "family": "fbf4b7025db5ba3db3cccdbcf738cb81f1aa6a8a0d374768c6cda6b9fbcd3c71",
-        "raw": "90aed289a1ab053f8dc42488542bf3e06571e04adc0fd90dbb7f09acf2dfe8a3",
-        "structural": "c90e5bbf21b8f8c310309396a604ef25eda55cd989a14ad5d9fc5c9a6b8b213c"
+        "family": "3fdd2af0bf4d5ddbdb90d78eec183f9476d2231708fdae17ce6ef8709e45e038",
+        "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
+        "structural": "5be63418c334d71e4e0e541e90e3489922dce6aecd46122c105a6f4e9f786aaa"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -45,7 +45,7 @@
         }
       ],
       "message": {
-        "raw_text": "expected ‘;’ before ‘}’ token"
+        "raw_text": "expected ';' before '}}' token"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -64,8 +64,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "34290ef4c03f6c967d9769710bff4559be233400fae4bf0932686c92c8c16840",
-    "structural": "fd2fba033bc4f31b2a2a61d1ccb804ecb1c41aa46ba0c459504853a72739e9d2"
+    "raw": "3a7a66eaf7c31d3f4bbd44f06ebc3583689a1f248ce0be98b5c2781c11d9b294",
+    "structural": "5f538649effc789ceaa6142c54b15f3b0822d123162496693a017000063adb07"
   },
   "producer": {
     "name": "gcc-formed",

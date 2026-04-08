@@ -1,0 +1,10 @@
+src/main.cpp:6:5: error: template instantiation failed
+help: start from the first user-owned template frame and match template arguments
+why: no matching function for call to 'expect_ptr(int&)'
+| src/main.cpp:6:5
+|     expect_ptr(value);
+template: candidate 1: 'template<class T> void expect_ptr(T*)' @ src/main.cpp
+template: template argument deduction/substitution failed: @ src/main.cpp
+note: candidate 1: 'template<class T> void expect_ptr(T*)'
+note: template argument deduction/substitution failed:
+note:   mismatched types 'T*' and 'int'

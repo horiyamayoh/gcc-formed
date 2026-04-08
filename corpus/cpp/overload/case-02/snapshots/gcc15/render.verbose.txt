@@ -4,9 +4,14 @@ help: compare the expected type and actual argument at the call site
 why: invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
+debug: rule_id=rule.family.type_overload.message
+debug: matched_conditions=message_contains=invalid conversion
 note: initializing argument 1 of 'void takes_int(int)'
 --> src/main.cpp:1:16
 help: inspect the preserved raw diagnostics for the first corrective action
 why: initializing argument 1 of 'void takes_int(int)'
 | src/main.cpp:1:16
 | void takes_int(int);
+debug: rule_id=rule.family.unknown
+debug: matched_conditions=no_family_rule_matched
+debug: suppression_reason=generic_fallback

@@ -20,8 +20,13 @@
       ],
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
       "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "context=macro_or_include"
+      ],
       "raw_message": "'missing_symbol' undeclared (first use in this function)",
+      "rule_id": "rule.family.macro_include.context_or_message",
       "severity": "error",
+      "suppression_reason": null,
       "title": "error surfaced through macro/include context"
     }
   ],

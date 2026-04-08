@@ -1,0 +1,16 @@
+error: syntax error
+--> src/main.c:2:19
+help: fix the first parser error at the user-owned location
+why: expected ';' before '}}' token
+| src/main.c:2:19
+|     return (1 + 2;
+debug: rule_id=rule.family.syntax.message
+debug: matched_conditions=message_contains=expected, message_contains=before
+error: syntax error
+--> src/main.c:2:18
+help: fix the first parser error at the user-owned location
+why: expected ')' before ';' token
+| src/main.c:2:18
+|     return (1 + 2;
+debug: rule_id=rule.family.syntax.message
+debug: matched_conditions=message_contains=expected, message_contains=before

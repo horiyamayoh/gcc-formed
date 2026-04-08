@@ -1,1 +1,134 @@
-{"family":"linker"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 166,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 2193,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "7f98dc59f25f716a8e068cd103ea22168224efea722345698957117e13c8364b",
+        "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
+        "structural": "2a0e0bad230ea5b3bf158e5f6aadd2141da11da037d2756b3866d24070cf5840"
+      },
+      "id": "residual-0",
+      "message": {
+        "raw_text": "collect2: error: ld returned 1 exit status"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "5baeb001cdb38b6ca1e9270de6b90a25d896868a3f336368b2e52bb50b885c3b",
+        "raw": "14616ad4584eab0cd2da62eea5a4c1c741b9db9095d6540cf0cf37d432fc1086",
+        "structural": "aeb0ab386662c6ccf24c4e2681682c68bb95dfebf2eb2b5d161d08ccb70faebc"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error",
+      "symbol_context": {
+        "primary_symbol": "shared"
+      }
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
+    "raw": "3c3db531c2a3073a15c28ce8266d8535df822cc9e0ed137734be2753803c4f91",
+    "structural": "d0ffe71c5c0df547b3f9524fd8472655ba6ed830b533bf6cfe08c95f59e2e9f3"
+  },
+  "integrity_issues": [
+    {
+      "message": "SARIF contained no diagnostic results",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "severity": "warning",
+      "stage": "parse"
+    }
+  ],
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "src/main.c",
+      "src/helper.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
