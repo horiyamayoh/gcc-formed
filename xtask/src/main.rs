@@ -1500,18 +1500,18 @@ fn compare_snapshot_file(
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", path.display()),
     })?;
-    let expected = normalize_snapshot_contents(path, &expected).map_err(|summary| {
-        VerificationFailure {
+    let expected =
+        normalize_snapshot_contents(path, &expected).map_err(|summary| VerificationFailure {
             layer: layer.to_string(),
             fixture_id: fixture.fixture_id().to_string(),
             summary,
-        }
-    })?;
-    let actual = normalize_snapshot_contents(path, actual).map_err(|summary| VerificationFailure {
-        layer: layer.to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary,
-    })?;
+        })?;
+    let actual =
+        normalize_snapshot_contents(path, actual).map_err(|summary| VerificationFailure {
+            layer: layer.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary,
+        })?;
     if expected == actual {
         return Ok(());
     }
