@@ -1,5 +1,4 @@
-error: type or overload mismatch
---> src/main.cpp:3:49
+src/main.cpp:3:49: error: type or overload mismatch
 help: compare the expected type and actual argument at the call site
 why: invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49

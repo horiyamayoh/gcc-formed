@@ -1,0 +1,4 @@
+src/main.c: In function 'main':
+src/main.c:2:17: error: expected expression before ';' token
+    2 |     int value = ;
+      |                 ^

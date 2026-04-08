@@ -29,9 +29,9 @@ jobs:
       REPORT_ROOT: ${{ runner.temp }}/reports
       TARGET_DIR: ${{ runner.temp }}/gcc-formed-target
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
@@ -93,6 +93,9 @@ jobs:
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" > "$REPORT_ROOT/release/install.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/installed-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/uninstall.json"
+      - name: Rollback symlink smoke
+        if: matrix.release_blocker
+        run: cargo test -p xtask rollback_switches_current_symlink_to_requested_version > "$REPORT_ROOT/release/rollback-smoke.txt"
       - name: System-wide layout smoke
         if: matrix.release_blocker
         run: |
@@ -130,7 +133,7 @@ jobs:
           cargo deny check > "$REPORT_ROOT/release/cargo-deny.txt"
       - name: Upload nightly artifacts
         if: always()
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: nightly-${{ matrix.gcc_label }}-artifacts
           path: |

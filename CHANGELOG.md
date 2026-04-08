@@ -11,10 +11,11 @@ The project is currently `v1alpha`. This changelog does not imply general-availa
 - Added representative acceptance and snapshot report output to `cargo xtask replay` / `cargo xtask snapshot` so CI can retain normalized IR, raw stderr, rendered output, and failure summaries as artifacts.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
+- Added three more promoted representative fixtures so the GCC 15 acceptance/snapshot gate now covers multiple syntax, type-overload, and linker cases instead of a single exemplar.
 
 ### Changed
 
-- Updated CI workflows to use pinned action versions, split previously aggregated gate steps, retain gate artifacts, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
+- Updated CI workflows to use pinned action SHAs, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
 

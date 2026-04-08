@@ -1,0 +1,21 @@
+{
+  "cards": [
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "first_action": "define the missing symbol or link the object/library that provides it",
+      "group_id": "residual-1",
+      "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "severity": "error",
+      "title": "undefined reference to `missing_symbol`"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true
+  }
+}

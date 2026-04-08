@@ -25,11 +25,14 @@ use std::time::Instant;
 
 const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/syntax/case-01",
+    "c/syntax/case-02",
     "c/type/case-01",
     "cpp/overload/case-01",
+    "cpp/overload/case-02",
     "cpp/template/case-01",
     "c/macro_include/case-01",
     "c/linker/case-01",
+    "c/linker/case-02",
     "c/partial/case-01",
 ];
 

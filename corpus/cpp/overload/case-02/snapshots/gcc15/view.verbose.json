@@ -1,0 +1,44 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:3:49",
+      "child_notes": [],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "int main() { const char *value = \"x\"; takes_int(value); }"
+          ],
+          "location": "src/main.cpp:3:49"
+        }
+      ],
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "sarif-0-0",
+      "raw_message": "invalid conversion from 'const char*' to 'int'",
+      "severity": "error",
+      "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:1:16",
+      "child_notes": [],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "void takes_int(int);"
+          ],
+          "location": "src/main.cpp:1:16"
+        }
+      ],
+      "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+      "group_id": "sarif-0-1",
+      "raw_message": "initializing argument 1 of 'void takes_int(int)'",
+      "severity": "note",
+      "title": "initializing argument 1 of 'void takes_int(int)'"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

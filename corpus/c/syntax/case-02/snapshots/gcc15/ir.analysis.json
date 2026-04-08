@@ -29,10 +29,16 @@
   ],
   "diagnostics": [
     {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error"
+      },
       "fingerprints": {
-        "family": "f37c4336a8ad9797cc3b32afb4945d2038cf719724fc4985d7aee78ec826ee70",
+        "family": "fb3821776a159583785e0fc27eec60cbe3a40d7b3a4adb753642ea4c6a3a168e",
         "raw": "9b94c91b635b1185af168febdf77ecc877b99efabe1e9d3bff9940f44c992312",
-        "structural": "c9d4bc25f28f69c66c297b3e343756acd749266773d28d070a642a05b5ba61a0"
+        "structural": "7bea794ed8166cf414e03ceb231a0635bdb253682ea1cad3725671824741fdde"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -63,9 +69,9 @@
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "7940d2fa9c33c34eb3bf7466d32db3d3d0a28a82f5973f517395d6042722a10c",
-    "structural": "2fc4c1895520de252caf36d90d3d4629f0e329eb2241a6067d2c7e02e27d1ef6"
+    "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
+    "raw": "75f8edae44cb95a0f12cbc84d7ef43faae8bb178984c336a67569f587fcc887d",
+    "structural": "307047af4e1db364bd11fc8873d55e256d7d8b265c73cfe2916ee4da8345b803"
   },
   "producer": {
     "name": "gcc-formed",

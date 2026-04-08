@@ -1,5 +1,4 @@
-error: syntax error
---> src/main.c:2:17
+src/main.c:2:17: error: syntax error
 help: fix the first parser error at the user-owned location
 why: expected expression before ';' token
 | src/main.c:2:17

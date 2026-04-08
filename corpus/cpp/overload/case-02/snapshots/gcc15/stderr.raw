@@ -1,0 +1,9 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:3:49: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+    3 | int main() { const char *value = "x"; takes_int(value); }
+      |                                                 ^~~~~
+      |                                                 |
+      |                                                 const char*
+src/main.cpp:1:16: note: initializing argument 1 of 'void takes_int(int)'
+    1 | void takes_int(int);
+      |                ^~~
