@@ -1031,39 +1031,39 @@ v1alpha で後回しにすべきもの:
 
 ### B.1 artifact
 
-- [ ] `x86_64-unknown-linux-musl` primary artifact を生成できる
-- [ ] `gcc-formed` / `g++-formed` が同一 bits である
-- [ ] `manifest.json` に target / version / commit / lock hash が入る
-- [ ] checksum と detached signature を生成できる
-- [ ] debug artifact を保持できる
+- [x] `x86_64-unknown-linux-musl` primary artifact を生成できる
+- [x] `gcc-formed` / `g++-formed` が同一 bits である
+- [x] `manifest.json` に target / version / commit / lock hash が入る
+- [x] checksum と detached signature を生成できる
+- [x] debug artifact を保持できる
 
 ### B.2 install / rollback
 
-- [ ] user-local install が rootless で成立する
-- [ ] system-wide install が `/opt/cc-formed/...` モデルで成立する
-- [ ] symlink swap upgrade が成立する
-- [ ] rollback で旧 binary に戻せる
-- [ ] uninstall が state を壊さない
+- [x] user-local install が rootless で成立する
+- [x] system-wide install が `/opt/cc-formed/...` モデルで成立する
+- [x] symlink swap upgrade が成立する
+- [x] rollback で旧 binary に戻せる
+- [x] uninstall が state を壊さない
 
 ### B.3 XDG / state
 
-- [ ] config / cache / state / runtime が分離される
-- [ ] state dir permission が `0700` 既定である
-- [ ] trace bundle が install root に書かれない
-- [ ] `XDG_RUNTIME_DIR` 未設定 fallback が安全に動く
+- [x] config / cache / state / runtime が分離される
+- [x] state dir permission が `0700` 既定である
+- [x] trace bundle が install root に書かれない
+- [x] `XDG_RUNTIME_DIR` 未設定 fallback が安全に動く
 
 ### B.4 release engineering
 
-- [ ] `Cargo.lock` を commit している
-- [ ] `cargo vendor` で依存を local 化できる
-- [ ] `cargo build --locked --offline --release` が通る
-- [ ] dirty tree release が禁止されている
-- [ ] version / commit / rustc/cargo version が manifest に残る
+- [x] `Cargo.lock` を commit している
+- [x] `cargo vendor` で依存を local 化できる
+- [x] `cargo build --locked --offline --release` が通る
+- [x] dirty tree release が禁止されている
+- [x] version / commit / rustc/cargo version が manifest に残る
 
 ### B.5 operations
 
-- [ ] `--formed-version` がある
-- [ ] `--formed-version=verbose` が build metadata を出す
-- [ ] `--formed-self-check` が install/host/runtime を検査できる
-- [ ] CI が exact version + checksum を pin する
-- [ ] canary / beta / stable の promote が rebuild なしで行える
+- [x] `--formed-version` がある
+- [x] `--formed-version=verbose` が build metadata を出す
+- [x] `--formed-self-check` が install/host/runtime を検査できる
+- [x] CI が exact version + checksum を pin する
+- [x] canary / beta / stable の promote が rebuild なしで行える

@@ -22,6 +22,7 @@ jobs:
         with:
           toolchain: 1.94.1
           components: rustfmt
+          targets: x86_64-unknown-linux-musl
       - name: Build matrix CI image
         run: docker build --build-arg GCC_IMAGE=${{ matrix.gcc_image }} -t gcc-formed-ci:nightly -f ci/images/gcc-matrix/Dockerfile .
       - name: Run nightly matrix gate
@@ -31,6 +32,90 @@ jobs:
       - name: Representative GCC 15 snapshot check
         if: matrix.gcc_image == 'gcc:15'
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
+      - name: Hermetic release build smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          cargo xtask vendor --output-dir vendor
+          cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
+      - name: Release packaging smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: >
+          printf '%s\n' '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f' > "$RUNNER_TEMP/release-signing.key" &&
+          cargo xtask package
+          --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed
+          --target-triple x86_64-unknown-linux-musl
+          --release-channel stable
+          --support-tier gcc15_primary
+          --signing-private-key "$RUNNER_TEMP/release-signing.key"
+      - name: Release install smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
+          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-musl"
+          bin_dir="$RUNNER_TEMP/gcc-formed/bin"
+          signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["key_id"])
+PY
+)"
+          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
+          "$bin_dir/gcc-formed" --formed-version
+          cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
+      - name: System-wide layout smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
+          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          install_root="$RUNNER_TEMP/system-root/opt/cc-formed/x86_64-unknown-linux-musl"
+          bin_dir="$RUNNER_TEMP/system-root/usr/local/bin"
+          signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["key_id"])
+PY
+)"
+          cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
+          "$bin_dir/gcc-formed" --formed-version
+          cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
+      - name: Release repository promote and pin smoke
+        if: matrix.gcc_image == 'gcc:15'
+        run: |
+          trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
+          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          repo_root="$RUNNER_TEMP/gcc-formed-release-repo"
+          resolved_json="$RUNNER_TEMP/gcc-formed-stable-release.json"
+          install_root="$RUNNER_TEMP/gcc-formed-release/x86_64-unknown-linux-musl"
+          bin_dir="$RUNNER_TEMP/gcc-formed-release-bin"
+
+          cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root"
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel canary
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel stable
+          cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable > "$resolved_json"
+          primary_sha="$(python3 - "$resolved_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["primary_archive_sha256"])
+PY
+)"
+          signing_key_id="$(python3 - "$resolved_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    print(json.load(handle)["signing_key_id"])
+PY
+)"
+          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir"
+          "$bin_dir/gcc-formed" --formed-version
+          cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
       - name: Dependency and license gate
         run: |
           cargo install cargo-deny --locked

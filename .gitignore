@@ -2,6 +2,7 @@
 /.cargo-home
 /.toolchains
 /dist
+/vendor
 /coverage
 /.DS_Store
 **/*.snap.new
