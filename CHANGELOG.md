@@ -2,7 +2,7 @@
 
 All notable user-visible changes to `gcc-formed` are recorded here.
 
-The project is currently `v1alpha`. This changelog does not imply general-availability stable support.
+The current maturity label is `v1alpha`, and the current artifact semver line is `0.1.x`. This changelog does not imply `v1beta`, `v1.0.0-rc`, or `v1.0.0 stable` support.
 
 ## [Unreleased]
 
@@ -13,12 +13,15 @@ The project is currently `v1alpha`. This changelog does not imply general-availa
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
 - Added three more promoted representative fixtures so the GCC 15 acceptance/snapshot gate now covers multiple syntax, type-overload, and linker cases instead of a single exemplar.
+- Added `VERSIONING.md` and `ADR-0021` to separate maturity labels, artifact semver, and release channels in the public documentation.
 
 ### Changed
 
 - Updated CI workflows to use pinned action SHAs, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
+- Unified README, release notes, checklist, limitations, security policy, and contribution guidance around `v1alpha` as the current maturity line and `0.1.x` as the current artifact line.
+- Moved snapshot normalization and comparison logic into `diag_testkit` so harness-side volatile-field handling is centralized, and snapshot reports now distinguish `exact`, `normalization_only`, `semantic`, and `missing_expected` drift kinds.
 
 ## [0.1.0] - 2026-04-07
 
@@ -38,4 +41,4 @@ The project is currently `v1alpha`. This changelog does not imply general-availa
 ### Known Limits
 
 - `x86_64-unknown-linux-gnu` remains a compatibility and exception path rather than the primary shipped artifact.
-- Public stable release status is not claimed; the repository baseline remains `v1alpha`.
+- `0.1.0` is an artifact in the `v1alpha` maturity line, not a `v1beta`, `1.0.0-rc.N`, or `1.0.0` stable release.

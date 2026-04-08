@@ -1,16 +1,19 @@
 # gcc-formed
 
 - **状態**: Accepted Baseline
-- **フェーズ**: `v1alpha`
+- **成熟度ラベル**: `v1alpha`
+- **artifact semver 系列**: `0.1.x`
 - **一般利用向け安定版**: 未提供
 - **日付**: 2026-04-07
 - **実装状況**: Phase 1 MVP の Rust workspace を同梱。仕様書と ADR は実装契約の正本として維持する。
 
 `gcc-formed` は、GCC first / Linux first の C/C++ 診断 UX 基盤を定義する spec-first リポジトリである。目標は「コンパイラの生出力を prettier にすること」ではなく、wrapper・adapter・Diagnostic IR・renderer・quality gate を分離した実装可能な製品基線を固めることにある。
 
-## 初回リリーススコープ
+成熟度ラベルと artifact semver の使い分けは [VERSIONING.md](VERSIONING.md) に固定する。現在の baseline は **`v1alpha` という成熟度ラベル**と**`0.1.x` という artifact 系列**を別物として扱う。
 
-`v0.1.0` 相当の初回一般公開は、次の範囲だけを shipped contract とする。
+## 現在の alpha baseline scope
+
+現在の alpha baseline artifact 系列 (`0.1.x`、先頭 artifact は `0.1.0`) は、次の範囲だけを shipped contract とする。
 
 - Linux first
 - `x86_64-unknown-linux-musl` を primary artifact とする
@@ -19,7 +22,9 @@
 - GCC 13/14 は compatibility support とし、保守的 passthrough / shadow path を前提にする
 - `shadow`、trace bundle、raw fallback は残すが、改善品質を保証するのは GCC 15 render path のみとする
 
-初回リリースで**保証しないもの**は [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) と [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md) にまとめてある。
+現在の alpha baseline で**保証しないもの**は [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) と [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md) にまとめてある。
+
+release repository の `canary` / `beta` / `stable` channel は配布先ポインタであり、成熟度ラベルそのものではない。たとえば `0.1.0` artifact が `stable` channel に載っていても、製品成熟度は引き続き `v1alpha` のままである。
 
 ## このリポジトリにあるもの
 
@@ -32,6 +37,7 @@
 - [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始時の最小順序
 - [adr-initial-set/README.md](adr-initial-set/README.md): Accepted baseline の ADR 一覧
 - [CHANGELOG.md](CHANGELOG.md): 外部向けの変更履歴
+- [VERSIONING.md](VERSIONING.md): 成熟度ラベル / artifact semver / release channel の用語契約
 - [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md): 初回公開時点で保証しない範囲と raw fallback の意味
 - [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md): 初回公開用の release blocker / non-goals / 出荷前確認項目
 - [SIGNING-KEY-OPERATIONS.md](SIGNING-KEY-OPERATIONS.md): signing key rotation / revoke / emergency re-sign と provenance 保持
@@ -161,6 +167,8 @@ cargo xtask install-release --repository-root "$repo_root" --target-triple x86_6
 ```
 
 CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` と `signing_public_key_sha256` を取り出し、`--expected-signing-key-id ... --expected-signing-public-key-sha256 ...` を追加する。local smoke では `SHA256SUMS.sig` から計算してもよいが、production CI は trusted public key sha256 を artifact 外で pin する。
+
+ここでの `stable` は release repository channel 名であり、`v1.0.0 stable` という成熟度ラベルを意味しない。
 
 system-wide layout を pseudo-root で検証する最小例:
 

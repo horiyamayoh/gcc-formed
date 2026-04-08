@@ -2,7 +2,7 @@
 
 ## Project Baseline
 
-`gcc-formed` is a spec-first repository with a `v1alpha` implementation baseline. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details.
+`gcc-formed` is a spec-first repository with the current `v1alpha` maturity label and the `0.1.x` artifact line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [VERSIONING.md](VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
 
 ## Local Prerequisites
 
@@ -29,11 +29,12 @@ If you touch release packaging, install flows, or release metadata, also validat
 - Prefer behavior-preserving fixes over silent contract drift.
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
-- Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` aligned with shipped baseline scope.
+- Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
 
 ## Submission Notes
 
 - Keep pull requests narrow and decision-complete.
 - Document intentional tradeoffs and limitations in the PR description.
 - When CI fails, inspect the uploaded `REPORT_ROOT/gate/gate-summary.json` and `gate-summary.md` artifacts before diving into raw GitHub step logs; they are the primary failure-triage entrypoint for instrumented `run:` steps.
+- For snapshot failures or updates, inspect `snapshot-report.json` and per-fixture `comparisons.json`; they separate `normalization_only` drift from semantic mismatches.
 - `cargo xtask package` expects a clean git worktree for production artifacts; do not cut release artifacts from a dirty tree.

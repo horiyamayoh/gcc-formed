@@ -1,3 +1,9 @@
+mod snapshot;
+
+pub use snapshot::{
+    SnapshotComparison, SnapshotDiffKind, compare_snapshot_contents, normalize_snapshot_contents,
+};
+
 use diag_core::{Confidence, Severity};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

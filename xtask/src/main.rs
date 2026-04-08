@@ -10,7 +10,9 @@ use diag_render::{
     StreamKind, TypeDisplayPolicy, WarningVisibility, build_view_model, render,
 };
 use diag_testkit::{
-    ExpectedFallback, Fixture, RenderProfileExpectations, discover, family_counts, validate_fixture,
+    ExpectedFallback, Fixture, RenderProfileExpectations, SnapshotDiffKind,
+    compare_snapshot_contents, discover, family_counts, normalize_snapshot_contents,
+    validate_fixture,
 };
 use diag_trace::{BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, build_manifest_for_target};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
@@ -276,10 +278,40 @@ struct ReplayReport {
 struct SnapshotReport {
     selected_fixture_count: usize,
     promoted_fixture_count: usize,
+    successful_fixture_count: usize,
     check_only: bool,
     subset: String,
     docker_image: String,
+    drift_metrics: SnapshotDriftMetrics,
+    fixtures: Vec<SnapshotFixtureReport>,
     failures: Vec<VerificationFailure>,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+struct SnapshotDriftMetrics {
+    exact_count: usize,
+    normalization_only_count: usize,
+    semantic_count: usize,
+    missing_expected_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SnapshotArtifactDiff {
+    path: String,
+    diff_kind: SnapshotDiffKind,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SnapshotFixtureReport {
+    fixture_id: String,
+    family_key: String,
+    artifact_diffs: Vec<SnapshotArtifactDiff>,
+}
+
+#[derive(Debug)]
+struct SnapshotFixtureOutcome {
+    report: SnapshotFixtureReport,
+    check_failure: Option<VerificationFailure>,
 }
 
 #[derive(Debug)]
@@ -966,6 +998,7 @@ fn run_snapshot(
 
     let mut failures = Vec::new();
     let mut updated = 0usize;
+    let mut fixture_reports = Vec::new();
     for fixture in promoted {
         if let Err(error) = validate_snapshot_inputs(fixture) {
             failures.push(VerificationFailure {
@@ -976,7 +1009,13 @@ fn run_snapshot(
             continue;
         }
         match materialize_fixture_snapshots(fixture, docker_image, check, report_dir) {
-            Ok(count) => updated += count,
+            Ok(outcome) => {
+                updated += 1;
+                if let Some(failure) = outcome.check_failure {
+                    failures.push(failure);
+                }
+                fixture_reports.push(outcome.report);
+            }
             Err(failure) => failures.push(failure),
         }
     }
@@ -984,9 +1023,12 @@ fn run_snapshot(
     let report = SnapshotReport {
         selected_fixture_count: selected.len(),
         promoted_fixture_count: promoted_count,
+        successful_fixture_count: fixture_reports.len(),
         check_only: check,
         subset: subset_name(subset).to_string(),
         docker_image: docker_image.to_string(),
+        drift_metrics: snapshot_drift_metrics_for(&fixture_reports),
+        fixtures: fixture_reports,
         failures: failures.clone(),
     };
     if let Some(report_dir) = report_dir {
@@ -1005,7 +1047,8 @@ fn run_snapshot(
             "promoted_fixture_count": updated,
             "check_only": check,
             "subset": report.subset,
-            "docker_image": docker_image
+            "docker_image": docker_image,
+            "drift_metrics": report.drift_metrics
         }))?
     );
     Ok(())
@@ -1156,13 +1199,20 @@ fn collect_acceptance_fixture_summary(
             "render.default.txt".to_string(),
             default_render_result.text.clone(),
         );
-        write_fixture_report_bundle(report_dir, fixture, &artifacts).map_err(|error| {
-            VerificationFailure {
+        let mut artifact_diffs = Vec::new();
+        for (relative, contents) in &artifacts {
+            let path = fixture.snapshot_root().join(relative);
+            let (diff, _) =
+                classify_snapshot_artifact_diff(fixture, relative, &path, contents, false)?;
+            artifact_diffs.push(diff);
+        }
+        write_fixture_report_bundle(report_dir, fixture, &artifacts, &artifact_diffs).map_err(
+            |error| VerificationFailure {
                 layer: "report.bundle".to_string(),
                 fixture_id: fixture.fixture_id().to_string(),
                 summary: error,
-            }
-        })?;
+            },
+        )?;
     }
 
     Ok(AcceptanceFixtureSummary {
@@ -1204,7 +1254,7 @@ fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), VerificationFailure>
             summary: error.errors.join("; "),
         })?;
 
-    compare_snapshot_file(
+    verify_snapshot_file(
         fixture,
         "ir.facts",
         &fixture.snapshot_root().join("ir.facts.json"),
@@ -1216,7 +1266,7 @@ fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), VerificationFailure>
             }
         })?,
     )?;
-    compare_snapshot_file(
+    verify_snapshot_file(
         fixture,
         "ir.analysis",
         &fixture.snapshot_root().join("ir.analysis.json"),
@@ -1274,7 +1324,7 @@ fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), VerificationFailure>
             })?
         };
 
-        compare_snapshot_file(
+        verify_snapshot_file(
             fixture,
             &format!("view.{profile_name}"),
             &fixture
@@ -1288,7 +1338,7 @@ fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), VerificationFailure>
                 }
             })?,
         )?;
-        compare_snapshot_file(
+        verify_snapshot_file(
             fixture,
             &format!("render.{profile_name}"),
             &fixture
@@ -1337,7 +1387,7 @@ fn materialize_fixture_snapshots(
     docker_image: &str,
     check: bool,
     report_dir: Option<&Path>,
-) -> Result<usize, VerificationFailure> {
+) -> Result<SnapshotFixtureOutcome, VerificationFailure> {
     let captured = if std::env::var_os("FORMED_SNAPSHOT_USE_EXISTING_INGRESS").is_some() {
         load_existing_ingress(fixture)?
     } else {
@@ -1436,28 +1486,31 @@ fn materialize_fixture_snapshots(
         artifacts.insert(format!("render.{profile_name}.txt"), render_result.text);
     }
 
+    let mut artifact_diffs = Vec::new();
+    let mut pending_failure = None;
+    for (relative, contents) in &artifacts {
+        let path = snapshot_root.join(relative);
+        let (diff, failure) =
+            classify_snapshot_artifact_diff(fixture, relative, &path, contents, check)?;
+        artifact_diffs.push(diff);
+        if pending_failure.is_none() {
+            pending_failure = failure;
+        }
+    }
+
     if let Some(report_dir) = report_dir {
-        write_fixture_report_bundle(report_dir, fixture, &artifacts).map_err(|error| {
-            VerificationFailure {
+        write_fixture_report_bundle(report_dir, fixture, &artifacts, &artifact_diffs).map_err(
+            |error| VerificationFailure {
                 layer: "report.bundle".to_string(),
                 fixture_id: fixture.fixture_id().to_string(),
                 summary: error,
-            }
-        })?;
+            },
+        )?;
     }
 
     for (relative, contents) in artifacts {
         let path = snapshot_root.join(relative);
-        if check {
-            compare_snapshot_file(
-                fixture,
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .unwrap_or("snapshot"),
-                &path,
-                &contents,
-            )?;
-        } else {
+        if !check {
             fs::write(&path, contents).map_err(|error| VerificationFailure {
                 layer: "snapshot_write".to_string(),
                 fixture_id: fixture.fixture_id().to_string(),
@@ -1466,7 +1519,14 @@ fn materialize_fixture_snapshots(
         }
     }
 
-    Ok(1)
+    Ok(SnapshotFixtureOutcome {
+        report: SnapshotFixtureReport {
+            fixture_id: fixture.fixture_id().to_string(),
+            family_key: fixture.family_key(),
+            artifact_diffs,
+        },
+        check_failure: pending_failure,
+    })
 }
 
 fn load_existing_ingress(fixture: &Fixture) -> Result<CapturedIngress, VerificationFailure> {
@@ -1831,858 +1891,100 @@ fn verify_render_expectations(
     Ok(())
 }
 
-fn compare_snapshot_file(
+fn classify_snapshot_artifact_diff(
+    fixture: &Fixture,
+    relative: &str,
+    path: &Path,
+    actual: &str,
+    check: bool,
+) -> Result<(SnapshotArtifactDiff, Option<VerificationFailure>), VerificationFailure> {
+    let diff_path = relative.to_string();
+    if !path.exists() {
+        let diff = SnapshotArtifactDiff {
+            path: diff_path,
+            diff_kind: SnapshotDiffKind::MissingExpected,
+        };
+        let failure = check.then(|| VerificationFailure {
+            layer: relative.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("missing expected snapshot {}", path.display()),
+        });
+        return Ok((diff, failure));
+    }
+
+    let expected = fs::read_to_string(path).map_err(|error| VerificationFailure {
+        layer: relative.to_string(),
+        fixture_id: fixture.fixture_id().to_string(),
+        summary: format!("failed to read {}: {error}", path.display()),
+    })?;
+    let comparison = compare_snapshot_contents(path, &expected, actual).map_err(|summary| {
+        VerificationFailure {
+            layer: relative.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary,
+        }
+    })?;
+    let diff = SnapshotArtifactDiff {
+        path: diff_path,
+        diff_kind: comparison.diff_kind,
+    };
+    let failure = if check && !comparison.matches_after_normalization() {
+        Some(VerificationFailure {
+            layer: relative.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "semantic diff after normalization: {}",
+                first_diff_summary(
+                    &comparison.normalized_expected,
+                    &comparison.normalized_actual
+                )
+            ),
+        })
+    } else {
+        None
+    };
+    Ok((diff, failure))
+}
+
+fn verify_snapshot_file(
     fixture: &Fixture,
     layer: &str,
     path: &Path,
     actual: &str,
 ) -> Result<(), VerificationFailure> {
+    if !path.exists() {
+        return Err(VerificationFailure {
+            layer: layer.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("missing expected snapshot {}", path.display()),
+        });
+    }
     let expected = fs::read_to_string(path).map_err(|error| VerificationFailure {
         layer: layer.to_string(),
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", path.display()),
     })?;
-    let expected =
-        normalize_snapshot_contents(path, &expected).map_err(|summary| VerificationFailure {
+    let comparison = compare_snapshot_contents(path, &expected, actual).map_err(|summary| {
+        VerificationFailure {
             layer: layer.to_string(),
             fixture_id: fixture.fixture_id().to_string(),
             summary,
-        })?;
-    let actual =
-        normalize_snapshot_contents(path, actual).map_err(|summary| VerificationFailure {
-            layer: layer.to_string(),
-            fixture_id: fixture.fixture_id().to_string(),
-            summary,
-        })?;
-    if expected == actual {
+        }
+    })?;
+    if comparison.matches_after_normalization() {
         return Ok(());
     }
     Err(VerificationFailure {
         layer: layer.to_string(),
         fixture_id: fixture.fixture_id().to_string(),
-        summary: first_diff_summary(&expected, &actual),
+        summary: format!(
+            "semantic diff after normalization: {}",
+            first_diff_summary(
+                &comparison.normalized_expected,
+                &comparison.normalized_actual
+            )
+        ),
     })
-}
-
-fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
-    match path.file_name().and_then(|value| value.to_str()) {
-        Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),
-        Some("ir.facts.json") | Some("ir.analysis.json") => {
-            normalize_ir_snapshot_contents(path, contents)
-        }
-        _ => Ok(normalize_snapshot_text(contents)),
-    }
-}
-
-fn normalize_sarif_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
-    let value: serde_json::Value = serde_json::from_str(contents)
-        .map_err(|error| format!("failed to parse {} as JSON: {error}", path.display()))?;
-    let value = normalize_sarif_snapshot_value(value);
-    diag_core::canonical_json(&value)
-        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
-}
-
-fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
-    let mut document: DiagnosticDocument = serde_json::from_str(contents).map_err(|error| {
-        format!(
-            "failed to parse {} as diagnostic IR: {error}",
-            path.display()
-        )
-    })?;
-    normalize_diagnostic_document_for_snapshot_compare(&mut document);
-    diag_core::canonical_json(&normalized_ir_snapshot_value(&document))
-        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
-}
-
-fn normalize_snapshot_text(contents: &str) -> String {
-    let contents = normalize_transient_object_paths(contents);
-    let contents = normalize_gcc_quote_style(&contents);
-    let contents = normalize_volatile_compiler_text(&contents);
-    normalize_transient_line_numbers(&contents)
-}
-
-fn normalize_volatile_compiler_text(contents: &str) -> String {
-    let contents = contents
-        .replace("'{{'", "'{'")
-        .replace("'}}'", "'}'")
-        .replace("[-Werror=", "[-W")
-        .replace("\"  candidate", "\"candidate")
-        .replace("\"  template", "\"template")
-        .replace("\"  deduced", "\"deduced");
-    let contents = normalize_linker_offsets(&contents);
-    let mut normalized = String::with_capacity(contents.len());
-    for segment in contents.split_inclusive('\n') {
-        let (line, newline) = segment
-            .strip_suffix('\n')
-            .map(|line| (line, "\n"))
-            .unwrap_or((segment, ""));
-        let line = normalize_candidate_line(line);
-        if line.trim() == "cc1: all warnings being treated as errors"
-            || is_candidate_count_line(&line)
-        {
-            continue;
-        }
-        let line = normalize_marker_line(&line);
-        normalized.push_str(&line);
-        normalized.push_str(newline);
-    }
-    normalized
-}
-
-fn normalize_linker_offsets(contents: &str) -> String {
-    let mut normalized = String::with_capacity(contents.len());
-    let bytes = contents.as_bytes();
-    let mut index = 0;
-
-    while index < bytes.len() {
-        if bytes[index] == b'+'
-            && index + 3 < bytes.len()
-            && bytes[index + 1] == b'0'
-            && bytes[index + 2] == b'x'
-        {
-            let mut digit_end = index + 3;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_hexdigit() {
-                digit_end += 1;
-            }
-            if digit_end > index + 3 {
-                normalized.push_str("+0x0");
-                index = digit_end;
-                continue;
-            }
-        }
-        normalized.push(bytes[index] as char);
-        index += 1;
-    }
-
-    normalized
-}
-
-fn normalize_candidate_line(line: &str) -> String {
-    let mut normalized = String::with_capacity(line.len());
-    let bytes = line.as_bytes();
-    let mut index = 0;
-
-    while index < bytes.len() {
-        if line[index..].starts_with("candidate ") {
-            let digit_start = index + "candidate ".len();
-            let mut digit_end = digit_start;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
-                digit_end += 1;
-            }
-            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
-                normalized.push_str("candidate:");
-                index = digit_end + 1;
-                continue;
-            }
-        }
-        normalized.push(bytes[index] as char);
-        index += 1;
-    }
-
-    let normalized = normalized
-        .replace("note:   candidate", "note: candidate")
-        .replace("note:   template", "note: template")
-        .replace("note:   deduced", "note: deduced");
-    if let Some(rest) = normalized.strip_prefix("  candidate") {
-        return format!("candidate{rest}");
-    }
-    if let Some(rest) = normalized.strip_prefix("  template") {
-        return format!("template{rest}");
-    }
-    if let Some(rest) = normalized.strip_prefix("  deduced") {
-        return format!("deduced{rest}");
-    }
-    normalized
-}
-
-fn is_candidate_count_line(line: &str) -> bool {
-    let trimmed = line.trim();
-    if let Some(note_start) = trimmed.find("note: there are ") {
-        let rest = &trimmed[note_start + "note: there are ".len()..];
-        return rest.ends_with(" candidates");
-    }
-    trimmed.contains("note: there is 1 candidate")
-}
-
-fn normalize_marker_line(line: &str) -> String {
-    let Some(pipe_index) = line.find('|') else {
-        return line.to_string();
-    };
-    let after_pipe = &line[pipe_index + 1..];
-    let trimmed = after_pipe.trim();
-    if trimmed.is_empty() || !trimmed.chars().all(|ch| matches!(ch, '^' | '~')) {
-        return line.to_string();
-    }
-    let marker_indent = after_pipe
-        .chars()
-        .take_while(|ch| *ch == ' ')
-        .collect::<String>();
-    format!("{}|{}^", &line[..pipe_index], marker_indent)
-}
-
-fn normalize_transient_object_paths(contents: &str) -> String {
-    let mut normalized = String::with_capacity(contents.len());
-    let mut remaining = contents;
-
-    while let Some(start) = remaining.find("/tmp/") {
-        normalized.push_str(&remaining[..start]);
-        let candidate = &remaining[start..];
-        let path_len = candidate
-            .chars()
-            .take_while(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '/' | '.' | '_' | '-'))
-            .map(char::len_utf8)
-            .sum::<usize>();
-        let path = &candidate[..path_len];
-        if path.starts_with("/tmp/") && path.ends_with(".o") {
-            normalized.push_str("/tmp/<object>.o");
-            remaining = &candidate[path_len..];
-        } else {
-            normalized.push_str("/tmp/");
-            remaining = &candidate["/tmp/".len()..];
-        }
-    }
-
-    normalized.push_str(remaining);
-    normalized
-}
-
-fn normalize_gcc_quote_style(contents: &str) -> String {
-    contents
-        .chars()
-        .map(|ch| match ch {
-            '`' | '‘' | '’' => '\'',
-            '“' | '”' => '"',
-            _ => ch,
-        })
-        .collect()
-}
-
-fn normalize_transient_line_numbers(contents: &str) -> String {
-    let contents = replace_number_after_marker(contents, "\"line\": ");
-    let contents = replace_number_after_marker(&contents, "\"end_line\": ");
-    let contents = replace_number_after_marker(&contents, "\"startLine\": ");
-    let contents = replace_number_after_marker(&contents, "\"endLine\": ");
-    let contents = normalize_gutter_line_numbers(&contents);
-    normalize_colon_number_sequences(&contents)
-}
-
-fn replace_number_after_marker(contents: &str, marker: &str) -> String {
-    let mut normalized = String::with_capacity(contents.len());
-    let mut remaining = contents;
-
-    while let Some(offset) = remaining.find(marker) {
-        let marker_end = offset + marker.len();
-        normalized.push_str(&remaining[..marker_end]);
-        let tail = &remaining[marker_end..];
-        let digit_len = tail
-            .chars()
-            .take_while(|ch| ch.is_ascii_digit())
-            .map(char::len_utf8)
-            .sum::<usize>();
-        if digit_len == 0 {
-            remaining = tail;
-            continue;
-        }
-        normalized.push('1');
-        remaining = &tail[digit_len..];
-    }
-
-    normalized.push_str(remaining);
-    normalized
-}
-
-fn normalize_gutter_line_numbers(contents: &str) -> String {
-    let mut normalized = String::with_capacity(contents.len());
-    for segment in contents.split_inclusive('\n') {
-        let (line, newline) = segment
-            .strip_suffix('\n')
-            .map(|line| (line, "\n"))
-            .unwrap_or((segment, ""));
-        let indent_len = line
-            .chars()
-            .take_while(|ch| matches!(ch, ' ' | '\t'))
-            .map(char::len_utf8)
-            .sum::<usize>();
-        let rest = &line[indent_len..];
-        let digit_len = rest
-            .chars()
-            .take_while(|ch| ch.is_ascii_digit())
-            .map(char::len_utf8)
-            .sum::<usize>();
-        if digit_len > 0 && rest[digit_len..].starts_with(" |") {
-            normalized.push_str(&line[..indent_len]);
-            normalized.push('1');
-            normalized.push_str(&rest[digit_len..]);
-        } else {
-            normalized.push_str(line);
-        }
-        normalized.push_str(newline);
-    }
-    normalized
-}
-
-fn normalize_colon_number_sequences(contents: &str) -> String {
-    let mut normalized = String::with_capacity(contents.len());
-    let bytes = contents.as_bytes();
-    let mut index = 0;
-
-    while index < bytes.len() {
-        if bytes[index] == b':' {
-            let digit_start = index + 1;
-            let mut digit_end = digit_start;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
-                digit_end += 1;
-            }
-            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
-                normalized.push(':');
-                normalized.push('1');
-                index = digit_end;
-                continue;
-            }
-        }
-        normalized.push(bytes[index] as char);
-        index += 1;
-    }
-
-    normalized
-}
-
-fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if let Some(version) = value.get("version").cloned() {
-        normalized.insert("version".to_string(), version);
-    }
-    if let Some(runs) = value.get("runs").and_then(serde_json::Value::as_array) {
-        normalized.insert(
-            "runs".to_string(),
-            serde_json::Value::Array(
-                runs.iter()
-                    .map(|run| {
-                        let mut normalized_run = serde_json::Map::new();
-                        if let Some(results) =
-                            run.get("results").and_then(serde_json::Value::as_array)
-                        {
-                            normalized_run.insert(
-                                "results".to_string(),
-                                serde_json::Value::Array(
-                                    results.iter().map(normalize_sarif_result).collect(),
-                                ),
-                            );
-                        }
-                        serde_json::Value::Object(normalized_run)
-                    })
-                    .collect(),
-            ),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalize_sarif_result(result: &serde_json::Value) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if let Some(level) = result.get("level").and_then(serde_json::Value::as_str) {
-        normalized.insert(
-            "level".to_string(),
-            serde_json::Value::String(level.to_string()),
-        );
-    }
-    if let Some(message) = result.get("message") {
-        if let Some(message) = normalize_sarif_message(message) {
-            normalized.insert("message".to_string(), message);
-        }
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalize_sarif_message(message: &serde_json::Value) -> Option<serde_json::Value> {
-    if let Some(text) = message.get("text").and_then(serde_json::Value::as_str) {
-        return Some(serde_json::json!({ "text": normalize_snapshot_text(text) }));
-    }
-    message
-        .get("markdown")
-        .and_then(serde_json::Value::as_str)
-        .map(|markdown| serde_json::json!({ "markdown": normalize_snapshot_text(markdown) }))
-}
-
-fn normalized_ir_snapshot_value(document: &DiagnosticDocument) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "document_completeness".to_string(),
-        serde_json::json!(document.document_completeness),
-    );
-    normalized.insert(
-        "document_id".to_string(),
-        serde_json::Value::String(document.document_id.clone()),
-    );
-    normalized.insert(
-        "schema_version".to_string(),
-        serde_json::Value::String(document.schema_version.clone()),
-    );
-    normalized.insert(
-        "producer".to_string(),
-        normalized_producer_info_value(&document.producer),
-    );
-    normalized.insert("run".to_string(), normalized_run_info_value(&document.run));
-    if !document.captures.is_empty() {
-        normalized.insert(
-            "captures".to_string(),
-            serde_json::Value::Array(
-                document
-                    .captures
-                    .iter()
-                    .map(normalized_capture_value)
-                    .collect(),
-            ),
-        );
-    }
-    if !document.integrity_issues.is_empty() {
-        normalized.insert(
-            "integrity_issues".to_string(),
-            serde_json::Value::Array(
-                document
-                    .integrity_issues
-                    .iter()
-                    .map(normalized_integrity_issue_value)
-                    .collect(),
-            ),
-        );
-    }
-    if !document.diagnostics.is_empty() {
-        normalized.insert(
-            "diagnostics".to_string(),
-            serde_json::Value::Array(
-                document
-                    .diagnostics
-                    .iter()
-                    .map(normalized_diagnostic_node_value)
-                    .collect(),
-            ),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_producer_info_value(producer: &diag_core::ProducerInfo) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "name".to_string(),
-        serde_json::Value::String(producer.name.clone()),
-    );
-    normalized.insert(
-        "version".to_string(),
-        serde_json::Value::String(producer.version.clone()),
-    );
-    if let Some(rulepack_version) = producer.rulepack_version.as_ref() {
-        normalized.insert(
-            "rulepack_version".to_string(),
-            serde_json::Value::String(rulepack_version.clone()),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_run_info_value(run: &RunInfo) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "exit_status".to_string(),
-        serde_json::json!(run.exit_status),
-    );
-    normalized.insert(
-        "invocation_id".to_string(),
-        serde_json::Value::String(run.invocation_id.clone()),
-    );
-    if let Some(invoked_as) = run.invoked_as.as_ref() {
-        normalized.insert(
-            "invoked_as".to_string(),
-            serde_json::Value::String(invoked_as.clone()),
-        );
-    }
-    if !run.argv_redacted.is_empty() {
-        normalized.insert(
-            "argv_redacted".to_string(),
-            serde_json::json!(run.argv_redacted),
-        );
-    }
-    if let Some(cwd_display) = run.cwd_display.as_ref() {
-        normalized.insert(
-            "cwd_display".to_string(),
-            serde_json::Value::String(cwd_display.clone()),
-        );
-    }
-    normalized.insert(
-        "primary_tool".to_string(),
-        normalized_tool_info_value(&run.primary_tool),
-    );
-    if let Some(language_mode) = run.language_mode.as_ref() {
-        normalized.insert(
-            "language_mode".to_string(),
-            serde_json::json!(language_mode),
-        );
-    }
-    if let Some(target_triple) = run.target_triple.as_ref() {
-        normalized.insert(
-            "target_triple".to_string(),
-            serde_json::Value::String(target_triple.clone()),
-        );
-    }
-    if let Some(wrapper_mode) = run.wrapper_mode.as_ref() {
-        normalized.insert("wrapper_mode".to_string(), serde_json::json!(wrapper_mode));
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_tool_info_value(tool: &diag_core::ToolInfo) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "name".to_string(),
-        serde_json::Value::String(tool.name.clone()),
-    );
-    if let Some(vendor) = tool.vendor.as_ref() {
-        normalized.insert(
-            "vendor".to_string(),
-            serde_json::Value::String(vendor.clone()),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_capture_value(capture: &CaptureArtifact) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "id".to_string(),
-        serde_json::Value::String(capture.id.clone()),
-    );
-    normalized.insert("kind".to_string(), serde_json::json!(capture.kind));
-    normalized.insert("storage".to_string(), serde_json::json!(capture.storage));
-    if let Some(inline_text) = capture.inline_text.as_ref() {
-        normalized.insert(
-            "inline_text".to_string(),
-            serde_json::Value::String(inline_text.clone()),
-        );
-    }
-    if let Some(external_ref) = capture.external_ref.as_ref() {
-        normalized.insert(
-            "external_ref".to_string(),
-            serde_json::Value::String(external_ref.clone()),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_integrity_issue_value(issue: &diag_core::IntegrityIssue) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "message".to_string(),
-        serde_json::Value::String(issue.message.clone()),
-    );
-    normalized.insert("severity".to_string(), serde_json::json!(issue.severity));
-    normalized.insert("stage".to_string(), serde_json::json!(issue.stage));
-    if let Some(provenance) = issue.provenance.as_ref() {
-        normalized.insert(
-            "provenance".to_string(),
-            normalized_provenance_value(provenance),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_diagnostic_node_value(node: &diag_core::DiagnosticNode) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if let Some(analysis) = node.analysis.as_ref() {
-        normalized.insert("analysis".to_string(), normalized_analysis_value(analysis));
-    }
-    if !node.children.is_empty() {
-        normalized.insert(
-            "children".to_string(),
-            serde_json::Value::Array(
-                node.children
-                    .iter()
-                    .map(normalized_diagnostic_node_value)
-                    .collect(),
-            ),
-        );
-    }
-    if !node.context_chains.is_empty() {
-        normalized.insert(
-            "context_chains".to_string(),
-            serde_json::Value::Array(
-                node.context_chains
-                    .iter()
-                    .map(normalized_context_chain_value)
-                    .collect(),
-            ),
-        );
-    }
-    if matches!(node.semantic_role, diag_core::SemanticRole::Root) {
-        normalized.insert("id".to_string(), serde_json::Value::String(node.id.clone()));
-    }
-    if !node.locations.is_empty() {
-        normalized.insert(
-            "locations".to_string(),
-            serde_json::Value::Array(
-                node.locations
-                    .iter()
-                    .map(normalized_location_value)
-                    .collect(),
-            ),
-        );
-    }
-    normalized.insert(
-        "message".to_string(),
-        normalized_message_text_value(&node.message),
-    );
-    normalized.insert(
-        "node_completeness".to_string(),
-        serde_json::json!(node.node_completeness),
-    );
-    normalized.insert("origin".to_string(), serde_json::json!(node.origin));
-    normalized.insert("phase".to_string(), serde_json::json!(node.phase));
-    normalized.insert(
-        "provenance".to_string(),
-        normalized_provenance_value(&node.provenance),
-    );
-    normalized.insert(
-        "semantic_role".to_string(),
-        serde_json::json!(node.semantic_role),
-    );
-    normalized.insert("severity".to_string(), serde_json::json!(node.severity));
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if let Some(confidence) = analysis.confidence.as_ref() {
-        normalized.insert("confidence".to_string(), serde_json::json!(confidence));
-    }
-    if let Some(family) = analysis.family.as_ref() {
-        normalized.insert(
-            "family".to_string(),
-            serde_json::Value::String(family.clone()),
-        );
-    }
-    if let Some(first_action_hint) = analysis.first_action_hint.as_ref() {
-        normalized.insert(
-            "first_action_hint".to_string(),
-            serde_json::Value::String(normalize_snapshot_text(first_action_hint)),
-        );
-    }
-    if let Some(headline) = analysis.headline.as_ref() {
-        normalized.insert(
-            "headline".to_string(),
-            serde_json::Value::String(normalize_snapshot_text(headline)),
-        );
-    }
-    if let Some(rule_id) = analysis.rule_id.as_ref() {
-        normalized.insert(
-            "rule_id".to_string(),
-            serde_json::Value::String(rule_id.clone()),
-        );
-    }
-    if !analysis.matched_conditions.is_empty() {
-        normalized.insert(
-            "matched_conditions".to_string(),
-            serde_json::Value::Array(
-                analysis
-                    .matched_conditions
-                    .iter()
-                    .map(|condition| serde_json::Value::String(condition.clone()))
-                    .collect(),
-            ),
-        );
-    }
-    if let Some(suppression_reason) = analysis.suppression_reason.as_ref() {
-        normalized.insert(
-            "suppression_reason".to_string(),
-            serde_json::Value::String(suppression_reason.clone()),
-        );
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_context_chain_value(chain: &diag_core::ContextChain) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if !chain.frames.is_empty() {
-        normalized.insert(
-            "frames".to_string(),
-            serde_json::Value::Array(
-                chain
-                    .frames
-                    .iter()
-                    .map(normalized_context_frame_value)
-                    .collect(),
-            ),
-        );
-    }
-    normalized.insert("kind".to_string(), serde_json::json!(chain.kind));
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    normalized.insert(
-        "label".to_string(),
-        serde_json::Value::String(frame.label.clone()),
-    );
-    if let Some(path) = frame.path.as_ref() {
-        normalized.insert("path".to_string(), serde_json::Value::String(path.clone()));
-    }
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_location_value(location: &diag_core::Location) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if let Some(ownership) = location.ownership.as_ref() {
-        normalized.insert("ownership".to_string(), serde_json::json!(ownership));
-    }
-    normalized.insert(
-        "path".to_string(),
-        serde_json::Value::String(location.path.clone()),
-    );
-    serde_json::Value::Object(normalized)
-}
-
-fn normalized_message_text_value(message: &diag_core::MessageText) -> serde_json::Value {
-    serde_json::json!({
-        "raw_text": message.raw_text,
-    })
-}
-
-fn normalized_provenance_value(provenance: &diag_core::Provenance) -> serde_json::Value {
-    let mut normalized = serde_json::Map::new();
-    if !provenance.capture_refs.is_empty() {
-        normalized.insert(
-            "capture_refs".to_string(),
-            serde_json::json!(provenance.capture_refs),
-        );
-    }
-    normalized.insert("source".to_string(), serde_json::json!(provenance.source));
-    serde_json::Value::Object(normalized)
-}
-
-fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticDocument) {
-    document.document_id = normalize_transient_object_paths(&document.document_id);
-    document.producer.name = normalize_transient_object_paths(&document.producer.name);
-    document.producer.version = normalize_transient_object_paths(&document.producer.version);
-    if let Some(git_revision) = document.producer.git_revision.as_mut() {
-        *git_revision = normalize_transient_object_paths(git_revision);
-    }
-    if let Some(build_profile) = document.producer.build_profile.as_mut() {
-        *build_profile = normalize_transient_object_paths(build_profile);
-    }
-    if let Some(rulepack_version) = document.producer.rulepack_version.as_mut() {
-        *rulepack_version = normalize_transient_object_paths(rulepack_version);
-    }
-    normalize_run_info_for_snapshot_compare(&mut document.run);
-    for capture in &mut document.captures {
-        normalize_capture_for_snapshot_compare(capture);
-    }
-    for issue in &mut document.integrity_issues {
-        issue.message = normalize_snapshot_text(&issue.message);
-    }
-    for diagnostic in &mut document.diagnostics {
-        normalize_diagnostic_node_for_snapshot_compare(diagnostic);
-    }
-    document.fingerprints = None;
-    document.refresh_fingerprints();
-    document.fingerprints = None;
-}
-
-fn normalize_run_info_for_snapshot_compare(run: &mut RunInfo) {
-    run.invocation_id = normalize_transient_object_paths(&run.invocation_id);
-    if let Some(invoked_as) = run.invoked_as.as_mut() {
-        *invoked_as = normalize_transient_object_paths(invoked_as);
-    }
-    for arg in &mut run.argv_redacted {
-        *arg = normalize_transient_object_paths(arg);
-    }
-    if let Some(cwd_display) = run.cwd_display.as_mut() {
-        *cwd_display = normalize_transient_object_paths(cwd_display);
-    }
-    normalize_tool_info_for_snapshot_compare(&mut run.primary_tool);
-    for tool in &mut run.secondary_tools {
-        normalize_tool_info_for_snapshot_compare(tool);
-    }
-    if let Some(target_triple) = run.target_triple.as_mut() {
-        *target_triple = normalize_transient_object_paths(target_triple);
-    }
-}
-
-fn normalize_tool_info_for_snapshot_compare(tool: &mut diag_core::ToolInfo) {
-    tool.name = normalize_transient_object_paths(&tool.name);
-    if let Some(version) = tool.version.as_mut() {
-        *version = normalize_transient_object_paths(version);
-    }
-    if let Some(component) = tool.component.as_mut() {
-        *component = normalize_transient_object_paths(component);
-    }
-    if let Some(vendor) = tool.vendor.as_mut() {
-        *vendor = normalize_transient_object_paths(vendor);
-    }
-}
-
-fn normalize_capture_for_snapshot_compare(capture: &mut CaptureArtifact) {
-    capture.id = normalize_transient_object_paths(&capture.id);
-    capture.media_type = normalize_transient_object_paths(&capture.media_type);
-    if let Some(encoding) = capture.encoding.as_mut() {
-        *encoding = normalize_transient_object_paths(encoding);
-    }
-    if let Some(digest_sha256) = capture.digest_sha256.as_mut() {
-        *digest_sha256 = normalize_transient_object_paths(digest_sha256);
-    }
-    if let Some(inline_text) = capture.inline_text.as_mut() {
-        *inline_text = normalize_snapshot_text(inline_text);
-        capture.size_bytes = Some(inline_text.len() as u64);
-    }
-    if let Some(external_ref) = capture.external_ref.as_mut() {
-        *external_ref = normalize_transient_object_paths(external_ref);
-    }
-    if matches!(capture.kind, ArtifactKind::GccSarif) {
-        capture.size_bytes = None;
-    }
-    if let Some(produced_by) = capture.produced_by.as_mut() {
-        normalize_tool_info_for_snapshot_compare(produced_by);
-    }
-}
-
-fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::DiagnosticNode) {
-    node.id = normalize_transient_object_paths(&node.id);
-    normalize_message_text_for_snapshot_compare(&mut node.message);
-    for location in &mut node.locations {
-        normalize_location_for_snapshot_compare(location);
-    }
-    node.suggestions.clear();
-    node.symbol_context = None;
-    for child in &mut node.children {
-        normalize_diagnostic_node_for_snapshot_compare(child);
-    }
-    for frame in node
-        .context_chains
-        .iter_mut()
-        .flat_map(|chain| &mut chain.frames)
-    {
-        frame.label = normalize_snapshot_text(&frame.label);
-        if let Some(path) = frame.path.as_mut() {
-            *path = normalize_transient_object_paths(path);
-        }
-    }
-    node.fingerprints = None;
-}
-
-fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageText) {
-    message.raw_text = normalize_snapshot_text(&message.raw_text);
-    if let Some(normalized_text) = message.normalized_text.as_mut() {
-        *normalized_text = normalize_snapshot_text(normalized_text);
-    }
-    if let Some(locale) = message.locale.as_mut() {
-        *locale = normalize_transient_object_paths(locale);
-    }
-}
-
-fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
-    location.path = normalize_transient_object_paths(&location.path);
-    if let Some(display_path) = location.display_path.as_mut() {
-        *display_path = normalize_transient_object_paths(display_path);
-    }
 }
 
 fn canonical_json_for_view_model(
@@ -2850,6 +2152,21 @@ fn ratio(numerator: usize, denominator: usize) -> f64 {
     }
 }
 
+fn snapshot_drift_metrics_for(fixtures: &[SnapshotFixtureReport]) -> SnapshotDriftMetrics {
+    let mut metrics = SnapshotDriftMetrics::default();
+    for fixture in fixtures {
+        for artifact in &fixture.artifact_diffs {
+            match artifact.diff_kind {
+                SnapshotDiffKind::Exact => metrics.exact_count += 1,
+                SnapshotDiffKind::NormalizationOnly => metrics.normalization_only_count += 1,
+                SnapshotDiffKind::Semantic => metrics.semantic_count += 1,
+                SnapshotDiffKind::MissingExpected => metrics.missing_expected_count += 1,
+            }
+        }
+    }
+    metrics
+}
+
 fn write_replay_report(
     report_dir: &Path,
     report: &ReplayReport,
@@ -2878,6 +2195,7 @@ fn write_fixture_report_bundle(
     report_dir: &Path,
     fixture: &Fixture,
     actual_artifacts: &BTreeMap<String, String>,
+    artifact_diffs: &[SnapshotArtifactDiff],
 ) -> Result<(), String> {
     let fixture_dir = report_dir.join("fixtures").join(fixture.fixture_id());
     let actual_dir = fixture_dir.join("actual");
@@ -2939,8 +2257,15 @@ fn write_fixture_report_bundle(
             "fixture_id": fixture.fixture_id(),
             "family": fixture.family_key(),
             "title": fixture.meta.title.clone(),
+            "artifact_diffs": artifact_diffs,
         }))
         .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    fs::write(
+        fixture_dir.join("comparisons.json"),
+        serde_json::to_vec_pretty(artifact_diffs).map_err(|error| error.to_string())?,
     )
     .map_err(|error| error.to_string())?;
 

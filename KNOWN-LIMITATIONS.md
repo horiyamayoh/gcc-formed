@@ -1,6 +1,6 @@
 # Known Limitations
 
-`gcc-formed` is still a `v1alpha` project. The first public release is intentionally narrow.
+`gcc-formed` is currently in the `v1alpha` maturity line, and the current artifact line is `0.1.x`. The current alpha baseline is intentionally narrow.
 
 ## Primary Contract
 
@@ -31,7 +31,8 @@ You should expect raw fallback when:
 - Enhanced render quality outside the GCC 15 primary path.
 - Non-Linux production artifacts.
 - Elimination of passthrough, shadow mode, or raw fallback.
-- Stable general-availability support promises beyond the documented `v1alpha` scope.
+- Public beta artifacts (`0.2.0-beta.N`) or release-candidate / stable artifacts (`1.0.0-rc.N`, `1.0.0`).
+- Stable general-availability support promises beyond the documented `v1alpha` / `0.1.x` scope.
 
 ## Bug Reports
 
