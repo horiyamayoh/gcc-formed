@@ -1549,7 +1549,7 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
         )
     })?;
     normalize_diagnostic_document_for_snapshot_compare(&mut document);
-    diag_core::canonical_json(&document)
+    diag_core::canonical_json(&normalized_ir_snapshot_value(&document))
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
@@ -1742,6 +1742,349 @@ fn normalize_sarif_message(message: &serde_json::Value) -> Option<serde_json::Va
         .get("markdown")
         .and_then(serde_json::Value::as_str)
         .map(|markdown| serde_json::json!({ "markdown": normalize_snapshot_text(markdown) }))
+}
+
+fn normalized_ir_snapshot_value(document: &DiagnosticDocument) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "document_completeness".to_string(),
+        serde_json::json!(document.document_completeness),
+    );
+    normalized.insert(
+        "document_id".to_string(),
+        serde_json::Value::String(document.document_id.clone()),
+    );
+    normalized.insert(
+        "schema_version".to_string(),
+        serde_json::Value::String(document.schema_version.clone()),
+    );
+    normalized.insert(
+        "producer".to_string(),
+        normalized_producer_info_value(&document.producer),
+    );
+    normalized.insert("run".to_string(), normalized_run_info_value(&document.run));
+    if !document.captures.is_empty() {
+        normalized.insert(
+            "captures".to_string(),
+            serde_json::Value::Array(
+                document
+                    .captures
+                    .iter()
+                    .map(normalized_capture_value)
+                    .collect(),
+            ),
+        );
+    }
+    if !document.integrity_issues.is_empty() {
+        normalized.insert(
+            "integrity_issues".to_string(),
+            serde_json::Value::Array(
+                document
+                    .integrity_issues
+                    .iter()
+                    .map(normalized_integrity_issue_value)
+                    .collect(),
+            ),
+        );
+    }
+    if !document.diagnostics.is_empty() {
+        normalized.insert(
+            "diagnostics".to_string(),
+            serde_json::Value::Array(
+                document
+                    .diagnostics
+                    .iter()
+                    .map(normalized_diagnostic_node_value)
+                    .collect(),
+            ),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_producer_info_value(producer: &diag_core::ProducerInfo) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "name".to_string(),
+        serde_json::Value::String(producer.name.clone()),
+    );
+    normalized.insert(
+        "version".to_string(),
+        serde_json::Value::String(producer.version.clone()),
+    );
+    if let Some(rulepack_version) = producer.rulepack_version.as_ref() {
+        normalized.insert(
+            "rulepack_version".to_string(),
+            serde_json::Value::String(rulepack_version.clone()),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_run_info_value(run: &RunInfo) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "exit_status".to_string(),
+        serde_json::json!(run.exit_status),
+    );
+    normalized.insert(
+        "invocation_id".to_string(),
+        serde_json::Value::String(run.invocation_id.clone()),
+    );
+    if let Some(invoked_as) = run.invoked_as.as_ref() {
+        normalized.insert(
+            "invoked_as".to_string(),
+            serde_json::Value::String(invoked_as.clone()),
+        );
+    }
+    if !run.argv_redacted.is_empty() {
+        normalized.insert(
+            "argv_redacted".to_string(),
+            serde_json::json!(run.argv_redacted),
+        );
+    }
+    if let Some(cwd_display) = run.cwd_display.as_ref() {
+        normalized.insert(
+            "cwd_display".to_string(),
+            serde_json::Value::String(cwd_display.clone()),
+        );
+    }
+    normalized.insert(
+        "primary_tool".to_string(),
+        normalized_tool_info_value(&run.primary_tool),
+    );
+    if let Some(language_mode) = run.language_mode.as_ref() {
+        normalized.insert(
+            "language_mode".to_string(),
+            serde_json::json!(language_mode),
+        );
+    }
+    if let Some(target_triple) = run.target_triple.as_ref() {
+        normalized.insert(
+            "target_triple".to_string(),
+            serde_json::Value::String(target_triple.clone()),
+        );
+    }
+    if let Some(wrapper_mode) = run.wrapper_mode.as_ref() {
+        normalized.insert("wrapper_mode".to_string(), serde_json::json!(wrapper_mode));
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_tool_info_value(tool: &diag_core::ToolInfo) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "name".to_string(),
+        serde_json::Value::String(tool.name.clone()),
+    );
+    if let Some(vendor) = tool.vendor.as_ref() {
+        normalized.insert(
+            "vendor".to_string(),
+            serde_json::Value::String(vendor.clone()),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_capture_value(capture: &CaptureArtifact) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "id".to_string(),
+        serde_json::Value::String(capture.id.clone()),
+    );
+    normalized.insert("kind".to_string(), serde_json::json!(capture.kind));
+    normalized.insert("storage".to_string(), serde_json::json!(capture.storage));
+    if let Some(inline_text) = capture.inline_text.as_ref() {
+        normalized.insert(
+            "inline_text".to_string(),
+            serde_json::Value::String(inline_text.clone()),
+        );
+    }
+    if let Some(external_ref) = capture.external_ref.as_ref() {
+        normalized.insert(
+            "external_ref".to_string(),
+            serde_json::Value::String(external_ref.clone()),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_integrity_issue_value(issue: &diag_core::IntegrityIssue) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert(
+        "message".to_string(),
+        serde_json::Value::String(issue.message.clone()),
+    );
+    normalized.insert("severity".to_string(), serde_json::json!(issue.severity));
+    normalized.insert("stage".to_string(), serde_json::json!(issue.stage));
+    if let Some(provenance) = issue.provenance.as_ref() {
+        normalized.insert(
+            "provenance".to_string(),
+            normalized_provenance_value(provenance),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_diagnostic_node_value(node: &diag_core::DiagnosticNode) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if let Some(analysis) = node.analysis.as_ref() {
+        normalized.insert("analysis".to_string(), normalized_analysis_value(analysis));
+    }
+    if !node.children.is_empty() {
+        normalized.insert(
+            "children".to_string(),
+            serde_json::Value::Array(
+                node.children
+                    .iter()
+                    .map(normalized_diagnostic_node_value)
+                    .collect(),
+            ),
+        );
+    }
+    if !node.context_chains.is_empty() {
+        normalized.insert(
+            "context_chains".to_string(),
+            serde_json::Value::Array(
+                node.context_chains
+                    .iter()
+                    .map(normalized_context_chain_value)
+                    .collect(),
+            ),
+        );
+    }
+    normalized.insert("id".to_string(), serde_json::Value::String(node.id.clone()));
+    if !node.locations.is_empty() {
+        normalized.insert(
+            "locations".to_string(),
+            serde_json::Value::Array(
+                node.locations
+                    .iter()
+                    .map(normalized_location_value)
+                    .collect(),
+            ),
+        );
+    }
+    normalized.insert(
+        "message".to_string(),
+        normalized_message_text_value(&node.message),
+    );
+    normalized.insert(
+        "node_completeness".to_string(),
+        serde_json::json!(node.node_completeness),
+    );
+    normalized.insert("origin".to_string(), serde_json::json!(node.origin));
+    normalized.insert("phase".to_string(), serde_json::json!(node.phase));
+    normalized.insert(
+        "provenance".to_string(),
+        normalized_provenance_value(&node.provenance),
+    );
+    normalized.insert(
+        "semantic_role".to_string(),
+        serde_json::json!(node.semantic_role),
+    );
+    normalized.insert("severity".to_string(), serde_json::json!(node.severity));
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if let Some(confidence) = analysis.confidence.as_ref() {
+        normalized.insert("confidence".to_string(), serde_json::json!(confidence));
+    }
+    if let Some(family) = analysis.family.as_ref() {
+        normalized.insert(
+            "family".to_string(),
+            serde_json::Value::String(family.clone()),
+        );
+    }
+    if let Some(first_action_hint) = analysis.first_action_hint.as_ref() {
+        normalized.insert(
+            "first_action_hint".to_string(),
+            serde_json::Value::String(first_action_hint.clone()),
+        );
+    }
+    if let Some(headline) = analysis.headline.as_ref() {
+        normalized.insert(
+            "headline".to_string(),
+            serde_json::Value::String(headline.clone()),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_context_chain_value(chain: &diag_core::ContextChain) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if !chain.frames.is_empty() {
+        normalized.insert(
+            "frames".to_string(),
+            serde_json::Value::Array(
+                chain
+                    .frames
+                    .iter()
+                    .map(normalized_context_frame_value)
+                    .collect(),
+            ),
+        );
+    }
+    normalized.insert("kind".to_string(), serde_json::json!(chain.kind));
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if let Some(column) = frame.column {
+        normalized.insert("column".to_string(), serde_json::json!(column));
+    }
+    normalized.insert(
+        "label".to_string(),
+        serde_json::Value::String(frame.label.clone()),
+    );
+    if let Some(line) = frame.line {
+        normalized.insert("line".to_string(), serde_json::json!(line));
+    }
+    if let Some(path) = frame.path.as_ref() {
+        normalized.insert("path".to_string(), serde_json::Value::String(path.clone()));
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_location_value(location: &diag_core::Location) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    normalized.insert("column".to_string(), serde_json::json!(location.column));
+    if let Some(end_column) = location.end_column {
+        normalized.insert("end_column".to_string(), serde_json::json!(end_column));
+    }
+    if let Some(end_line) = location.end_line {
+        normalized.insert("end_line".to_string(), serde_json::json!(end_line));
+    }
+    normalized.insert("line".to_string(), serde_json::json!(location.line));
+    if let Some(ownership) = location.ownership.as_ref() {
+        normalized.insert("ownership".to_string(), serde_json::json!(ownership));
+    }
+    normalized.insert(
+        "path".to_string(),
+        serde_json::Value::String(location.path.clone()),
+    );
+    serde_json::Value::Object(normalized)
+}
+
+fn normalized_message_text_value(message: &diag_core::MessageText) -> serde_json::Value {
+    serde_json::json!({
+        "raw_text": message.raw_text,
+    })
+}
+
+fn normalized_provenance_value(provenance: &diag_core::Provenance) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if !provenance.capture_refs.is_empty() {
+        normalized.insert(
+            "capture_refs".to_string(),
+            serde_json::json!(provenance.capture_refs),
+        );
+    }
+    normalized.insert("source".to_string(), serde_json::json!(provenance.source));
+    serde_json::Value::Object(normalized)
 }
 
 fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticDocument) {
