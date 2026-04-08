@@ -9,7 +9,7 @@ semantic:
     - sarif-0-0
   primary_locations:
     - path: src/main.c
-      line: 2
+      line: 3
       column: 25
   first_action_required: true
   raw_provenance_required: true

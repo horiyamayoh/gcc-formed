@@ -9,7 +9,7 @@ semantic:
     - sarif-0-0
   primary_locations:
     - path: src/main.cpp
-      line: 4
+      line: 5
       column: 5
   first_action_required: true
   raw_provenance_required: true

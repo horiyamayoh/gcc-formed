@@ -2,6 +2,7 @@
 
 - **状態**: Accepted Baseline
 - **フェーズ**: `v1alpha`
+- **一般利用向け安定版**: 未提供
 - **日付**: 2026-04-07
 - **実装状況**: Phase 1 MVP の Rust workspace を同梱。仕様書と ADR は実装契約の正本として維持する。
 
@@ -17,6 +18,9 @@
 - [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md): 配布・install・rollback・release engineering の実装契約
 - [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始時の最小順序
 - [adr-initial-set/README.md](adr-initial-set/README.md): Accepted baseline の ADR 一覧
+- [CHANGELOG.md](CHANGELOG.md): 外部向けの変更履歴
+- [SECURITY.md](SECURITY.md): 脆弱性報告とサポート方針
+- [CONTRIBUTING.md](CONTRIBUTING.md): 変更提案時の gate と contribution 方針
 
 ## 現在の基線
 
