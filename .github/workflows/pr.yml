@@ -22,7 +22,7 @@ jobs:
       - name: Run local fast gate
         run: >
           docker run --rm -v "$PWD:/workspace" -w /workspace gcc-formed-ci:pr
-          bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && \"$CARGO_TARGET_DIR/debug/gcc-formed\" --formed-self-check"
+          bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo xtask check && cargo xtask replay --root corpus && cargo build --bin gcc-formed && /tmp/gcc-formed-target/debug/gcc-formed --formed-self-check"
       - name: Representative GCC 15 snapshot check
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
       - name: Hermetic release build smoke
