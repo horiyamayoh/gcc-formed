@@ -47,6 +47,8 @@ pub struct SemanticExpectations {
     #[serde(default)]
     pub primary_locations: Vec<ExpectedPrimaryLocation>,
     #[serde(default)]
+    pub primary_location_user_owned_required: bool,
+    #[serde(default)]
     pub first_action_required: bool,
     #[serde(default)]
     pub raw_provenance_required: bool,

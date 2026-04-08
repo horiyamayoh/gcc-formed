@@ -8,6 +8,19 @@
 
 `gcc-formed` は、GCC first / Linux first の C/C++ 診断 UX 基盤を定義する spec-first リポジトリである。目標は「コンパイラの生出力を prettier にすること」ではなく、wrapper・adapter・Diagnostic IR・renderer・quality gate を分離した実装可能な製品基線を固めることにある。
 
+## 初回リリーススコープ
+
+`v0.1.0` 相当の初回一般公開は、次の範囲だけを shipped contract とする。
+
+- Linux first
+- `x86_64-unknown-linux-musl` を primary artifact とする
+- GCC 15 を primary support とする
+- terminal renderer を primary surface とする
+- GCC 13/14 は compatibility support とし、保守的 passthrough / shadow path を前提にする
+- `shadow`、trace bundle、raw fallback は残すが、改善品質を保証するのは GCC 15 render path のみとする
+
+初回リリースで**保証しないもの**は [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) と [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md) にまとめてある。
+
 ## このリポジトリにあるもの
 
 - [gcc-formed-architecture-proposal.md](gcc-formed-architecture-proposal.md): 上位設計と v1alpha の意思決定候補
@@ -19,6 +32,8 @@
 - [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始時の最小順序
 - [adr-initial-set/README.md](adr-initial-set/README.md): Accepted baseline の ADR 一覧
 - [CHANGELOG.md](CHANGELOG.md): 外部向けの変更履歴
+- [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md): 初回公開時点で保証しない範囲と raw fallback の意味
+- [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md): 初回公開用の release blocker / non-goals / 出荷前確認項目
 - [SECURITY.md](SECURITY.md): 脆弱性報告とサポート方針
 - [CONTRIBUTING.md](CONTRIBUTING.md): 変更提案時の gate と contribution 方針
 
@@ -31,6 +46,7 @@
 - `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
 - `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
 - `/opt/cc-formed/...` + `/usr/local/bin` 相当の system-wide layout も pseudo-root smoke で検証している
+- GCC 15 representative corpus に対する acceptance report と snapshot report を `cargo xtask replay --report-dir ...` / `cargo xtask snapshot --report-dir ...` で保存できる
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -157,7 +173,7 @@ cargo xtask install \
   --expected-signing-public-key-sha256 "$signing_public_key_sha256"
 ```
 
-`cargo xtask package` は clean git worktree を前提とする。本命の production artifact は `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。
+`cargo xtask package` は clean git worktree を前提とする。本命の production artifact は `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。GCC 13/14 も同様に primary render path ではなく、compatibility support として扱う。
 
 ## 実装に入る順序
 

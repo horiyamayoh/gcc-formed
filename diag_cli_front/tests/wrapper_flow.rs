@@ -39,6 +39,9 @@ fn falls_back_to_passthrough_with_fake_gcc13_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
+            "gcc-formed: GCC 13/14 is running in compatibility mode",
+        ))
+        .stderr(predicate::str::contains(
             "main.c:4:1: error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains("help:").not());
