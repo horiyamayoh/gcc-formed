@@ -1,12 +1,12 @@
-use diag_adapter_gcc::{ingest, producer_for_version, tool_for_backend};
+use diag_adapter_gcc::{ingest_with_reason, producer_for_version, tool_for_backend};
 use diag_backend_probe::{ProbeCache, ResolveRequest, SupportTier};
 use diag_capture_runtime::{
     CaptureOutcome, CaptureRequest, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
     trace_sanitized_env_keys,
 };
 use diag_core::{
-    DiagnosticDocument, DocumentCompleteness, LanguageMode, RunInfo, SnapshotKind, WrapperSurface,
-    snapshot_json,
+    DiagnosticDocument, DocumentCompleteness, FallbackReason, LanguageMode, RunInfo, SnapshotKind,
+    WrapperSurface, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -109,12 +109,13 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
             WrapperSurface::Terminal
         }),
     };
-    let mut document = ingest(
+    let ingest_outcome = ingest_with_reason(
         capture.sarif_path.as_deref(),
         &String::from_utf8_lossy(&capture.stderr_bytes),
         producer_for_version(env!("CARGO_PKG_VERSION")),
         run_info,
     )?;
+    let mut document = ingest_outcome.document;
     document.captures = capture.artifacts.clone();
     enrich_document(&mut document, &cwd);
 
@@ -128,6 +129,9 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
             &plan.mode_decision,
             plan.profile,
             &plan.capabilities,
+            plan.mode_decision
+                .fallback_reason
+                .or(ingest_outcome.fallback_reason),
             None,
             wrapper_started.elapsed().as_millis() as u64,
         )?;
@@ -150,6 +154,11 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         type_display_policy: TypeDisplayPolicy::CompactSafe,
         source_excerpt_policy: SourceExcerptPolicy::Auto,
     })?;
+    let effective_fallback_reason = plan
+        .mode_decision
+        .fallback_reason
+        .or(ingest_outcome.fallback_reason)
+        .or(render_result.fallback_reason);
     let render_duration_ms = render_started.elapsed().as_millis() as u64;
     let mut stderr = std::io::stderr().lock();
     stderr.write_all(render_result.text.as_bytes())?;
@@ -164,6 +173,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         &plan.mode_decision,
         plan.profile,
         &plan.capabilities,
+        effective_fallback_reason,
         Some(render_duration_ms),
         wrapper_started.elapsed().as_millis() as u64,
     )?;
@@ -195,6 +205,7 @@ fn maybe_write_trace(
     mode_decision: &ModeDecision,
     profile: RenderProfile,
     capabilities: &RenderCapabilities,
+    fallback_reason: Option<FallbackReason>,
     render_duration_ms: Option<u64>,
     total_duration_ms: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -215,10 +226,7 @@ fn maybe_write_trace(
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
-        wrapper_verdict: Some(trace_wrapper_verdict(
-            mode_decision.mode,
-            mode_decision.fallback_reason,
-        )),
+        wrapper_verdict: Some(trace_wrapper_verdict(mode_decision.mode, fallback_reason)),
         version_summary: Some(trace_version_summary()),
         environment_summary: Some(trace_environment_summary(
             backend,
@@ -232,14 +240,14 @@ fn maybe_write_trace(
             total_ms: total_duration_ms,
         }),
         child_exit: Some(trace_child_exit(&capture.exit_status)),
-        parser_result_summary: Some(parsed_parser_result_summary(document)),
+        parser_result_summary: Some(parsed_parser_result_summary(document, fallback_reason)),
         fingerprint_summary: trace_fingerprint_summary_from_document(document),
         redaction_status: Some(trace_redaction_status(
             mode_decision.mode,
             retained_trace_dir.is_some(),
         )),
         decision_log: mode_decision.decision_log.clone(),
-        fallback_reason: mode_decision.fallback_reason.map(str::to_string),
+        fallback_reason,
         warning_messages: document
             .integrity_issues
             .iter()
@@ -306,7 +314,7 @@ fn maybe_write_passthrough_trace(
             retained_trace_dir.is_some(),
         )),
         decision_log: mode_decision.decision_log.clone(),
-        fallback_reason: mode_decision.fallback_reason.map(str::to_string),
+        fallback_reason: mode_decision.fallback_reason,
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(
             &capture.artifacts,
@@ -434,20 +442,36 @@ fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
     }
 }
 
-fn trace_wrapper_verdict(mode: ExecutionMode, fallback_reason: Option<&str>) -> String {
+fn trace_wrapper_verdict(mode: ExecutionMode, fallback_reason: Option<FallbackReason>) -> String {
     match mode {
-        ExecutionMode::Render => "rendered".to_string(),
+        ExecutionMode::Render => {
+            if fallback_reason.is_some() {
+                "render_fallback".to_string()
+            } else {
+                "rendered".to_string()
+            }
+        }
         ExecutionMode::Shadow => "shadow_observed".to_string(),
         ExecutionMode::Passthrough => match fallback_reason {
-            Some("explicit_passthrough") => "passthrough_requested".to_string(),
+            Some(FallbackReason::UserOptOut) => "passthrough_requested".to_string(),
             _ => "passthrough_fallback".to_string(),
         },
     }
 }
 
-fn parsed_parser_result_summary(document: &DiagnosticDocument) -> TraceParserResultSummary {
+fn parsed_parser_result_summary(
+    document: &DiagnosticDocument,
+    fallback_reason: Option<FallbackReason>,
+) -> TraceParserResultSummary {
     TraceParserResultSummary {
-        status: "parsed".to_string(),
+        status: if matches!(
+            fallback_reason,
+            Some(FallbackReason::SarifMissing | FallbackReason::SarifParseFailed)
+        ) {
+            "fallback".to_string()
+        } else {
+            "parsed".to_string()
+        },
         document_completeness: Some(document_completeness_label(&document.document_completeness)),
         diagnostic_count: document.diagnostics.len(),
         integrity_issue_count: document.integrity_issues.len(),
@@ -828,7 +852,7 @@ fn select_mode(
         decision_log.push("hard_conflict=diagnostic_sink_override".to_string());
         return ModeDecision {
             mode: ExecutionMode::Passthrough,
-            fallback_reason: Some("hard_conflict"),
+            fallback_reason: Some(FallbackReason::IncompatibleSink),
             decision_log,
         };
     }
@@ -836,7 +860,7 @@ fn select_mode(
         decision_log.push("requested_mode=passthrough".to_string());
         return ModeDecision {
             mode: ExecutionMode::Passthrough,
-            fallback_reason: Some("explicit_passthrough"),
+            fallback_reason: Some(FallbackReason::UserOptOut),
             decision_log,
         };
     }
@@ -872,15 +896,10 @@ fn select_mode(
     let fallback_reason = match mode {
         ExecutionMode::Passthrough => match tier {
             SupportTier::A => None,
-            SupportTier::B => Some(match requested {
-                Some(ExecutionMode::Render) => "tier_b_render_unsupported",
-                Some(ExecutionMode::Shadow) => unreachable!(),
-                Some(ExecutionMode::Passthrough) => "explicit_passthrough",
-                None => "tier_b_default",
-            }),
-            SupportTier::C => Some("tier_c_only"),
+            SupportTier::B | SupportTier::C => Some(FallbackReason::UnsupportedTier),
         },
-        ExecutionMode::Render | ExecutionMode::Shadow => None,
+        ExecutionMode::Shadow => Some(FallbackReason::ShadowMode),
+        ExecutionMode::Render => None,
     };
 
     ModeDecision {
@@ -1003,7 +1022,7 @@ fn build_execution_plan(
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ModeDecision {
     mode: ExecutionMode,
-    fallback_reason: Option<&'static str>,
+    fallback_reason: Option<FallbackReason>,
     decision_log: Vec<String>,
 }
 
@@ -1257,7 +1276,10 @@ mod tests {
     fn selects_passthrough_with_reason_for_hard_conflict() {
         let decision = select_mode(SupportTier::A, None, true);
         assert_eq!(decision.mode, ExecutionMode::Passthrough);
-        assert_eq!(decision.fallback_reason, Some("hard_conflict"));
+        assert_eq!(
+            decision.fallback_reason,
+            Some(FallbackReason::IncompatibleSink)
+        );
         assert!(
             decision
                 .decision_log
@@ -1267,10 +1289,10 @@ mod tests {
     }
 
     #[test]
-    fn keeps_tier_b_shadow_without_fallback_reason() {
+    fn annotates_shadow_mode_with_reason() {
         let decision = select_mode(SupportTier::B, Some(ExecutionMode::Shadow), false);
         assert_eq!(decision.mode, ExecutionMode::Shadow);
-        assert_eq!(decision.fallback_reason, None);
+        assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
         assert!(
             decision
                 .decision_log

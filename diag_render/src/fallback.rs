@@ -1,6 +1,7 @@
 use crate::{DebugRefs, RenderRequest, RenderResult};
+use diag_core::FallbackReason;
 
-pub fn render_fallback(request: &RenderRequest) -> RenderResult {
+pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason) -> RenderResult {
     let mut lines = vec![
         "error: showing a conservative wrapper view; original compiler diagnostics are preserved"
             .to_string(),
@@ -26,6 +27,7 @@ pub fn render_fallback(request: &RenderRequest) -> RenderResult {
         text: lines.join("\n"),
         used_analysis: false,
         used_fallback: true,
+        fallback_reason: Some(fallback_reason),
         displayed_group_refs: request
             .document
             .diagnostics

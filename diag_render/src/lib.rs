@@ -5,7 +5,7 @@ mod formatter;
 mod selector;
 mod view_model;
 
-use diag_core::{DiagnosticDocument, IntegrityIssue};
+use diag_core::{DiagnosticDocument, DocumentCompleteness, FallbackReason, IntegrityIssue};
 use serde::{Deserialize, Serialize};
 
 pub use excerpt::ExcerptBlock;
@@ -99,6 +99,8 @@ pub struct RenderResult {
     pub text: String,
     pub used_analysis: bool,
     pub used_fallback: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fallback_reason: Option<FallbackReason>,
     pub displayed_group_refs: Vec<String>,
     pub suppressed_group_count: usize,
     pub suppressed_warning_count: usize,
@@ -113,18 +115,37 @@ pub enum RenderError {
 }
 
 pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
-    if matches!(request.profile, RenderProfile::RawFallback)
-        || matches!(
-            request.document.document_completeness,
-            diag_core::DocumentCompleteness::Passthrough | diag_core::DocumentCompleteness::Failed
-        )
-    {
-        return Ok(fallback::render_fallback(&request));
+    if matches!(request.profile, RenderProfile::RawFallback) {
+        return Ok(fallback::render_fallback(
+            &request,
+            FallbackReason::UserOptOut,
+        ));
+    }
+    if matches!(
+        request.document.document_completeness,
+        DocumentCompleteness::Passthrough
+    ) {
+        return Ok(fallback::render_fallback(
+            &request,
+            FallbackReason::ResidualOnly,
+        ));
+    }
+    if matches!(
+        request.document.document_completeness,
+        DocumentCompleteness::Failed
+    ) {
+        return Ok(fallback::render_fallback(
+            &request,
+            FallbackReason::InternalError,
+        ));
     }
 
     let selected = selector::select_groups(&request);
     if selected.cards.is_empty() {
-        return Ok(fallback::render_fallback(&request));
+        return Ok(fallback::render_fallback(
+            &request,
+            FallbackReason::RendererLowConfidence,
+        ));
     }
     let view_model = view_model::build(&request, selected.cards);
     Ok(formatter::emit(
@@ -138,7 +159,7 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
     if matches!(request.profile, RenderProfile::RawFallback)
         || matches!(
             request.document.document_completeness,
-            diag_core::DocumentCompleteness::Passthrough | diag_core::DocumentCompleteness::Failed
+            DocumentCompleteness::Passthrough | DocumentCompleteness::Failed
         )
     {
         return None;

@@ -24,6 +24,44 @@ pub enum DocumentCompleteness {
     Failed,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum FallbackReason {
+    UnsupportedTier,
+    IncompatibleSink,
+    ShadowMode,
+    SarifMissing,
+    SarifParseFailed,
+    ResidualOnly,
+    RendererLowConfidence,
+    InternalError,
+    TimeoutOrBudget,
+    UserOptOut,
+}
+
+impl FallbackReason {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::UnsupportedTier => "unsupported_tier",
+            Self::IncompatibleSink => "incompatible_sink",
+            Self::ShadowMode => "shadow_mode",
+            Self::SarifMissing => "sarif_missing",
+            Self::SarifParseFailed => "sarif_parse_failed",
+            Self::ResidualOnly => "residual_only",
+            Self::RendererLowConfidence => "renderer_low_confidence",
+            Self::InternalError => "internal_error",
+            Self::TimeoutOrBudget => "timeout_or_budget",
+            Self::UserOptOut => "user_opt_out",
+        }
+    }
+}
+
+impl Display for FallbackReason {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum WrapperSurface {

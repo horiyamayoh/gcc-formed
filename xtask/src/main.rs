@@ -1,8 +1,8 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use diag_adapter_gcc::{ingest, producer_for_version, tool_for_backend};
+use diag_adapter_gcc::{ingest_with_reason, producer_for_version, tool_for_backend};
 use diag_core::{
-    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, LanguageMode, Ownership,
-    RunInfo, SnapshotKind, WrapperSurface, snapshot_json,
+    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackReason,
+    LanguageMode, Ownership, RunInfo, SnapshotKind, WrapperSurface, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -223,6 +223,7 @@ struct AcceptanceFixtureSummary {
     actual_family: String,
     family_match: bool,
     used_fallback: bool,
+    fallback_reason: Option<FallbackReason>,
     fallback_forbidden: bool,
     unexpected_fallback: bool,
     primary_location_path: Option<String>,
@@ -244,6 +245,8 @@ struct AcceptanceMetrics {
     fallback_used_count: usize,
     fallback_forbidden_count: usize,
     unexpected_fallback_count: usize,
+    fallback_reason_counts: BTreeMap<String, usize>,
+    unexpected_fallback_reason_counts: BTreeMap<String, usize>,
     primary_location_user_owned_required_count: usize,
     primary_location_user_owned_count: usize,
     missing_required_primary_location_count: usize,
@@ -1091,6 +1094,9 @@ fn collect_acceptance_fixture_summary(
             fixture_id: fixture.fixture_id().to_string(),
             summary: error.to_string(),
         })?;
+    let effective_fallback_reason = replay
+        .fallback_reason
+        .or(default_render_result.fallback_reason);
     let render_time_ms = elapsed_ms(render_started);
     let lead_node = lead_node_for_document(
         &replay.document,
@@ -1223,6 +1229,7 @@ fn collect_acceptance_fixture_summary(
         actual_family,
         family_match,
         used_fallback: default_render_result.used_fallback,
+        fallback_reason: effective_fallback_reason,
         fallback_forbidden,
         unexpected_fallback,
         primary_location_path: primary_location.map(|location| location.path.clone()),
@@ -1414,7 +1421,7 @@ fn materialize_fixture_snapshots(
         }
     })?;
 
-    let document = replay_document_from_ingress(
+    let replay = replay_document_from_ingress(
         fixture,
         &captured.stderr_text,
         temp_root.join("diagnostics.sarif").as_path(),
@@ -1424,11 +1431,14 @@ fn materialize_fixture_snapshots(
         fixture_id: fixture.fixture_id().to_string(),
         summary: error.to_string(),
     })?;
-    document.validate().map_err(|error| VerificationFailure {
-        layer: "snapshot".to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary: error.errors.join("; "),
-    })?;
+    replay
+        .document
+        .validate()
+        .map_err(|error| VerificationFailure {
+            layer: "snapshot".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.errors.join("; "),
+        })?;
 
     let snapshot_root = fixture.snapshot_root();
     fs::create_dir_all(&snapshot_root).map_err(|error| VerificationFailure {
@@ -1442,15 +1452,17 @@ fn materialize_fixture_snapshots(
     artifacts.insert("diagnostics.sarif".to_string(), captured.sarif_text.clone());
     artifacts.insert(
         "ir.facts.json".to_string(),
-        snapshot_json(&document, SnapshotKind::FactsOnly).map_err(|error| VerificationFailure {
-            layer: "snapshot".to_string(),
-            fixture_id: fixture.fixture_id().to_string(),
-            summary: error.to_string(),
+        snapshot_json(&replay.document, SnapshotKind::FactsOnly).map_err(|error| {
+            VerificationFailure {
+                layer: "snapshot".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error.to_string(),
+            }
         })?,
     );
     artifacts.insert(
         "ir.analysis.json".to_string(),
-        snapshot_json(&document, SnapshotKind::AnalysisIncluded).map_err(|error| {
+        snapshot_json(&replay.document, SnapshotKind::AnalysisIncluded).map_err(|error| {
             VerificationFailure {
                 layer: "snapshot".to_string(),
                 fixture_id: fixture.fixture_id().to_string(),
@@ -1466,7 +1478,7 @@ fn materialize_fixture_snapshots(
                 fixture_id: fixture.fixture_id().to_string(),
                 summary: format!("unknown snapshot profile `{profile_name}`"),
             })?;
-        let request = render_request_for_fixture(fixture, &document, profile);
+        let request = render_request_for_fixture(fixture, &replay.document, profile);
         let view_model = build_view_model(&request);
         let render_result = render(request).map_err(|error| VerificationFailure {
             layer: format!("render.{profile_name}"),
@@ -1555,20 +1567,21 @@ fn replay_fixture_document(
     let snapshot_root = fixture.snapshot_root();
     let stderr_text = fs::read_to_string(snapshot_root.join("stderr.raw"))?;
     let parse_start = Instant::now();
-    let document = replay_document_from_ingress(
+    let replay = replay_document_from_ingress(
         fixture,
         &stderr_text,
         snapshot_root.join("diagnostics.sarif").as_path(),
     )?;
     Ok(ReplayOutcomeAndDocument {
-        document,
         parse_time_ms: elapsed_ms(parse_start),
+        ..replay
     })
 }
 
 #[derive(Debug)]
 struct ReplayOutcomeAndDocument {
     document: DiagnosticDocument,
+    fallback_reason: Option<FallbackReason>,
     parse_time_ms: u64,
 }
 
@@ -1576,17 +1589,22 @@ fn replay_document_from_ingress(
     fixture: &Fixture,
     stderr_text: &str,
     sarif_path: &Path,
-) -> Result<DiagnosticDocument, Box<dyn std::error::Error>> {
+) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
     let run_info = run_info_for_fixture(fixture);
-    let mut document = ingest(
+    let ingest = ingest_with_reason(
         Some(sarif_path),
         stderr_text,
         producer_for_version("snapshot"),
         run_info,
     )?;
+    let mut document = ingest.document;
     document.captures = capture_artifacts_for_fixture(fixture, stderr_text, sarif_path)?;
     enrich_document(&mut document, &fixture.root);
-    Ok(document)
+    Ok(ReplayOutcomeAndDocument {
+        document,
+        fallback_reason: ingest.fallback_reason,
+        parse_time_ms: 0,
+    })
 }
 
 fn run_info_for_fixture(fixture: &Fixture) -> RunInfo {
@@ -2080,6 +2098,12 @@ fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMe
         .iter()
         .filter(|fixture| fixture.unexpected_fallback)
         .count();
+    let fallback_reason_counts = count_fallback_reasons(fixtures.iter());
+    let unexpected_fallback_reason_counts = count_fallback_reasons(
+        fixtures
+            .iter()
+            .filter(|fixture| fixture.unexpected_fallback),
+    );
     let primary_location_user_owned_required_count = fixtures
         .iter()
         .filter(|fixture| fixture.primary_location_user_owned_required)
@@ -2124,6 +2148,8 @@ fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMe
         fallback_used_count,
         fallback_forbidden_count,
         unexpected_fallback_count,
+        fallback_reason_counts,
+        unexpected_fallback_reason_counts,
         primary_location_user_owned_required_count,
         primary_location_user_owned_count,
         missing_required_primary_location_count,
@@ -2142,6 +2168,18 @@ fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMe
         headline_rewritten_rate: ratio(headline_rewritten_count, promoted_fixture_count),
         family_match_rate: ratio(family_match_count, family_expected_count),
     }
+}
+
+fn count_fallback_reasons<'a>(
+    fixtures: impl IntoIterator<Item = &'a AcceptanceFixtureSummary>,
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for fixture in fixtures {
+        if let Some(reason) = fixture.fallback_reason {
+            *counts.entry(reason.to_string()).or_insert(0) += 1;
+        }
+    }
+    counts
 }
 
 fn ratio(numerator: usize, denominator: usize) -> f64 {
@@ -4438,6 +4476,7 @@ mod tests {
                 .map(|expected| expected == actual_family)
                 .unwrap_or(false),
             used_fallback: false,
+            fallback_reason: None,
             fallback_forbidden: false,
             unexpected_fallback: false,
             primary_location_path: Some("src/main.c".to_string()),
@@ -4978,6 +5017,7 @@ mod tests {
 
         let mut advisory_only = acceptance_summary("c/partial/case-01", None, "linker");
         advisory_only.used_fallback = true;
+        advisory_only.fallback_reason = Some(FallbackReason::ResidualOnly);
         advisory_only.headline_rewritten = false;
 
         let metrics = acceptance_metrics_for(&[required, advisory_only]);
@@ -4986,6 +5026,13 @@ mod tests {
         assert_eq!(metrics.fallback_used_count, 1);
         assert_eq!(metrics.fallback_forbidden_count, 1);
         assert_eq!(metrics.unexpected_fallback_count, 0);
+        assert_eq!(
+            metrics
+                .fallback_reason_counts
+                .get(FallbackReason::ResidualOnly.as_str()),
+            Some(&1)
+        );
+        assert!(metrics.unexpected_fallback_reason_counts.is_empty());
         assert_eq!(metrics.primary_location_user_owned_required_count, 1);
         assert_eq!(metrics.primary_location_user_owned_count, 1);
         assert_eq!(metrics.first_action_required_count, 1);

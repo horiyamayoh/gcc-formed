@@ -23,6 +23,7 @@ This document uses artifact semver for release headings. Artifact `0.1.0` belong
 - Adds optional Ed25519 `SHA256SUMS.sig` generation plus signing key id and trusted signing public key sha256 pin verification, and covers pseudo-root system-wide install layout in the packaging smoke path.
 - Stores a `release-provenance.json` bundle in CI artifacts so package/publish/promote/install evidence can be audited per run, and documents key rotation/revoke/emergency re-sign operations.
 - Verifies the canonical `x86_64-unknown-linux-musl` artifact end to end: vendored hermetic release build, package generation, install, system-wide pseudo-root layout, immutable release publish/promote, and exact-pin install all run against the musl payload.
+- Preserves reason-coded fallback evidence in trace and replay outputs, including sink conflicts, unsupported tiers, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
 - Keeps release scope intentionally narrow: GCC 15 primary support, Linux-first runtime assumptions, and fail-open fallback behavior remain the shipped contract.
 
 ## Known Limits

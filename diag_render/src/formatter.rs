@@ -91,6 +91,7 @@ pub fn emit(
         text: lines.join("\n"),
         used_analysis: true,
         used_fallback: false,
+        fallback_reason: None,
         displayed_group_refs: view_model
             .cards
             .iter()

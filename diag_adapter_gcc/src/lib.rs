@@ -1,8 +1,8 @@
 use diag_core::{
     AnalysisOverlay, Confidence, ContextChain, ContextChainKind, DiagnosticDocument,
-    DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue, IssueSeverity,
-    IssueStage, Location, MessageText, NodeCompleteness, Origin, Phase, ProducerInfo, Provenance,
-    ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
+    DiagnosticNode, DocumentCompleteness, FallbackReason, FingerprintSet, IntegrityIssue,
+    IssueSeverity, IssueStage, Location, MessageText, NodeCompleteness, Origin, Phase,
+    ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
 };
 use diag_residual_text::classify;
 use serde_json::Value;
@@ -21,22 +21,64 @@ pub enum AdapterError {
     MissingRuns,
 }
 
+#[derive(Debug)]
+pub struct IngestOutcome {
+    pub document: DiagnosticDocument,
+    pub fallback_reason: Option<FallbackReason>,
+}
+
 pub fn ingest(
     sarif_path: Option<&Path>,
     stderr_text: &str,
     producer: ProducerInfo,
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
+    Ok(ingest_with_reason(sarif_path, stderr_text, producer, run)?.document)
+}
+
+pub fn ingest_with_reason(
+    sarif_path: Option<&Path>,
+    stderr_text: &str,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<IngestOutcome, AdapterError> {
     let has_authoritative_sarif = sarif_path.filter(|path| path.exists()).is_some();
-    let mut document = if let Some(path) = sarif_path.filter(|path| path.exists()) {
-        from_sarif(path, producer, run)?
-    } else {
-        passthrough_document(producer, run)
+    let (mut document, fallback_reason) = match sarif_path {
+        Some(path) if path.exists() => match from_sarif(path, producer.clone(), run.clone()) {
+            Ok(document) => (document, None),
+            Err(error) => (
+                failed_document(
+                    producer,
+                    run,
+                    stderr_text,
+                    format!(
+                        "failed to parse authoritative SARIF; preserving raw diagnostics: {error}"
+                    ),
+                    Some("diagnostics.sarif"),
+                ),
+                Some(FallbackReason::SarifParseFailed),
+            ),
+        },
+        Some(_) => (
+            fallback_document(
+                producer,
+                run,
+                DocumentCompleteness::Passthrough,
+                stderr_text,
+                "expected authoritative SARIF was not produced; preserving raw diagnostics"
+                    .to_string(),
+                None,
+            ),
+            Some(FallbackReason::SarifMissing),
+        ),
+        None => (passthrough_document(producer, run), None),
     };
 
     let residual_nodes = classify(stderr_text, !has_authoritative_sarif);
     if document.diagnostics.is_empty() && residual_nodes.is_empty() && !stderr_text.is_empty() {
-        document.document_completeness = DocumentCompleteness::Passthrough;
+        if !matches!(document.document_completeness, DocumentCompleteness::Failed) {
+            document.document_completeness = DocumentCompleteness::Passthrough;
+        }
         document.diagnostics.push(passthrough_node(stderr_text));
     } else if !residual_nodes.is_empty() {
         if matches!(
@@ -51,7 +93,10 @@ pub fn ingest(
         augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
-    Ok(document)
+    Ok(IngestOutcome {
+        document,
+        fallback_reason,
+    })
 }
 
 pub fn from_sarif(
@@ -658,6 +703,48 @@ fn passthrough_document(producer: ProducerInfo, run: RunInfo) -> DiagnosticDocum
     }
 }
 
+fn fallback_document(
+    producer: ProducerInfo,
+    run: RunInfo,
+    completeness: DocumentCompleteness,
+    stderr_text: &str,
+    integrity_message: String,
+    capture_ref: Option<&str>,
+) -> DiagnosticDocument {
+    let mut document = passthrough_document(producer, run);
+    document.document_completeness = completeness;
+    document.integrity_issues.push(IntegrityIssue {
+        severity: IssueSeverity::Error,
+        stage: IssueStage::Parse,
+        message: integrity_message,
+        provenance: capture_ref.map(|capture_ref| Provenance {
+            source: ProvenanceSource::Compiler,
+            capture_refs: vec![capture_ref.to_string()],
+        }),
+    });
+    if !stderr_text.trim().is_empty() {
+        document.diagnostics.push(passthrough_node(stderr_text));
+    }
+    document
+}
+
+fn failed_document(
+    producer: ProducerInfo,
+    run: RunInfo,
+    stderr_text: &str,
+    integrity_message: String,
+    capture_ref: Option<&str>,
+) -> DiagnosticDocument {
+    fallback_document(
+        producer,
+        run,
+        DocumentCompleteness::Failed,
+        stderr_text,
+        integrity_message,
+        capture_ref,
+    )
+}
+
 fn passthrough_node(stderr_text: &str) -> DiagnosticNode {
     DiagnosticNode {
         id: "passthrough-0".to_string(),
@@ -915,6 +1002,88 @@ mod tests {
         assert_eq!(
             document.diagnostics[0].children[0].message.raw_text,
             "candidate 1: 'void takes(int, int)'"
+        );
+    }
+
+    #[test]
+    fn fail_opens_when_authoritative_sarif_is_missing() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("missing.sarif");
+        let outcome = ingest_with_reason(
+            Some(&path),
+            "src/main.c:4:1: error: expected ';' before '}' token\n",
+            producer_for_version("0.1.0"),
+            RunInfo {
+                invocation_id: "inv".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: vec!["gcc".to_string()],
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+                secondary_tools: Vec::new(),
+                language_mode: Some(LanguageMode::C),
+                target_triple: None,
+                wrapper_mode: Some(WrapperSurface::Terminal),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(outcome.fallback_reason, Some(FallbackReason::SarifMissing));
+        assert_eq!(
+            outcome.document.document_completeness,
+            DocumentCompleteness::Passthrough
+        );
+        assert!(outcome.document.diagnostics.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Passthrough)
+                && node
+                    .message
+                    .raw_text
+                    .contains("expected ';' before '}' token")
+        }));
+        assert!(
+            outcome.document.integrity_issues[0]
+                .message
+                .contains("authoritative SARIF was not produced")
+        );
+    }
+
+    #[test]
+    fn fail_opens_when_authoritative_sarif_is_invalid() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(&path, "{\"version\":").unwrap();
+        let outcome = ingest_with_reason(
+            Some(&path),
+            "src/main.c:4:1: error: expected ';' before '}' token\n",
+            producer_for_version("0.1.0"),
+            RunInfo {
+                invocation_id: "inv".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: vec!["gcc".to_string()],
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+                secondary_tools: Vec::new(),
+                language_mode: Some(LanguageMode::C),
+                target_triple: None,
+                wrapper_mode: Some(WrapperSurface::Terminal),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            outcome.fallback_reason,
+            Some(FallbackReason::SarifParseFailed)
+        );
+        assert_eq!(
+            outcome.document.document_completeness,
+            DocumentCompleteness::Failed
+        );
+        assert_eq!(outcome.document.diagnostics.len(), 1);
+        assert!(
+            outcome.document.integrity_issues[0]
+                .message
+                .contains("failed to parse authoritative SARIF")
         );
     }
 }

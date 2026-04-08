@@ -499,7 +499,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "passthrough");
     assert_eq!(trace["wrapper_verdict"], "passthrough_fallback");
-    assert_eq!(trace["fallback_reason"], "hard_conflict");
+    assert_eq!(trace["fallback_reason"], "incompatible_sink");
     assert_eq!(
         trace["environment_summary"]["backend_version"].as_str(),
         Some("gcc (Fake) 15.2.0")
@@ -602,6 +602,102 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
     );
 }
 
+#[test]
+fn missing_sarif_falls_back_with_reason_coded_trace() {
+    let temp = fixture_with_sarif_mode("15.2.0", "missing");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "error: showing a conservative wrapper view",
+        ))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ));
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["fallback_reason"], "sarif_missing");
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("passthrough")
+    );
+    assert!(
+        trace["warning_messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|message| message
+                .as_str()
+                .is_some_and(|message| message.contains("authoritative SARIF was not produced")))
+    );
+}
+
+#[test]
+fn invalid_sarif_falls_back_with_reason_coded_trace() {
+    let temp = fixture_with_sarif_mode("15.2.0", "invalid");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "error: showing a conservative wrapper view",
+        ))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ));
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["fallback_reason"], "sarif_parse_failed");
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("failed")
+    );
+    assert!(
+        trace["warning_messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|message| message
+                .as_str()
+                .is_some_and(|message| message.contains("failed to parse authoritative SARIF")))
+    );
+}
+
 fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
     contents
         .lines()
@@ -627,6 +723,10 @@ fn assert_private_file(path: &std::path::Path) {
 }
 
 fn fixture(version: &str) -> TempDir {
+    fixture_with_sarif_mode(version, "valid")
+}
+
+fn fixture_with_sarif_mode(version: &str, sarif_mode: &str) -> TempDir {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("main.c"), "int main(void) { return 0 }\n").unwrap();
     let script = format!(
@@ -643,7 +743,9 @@ for arg in "$@"; do
   fi
 done
 if [[ -n "$sarif" ]]; then
-  cat >"$sarif" <<'JSON'
+  case "{sarif_mode}" in
+    valid)
+      cat >"$sarif" <<'JSON'
 {{
   "version":"2.1.0",
   "runs":[
@@ -666,6 +768,13 @@ if [[ -n "$sarif" ]]; then
   ]
 }}
 JSON
+      ;;
+    invalid)
+      printf '%s\n' '{{"version":' >"$sarif"
+      ;;
+    missing)
+      ;;
+  esac
 fi
 if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
   {{

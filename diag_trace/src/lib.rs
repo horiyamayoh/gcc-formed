@@ -1,4 +1,4 @@
-use diag_core::{ADAPTER_SPEC_VERSION, RENDERER_SPEC_VERSION};
+use diag_core::{ADAPTER_SPEC_VERSION, FallbackReason, RENDERER_SPEC_VERSION};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::ffi::OsString;
@@ -92,7 +92,7 @@ pub struct TraceEnvelope {
     pub redaction_status: Option<TraceRedactionStatus>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
-    pub fallback_reason: Option<String>,
+    pub fallback_reason: Option<FallbackReason>,
     pub warning_messages: Vec<String>,
     pub artifacts: Vec<TraceArtifactRef>,
 }
