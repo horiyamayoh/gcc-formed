@@ -22,11 +22,6 @@ jobs:
       ARTIFACT_SLUG: linux-x86_64-musl
       SUPPORT_TIER: gcc15_primary
       RELEASE_CHANNEL: beta
-      REPORT_ROOT: ${{ runner.temp }}/public-beta-release
-      RELEASE_REPO_ROOT: ${{ runner.temp }}/public-beta-release-repo
-      RELEASE_ASSET_ROOT: ${{ runner.temp }}/public-beta-assets
-      RELEASE_NOTES_PATH: ${{ runner.temp }}/public-beta-release-notes.md
-      REQUESTED_VERSION: ${{ github.event.inputs.version }}
       RELEASE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_HEX }}
     steps:
       - uses: actions/checkout@v5.0.0
@@ -35,7 +30,9 @@ jobs:
         with:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
-      - name: Resolve release version
+      - name: Resolve runtime paths and release version
+        env:
+          DISPATCH_VERSION: ${{ github.event.inputs.version || '' }}
         run: |
           package_version="$(python3 - <<'PY'
           import tomllib
@@ -46,7 +43,7 @@ jobs:
           PY
           )"
 
-          requested_version="$REQUESTED_VERSION"
+          requested_version="$DISPATCH_VERSION"
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             requested_version="${GITHUB_REF_NAME#v}"
           fi
@@ -56,6 +53,10 @@ jobs:
             exit 1
           fi
 
+          echo "REPORT_ROOT=$RUNNER_TEMP/public-beta-release" >> "$GITHUB_ENV"
+          echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/public-beta-release-repo" >> "$GITHUB_ENV"
+          echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/public-beta-assets" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/public-beta-release-notes.md" >> "$GITHUB_ENV"
           echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
           echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"

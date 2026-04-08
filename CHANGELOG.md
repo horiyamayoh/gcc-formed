@@ -34,6 +34,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Tightened the curated corpus gate so replay rejects fixture counts outside the beta-bar window instead of enforcing only the minimum size.
 - Updated CI workflows to use pinned action/toolchain versions, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, classify gate failures as `product` / `infrastructure` / `instrumentation`, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the release smoke path to exercise canary-to-beta promote, beta-channel exact-pin install, and GitHub Release-ready artifact bundles instead of only local repository smoke.
+- Fixed the public-beta GitHub Release workflow so runner-temp derived report and asset paths are initialized inside a runtime step, avoiding GitHub parser failures before jobs are created on tag push or manual dispatch.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
 - Changed GCC SARIF ingest to fail open when authoritative SARIF is missing or malformed, preserving raw diagnostics while emitting `sarif_missing` / `sarif_parse_failed` trace reasons.
