@@ -123,6 +123,7 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
         .to_string();
     let related_messages = related_messages(result);
     let family_seed = combined_message_seed(&raw_text, &related_messages);
+    let family_decision = classify_family_seed(&family_seed);
     let severity = match result.get("level").and_then(Value::as_str) {
         Some("error") => Severity::Error,
         Some("warning") => Severity::Warning,
@@ -161,17 +162,20 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
             capture_refs: vec!["diagnostics.sarif".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(infer_family(&family_seed)),
+            family: Some(family_decision.family.clone()),
             headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
-            first_action_hint: Some(first_action_hint(&family_seed)),
+            first_action_hint: Some(first_action_hint(family_decision.family.as_str())),
             confidence: Some(Confidence::Medium),
+            rule_id: Some(family_decision.rule_id),
+            matched_conditions: family_decision.matched_conditions,
+            suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
         }),
         fingerprints: Some(FingerprintSet {
             raw: diag_core::fingerprint_for(&raw_text),
             structural: diag_core::fingerprint_for(&result),
-            family: diag_core::fingerprint_for(&infer_family(&family_seed)),
+            family: diag_core::fingerprint_for(&family_decision.family),
         }),
     }
 }
@@ -353,36 +357,88 @@ fn infer_phase(message: &str, context_chains: &[ContextChain]) -> Phase {
     }
 }
 
-fn infer_family(message: &str) -> String {
-    let message = message.to_lowercase();
-    if message.contains("undefined reference") {
-        "linker.undefined_reference".to_string()
-    } else if message.contains("multiple definition") {
-        "linker.multiple_definition".to_string()
-    } else if message.contains("template")
-        || message.contains("deduction/substitution")
-        || message.contains("deduced conflicting")
-    {
-        "template".to_string()
-    } else if message.contains("macro") || message.contains("include") {
-        "macro_include".to_string()
-    } else if message.contains("cannot convert")
-        || message.contains("no matching")
-        || message.contains("invalid conversion")
-        || message.contains("incompatible type")
-        || message.contains("passing argument")
-    {
-        "type_overload".to_string()
-    } else if message.contains("expected") || message.contains("before") {
-        "syntax".to_string()
-    } else {
-        "unknown".to_string()
+#[derive(Debug, Clone)]
+struct AdapterFamilyDecision {
+    family: String,
+    rule_id: String,
+    matched_conditions: Vec<String>,
+    suppression_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct AdapterFamilyRule {
+    id: &'static str,
+    family: &'static str,
+    contains_any: &'static [&'static str],
+}
+
+const ADAPTER_FAMILY_RULES: &[AdapterFamilyRule] = &[
+    AdapterFamilyRule {
+        id: "rule.family_seed.linker.undefined_reference",
+        family: "linker.undefined_reference",
+        contains_any: &["undefined reference"],
+    },
+    AdapterFamilyRule {
+        id: "rule.family_seed.linker.multiple_definition",
+        family: "linker.multiple_definition",
+        contains_any: &["multiple definition"],
+    },
+    AdapterFamilyRule {
+        id: "rule.family_seed.template",
+        family: "template",
+        contains_any: &["template", "deduction/substitution", "deduced conflicting"],
+    },
+    AdapterFamilyRule {
+        id: "rule.family_seed.macro_include",
+        family: "macro_include",
+        contains_any: &["macro", "include"],
+    },
+    AdapterFamilyRule {
+        id: "rule.family_seed.type_overload",
+        family: "type_overload",
+        contains_any: &[
+            "cannot convert",
+            "no matching",
+            "invalid conversion",
+            "incompatible type",
+            "passing argument",
+        ],
+    },
+    AdapterFamilyRule {
+        id: "rule.family_seed.syntax",
+        family: "syntax",
+        contains_any: &["expected", "before"],
+    },
+];
+
+fn classify_family_seed(message: &str) -> AdapterFamilyDecision {
+    let lowered = message.to_lowercase();
+    for rule in ADAPTER_FAMILY_RULES {
+        let matched_conditions = rule
+            .contains_any
+            .iter()
+            .filter(|needle| lowered.contains(**needle))
+            .map(|needle| format!("message_contains={needle}"))
+            .collect::<Vec<_>>();
+        if !matched_conditions.is_empty() {
+            return AdapterFamilyDecision {
+                family: rule.family.to_string(),
+                rule_id: rule.id.to_string(),
+                matched_conditions,
+                suppression_reason: None,
+            };
+        }
+    }
+    AdapterFamilyDecision {
+        family: "unknown".to_string(),
+        rule_id: "rule.family_seed.unknown".to_string(),
+        matched_conditions: vec!["no_seed_rule_matched".to_string()],
+        suppression_reason: Some("generic_fallback".to_string()),
     }
 }
 
-fn first_action_hint(message: &str) -> String {
-    let family = infer_family(message);
-    match family.as_str() {
+fn first_action_hint(family: &str) -> String {
+    match family {
         "syntax" => "fix the parse error at the first user-owned location".to_string(),
         "type_overload" => "compare the expected and actual types at the call site".to_string(),
         "template" => "start from the first user-owned template frame and match template arguments"
@@ -632,6 +688,9 @@ fn passthrough_node(stderr_text: &str) -> DiagnosticNode {
                     .to_string(),
             ),
             confidence: Some(Confidence::Low),
+            rule_id: Some("rule.family_seed.passthrough".to_string()),
+            matched_conditions: vec!["semantic_role=passthrough".to_string()],
+            suppression_reason: Some("generic_fallback".to_string()),
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
         }),

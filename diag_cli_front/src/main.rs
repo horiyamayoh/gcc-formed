@@ -53,64 +53,33 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     }
 
     let mut cache = ProbeCache::default();
-    let backend = cache.get_or_probe(ResolveRequest {
-        explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
-        env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
-        invoked_as: argv0.clone(),
-    })?;
+    let plan = build_execution_plan(&argv0, &parsed, &config, &mut cache)?;
 
     if is_compiler_introspection(&parsed.forwarded_args) {
         return passthrough_inherit(
-            &backend.resolved_path,
+            &plan.backend.resolved_path,
             &parsed.forwarded_args,
             &env::current_dir()?,
         );
     }
 
-    let explicit_mode = parsed.mode.or(config.runtime.mode);
-    let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
-    let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
-    let mode = mode_decision.mode;
-    if let Some(note) = compatibility_scope_notice(backend.support_tier, &mode_decision) {
+    if let Some(note) = plan.scope_notice {
         eprintln!("{note}");
     }
-    let capabilities = detect_capabilities();
-    let profile = parsed
-        .profile
-        .or(config.render.profile)
-        .unwrap_or_else(|| detect_profile_from_capabilities(&capabilities));
-    let debug_refs = parsed
-        .debug_refs
-        .or(config.render.debug_refs)
-        .unwrap_or(DebugRefs::None);
-    let retention_policy = parsed
-        .trace
-        .or(config.trace.retention_policy)
-        .unwrap_or(RetentionPolicy::OnWrapperFailure);
 
     let cwd = env::current_dir()?;
-    let capture = run_capture(&CaptureRequest {
-        backend: backend.clone(),
-        args: parsed.forwarded_args.clone(),
-        cwd: cwd.clone(),
-        mode,
-        capture_passthrough_stderr: should_capture_passthrough_stderr(retention_policy, debug_refs),
-        retention: retention_policy,
-        paths: paths.clone(),
-        inject_sarif: mode != ExecutionMode::Passthrough
-            && matches!(backend.support_tier, SupportTier::A),
-    })?;
+    let capture = run_capture(&plan.capture_request(&paths, &parsed, &cwd))?;
 
     let exit_code = exit_code_from_status(&capture.exit_status);
-    if matches!(mode, ExecutionMode::Passthrough) {
+    if matches!(plan.mode(), ExecutionMode::Passthrough) {
         maybe_write_passthrough_trace(
             &paths,
             &capture,
             &parsed,
-            &backend,
-            &mode_decision,
-            profile,
-            &capabilities,
+            &plan.backend,
+            &plan.mode_decision,
+            plan.profile,
+            &plan.capabilities,
             wrapper_started.elapsed().as_millis() as u64,
         )?;
         cleanup_capture(&capture)?;
@@ -124,12 +93,12 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         cwd_display: Some(cwd.display().to_string()),
         exit_status: exit_code,
         primary_tool: tool_for_backend(
-            backend
+            plan.backend
                 .resolved_path
                 .file_name()
                 .and_then(OsStr::to_str)
                 .unwrap_or("gcc"),
-            Some(backend.version_string.clone()),
+            Some(plan.backend.version_string.clone()),
         ),
         secondary_tools: Vec::new(),
         language_mode: Some(language_mode_from_invocation(&argv0)),
@@ -149,16 +118,16 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     document.captures = capture.artifacts.clone();
     enrich_document(&mut document, &cwd);
 
-    if matches!(mode, ExecutionMode::Shadow) {
+    if matches!(plan.mode(), ExecutionMode::Shadow) {
         maybe_write_trace(
             &paths,
             &document,
             &capture,
             &parsed,
-            &backend,
-            &mode_decision,
-            profile,
-            &capabilities,
+            &plan.backend,
+            &plan.mode_decision,
+            plan.profile,
+            &plan.capabilities,
             None,
             wrapper_started.elapsed().as_millis() as u64,
         )?;
@@ -169,15 +138,15 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let render_started = Instant::now();
     let render_result = render(RenderRequest {
         document: document.clone(),
-        profile,
-        capabilities: capabilities.clone(),
+        profile: plan.profile,
+        capabilities: plan.capabilities.clone(),
         cwd: Some(cwd),
         path_policy: config
             .render
             .path_policy
             .unwrap_or(PathPolicy::ShortestUnambiguous),
         warning_visibility: WarningVisibility::Auto,
-        debug_refs,
+        debug_refs: plan.debug_refs,
         type_display_policy: TypeDisplayPolicy::CompactSafe,
         source_excerpt_policy: SourceExcerptPolicy::Auto,
     })?;
@@ -191,10 +160,10 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         &document,
         &capture,
         &parsed,
-        &backend,
-        &mode_decision,
-        profile,
-        &capabilities,
+        &plan.backend,
+        &plan.mode_decision,
+        plan.profile,
+        &plan.capabilities,
         Some(render_duration_ms),
         wrapper_started.elapsed().as_millis() as u64,
     )?;
@@ -951,6 +920,84 @@ fn should_capture_passthrough_stderr(
         retention_policy,
         RetentionPolicy::OnChildError | RetentionPolicy::Always
     ) || matches!(debug_refs, DebugRefs::CaptureRef)
+}
+
+#[derive(Debug, Clone)]
+struct ExecutionPlan {
+    backend: diag_backend_probe::ProbeResult,
+    mode_decision: ModeDecision,
+    profile: RenderProfile,
+    debug_refs: DebugRefs,
+    retention_policy: RetentionPolicy,
+    capabilities: RenderCapabilities,
+    capture_passthrough_stderr: bool,
+    inject_sarif: bool,
+    scope_notice: Option<&'static str>,
+}
+
+impl ExecutionPlan {
+    fn mode(&self) -> ExecutionMode {
+        self.mode_decision.mode
+    }
+
+    fn capture_request(
+        &self,
+        paths: &WrapperPaths,
+        parsed: &ParsedArgs,
+        cwd: &Path,
+    ) -> CaptureRequest {
+        CaptureRequest {
+            backend: self.backend.clone(),
+            args: parsed.forwarded_args.clone(),
+            cwd: cwd.to_path_buf(),
+            mode: self.mode(),
+            capture_passthrough_stderr: self.capture_passthrough_stderr,
+            retention: self.retention_policy,
+            paths: paths.clone(),
+            inject_sarif: self.inject_sarif,
+        }
+    }
+}
+
+fn build_execution_plan(
+    argv0: &str,
+    parsed: &ParsedArgs,
+    config: &ConfigFile,
+    cache: &mut ProbeCache,
+) -> Result<ExecutionPlan, Box<dyn std::error::Error>> {
+    let backend = cache.get_or_probe(ResolveRequest {
+        explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
+        env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
+        invoked_as: argv0.to_string(),
+    })?;
+    let capabilities = detect_capabilities();
+    let explicit_mode = parsed.mode.or(config.runtime.mode);
+    let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
+    let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
+    let profile = parsed
+        .profile
+        .or(config.render.profile)
+        .unwrap_or_else(|| detect_profile_from_capabilities(&capabilities));
+    let debug_refs = parsed
+        .debug_refs
+        .or(config.render.debug_refs)
+        .unwrap_or(DebugRefs::None);
+    let retention_policy = parsed
+        .trace
+        .or(config.trace.retention_policy)
+        .unwrap_or(RetentionPolicy::OnWrapperFailure);
+    Ok(ExecutionPlan {
+        scope_notice: compatibility_scope_notice(backend.support_tier, &mode_decision),
+        capture_passthrough_stderr: should_capture_passthrough_stderr(retention_policy, debug_refs),
+        inject_sarif: mode_decision.mode != ExecutionMode::Passthrough
+            && matches!(backend.support_tier, SupportTier::A),
+        backend,
+        mode_decision,
+        profile,
+        debug_refs,
+        retention_policy,
+        capabilities,
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

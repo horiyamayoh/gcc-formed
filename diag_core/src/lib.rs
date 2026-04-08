@@ -391,6 +391,12 @@ pub struct AnalysisOverlay {
     pub first_action_hint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub confidence: Option<Confidence>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_id: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub matched_conditions: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suppression_reason: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub collapsed_child_ids: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -796,6 +802,9 @@ mod tests {
                     headline: Some("syntax error".to_string()),
                     first_action_hint: Some("insert the missing semicolon".to_string()),
                     confidence: Some(Confidence::High),
+                    rule_id: Some("rule.syntax.expected_or_before".to_string()),
+                    matched_conditions: vec!["message_contains=expected".to_string()],
+                    suppression_reason: None,
                     collapsed_child_ids: Vec::new(),
                     collapsed_chain_ids: Vec::new(),
                 }),

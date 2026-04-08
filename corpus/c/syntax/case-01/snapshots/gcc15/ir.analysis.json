@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function ‘main’:\nsrc/main.c:2:13: error: expected ‘;’ before ‘}’ token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            \n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:13: error: expected ';' before '}' token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            \n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 195,
+      "size_bytes": 183,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 459,
+      "size_bytes": 4904,
       "storage": "external_ref"
     }
   ],
@@ -33,12 +33,17 @@
         "confidence": "high",
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
-        "headline": "syntax error"
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
       },
       "fingerprints": {
-        "family": "0745cb1261f83b0ac212796db74ce46a92afea206db938a2867d3ea2160f3109",
-        "raw": "90aed289a1ab053f8dc42488542bf3e06571e04adc0fd90dbb7f09acf2dfe8a3",
-        "structural": "8e75b8c22922ae1e047ebe13f6626f54982e8921f0f784139a3ccccd52f0d7a7"
+        "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
+        "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
+        "structural": "135635888e0683afb08cdc7a69844ff3af34710f5e039bce463e7f42a0ca7892"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -51,7 +56,7 @@
         }
       ],
       "message": {
-        "raw_text": "expected ‘;’ before ‘}’ token"
+        "raw_text": "expected ';' before '}}' token"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -70,8 +75,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
-    "raw": "46cceaa0372efc896dacceefcc133dbfb72ad5c8589c319417cf796a1442e659",
-    "structural": "caf20231933e076e1911e53421bbf92a5df4a2f016ab9067b11ce832fadec148"
+    "raw": "90c468618c626b0aba6b1ed1b469184de88a78cbd644278810d544e0f4cfedb4",
+    "structural": "e419f346cf272fe5c4e2299cc4a0d5863329e040755288b0a624ee1a5402e1cd"
   },
   "producer": {
     "name": "gcc-formed",

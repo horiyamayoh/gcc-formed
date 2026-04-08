@@ -1,6 +1,6 @@
 error: syntax error
 --> src/main.c:2:13
 help: fix the first parser error at the user-owned location
-why: expected ‘;’ before ‘}’ token
+why: expected ';' before '}}' token
 | src/main.c:2:13
 |     return 0

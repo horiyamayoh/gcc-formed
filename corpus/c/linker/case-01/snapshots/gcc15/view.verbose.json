@@ -9,8 +9,15 @@
       "excerpts": [],
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
       "group_id": "residual-1",
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here",
+      "matched_conditions": [
+        "phase=link",
+        "message_contains=multiple definition",
+        "existing_specific_family=linker.multiple_definition"
+      ],
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here",
+      "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
       "title": "multiple definition of `duplicate`"
     },
     {
@@ -20,11 +27,17 @@
         "linker: preserved"
       ],
       "excerpts": [],
-      "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
       "group_id": "residual-0",
+      "matched_conditions": [
+        "phase=link",
+        "existing_specific_family=linker.file_format_or_relocation"
+      ],
       "raw_message": "collect2: error: ld returned 1 exit status",
+      "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
-      "title": "collect2: error: ld returned 1 exit status"
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "linker reported a failure"
     }
   ],
   "summary": {

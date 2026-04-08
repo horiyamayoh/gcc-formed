@@ -1,1 +1,215 @@
-{"family":"template"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'\n    5 |     combine(1, \"x\");\n      |     ~~~~~~~^~~~~~~~\nsrc/main.cpp:5:12: note: there is 1 candidate\nsrc/main.cpp:2:6: note: candidate 1: 'template<class T> void combine(T, T)'\n    2 | void combine(T, T) {}\n      |      ^~~~~~~\nsrc/main.cpp:2:6: note: template argument deduction/substitution failed:\nsrc/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')\n    5 |     combine(1, \"x\");\n      |     ~~~~~~~^~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 587,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 7291,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "68709bb8853d4c26a54248a3b041f9c203ccccedf39a5a031029f93b77cda0d8",
+            "raw": "239c97a6c12544b87f62f7ad74ab28a97177e61f148c1d69796c48612af42b76",
+            "structural": "b7864db11415ce73e663c9f3f70f1d728664894b021785c745996ca392681ef4"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 13,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'template<class T> void combine(T, T)'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "762a09c40bd006e751b37e4e4e87f4dc1bf17de632b2afeea9236e1d37a86bbe"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 13,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "515026075d0e0c7be715ba95de9d9c3b6937ce4aa0a5dcf874ca01a17f994a14",
+            "raw": "e055c5b2d55f0472dde830fdcad5ac6efb0421a8e52f0b485ce97f32eeccf64a",
+            "structural": "b5912cb7891201befe2ed8db80a1be3738f389aa0a3eda7e46d092d9faf57df6"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 5,
+              "end_column": 20,
+              "line": 5,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  deduced conflicting types for parameter 'T' ('int' and 'const char*')"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "candidate 1: 'template<class T> void combine(T, T)'",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+              "line": 5,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "c9268c1a68f61a93cac7cdeacf5ea030bbb43edc4d42cfef6f763b2d625b5dd3",
+        "raw": "08e3fd173427fb70954791d06bc034af9d09833502e53b2c7403bb9274f766ae",
+        "structural": "596108d5cc60b44b6423eb0ca43e7b9ee6f468eacf054031bda3c0d5d50dbaba"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 20,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to 'combine(int, const char [2])'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "1d4a7295a538001cfe41312f7370fb23349ab22f99f913596d6c2fc23f13e26d",
+    "structural": "86529ff4e172a05cfe1ea963cfba120b4cc36606322bb41cb46b47d8bbf87d4e"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

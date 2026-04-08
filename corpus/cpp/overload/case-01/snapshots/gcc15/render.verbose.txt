@@ -8,3 +8,5 @@ note: candidate 1: 'void takes(int, int)'
 note: candidate expects 2 arguments, 1 provided
 note: candidate 2: 'void takes(double, double)'
 note: candidate expects 2 arguments, 1 provided
+debug: rule_id=rule.family.type_overload.message
+debug: matched_conditions=message_contains=no matching

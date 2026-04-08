@@ -34,6 +34,7 @@
 - [CHANGELOG.md](CHANGELOG.md): 外部向けの変更履歴
 - [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md): 初回公開時点で保証しない範囲と raw fallback の意味
 - [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md): 初回公開用の release blocker / non-goals / 出荷前確認項目
+- [SIGNING-KEY-OPERATIONS.md](SIGNING-KEY-OPERATIONS.md): signing key rotation / revoke / emergency re-sign と provenance 保持
 - [SECURITY.md](SECURITY.md): 脆弱性報告とサポート方針
 - [CONTRIBUTING.md](CONTRIBUTING.md): 変更提案時の gate と contribution 方針
 
@@ -43,10 +44,12 @@
 - 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
 - `cargo xtask package` により release artifact / control file の最小セットを生成でき、必要なら `SHA256SUMS.sig` を Ed25519 で付与できる
 - `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証でき、署名付き release は signing key id と trusted signing public key sha256 pin の両方で検証できる
+- `cargo xtask install --dry-run` / `rollback --dry-run` / `uninstall --dry-run` は実変更なしで symlink switch / 配置先 / 削除対象を JSON として確認できる
 - `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
 - `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
 - `/opt/cc-formed/...` + `/usr/local/bin` 相当の system-wide layout も pseudo-root smoke で検証している
 - GCC 15 representative corpus に対する acceptance report と snapshot report を `cargo xtask replay --report-dir ...` / `cargo xtask snapshot --report-dir ...` で保存できる
+- GitHub Actions は release smoke ごとに `release-provenance.json` を artifact として保存し、publish/promote/install 系の出荷証跡を残す
 - 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
 
 ## 実装ワークスペース
@@ -99,6 +102,7 @@ control_dir=dist/gcc-formed-v0.1.0-linux-x86_64-musl
 install_root="$HOME/.local/opt/cc-formed/x86_64-unknown-linux-musl"
 bin_dir="$HOME/.local/bin"
 
+cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --dry-run
 cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
 "$bin_dir/gcc-formed" --formed-version
 cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --version 0.1.0

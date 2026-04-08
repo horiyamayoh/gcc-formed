@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/helper.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cca9KXfL.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 205,
+      "size_bytes": 211,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 44,
+      "size_bytes": 2193,
       "storage": "external_ref"
     }
   ],
@@ -62,13 +62,13 @@
         }
       ],
       "fingerprints": {
-        "family": "bef934d1233aa02e98569bd4bcc9441b9f1f0bb71b1894b935183dc79bd7db3f",
-        "raw": "9258659eb01f0e9ab2d814b8b0e51cfb39fddb4ff1418dfa6fe206adea562f16",
-        "structural": "68ee897872277adf506e94ba04caa9111bae35e74393bb8007935ff5b5e5615a"
+        "family": "96a57e70e13827624a9cb4ac76ed4f25c4e8495cd3d9de70c0507aff92d799f8",
+        "raw": "29e2f9a08583d9bca36687653eeb756182b4b49665eafab589ac63886d2f32a9",
+        "structural": "157979beea9d5d9542a21d3aeb28f1033b9a681f4046ef9d610cb248bb50a4a7"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -90,8 +90,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "d85aefe623cca4fa61289f983f6b95cdde8fccb9f305c9f8d6cd08ecba7077bc",
-    "structural": "9cffed632ad4516c0993ffebcd9f51e33c9e843252273e8d7e40c739db1bfa2b"
+    "raw": "c007cc3ba034d341dc46b44e7691b6dd432d7bed296a0020a0d3e1e7139a20f7",
+    "structural": "1b1bbfe8ff7a3b3467b5dba0ebcf06dde8b55710f62878942ea822a2dd45de2e"
   },
   "integrity_issues": [
     {

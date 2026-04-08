@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/helper.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cca9KXfL.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 205,
+      "size_bytes": 211,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 44,
+      "size_bytes": 2193,
       "storage": "external_ref"
     }
   ],
@@ -32,8 +32,14 @@
       "analysis": {
         "confidence": "medium",
         "family": "linker.file_format_or_relocation",
-        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-        "headline": "collect2: error: ld returned 1 exit status"
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link",
+          "existing_specific_family=linker.file_format_or_relocation"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
       },
       "context_chains": [
         {
@@ -43,7 +49,7 @@
       "fingerprints": {
         "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "ccba536d0bd57b46efe4ca349d19c15881f700b6dc89b16ffa9134c71a7c1616"
+        "structural": "8d64592ab76890883065d290e0cf326863036c6eac9954c9cb2e23e803af66d3"
       },
       "id": "residual-0",
       "message": {
@@ -66,7 +72,14 @@
         "confidence": "medium",
         "family": "linker.multiple_definition",
         "first_action_hint": "remove the duplicate definition or make the symbol internal to one translation unit",
-        "headline": "multiple definition of `duplicate`"
+        "headline": "multiple definition of `duplicate`",
+        "matched_conditions": [
+          "phase=link",
+          "message_contains=multiple definition",
+          "existing_specific_family=linker.multiple_definition"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
       },
       "context_chains": [
         {
@@ -74,13 +87,13 @@
         }
       ],
       "fingerprints": {
-        "family": "9188a6d05a0c6d03c14e5b5b9d489abf923cdf15c554364946412218004fc6ea",
-        "raw": "9258659eb01f0e9ab2d814b8b0e51cfb39fddb4ff1418dfa6fe206adea562f16",
-        "structural": "b7f5a2461a64edeadae401d5e4ac79bd17ab76583c7fab81d23cb3abd3821112"
+        "family": "3517b5287d657c4f75009ac088df786555e5f98e5b5d5c3ed56b539eee650188",
+        "raw": "29e2f9a08583d9bca36687653eeb756182b4b49665eafab589ac63886d2f32a9",
+        "structural": "48e8820896bf428710b495c218a50119591cdd5f2c5c6ec33cf2e7bc96de34ef"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -102,8 +115,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "ea0761aa0e9cb4ee3f5ba84d8ab9db92cb5ec33e217cd69a86f88e93b498db83",
-    "raw": "97092910f8fd52ceacb18660081e48b21d2e0735dbfd5fc0960a480e3311cd00",
-    "structural": "9df01996e50e97d0ff4d8f528a226b6c5fd3ba8cb1153e2ba7e4c3593d12ff38"
+    "raw": "0308e504b77805e253caf9c16e7142f09f8166f61dec2e10630f9b6e154b5d5f",
+    "structural": "8d09f073036d0526a812ce7b8844095eb94cf577306660b2be20d5118d798522"
   },
   "integrity_issues": [
     {

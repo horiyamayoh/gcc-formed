@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:4:14: error: no matching function for call to ‘takes_same(int, double)’\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\nsrc/main.cpp:2:6: note: candidate: ‘template<class T> void takes_same(T, T)’\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note:   template argument deduction/substitution failed:\nsrc/main.cpp:4:14: note:   deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)\n    4 | int main() { takes_same(1, 2.0); }\n      |              ^~~~~~~~~~\n",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'\n    4 | int main() { takes_same(1, 2.0); }\n      |              ~~~~~~~~~~^~~~~~~~\nsrc/main.cpp:4:24: note: there is 1 candidate\nsrc/main.cpp:2:6: note: candidate 1: 'template<class T> void takes_same(T, T)'\n    2 | void takes_same(T, T) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note: template argument deduction/substitution failed:\nsrc/main.cpp:4:24: note:   deduced conflicting types for parameter 'T' ('int' and 'double')\n    4 | int main() { takes_same(1, 2.0); }\n      |              ~~~~~~~~~~^~~~~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 600,
+      "size_bytes": 638,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 933,
+      "size_bytes": 7327,
       "storage": "external_ref"
     }
   ],
@@ -32,11 +32,11 @@
       "children": [
         {
           "fingerprints": {
-            "family": "3ea154fc12464372c9de59621154eea7c328a68d817d9f403164d0b9b82bc3b9",
-            "raw": "dd73fdae35ae794d617ac6f6a9c05421098ad92ed027faa7106d25143d74794a",
-            "structural": "740bd41db2469029bc763647f50245e1b2d0a58f00d7944be1bd1b4ce6e7f37d"
+            "family": "5a54dadd15f95ad73297f3127bfb131b144dcd4142a7daeeacab0c53d6322004",
+            "raw": "8c90bf8f65824f06a9c0fbbec82ff5a34f7aadd2d8e9f21c9a2395032d74d2a7",
+            "structural": "a649320c9175ec2e008fcd68cb8aab461fc5ccb8cf9d6cad1fede17491d7596d"
           },
-          "id": "sarif-0-0-related-0",
+          "id": "sarif-0-0-related-1",
           "locations": [
             {
               "column": 6,
@@ -47,7 +47,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T> void takes_same(T, T)’"
+            "raw_text": "candidate 1: 'template<class T> void takes_same(T, T)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -63,11 +63,11 @@
         },
         {
           "fingerprints": {
-            "family": "c61185edf58cc068a231944e999438047e8caad001e074fd166a71344543acb3",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "819c8d9a52ed54f5bfa5e05a92c0c28873d642730caa5b9a30fcb9f72eb4de0e"
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "e49ad7374130020c375fbafd1d3345dd69bcbad85ffb0fbf35f474f80b5d43b7"
           },
-          "id": "sarif-0-0-related-1",
+          "id": "sarif-0-0-related-2",
           "locations": [
             {
               "column": 6,
@@ -78,7 +78,7 @@
             }
           ],
           "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
+            "raw_text": "template argument deduction/substitution failed:"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -94,11 +94,11 @@
         },
         {
           "fingerprints": {
-            "family": "0a626c4ddcb7c46fdf8d182f065dae86c6452042ea72ed7684957064b655067b",
-            "raw": "e130de801835a578350dfa6668a0dfd425c17c3c2b66c436b8b1ebf0183d064b",
-            "structural": "ba8ec02962f2404fd14712d25cad5ff523006f29f4be5dafac74e24419e82ed8"
+            "family": "8e6584eeb0a8dee931b22148d36e78260dfcd7b4ada764d776d1303c42b4f45f",
+            "raw": "ff59002388b2d94cedacf3229f008ad588726751d776c6f484611e00ba9fa3b2",
+            "structural": "1523cc566e0937e0f05861c4d11207fa4c3de8c40e142bfbbcc040b9c803ee69"
           },
-          "id": "sarif-0-0-related-2",
+          "id": "sarif-0-0-related-3",
           "locations": [
             {
               "column": 14,
@@ -109,7 +109,7 @@
             }
           ],
           "message": {
-            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)"
+            "raw_text": "  deduced conflicting types for parameter 'T' ('int' and 'double')"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -129,7 +129,7 @@
           "frames": [
             {
               "column": 6,
-              "label": "candidate: ‘template<class T> void takes_same(T, T)’",
+              "label": "candidate 1: 'template<class T> void takes_same(T, T)'",
               "line": 2,
               "path": "src/main.cpp"
             },
@@ -141,7 +141,7 @@
             },
             {
               "column": 14,
-              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘double’)",
+              "label": "deduced conflicting types for parameter 'T' ('int' and 'double')",
               "line": 4,
               "path": "src/main.cpp"
             }
@@ -150,9 +150,9 @@
         }
       ],
       "fingerprints": {
-        "family": "dbfbf391231aefcbdece1159728c9b74a2d5b127db427ea872bfe2db1cf4b797",
-        "raw": "a4a42ba9c4d2daacdfc4ae6e71dc169de1cb8b67ecc3d10611a1c16cadbac246",
-        "structural": "4863d2e084eacbb8be9db1f2edde07142b7ea2acac11b0aaa3218e6fce59838c"
+        "family": "91a0a3709a894fb7b4e7cd8f37da7fc1b93597f1aabd9347465fd429d2c6fc61",
+        "raw": "42ba3b1913bab82a1387c855afdd646913c284106b1d8973fdcb727c915fa98a",
+        "structural": "2d949ff1aabbb27a3e7aebfbbd3c2823ea0cca66afa3126cc745feae81e63764"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -165,7 +165,7 @@
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘takes_same(int, double)’"
+        "raw_text": "no matching function for call to 'takes_same(int, double)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -184,8 +184,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "dfabe654d89cc887af203c3c53fbc1c42e928d282910a0a104d440373a78c508",
-    "structural": "733c5002f4c4c2666cd2e984dde4d0266d436e5364b74cdab41a5eb5f9c228ce"
+    "raw": "b15b281bfdd1eaf523ba1f2b1dffef9ba85b6e2557e604513913c60275886465",
+    "structural": "04ade1c0ab83b38a8eca4fae78c85ee994295fe60572be4165d0b85ba58a444b"
   },
   "producer": {
     "name": "gcc-formed",

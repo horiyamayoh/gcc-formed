@@ -1,0 +1,7 @@
+src/main.c: In function 'main':
+src/main.c:1:33: error: 'Box' has no member named 'missing'
+    1 | #define READ_FIELD(item) ((item).missing)
+      |                                 ^
+src/main.c:3:40: note: in expansion of macro 'READ_FIELD'
+    3 | int main(void) { Box box = {1}; return READ_FIELD(box); }
+      |                                        ^~~~~~~~~~

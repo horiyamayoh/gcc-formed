@@ -1,2 +1,3 @@
-extern int missing_symbol(void);
-int main(void) { return missing_symbol(); }
+int shared = 1;
+
+int main(void) { return shared; }

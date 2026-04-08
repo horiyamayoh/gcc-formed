@@ -9,6 +9,7 @@ This checklist defines the minimum bar for a first public release candidate.
 - Representative acceptance replay is green and the report artifacts are attached.
 - Representative GCC 15 snapshot check is green and the report artifacts are attached.
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.
+- Release artifacts include `release-provenance.json`.
 
 ## First-Release Scope
 
@@ -34,3 +35,5 @@ This checklist defines the minimum bar for a first public release candidate.
 - Replay report includes normalized IR, preserved raw stderr, and rendered output.
 - Snapshot report includes expected/actual artifacts for the representative fixtures.
 - Release smoke retains `manifest.json`, package/install JSON output, and resolve/install-release JSON output.
+- Release smoke retains `release-provenance.json` alongside signing material and build metadata.
+- Signing key rotation / revoke / emergency re-sign follows `SIGNING-KEY-OPERATIONS.md`.

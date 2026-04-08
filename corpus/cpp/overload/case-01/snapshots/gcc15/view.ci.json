@@ -18,8 +18,13 @@
       ],
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=no matching"
+      ],
       "raw_message": "no matching function for call to 'takes(int)'",
+      "rule_id": "rule.family.type_overload.message",
       "severity": "error",
+      "suppression_reason": null,
       "title": "type or overload mismatch"
     }
   ],

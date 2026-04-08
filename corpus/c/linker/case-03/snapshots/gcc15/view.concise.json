@@ -1,0 +1,28 @@
+{
+  "cards": [
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
+      "group_id": "residual-1",
+      "matched_conditions": [
+        "phase=link",
+        "message_contains=multiple definition",
+        "existing_specific_family=linker.multiple_definition"
+      ],
+      "raw_message": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here",
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "multiple definition of `shared`"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true
+  }
+}

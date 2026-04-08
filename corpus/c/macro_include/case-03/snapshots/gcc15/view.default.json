@@ -1,0 +1,37 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:3:25",
+      "child_notes": [
+        "each undeclared identifier is reported only once for each function it appears in"
+      ],
+      "context_lines": [
+        "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
+        "macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c",
+        "macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c"
+      ],
+      "excerpts": [
+        {
+          "lines": [
+            "int main(void) { return FETCH_VALUE(); }"
+          ],
+          "location": "src/main.c:3:25"
+        }
+      ],
+      "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "context=macro_or_include"
+      ],
+      "raw_message": "'missing_symbol' undeclared (first use in this function)",
+      "rule_id": "rule.family.macro_include.context_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "error surfaced through macro/include context"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

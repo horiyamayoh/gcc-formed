@@ -33,12 +33,16 @@
         "confidence": "high",
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch"
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "message_contains=invalid conversion"
+        ],
+        "rule_id": "rule.family.type_overload.message"
       },
       "fingerprints": {
         "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
         "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-        "structural": "f29638b8fde34387128e85baecc1d95465df39ef9f15b1275efd66cc09bf6dea"
+        "structural": "222d35a8760074e0eeb177f29f2f54cf1c84e505cc19c455cf7607343e01b035"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -70,12 +74,17 @@
         "confidence": "low",
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-        "headline": "initializing argument 1 of 'void takes_int(int)'"
+        "headline": "initializing argument 1 of 'void takes_int(int)'",
+        "matched_conditions": [
+          "no_family_rule_matched"
+        ],
+        "rule_id": "rule.family.unknown",
+        "suppression_reason": "generic_fallback"
       },
       "fingerprints": {
         "family": "87519ac914183fe5c132b075999144e83d66ae5d19e03f5b8b7fedddbbd8a503",
         "raw": "e3511ac889de3303507d5b5493a7dfd89cc1aaae9f42dbe8dbee2886079fbdb6",
-        "structural": "ea896598ad1cb3b2a4b4e351351fc81c92ddfbb1870072a3ed71fd80ce1421d2"
+        "structural": "c29dd5d47e491ac3166aa05e6b18a7f60e86ac014d21544e9179de8281b928fe"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -107,8 +116,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "b0f8582b3f86e2123e0f72331c88ee52b5b6998f5fabf26e8b14a61fad0f4ae9",
-    "structural": "29fa6ab8a0bafee9e3150670f393d22c455d612f257f4ef29e64707cf6ce82bd"
+    "raw": "554df97bda8756b7dd69bfef0ac91e75a19a7a74c74e76506fd2b32f60f5acaa",
+    "structural": "a45080094540186f4913a0ae659cbc797fc68433abe9808a5b1bd7a6c3a44408"
   },
   "producer": {
     "name": "gcc-formed",

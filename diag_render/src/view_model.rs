@@ -21,6 +21,9 @@ pub struct RenderGroupCard {
     pub excerpts: Vec<crate::ExcerptBlock>,
     pub context_lines: Vec<String>,
     pub child_notes: Vec<String>,
+    pub rule_id: Option<String>,
+    pub matched_conditions: Vec<String>,
+    pub suppression_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -113,6 +116,19 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         excerpts,
         context_lines,
         child_notes,
+        rule_id: node
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.rule_id.clone()),
+        matched_conditions: node
+            .analysis
+            .as_ref()
+            .map(|analysis| analysis.matched_conditions.clone())
+            .unwrap_or_default(),
+        suppression_reason: node
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.suppression_reason.clone()),
     }
 }
 

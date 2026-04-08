@@ -1,1 +1,108 @@
-{"family":"macro_include"}
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:1:33: error: 'Box' has no member named 'missing'\n    1 | #define READ_FIELD(item) ((item).missing)\n      |                                 ^\nsrc/main.c:3:40: note: in expansion of macro 'READ_FIELD'\n    3 | int main(void) { Box box = {1}; return READ_FIELD(box); }\n      |                                        ^~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 366,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3488,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 40,
+              "label": "src/main.c:3:40: note: in expansion of macro 'READ_FIELD'",
+              "line": 3,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "8e05a0061c8a0a9f4b6b58098be6a2bc1d14532b1080ba1310978b46e2e51e4e",
+        "raw": "8656d4c1dae0beda317273d663831c673c42cb168fd5b819a61dd687004a8f28",
+        "structural": "4e09c22897f1bbcf2e56762fadfe9dd76ed8037d41ad69814749a4499657e6a7"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 40,
+          "end_column": 41,
+          "line": 3,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "'Box' has no member named 'missing'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "867903d35b668e97e78e2fbb39e3b9ac2c9a350485d7a2459844729da4dea86e",
+    "structural": "982d23341c0f2edab9a8fb82f4cfcb12d9486668bc4b188ccbb34f087c213e33"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

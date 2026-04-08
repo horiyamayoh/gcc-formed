@@ -1,2 +1,6 @@
-template <typename T> struct Box { T value; };
-int main() { Box<int> box{1}; return box.value; }
+template <typename T>
+void combine(T, T) {}
+
+int main() {
+    combine(1, "x");
+}

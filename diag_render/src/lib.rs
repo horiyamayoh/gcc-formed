@@ -244,6 +244,9 @@ mod tests {
                             "fix the first parser error at the user-owned location".to_string(),
                         ),
                         confidence: Some(diag_core::Confidence::High),
+                        rule_id: Some("rule.syntax.expected_or_before".to_string()),
+                        matched_conditions: vec!["message_contains=expected".to_string()],
+                        suppression_reason: None,
                         collapsed_child_ids: Vec::new(),
                         collapsed_chain_ids: Vec::new(),
                     }),
@@ -276,5 +279,22 @@ mod tests {
         let right = diag_core::canonical_json(&build_view_model(&request).unwrap()).unwrap();
         assert_eq!(left, right);
         assert!(left.contains("syntax error"));
+    }
+
+    #[test]
+    fn verbose_render_includes_rule_explainability() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Verbose;
+        let output = render(request).unwrap();
+        assert!(
+            output
+                .text
+                .contains("debug: rule_id=rule.syntax.expected_or_before")
+        );
+        assert!(
+            output
+                .text
+                .contains("debug: matched_conditions=message_contains=expected")
+        );
     }
 }

@@ -4,3 +4,5 @@ help: fix the first parser error at the user-owned location
 why: expected expression before ';' token
 | src/main.c:2:17
 |     int value = ;
+debug: rule_id=rule.family.syntax.message
+debug: matched_conditions=message_contains=expected, message_contains=before

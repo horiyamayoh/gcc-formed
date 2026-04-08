@@ -1,0 +1,15 @@
+In file included from src/wrapper.h:1,
+                 from src/main.c:1:
+src/main.c: In function 'main':
+src/config.h:1:23: error: 'missing_symbol' undeclared (first use in this function)
+    1 | #define FETCH_VALUE() missing_symbol
+      |                       ^~~~~~~~~~~~~~
+src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'
+    3 | int main(void) { return FETCH_VALUE(); }
+      |                         ^~~~~~~~~~~
+src/config.h:1:23: note: each undeclared identifier is reported only once for each function it appears in
+    1 | #define FETCH_VALUE() missing_symbol
+      |                       ^~~~~~~~~~~~~~
+src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'
+    3 | int main(void) { return FETCH_VALUE(); }
+      |                         ^~~~~~~~~~~
