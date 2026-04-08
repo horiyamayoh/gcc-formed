@@ -1523,7 +1523,7 @@ fn compare_snapshot_file(
 }
 
 fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
-    let contents = normalize_transient_object_paths(contents);
+    let contents = normalize_snapshot_text(contents);
     match path.file_name().and_then(|value| value.to_str()) {
         Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, &contents),
         Some("ir.facts.json") | Some("ir.analysis.json") => {
@@ -1553,6 +1553,10 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
+fn normalize_snapshot_text(contents: &str) -> String {
+    normalize_gcc_quote_style(&normalize_transient_object_paths(contents))
+}
+
 fn normalize_transient_object_paths(contents: &str) -> String {
     let mut normalized = String::with_capacity(contents.len());
     let mut remaining = contents;
@@ -1577,6 +1581,17 @@ fn normalize_transient_object_paths(contents: &str) -> String {
 
     normalized.push_str(remaining);
     normalized
+}
+
+fn normalize_gcc_quote_style(contents: &str) -> String {
+    contents
+        .chars()
+        .map(|ch| match ch {
+            '`' | '‘' | '’' => '\'',
+            '“' | '”' => '"',
+            _ => ch,
+        })
+        .collect()
 }
 
 fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value {
@@ -1628,12 +1643,12 @@ fn normalize_sarif_result(result: &serde_json::Value) -> serde_json::Value {
 
 fn normalize_sarif_message(message: &serde_json::Value) -> Option<serde_json::Value> {
     if let Some(text) = message.get("text").and_then(serde_json::Value::as_str) {
-        return Some(serde_json::json!({ "text": text }));
+        return Some(serde_json::json!({ "text": normalize_snapshot_text(text) }));
     }
     message
         .get("markdown")
         .and_then(serde_json::Value::as_str)
-        .map(|markdown| serde_json::json!({ "markdown": markdown }))
+        .map(|markdown| serde_json::json!({ "markdown": normalize_snapshot_text(markdown) }))
 }
 
 fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticDocument) {
@@ -1654,7 +1669,7 @@ fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticD
         normalize_capture_for_snapshot_compare(capture);
     }
     for issue in &mut document.integrity_issues {
-        issue.message = normalize_transient_object_paths(&issue.message);
+        issue.message = normalize_snapshot_text(&issue.message);
     }
     for diagnostic in &mut document.diagnostics {
         normalize_diagnostic_node_for_snapshot_compare(diagnostic);
@@ -1705,7 +1720,7 @@ fn normalize_capture_for_snapshot_compare(capture: &mut CaptureArtifact) {
         *digest_sha256 = normalize_transient_object_paths(digest_sha256);
     }
     if let Some(inline_text) = capture.inline_text.as_mut() {
-        *inline_text = normalize_transient_object_paths(inline_text);
+        *inline_text = normalize_snapshot_text(inline_text);
         capture.size_bytes = Some(inline_text.len() as u64);
     }
     if let Some(external_ref) = capture.external_ref.as_mut() {
@@ -1729,10 +1744,10 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
         normalize_diagnostic_node_for_snapshot_compare(child);
     }
     for suggestion in &mut node.suggestions {
-        suggestion.label = normalize_transient_object_paths(&suggestion.label);
+        suggestion.label = normalize_snapshot_text(&suggestion.label);
         for edit in &mut suggestion.edits {
             edit.path = normalize_transient_object_paths(&edit.path);
-            edit.replacement = normalize_transient_object_paths(&edit.replacement);
+            edit.replacement = normalize_snapshot_text(&edit.replacement);
         }
     }
     for frame in node
@@ -1740,7 +1755,7 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
         .iter_mut()
         .flat_map(|chain| &mut chain.frames)
     {
-        frame.label = normalize_transient_object_paths(&frame.label);
+        frame.label = normalize_snapshot_text(&frame.label);
         if let Some(path) = frame.path.as_mut() {
             *path = normalize_transient_object_paths(path);
         }
@@ -1759,9 +1774,9 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
 }
 
 fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageText) {
-    message.raw_text = normalize_transient_object_paths(&message.raw_text);
+    message.raw_text = normalize_snapshot_text(&message.raw_text);
     if let Some(normalized_text) = message.normalized_text.as_mut() {
-        *normalized_text = normalize_transient_object_paths(normalized_text);
+        *normalized_text = normalize_snapshot_text(normalized_text);
     }
     if let Some(locale) = message.locale.as_mut() {
         *locale = normalize_transient_object_paths(locale);
@@ -3918,7 +3933,7 @@ mod tests {
         {
           "level":"error",
           "ruleId":"error",
-          "message":{"text":"link failed for /tmp/helper.o and /tmp/main.o"},
+          "message":{"text":"link failed for ‘/tmp/helper.o’ and ‘/tmp/main.o’"},
           "locations":[
             {
               "physicalLocation":{
@@ -3962,7 +3977,7 @@ mod tests {
             }
           ],
           "message": {
-            "text": "link failed for /tmp/cc123456.o and /tmp/cc654321.o"
+            "text": "link failed for '/tmp/cc123456.o' and '/tmp/cc654321.o'"
           }
         }
       ]
@@ -4012,7 +4027,7 @@ mod tests {
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of ‘duplicate’; /tmp/main.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -4079,7 +4094,7 @@ mod tests {
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cc654321.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/cc654321.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
