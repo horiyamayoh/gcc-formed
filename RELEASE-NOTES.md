@@ -4,14 +4,14 @@ This document uses artifact semver for release headings. Artifact `0.1.0` belong
 
 ## 0.1.0
 
-### Current `v1alpha` Scope
+### Current `v1alpha` Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary support target.
+- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 remain compatibility-only paths and may fall back to conservative passthrough or shadow behavior.
-- Quality improvements are only guaranteed on the GCC 15 render path.
+- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
 
 ### Highlights
 
@@ -30,7 +30,7 @@ This document uses artifact semver for release headings. Artifact `0.1.0` belong
 - `0.1.x` remains the alpha-baseline artifact line. Public beta artifacts will start at `0.2.0-beta.N`.
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers; they do not change the maturity label of the artifact they point to.
 - Release verification now supports trusted signing public key sha256 pinning, so CI and installers can bind detached signatures to a stable trust anchor instead of relying on key id alone.
-- `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is now centered on `x86_64-unknown-linux-musl`.
-- GCC 13/14 are not a primary enhanced-render target; they should be treated as conservative compatibility paths.
-- Raw fallback remains part of the shipped contract when the renderer cannot make a trustworthy improvement over preserved compiler output.
+- `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is centered on the primary `x86_64-unknown-linux-musl` artifact.
+- GCC 13/14 are compatibility-only paths and should not be described as primary enhanced-render coverage.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
 - See [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) for the detailed support boundary and fallback semantics.

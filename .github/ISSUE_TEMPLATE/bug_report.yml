@@ -8,11 +8,11 @@ body:
     id: support_tier
     attributes:
       label: Support tier
-      description: Which support boundary does this bug affect?
+      description: Which support boundary does this bug affect? Keep wording aligned with SUPPORT-BOUNDARY.md.
       options:
-        - GCC 15 primary render path
-        - GCC 13/14 compatibility path
-        - Older / unsupported GCC path
+        - GCC 15 primary enhanced-render path
+        - GCC 13/14 compatibility-only path
+        - Older / unsupported path
     validations:
       required: true
   - type: dropdown
@@ -58,6 +58,6 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Include OS, target triple, compiler version, and whether this is a primary or compatibility path.
+      description: Include OS, target triple, compiler version, terminal renderer vs passthrough/raw fallback, and whether this is the primary GCC 15 path or a compatibility-only path.
     validations:
       required: true

@@ -4,6 +4,17 @@
 
 `gcc-formed` is a spec-first repository with the current `v1alpha` maturity label and the `0.1.x` artifact line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [VERSIONING.md](VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
 
+## Current Support Boundary
+
+Keep support-boundary wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
+
+- Linux first.
+- `x86_64-unknown-linux-musl` is the primary production artifact.
+- GCC 15 is the primary enhanced-render path.
+- The terminal renderer is the primary user-facing surface.
+- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+
 ## Local Prerequisites
 
 - Rust `1.94.1`
@@ -28,6 +39,7 @@ If you touch release packaging, install flows, or release metadata, also validat
 
 - Prefer behavior-preserving fixes over silent contract drift.
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
+- If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in the user-facing docs, and the GitHub templates in the same change.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
 - Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
 

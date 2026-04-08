@@ -4,11 +4,22 @@
 
 `gcc-formed` is currently in the `v1alpha` maturity line, and the current artifact semver line is `0.1.x`. It is not yet declared ready for broad public use beyond the current alpha baseline; `v1beta`, `1.0.0-rc.N`, and `1.0.0` have not shipped.
 
+## Current Support Boundary
+
+Security support statements should be read inside the same support boundary documented in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
+
+- Linux first.
+- `x86_64-unknown-linux-musl` is the primary production artifact.
+- GCC 15 is the primary enhanced-render path.
+- The terminal renderer is the primary user-facing surface.
+- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+
 ## Supported Versions
 
 | Artifact line | Security support status |
 | --- | --- |
-| `0.1.x` | `v1alpha` baseline; best-effort coordinated fixes for the current shipped artifacts |
+| `0.1.x` | `v1alpha` baseline; best-effort coordinated fixes for the current shipped artifacts within the documented support boundary |
 | `main` | Development branch; fixes may land here first without backport guarantees |
 | `< 0.1.0` | Not supported |
 

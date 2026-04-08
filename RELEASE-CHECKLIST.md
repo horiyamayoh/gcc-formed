@@ -10,6 +10,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Planned release-candidate line: `1.0.0-rc.N`
 - Planned stable line: `1.0.0`
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.
+- Canonical support-boundary wording lives in `SUPPORT-BOUNDARY.md`.
 
 ## Release Blockers
 
@@ -20,23 +21,26 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.
 - Release artifacts include `release-provenance.json`.
 
-## Current Alpha Baseline Scope
+## Current Alpha Support Boundary
 
 - Linux first.
-- `x86_64-unknown-linux-musl` only as the primary production artifact.
-- GCC 15 only as the primary enhanced-render path.
-- Terminal renderer only as the primary surface.
+- `x86_64-unknown-linux-musl` is the primary production artifact.
+- GCC 15 is the primary enhanced-render path.
+- The terminal renderer is the primary user-facing surface.
+- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
 
 ## Explicit Non-Goals
 
 - Do not label `0.1.x` artifacts as `v1beta`, `1.0.0-rc.N`, or `1.0.0 stable`.
-- Do not claim enhanced render guarantees for GCC 13/14.
+- Do not describe GCC 13/14 as primary enhanced-render coverage.
 - Do not expand primary support to non-Linux artifacts.
 - Do not claim that raw fallback has been eliminated.
 
 ## Release Notes Gate
 
 - README states the current alpha-baseline scope in one screen.
+- `SUPPORT-BOUNDARY.md` exists and matches the wording reused in README, release notes, limitations, security, and contributing docs.
 - README links to `VERSIONING.md` and distinguishes maturity labels from artifact semver.
 - `RELEASE-NOTES.md` calls out compatibility paths and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.

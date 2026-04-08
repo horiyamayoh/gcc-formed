@@ -1,28 +1,57 @@
-## Summary
+## Goal
 
 -
 
-## Support Tier
+## Why Now
 
-- [ ] GCC 15 primary render path
-- [ ] GCC 13/14 compatibility path
-- [ ] Older / unsupported path
-- [ ] Packaging / install / release only
+-
 
-## Release Checklist Impact
+## Read Docs
 
-- [ ] This PR changes the first-release scope documented in `README.md` / `RELEASE-NOTES.md`.
-- [ ] This PR changes representative acceptance or snapshot gate behavior.
-- [ ] This PR changes packaging, install, rollback, or release repository behavior.
-- [ ] This PR preserves the rule that GCC 13/14 remain compatibility-only paths unless explicitly approved.
-
-## Verification
-
-- [ ] `cargo xtask check`
-- [ ] `cargo xtask replay --root corpus --subset representative`
-- [ ] `cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15`
+- [ ] `README.md`
+- [ ] `gcc-formed-architecture-proposal.md`
+- [ ] `quality-corpus-test-gate-spec.md`
+- [ ] `packaging-runtime-operations-spec.md`
+- [ ] `CONTRIBUTING.md`
 - [ ] Other:
 
-## Trace / Evidence
+## Files Touched
 
-- Trace bundle or CI artifact links:
+-
+
+## Out Of Scope
+
+-
+
+## Acceptance Criteria
+
+-
+
+## Commands Run
+
+- [ ] `cargo xtask check`
+- [ ] `cargo xtask replay --root corpus`
+- [ ] `cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15`
+- [ ] `cargo deny check`
+- [ ] `cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl`
+- [ ] Other:
+
+## Snapshot / Corpus / Docs Update Rationale
+
+-
+
+## Support Tier Impact
+
+- [ ] GCC 15 primary enhanced-render path
+- [ ] GCC 13/14 compatibility-only path
+- [ ] Older / unsupported path
+- [ ] Packaging / install / release only
+- [ ] This change updates `SUPPORT-BOUNDARY.md` and the copied wording in user-facing docs.
+
+## Trace / Fallback Impact
+
+- [ ] No trace or fallback behavior change.
+- [ ] Trace bundle content changed.
+- [ ] Raw fallback conditions changed.
+- [ ] Passthrough / shadow compatibility behavior changed.
+- Evidence:

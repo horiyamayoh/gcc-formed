@@ -11,6 +11,7 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 - Added `REPORT_ROOT/gate/` CI artifacts with per-step status JSON, stdout/stderr logs, and `gate-summary.{json,md}` so PR and nightly failures can be triaged without replaying the full GitHub log stream.
 - Added `REPORT_ROOT/gate/build-environment.json` so PR and nightly artifacts retain the host/container `rustc`, `cargo`, Docker, and GCC versions used by the gate.
 - Added representative acceptance and snapshot report output to `cargo xtask replay` / `cargo xtask snapshot` so CI can retain normalized IR, raw stderr, rendered output, and failure summaries as artifacts.
+- Added `SUPPORT-BOUNDARY.md` as the canonical wording for the current `v1alpha` / `0.1.x` support boundary.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
 - Added three more promoted representative fixtures so the GCC 15 acceptance/snapshot gate now covers multiple syntax, type-overload, and linker cases instead of a single exemplar.
@@ -22,6 +23,7 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
 - Unified README, release notes, checklist, limitations, security policy, and contribution guidance around `v1alpha` as the current maturity line and `0.1.x` as the current artifact line.
+- Unified README, release notes, checklist, limitations, security policy, contribution guidance, and GitHub templates around one copied support-boundary section: Linux first, `x86_64-unknown-linux-musl` primary, GCC 15 primary enhanced-render path, GCC 13/14 compatibility-only, and raw fallback included.
 - Moved snapshot normalization and comparison logic into `diag_testkit` so harness-side volatile-field handling is centralized, and snapshot reports now distinguish `exact`, `normalization_only`, `semantic`, and `missing_expected` drift kinds.
 
 ## [0.1.0] - 2026-04-07
