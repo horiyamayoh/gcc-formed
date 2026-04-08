@@ -15,6 +15,7 @@ jobs:
     env:
       REPORT_ROOT: ${{ runner.temp }}/reports
       TARGET_DIR: ${{ runner.temp }}/gcc-formed-target
+      GATE_PLAN: ci/plans/pr-gate.json
     steps:
       - uses: actions/checkout@v5.0.0
       - name: Install Rust toolchain
@@ -23,23 +24,52 @@ jobs:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
       - name: Prepare report directories
-        run: mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/self-check" "$REPORT_ROOT/release" "$TARGET_DIR"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id prepare-report-directories \
+            --report-root "$REPORT_ROOT" \
+            --command 'mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/self-check" "$REPORT_ROOT/release" "$TARGET_DIR"'
       - name: Build GCC 15 CI image
-        run: docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id build-gcc15-ci-image \
+            --report-root "$REPORT_ROOT" \
+            --command 'docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .'
       - name: cargo xtask check
-        run: cargo xtask check
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id cargo-xtask-check \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask check'
       - name: Representative acceptance replay
-        run: cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id representative-acceptance-replay \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
       - name: Build wrapper binary in GCC 15 image
         run: |
+          command=$(cat <<'EOF'
           docker run --rm \
             -v "$PWD:/workspace" \
             -v "$TARGET_DIR:/tmp/gcc-formed-target" \
             -w /workspace \
             gcc-formed-ci:pr \
             bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo build --bin gcc-formed"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id build-wrapper-binary-gcc15-image \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Wrapper self-check in GCC 15 image
         run: |
+          command=$(cat <<'EOF'
           docker run --rm \
             -v "$PWD:/workspace" \
             -v "$TARGET_DIR:/tmp/gcc-formed-target" \
@@ -47,14 +77,37 @@ jobs:
             -w /workspace \
             gcc-formed-ci:pr \
             bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target && /tmp/gcc-formed-target/debug/gcc-formed --formed-self-check > /reports/self-check/report.json"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id wrapper-self-check-gcc15-image \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Representative GCC 15 snapshot check
-        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id representative-gcc15-snapshot-check \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree
-        run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id vendor-dependency-tree \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"'
       - name: Hermetic release build smoke
-        run: cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl > "$REPORT_ROOT/release/hermetic-release.json"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id hermetic-release-build-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl > "$REPORT_ROOT/release/hermetic-release.json"'
       - name: Release packaging smoke
         run: |
+          command=$(cat <<'EOF'
           printf '%s\n' '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f' > "$RUNNER_TEMP/release-signing.key"
           cargo xtask package \
             --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed \
@@ -63,8 +116,16 @@ jobs:
             --support-tier gcc15_primary \
             --signing-private-key "$RUNNER_TEMP/release-signing.key" \
             > "$REPORT_ROOT/release/package.json"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id release-packaging-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Release install smoke
         run: |
+          command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-musl"
@@ -73,10 +134,23 @@ jobs:
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" > "$REPORT_ROOT/release/install.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/installed-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/uninstall.json"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id release-install-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Rollback symlink smoke
-        run: cargo test -p xtask rollback_switches_current_symlink_to_requested_version > "$REPORT_ROOT/release/rollback-smoke.txt"
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id rollback-symlink-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo test -p xtask rollback_switches_current_symlink_to_requested_version > "$REPORT_ROOT/release/rollback-smoke.txt"'
       - name: System-wide layout smoke
         run: |
+          command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/system-root/opt/cc-formed/x86_64-unknown-linux-musl"
@@ -85,8 +159,16 @@ jobs:
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" > "$REPORT_ROOT/release/system-install.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/system-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/system-uninstall.json"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id system-wide-layout-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Release repository promote and pin smoke
         run: |
+          command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           repo_root="$RUNNER_TEMP/gcc-formed-release-repo"
@@ -103,9 +185,17 @@ jobs:
           cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir" > "$REPORT_ROOT/release/install-release.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/install-release-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/install-release-uninstall.json"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id release-repository-promote-and-pin-smoke \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Release provenance manifest
         if: always()
         run: |
+          command=$(cat <<'EOF'
           python3 - <<'PY'
           import json
           import os
@@ -148,10 +238,31 @@ jobs:
               encoding="utf-8",
           )
           PY
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id release-provenance-manifest \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
       - name: Dependency and license gate
         run: |
+          command=$(cat <<'EOF'
           cargo install cargo-deny --locked
           cargo deny check > "$REPORT_ROOT/release/cargo-deny.txt"
+          EOF
+          )
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id dependency-and-license-gate \
+            --report-root "$REPORT_ROOT" \
+            --command "$command"
+      - name: Gate summary
+        if: always()
+        run: |
+          python3 ci/gate_summary.py \
+            --plan "$GATE_PLAN" \
+            --report-root "$REPORT_ROOT"
       - name: Upload gate artifacts
         if: always()
         uses: actions/upload-artifact@v6.0.0
