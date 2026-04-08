@@ -1,7 +1,7 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: multiple definition of `shared`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: /usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here
+why: /usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here
 linker: preserved
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, message_contains=multiple definition, existing_specific_family=linker.multiple_definition

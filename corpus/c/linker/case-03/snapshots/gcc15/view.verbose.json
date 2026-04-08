@@ -3,6 +3,8 @@
     {
       "canonical_location": null,
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
       "context_lines": [
         "linker: preserved"
       ],
@@ -14,7 +16,7 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here",
+      "raw_message": "/usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -23,6 +25,8 @@
     {
       "canonical_location": null,
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
       "context_lines": [
         "linker: preserved"
       ],

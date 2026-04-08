@@ -5,9 +5,10 @@
       "child_notes": [
         "candidate 1: 'void takes(int, int)'",
         "candidate expects 2 arguments, 1 provided",
-        "candidate 2: 'void takes(double, double)'",
-        "candidate expects 2 arguments, 1 provided"
+        "candidate 2: 'void takes(double, double)'"
       ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [],
       "excerpts": [
         {

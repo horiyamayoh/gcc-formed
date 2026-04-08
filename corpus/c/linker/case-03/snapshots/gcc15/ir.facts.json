@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -62,13 +62,13 @@
         }
       ],
       "fingerprints": {
-        "family": "5baeb001cdb38b6ca1e9270de6b90a25d896868a3f336368b2e52bb50b885c3b",
-        "raw": "14616ad4584eab0cd2da62eea5a4c1c741b9db9095d6540cf0cf37d432fc1086",
-        "structural": "aeb0ab386662c6ccf24c4e2681682c68bb95dfebf2eb2b5d161d08ccb70faebc"
+        "family": "c7173a29ac51938bd1d20c4c767a99b26ba788e19930feb262889dc6c059c55e",
+        "raw": "ee254b337ff93e4b58a6c36f708aa37b21317acb05342b5d8f691f4df8ea2ac1",
+        "structural": "ef1e91699b900d9001a09316674b4df7ed3fc99d79ae3d8aa05fc433a104a05e"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "/usr/bin/ld: /tmp/cc29s1vm.o:(.data+0x0): multiple definition of `shared'; /tmp/cck15Oha.o:(.data+0x0): first defined here"
+        "raw_text": "/usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -90,8 +90,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "3c3db531c2a3073a15c28ce8266d8535df822cc9e0ed137734be2753803c4f91",
-    "structural": "d0ffe71c5c0df547b3f9524fd8472655ba6ed830b533bf6cfe08c95f59e2e9f3"
+    "raw": "5e5dde97611fc61aced043cb1dab52f2925ee7f340615e0fc1df7ee07deeac7f",
+    "structural": "dbd6828c8de484da2ee3841a00bd2732936bcca03037886d15f13c68f5a28199"
   },
   "integrity_issues": [
     {

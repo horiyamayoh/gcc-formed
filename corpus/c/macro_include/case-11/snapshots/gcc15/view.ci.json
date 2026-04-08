@@ -3,6 +3,8 @@
     {
       "canonical_location": "src/main.c:9:12",
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [
         "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
         "macro: src/main.c:9:12: note: in expansion of macro 'READ_MISSING' @ src/main.c"

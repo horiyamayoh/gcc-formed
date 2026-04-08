@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/main.o: in function `main':\nmain.c:(.text+0x9): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cco3yskN.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 149,
+      "size_bytes": 153,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 44,
+      "size_bytes": 2187,
       "storage": "external_ref"
     }
   ],
@@ -88,12 +88,12 @@
       ],
       "fingerprints": {
         "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
-        "raw": "56cc489391cab194dff5ba8b4407acbde42f3eb31fe7d26a93312c6841ffa784",
-        "structural": "cb54604164c2bd99bd2aae5db7878fcc6ea100e234480d7253c78382f28fc72e"
+        "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
+        "structural": "4a3c9abc2580aa800da4cf94ecbd4ca6f0d9d5fa67a5f20e3c19399d9beb8a2e"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "main.c:(.text+0x9): undefined reference to `missing_symbol'"
+        "raw_text": "main.c:(.text+0x5): undefined reference to `missing_symbol'"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -115,8 +115,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "21f4f3692469c9d75e0cda967ec5f6dce4efc11f7e5431aa7ab5db4604873680",
-    "raw": "a249dcffdc35a8c69e2f6a82ed52f324ead9299cc733a137416d5dd6aa0c2b1b",
-    "structural": "69db1bc305239c4b831ddbc85c72212355ac6943c1b9700933eda0293835551e"
+    "raw": "058a998344be5f7d9765f07bfb14ea99160d89b1f1ec5fdd5cbb0fc346cc6293",
+    "structural": "2ebe85af81f9554e8ab7ad5f79a5b0ae4cc70ab536523beba616a226b9b1574b"
   },
   "integrity_issues": [
     {

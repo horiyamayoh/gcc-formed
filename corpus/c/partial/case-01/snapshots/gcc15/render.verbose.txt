@@ -1,7 +1,7 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: undefined reference to `missing_symbol`
 help: define the missing symbol or link the object/library that provides it
-why: main.c:(.text+0x9): undefined reference to `missing_symbol'
+why: main.c:(.text+0x5): undefined reference to `missing_symbol'
 linker: preserved
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, message_contains=undefined reference, existing_specific_family=linker.undefined_reference

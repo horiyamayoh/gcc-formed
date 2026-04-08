@@ -10,3 +10,4 @@ omitted 1 template frames
 note: no matching function for call to 'Pair(int, const char [2])'
 note: candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'
 note: template argument deduction/substitution failed:
+note: omitted 3 additional note(s)

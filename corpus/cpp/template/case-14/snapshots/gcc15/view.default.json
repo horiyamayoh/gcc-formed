@@ -7,6 +7,10 @@
         "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
         "template argument deduction/substitution failed:"
       ],
+      "collapsed_notices": [
+        "omitted 3 additional note(s)"
+      ],
+      "confidence_label": "certain",
       "context_lines": [
         "template: candidate 1: 'template<class T> Pair(T, T) -> Pair<T>' @ src/main.cpp",
         "template: template argument deduction/substitution failed: @ src/main.cpp",

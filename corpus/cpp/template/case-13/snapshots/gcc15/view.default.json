@@ -7,6 +7,8 @@
         "template argument deduction/substitution failed:",
         "  mismatched types 'T*' and 'int'"
       ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [
         "template: candidate 1: 'template<class T> void expect_ptr(T*)' @ src/main.cpp",
         "template: template argument deduction/substitution failed: @ src/main.cpp"

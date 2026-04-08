@@ -1,5 +1,5 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: multiple definition of `duplicate`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here
+why: helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccM9XKfN.o:main.c:(.text+0x0): first defined here
 linker: preserved

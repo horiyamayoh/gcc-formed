@@ -8,7 +8,7 @@ debug: rule_id=rule.family.type_overload.message
 debug: matched_conditions=message_contains=invalid conversion
 note: initializing argument 1 of 'void takes_int(int)'
 --> src/main.cpp:1:16
-help: inspect the preserved raw diagnostics for the first corrective action
+note: wrapper confidence is low; original compiler wording is preserved below
 why: initializing argument 1 of 'void takes_int(int)'
 | src/main.cpp:1:16
 | void takes_int(int);

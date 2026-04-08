@@ -3,6 +3,8 @@
     {
       "canonical_location": null,
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
       "context_lines": [
         "linker: preserved"
       ],
@@ -14,7 +16,7 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczX8Z6u.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccM9XKfN.o:main.c:(.text+0x0): first defined here",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",

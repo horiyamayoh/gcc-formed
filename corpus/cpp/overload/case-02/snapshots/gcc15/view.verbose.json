@@ -3,6 +3,8 @@
     {
       "canonical_location": "src/main.cpp:3:49",
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [],
       "excerpts": [
         {
@@ -26,6 +28,8 @@
     {
       "canonical_location": "src/main.cpp:1:16",
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "possible",
       "context_lines": [],
       "excerpts": [
         {
@@ -35,7 +39,7 @@
           "location": "src/main.cpp:1:16"
         }
       ],
-      "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+      "first_action": null,
       "group_id": "sarif-0-1",
       "matched_conditions": [
         "no_family_rule_matched"

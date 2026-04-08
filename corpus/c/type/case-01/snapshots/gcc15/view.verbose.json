@@ -5,6 +5,8 @@
       "child_notes": [
         "expected 'int' but argument is of type 'const char *'"
       ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [],
       "excerpts": [
         {

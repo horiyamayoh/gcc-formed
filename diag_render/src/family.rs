@@ -17,7 +17,7 @@ pub fn summarize_context(node: &DiagnosticNode, profile: RenderProfile) -> Vec<S
             ContextChainKind::Other => "context",
         };
         if chain.frames.is_empty() {
-            lines.push(format!("{label}: preserved"));
+            push_unique(&mut lines, format!("{label}: preserved"));
             continue;
         }
         for frame in chain.frames.iter().take(limit) {
@@ -25,14 +25,13 @@ pub fn summarize_context(node: &DiagnosticNode, profile: RenderProfile) -> Vec<S
             if let Some(path) = frame.path.as_ref() {
                 rendered.push_str(&format!(" @ {path}"));
             }
-            lines.push(rendered);
+            push_unique(&mut lines, rendered);
         }
         if chain.frames.len() > limit {
-            lines.push(format!(
-                "omitted {} {} frames",
-                chain.frames.len() - limit,
-                label
-            ));
+            push_unique(
+                &mut lines,
+                format!("omitted {} {} frames", chain.frames.len() - limit, label),
+            );
         }
     }
     if lines.is_empty() {
@@ -42,13 +41,19 @@ pub fn summarize_context(node: &DiagnosticNode, profile: RenderProfile) -> Vec<S
             .and_then(|analysis| analysis.family.as_ref())
         {
             if family == "template" {
-                lines.push("template: preserved".to_string());
+                push_unique(&mut lines, "template: preserved".to_string());
             } else if family == "macro_include" {
-                lines.push("macro/include: preserved".to_string());
-            } else if family == "linker" {
-                lines.push("linker: preserved".to_string());
+                push_unique(&mut lines, "macro/include: preserved".to_string());
+            } else if family == "linker" || family.starts_with("linker.") {
+                push_unique(&mut lines, "linker: preserved".to_string());
             }
         }
     }
     lines
+}
+
+fn push_unique(lines: &mut Vec<String>, line: String) {
+    if !lines.iter().any(|existing| existing == &line) {
+        lines.push(line);
+    }
 }

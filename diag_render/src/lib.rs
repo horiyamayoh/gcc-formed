@@ -175,10 +175,13 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::family::summarize_context;
+    use crate::selector::select_groups;
     use diag_core::{
-        AnalysisOverlay, CaptureArtifact, DiagnosticDocument, DocumentCompleteness, Location,
-        MessageText, NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance,
-        ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
+        AnalysisOverlay, CaptureArtifact, ContextChain, ContextChainKind, ContextFrame,
+        DiagnosticDocument, DocumentCompleteness, Location, MessageText, NodeCompleteness, Origin,
+        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
+        Severity, ToolInfo,
     };
     use std::path::PathBuf;
 
@@ -364,5 +367,122 @@ mod tests {
             Some(FallbackReason::RendererLowConfidence)
         );
         assert!(output.text.contains("stderr"));
+    }
+
+    #[test]
+    fn selector_prefers_user_owned_high_confidence_root() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Supporting,
+                message: MessageText {
+                    raw_text: "system header error".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![Location {
+                    path: "/usr/include/stdio.h".to_string(),
+                    line: 4,
+                    column: 2,
+                    end_line: None,
+                    end_column: None,
+                    display_path: None,
+                    ownership: Some(Ownership::System),
+                }],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: Some(AnalysisOverlay {
+                    family: Some("type_overload".to_string()),
+                    headline: Some("type or overload mismatch".to_string()),
+                    first_action_hint: Some(
+                        "compare the expected type and actual argument at the call site"
+                            .to_string(),
+                    ),
+                    confidence: Some(diag_core::Confidence::Medium),
+                    rule_id: Some("rule.family.type_overload.message".to_string()),
+                    matched_conditions: vec!["message_contains=invalid conversion".to_string()],
+                    suppression_reason: None,
+                    collapsed_child_ids: Vec::new(),
+                    collapsed_chain_ids: Vec::new(),
+                }),
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root");
+    }
+
+    #[test]
+    fn low_confidence_render_uses_raw_title_and_honesty_notice() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].message.raw_text =
+            "static assertion failed: size must be 4 bytes".to_string();
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("unknown".to_string());
+        analysis.headline = Some("template instantiation failed".to_string());
+        analysis.first_action_hint = Some(
+            "start from the first user-owned template frame and match template arguments"
+                .to_string(),
+        );
+        analysis.confidence = Some(diag_core::Confidence::Low);
+
+        let output = render(request).unwrap();
+
+        assert!(
+            output
+                .text
+                .contains("error: static assertion failed: size must be 4 bytes")
+        );
+        assert!(output.text.contains(
+            "note: wrapper confidence is low; original compiler wording is preserved below"
+        ));
+        assert!(
+            !output
+                .text
+                .contains("help: start from the first user-owned template frame")
+        );
+    }
+
+    #[test]
+    fn summarize_context_deduplicates_repeated_macro_frames() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].context_chains = vec![ContextChain {
+            kind: ContextChainKind::MacroExpansion,
+            frames: vec![
+                ContextFrame {
+                    label: "in expansion of macro 'READ_FIELD'".to_string(),
+                    path: Some("src/main.c".to_string()),
+                    line: Some(3),
+                    column: Some(25),
+                },
+                ContextFrame {
+                    label: "in expansion of macro 'READ_FIELD'".to_string(),
+                    path: Some("src/main.c".to_string()),
+                    line: Some(3),
+                    column: Some(25),
+                },
+            ],
+        }];
+
+        let lines = summarize_context(&request.document.diagnostics[0], request.profile);
+        assert_eq!(lines.len(), 1);
+        assert_eq!(
+            lines[0],
+            "macro: in expansion of macro 'READ_FIELD' @ src/main.c"
+        );
     }
 }

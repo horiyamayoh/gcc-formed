@@ -5,9 +5,10 @@
       "child_notes": [
         "each undeclared identifier is reported only once for each function it appears in"
       ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [
         "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
-        "macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c",
         "macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c"
       ],
       "excerpts": [

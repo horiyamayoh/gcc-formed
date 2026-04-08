@@ -3,6 +3,8 @@
     {
       "canonical_location": null,
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
       "context_lines": [
         "linker: preserved"
       ],
@@ -23,6 +25,8 @@
     {
       "canonical_location": null,
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
       "context_lines": [
         "linker: preserved"
       ],

@@ -26,6 +26,12 @@ pub fn emit(
                 lines.push(format!("--> {location}"));
             }
         }
+        if card.confidence_label == "possible" {
+            lines.push(
+                "note: wrapper confidence is low; original compiler wording is preserved below"
+                    .to_string(),
+            );
+        }
         if let Some(first_action) = card.first_action.as_ref() {
             lines.push(format!("help: {first_action}"));
         }
@@ -41,6 +47,9 @@ pub fn emit(
         }
         for note in &card.child_notes {
             lines.push(format!("note: {note}"));
+        }
+        for notice in &card.collapsed_notices {
+            lines.push(format!("note: {notice}"));
         }
         if matches!(request.profile, RenderProfile::Verbose)
             || matches!(request.debug_refs, DebugRefs::CaptureRef)

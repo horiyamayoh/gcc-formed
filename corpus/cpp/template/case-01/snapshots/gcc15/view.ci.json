@@ -7,6 +7,8 @@
         "template argument deduction/substitution failed:",
         "  deduced conflicting types for parameter 'T' ('int' and 'double')"
       ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [
         "template: candidate 1: 'template<class T> void takes_same(T, T)' @ src/main.cpp",
         "template: template argument deduction/substitution failed: @ src/main.cpp",

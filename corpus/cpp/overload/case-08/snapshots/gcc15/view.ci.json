@@ -7,6 +7,10 @@
         "conversion of argument 1 would be ill-formed:",
         "invalid conversion from 'const char*' to 'int'"
       ],
+      "collapsed_notices": [
+        "omitted 4 additional note(s)"
+      ],
+      "confidence_label": "certain",
       "context_lines": [],
       "excerpts": [
         {

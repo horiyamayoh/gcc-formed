@@ -6,5 +6,4 @@ why: 'missing_symbol' undeclared (first use in this function)
 | int main(void) { return FETCH_VALUE(); }
 include: In file included from src/wrapper.h:1, @ src/wrapper.h
 macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c
-macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c
 note: each undeclared identifier is reported only once for each function it appears in

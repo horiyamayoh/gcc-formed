@@ -1,5 +1,5 @@
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
-use diag_core::{DiagnosticNode, Ownership, Severity};
+use diag_core::{Confidence, DiagnosticNode, Ownership, Phase, SemanticRole, Severity};
 
 #[derive(Debug)]
 pub struct Selection {
@@ -42,13 +42,20 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
     }
 }
 
-fn sort_key(node: &DiagnosticNode) -> (u8, u8, usize) {
+fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, usize) {
     (
         severity_rank(&node.severity),
         ownership_rank(
             node.primary_location()
                 .and_then(|location| location.ownership.as_ref()),
         ),
+        confidence_rank(
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.confidence.as_ref()),
+        ),
+        phase_rank(&node.phase),
+        semantic_role_rank(&node.semantic_role),
         std::cmp::Reverse(node.message.raw_text.len()).0,
     )
 }
@@ -73,5 +80,42 @@ fn ownership_rank(ownership: Option<&Ownership>) -> u8 {
         Some(Ownership::Generated) => 2,
         Some(Ownership::System) => 1,
         _ => 0,
+    }
+}
+
+fn confidence_rank(confidence: Option<&Confidence>) -> u8 {
+    match confidence {
+        Some(Confidence::High) => 4,
+        Some(Confidence::Medium) => 3,
+        Some(Confidence::Low) => 2,
+        Some(Confidence::Unknown) => 1,
+        None => 0,
+    }
+}
+
+fn phase_rank(phase: &Phase) -> u8 {
+    match phase {
+        Phase::Parse => 9,
+        Phase::Semantic => 8,
+        Phase::Instantiate => 7,
+        Phase::Constraints => 6,
+        Phase::Analyze => 5,
+        Phase::Codegen => 4,
+        Phase::Assemble => 3,
+        Phase::Link => 2,
+        Phase::Driver | Phase::Preprocess | Phase::Optimize | Phase::Archive | Phase::Unknown => 1,
+    }
+}
+
+fn semantic_role_rank(role: &SemanticRole) -> u8 {
+    match role {
+        SemanticRole::Root => 7,
+        SemanticRole::Summary => 6,
+        SemanticRole::Help => 5,
+        SemanticRole::Supporting => 4,
+        SemanticRole::Candidate => 3,
+        SemanticRole::PathEvent => 2,
+        SemanticRole::Passthrough => 1,
+        SemanticRole::Unknown => 0,
     }
 }

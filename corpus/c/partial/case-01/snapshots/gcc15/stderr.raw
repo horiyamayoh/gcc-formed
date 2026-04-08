@@ -1,3 +1,3 @@
-/usr/bin/ld: /tmp/main.o: in function `main':
-main.c:(.text+0x9): undefined reference to `missing_symbol'
+/usr/bin/ld: /tmp/cco3yskN.o: in function `main':
+main.c:(.text+0x5): undefined reference to `missing_symbol'
 collect2: error: ld returned 1 exit status

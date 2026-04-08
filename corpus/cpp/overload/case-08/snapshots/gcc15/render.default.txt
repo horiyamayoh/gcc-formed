@@ -7,3 +7,4 @@ why: no matching function for call to 'takes_ref(const char*&)'
 note: candidate 1: 'void takes_ref(int&)' (near match)
 note: conversion of argument 1 would be ill-formed:
 note: invalid conversion from 'const char*' to 'int'
+note: omitted 4 additional note(s)

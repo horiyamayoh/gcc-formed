@@ -3,6 +3,8 @@
     {
       "canonical_location": "src/main.c:3:40",
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [
         "macro: src/main.c:3:40: note: in expansion of macro 'READ_FIELD' @ src/main.c"
       ],

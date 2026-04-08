@@ -3,6 +3,8 @@
     {
       "canonical_location": "src/main.c:2:19",
       "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
       "context_lines": [],
       "excerpts": [
         {
