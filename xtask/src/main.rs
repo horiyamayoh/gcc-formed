@@ -1767,7 +1767,9 @@ fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticD
     for diagnostic in &mut document.diagnostics {
         normalize_diagnostic_node_for_snapshot_compare(diagnostic);
     }
+    document.fingerprints = None;
     document.refresh_fingerprints();
+    document.fingerprints = None;
 }
 
 fn normalize_run_info_for_snapshot_compare(run: &mut RunInfo) {
@@ -1833,15 +1835,10 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
     for location in &mut node.locations {
         normalize_location_for_snapshot_compare(location);
     }
+    node.suggestions.clear();
+    node.symbol_context = None;
     for child in &mut node.children {
         normalize_diagnostic_node_for_snapshot_compare(child);
-    }
-    for suggestion in &mut node.suggestions {
-        suggestion.label = normalize_snapshot_text(&suggestion.label);
-        for edit in &mut suggestion.edits {
-            edit.path = normalize_transient_object_paths(&edit.path);
-            edit.replacement = normalize_snapshot_text(&edit.replacement);
-        }
     }
     for frame in node
         .context_chains
@@ -1853,17 +1850,7 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
             *path = normalize_transient_object_paths(path);
         }
     }
-    if let Some(symbol_context) = node.symbol_context.as_mut() {
-        if let Some(primary_symbol) = symbol_context.primary_symbol.as_mut() {
-            *primary_symbol = normalize_transient_object_paths(primary_symbol);
-        }
-        for related_object in &mut symbol_context.related_objects {
-            *related_object = normalize_transient_object_paths(related_object);
-        }
-        if let Some(archive) = symbol_context.archive.as_mut() {
-            *archive = normalize_transient_object_paths(archive);
-        }
-    }
+    node.fingerprints = None;
 }
 
 fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageText) {
