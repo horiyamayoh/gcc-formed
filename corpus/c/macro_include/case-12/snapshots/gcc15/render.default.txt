@@ -1,0 +1,9 @@
+error: error surfaced through macro/include context
+--> src/main.c:9:12
+help: inspect the user-owned macro invocation or include edge that reaches the failing line
+why: 'Counter' has no member named 'count'
+| src/main.c:9:12
+|     return OUTER_ACCESS(counter);
+include: In file included from src/wrapper.h:1, @ src/wrapper.h
+macro: src/config.h:2:29: note: in expansion of macro 'INNER_ACCESS' @ src/config.h
+macro: src/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS' @ src/main.c

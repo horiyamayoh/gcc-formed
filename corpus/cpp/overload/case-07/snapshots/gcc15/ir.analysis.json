@@ -1,0 +1,147 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:17: error: invalid conversion from 'const char*' to 'short int' [-fpermissive]\n    5 |     takes_short(\"x\");\n      |                 ^~~\n      |                 |\n      |                 const char*\nsrc/main.cpp:1:18: note: initializing argument 1 of 'void takes_short(short int)'\n    1 | void takes_short(short);\n      |                  ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 400,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5223,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "message_contains=invalid conversion"
+        ],
+        "rule_id": "rule.family.type_overload.message"
+      },
+      "fingerprints": {
+        "family": "6a2a5e104cee19b7cd847cc021698709de0696d15a43dbf7f2d52d88baaebc6a",
+        "raw": "6dfc7f826c76e7631d308e3dbf22bf07896113e1f1d07e6d7843c617e5d19a74",
+        "structural": "bcb0911ee938ebd56625edf2c15d3784edae442b79e826815879954acaa031e6"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 17,
+          "end_column": 20,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "invalid conversion from 'const char*' to 'short int'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "low",
+        "family": "unknown",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "initializing argument 1 of 'void takes_short(short int)'",
+        "matched_conditions": [
+          "no_family_rule_matched"
+        ],
+        "rule_id": "rule.family.unknown",
+        "suppression_reason": "generic_fallback"
+      },
+      "fingerprints": {
+        "family": "e1f81f2eeec82216cd3e5caaac1d91b70a9a055d5c73aa656a7db763cc350a17",
+        "raw": "aa73c4d7a4d40bdc6a0f07d075267e76fec3eed699e62de0c306715349ee6fa6",
+        "structural": "ba1906976e8a8efa85b18aad032f91f8f0f8942dd8caa590fb7cb5363f03e57b"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "column": 18,
+          "end_column": 23,
+          "line": 1,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "initializing argument 1 of 'void takes_short(short int)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "note"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
+    "raw": "665e1d74312138a597b3731bb86d586dc5c550e219581fbcdd200b2261d61590",
+    "structural": "4abbab1731c74777d79f197a5bc1562d5951b7555380225f9044c55a58a9f3f3"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

@@ -1,0 +1,147 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:10: error: expected ')' before '{' token\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\nsrc/main.c:5:1: error: expected expression before '}' token\n    5 | }\n      | ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 225,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 7005,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "604e1afd79870d277dc62d1d4d7023e5ec89084b0c23d6d491f0f2b5c5e4820d",
+        "raw": "49a8ee1e796cd1f7e8a3620fbdd04b2f9388de9565a2c8dad79e8c79b65ae002",
+        "structural": "a2eebdf2fcb16ca99979731ecd6e0bcc07687b9af58e71c69d2e0d8386991d3c"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 10,
+          "end_column": 11,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected ')' before '{{' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "ccb547fe60567ab18367c0836b511b22ef8baa9def27cb7bae718671585f4dde",
+        "raw": "ea5b0b3619d62000a2b9affe1f7523339a31b7e9e07941fccd4a159bcf010397",
+        "structural": "cc11e58ef0d723f0c45d063cc3e9db6b4b381de1a6bac42cbf665bcd4a616c5e"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "column": 1,
+          "end_column": 2,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected expression before '}}' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
+    "raw": "b1c3ae50d824f65fa07ec3f03b6592e5f867bee3583614f2b2e4fb7549805bab",
+    "structural": "220857b26d77c9176f0ecc780986fe853c7770235595caf71879e6faf627fcbd"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

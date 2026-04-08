@@ -1,0 +1,6 @@
+error: syntax error
+--> src/main.c:4:1
+help: fix the first parser error at the user-owned location
+why: expected declaration or statement at end of input
+| src/main.c:4:1
+| }

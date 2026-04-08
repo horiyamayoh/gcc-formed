@@ -1,0 +1,44 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:7:22",
+      "child_notes": [
+        "no matching function for call to 'Pair(int, const char [2])'",
+        "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
+        "template argument deduction/substitution failed:"
+      ],
+      "context_lines": [
+        "template: candidate 1: 'template<class T> Pair(T, T) -> Pair<T>' @ src/main.cpp",
+        "template: template argument deduction/substitution failed: @ src/main.cpp",
+        "template: deduced conflicting types for parameter 'T' ('int' and 'const char*') @ src/main.cpp",
+        "omitted 1 template frames"
+      ],
+      "excerpts": [
+        {
+          "lines": [
+            "    Pair value(1, \"x\");"
+          ],
+          "location": "src/main.cpp:7:22"
+        }
+      ],
+      "first_action": "start from the first user-owned template frame and match template arguments",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "context=template_instantiation",
+        "message_contains=template",
+        "child_message_contains=template",
+        "child_message_contains=deduction/substitution",
+        "child_message_contains=deduced conflicting"
+      ],
+      "raw_message": "class template argument deduction failed:",
+      "rule_id": "rule.family.template.context_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "template instantiation failed"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

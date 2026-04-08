@@ -1,0 +1,120 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:33: error: 'Box' has no member named 'missing_field'\n    1 | #define READ_MISSING(box) ((box).missing_field)\n      |                                 ^\nsrc/main.c:9:12: note: in expansion of macro 'READ_MISSING'\n    9 |     return READ_MISSING(box);\n      |            ^~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 403,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5668,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "label": "In file included from src/wrapper.h:1,",
+              "line": 1,
+              "path": "src/wrapper.h"
+            }
+          ],
+          "kind": "include"
+        },
+        {
+          "frames": [
+            {
+              "column": 12,
+              "label": "src/main.c:9:12: note: in expansion of macro 'READ_MISSING'",
+              "line": 9,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "4a27730055a5798410dbc415f33004733e8ecaeca16d58ca1e254d9c95409eb5",
+        "raw": "daf01a75b3b8077e90d5ca8953352a4a190554729538855d19ba0c47769d4f14",
+        "structural": "4c7b2c9788f4214ace2ffd9e0cf09303161efe1237ac21fa6fbdb9cdbf900300"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 12,
+          "end_column": 13,
+          "line": 9,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "'Box' has no member named 'missing_field'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "9d6956eef194bed193aab19d183b66b6ce0d1a63fdc2d6cab24132c82237053e",
+    "structural": "023594d6db779be2d6a2b64d7e461999f8d464e66d75a47ac8a16101e7db5a66"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

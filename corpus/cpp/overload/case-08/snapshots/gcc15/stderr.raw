@@ -1,0 +1,25 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'
+    6 |     takes_ref(value);
+      |     ~~~~~~~~~^~~~~~~
+src/main.cpp:6:14: note: there are 2 candidates
+src/main.cpp:1:6: note: candidate 1: 'void takes_ref(int&)' (near match)
+    1 | void takes_ref(int&);
+      |      ^~~~~~~~~
+src/main.cpp:1:6: note: conversion of argument 1 would be ill-formed:
+src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+    6 |     takes_ref(value);
+      |               ^~~~~
+      |               |
+      |               const char*
+src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'
+src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)
+    2 | void takes_ref(long&);
+      |      ^~~~~~~~~
+src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:
+src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]
+    6 |     takes_ref(value);
+      |               ^~~~~
+      |               |
+      |               const char*
+src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'

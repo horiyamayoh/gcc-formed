@@ -43,6 +43,12 @@ If you touch release packaging, install flows, or release metadata, also validat
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
 - Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
 
+## Corpus Workflow
+
+- Keep the hand-authored corpus within the current beta-bar target described in [corpus/README.md](corpus/README.md): 80 to 120 fixtures while preserving the composition quota from `quality-corpus-test-gate-spec.md`.
+- When a harvested trace graduates into the corpus, sanitize it first, minimize it to a bounded repro, then commit fixture metadata and GCC 15 snapshots in the same change.
+- Prefer semantic expectations that catch family, fallback, provenance, and first-action regressions without overfitting transient line or quote drift.
+
 ## Submission Notes
 
 - Keep pull requests narrow and decision-complete.

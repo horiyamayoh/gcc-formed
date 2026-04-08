@@ -1,0 +1,35 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:6:5",
+      "child_notes": [
+        "candidate 1: 'void takes_ref(int&)' (near match)",
+        "conversion of argument 1 would be ill-formed:",
+        "invalid conversion from 'const char*' to 'int'"
+      ],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    takes_ref(value);"
+          ],
+          "location": "src/main.cpp:6:5"
+        }
+      ],
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=no matching"
+      ],
+      "raw_message": "no matching function for call to 'takes_ref(const char*&)'",
+      "rule_id": "rule.family.type_overload.message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "type or overload mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

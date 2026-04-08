@@ -1,0 +1,94 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:7:17: error: incompatible types when initializing type 'int' using type 'struct Box'\n    7 |     int value = box;\n      |                 ^~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 185,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3420,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "7f9999923a0f24727678883f24f09199ee49c9eab36d8be7e8ff463f28f7d86e",
+        "raw": "179a3603f44ad1d06707037c018765067095674ac892a84c8971d39bc284bab0",
+        "structural": "6e464aa6361c94dccc63fb80f58b0d2ee7987ee3894d48348564424a290fd491"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 17,
+          "end_column": 20,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "incompatible types when initializing type 'int' using type 'struct Box'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "45cfc761c2e762f2a18b0311f9b76c673e7d1980ce139739bd620494c88d5c78",
+    "structural": "b49df53ac814fe49901f79f60df188d19bf3da2a9657c2818133a26c64954825"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

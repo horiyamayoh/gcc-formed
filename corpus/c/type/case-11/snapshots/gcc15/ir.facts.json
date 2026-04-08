@@ -1,0 +1,127 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 444,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4949,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "993d9fa67b90caa0aadf09099b167814afd8cf33b403e462231266c437e474aa",
+            "raw": "df6e71d3adadee8e5e7abf7f2a42f277f19dea97caaea8d38d14a0196b41fff2",
+            "structural": "f804cd0f179fcf94216b8d2b1fd8bb7242d791f59b75a1310851c389612b8cd9"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 20,
+              "end_column": 30,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.c"
+            }
+          ],
+          "message": {
+            "raw_text": "expected 'int *' but argument is of type 'struct Box *'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "3592aa39ab9b13b68c6eb0af8001ff6c27bed90a439cc28e531ecda524bcac7b",
+        "raw": "be79cfecd23523e17d91ae042e08c191798807ad1a04c21b25108296d4ff1778",
+        "structural": "d19ffc4c0173d96e54ce41ed8112f239f3fdb35098b137a436fba5596a5c5fc3"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 19,
+          "end_column": 23,
+          "line": 9,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "passing argument 1 of 'takes_int_ptr' from incompatible pointer type"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "077304a081a2c860c5192e10efa060b450579e4779dcbe5d0056b792f37ec64d",
+    "structural": "a2b6e7b49e45e7b52e4e70802ca85ceecb059fec46471237a9ac52dc1897af34"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

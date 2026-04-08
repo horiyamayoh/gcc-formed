@@ -1,0 +1,130 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:33: error: 'Box' has no member named 'missing_field'\n    1 | #define READ_MISSING(box) ((box).missing_field)\n      |                                 ^\nsrc/main.c:9:12: note: in expansion of macro 'READ_MISSING'\n    9 |     return READ_MISSING(box);\n      |            ^~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 403,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5668,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "macro_include",
+        "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "headline": "error surfaced through macro/include context",
+        "matched_conditions": [
+          "context=macro_or_include"
+        ],
+        "rule_id": "rule.family.macro_include.context_or_message"
+      },
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "label": "In file included from src/wrapper.h:1,",
+              "line": 1,
+              "path": "src/wrapper.h"
+            }
+          ],
+          "kind": "include"
+        },
+        {
+          "frames": [
+            {
+              "column": 12,
+              "label": "src/main.c:9:12: note: in expansion of macro 'READ_MISSING'",
+              "line": 9,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "d233e77377443463da664a19c09e120634caf6d4d7c692599f9104ff306efadc",
+        "raw": "daf01a75b3b8077e90d5ca8953352a4a190554729538855d19ba0c47769d4f14",
+        "structural": "ca91616f1bf490bca4e51e7c54ec304dce0e15e42408560d521f455dc9f77a71"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 12,
+          "end_column": 13,
+          "line": 9,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "'Box' has no member named 'missing_field'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
+    "raw": "ce0948b86492019bc5e0e5c4632916f5747f6891fb283bb3c1f898b96a3a0607",
+    "structural": "9e8e938d3fa0b35950f76100f1f6039f63f1a53abd1f5a9ade34eafd4d6154aa"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

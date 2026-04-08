@@ -1,0 +1,7 @@
+int duplicate_symbol(void) {
+    return 1;
+}
+
+int main(void) {
+    return duplicate_symbol();
+}

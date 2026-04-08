@@ -1,0 +1,33 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:9:19",
+      "child_notes": [
+        "expected 'int *' but argument is of type 'struct Box *'"
+      ],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    takes_int_ptr(&box);"
+          ],
+          "location": "src/main.c:9:19"
+        }
+      ],
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=passing argument"
+      ],
+      "raw_message": "passing argument 1 of 'takes_int_ptr' from incompatible pointer type",
+      "rule_id": "rule.family.type_overload.message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "type or overload mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

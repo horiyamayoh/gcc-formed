@@ -1,0 +1,314 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:7:22: error: class template argument deduction failed:\n    7 |     Pair value(1, \"x\");\n      |                      ^\nsrc/main.cpp:7:22: error: no matching function for call to 'Pair(int, const char [2])'\nsrc/main.cpp:7:22: note: there are 2 candidates\nsrc/main.cpp:3:5: note: candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'\n    3 |     Pair(T, T) {}\n      |     ^~~~\nsrc/main.cpp:3:5: note: template argument deduction/substitution failed:\nsrc/main.cpp:7:22: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')\n    7 |     Pair value(1, \"x\");\n      |                      ^\nsrc/main.cpp:2:8: note: candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'\n    2 | struct Pair {\n      |        ^~~~\nsrc/main.cpp:2:8: note: candidate expects 1 argument, 2 provided\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 850,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 10143,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "5e6c3f44dfc1250008ebd8998c26665ca1aa239c1e4dd8e0748bed5ad99a3699",
+            "raw": "ff00e2c8a0879c2c6b786bbc970f68bc432cc616bbf2ac3b3e5c3dc07d1185ef",
+            "structural": "670e7230ed2bca277edaf318d42f455ba775b07c551f0a0a4ed7fcc6bb8635f0"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "column": 22,
+              "end_column": 23,
+              "line": 7,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "no matching function for call to 'Pair(int, const char [2])'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f61532cea1e9ad424f24a9223297bd7b373fa863e244a23980de30e839f97ae2",
+            "raw": "ff18d2705971f4cfa77f32b5016c21002b1e16dc1b28190833dd5b0b7fc186a4",
+            "structural": "e5a7d1c7011a64ec51cd3e6c147cb799e7db6ce1c82c14c2e57029e116a06eac"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 5,
+              "end_column": 9,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "6238b907b9e38ebde162032f3e6321cd398c3cc7d2bf013b0f2d0e4c320ef055"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 5,
+              "end_column": 9,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "515026075d0e0c7be715ba95de9d9c3b6937ce4aa0a5dcf874ca01a17f994a14",
+            "raw": "e055c5b2d55f0472dde830fdcad5ac6efb0421a8e52f0b485ce97f32eeccf64a",
+            "structural": "37e6164ebf056b7519d7e983c82599b9564e1454accb8c2bff624d8bc3fa4540"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "column": 22,
+              "end_column": 23,
+              "line": 7,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "  deduced conflicting types for parameter 'T' ('int' and 'const char*')"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "37a19a8d428d93a81963d021090de161bf7cc73a21d4e9c2f3d851a9ee630a4b",
+            "raw": "7215558af083a839290898bc7c85bcdae5e7fdee7b9bec7ad6582ad0cb21b208",
+            "structural": "3c6cc5f1fc6f543bc4bf9c27b992695c53cf3136190a271aa831db68b57c2a5d"
+          },
+          "id": "sarif-0-0-related-5",
+          "locations": [
+            {
+              "column": 8,
+              "end_column": 12,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "09c1a5594f5c336a9c47e704d6c028bf0c2ac9490bb5bc64ee6f1250ec4c6d90",
+            "raw": "96b0a70fd1daf93ee95ffd842223afc0a4eb9c18c34f7a6232343ee23bc86580",
+            "structural": "9fcb1210ccb729b6e990ff9fccf00d899b4fa6e200fcfa75a376b5d6896a9aaa"
+          },
+          "id": "sarif-0-0-related-6",
+          "locations": [
+            {
+              "column": 8,
+              "end_column": 12,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate expects 1 argument, 2 provided"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 5,
+              "label": "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
+              "line": 3,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 3,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 22,
+              "label": "deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+              "line": 7,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 8,
+              "label": "candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'",
+              "line": 2,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "f29fe89475c6423f37dfbb4b77da01dcf8c79c487fae9d5805da8e6be09069f8",
+        "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
+        "structural": "0b37ae12987fecc195860b6c2fa5db4b7702193ac3e956bec8f197cb7ddb6820"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 22,
+          "end_column": 23,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "class template argument deduction failed:"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "fb8d717a006d416bc948d84ee3ef78fd15e68a03587c6a77fb15ec565670b361",
+    "structural": "5779de3f3b4310d8e5075026694e9699c7c270c4a854e33a3e7b5d60704906c9"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

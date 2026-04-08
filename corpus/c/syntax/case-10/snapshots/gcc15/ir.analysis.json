@@ -1,0 +1,187 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:26: error: expected '}' before ';' token\n    2 |     int values[2] = {1, 2;\n      |                     ~    ^\nsrc/main.c:4:1: error: expected ',' or ';' at end of input\n    4 | }\n      | ^\nsrc/main.c:4:1: error: expected declaration or statement at end of input\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 308,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 6661,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "e5e5380bdea9ec665158cc18b81bd1f7ac351307125d66cd1899d4948f3cbd8c",
+        "raw": "c325ce1ab487532c58d61baca170572bb8d2f085dd88ea8f271f5fdc097debb1",
+        "structural": "a4f6f6c04a1b4bbad20520b3ad21bc151667a1b19fd4e93bc247f38f57c32759"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 26,
+          "end_column": 27,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected '}}' before ';' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "1f6b3d794b5ad468fb38b8da1d3641df94c0c2dbebb3d226e80b30eb4f227ad3",
+        "raw": "fc3ebac37cc8eac98ef430b53abdb4068cdec47fb2554165cb4d4e9ba8f164b2",
+        "structural": "de2da96eed023bf8a33a07688e0e73585bdb0889959e0ab784523eee6bb652b7"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "column": 1,
+          "end_column": 2,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected ',' or ';' at end of input"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected"
+        ],
+        "rule_id": "rule.family.syntax.message"
+      },
+      "fingerprints": {
+        "family": "62ec51a69ab1fbc4dbb6d42aa20622207af6e4bc1e7c4174cda1e32ba5ae02f8",
+        "raw": "5f927caf8e2a26f37435e5ce135c9c0277c8428a617841c5134b747badca2381",
+        "structural": "fa19199ce87f007792dbeac22a4654de9030020e0274825ed4b928967607286f"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "column": 1,
+          "end_column": 2,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected declaration or statement at end of input"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
+    "raw": "b6a63fa0d751bad0b353d3e533637405e0231bd9ce2d3b54aa5f2e94ca8be899",
+    "structural": "8d7fd49910e8dc51cf50c5257e7557472396da489d7abeeae670ed2c4d63cbdb"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

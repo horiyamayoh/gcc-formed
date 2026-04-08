@@ -1,0 +1,345 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'\n    6 |     takes_ref(value);\n      |     ~~~~~~~~~^~~~~~~\nsrc/main.cpp:6:14: note: there are 2 candidates\nsrc/main.cpp:1:6: note: candidate 1: 'void takes_ref(int&)' (near match)\n    1 | void takes_ref(int&);\n      |      ^~~~~~~~~\nsrc/main.cpp:1:6: note: conversion of argument 1 would be ill-formed:\nsrc/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*\nsrc/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'\nsrc/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)\n    2 | void takes_ref(long&);\n      |      ^~~~~~~~~\nsrc/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:\nsrc/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*\nsrc/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1189,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 12692,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "f840285381e3eb1aedd6178485fe28543bbc3fd00fe91ca62f72868d117e9fb1",
+            "raw": "846c6239c3f4f1a0875c6216a86209cca13169760312c3362da67c37bd34c45b",
+            "structural": "c68ace53a49289da42b5f35db21f31a61db3efee396c4d81271ec00871082463"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'void takes_ref(int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
+            "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
+            "structural": "72ebdc5ae1791f9c40d323ea02b1d5730ac1bb86b715c92ad4c2b97575fc7567"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "12bb5280200d29d987a6706e7bb4010fac8a727408f9b156ecfdd2fae96c4254",
+            "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
+            "structural": "a850eede3431b493fca6264533b8773ed481bc663f815f4d3bfd68337fde3f26"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "invalid conversion from 'const char*' to 'int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "4a48fd23e0b2907f206f81a49108ab0a3e3da35aefb692a92dc62a341a5b8f59",
+            "raw": "3f46fa02fdb4d3ce87692d3acfdb008113021e426612ec939df434e40c445fce",
+            "structural": "3878980279ab80ed6fa806dc346326096ab615f5fd038d892fad9cfb7943f9b9"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "cannot bind rvalue '(int)value' to 'int&'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "315b9d13eb2c35f845afb7694903cb4d1760055e9f742c475ca0cdc4c1500dd0",
+            "raw": "aeead032b9e45607e06e6557537835b0dcc43c6ce40c0247b9182b3f58c13241",
+            "structural": "26f34b05249964cc7e9eecad0282dd79e3f9905ad3d9b9bf4add55f442b76c70"
+          },
+          "id": "sarif-0-0-related-5",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 2: 'void takes_ref(long int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
+            "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
+            "structural": "851d1d73eb0f0258edab71afebf690c5b36663abd0c63841eb48a84dce43ceae"
+          },
+          "id": "sarif-0-0-related-6",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "8960c8c8d48528f3944bba75d1758dfcca38bf97c825748c636e5ed424a3add1",
+            "raw": "dda2415f5a8b50911539da02f5603cf1616293ae5ede2648549b9b205b5f3806",
+            "structural": "2d1575c92e8cfb8c62c40d5d34d964bad72e9c5b9f6ebeeab4df398d8ae2fc39"
+          },
+          "id": "sarif-0-0-related-7",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "invalid conversion from 'const char*' to 'long int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "ff8f2511a3e3ce7d22a38bee35824b2b00412d4d74c8b93c9c586b24d0a751dc",
+            "raw": "99acf3dd425e542772622c50bce1c4855b5ebb8ee701ebf8a66b0adc61b0eea0",
+            "structural": "36fd4441d692d2611de10807f377cfa4fff917f9bf80879e2c51bac0228366ba"
+          },
+          "id": "sarif-0-0-related-8",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "cannot bind rvalue '(long int)value' to 'long int&'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "35bac6ba8e449a24954582112bce5773d02e29414e02e2bd62b43e959cea9280",
+        "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
+        "structural": "063de25e85a3d2d9ba1b1189efa087ce4a3db4d1ca39db8a81b2d412e04b60a3"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 21,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to 'takes_ref(const char*&)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "f5c9cbc4eaad28116065a8e37cfeba31280ceca838dab2b6d968d3350d54c903",
+    "structural": "f21a058edfe0a6f38638475de66e6439cd771381133eafab3a27ba868d6679e2"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

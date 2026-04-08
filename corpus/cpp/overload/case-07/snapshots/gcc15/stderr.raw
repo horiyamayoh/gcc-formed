@@ -1,0 +1,9 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:17: error: invalid conversion from 'const char*' to 'short int' [-fpermissive]
+    5 |     takes_short("x");
+      |                 ^~~
+      |                 |
+      |                 const char*
+src/main.cpp:1:18: note: initializing argument 1 of 'void takes_short(short int)'
+    1 | void takes_short(short);
+      |                  ^~~~~

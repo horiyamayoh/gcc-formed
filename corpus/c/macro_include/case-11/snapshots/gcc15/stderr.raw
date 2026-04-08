@@ -1,0 +1,9 @@
+In file included from src/wrapper.h:1,
+                 from src/main.c:1:
+src/main.c: In function 'main':
+src/config.h:1:33: error: 'Box' has no member named 'missing_field'
+    1 | #define READ_MISSING(box) ((box).missing_field)
+      |                                 ^
+src/main.c:9:12: note: in expansion of macro 'READ_MISSING'
+    9 |     return READ_MISSING(box);
+      |            ^~~~~~~~~~~~

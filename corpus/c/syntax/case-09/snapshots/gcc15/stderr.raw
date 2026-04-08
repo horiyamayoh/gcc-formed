@@ -1,0 +1,8 @@
+src/main.c: In function 'main':
+src/main.c:2:10: error: expected ')' before '{' token
+    2 |     if (1 {
+      |        ~ ^~
+      |          )
+src/main.c:5:1: error: expected expression before '}' token
+    5 | }
+      | ^

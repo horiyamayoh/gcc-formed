@@ -1,0 +1,31 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:4:1",
+      "child_notes": [],
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "}"
+          ],
+          "location": "src/main.c:4:1"
+        }
+      ],
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "sarif-0-2",
+      "matched_conditions": [
+        "message_contains=expected"
+      ],
+      "raw_message": "expected declaration or statement at end of input",
+      "rule_id": "rule.family.syntax.message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

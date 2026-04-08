@@ -1,0 +1,439 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'\n    6 |     takes_ref(value);\n      |     ~~~~~~~~~^~~~~~~\nsrc/main.cpp:6:14: note: there are 2 candidates\nsrc/main.cpp:1:6: note: candidate 1: 'void takes_ref(int&)' (near match)\n    1 | void takes_ref(int&);\n      |      ^~~~~~~~~\nsrc/main.cpp:1:6: note: conversion of argument 1 would be ill-formed:\nsrc/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*\nsrc/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'\nsrc/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)\n    2 | void takes_ref(long&);\n      |      ^~~~~~~~~\nsrc/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:\nsrc/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*\nsrc/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1189,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 12692,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "message_contains=no matching"
+        ],
+        "rule_id": "rule.family.type_overload.message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
+          },
+          "fingerprints": {
+            "family": "a6a8093e9730dfd23fd0aaf076302b34b9c238f541650cca15709441c46f64fc",
+            "raw": "846c6239c3f4f1a0875c6216a86209cca13169760312c3362da67c37bd34c45b",
+            "structural": "a2eaa4c53096fce7aab59abed9ec540ac0b156dcd12e524ab7fb85362dbfa387"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'void takes_ref(int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "conversion of argument 1 would be ill-formed:",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
+            "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
+            "structural": "a803708b214f7042ab78f55ab4701b8551da9374214d4a66e7f8f5546f2c8cd4"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=invalid conversion"
+            ],
+            "rule_id": "rule.family.type_overload.message"
+          },
+          "fingerprints": {
+            "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
+            "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
+            "structural": "9b82ab284f032ae59da419f7c54424c7e8dc1affd1dd9848e78b6932701fbf7d"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "invalid conversion from 'const char*' to 'int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "cannot bind rvalue '(int)value' to 'int&'",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "4a48fd23e0b2907f206f81a49108ab0a3e3da35aefb692a92dc62a341a5b8f59",
+            "raw": "3f46fa02fdb4d3ce87692d3acfdb008113021e426612ec939df434e40c445fce",
+            "structural": "b6790fef588489831ad49de740483aa01fdc6c2ed92f70016b8c3c8080d9cff1"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "cannot bind rvalue '(int)value' to 'int&'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate"
+            ],
+            "rule_id": "rule.family.type_overload.message"
+          },
+          "fingerprints": {
+            "family": "cfdaf730b0afd1f2553293ce3a5ddc1e133638848606ca98be5a014c1011beba",
+            "raw": "aeead032b9e45607e06e6557537835b0dcc43c6ce40c0247b9182b3f58c13241",
+            "structural": "abd12c19d2bfbabda1df090f8b143613f07adabe5366d7817707c1d955785634"
+          },
+          "id": "sarif-0-0-related-5",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 2: 'void takes_ref(long int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "conversion of argument 1 would be ill-formed:",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
+            "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
+            "structural": "52200937e206c9c5bd1fc0ce1f4f11e198673bbcc80b9f0d74fa1d7b09fff884"
+          },
+          "id": "sarif-0-0-related-6",
+          "locations": [
+            {
+              "column": 6,
+              "end_column": 15,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "high",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=invalid conversion"
+            ],
+            "rule_id": "rule.family.type_overload.message"
+          },
+          "fingerprints": {
+            "family": "fff3321b2d8c701ef142339d8eee359a99c34c2d5d9cc972c3479be43164a734",
+            "raw": "dda2415f5a8b50911539da02f5603cf1616293ae5ede2648549b9b205b5f3806",
+            "structural": "05001cea7ab46b48dd5c4af6abb1ae26fc8bf04143645b52b969bc012705c8f6"
+          },
+          "id": "sarif-0-0-related-7",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "invalid conversion from 'const char*' to 'long int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "cannot bind rvalue '(long int)value' to 'long int&'",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "ff8f2511a3e3ce7d22a38bee35824b2b00412d4d74c8b93c9c586b24d0a751dc",
+            "raw": "99acf3dd425e542772622c50bce1c4855b5ebb8ee701ebf8a66b0adc61b0eea0",
+            "structural": "c47938b73a4b705d0c068489ed2f2fd1ecff1d93ec3eecb891dcf5e2069eda2c"
+          },
+          "id": "sarif-0-0-related-8",
+          "locations": [
+            {
+              "column": 15,
+              "end_column": 20,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp"
+            }
+          ],
+          "message": {
+            "raw_text": "cannot bind rvalue '(long int)value' to 'long int&'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "c27aaced0b9e5541c8fa546e86f31f2cee31851c688875a65347f78d48358fb8",
+        "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
+        "structural": "8c25b21f403ec4ea4a13dfd0e0e27b142402600afbc78714bb3853af4e4a8aef"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 5,
+          "end_column": 21,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to 'takes_ref(const char*&)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "204c3082fab42d5556def7ccc80cd3be306d29e398c11ed2119979e5953c04b3",
+    "structural": "124dae35eb20c128529a19e0194cb6ef8916634b40d9b79a02d743b0edef09de"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

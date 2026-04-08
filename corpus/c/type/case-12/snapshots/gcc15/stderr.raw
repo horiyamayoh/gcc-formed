@@ -1,0 +1,4 @@
+src/main.c: In function 'main':
+src/main.c:7:17: error: incompatible types when initializing type 'int' using type 'struct Box'
+    7 |     int value = box;
+      |                 ^~~

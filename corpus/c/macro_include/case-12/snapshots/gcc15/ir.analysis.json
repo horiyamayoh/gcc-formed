@@ -1,0 +1,136 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:37: error: 'Counter' has no member named 'count'\n    1 | #define INNER_ACCESS(value) ((value).count)\n      |                                     ^\nsrc/config.h:2:29: note: in expansion of macro 'INNER_ACCESS'\n    2 | #define OUTER_ACCESS(value) INNER_ACCESS(value)\n      |                             ^~~~~~~~~~~~\nsrc/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS'\n    9 |     return OUTER_ACCESS(counter);\n      |            ^~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 570,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5684,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "macro_include",
+        "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "headline": "error surfaced through macro/include context",
+        "matched_conditions": [
+          "context=macro_or_include"
+        ],
+        "rule_id": "rule.family.macro_include.context_or_message"
+      },
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "label": "In file included from src/wrapper.h:1,",
+              "line": 1,
+              "path": "src/wrapper.h"
+            }
+          ],
+          "kind": "include"
+        },
+        {
+          "frames": [
+            {
+              "column": 29,
+              "label": "src/config.h:2:29: note: in expansion of macro 'INNER_ACCESS'",
+              "line": 2,
+              "path": "src/config.h"
+            },
+            {
+              "column": 12,
+              "label": "src/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS'",
+              "line": 9,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "fd7ef7326df8ac818fc71397a829fcd8c3162983dcf4e173270534ba6ae81b70",
+        "raw": "7837484658def323d49ec677857a7e0720c09ada0397b0ff9203885bd6abf0a6",
+        "structural": "d34b05accf182962e24168398809fe1d3aa42e125ecb6dae5c4288b62b673d89"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 12,
+          "end_column": 13,
+          "line": 9,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "'Counter' has no member named 'count'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
+    "raw": "780951f4ee883426c08ee62026cb17d5f97275e464ee261a9d0a8e53c667e6c7",
+    "structural": "ebd8def994868bb7aac18e2f57b5a92f6744d9c6d3d13b4c5d09d3b81107a447"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

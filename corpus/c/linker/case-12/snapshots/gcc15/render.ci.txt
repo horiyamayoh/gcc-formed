@@ -1,0 +1,5 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: undefined reference to `missing_symbol`
+help: define the missing symbol or link the object/library that provides it
+why: main.c:(.text+0x5): undefined reference to `missing_symbol'
+linker: preserved

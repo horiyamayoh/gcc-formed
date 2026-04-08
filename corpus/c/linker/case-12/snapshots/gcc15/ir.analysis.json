@@ -1,0 +1,158 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/ccXgV7uK.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 153,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 2187,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.file_format_or_relocation",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link",
+          "existing_specific_family=linker.file_format_or_relocation"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
+        "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
+        "structural": "8d64592ab76890883065d290e0cf326863036c6eac9954c9cb2e23e803af66d3"
+      },
+      "id": "residual-0",
+      "message": {
+        "raw_text": "collect2: error: ld returned 1 exit status"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.undefined_reference",
+        "first_action_hint": "define the missing symbol or link the object/library that provides it",
+        "headline": "undefined reference to `missing_symbol`",
+        "matched_conditions": [
+          "phase=link",
+          "message_contains=undefined reference",
+          "existing_specific_family=linker.undefined_reference"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
+        "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
+        "structural": "4a3c9abc2580aa800da4cf94ecbd4ca6f0d9d5fa67a5f20e3c19399d9beb8a2e"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error",
+      "symbol_context": {
+        "primary_symbol": "missing_symbol"
+      }
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "21f4f3692469c9d75e0cda967ec5f6dce4efc11f7e5431aa7ab5db4604873680",
+    "raw": "058a998344be5f7d9765f07bfb14ea99160d89b1f1ec5fdd5cbb0fc346cc6293",
+    "structural": "6e3e52961bc96058a7ec5879bed0433df262ae43ca6b2238dc89927e348c1d28"
+  },
+  "integrity_issues": [
+    {
+      "message": "SARIF contained no diagnostic results",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "severity": "warning",
+      "stage": "parse"
+    }
+  ],
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

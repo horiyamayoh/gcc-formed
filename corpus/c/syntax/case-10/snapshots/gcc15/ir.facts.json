@@ -1,0 +1,156 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:26: error: expected '}' before ';' token\n    2 |     int values[2] = {1, 2;\n      |                     ~    ^\nsrc/main.c:4:1: error: expected ',' or ';' at end of input\n    4 | }\n      | ^\nsrc/main.c:4:1: error: expected declaration or statement at end of input\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 308,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 6661,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "cf0dd364ebc6ec5196daa20260ea3171bf0ca2561e8ce8e0f7c7ae6b11dfda74",
+        "raw": "c325ce1ab487532c58d61baca170572bb8d2f085dd88ea8f271f5fdc097debb1",
+        "structural": "ffd46ec7ccc985df6737299d3a320a0d9d399fd6800825b7211ec42db3422a34"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 26,
+          "end_column": 27,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected '}}' before ';' token"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "22bb3118cda2d98797637c640372dcc42d2aff2e59f973b7f14f2a659db11ffb",
+        "raw": "fc3ebac37cc8eac98ef430b53abdb4068cdec47fb2554165cb4d4e9ba8f164b2",
+        "structural": "57911d1b4f4019378da951024dab2ae5a7ba9bf9887d8e2cb7e6dab5725b947f"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "column": 1,
+          "end_column": 2,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected ',' or ';' at end of input"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "46a04b890912282c689fd06c8c1ebc68c577b3386e4175ba2b6ce285871aa520",
+        "raw": "5f927caf8e2a26f37435e5ce135c9c0277c8428a617841c5134b747badca2381",
+        "structural": "cf648e248c40b38a239585b93c2ea7788e86fbe02bec13e136e4f5de4fd38531"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "column": 1,
+          "end_column": 2,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "expected declaration or statement at end of input"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "685e2fe96cbf23d6fb048d4c6329060d81711356d055125f17b211f2e07b63cc",
+    "structural": "e2023c2e2db1d66f63e20599c6bb0da88ab149f15354e24de7884936d64e8e2d"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

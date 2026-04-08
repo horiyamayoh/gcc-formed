@@ -1,0 +1,12 @@
+In file included from src/wrapper.h:1,
+                 from src/main.c:1:
+src/main.c: In function 'main':
+src/config.h:1:37: error: 'Counter' has no member named 'count'
+    1 | #define INNER_ACCESS(value) ((value).count)
+      |                                     ^
+src/config.h:2:29: note: in expansion of macro 'INNER_ACCESS'
+    2 | #define OUTER_ACCESS(value) INNER_ACCESS(value)
+      |                             ^~~~~~~~~~~~
+src/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS'
+    9 |     return OUTER_ACCESS(counter);
+      |            ^~~~~~~~~~~~

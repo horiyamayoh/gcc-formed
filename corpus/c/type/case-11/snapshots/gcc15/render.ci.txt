@@ -1,0 +1,6 @@
+src/main.c:9:19: error: type or overload mismatch
+help: compare the expected type and actual argument at the call site
+why: passing argument 1 of 'takes_int_ptr' from incompatible pointer type
+| src/main.c:9:19
+|     takes_int_ptr(&box);
+note: expected 'int *' but argument is of type 'struct Box *'

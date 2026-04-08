@@ -1,0 +1,8 @@
+src/main.c: In function 'main':
+src/main.c:2:26: error: expected '}' before ';' token
+    2 |     int values[2] = {1, 2;
+      |                     ~    ^
+src/main.c:4:1: error: expected ',' or ';' at end of input
+    4 | }
+      | ^
+src/main.c:4:1: error: expected declaration or statement at end of input

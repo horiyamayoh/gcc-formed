@@ -43,6 +43,8 @@ const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/linker/case-03",
 ];
 
+const MINIMUM_CURATED_CORPUS_SIZE: usize = 80;
+
 const SHASUMS_SIGNATURE_FILE: &str = "SHA256SUMS.sig";
 
 #[derive(Debug, Parser)]
@@ -909,7 +911,7 @@ fn run_replay(
         validate_fixture(fixture)?;
     }
     let counts = family_counts(&fixtures);
-    enforce_minimum_family_counts(&counts)?;
+    enforce_minimum_corpus_shape(fixtures.len(), &counts)?;
     let selected = select_fixtures(&fixtures, fixture_filter, family_filter, subset);
     if selected.is_empty() {
         return Err("no fixtures matched replay selection".into());
@@ -4418,9 +4420,16 @@ fn run(binary: &str, args: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-fn enforce_minimum_family_counts(
+fn enforce_minimum_corpus_shape(
+    fixture_count: usize,
     counts: &std::collections::BTreeMap<String, usize>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if fixture_count < MINIMUM_CURATED_CORPUS_SIZE {
+        return Err(format!(
+            "curated corpus below beta bar: expected >= {MINIMUM_CURATED_CORPUS_SIZE} fixtures, got {fixture_count}"
+        )
+        .into());
+    }
     let minimums = [
         ("syntax", 8_usize),
         ("type", 10),

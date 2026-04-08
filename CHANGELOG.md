@@ -12,11 +12,13 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 - Added `REPORT_ROOT/gate/build-environment.json` so PR and nightly artifacts retain the host/container `rustc`, `cargo`, Docker, and GCC versions used by the gate.
 - Added representative acceptance and snapshot report output to `cargo xtask replay` / `cargo xtask snapshot` so CI can retain normalized IR, raw stderr, rendered output, and failure summaries as artifacts.
 - Added reason-coded fallback taxonomy to trace and replay/snapshot outputs so unsupported tiers, sink conflicts, SARIF loss/parse failures, and renderer fallback decisions can be counted instead of reported as ad hoc strings.
+- Added 12 new GCC 15 fixtures across syntax, type mismatch, macro/include, linker, overload, and template families so the hand-authored corpus now reaches the 80-fixture beta bar.
 - Added `SUPPORT-BOUNDARY.md` as the canonical wording for the current `v1alpha` / `0.1.x` support boundary.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
 - Added three more promoted representative fixtures so the GCC 15 acceptance/snapshot gate now covers multiple syntax, type-overload, and linker cases instead of a single exemplar.
 - Added `VERSIONING.md` and `ADR-0021` to separate maturity labels, artifact semver, and release channels in the public documentation.
+- Added `corpus/README.md` to document the harvested-trace to committed-fixture promotion flow.
 
 ### Changed
 

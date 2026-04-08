@@ -1,0 +1,15 @@
+src/main.cpp: In instantiation of 'void call_expect(T) [with T = int]':
+src/main.cpp:11:16:   required from here
+   11 |     call_expect(value);
+      |     ~~~~~~~~~~~^~~~~~~
+src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'
+    6 |     expect_ptr(value);
+      |     ~~~~~~~~~~^~~~~~~
+src/main.cpp:6:15: note: there is 1 candidate
+src/main.cpp:2:6: note: candidate 1: 'template<class T> void expect_ptr(T*)'
+    2 | void expect_ptr(T*) {}
+      |      ^~~~~~~~~~
+src/main.cpp:2:6: note: template argument deduction/substitution failed:
+src/main.cpp:6:15: note:   mismatched types 'T*' and 'int'
+    6 |     expect_ptr(value);
+      |     ~~~~~~~~~~^~~~~~~

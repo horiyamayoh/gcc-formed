@@ -1,0 +1,35 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:9:12",
+      "child_notes": [],
+      "context_lines": [
+        "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
+        "macro: src/config.h:2:29: note: in expansion of macro 'INNER_ACCESS' @ src/config.h",
+        "macro: src/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS' @ src/main.c"
+      ],
+      "excerpts": [
+        {
+          "lines": [
+            "    return OUTER_ACCESS(counter);"
+          ],
+          "location": "src/main.c:9:12"
+        }
+      ],
+      "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "context=macro_or_include"
+      ],
+      "raw_message": "'Counter' has no member named 'count'",
+      "rule_id": "rule.family.macro_include.context_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "error surfaced through macro/include context"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false
+  }
+}

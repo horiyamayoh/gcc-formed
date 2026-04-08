@@ -1,0 +1,104 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:7:17: error: incompatible types when initializing type 'int' using type 'struct Box'\n    7 |     int value = box;\n      |                 ^~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 185,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3420,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "message_contains=incompatible type"
+        ],
+        "rule_id": "rule.family.type_overload.message"
+      },
+      "fingerprints": {
+        "family": "ecb61fca63c3eaf86369996505e1f796d0917a1a8ac1686f3133b7f824707091",
+        "raw": "179a3603f44ad1d06707037c018765067095674ac892a84c8971d39bc284bab0",
+        "structural": "5f631cfbfb85df232b359dc6f6ed47ca85cc2ba041c53dddd4b81cdd13c332c5"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "column": 17,
+          "end_column": 20,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.c"
+        }
+      ],
+      "message": {
+        "raw_text": "incompatible types when initializing type 'int' using type 'struct Box'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "34faf5d5e2cd443d611a72526f4d99e70da0c60538e0ce31c51a6bae3d0d97f8",
+    "structural": "73bcd647972ea29351b55792a9fa327b1a365cd8cd77e0b36a26c6972afab7b3"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
