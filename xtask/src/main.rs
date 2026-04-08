@@ -1527,13 +1527,35 @@ fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, St
         return Ok(contents.to_string());
     }
 
-    let mut value: serde_json::Value = serde_json::from_str(contents)
+    let value: serde_json::Value = serde_json::from_str(contents)
         .map_err(|error| format!("failed to parse {} as JSON: {error}", path.display()))?;
-    if let Some(object) = value.as_object_mut() {
-        object.remove("$schema");
-    }
+    let value = normalize_sarif_snapshot_value(value);
     diag_core::canonical_json(&value)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if let Some(version) = value.get("version").cloned() {
+        normalized.insert("version".to_string(), version);
+    }
+    if let Some(runs) = value.get("runs").and_then(serde_json::Value::as_array) {
+        normalized.insert(
+            "runs".to_string(),
+            serde_json::Value::Array(
+                runs.iter()
+                    .map(|run| {
+                        let mut normalized_run = serde_json::Map::new();
+                        if let Some(results) = run.get("results").cloned() {
+                            normalized_run.insert("results".to_string(), results);
+                        }
+                        serde_json::Value::Object(normalized_run)
+                    })
+                    .collect(),
+            ),
+        );
+    }
+    serde_json::Value::Object(normalized)
 }
 
 fn canonical_json_for_view_model(
@@ -3676,6 +3698,13 @@ mod tests {
   "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
   "runs": [
     {
+      "artifacts": [
+        {
+          "location": {
+            "uri": "src/main.c"
+          }
+        }
+      ],
       "results": []
     }
   ],
