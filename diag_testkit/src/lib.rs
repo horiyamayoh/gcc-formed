@@ -74,6 +74,10 @@ pub struct RenderProfileExpectations {
     pub path_first_required: Option<bool>,
     #[serde(default)]
     pub color_meaning_forbidden: Option<bool>,
+    #[serde(default)]
+    pub required_substrings: Vec<String>,
+    #[serde(default)]
+    pub forbidden_substrings: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]

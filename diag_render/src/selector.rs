@@ -1,3 +1,4 @@
+use crate::budget::{WarningFailureMode, budget_for};
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{Confidence, DiagnosticNode, Ownership, Phase, SemanticRole, Severity};
 
@@ -8,19 +9,20 @@ pub struct Selection {
 }
 
 pub fn select_groups(request: &RenderRequest) -> Selection {
+    let budget = budget_for(request.profile);
     let mut diagnostics = request.document.diagnostics.clone();
-    diagnostics.sort_by(|left, right| sort_key(right).cmp(&sort_key(left)));
+    diagnostics.sort_by(|left, right| {
+        sort_key(right)
+            .cmp(&sort_key(left))
+            .then_with(|| left.id.cmp(&right.id))
+    });
     let has_failure = diagnostics
         .iter()
         .any(|node| matches!(node.severity, Severity::Fatal | Severity::Error));
 
     let mut suppressed_warning_count = 0;
     if has_failure
-        && matches!(
-            request.warning_visibility,
-            WarningVisibility::Auto | WarningVisibility::SuppressAll
-        )
-        && !matches!(request.profile, RenderProfile::Verbose)
+        && should_filter_warnings(request.warning_visibility, budget.warning_failure_mode)
     {
         diagnostics.retain(|node| {
             if matches!(node.severity, Severity::Warning) {
@@ -32,23 +34,32 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
         });
     }
 
-    let expanded = match request.profile {
-        RenderProfile::Verbose => diagnostics,
-        _ => diagnostics.into_iter().take(1).collect(),
+    let expanded_groups = match request.profile {
+        RenderProfile::Default if !has_failure => 2,
+        _ => budget.expanded_groups,
     };
+    let expanded = diagnostics.into_iter().take(expanded_groups).collect();
     Selection {
         cards: expanded,
         suppressed_warning_count,
     }
 }
 
-fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, usize) {
+fn should_filter_warnings(
+    visibility: WarningVisibility,
+    warning_failure_mode: WarningFailureMode,
+) -> bool {
+    match visibility {
+        WarningVisibility::ShowAll => false,
+        WarningVisibility::SuppressAll => true,
+        WarningVisibility::Auto => !matches!(warning_failure_mode, WarningFailureMode::Show),
+    }
+}
+
+fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, usize) {
     (
         severity_rank(&node.severity),
-        ownership_rank(
-            node.primary_location()
-                .and_then(|location| location.ownership.as_ref()),
-        ),
+        ownership_rank(best_ownership(node)),
         confidence_rank(
             node.analysis
                 .as_ref()
@@ -56,6 +67,7 @@ fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, usize) {
         ),
         phase_rank(&node.phase),
         semantic_role_rank(&node.semantic_role),
+        specificity_rank(node),
         std::cmp::Reverse(node.message.raw_text.len()).0,
     )
 }
@@ -83,13 +95,23 @@ fn ownership_rank(ownership: Option<&Ownership>) -> u8 {
     }
 }
 
+fn best_ownership(node: &DiagnosticNode) -> Option<&Ownership> {
+    node.primary_location()
+        .and_then(|location| location.ownership.as_ref())
+        .or_else(|| {
+            node.locations
+                .iter()
+                .filter_map(|location| location.ownership.as_ref())
+                .max_by_key(|ownership| ownership_rank(Some(*ownership)))
+        })
+}
+
 fn confidence_rank(confidence: Option<&Confidence>) -> u8 {
     match confidence {
         Some(Confidence::High) => 4,
         Some(Confidence::Medium) => 3,
         Some(Confidence::Low) => 2,
-        Some(Confidence::Unknown) => 1,
-        None => 0,
+        Some(Confidence::Unknown) | None => 1,
     }
 }
 
@@ -105,6 +127,27 @@ fn phase_rank(phase: &Phase) -> u8 {
         Phase::Link => 2,
         Phase::Driver | Phase::Preprocess | Phase::Optimize | Phase::Archive | Phase::Unknown => 1,
     }
+}
+
+fn specificity_rank(node: &DiagnosticNode) -> u8 {
+    let family_rank = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref())
+        .map(|family| match family {
+            "unknown" | "passthrough" | "linker.file_format_or_relocation" => 0,
+            family if family.starts_with("linker.") => 3,
+            _ => 2,
+        })
+        .unwrap_or(0);
+    let symbol_rank = u8::from(node.symbol_context.is_some());
+    let first_action_rank = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.first_action_hint.as_ref())
+        .map(|hint| !hint.trim().is_empty())
+        .unwrap_or(false);
+    family_rank + symbol_rank + u8::from(first_action_rank)
 }
 
 fn semantic_role_rank(role: &SemanticRole) -> u8 {

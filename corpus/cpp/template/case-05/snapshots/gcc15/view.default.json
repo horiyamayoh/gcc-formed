@@ -2,17 +2,15 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:5:5",
-      "child_notes": [
-        "candidate 1: 'template<class T> void combine(T, T)'",
-        "template argument deduction/substitution failed:",
-        "  deduced conflicting types for parameter 'T' ('int' and 'const char*')"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
+      "confidence_notice": null,
       "context_lines": [
-        "template: candidate 1: 'template<class T> void combine(T, T)' @ src/main.cpp",
-        "template: template argument deduction/substitution failed: @ src/main.cpp",
-        "template: deduced conflicting types for parameter 'T' ('int' and 'const char*') @ src/main.cpp"
+        "while instantiating:",
+        "  - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'",
+        "  - src/main.cpp:2:6 template argument deduction/substitution failed:",
+        "  - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')"
       ],
       "excerpts": [
         {
@@ -22,6 +20,7 @@
           "location": "src/main.cpp:5:5"
         }
       ],
+      "family": "template",
       "first_action": "start from the first user-owned template frame and match template arguments",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -39,6 +38,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

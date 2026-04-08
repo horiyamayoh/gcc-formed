@@ -2,16 +2,15 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:6:5",
-      "child_notes": [
-        "candidate 1: 'void takes_ref(int&)' (near match)",
-        "conversion of argument 1 would be ill-formed:",
-        "invalid conversion from 'const char*' to 'int'"
-      ],
-      "collapsed_notices": [
-        "omitted 4 additional note(s)"
-      ],
+      "child_notes": [],
+      "collapsed_notices": [],
       "confidence_label": "certain",
-      "context_lines": [],
+      "confidence_notice": null,
+      "context_lines": [
+        "because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6",
+        "because: conversion of argument 1 would be ill-formed:",
+        "omitted 5 other overload notes"
+      ],
       "excerpts": [
         {
           "lines": [
@@ -20,6 +19,7 @@
           "location": "src/main.cpp:6:5"
         }
       ],
+      "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -34,6 +34,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

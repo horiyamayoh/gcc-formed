@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/cco3yskN.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/ccs5fzgK.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -116,7 +116,7 @@
   "fingerprints": {
     "family": "21f4f3692469c9d75e0cda967ec5f6dce4efc11f7e5431aa7ab5db4604873680",
     "raw": "058a998344be5f7d9765f07bfb14ea99160d89b1f1ec5fdd5cbb0fc346cc6293",
-    "structural": "2ebe85af81f9554e8ab7ad5f79a5b0ae4cc70ab536523beba616a226b9b1574b"
+    "structural": "0ac5eb278d391fba5d5cf10be771f0d0c0f4d3d5758dc7ecd32ac5d36da6f7a5"
   },
   "integrity_issues": [
     {

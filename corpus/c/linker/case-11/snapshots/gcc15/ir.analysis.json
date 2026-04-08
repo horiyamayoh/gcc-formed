@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/ccqxAYOM.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccwo8LPW.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/ccyzff27.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccEdQV9K.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -87,13 +87,13 @@
         }
       ],
       "fingerprints": {
-        "family": "98422e383208de220f8a821bc3a4398409252a90928882aaa4fc243c35ec35f9",
-        "raw": "5f1be1fa431d662e2091e3105cbeb65659537e60b851f6dc91ba47f8aac6d7f0",
-        "structural": "1616a7537d1a54605cdf3a7dec030df70229a3cf9236e999b2a63f0cbacc7a00"
+        "family": "6434d235e3fc297460fc3f6101f29b05aeb1253a7be6bdd8e2643b2ec93fc925",
+        "raw": "45bbb38a25f0d51f9bce1b716e1a1fa6caddf0d8c125c690b715d089aa7e3ec0",
+        "structural": "1421baa9366747bb639bc08985073bbdf3d3b211ea334e56d4f944ead474ceaa"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccwo8LPW.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccEdQV9K.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -115,8 +115,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "ea0761aa0e9cb4ee3f5ba84d8ab9db92cb5ec33e217cd69a86f88e93b498db83",
-    "raw": "35414d0afc04a2a0bd0639c98c2c8492383253e9e7ff88fb69dca378ea8d2b4c",
-    "structural": "555c5051e92f9df1c8a6728785184a4b490f2a8e180b990e4860f4024cb6c281"
+    "raw": "b64fb0e042d32dd65fd707947a2964354c102b2af8c9d7ccd1e3530c1c21d529",
+    "structural": "c8697261d1073f0bf33c95a8f3890c3bd31d0d76151268e4a1e9cf70c619cd95"
   },
   "integrity_issues": [
     {

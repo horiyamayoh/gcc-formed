@@ -2,12 +2,13 @@
   "cards": [
     {
       "canonical_location": "src/main.c:9:19",
-      "child_notes": [
-        "expected 'int *' but argument is of type 'struct Box *'"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
-      "context_lines": [],
+      "confidence_notice": null,
+      "context_lines": [
+        "because: expected 'int *' but argument is of type 'struct Box *'"
+      ],
       "excerpts": [
         {
           "lines": [
@@ -16,6 +17,7 @@
           "location": "src/main.c:9:19"
         }
       ],
+      "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -30,6 +32,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

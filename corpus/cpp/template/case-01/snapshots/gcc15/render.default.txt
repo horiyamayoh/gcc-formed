@@ -4,9 +4,8 @@ help: start from the first user-owned template frame and match template argument
 why: no matching function for call to 'takes_same(int, double)'
 | src/main.cpp:4:14
 | int main() { takes_same(1, 2.0); }
-template: candidate 1: 'template<class T> void takes_same(T, T)' @ src/main.cpp
-template: template argument deduction/substitution failed: @ src/main.cpp
-template: deduced conflicting types for parameter 'T' ('int' and 'double') @ src/main.cpp
-note: candidate 1: 'template<class T> void takes_same(T, T)'
-note: template argument deduction/substitution failed:
-note:   deduced conflicting types for parameter 'T' ('int' and 'double')
+while instantiating:
+  - src/main.cpp:2:6 candidate 1: 'template<class T> void takes_same(T, T)'
+  - src/main.cpp:2:6 template argument deduction/substitution failed:
+  - src/main.cpp:4:14 deduced conflicting types for parameter 'T' ('int' and 'double')
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -6,10 +6,19 @@ pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason)
         "error: showing a conservative wrapper view; original compiler diagnostics are preserved"
             .to_string(),
     ];
+    lines.push(format!(
+        "note: fallback reason = {}",
+        fallback_reason.as_str()
+    ));
+    lines.push("raw:".to_string());
+
+    let mut raw_lines = Vec::new();
     for node in &request.document.diagnostics {
-        lines.push(node.message.raw_text.clone());
+        for line in node.message.raw_text.lines() {
+            raw_lines.push(line.to_string());
+        }
     }
-    if lines.len() == 1 {
+    if raw_lines.is_empty() {
         if let Some(stderr) = request
             .document
             .captures
@@ -17,8 +26,11 @@ pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason)
             .find(|capture| capture.id == "stderr.raw")
             .and_then(|capture| capture.inline_text.as_ref())
         {
-            lines.push(stderr.clone());
+            raw_lines.extend(stderr.lines().map(ToOwned::to_owned));
         }
+    }
+    for line in raw_lines {
+        lines.push(format!("  {line}"));
     }
     if matches!(request.debug_refs, DebugRefs::TraceId) {
         lines.push(format!("trace: {}", request.document.run.invocation_id));

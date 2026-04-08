@@ -5,10 +5,12 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
+      "confidence_notice": null,
       "context_lines": [
-        "linker: preserved"
+        "linker: symbol `missing_symbol`"
       ],
       "excerpts": [],
+      "family": "linker.undefined_reference",
       "first_action": "define the missing symbol or link the object/library that provides it",
       "group_id": "residual-1",
       "matched_conditions": [
@@ -25,6 +27,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": true
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

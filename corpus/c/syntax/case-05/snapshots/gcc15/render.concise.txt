@@ -4,3 +4,4 @@ help: fix the first parser error at the user-owned location
 why: expected ';' before '}}' token
 | src/main.c:2:19
 |     return (1 + 2;
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

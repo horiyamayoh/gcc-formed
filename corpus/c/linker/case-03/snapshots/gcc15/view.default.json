@@ -5,10 +5,12 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
+      "confidence_notice": null,
       "context_lines": [
-        "linker: preserved"
+        "linker: symbol `shared`"
       ],
       "excerpts": [],
+      "family": "linker.multiple_definition",
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
       "group_id": "residual-1",
       "matched_conditions": [
@@ -16,7 +18,7 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "/usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here",
+      "raw_message": "/usr/bin/ld: /tmp/ccU1saff.o:(.data+0x0): multiple definition of `shared'; /tmp/ccsciDGG.o:(.data+0x0): first defined here",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -25,6 +27,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": true
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

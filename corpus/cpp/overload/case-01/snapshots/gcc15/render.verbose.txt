@@ -4,8 +4,10 @@ help: compare the expected type and actual argument at the call site
 why: no matching function for call to 'takes(int)'
 | src/main.cpp:5:5
 |     takes(1);
-note: candidate 1: 'void takes(int, int)'
-note: candidate expects 2 arguments, 1 provided
-note: candidate 2: 'void takes(double, double)'
+because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6
+because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6
+because: candidate 2: 'void takes(double, double)' at src/main.cpp:2:6
+because: candidate expects 2 arguments, 1 provided at src/main.cpp:2:6
 debug: rule_id=rule.family.type_overload.message
 debug: matched_conditions=message_contains=no matching
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

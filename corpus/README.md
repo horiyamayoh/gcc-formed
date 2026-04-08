@@ -24,5 +24,6 @@ When a harvested trace deserves to become a committed fixture, use this order:
 ## Fixture Notes
 
 - Promoted fixtures should carry semantic expectations strict enough to catch family, fallback, and provenance regressions without overfitting line noise.
+- Use render expectation fields like `required_substrings` / `forbidden_substrings` to lock template, overload, macro/include, linker, and raw escape-hatch wording when snapshots alone would be too brittle.
 - If a fixture is not ready for representative gating yet, keep it out of the representative subset instead of weakening the representative expectations.
 - When a snapshot changes, explain whether the change is semantic or normalization-only in the review.

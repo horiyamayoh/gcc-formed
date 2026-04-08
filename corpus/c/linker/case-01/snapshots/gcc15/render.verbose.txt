@@ -1,15 +1,16 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: multiple definition of `duplicate`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccM9XKfN.o:main.c:(.text+0x0): first defined here
-linker: preserved
+why: helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccGoSlKg.o:main.c:(.text+0x0): first defined here
+linker: symbol `duplicate`
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, message_contains=multiple definition, existing_specific_family=linker.multiple_definition
 debug: suppression_reason=preserved_specific_family_from_ingress
 error: linker reported a failure
 help: check the missing/duplicate symbol and the object or library inputs
 why: collect2: error: ld returned 1 exit status
-linker: preserved
+linker: original linker diagnostics are preserved
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, existing_specific_family=linker.file_format_or_relocation
 debug: suppression_reason=preserved_specific_family_from_ingress
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

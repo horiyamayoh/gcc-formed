@@ -2,14 +2,16 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:5:5",
-      "child_notes": [
-        "candidate 1: 'void takes(int, int)'",
-        "candidate expects 2 arguments, 1 provided",
-        "candidate 2: 'void takes(double, double)'"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
-      "context_lines": [],
+      "confidence_notice": null,
+      "context_lines": [
+        "because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6",
+        "because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6",
+        "because: candidate 2: 'void takes(double, double)' at src/main.cpp:2:6",
+        "omitted 1 other overload notes"
+      ],
       "excerpts": [
         {
           "lines": [
@@ -18,6 +20,7 @@
           "location": "src/main.cpp:5:5"
         }
       ],
+      "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -32,6 +35,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

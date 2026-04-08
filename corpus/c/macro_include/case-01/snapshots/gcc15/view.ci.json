@@ -2,14 +2,15 @@
   "cards": [
     {
       "canonical_location": "src/main.c:3:25",
-      "child_notes": [
-        "each undeclared identifier is reported only once for each function it appears in"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
+      "confidence_notice": null,
       "context_lines": [
-        "include: In file included from src/wrapper.h:1, @ src/wrapper.h",
-        "macro: src/main.c:3:25: note: in expansion of macro 'CALL_BAD' @ src/main.c"
+        "through macro expansion:",
+        "  - src/main.c:3:25 in expansion of macro 'CALL_BAD'",
+        "from include chain:",
+        "  - In file included from src/wrapper.h:1"
       ],
       "excerpts": [
         {
@@ -19,6 +20,7 @@
           "location": "src/main.c:3:25"
         }
       ],
+      "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -33,6 +35,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

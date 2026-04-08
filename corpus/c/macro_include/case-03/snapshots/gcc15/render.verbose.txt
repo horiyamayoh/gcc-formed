@@ -4,8 +4,10 @@ help: inspect the user-owned macro invocation or include edge that reaches the f
 why: 'missing_symbol' undeclared (first use in this function)
 | src/main.c:3:25
 | int main(void) { return FETCH_VALUE(); }
-include: In file included from src/wrapper.h:1, @ src/wrapper.h
-macro: src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE' @ src/main.c
-note: each undeclared identifier is reported only once for each function it appears in
+through macro expansion:
+  - src/main.c:3:25 in expansion of macro 'FETCH_VALUE'
+from include chain:
+  - In file included from src/wrapper.h:1
 debug: rule_id=rule.family.macro_include.context_or_message
 debug: matched_conditions=context=macro_or_include
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

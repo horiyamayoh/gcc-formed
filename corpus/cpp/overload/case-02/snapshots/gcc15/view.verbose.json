@@ -5,6 +5,7 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
+      "confidence_notice": null,
       "context_lines": [],
       "excerpts": [
         {
@@ -14,6 +15,7 @@
           "location": "src/main.cpp:3:49"
         }
       ],
+      "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "sarif-0-0",
       "matched_conditions": [
@@ -30,6 +32,7 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "possible",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
       "context_lines": [],
       "excerpts": [
         {
@@ -39,6 +42,7 @@
           "location": "src/main.cpp:1:16"
         }
       ],
+      "family": "unknown",
       "first_action": null,
       "group_id": "sarif-0-1",
       "matched_conditions": [
@@ -53,6 +57,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

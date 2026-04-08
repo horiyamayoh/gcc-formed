@@ -1,3 +1,5 @@
 error: showing a conservative wrapper view; original compiler diagnostics are preserved
-collect2: error: ld returned 1 exit status
-main.c:(.text+0x5): undefined reference to `missing_symbol'
+note: fallback reason = user_opt_out
+raw:
+  collect2: error: ld returned 1 exit status
+  main.c:(.text+0x5): undefined reference to `missing_symbol'

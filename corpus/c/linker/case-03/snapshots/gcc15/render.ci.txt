@@ -1,5 +1,6 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: multiple definition of `shared`
+linker: error: multiple definition of `shared`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: /usr/bin/ld: /tmp/cc2lkoXD.o:(.data+0x0): multiple definition of `shared'; /tmp/ccnMawcj.o:(.data+0x0): first defined here
-linker: preserved
+why: /usr/bin/ld: /tmp/ccU1saff.o:(.data+0x0): multiple definition of `shared'; /tmp/ccsciDGG.o:(.data+0x0): first defined here
+linker: symbol `shared`
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

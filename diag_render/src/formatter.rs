@@ -1,3 +1,4 @@
+use crate::budget::{WarningFailureMode, budget_for};
 use crate::view_model::RenderViewModel;
 use crate::{DebugRefs, RenderProfile, RenderRequest, RenderResult};
 
@@ -6,19 +7,29 @@ pub fn emit(
     view_model: RenderViewModel,
     suppressed_warning_count: usize,
 ) -> RenderResult {
+    let budget = budget_for(request.profile);
     let mut lines = Vec::new();
     if view_model.summary.partial_notice {
         lines.push("note: some compiler details were not fully structured; original diagnostics are preserved".to_string());
     }
 
-    let max_lines = line_budget(request.profile);
     for card in &view_model.cards {
         if matches!(request.profile, RenderProfile::Ci) {
             let first_line = card
                 .canonical_location
                 .as_ref()
                 .map(|location| format!("{location}: {}: {}", card.severity, card.title))
-                .unwrap_or_else(|| format!("{}: {}", card.severity, card.title));
+                .unwrap_or_else(|| {
+                    if card
+                        .family
+                        .as_deref()
+                        .is_some_and(|family| family.starts_with("linker"))
+                    {
+                        format!("linker: {}: {}", card.severity, card.title)
+                    } else {
+                        format!("{}: {}", card.severity, card.title)
+                    }
+                });
             lines.push(first_line);
         } else {
             lines.push(format!("{}: {}", card.severity, card.title));
@@ -26,11 +37,8 @@ pub fn emit(
                 lines.push(format!("--> {location}"));
             }
         }
-        if card.confidence_label == "possible" {
-            lines.push(
-                "note: wrapper confidence is low; original compiler wording is preserved below"
-                    .to_string(),
-            );
+        if let Some(confidence_notice) = card.confidence_notice.as_ref() {
+            lines.push(confidence_notice.clone());
         }
         if let Some(first_action) = card.first_action.as_ref() {
             lines.push(format!("help: {first_action}"));
@@ -69,8 +77,13 @@ pub fn emit(
         }
     }
 
-    if suppressed_warning_count > 0 {
+    if suppressed_warning_count > 0
+        && matches!(budget.warning_failure_mode, WarningFailureMode::Summarize)
+    {
         lines.push(format!("note: suppressed {suppressed_warning_count} warning(s) while focusing on the failing group"));
+    }
+    if let Some(raw_hint) = view_model.summary.raw_diagnostics_hint.as_ref() {
+        lines.push(raw_hint.clone());
     }
     if matches!(request.debug_refs, DebugRefs::TraceId) {
         lines.push(format!("trace: {}", request.document.run.invocation_id));
@@ -88,9 +101,9 @@ pub fn emit(
         }
     }
 
-    let truncation_occurred = lines.len() > max_lines;
+    let truncation_occurred = lines.len() > budget.hard_max_lines;
     if truncation_occurred {
-        lines.truncate(max_lines.saturating_sub(1));
+        lines.truncate(budget.hard_max_lines.saturating_sub(1));
         lines.push(
             "note: omitted additional details; rerun with --formed-profile=verbose".to_string(),
         );
@@ -119,14 +132,4 @@ fn first_line(raw_message: &str) -> String {
         .next()
         .unwrap_or(raw_message)
         .to_string()
-}
-
-fn line_budget(profile: RenderProfile) -> usize {
-    match profile {
-        RenderProfile::Verbose => 80,
-        RenderProfile::Ci => 16,
-        RenderProfile::Concise => 14,
-        RenderProfile::Default => 28,
-        RenderProfile::RawFallback => usize::MAX,
-    }
 }

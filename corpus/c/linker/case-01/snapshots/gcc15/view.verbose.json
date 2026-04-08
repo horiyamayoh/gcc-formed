@@ -5,10 +5,12 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
+      "confidence_notice": null,
       "context_lines": [
-        "linker: preserved"
+        "linker: symbol `duplicate`"
       ],
       "excerpts": [],
+      "family": "linker.multiple_definition",
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
       "group_id": "residual-1",
       "matched_conditions": [
@@ -16,7 +18,7 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccM9XKfN.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccGoSlKg.o:main.c:(.text+0x0): first defined here",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -27,10 +29,12 @@
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
+      "confidence_notice": null,
       "context_lines": [
-        "linker: preserved"
+        "linker: original linker diagnostics are preserved"
       ],
       "excerpts": [],
+      "family": "linker.file_format_or_relocation",
       "first_action": "check the missing/duplicate symbol and the object or library inputs",
       "group_id": "residual-0",
       "matched_conditions": [
@@ -46,6 +50,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": true
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

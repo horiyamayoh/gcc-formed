@@ -1,5 +1,5 @@
 use crate::excerpt::load_excerpt;
-use crate::family::summarize_context;
+use crate::family::summarize_supporting_evidence;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{Confidence, DiagnosticNode, Severity};
 use serde::{Deserialize, Serialize};
@@ -8,14 +8,17 @@ use serde::{Deserialize, Serialize};
 pub struct RenderSessionSummary {
     pub failure_kind: String,
     pub partial_notice: bool,
+    pub raw_diagnostics_hint: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderGroupCard {
     pub group_id: String,
     pub severity: String,
+    pub family: Option<String>,
     pub title: String,
     pub confidence_label: String,
+    pub confidence_notice: Option<String>,
     pub first_action: Option<String>,
     pub canonical_location: Option<String>,
     pub raw_message: String,
@@ -53,6 +56,15 @@ pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewM
                 request.document.document_completeness,
                 diag_core::DocumentCompleteness::Complete
             ),
+            raw_diagnostics_hint: request
+                .document
+                .captures
+                .iter()
+                .any(|capture| capture.id == "stderr.raw")
+                .then_some(
+                    "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+                        .to_string(),
+                ),
         },
         cards: rendered_cards,
     }
@@ -66,6 +78,10 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let confidence_label = confidence_label(confidence).to_string();
     let title = select_title(node, confidence);
     let first_action = select_first_action(node, confidence);
+    let family = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.clone());
     let canonical_location = node.primary_location().map(|location| {
         let path = if matches!(request.profile, RenderProfile::Ci) {
             location.path.clone()
@@ -80,43 +96,25 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         format!("{path}:{}:{}", location.line, location.column)
     });
     let excerpts = load_excerpt(request, node);
-    let context_lines = summarize_context(node, request.profile);
-    let note_limit = match request.profile {
-        RenderProfile::Verbose => 10,
-        _ => 3,
-    };
-    let unique_child_notes = dedup_lines(
-        node.children
-            .iter()
-            .map(|child| {
-                child
-                    .message
-                    .raw_text
-                    .lines()
-                    .next()
-                    .unwrap_or_default()
-                    .to_string()
-            })
-            .collect(),
+    let supporting_evidence = summarize_supporting_evidence(node, request.profile);
+    let context_lines = supporting_evidence.context_lines;
+    let child_notes = supporting_evidence.child_notes;
+    let collapsed_notices = supporting_evidence.collapsed_notices;
+    let confidence_notice = matches!(
+        confidence,
+        Some(Confidence::Low) | Some(Confidence::Unknown) | None
+    )
+    .then_some(
+        "note: wrapper confidence is low; verify against the preserved raw diagnostics".to_string(),
     );
-    let unique_child_note_count = unique_child_notes.len();
-    let child_notes = unique_child_notes
-        .into_iter()
-        .take(note_limit)
-        .collect::<Vec<_>>();
-    let mut collapsed_notices = Vec::new();
-    if unique_child_note_count > note_limit {
-        collapsed_notices.push(format!(
-            "omitted {} additional note(s)",
-            unique_child_note_count - note_limit
-        ));
-    }
 
     RenderGroupCard {
         group_id: node.id.clone(),
         severity: severity_label(&node.severity).to_string(),
+        family,
         title,
         confidence_label,
+        confidence_notice,
         first_action,
         canonical_location,
         raw_message: node.message.raw_text.clone(),
@@ -190,14 +188,4 @@ fn raw_title(node: &DiagnosticNode) -> String {
         .next()
         .unwrap_or("diagnostic")
         .to_string()
-}
-
-fn dedup_lines(lines: Vec<String>) -> Vec<String> {
-    let mut deduped = Vec::new();
-    for line in lines {
-        if !line.trim().is_empty() && !deduped.iter().any(|existing| existing == &line) {
-            deduped.push(line);
-        }
-    }
-    deduped
 }

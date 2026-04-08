@@ -20,6 +20,10 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
+    required_substrings:
+      - "through macro expansion:"
+      - "from include chain:"
+      - "raw: rerun with --formed-profile=raw_fallback"
   concise:
     omission_notice_required: false
     first_screenful_max_lines: 14
@@ -30,6 +34,10 @@ render:
     first_screenful_max_lines: 16
     path_first_required: true
     color_meaning_forbidden: true
+    required_substrings:
+      - "through macro expansion:"
+      - "from include chain:"
+      - "raw: rerun with --formed-profile=raw_fallback"
 integrity:
   allowed_issue_codes: []
 performance:

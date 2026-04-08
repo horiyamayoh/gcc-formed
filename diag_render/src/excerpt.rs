@@ -1,3 +1,4 @@
+use crate::budget::budget_for;
 use crate::{RenderProfile, RenderRequest, SourceExcerptPolicy};
 use diag_core::DiagnosticNode;
 use serde::{Deserialize, Serialize};
@@ -14,8 +15,8 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
         return Vec::new();
     }
     let limit = match request.profile {
-        RenderProfile::Verbose => 3,
-        _ => 1,
+        RenderProfile::RawFallback => 0,
+        _ => budget_for(request.profile).source_excerpts,
     };
     node.locations
         .iter()

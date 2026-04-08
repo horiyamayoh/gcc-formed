@@ -23,8 +23,10 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 
 ### Changed
 
+- Hardened `diag_render` selection and budgeting so lead diagnostics now rank user-owned/confident/actionable groups first, family-specific cards use stable template/overload/macro/include/linker headings, CI linker output becomes explicitly `linker:`-prefixed when locations are weak, and enhanced renders always leave a `--formed-profile=raw_fallback` escape hatch.
 - Refactored `diag_enrich` into separate family, headline, action-hint, and ownership modules, and added deterministic unit coverage for syntax, type/overload, template, macro/include, linker, passthrough, and unknown classification paths.
 - Strengthened `diag_render` lead selection and honesty rules so user-owned high-confidence roots win by default, low-confidence cases fall back to raw compiler wording without synthesized first actions, and repeated context/note lines collapse deterministically across TTY and CI profiles.
+- Wired `diag_render` profile budgets through selection, excerpts, family-specific supporting evidence, truncation, and warning suppression so default/concise/verbose/ci now share one deterministic source of truth instead of ad hoc per-file limits.
 - Tightened the curated corpus gate so replay rejects fixture counts outside the beta-bar window instead of enforcing only the minimum size.
 - Updated CI workflows to use pinned action/toolchain versions, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, classify gate failures as `product` / `infrastructure` / `instrumentation`, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.

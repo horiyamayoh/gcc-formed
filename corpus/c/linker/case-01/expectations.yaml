@@ -16,6 +16,9 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
+    required_substrings:
+      - "linker: symbol `duplicate`"
+      - "raw: rerun with --formed-profile=raw_fallback"
   concise:
     omission_notice_required: false
     first_screenful_max_lines: 14
@@ -25,6 +28,9 @@ render:
   ci:
     first_screenful_max_lines: 16
     color_meaning_forbidden: true
+    required_substrings:
+      - "linker: error: multiple definition of `duplicate`"
+      - "raw: rerun with --formed-profile=raw_fallback"
 integrity:
   allowed_issue_codes: []
 performance:

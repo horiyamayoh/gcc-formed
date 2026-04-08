@@ -1,3 +1,4 @@
+mod budget;
 mod excerpt;
 mod fallback;
 mod family;
@@ -175,7 +176,7 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::family::summarize_context;
+    use crate::family::summarize_supporting_evidence;
     use crate::selector::select_groups;
     use diag_core::{
         AnalysisOverlay, CaptureArtifact, ContextChain, ContextChainKind, ContextFrame,
@@ -427,6 +428,139 @@ mod tests {
     }
 
     #[test]
+    fn default_profile_suppresses_warnings_after_failure() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "warning".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Warning,
+                semantic_role: SemanticRole::Supporting,
+                message: MessageText {
+                    raw_text: "unused variable 'tmp'".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![Location {
+                    path: "src/main.c".to_string(),
+                    line: 7,
+                    column: 5,
+                    end_line: None,
+                    end_column: None,
+                    display_path: None,
+                    ownership: Some(Ownership::User),
+                }],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root");
+        assert_eq!(selection.suppressed_warning_count, 1);
+    }
+
+    #[test]
+    fn verbose_profile_keeps_warnings_after_failure() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Verbose;
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "warning".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Warning,
+                semantic_role: SemanticRole::Supporting,
+                message: MessageText {
+                    raw_text: "unused variable 'tmp'".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![Location {
+                    path: "src/main.c".to_string(),
+                    line: 7,
+                    column: 5,
+                    end_line: None,
+                    end_column: None,
+                    display_path: None,
+                    ownership: Some(Ownership::User),
+                }],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.suppressed_warning_count, 0);
+    }
+
+    #[test]
+    fn default_profile_expands_two_warning_groups() {
+        let mut request = sample_request();
+        request.document.diagnostics = (1..=3)
+            .map(|index| diag_core::DiagnosticNode {
+                id: format!("warning-{index}"),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Warning,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: format!("warning {index}"),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![Location {
+                    path: "src/main.c".to_string(),
+                    line: index,
+                    column: 1,
+                    end_line: None,
+                    end_column: None,
+                    display_path: None,
+                    ownership: Some(Ownership::User),
+                }],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            })
+            .collect();
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.suppressed_warning_count, 0);
+    }
+
+    #[test]
     fn low_confidence_render_uses_raw_title_and_honesty_notice() {
         let mut request = sample_request();
         request.document.diagnostics[0].message.raw_text =
@@ -448,7 +582,7 @@ mod tests {
                 .contains("error: static assertion failed: size must be 4 bytes")
         );
         assert!(output.text.contains(
-            "note: wrapper confidence is low; original compiler wording is preserved below"
+            "note: wrapper confidence is low; verify against the preserved raw diagnostics"
         ));
         assert!(
             !output
@@ -460,6 +594,11 @@ mod tests {
     #[test]
     fn summarize_context_deduplicates_repeated_macro_frames() {
         let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("macro_include".to_string());
         request.document.diagnostics[0].context_chains = vec![ContextChain {
             kind: ContextChainKind::MacroExpansion,
             frames: vec![
@@ -478,11 +617,91 @@ mod tests {
             ],
         }];
 
-        let lines = summarize_context(&request.document.diagnostics[0], request.profile);
-        assert_eq!(lines.len(), 1);
+        let evidence =
+            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        assert_eq!(evidence.context_lines[0], "through macro expansion:");
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .filter(|line| line.contains("READ_FIELD"))
+                .count()
+                == 1
+        );
+        assert!(
+            !evidence
+                .context_lines
+                .iter()
+                .any(|line| line.contains("omitted"))
+        );
+    }
+
+    #[test]
+    fn template_supporting_evidence_respects_default_budget() {
+        let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("template".to_string());
+        request.document.diagnostics[0].context_chains = vec![ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: (1..=7)
+                .map(|index| ContextFrame {
+                    label: format!("instantiated from here #{index}"),
+                    path: Some(format!("src/t{index}.hpp")),
+                    line: Some(index),
+                    column: Some(1),
+                })
+                .collect(),
+        }];
+
+        let evidence =
+            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        assert_eq!(evidence.context_lines[0], "while instantiating:");
+        assert_eq!(evidence.context_lines.len(), 7);
         assert_eq!(
-            lines[0],
-            "macro: in expansion of macro 'READ_FIELD' @ src/main.c"
+            evidence.context_lines[6],
+            "omitted 2 internal template frames"
+        );
+    }
+
+    #[test]
+    fn generic_notes_emit_omission_notice() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].children = (1..=5)
+            .map(|index| diag_core::DiagnosticNode {
+                id: format!("note-{index}"),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Note,
+                semantic_role: SemanticRole::Supporting,
+                message: MessageText {
+                    raw_text: format!("related note {index}"),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: Vec::new(),
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            })
+            .collect();
+
+        let evidence =
+            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        assert_eq!(evidence.child_notes.len(), 3);
+        assert_eq!(
+            evidence.collapsed_notices,
+            vec!["omitted 2 additional note(s)"]
         );
     }
 }

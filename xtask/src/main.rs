@@ -1918,6 +1918,24 @@ fn verify_render_expectations(
             summary: "render output used ANSI escapes".to_string(),
         });
     }
+    for required in &expectations.required_substrings {
+        if !text.contains(required) {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.required_substrings"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("required substring missing: `{required}`"),
+            });
+        }
+    }
+    for forbidden in &expectations.forbidden_substrings {
+        if text.contains(forbidden) {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.forbidden_substrings"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("forbidden substring present: `{forbidden}`"),
+            });
+        }
+    }
     Ok(())
 }
 
