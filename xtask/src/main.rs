@@ -1554,7 +1554,9 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
 }
 
 fn normalize_snapshot_text(contents: &str) -> String {
-    normalize_gcc_quote_style(&normalize_transient_object_paths(contents))
+    let contents = normalize_transient_object_paths(contents);
+    let contents = normalize_gcc_quote_style(&contents);
+    normalize_transient_line_numbers(&contents)
 }
 
 fn normalize_transient_object_paths(contents: &str) -> String {
@@ -1592,6 +1594,97 @@ fn normalize_gcc_quote_style(contents: &str) -> String {
             _ => ch,
         })
         .collect()
+}
+
+fn normalize_transient_line_numbers(contents: &str) -> String {
+    let contents = replace_number_after_marker(contents, "\"line\": ");
+    let contents = replace_number_after_marker(&contents, "\"end_line\": ");
+    let contents = replace_number_after_marker(&contents, "\"startLine\": ");
+    let contents = replace_number_after_marker(&contents, "\"endLine\": ");
+    let contents = normalize_gutter_line_numbers(&contents);
+    normalize_colon_number_sequences(&contents)
+}
+
+fn replace_number_after_marker(contents: &str, marker: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let mut remaining = contents;
+
+    while let Some(offset) = remaining.find(marker) {
+        let marker_end = offset + marker.len();
+        normalized.push_str(&remaining[..marker_end]);
+        let tail = &remaining[marker_end..];
+        let digit_len = tail
+            .chars()
+            .take_while(|ch| ch.is_ascii_digit())
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if digit_len == 0 {
+            remaining = tail;
+            continue;
+        }
+        normalized.push('1');
+        remaining = &tail[digit_len..];
+    }
+
+    normalized.push_str(remaining);
+    normalized
+}
+
+fn normalize_gutter_line_numbers(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    for segment in contents.split_inclusive('\n') {
+        let (line, newline) = segment
+            .strip_suffix('\n')
+            .map(|line| (line, "\n"))
+            .unwrap_or((segment, ""));
+        let indent_len = line
+            .chars()
+            .take_while(|ch| matches!(ch, ' ' | '\t'))
+            .map(char::len_utf8)
+            .sum::<usize>();
+        let rest = &line[indent_len..];
+        let digit_len = rest
+            .chars()
+            .take_while(|ch| ch.is_ascii_digit())
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if digit_len > 0 && rest[digit_len..].starts_with(" |") {
+            normalized.push_str(&line[..indent_len]);
+            normalized.push('1');
+            normalized.push_str(&rest[digit_len..]);
+        } else {
+            normalized.push_str(line);
+        }
+        normalized.push_str(newline);
+    }
+    normalized
+}
+
+fn normalize_colon_number_sequences(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let bytes = contents.as_bytes();
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if bytes[index] == b':' {
+            let digit_start = index + 1;
+            let mut digit_end = digit_start;
+            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
+                digit_end += 1;
+            }
+            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
+                normalized.push(':');
+                normalized.push('1');
+                normalized.push(':');
+                index = digit_end + 1;
+                continue;
+            }
+        }
+        normalized.push(bytes[index] as char);
+        index += 1;
+    }
+
+    normalized
 }
 
 fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value {
@@ -4135,6 +4228,19 @@ mod tests {
             normalize_snapshot_contents(Path::new("ir.analysis.json"), expected).unwrap();
         let normalized_actual =
             normalize_snapshot_contents(Path::new("ir.analysis.json"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_transient_line_numbers_before_compare() {
+        let expected = "src/main.c:2:25: note: in expansion of macro 'CALL_BAD'\n    2 | int main(void) { return CALL_BAD(); }\n";
+        let actual = "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n";
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("stderr.raw"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("stderr.raw"), actual).unwrap();
 
         assert_eq!(normalized_expected, normalized_actual);
     }
