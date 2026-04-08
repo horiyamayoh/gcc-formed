@@ -49,6 +49,16 @@ jobs:
             --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/self-check" "$REPORT_ROOT/release" "$TARGET_DIR"'
+      - name: Capture host build environment
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id capture-host-build-environment \
+            --report-root "$REPORT_ROOT" \
+            --matrix-gcc-version "$MATRIX_GCC_VERSION" \
+            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --release-blocker "$RELEASE_BLOCKER" \
+            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
       - name: Build matrix CI image
         run: |
           python3 ci/gate_step.py \
@@ -59,6 +69,16 @@ jobs:
             --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'docker build --build-arg GCC_IMAGE=${MATRIX_GCC_VERSION} -t gcc-formed-ci:nightly -f ci/images/gcc-matrix/Dockerfile .'
+      - name: Capture matrix CI environment
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id capture-matrix-ci-environment \
+            --report-root "$REPORT_ROOT" \
+            --matrix-gcc-version "$MATRIX_GCC_VERSION" \
+            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --release-blocker "$RELEASE_BLOCKER" \
+            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image "$MATRIX_GCC_VERSION" --docker-image-tag gcc-formed-ci:nightly'
       - name: cargo test --workspace
         run: |
           python3 ci/gate_step.py \

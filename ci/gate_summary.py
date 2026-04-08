@@ -8,7 +8,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+BUILD_ENVIRONMENT_SCHEMA_VERSION = 1
+BUILD_ENVIRONMENT_STEP_SECTIONS = {
+    "capture-host-build-environment": "host",
+    "capture-gcc15-ci-environment": "ci_image",
+    "capture-matrix-ci-environment": "ci_image",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -100,6 +106,7 @@ def planned_status(step: dict, mapping: dict, status: str) -> dict:
             "name": step["name"],
             "order": step["order"],
             "policy": step.get("policy", "always"),
+            "failure_classification": step.get("failure_classification", "product"),
         },
         "status": status,
         "command": substitute(step.get("command"), mapping),
@@ -120,6 +127,56 @@ def planned_status(step: dict, mapping: dict, status: str) -> dict:
     }
 
 
+def load_build_environment(build_environment_path: Path) -> dict | None:
+    if not build_environment_path.exists():
+        return None
+    return json.loads(build_environment_path.read_text(encoding="utf-8"))
+
+
+def build_environment_markdown_lines(summary: dict) -> list[str]:
+    build_environment = summary.get("build_environment")
+    if not build_environment:
+        return ["- Build environment: missing"]
+
+    host = build_environment.get("host") or {}
+    ci_image = build_environment.get("ci_image") or {}
+    host_rustc = ((host.get("rustc") or {}).get("release")) or "-"
+    host_cargo = ((host.get("cargo") or {}).get("release")) or "-"
+    host_docker = ((host.get("docker") or {}).get("version")) or "-"
+    ci_requested_base = ci_image.get("requested_base_image") or "-"
+    ci_rustc = (((ci_image.get("image") or {}).get("rustc") or {}).get("release")) or "-"
+    ci_cargo = (((ci_image.get("image") or {}).get("cargo") or {}).get("release")) or "-"
+    ci_gcc = (((ci_image.get("image") or {}).get("gcc") or {}).get("dumpfullversion")) or "-"
+    lines = [
+        (
+            "- Build environment: "
+            f"host rustc=`{host_rustc}`, "
+            f"host cargo=`{host_cargo}`, "
+            f"docker=`{host_docker}`, "
+            f"base image=`{ci_requested_base}`, "
+            f"ci rustc=`{ci_rustc}`, "
+            f"ci cargo=`{ci_cargo}`, "
+            f"ci gcc=`{ci_gcc}`"
+        )
+    ]
+    return lines
+
+
+def overall_failure_classification_for(summary_steps: list[dict], anomalies: list[str]) -> str | None:
+    classes = {
+        step["step"].get("failure_classification", "product")
+        for step in summary_steps
+        if step["status"] == "failure"
+    }
+    if anomalies:
+        classes.add("instrumentation")
+    if not classes:
+        return None
+    if len(classes) == 1:
+        return next(iter(classes))
+    return "mixed"
+
+
 def build_markdown(summary: dict) -> str:
     lines = [
         "# Gate Summary",
@@ -128,14 +185,20 @@ def build_markdown(summary: dict) -> str:
         f"- Job: `{summary['job']}`",
         f"- Overall status: `{summary['overall_status']}`",
     ]
+    failure_classification = summary.get("overall_failure_classification") or "none"
+    lines.append(f"- Failure classification: `{failure_classification}`")
     first_failed = summary.get("first_failed_step")
     if first_failed is None:
         lines.append("- First failed step: none")
     else:
         lines.append(
-            f"- First failed step: `{first_failed['order']:02d} {first_failed['name']}` (`{first_failed['id']}`)"
+            (
+                f"- First failed step: `{first_failed['order']:02d} {first_failed['name']}` "
+                f"(`{first_failed['id']}`, class=`{first_failed['failure_classification']}`)"
+            )
         )
     counts = summary["status_counts"]
+    classification_counts = summary["failure_classification_counts"]
     lines.extend(
         [
             (
@@ -145,9 +208,16 @@ def build_markdown(summary: dict) -> str:
                 f"skipped_prior_failure={counts.get('skipped_prior_failure', 0)}, "
                 f"skipped_by_policy={counts.get('skipped_by_policy', 0)}"
             ),
+            (
+                "- Failure classes: "
+                f"product={classification_counts.get('product', 0)}, "
+                f"infrastructure={classification_counts.get('infrastructure', 0)}, "
+                f"instrumentation={classification_counts.get('instrumentation', 0)}"
+            ),
+            *build_environment_markdown_lines(summary),
             "",
-            "| Order | Step | Status | Exit | GCC | Tier | Fixture |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Order | Step | Class | Status | Exit | GCC | Tier | Fixture |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for step in summary["steps"]:
@@ -156,10 +226,12 @@ def build_markdown(summary: dict) -> str:
         exit_code = "-" if step.get("exit_code") is None else str(step["exit_code"])
         gcc_version = step.get("gcc_version") or "-"
         support_tier = step.get("support_tier") or "-"
+        failure_classification = step_meta.get("failure_classification") or "product"
         lines.append(
             "| "
             f"{step_meta['order']:02d} | "
             f"{step_meta['name']} | "
+            f"`{failure_classification}` | "
             f"`{step['status']}` | "
             f"{exit_code} | "
             f"`{gcc_version}` | "
@@ -212,6 +284,9 @@ def main() -> int:
                         "id": step["id"],
                         "name": step["name"],
                         "order": step["order"],
+                        "failure_classification": status["step"].get(
+                            "failure_classification", "product"
+                        ),
                     }
             continue
 
@@ -232,6 +307,7 @@ def main() -> int:
                 "id": step["id"],
                 "name": step["name"],
                 "order": step["order"],
+                "failure_classification": step.get("failure_classification", "product"),
             }
 
     for step_id in sorted(statuses_by_id):
@@ -239,7 +315,45 @@ def main() -> int:
             anomalies.append(f"status artifact exists for unknown step `{step_id}`")
 
     status_counts = Counter(step["status"] for step in materialized_steps)
+    build_environment_path = gate_root / "build-environment.json"
+    build_environment = None
+    if build_environment_path.exists():
+        try:
+            build_environment = load_build_environment(build_environment_path)
+        except json.JSONDecodeError as error:
+            anomalies.append(f"build environment artifact is not valid JSON: {error}")
+    if build_environment is not None:
+        if build_environment.get("schema_version") != BUILD_ENVIRONMENT_SCHEMA_VERSION:
+            anomalies.append(
+                "build-environment schema version mismatch: "
+                f"expected {BUILD_ENVIRONMENT_SCHEMA_VERSION}, "
+                f"found {build_environment.get('schema_version')}"
+            )
+    for step_id, section_name in BUILD_ENVIRONMENT_STEP_SECTIONS.items():
+        status = statuses_by_id.get(step_id)
+        if status is None or status.get("status") != "success":
+            continue
+        if build_environment is None:
+            anomalies.append(
+                f"build environment artifact missing after successful `{step_id}` step"
+            )
+            continue
+        if build_environment.get(section_name) is None:
+            anomalies.append(
+                f"build environment section `{section_name}` missing after successful `{step_id}` step"
+            )
+
+    failure_classification_counts = Counter(
+        step["step"].get("failure_classification", "product")
+        for step in materialized_steps
+        if step["status"] == "failure"
+    )
+    if anomalies:
+        failure_classification_counts["instrumentation"] += len(anomalies)
     overall_status = "failure" if status_counts.get("failure", 0) > 0 or anomalies else "success"
+    overall_failure_classification = overall_failure_classification_for(
+        materialized_steps, anomalies
+    )
 
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -247,6 +361,7 @@ def main() -> int:
         "job": plan["job"],
         "generated_at": utc_now(),
         "overall_status": overall_status,
+        "overall_failure_classification": overall_failure_classification,
         "first_failed_step": first_failed_step,
         "status_counts": {
             "success": status_counts.get("success", 0),
@@ -254,8 +369,15 @@ def main() -> int:
             "skipped_prior_failure": status_counts.get("skipped_prior_failure", 0),
             "skipped_by_policy": status_counts.get("skipped_by_policy", 0),
         },
+        "failure_classification_counts": {
+            "product": failure_classification_counts.get("product", 0),
+            "infrastructure": failure_classification_counts.get("infrastructure", 0),
+            "instrumentation": failure_classification_counts.get("instrumentation", 0),
+        },
         "steps": materialized_steps,
         "anomalies": anomalies,
+        "build_environment_path": str(build_environment_path),
+        "build_environment": build_environment,
         "matrix": {
             "gcc_version": args.matrix_gcc_version,
             "support_tier": args.matrix_support_tier,

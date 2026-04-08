@@ -35,6 +35,6 @@ If you touch release packaging, install flows, or release metadata, also validat
 
 - Keep pull requests narrow and decision-complete.
 - Document intentional tradeoffs and limitations in the PR description.
-- When CI fails, inspect the uploaded `REPORT_ROOT/gate/gate-summary.json` and `gate-summary.md` artifacts before diving into raw GitHub step logs; they are the primary failure-triage entrypoint for instrumented `run:` steps.
+- When CI fails, inspect the uploaded `REPORT_ROOT/gate/gate-summary.json`, `gate-summary.md`, and `build-environment.json` artifacts before diving into raw GitHub step logs; they are the primary failure-triage entrypoint for instrumented `run:` steps and record the exact `rustc` / `cargo` / Docker / GCC environment used by the gate.
 - For snapshot failures or updates, inspect `snapshot-report.json` and per-fixture `comparisons.json`; they separate `normalization_only` drift from semantic mismatches.
 - `cargo xtask package` expects a clean git worktree for production artifacts; do not cut release artifacts from a dirty tree.

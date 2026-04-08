@@ -9,6 +9,7 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 ### Added
 
 - Added `REPORT_ROOT/gate/` CI artifacts with per-step status JSON, stdout/stderr logs, and `gate-summary.{json,md}` so PR and nightly failures can be triaged without replaying the full GitHub log stream.
+- Added `REPORT_ROOT/gate/build-environment.json` so PR and nightly artifacts retain the host/container `rustc`, `cargo`, Docker, and GCC versions used by the gate.
 - Added representative acceptance and snapshot report output to `cargo xtask replay` / `cargo xtask snapshot` so CI can retain normalized IR, raw stderr, rendered output, and failure summaries as artifacts.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
@@ -17,7 +18,7 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 
 ### Changed
 
-- Updated CI workflows to use pinned action SHAs, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
+- Updated CI workflows to use pinned action/toolchain versions, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, classify gate failures as `product` / `infrastructure` / `instrumentation`, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
 - Unified README, release notes, checklist, limitations, security policy, and contribution guidance around `v1alpha` as the current maturity line and `0.1.x` as the current artifact line.

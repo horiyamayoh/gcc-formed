@@ -7,6 +7,7 @@
 ```text
 $REPORT_ROOT/
   gate/
+    build-environment.json
     gate-summary.json
     gate-summary.md
     status/
@@ -16,14 +17,14 @@ $REPORT_ROOT/
       <nn>-<step>.stderr.log
 ```
 
-既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」を集約するためだけに追加する。
+既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
 
 ## Status Schema
 
-各 `status/*.json` は schema version `1` を使い、最低限次を持つ。
+各 `status/*.json` は schema version `2` を使い、最低限次を持つ。
 
 - `workflow`, `job`
-- `step.id`, `step.name`, `step.order`, `step.policy`
+- `step.id`, `step.name`, `step.order`, `step.policy`, `step.failure_classification`
 - `status`: `success` / `failure` / `skipped_prior_failure` / `skipped_by_policy`
 - `command`, `exit_code`
 - `fixture`
@@ -33,12 +34,28 @@ $REPORT_ROOT/
 - `log_paths.stdout`, `log_paths.stderr`
 - `started_at`, `finished_at`, `duration_ms`
 
+`step.failure_classification` は、少なくとも `product` / `infrastructure` / `instrumentation` を取り、workflow/platform 側の不調を product regression と混同しないために使う。
+
+## Build Environment Schema
+
+`build-environment.json` は schema version `1` を使い、少なくとも次を持つ。
+
+- `host.runner`
+- `host.toolchain_policy`
+- `host.rustc`, `host.cargo`, `host.docker`
+- `ci_image.requested_base_image`, `ci_image.built_image_tag`, `ci_image.dockerfile`
+- `ci_image.image.gcc`, `ci_image.image.rustc`, `ci_image.image.cargo`
+
+PR / nightly ともに host 側の `rustc` / `cargo` / Docker version を先に採取し、CI image build 後に selected GCC image 上の `rustc` / `cargo` / `gcc` を同じ JSON に追記する。
+
 ## Summary Semantics
 
 - `gate-summary.json` は static plan と recorded status files を照合した正本。
 - `gate-summary.md` は同内容の reviewer 向け要約で、GitHub Actions の `GITHUB_STEP_SUMMARY` にも追記される。
+- summary には `overall_failure_classification`, `failure_classification_counts`, `build_environment_path`, `build_environment` が含まれる。
 - `nightly-gate` の `release_blocker_only` steps は、`gcc:13` / `gcc:14` matrix run では `skipped_by_policy` として summary に残る。
 - plan にある step が failure より前に missing の場合、summary generation 自体を failure にして instrumentation drift を検知する。
+- build-environment capture step が success なのに `build-environment.json` や必要 section が欠けている場合も instrumentation drift として anomaly にする。
 
 ## Static Plans
 

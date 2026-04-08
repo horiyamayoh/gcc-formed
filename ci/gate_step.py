@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def parse_args() -> argparse.Namespace:
@@ -152,6 +152,7 @@ def build_status_payload(
             "name": step["name"],
             "order": step["order"],
             "policy": step.get("policy", "always"),
+            "failure_classification": step.get("failure_classification", "product"),
         },
         "status": status,
         "command": args.command,

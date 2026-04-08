@@ -30,6 +30,13 @@ jobs:
             --step-id prepare-report-directories \
             --report-root "$REPORT_ROOT" \
             --command 'mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/self-check" "$REPORT_ROOT/release" "$TARGET_DIR"'
+      - name: Capture host build environment
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id capture-host-build-environment \
+            --report-root "$REPORT_ROOT" \
+            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
       - name: Build GCC 15 CI image
         run: |
           python3 ci/gate_step.py \
@@ -37,6 +44,13 @@ jobs:
             --step-id build-gcc15-ci-image \
             --report-root "$REPORT_ROOT" \
             --command 'docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .'
+      - name: Capture GCC 15 CI environment
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id capture-gcc15-ci-environment \
+            --report-root "$REPORT_ROOT" \
+            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image gcc:15 --docker-image-tag gcc-formed-ci:pr'
       - name: cargo xtask check
         run: |
           python3 ci/gate_step.py \
