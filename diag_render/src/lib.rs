@@ -307,6 +307,8 @@ mod tests {
         let mut request = sample_request();
         request.profile = RenderProfile::Verbose;
         let output = render(request).unwrap();
+        assert!(!output.used_fallback);
+        assert_eq!(output.fallback_reason, None);
         assert!(
             output
                 .text
@@ -317,5 +319,50 @@ mod tests {
                 .text
                 .contains("debug: matched_conditions=message_contains=expected")
         );
+    }
+
+    #[test]
+    fn raw_fallback_profile_sets_user_opt_out_reason() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::RawFallback;
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert_eq!(output.fallback_reason, Some(FallbackReason::UserOptOut));
+        assert!(output.text.contains("showing a conservative wrapper view"));
+    }
+
+    #[test]
+    fn passthrough_document_sets_residual_only_reason() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Passthrough;
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert_eq!(output.fallback_reason, Some(FallbackReason::ResidualOnly));
+    }
+
+    #[test]
+    fn failed_document_sets_internal_error_reason() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Failed;
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert_eq!(output.fallback_reason, Some(FallbackReason::InternalError));
+    }
+
+    #[test]
+    fn empty_selection_sets_renderer_low_confidence_reason() {
+        let mut request = sample_request();
+        request.document.diagnostics.clear();
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert_eq!(
+            output.fallback_reason,
+            Some(FallbackReason::RendererLowConfidence)
+        );
+        assert!(output.text.contains("stderr"));
     }
 }

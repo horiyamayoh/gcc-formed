@@ -286,6 +286,7 @@ struct SnapshotReport {
     subset: String,
     docker_image: String,
     drift_metrics: SnapshotDriftMetrics,
+    fallback_reason_counts: BTreeMap<String, usize>,
     fixtures: Vec<SnapshotFixtureReport>,
     failures: Vec<VerificationFailure>,
 }
@@ -308,6 +309,7 @@ struct SnapshotArtifactDiff {
 struct SnapshotFixtureReport {
     fixture_id: String,
     family_key: String,
+    fallback_reason: Option<FallbackReason>,
     artifact_diffs: Vec<SnapshotArtifactDiff>,
 }
 
@@ -1031,6 +1033,7 @@ fn run_snapshot(
         subset: subset_name(subset).to_string(),
         docker_image: docker_image.to_string(),
         drift_metrics: snapshot_drift_metrics_for(&fixture_reports),
+        fallback_reason_counts: count_snapshot_fallback_reasons(&fixture_reports),
         fixtures: fixture_reports,
         failures: failures.clone(),
     };
@@ -1051,7 +1054,8 @@ fn run_snapshot(
             "check_only": check,
             "subset": report.subset,
             "docker_image": docker_image,
-            "drift_metrics": report.drift_metrics
+            "drift_metrics": report.drift_metrics,
+            "fallback_reason_counts": report.fallback_reason_counts
         }))?
     );
     Ok(())
@@ -1471,6 +1475,7 @@ fn materialize_fixture_snapshots(
         })?,
     );
 
+    let mut effective_fallback_reason = replay.fallback_reason;
     for (profile_name, _) in fixture.expectations.render.named_profiles() {
         let profile =
             render_profile_from_name(profile_name).ok_or_else(|| VerificationFailure {
@@ -1485,6 +1490,9 @@ fn materialize_fixture_snapshots(
             fixture_id: fixture.fixture_id().to_string(),
             summary: error.to_string(),
         })?;
+        if matches!(profile, RenderProfile::Default) {
+            effective_fallback_reason = effective_fallback_reason.or(render_result.fallback_reason);
+        }
         artifacts.insert(
             format!("view.{profile_name}.json"),
             canonical_json_for_view_model(view_model.as_ref()).map_err(|error| {
@@ -1535,6 +1543,7 @@ fn materialize_fixture_snapshots(
         report: SnapshotFixtureReport {
             fixture_id: fixture.fixture_id().to_string(),
             family_key: fixture.family_key(),
+            fallback_reason: effective_fallback_reason,
             artifact_diffs,
         },
         check_failure: pending_failure,
@@ -2203,6 +2212,16 @@ fn snapshot_drift_metrics_for(fixtures: &[SnapshotFixtureReport]) -> SnapshotDri
         }
     }
     metrics
+}
+
+fn count_snapshot_fallback_reasons(fixtures: &[SnapshotFixtureReport]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for fixture in fixtures {
+        if let Some(reason) = fixture.fallback_reason {
+            *counts.entry(reason.to_string()).or_insert(0) += 1;
+        }
+    }
+    counts
 }
 
 fn write_replay_report(
@@ -5044,6 +5063,34 @@ mod tests {
         assert_eq!(metrics.first_action_present_rate, 1.0);
         assert_eq!(metrics.family_match_rate, 1.0);
         assert_eq!(metrics.headline_rewritten_rate, 0.5);
+    }
+
+    #[test]
+    fn snapshot_reports_count_reason_coded_fallbacks() {
+        let fixtures = vec![
+            SnapshotFixtureReport {
+                fixture_id: "c/partial/case-01".to_string(),
+                family_key: "partial".to_string(),
+                fallback_reason: Some(FallbackReason::ResidualOnly),
+                artifact_diffs: Vec::new(),
+            },
+            SnapshotFixtureReport {
+                fixture_id: "c/syntax/case-01".to_string(),
+                family_key: "syntax".to_string(),
+                fallback_reason: Some(FallbackReason::SarifMissing),
+                artifact_diffs: Vec::new(),
+            },
+            SnapshotFixtureReport {
+                fixture_id: "c/syntax/case-02".to_string(),
+                family_key: "syntax".to_string(),
+                fallback_reason: Some(FallbackReason::SarifMissing),
+                artifact_diffs: Vec::new(),
+            },
+        ];
+
+        let counts = count_snapshot_fallback_reasons(&fixtures);
+        assert_eq!(counts.get(FallbackReason::ResidualOnly.as_str()), Some(&1));
+        assert_eq!(counts.get(FallbackReason::SarifMissing.as_str()), Some(&2));
     }
 
     #[test]

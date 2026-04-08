@@ -260,6 +260,7 @@ renderer は概念上、以下の入力と出力を持つ。
 | `text` | string | MUST | user-visible output |
 | `used_analysis` | bool | MUST | analysis overlay を実表示に使ったか |
 | `used_fallback` | bool | MUST | raw fallback が発動したか |
+| `fallback_reason` | enum | SHOULD | `used_fallback = true` のとき reason-coded taxonomy を保持する。非 fallback では省略可 |
 | `displayed_group_refs` | array<string> | MAY | 展開表示した group |
 | `suppressed_group_count` | integer | MAY | summary のみに落とした group 数 |
 | `suppressed_warning_count` | integer | MAY | 表示抑制した warning 数 |
@@ -267,6 +268,13 @@ renderer は概念上、以下の入力と出力を持つ。
 | `render_issues` | array<`IntegrityIssue`> | MAY | render stage の問題 |
 
 `RenderResult` は主に test harness / telemetry / debug 用であり、user-visible contract の主役は `text` である。
+
+#### `fallback_reason` の規則
+
+- `used_fallback = true` のとき、renderer は `fallback_reason` を埋めるべきである。
+- `fallback_reason` は free-form string ではなく、reason-coded taxonomy を使うべきである。
+- 少なくとも `unsupported_tier`, `incompatible_sink`, `shadow_mode`, `sarif_missing`, `sarif_parse_failed`, `residual_only`, `renderer_low_confidence`, `internal_error`, `timeout_or_budget`, `user_opt_out` を表現可能であるべきである。
+- trace / replay / snapshot report はこの taxonomy をそのまま再利用してよい。
 
 ---
 
