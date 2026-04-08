@@ -44,6 +44,7 @@ const REPRESENTATIVE_FIXTURES: &[&str] = &[
 ];
 
 const MINIMUM_CURATED_CORPUS_SIZE: usize = 80;
+const MAXIMUM_CURATED_CORPUS_SIZE: usize = 120;
 
 const SHASUMS_SIGNATURE_FILE: &str = "SHA256SUMS.sig";
 
@@ -4430,6 +4431,12 @@ fn enforce_minimum_corpus_shape(
         )
         .into());
     }
+    if fixture_count > MAXIMUM_CURATED_CORPUS_SIZE {
+        return Err(format!(
+            "curated corpus exceeded beta bar: expected <= {MAXIMUM_CURATED_CORPUS_SIZE} fixtures, got {fixture_count}"
+        )
+        .into());
+    }
     let minimums = [
         ("syntax", 8_usize),
         ("type", 10),
@@ -5100,6 +5107,65 @@ mod tests {
         let counts = count_snapshot_fallback_reasons(&fixtures);
         assert_eq!(counts.get(FallbackReason::ResidualOnly.as_str()), Some(&1));
         assert_eq!(counts.get(FallbackReason::SarifMissing.as_str()), Some(&2));
+    }
+
+    #[test]
+    fn curated_corpus_shape_rejects_fixture_count_below_beta_bar() {
+        let counts = BTreeMap::from([
+            ("syntax".to_string(), 8),
+            ("type".to_string(), 10),
+            ("overload".to_string(), 6),
+            ("template".to_string(), 12),
+            ("macro_include".to_string(), 10),
+            ("linker".to_string(), 10),
+            ("partial".to_string(), 6),
+            ("path".to_string(), 6),
+        ]);
+
+        let error = enforce_minimum_corpus_shape(79, &counts).unwrap_err();
+        assert!(error.to_string().contains("curated corpus below beta bar"));
+    }
+
+    #[test]
+    fn curated_corpus_shape_rejects_fixture_count_above_beta_bar() {
+        let counts = BTreeMap::from([
+            ("syntax".to_string(), 12),
+            ("type".to_string(), 14),
+            ("overload".to_string(), 10),
+            ("template".to_string(), 18),
+            ("macro_include".to_string(), 14),
+            ("linker".to_string(), 14),
+            ("partial".to_string(), 8),
+            ("path".to_string(), 10),
+        ]);
+
+        let error = enforce_minimum_corpus_shape(121, &counts).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("curated corpus exceeded beta bar")
+        );
+    }
+
+    #[test]
+    fn curated_corpus_shape_rejects_family_quota_regressions() {
+        let counts = BTreeMap::from([
+            ("syntax".to_string(), 8),
+            ("type".to_string(), 9),
+            ("overload".to_string(), 6),
+            ("template".to_string(), 12),
+            ("macro_include".to_string(), 10),
+            ("linker".to_string(), 10),
+            ("partial".to_string(), 6),
+            ("path".to_string(), 6),
+        ]);
+
+        let error = enforce_minimum_corpus_shape(80, &counts).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("family `type` below minimum fixture count")
+        );
     }
 
     #[test]

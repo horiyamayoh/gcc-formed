@@ -13,6 +13,7 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 - Added representative acceptance and snapshot report output to `cargo xtask replay` / `cargo xtask snapshot` so CI can retain normalized IR, raw stderr, rendered output, and failure summaries as artifacts.
 - Added reason-coded fallback taxonomy to trace and replay/snapshot outputs so unsupported tiers, sink conflicts, SARIF loss/parse failures, and renderer fallback decisions can be counted instead of reported as ad hoc strings.
 - Added 12 new GCC 15 fixtures across syntax, type mismatch, macro/include, linker, overload, and template families so the hand-authored corpus now reaches the 80-fixture beta bar.
+- Added corpus governance metadata to the newly promoted GCC 15 fixtures and linked the corpus workflow guide from the top-level README.
 - Added `SUPPORT-BOUNDARY.md` as the canonical wording for the current `v1alpha` / `0.1.x` support boundary.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
@@ -22,6 +23,8 @@ The current maturity label is `v1alpha`, and the current artifact semver line is
 
 ### Changed
 
+- Refactored `diag_enrich` into separate family, headline, action-hint, and ownership modules, and added deterministic unit coverage for syntax, type/overload, template, macro/include, linker, passthrough, and unknown classification paths.
+- Tightened the curated corpus gate so replay rejects fixture counts outside the beta-bar window instead of enforcing only the minimum size.
 - Updated CI workflows to use pinned action/toolchain versions, corrected the Rust toolchain action ref, added rollback smoke coverage, retained gate artifacts, classify gate failures as `product` / `infrastructure` / `instrumentation`, and treat GCC 13/14 nightly runs as health indicators instead of release blockers.
 - Updated the CLI to announce conservative compatibility mode when the selected backend is outside the primary GCC 15 render path.
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.

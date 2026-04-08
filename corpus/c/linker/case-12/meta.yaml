@@ -1,3 +1,5 @@
+corpus_id: c/linker/case-12
+title: unresolved external symbol from missing link target
 tags:
 - linker
 - phase1
@@ -5,3 +7,10 @@ tags:
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-09'
+reviewers:
+- codex
+promotion_status: curated
+known_version_drift_notes: []

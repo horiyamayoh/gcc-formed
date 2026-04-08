@@ -1,3 +1,5 @@
+corpus_id: cpp/template/case-14
+title: class template argument deduction conflicts across constructor arguments
 tags:
 - template
 - phase1
@@ -5,3 +7,10 @@ tags:
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-09'
+reviewers:
+- codex
+promotion_status: curated
+known_version_drift_notes: []

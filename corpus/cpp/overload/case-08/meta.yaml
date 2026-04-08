@@ -1,3 +1,5 @@
+corpus_id: cpp/overload/case-08
+title: no matching reference overload for const char pointer
 tags:
 - overload
 - phase1
@@ -5,3 +7,10 @@ tags:
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-09'
+reviewers:
+- codex
+promotion_status: curated
+known_version_drift_notes: []
