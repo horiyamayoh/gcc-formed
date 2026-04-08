@@ -23,6 +23,18 @@ jobs:
         with:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
+      - name: Resolve package version
+        run: |
+          package_version="$(python3 - <<'PY'
+          import tomllib
+
+          with open("Cargo.toml", "rb") as handle:
+              cargo = tomllib.load(handle)
+          print(cargo["workspace"]["package"]["version"])
+          PY
+          )"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-linux-x86_64-musl" >> "$GITHUB_ENV"
       - name: Prepare report directories
         run: |
           python3 ci/gate_step.py \
@@ -126,7 +138,7 @@ jobs:
           cargo xtask package \
             --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed \
             --target-triple x86_64-unknown-linux-musl \
-            --release-channel stable \
+            --release-channel beta \
             --support-tier gcc15_primary \
             --signing-private-key "$RUNNER_TEMP/release-signing.key" \
             > "$REPORT_ROOT/release/package.json"
@@ -141,7 +153,7 @@ jobs:
         run: |
           command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
-          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          control_dir="$CONTROL_DIR"
           install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/gcc-formed/bin"
           signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$control_dir/SHA256SUMS.sig")"
@@ -166,7 +178,7 @@ jobs:
         run: |
           command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
-          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          control_dir="$CONTROL_DIR"
           install_root="$RUNNER_TEMP/system-root/opt/cc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/system-root/usr/local/bin"
           signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$control_dir/SHA256SUMS.sig")"
@@ -184,19 +196,19 @@ jobs:
         run: |
           command=$(cat <<'EOF'
           trusted_signing_public_key_sha256="56475aa75463474c0285df5dbf2bcab73da651358839e9b77481b2eab107708c"
-          control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
+          control_dir="$CONTROL_DIR"
           repo_root="$RUNNER_TEMP/gcc-formed-release-repo"
-          resolved_json="$REPORT_ROOT/release/release-resolve-stable.json"
+          resolved_json="$REPORT_ROOT/release/release-resolve-beta.json"
           install_root="$RUNNER_TEMP/gcc-formed-release/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/gcc-formed-release-bin"
 
           cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root" > "$REPORT_ROOT/release/release-publish.json"
-          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel canary > "$REPORT_ROOT/release/release-promote-canary.json"
-          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel stable > "$REPORT_ROOT/release/release-promote-stable.json"
-          cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable > "$resolved_json"
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version "$PACKAGE_VERSION" --channel canary > "$REPORT_ROOT/release/release-promote-canary.json"
+          cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version "$PACKAGE_VERSION" --channel beta > "$REPORT_ROOT/release/release-promote-beta.json"
+          cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel beta > "$resolved_json"
           primary_sha="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["primary_archive_sha256"])' "$resolved_json")"
           signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["signing_key_id"])' "$resolved_json")"
-          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir" > "$REPORT_ROOT/release/install-release.json"
+          cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version "$PACKAGE_VERSION" --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir" > "$REPORT_ROOT/release/install-release.json"
           "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/install-release-version.txt"
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install > "$REPORT_ROOT/release/install-release-uninstall.json"
           EOF
@@ -238,8 +250,8 @@ jobs:
                   "package": load("package.json"),
                   "release_publish": load("release-publish.json"),
                   "release_promote_canary": load("release-promote-canary.json"),
-                  "release_promote_stable": load("release-promote-stable.json"),
-                  "release_resolve_stable": load("release-resolve-stable.json"),
+                  "release_promote_beta": load("release-promote-beta.json"),
+                  "release_resolve_beta": load("release-resolve-beta.json"),
                   "install": load("install.json"),
                   "install_release": load("install-release.json"),
                   "system_install": load("system-install.json"),

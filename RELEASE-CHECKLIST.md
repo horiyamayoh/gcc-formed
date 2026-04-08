@@ -1,12 +1,12 @@
 # Release Checklist
 
-This checklist defines the minimum bar for shipping artifacts from the current `v1alpha` / `0.1.x` baseline and for deciding whether the project is ready to advance to `v1beta` / `0.2.0-beta.N`.
+This checklist defines the minimum bar for shipping artifacts from the current `v1beta` / `0.2.0-beta.N` baseline and for deciding whether the project is ready to advance to `v1.0.0-rc` / `1.0.0-rc.N`.
 
 ## Versioning Contract
 
-- Current maturity label: `v1alpha`
-- Current artifact semver line: `0.1.x`
-- Planned public beta line: `0.2.0-beta.N`
+- Current maturity label: `v1beta`
+- Current artifact semver line: `0.2.0-beta.N`
+- Current public beta artifact: `0.2.0-beta.1`
 - Planned release-candidate line: `1.0.0-rc.N`
 - Planned stable line: `1.0.0`
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.
@@ -19,9 +19,10 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Representative acceptance replay is green and the report artifacts are attached.
 - Representative GCC 15 snapshot check is green and the report artifacts are attached.
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.
+- The public GitHub Release exists and includes the minimum beta asset set.
 - Release artifacts include `release-provenance.json`.
 
-## Current Alpha Support Boundary
+## Current Beta Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -32,18 +33,20 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 ## Explicit Non-Goals
 
-- Do not label `0.1.x` artifacts as `v1beta`, `1.0.0-rc.N`, or `1.0.0 stable`.
+- Do not label `0.2.0-beta.N` artifacts as `1.0.0-rc.N` or `1.0.0 stable`.
 - Do not describe GCC 13/14 as primary enhanced-render coverage.
 - Do not expand primary support to non-Linux artifacts.
 - Do not claim that raw fallback has been eliminated.
 
 ## Release Notes Gate
 
-- README states the current alpha-baseline scope in one screen.
+- README states the current beta-baseline scope in one screen.
+- README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
 - `SUPPORT-BOUNDARY.md` exists and matches the wording reused in README, release notes, limitations, security, and contributing docs.
 - README links to `VERSIONING.md` and distinguishes maturity labels from artifact semver.
 - `RELEASE-NOTES.md` calls out compatibility paths and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.
+- The GitHub Release body links `SUPPORT-BOUNDARY.md`, `KNOWN-LIMITATIONS.md`, and `PUBLIC-BETA-RELEASE.md`.
 
 ## Artifact Retention
 
@@ -51,4 +54,5 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Snapshot report includes expected/actual artifacts for the representative fixtures.
 - Release smoke retains `manifest.json`, package/install JSON output, and resolve/install-release JSON output.
 - Release smoke retains `release-provenance.json` alongside signing material and build metadata.
+- The public GitHub Release ships `primary`, `debug`, and `source` archives, the full control bundle, the immutable release-repo bundle, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, and `release-provenance.json`.
 - Signing key rotation / revoke / emergency re-sign follows `SIGNING-KEY-OPERATIONS.md`.

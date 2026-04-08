@@ -1,6 +1,6 @@
 # Known Limitations
 
-`gcc-formed` is currently in the `v1alpha` maturity line, and the current artifact line is `0.1.x`. The current alpha baseline is intentionally narrow.
+`gcc-formed` is currently in the `v1beta` maturity line, and the current artifact line is `0.2.0-beta.N`. The current public-beta baseline is intentionally narrow.
 
 The exact support-boundary wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md). This file repeats the same contract before listing additional detail.
 
@@ -42,8 +42,8 @@ You should expect raw fallback when:
 - Enhanced render quality outside the GCC 15 primary path.
 - Non-Linux production artifacts.
 - Elimination of passthrough, shadow mode, or raw fallback.
-- Public beta artifacts (`0.2.0-beta.N`) or release-candidate / stable artifacts (`1.0.0-rc.N`, `1.0.0`).
-- Stable general-availability support promises beyond the documented `v1alpha` / `0.1.x` scope.
+- Release-candidate or stable artifacts (`1.0.0-rc.N`, `1.0.0`).
+- Stable general-availability support promises beyond the documented `v1beta` / `0.2.0-beta.N` scope.
 
 ## Bug Reports
 

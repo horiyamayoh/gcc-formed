@@ -236,7 +236,7 @@ dependencies = [
 
 [[package]]
 name = "diag_adapter_gcc"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
  "diag_residual_text",
@@ -248,7 +248,7 @@ dependencies = [
 
 [[package]]
 name = "diag_backend_probe"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "serde",
  "thiserror",
@@ -256,7 +256,7 @@ dependencies = [
 
 [[package]]
 name = "diag_capture_runtime"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_backend_probe",
  "diag_core",
@@ -269,7 +269,7 @@ dependencies = [
 
 [[package]]
 name = "diag_cli_front"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -290,7 +290,7 @@ dependencies = [
 
 [[package]]
 name = "diag_core"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "regex",
  "serde",
@@ -301,7 +301,7 @@ dependencies = [
 
 [[package]]
 name = "diag_enrich"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
  "regex",
@@ -309,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "diag_render"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
  "serde",
@@ -318,7 +318,7 @@ dependencies = [
 
 [[package]]
 name = "diag_residual_text"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
  "regex",
@@ -326,7 +326,7 @@ dependencies = [
 
 [[package]]
 name = "diag_testkit"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "assert_cmd",
  "diag_core",
@@ -340,7 +340,7 @@ dependencies = [
 
 [[package]]
 name = "diag_trace"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
  "serde",
@@ -1135,7 +1135,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.2.0-beta.1"
 dependencies = [
  "clap",
  "diag_adapter_gcc",

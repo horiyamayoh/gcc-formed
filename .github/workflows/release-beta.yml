@@ -1,0 +1,292 @@
+name: public-beta-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Artifact semver without leading v
+        required: true
+        default: 0.2.0-beta.1
+  push:
+    tags:
+      - "v*-beta.*"
+
+permissions:
+  contents: write
+
+jobs:
+  public-beta-release:
+    runs-on: ubuntu-24.04
+    env:
+      TARGET_TRIPLE: x86_64-unknown-linux-musl
+      ARTIFACT_SLUG: linux-x86_64-musl
+      SUPPORT_TIER: gcc15_primary
+      RELEASE_CHANNEL: beta
+      REPORT_ROOT: ${{ runner.temp }}/public-beta-release
+      RELEASE_REPO_ROOT: ${{ runner.temp }}/public-beta-release-repo
+      RELEASE_ASSET_ROOT: ${{ runner.temp }}/public-beta-assets
+      RELEASE_NOTES_PATH: ${{ runner.temp }}/public-beta-release-notes.md
+      REQUESTED_VERSION: ${{ github.event.inputs.version }}
+      RELEASE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_HEX }}
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.94.1
+        with:
+          components: rustfmt
+          targets: x86_64-unknown-linux-musl
+      - name: Resolve release version
+        run: |
+          package_version="$(python3 - <<'PY'
+          import tomllib
+
+          with open("Cargo.toml", "rb") as handle:
+              cargo = tomllib.load(handle)
+          print(cargo["workspace"]["package"]["version"])
+          PY
+          )"
+
+          requested_version="$REQUESTED_VERSION"
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            requested_version="${GITHUB_REF_NAME#v}"
+          fi
+
+          if [ "$requested_version" != "$package_version" ]; then
+            echo "::error::requested release version '$requested_version' did not match Cargo.toml workspace version '$package_version'"
+            exit 1
+          fi
+
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
+          echo "PRIMARY_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
+          echo "DEBUG_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
+          echo "SOURCE_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-source.tar.gz" >> "$GITHUB_ENV"
+      - name: Ensure signing key is configured
+        run: |
+          if [ -z "$RELEASE_SIGNING_PRIVATE_KEY_HEX" ]; then
+            echo "::error::RELEASE_SIGNING_PRIVATE_KEY_HEX repository secret is required for signed public beta releases"
+            exit 1
+          fi
+      - name: Prepare release directories
+        run: |
+          mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/release" "$RELEASE_REPO_ROOT" "$RELEASE_ASSET_ROOT"
+      - name: cargo xtask check
+        run: cargo xtask check
+      - name: Representative acceptance replay
+        run: cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"
+      - name: Representative GCC 15 snapshot check
+        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"
+      - name: Vendor dependency tree
+        run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
+      - name: Hermetic release build
+        run: cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple "$TARGET_TRIPLE" > "$REPORT_ROOT/release/hermetic-release.json"
+      - name: Write release signing key
+        run: |
+          printf '%s\n' "$RELEASE_SIGNING_PRIVATE_KEY_HEX" > "$RUNNER_TEMP/release-signing.key"
+          chmod 0600 "$RUNNER_TEMP/release-signing.key"
+      - name: Signed package generation
+        run: |
+          cargo xtask package \
+            --binary "target/hermetic-release/${TARGET_TRIPLE}/release/gcc-formed" \
+            --target-triple "$TARGET_TRIPLE" \
+            --release-channel "$RELEASE_CHANNEL" \
+            --support-tier "$SUPPORT_TIER" \
+            --signing-private-key "$RUNNER_TEMP/release-signing.key" \
+            > "$REPORT_ROOT/release/package.json"
+      - name: Install smoke
+        run: |
+          control_dir="$CONTROL_DIR"
+          install_root="$RUNNER_TEMP/gcc-formed/${TARGET_TRIPLE}"
+          bin_dir="$RUNNER_TEMP/gcc-formed/bin"
+          signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$control_dir/SHA256SUMS.sig")"
+          trusted_signing_public_key_sha256="$(python3 -c 'import hashlib, json, sys; print(hashlib.sha256(bytes.fromhex(json.load(open(sys.argv[1], "r", encoding="utf-8"))["public_key_hex"])).hexdigest())' "$control_dir/SHA256SUMS.sig")"
+          echo "RELEASE_SIGNING_KEY_ID=$signing_key_id" >> "$GITHUB_ENV"
+          echo "RELEASE_SIGNING_PUBLIC_KEY_SHA256=$trusted_signing_public_key_sha256" >> "$GITHUB_ENV"
+          cargo xtask install \
+            --control-dir "$control_dir" \
+            --install-root "$install_root" \
+            --bin-dir "$bin_dir" \
+            --expected-signing-key-id "$signing_key_id" \
+            --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" \
+            > "$REPORT_ROOT/release/install.json"
+          "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/installed-version.txt"
+      - name: Rollback symlink smoke
+        run: cargo test -p xtask rollback_switches_current_symlink_to_requested_version > "$REPORT_ROOT/release/rollback-smoke.txt"
+      - name: System-wide layout smoke
+        run: |
+          control_dir="$CONTROL_DIR"
+          install_root="$RUNNER_TEMP/system-root/opt/cc-formed/${TARGET_TRIPLE}"
+          bin_dir="$RUNNER_TEMP/system-root/usr/local/bin"
+          cargo xtask install \
+            --control-dir "$control_dir" \
+            --install-root "$install_root" \
+            --bin-dir "$bin_dir" \
+            --expected-signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --expected-signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
+            > "$REPORT_ROOT/release/system-install.json"
+          "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/system-version.txt"
+          cargo xtask uninstall \
+            --install-root "$install_root" \
+            --bin-dir "$bin_dir" \
+            --mode purge-install \
+            > "$REPORT_ROOT/release/system-uninstall.json"
+      - name: Publish immutable release repository
+        run: cargo xtask release-publish --control-dir "$CONTROL_DIR" --repository-root "$RELEASE_REPO_ROOT" > "$REPORT_ROOT/release/release-publish.json"
+      - name: Promote canary
+        run: cargo xtask release-promote --repository-root "$RELEASE_REPO_ROOT" --target-triple "$TARGET_TRIPLE" --version "$PACKAGE_VERSION" --channel canary > "$REPORT_ROOT/release/release-promote-canary.json"
+      - name: Promote beta
+        run: cargo xtask release-promote --repository-root "$RELEASE_REPO_ROOT" --target-triple "$TARGET_TRIPLE" --version "$PACKAGE_VERSION" --channel beta > "$REPORT_ROOT/release/release-promote-beta.json"
+      - name: Resolve beta release
+        run: cargo xtask release-resolve --repository-root "$RELEASE_REPO_ROOT" --target-triple "$TARGET_TRIPLE" --channel beta > "$REPORT_ROOT/release/release-resolve-beta.json"
+      - name: Exact-pin install-release smoke
+        run: |
+          resolved_json="$REPORT_ROOT/release/release-resolve-beta.json"
+          install_root="$RUNNER_TEMP/release-repo-install/${TARGET_TRIPLE}"
+          bin_dir="$RUNNER_TEMP/release-repo-bin"
+          primary_sha="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["primary_archive_sha256"])' "$resolved_json")"
+          cargo xtask install-release \
+            --repository-root "$RELEASE_REPO_ROOT" \
+            --target-triple "$TARGET_TRIPLE" \
+            --version "$PACKAGE_VERSION" \
+            --expected-primary-sha256 "$primary_sha" \
+            --expected-signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --expected-signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
+            --install-root "$install_root" \
+            --bin-dir "$bin_dir" \
+            > "$REPORT_ROOT/release/install-release.json"
+          "$bin_dir/gcc-formed" --formed-version > "$REPORT_ROOT/release/install-release-version.txt"
+          cargo xtask uninstall \
+            --install-root "$install_root" \
+            --bin-dir "$bin_dir" \
+            --mode purge-install \
+            > "$REPORT_ROOT/release/install-release-uninstall.json"
+      - name: Assemble GitHub Release bundles
+        run: |
+          control_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
+          release_repo_dir="$RUNNER_TEMP/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
+          release_repo_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+          tar -czf "$control_bundle" -C dist "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}"
+          cp -R "$RELEASE_REPO_ROOT" "$release_repo_dir"
+          tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
+      - name: Write release provenance
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report_root = Path(os.environ["REPORT_ROOT"]) / "release"
+
+          def load(name):
+              path = report_root / name
+              if not path.exists():
+                  return None
+              return json.loads(path.read_text(encoding="utf-8"))
+
+          payload = {
+              "workflow": "public-beta-release",
+              "github": {
+                  "repository": os.environ.get("GITHUB_REPOSITORY"),
+                  "sha": os.environ.get("GITHUB_SHA"),
+                  "ref": os.environ.get("GITHUB_REF"),
+                  "run_id": os.environ.get("GITHUB_RUN_ID"),
+                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+                  "actor": os.environ.get("GITHUB_ACTOR"),
+                  "tag": os.environ.get("RELEASE_TAG"),
+              },
+              "release": {
+                  "package_version": os.environ.get("PACKAGE_VERSION"),
+                  "target_triple": os.environ.get("TARGET_TRIPLE"),
+                  "release_channel": os.environ.get("RELEASE_CHANNEL"),
+                  "signing_key_id": os.environ.get("RELEASE_SIGNING_KEY_ID"),
+                  "signing_public_key_sha256": os.environ.get("RELEASE_SIGNING_PUBLIC_KEY_SHA256"),
+                  "package": load("package.json"),
+                  "release_publish": load("release-publish.json"),
+                  "release_promote_canary": load("release-promote-canary.json"),
+                  "release_promote_beta": load("release-promote-beta.json"),
+                  "release_resolve_beta": load("release-resolve-beta.json"),
+                  "install": load("install.json"),
+                  "install_release": load("install-release.json"),
+                  "system_install": load("system-install.json"),
+                  "hermetic_release": load("hermetic-release.json"),
+                  "vendor": load("vendor.json"),
+              },
+          }
+          (report_root / "release-provenance.json").write_text(
+              json.dumps(payload, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Write release notes
+        run: |
+          cat > "$RELEASE_NOTES_PATH" <<EOF
+          # gcc-formed ${PACKAGE_VERSION}
+
+          This GitHub prerelease ships artifact \`${PACKAGE_VERSION}\` in the \`v1beta\` maturity line.
+
+          ## Support Boundary
+
+          - Linux first.
+          - \`x86_64-unknown-linux-musl\` is the primary production artifact.
+          - GCC 15 is the primary enhanced-render path.
+          - The terminal renderer is the primary user-facing surface.
+          - GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+
+          ## Install Paths
+
+          - Direct install / rollback path: see \`PUBLIC-BETA-RELEASE.md\` and use the \`.control.tar.gz\` bundle.
+          - Exact-pin release-repository path: use the \`.release-repo.tar.gz\` bundle together with \`cargo xtask install-release\`.
+          - Current docs:
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/PUBLIC-BETA-RELEASE.md
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/SUPPORT-BOUNDARY.md
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/KNOWN-LIMITATIONS.md
+
+          ## Signing
+
+          - signing key id: \`${RELEASE_SIGNING_KEY_ID}\`
+          - trusted signing public key sha256: \`${RELEASE_SIGNING_PUBLIC_KEY_SHA256}\`
+
+          ## Included Assets
+
+          - primary archive
+          - debug archive
+          - source archive
+          - control-dir bundle
+          - immutable release-repo bundle
+          - \`manifest.json\`
+          - \`build-info.txt\`
+          - \`SHA256SUMS\`
+          - \`SHA256SUMS.sig\`
+          - \`release-provenance.json\`
+
+          ## Known Limits
+
+          - \`${PACKAGE_VERSION}\` remains a public-beta artifact, not a release candidate or stable release.
+          - GCC 13/14 remain compatibility-only paths.
+          - Raw fallback remains part of the shipped contract.
+          EOF
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          assets=(
+            "$PRIMARY_ARCHIVE"
+            "$DEBUG_ARCHIVE"
+            "$SOURCE_ARCHIVE"
+            "$CONTROL_DIR/manifest.json"
+            "$CONTROL_DIR/build-info.txt"
+            "$CONTROL_DIR/SHA256SUMS"
+            "$CONTROL_DIR/SHA256SUMS.sig"
+            "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
+            "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+            "$REPORT_ROOT/release/release-provenance.json"
+          )
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --prerelease
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --prerelease
+          fi

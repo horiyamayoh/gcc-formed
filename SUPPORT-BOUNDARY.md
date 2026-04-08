@@ -1,8 +1,8 @@
 # Support Boundary
 
-This document is the canonical wording for the current `v1alpha` / `0.1.x` support boundary. Keep README, release notes, known limitations, security policy, contribution guidance, and GitHub templates aligned with the exact wording below.
+This document is the canonical wording for the current `v1beta` / `0.2.0-beta.N` support boundary. Keep README, release notes, known limitations, security policy, contribution guidance, and GitHub templates aligned with the exact wording below.
 
-## Current `v1alpha` / `0.1.x` Support Boundary
+## Current `v1beta` / `0.2.0-beta.N` Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -16,4 +16,4 @@ This document is the canonical wording for the current `v1alpha` / `0.1.x` suppo
 - Non-Linux production artifacts.
 - Enhanced-render guarantees outside the GCC 15 primary path.
 - Elimination of passthrough, shadow mode, or raw fallback.
-- Stable general-availability support claims beyond the documented `v1alpha` / `0.1.x` baseline.
+- Release-candidate or stable general-availability support claims beyond the documented `v1beta` / `0.2.0-beta.N` baseline.

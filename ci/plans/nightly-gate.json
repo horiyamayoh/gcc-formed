@@ -239,15 +239,15 @@
       "name": "Release repository promote and pin smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
-      "command": "publish release repository, promote canary/stable, resolve stable, install exact version, and uninstall",
+      "command": "publish release repository, promote canary/beta, resolve beta, install exact version, and uninstall",
       "fixture": null,
       "gcc_version": "host",
       "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/release-publish.json",
         "$REPORT_ROOT/release/release-promote-canary.json",
-        "$REPORT_ROOT/release/release-promote-stable.json",
-        "$REPORT_ROOT/release/release-resolve-stable.json",
+        "$REPORT_ROOT/release/release-promote-beta.json",
+        "$REPORT_ROOT/release/release-resolve-beta.json",
         "$REPORT_ROOT/release/install-release.json",
         "$REPORT_ROOT/release/install-release-version.txt",
         "$REPORT_ROOT/release/install-release-uninstall.json"

@@ -4570,6 +4570,14 @@ mod tests {
         signing_public_key_sha256(&read_signing_key(&path).unwrap().verifying_key())
     }
 
+    fn current_release_fixture_version() -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
+
+    fn current_release_fixture_version_name() -> String {
+        format!("v{}", current_release_fixture_version())
+    }
+
     fn init_release_repo(version: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
         let sandbox = tempfile::tempdir().unwrap();
         let repo_root = sandbox.path().join("repo");
@@ -5188,7 +5196,8 @@ mod tests {
 
     #[test]
     fn package_smoke_emits_release_artifacts() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (_sandbox, repo_root, binary_path) = init_release_repo(version);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -5263,7 +5272,8 @@ mod tests {
 
     #[test]
     fn package_rejects_dirty_worktree() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (_sandbox, repo_root, binary_path) = init_release_repo(version);
         write_file(&repo_root.join("dirty.txt"), b"untracked\n");
 
         let error = run_package_at(
@@ -5284,7 +5294,8 @@ mod tests {
 
     #[test]
     fn package_requires_release_documents() {
-        let (_sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (_sandbox, repo_root, binary_path) = init_release_repo(version);
         fs::remove_file(repo_root.join("NOTICE")).unwrap();
         run_command(&repo_root, "git", &["add", "-u"]);
         run_command(&repo_root, "git", &["commit", "-q", "-m", "remove notice"]);
@@ -5393,7 +5404,9 @@ mod tests {
 
     #[test]
     fn install_smoke_verifies_archive_and_creates_current_symlink() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let version_name = current_release_fixture_version_name();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -5425,20 +5438,27 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.installed_version, version);
         assert_eq!(install.previous_version, None);
         assert_eq!(
             current_version_name(&install_root).unwrap().as_deref(),
-            Some("v0.1.0")
+            Some(version_name.as_str())
         );
-        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
-        assert!(install_root.join("v0.1.0/bin/gcc-formed").exists());
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), version).unwrap();
+        assert!(
+            install_root
+                .join(&version_name)
+                .join("bin/gcc-formed")
+                .exists()
+        );
         assert!(launcher_is_managed(&bin_dir.join("gcc-formed"), &install_root).unwrap());
     }
 
     #[test]
     fn install_dry_run_reports_actions_without_mutating_install_layout() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let version_name = current_release_fixture_version_name();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -5472,7 +5492,7 @@ mod tests {
         .unwrap();
 
         assert!(install.dry_run);
-        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.installed_version, version);
         assert_eq!(
             install
                 .planned_actions
@@ -5488,14 +5508,15 @@ mod tests {
                 "swap_symlink",
             ]
         );
-        assert!(!install_root.join("v0.1.0").exists());
+        assert!(!install_root.join(&version_name).exists());
         assert_eq!(current_version_name(&install_root).unwrap(), None);
         assert!(fs::symlink_metadata(bin_dir.join("gcc-formed")).is_err());
     }
 
     #[test]
     fn install_rejects_control_dir_with_bad_checksums() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let package = run_package_at(
             &repo_root,
             &PackageOptions {
@@ -5531,7 +5552,9 @@ mod tests {
 
     #[test]
     fn signed_package_supports_pinned_signature_verification_and_system_wide_layout() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let version_name = current_release_fixture_version_name();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5582,19 +5605,20 @@ mod tests {
             install.signing_public_key_sha256.as_deref(),
             Some(trusted_public_key_sha256.as_str())
         );
-        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.installed_version, version);
         assert_eq!(
             current_version_name(&install_root).unwrap().as_deref(),
-            Some("v0.1.0")
+            Some(version_name.as_str())
         );
-        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), version).unwrap();
         assert!(bin_dir.join("gcc-formed").exists());
         assert!(launcher_is_managed(&bin_dir.join("gcc-formed"), &install_root).unwrap());
     }
 
     #[test]
     fn install_rejects_signed_release_with_wrong_key_id() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5636,7 +5660,8 @@ mod tests {
 
     #[test]
     fn install_rejects_signed_release_with_wrong_public_key_sha() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5678,7 +5703,8 @@ mod tests {
 
     #[test]
     fn release_publish_promote_and_resolve_keep_same_bits() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5709,7 +5735,7 @@ mod tests {
             &ReleasePromoteOptions {
                 repository_root: repository_root.clone(),
                 target_triple: "x86_64-unknown-linux-gnu".to_string(),
-                version: "0.1.0".to_string(),
+                version: version.to_string(),
                 channel: "canary".to_string(),
             },
         )
@@ -5719,7 +5745,7 @@ mod tests {
             &ReleasePromoteOptions {
                 repository_root: repository_root.clone(),
                 target_triple: "x86_64-unknown-linux-gnu".to_string(),
-                version: "0.1.0".to_string(),
+                version: version.to_string(),
                 channel: "stable".to_string(),
             },
         )
@@ -5738,14 +5764,14 @@ mod tests {
         let published = read_published_release(&release_version_root(
             &repository_root,
             "x86_64-unknown-linux-gnu",
-            "0.1.0",
+            version,
         ))
         .unwrap();
         let stable_pointer =
             read_release_channel_pointer(&repository_root, "x86_64-unknown-linux-gnu", "stable")
                 .unwrap();
 
-        assert_eq!(publish.version, "0.1.0");
+        assert_eq!(publish.version, version);
         assert!(publish.signing_key_id.is_some());
         assert!(publish.signing_public_key_sha256.is_some());
         assert_eq!(
@@ -5756,7 +5782,7 @@ mod tests {
             stable.primary_archive_sha256,
             publish.primary_archive_sha256
         );
-        assert_eq!(resolved.resolved_version, "0.1.0");
+        assert_eq!(resolved.resolved_version, version);
         assert_eq!(
             resolved.primary_archive_sha256,
             publish.primary_archive_sha256
@@ -5765,7 +5791,7 @@ mod tests {
             published.primary_archive_sha256,
             publish.primary_archive_sha256
         );
-        assert_eq!(stable_pointer.version, "0.1.0");
+        assert_eq!(stable_pointer.version, version);
         assert_eq!(
             stable_pointer.primary_archive_sha256,
             published.primary_archive_sha256
@@ -5792,7 +5818,9 @@ mod tests {
 
     #[test]
     fn install_release_supports_exact_version_and_checksum_pin() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let version_name = current_release_fixture_version_name();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5822,7 +5850,7 @@ mod tests {
             &ReleasePromoteOptions {
                 repository_root: repository_root.clone(),
                 target_triple: "x86_64-unknown-linux-gnu".to_string(),
-                version: "0.1.0".to_string(),
+                version: version.to_string(),
                 channel: "stable".to_string(),
             },
         )
@@ -5851,7 +5879,7 @@ mod tests {
                 install_root: install_root.clone(),
                 bin_dir: bin_dir.clone(),
                 channel: None,
-                version: Some("0.1.0".to_string()),
+                version: Some(version.to_string()),
                 expected_primary_sha256: Some(resolved.primary_archive_sha256.clone()),
                 expected_signing_key_id: resolved.signing_key_id.clone(),
                 expected_signing_public_key_sha256: resolved.signing_public_key_sha256.clone(),
@@ -5860,8 +5888,8 @@ mod tests {
         .unwrap();
 
         assert_eq!(install.requested_channel, None);
-        assert_eq!(install.resolved_version, "0.1.0");
-        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.resolved_version, version);
+        assert_eq!(install.installed_version, version);
         assert_eq!(
             install.primary_archive_sha256,
             resolved.primary_archive_sha256
@@ -5873,14 +5901,15 @@ mod tests {
         );
         assert_eq!(
             current_version_name(&install_root).unwrap().as_deref(),
-            Some("v0.1.0")
+            Some(version_name.as_str())
         );
-        assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.0").unwrap();
+        assert_binary_reports_version(&bin_dir.join("gcc-formed"), version).unwrap();
     }
 
     #[test]
     fn install_release_from_channel_reports_exact_installed_version() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5910,7 +5939,7 @@ mod tests {
             &ReleasePromoteOptions {
                 repository_root: repository_root.clone(),
                 target_triple: "x86_64-unknown-linux-gnu".to_string(),
-                version: "0.1.0".to_string(),
+                version: version.to_string(),
                 channel: "stable".to_string(),
             },
         )
@@ -5941,13 +5970,14 @@ mod tests {
         .unwrap();
 
         assert_eq!(install.requested_channel.as_deref(), Some("stable"));
-        assert_eq!(install.resolved_version, "0.1.0");
-        assert_eq!(install.installed_version, "0.1.0");
+        assert_eq!(install.resolved_version, version);
+        assert_eq!(install.installed_version, version);
     }
 
     #[test]
     fn install_release_rejects_mismatched_pinned_checksum() {
-        let (sandbox, repo_root, binary_path) = init_release_repo("0.1.0");
+        let version = current_release_fixture_version();
+        let (sandbox, repo_root, binary_path) = init_release_repo(version);
         let signing_private_key = sandbox.path().join("release-signing.key");
         write_signing_private_key(&signing_private_key);
         let package = run_package_at(
@@ -5984,7 +6014,7 @@ mod tests {
                     .join("x86_64-unknown-linux-gnu"),
                 bin_dir: sandbox.path().join("bin"),
                 channel: None,
-                version: Some("0.1.0".to_string()),
+                version: Some(version.to_string()),
                 expected_primary_sha256: Some("deadbeef".to_string()),
                 expected_signing_key_id: None,
                 expected_signing_public_key_sha256: None,
