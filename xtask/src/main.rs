@@ -1500,14 +1500,40 @@ fn compare_snapshot_file(
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", path.display()),
     })?;
+    let expected = normalize_snapshot_contents(path, &expected).map_err(|summary| {
+        VerificationFailure {
+            layer: layer.to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary,
+        }
+    })?;
+    let actual = normalize_snapshot_contents(path, actual).map_err(|summary| VerificationFailure {
+        layer: layer.to_string(),
+        fixture_id: fixture.fixture_id().to_string(),
+        summary,
+    })?;
     if expected == actual {
         return Ok(());
     }
     Err(VerificationFailure {
         layer: layer.to_string(),
         fixture_id: fixture.fixture_id().to_string(),
-        summary: first_diff_summary(&expected, actual),
+        summary: first_diff_summary(&expected, &actual),
     })
+}
+
+fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
+    if path.file_name().and_then(|value| value.to_str()) != Some("diagnostics.sarif") {
+        return Ok(contents.to_string());
+    }
+
+    let mut value: serde_json::Value = serde_json::from_str(contents)
+        .map_err(|error| format!("failed to parse {} as JSON: {error}", path.display()))?;
+    if let Some(object) = value.as_object_mut() {
+        object.remove("$schema");
+    }
+    diag_core::canonical_json(&value)
+        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
 fn canonical_json_for_view_model(
@@ -3641,6 +3667,27 @@ mod tests {
         write_file(&root.join("src/main.rs"), b"fn main() {}\n");
         run_command(&root, "cargo", &["generate-lockfile", "--offline"]);
         (sandbox, root)
+    }
+
+    #[test]
+    fn normalizes_sarif_snapshots_before_compare() {
+        let expected = r#"{"version":"2.1.0","runs":[{"results":[]}]}"#;
+        let actual = r#"{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "results": []
+    }
+  ],
+  "version": "2.1.0"
+}"#;
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("diagnostics.sarif"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("diagnostics.sarif"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
     }
 
     #[test]
