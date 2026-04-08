@@ -2,6 +2,7 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use serde_json::Value;
 use std::collections::BTreeMap;
+use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use tempfile::TempDir;
@@ -147,7 +148,10 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
                 .as_str()
                 .is_some_and(|path| path.contains("runtime-root/formed-")))
     );
-    assert_eq!(trace["capabilities"]["stream_kind"], "pipe");
+    assert_eq!(
+        trace["capabilities"]["stream_kind"],
+        expected_non_tty_stream_kind()
+    );
     assert_eq!(trace["capabilities"]["ansi_color"], false);
     assert!(trace["timing"]["capture_ms"].as_u64().is_some());
     assert!(trace["timing"]["render_ms"].as_u64().is_some());
@@ -307,7 +311,10 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         serde_json::from_str(&fs::read_to_string(retained_dir.join("trace.json")).unwrap())
             .unwrap();
     assert_eq!(retained_trace["selected_mode"], "render");
-    assert_eq!(retained_trace["capabilities"]["stream_kind"], "pipe");
+    assert_eq!(
+        retained_trace["capabilities"]["stream_kind"],
+        expected_non_tty_stream_kind()
+    );
 
     let normalized_ir: Value =
         serde_json::from_str(&fs::read_to_string(retained_dir.join("ir.analysis.json")).unwrap())
@@ -391,6 +398,14 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     );
     assert_eq!(report["backend"]["support_tier"], "a");
     assert!(report["warnings"].as_array().unwrap().is_empty());
+}
+
+fn expected_non_tty_stream_kind() -> &'static str {
+    if env::var_os("CI").is_some() {
+        "cilog"
+    } else {
+        "pipe"
+    }
 }
 
 #[test]
