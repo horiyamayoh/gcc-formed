@@ -1591,8 +1591,15 @@ fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value
                 runs.iter()
                     .map(|run| {
                         let mut normalized_run = serde_json::Map::new();
-                        if let Some(results) = run.get("results").cloned() {
-                            normalized_run.insert("results".to_string(), results);
+                        if let Some(results) =
+                            run.get("results").and_then(serde_json::Value::as_array)
+                        {
+                            normalized_run.insert(
+                                "results".to_string(),
+                                serde_json::Value::Array(
+                                    results.iter().map(normalize_sarif_result).collect(),
+                                ),
+                            );
                         }
                         serde_json::Value::Object(normalized_run)
                     })
@@ -1601,6 +1608,120 @@ fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value
         );
     }
     serde_json::Value::Object(normalized)
+}
+
+fn normalize_sarif_result(result: &serde_json::Value) -> serde_json::Value {
+    let mut normalized = serde_json::Map::new();
+    if let Some(level) = result.get("level").and_then(serde_json::Value::as_str) {
+        normalized.insert(
+            "level".to_string(),
+            serde_json::Value::String(level.to_string()),
+        );
+    }
+    if let Some(message) = result.get("message") {
+        if let Some(message) = normalize_sarif_message(message) {
+            normalized.insert("message".to_string(), message);
+        }
+    }
+    if let Some(locations) = result
+        .get("locations")
+        .and_then(serde_json::Value::as_array)
+    {
+        normalized.insert(
+            "locations".to_string(),
+            serde_json::Value::Array(
+                locations
+                    .iter()
+                    .filter_map(|location| normalize_sarif_location(location, false))
+                    .collect(),
+            ),
+        );
+    }
+    if let Some(related_locations) = result
+        .get("relatedLocations")
+        .and_then(serde_json::Value::as_array)
+    {
+        normalized.insert(
+            "relatedLocations".to_string(),
+            serde_json::Value::Array(
+                related_locations
+                    .iter()
+                    .filter_map(|location| normalize_sarif_location(location, true))
+                    .collect(),
+            ),
+        );
+    }
+    serde_json::Value::Object(normalized)
+}
+
+fn normalize_sarif_location(
+    location: &serde_json::Value,
+    include_message: bool,
+) -> Option<serde_json::Value> {
+    let mut normalized = serde_json::Map::new();
+    let physical = location
+        .get("physicalLocation")
+        .or_else(|| location.get("physical_location"));
+    if let Some(physical) = physical.and_then(normalize_sarif_physical_location) {
+        normalized.insert("physicalLocation".to_string(), physical);
+    }
+    if include_message {
+        if let Some(message) = location.get("message").and_then(normalize_sarif_message) {
+            normalized.insert("message".to_string(), message);
+        }
+    }
+    if normalized.is_empty() {
+        None
+    } else {
+        Some(serde_json::Value::Object(normalized))
+    }
+}
+
+fn normalize_sarif_physical_location(physical: &serde_json::Value) -> Option<serde_json::Value> {
+    let mut normalized = serde_json::Map::new();
+    if let Some(uri) = physical
+        .get("artifactLocation")
+        .or_else(|| physical.get("artifact_location"))
+        .and_then(|artifact| artifact.get("uri"))
+        .and_then(serde_json::Value::as_str)
+    {
+        normalized.insert(
+            "artifactLocation".to_string(),
+            serde_json::json!({ "uri": uri }),
+        );
+    }
+    if let Some(region) = physical
+        .get("region")
+        .and_then(serde_json::Value::as_object)
+    {
+        let mut normalized_region = serde_json::Map::new();
+        for key in ["startLine", "startColumn", "endLine", "endColumn"] {
+            if let Some(value) = region.get(key) {
+                normalized_region.insert(key.to_string(), value.clone());
+            }
+        }
+        if !normalized_region.is_empty() {
+            normalized.insert(
+                "region".to_string(),
+                serde_json::Value::Object(normalized_region),
+            );
+        }
+    }
+    if normalized.is_empty() {
+        None
+    } else {
+        Some(serde_json::Value::Object(normalized))
+    }
+}
+
+fn normalize_sarif_message(message: &serde_json::Value) -> Option<serde_json::Value> {
+    if let Some(text) = message.get("text").and_then(serde_json::Value::as_str) {
+        return Some(serde_json::json!({ "text": text }));
+    }
+    message
+        .get("markdown")
+        .and_then(serde_json::Value::as_str)
+        .map(|markdown| serde_json::json!({ "markdown": markdown }))
 }
 
 fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticDocument) {
@@ -3877,7 +3998,28 @@ mod tests {
 
     #[test]
     fn normalizes_sarif_snapshots_before_compare() {
-        let expected = r#"{"version":"2.1.0","runs":[{"results":[{"message":{"text":"link failed for /tmp/helper.o and /tmp/main.o"}}]}]}"#;
+        let expected = r#"{
+  "version":"2.1.0",
+  "runs":[
+    {
+      "results":[
+        {
+          "level":"error",
+          "ruleId":"error",
+          "message":{"text":"link failed for /tmp/helper.o and /tmp/main.o"},
+          "locations":[
+            {
+              "physicalLocation":{
+                "artifactLocation":{"uri":"src/main.c"},
+                "region":{"startLine":2,"startColumn":25}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}"#;
         let actual = r#"{
   "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
   "runs": [
@@ -3891,6 +4033,22 @@ mod tests {
       ],
       "results": [
         {
+          "level": "error",
+          "locations": [
+            {
+              "id": 0,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.c",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 25
+                }
+              }
+            }
+          ],
           "message": {
             "text": "link failed for /tmp/cc123456.o and /tmp/cc654321.o"
           }
