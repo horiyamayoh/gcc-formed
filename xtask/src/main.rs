@@ -1523,15 +1523,42 @@ fn compare_snapshot_file(
 }
 
 fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
+    let contents = normalize_transient_object_paths(contents);
     if path.file_name().and_then(|value| value.to_str()) != Some("diagnostics.sarif") {
-        return Ok(contents.to_string());
+        return Ok(contents);
     }
 
-    let value: serde_json::Value = serde_json::from_str(contents)
+    let value: serde_json::Value = serde_json::from_str(&contents)
         .map_err(|error| format!("failed to parse {} as JSON: {error}", path.display()))?;
     let value = normalize_sarif_snapshot_value(value);
     diag_core::canonical_json(&value)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_transient_object_paths(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let mut remaining = contents;
+
+    while let Some(start) = remaining.find("/tmp/") {
+        normalized.push_str(&remaining[..start]);
+        let candidate = &remaining[start..];
+        let path_len = candidate
+            .chars()
+            .take_while(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '/' | '.' | '_' | '-'))
+            .map(char::len_utf8)
+            .sum::<usize>();
+        let path = &candidate[..path_len];
+        if path.starts_with("/tmp/") && path.ends_with(".o") {
+            normalized.push_str("/tmp/<object>.o");
+            remaining = &candidate[path_len..];
+        } else {
+            normalized.push_str("/tmp/");
+            remaining = &candidate["/tmp/".len()..];
+        }
+    }
+
+    normalized.push_str(remaining);
+    normalized
 }
 
 fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value {
@@ -3693,7 +3720,7 @@ mod tests {
 
     #[test]
     fn normalizes_sarif_snapshots_before_compare() {
-        let expected = r#"{"version":"2.1.0","runs":[{"results":[]}]}"#;
+        let expected = r#"{"version":"2.1.0","runs":[{"results":[{"message":{"text":"link failed for /tmp/helper.o and /tmp/main.o"}}]}]}"#;
         let actual = r#"{
   "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
   "runs": [
@@ -3705,7 +3732,13 @@ mod tests {
           }
         }
       ],
-      "results": []
+      "results": [
+        {
+          "message": {
+            "text": "link failed for /tmp/cc123456.o and /tmp/cc654321.o"
+          }
+        }
+      ]
     }
   ],
   "version": "2.1.0"
