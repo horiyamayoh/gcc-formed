@@ -1,8 +1,8 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use diag_adapter_gcc::{ingest, producer_for_version, tool_for_backend};
 use diag_core::{
-    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, LanguageMode, RunInfo,
-    SnapshotKind, WrapperSurface, snapshot_json,
+    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, LanguageMode, Ownership,
+    RunInfo, SnapshotKind, WrapperSurface, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -160,6 +160,10 @@ enum Commands {
         fixture: Option<String>,
         #[arg(long)]
         family: Option<String>,
+        #[arg(long, value_enum, default_value_t = SnapshotSubset::All)]
+        subset: SnapshotSubset,
+        #[arg(long)]
+        report_dir: Option<PathBuf>,
     },
     Snapshot {
         #[arg(long, default_value = "corpus")]
@@ -174,6 +178,8 @@ enum Commands {
         check: bool,
         #[arg(long, default_value = "gcc:15")]
         docker_image: String,
+        #[arg(long)]
+        report_dir: Option<PathBuf>,
     },
     BenchSmoke,
     SelfCheck,
@@ -185,11 +191,81 @@ enum SnapshotSubset {
     Representative,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 struct VerificationFailure {
     layer: String,
     fixture_id: String,
     summary: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct AcceptanceFixtureSummary {
+    fixture_id: String,
+    family_key: String,
+    title: Option<String>,
+    expected_family: Option<String>,
+    actual_family: String,
+    family_match: bool,
+    used_fallback: bool,
+    fallback_forbidden: bool,
+    unexpected_fallback: bool,
+    primary_location_path: Option<String>,
+    primary_location_user_owned_required: bool,
+    primary_location_user_owned: bool,
+    missing_required_primary_location: bool,
+    first_action_required: bool,
+    first_action_present: bool,
+    missing_required_first_action: bool,
+    headline_rewritten: bool,
+    parse_time_ms: u64,
+    render_time_ms: u64,
+    verified: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct AcceptanceMetrics {
+    promoted_fixture_count: usize,
+    fallback_used_count: usize,
+    fallback_forbidden_count: usize,
+    unexpected_fallback_count: usize,
+    primary_location_user_owned_required_count: usize,
+    primary_location_user_owned_count: usize,
+    missing_required_primary_location_count: usize,
+    first_action_required_count: usize,
+    first_action_present_count: usize,
+    missing_required_first_action_count: usize,
+    headline_rewritten_count: usize,
+    family_expected_count: usize,
+    family_match_count: usize,
+    fallback_rate: f64,
+    primary_location_user_owned_rate: f64,
+    first_action_present_rate: f64,
+    headline_rewritten_rate: f64,
+    family_match_rate: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct ReplayReport {
+    family_counts: BTreeMap<String, usize>,
+    selected_family_counts: BTreeMap<String, usize>,
+    selected_fixture_count: usize,
+    promoted_fixture_count: usize,
+    promoted_verified: usize,
+    promoted_failed: usize,
+    subset: String,
+    metrics: AcceptanceMetrics,
+    fixtures: Vec<AcceptanceFixtureSummary>,
+    failures: Vec<VerificationFailure>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct SnapshotReport {
+    selected_fixture_count: usize,
+    promoted_fixture_count: usize,
+    check_only: bool,
+    subset: String,
+    docker_image: String,
+    failures: Vec<VerificationFailure>,
 }
 
 #[derive(Debug)]
@@ -721,7 +797,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             root,
             fixture,
             family,
-        } => run_replay(&root, fixture.as_deref(), family.as_deref())?,
+            subset,
+            report_dir,
+        } => run_replay(
+            &root,
+            fixture.as_deref(),
+            family.as_deref(),
+            subset,
+            report_dir.as_deref(),
+        )?,
         Commands::Snapshot {
             root,
             fixture,
@@ -729,6 +813,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             subset,
             check,
             docker_image,
+            report_dir,
         } => run_snapshot(
             &root,
             fixture.as_deref(),
@@ -736,6 +821,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             subset,
             check,
             &docker_image,
+            report_dir.as_deref(),
         )?,
         Commands::BenchSmoke => {
             println!(
@@ -765,6 +851,8 @@ fn run_replay(
     root: &Path,
     fixture_filter: Option<&str>,
     family_filter: Option<&str>,
+    subset: SnapshotSubset,
+    report_dir: Option<&Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let fixtures = discover(root)?;
     for fixture in &fixtures {
@@ -772,25 +860,49 @@ fn run_replay(
     }
     let counts = family_counts(&fixtures);
     enforce_minimum_family_counts(&counts)?;
-    let selected = select_fixtures(
-        &fixtures,
-        fixture_filter,
-        family_filter,
-        SnapshotSubset::All,
-    );
+    let selected = select_fixtures(&fixtures, fixture_filter, family_filter, subset);
     if selected.is_empty() {
         return Err("no fixtures matched replay selection".into());
     }
+    let selected_family_counts = family_counts_for_selected(&selected);
 
     let mut failures = Vec::new();
     let mut promoted_verified = 0usize;
+    let mut summaries = Vec::new();
     for fixture in &selected {
         if fixture.is_promoted() {
-            match verify_promoted_fixture(fixture) {
-                Ok(_) => promoted_verified += 1,
+            match collect_acceptance_fixture_summary(fixture, report_dir) {
+                Ok(mut summary) => match verify_promoted_fixture(fixture) {
+                    Ok(_) => {
+                        summary.verified = true;
+                        promoted_verified += 1;
+                        summaries.push(summary);
+                    }
+                    Err(failure) => {
+                        summary.verified = false;
+                        summaries.push(summary);
+                        failures.push(failure);
+                    }
+                },
                 Err(failure) => failures.push(failure),
             }
         }
+    }
+
+    let report = ReplayReport {
+        family_counts: counts.clone(),
+        selected_family_counts,
+        selected_fixture_count: selected.len(),
+        promoted_fixture_count: summaries.len(),
+        promoted_verified,
+        promoted_failed: summaries.len().saturating_sub(promoted_verified),
+        subset: subset_name(subset).to_string(),
+        metrics: acceptance_metrics_for(&summaries),
+        fixtures: summaries,
+        failures: failures.clone(),
+    };
+    if let Some(report_dir) = report_dir {
+        write_replay_report(report_dir, &report)?;
     }
 
     if !failures.is_empty() {
@@ -802,8 +914,12 @@ fn run_replay(
         "{}",
         serde_json::to_string_pretty(&serde_json::json!({
             "family_counts": counts,
+            "selected_family_counts": report.selected_family_counts,
             "selected_fixture_count": selected.len(),
             "promoted_verified": promoted_verified,
+            "promoted_fixture_count": report.promoted_fixture_count,
+            "subset": report.subset,
+            "metrics": report.metrics,
             "mode": "replay"
         }))?
     );
@@ -817,6 +933,7 @@ fn run_snapshot(
     subset: SnapshotSubset,
     check: bool,
     docker_image: &str,
+    report_dir: Option<&Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let fixtures = discover(root)?;
     let selected = select_fixtures(&fixtures, fixture_filter, family_filter, subset);
@@ -832,6 +949,7 @@ fn run_snapshot(
     if promoted.is_empty() {
         return Err("snapshot selection did not include any promoted fixtures".into());
     }
+    let promoted_count = promoted.len();
 
     let mut failures = Vec::new();
     let mut updated = 0usize;
@@ -844,10 +962,22 @@ fn run_snapshot(
             });
             continue;
         }
-        match materialize_fixture_snapshots(fixture, docker_image, check) {
+        match materialize_fixture_snapshots(fixture, docker_image, check, report_dir) {
             Ok(count) => updated += count,
             Err(failure) => failures.push(failure),
         }
+    }
+
+    let report = SnapshotReport {
+        selected_fixture_count: selected.len(),
+        promoted_fixture_count: promoted_count,
+        check_only: check,
+        subset: subset_name(subset).to_string(),
+        docker_image: docker_image.to_string(),
+        failures: failures.clone(),
+    };
+    if let Some(report_dir) = report_dir {
+        write_snapshot_report(report_dir, &report)?;
     }
 
     if !failures.is_empty() {
@@ -861,14 +991,189 @@ fn run_snapshot(
             "selected_fixture_count": selected.len(),
             "promoted_fixture_count": updated,
             "check_only": check,
-            "subset": match subset {
-                SnapshotSubset::All => "all",
-                SnapshotSubset::Representative => "representative",
-            },
+            "subset": report.subset,
             "docker_image": docker_image
         }))?
     );
     Ok(())
+}
+
+fn collect_acceptance_fixture_summary(
+    fixture: &Fixture,
+    report_dir: Option<&Path>,
+) -> Result<AcceptanceFixtureSummary, VerificationFailure> {
+    let semantic = fixture
+        .expectations
+        .semantic
+        .as_ref()
+        .ok_or_else(|| VerificationFailure {
+            layer: "semantic".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "promoted fixture missing semantic expectations".to_string(),
+        })?;
+    let replay = replay_fixture_document(fixture).map_err(|error| VerificationFailure {
+        layer: "ingest".to_string(),
+        fixture_id: fixture.fixture_id().to_string(),
+        summary: error.to_string(),
+    })?;
+    replay
+        .document
+        .validate()
+        .map_err(|error| VerificationFailure {
+            layer: "schema_validation".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.errors.join("; "),
+        })?;
+
+    let default_request =
+        render_request_for_fixture(fixture, &replay.document, RenderProfile::Default);
+    let default_view_model = build_view_model(&default_request);
+    let render_started = Instant::now();
+    let default_render_result =
+        render(default_request.clone()).map_err(|error| VerificationFailure {
+            layer: "render.default".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.to_string(),
+        })?;
+    let render_time_ms = elapsed_ms(render_started);
+    let lead_node = lead_node_for_document(
+        &replay.document,
+        &default_render_result.displayed_group_refs,
+    )
+    .ok_or_else(|| VerificationFailure {
+        layer: "semantic".to_string(),
+        fixture_id: fixture.fixture_id().to_string(),
+        summary: "default render produced no lead diagnostic".to_string(),
+    })?;
+
+    let actual_family = lead_node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref())
+        .unwrap_or("unknown")
+        .to_string();
+    let family_match = semantic.family == actual_family;
+    let raw_headline = lead_node
+        .message
+        .raw_text
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    let analyzed_headline = lead_node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.headline.as_deref())
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    let first_action_present = lead_node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.first_action_hint.as_ref())
+        .map(|value| !value.trim().is_empty())
+        .unwrap_or(false);
+    let primary_location = lead_node.primary_location();
+    let primary_location_user_owned = primary_location
+        .and_then(|location| location.ownership.as_ref())
+        .is_some_and(|ownership| *ownership == Ownership::User);
+    let fallback_forbidden = semantic.fallback == Some(ExpectedFallback::Forbidden);
+    let unexpected_fallback = fallback_forbidden && default_render_result.used_fallback;
+    let primary_location_user_owned_required = semantic.primary_location_user_owned_required;
+    let missing_required_primary_location =
+        primary_location_user_owned_required && !primary_location_user_owned;
+    let first_action_required = semantic.first_action_required;
+    let missing_required_first_action = first_action_required && !first_action_present;
+
+    if let Some(report_dir) = report_dir {
+        let mut artifacts = BTreeMap::new();
+        let snapshot_root = fixture.snapshot_root();
+        artifacts.insert(
+            "stderr.raw".to_string(),
+            fs::read_to_string(snapshot_root.join("stderr.raw")).map_err(|error| {
+                VerificationFailure {
+                    layer: "report.stderr".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                }
+            })?,
+        );
+        artifacts.insert(
+            "diagnostics.sarif".to_string(),
+            fs::read_to_string(snapshot_root.join("diagnostics.sarif")).map_err(|error| {
+                VerificationFailure {
+                    layer: "report.sarif".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                }
+            })?,
+        );
+        artifacts.insert(
+            "ir.facts.json".to_string(),
+            snapshot_json(&replay.document, SnapshotKind::FactsOnly).map_err(|error| {
+                VerificationFailure {
+                    layer: "report.ir.facts".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                }
+            })?,
+        );
+        artifacts.insert(
+            "ir.analysis.json".to_string(),
+            snapshot_json(&replay.document, SnapshotKind::AnalysisIncluded).map_err(|error| {
+                VerificationFailure {
+                    layer: "report.ir.analysis".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                }
+            })?,
+        );
+        artifacts.insert(
+            "view.default.json".to_string(),
+            canonical_json_for_view_model(default_view_model.as_ref()).map_err(|error| {
+                VerificationFailure {
+                    layer: "report.view.default".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                }
+            })?,
+        );
+        artifacts.insert(
+            "render.default.txt".to_string(),
+            default_render_result.text.clone(),
+        );
+        write_fixture_report_bundle(report_dir, fixture, &artifacts).map_err(|error| {
+            VerificationFailure {
+                layer: "report.bundle".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error,
+            }
+        })?;
+    }
+
+    Ok(AcceptanceFixtureSummary {
+        fixture_id: fixture.fixture_id().to_string(),
+        family_key: fixture.family_key(),
+        title: fixture.meta.title.clone(),
+        expected_family: Some(semantic.family.clone()),
+        actual_family,
+        family_match,
+        used_fallback: default_render_result.used_fallback,
+        fallback_forbidden,
+        unexpected_fallback,
+        primary_location_path: primary_location.map(|location| location.path.clone()),
+        primary_location_user_owned_required,
+        primary_location_user_owned,
+        missing_required_primary_location,
+        first_action_required,
+        first_action_present,
+        missing_required_first_action,
+        headline_rewritten: !analyzed_headline.is_empty() && analyzed_headline != raw_headline,
+        parse_time_ms: replay.parse_time_ms,
+        render_time_ms,
+        verified: false,
+    })
 }
 
 fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), VerificationFailure> {
@@ -1018,6 +1323,7 @@ fn materialize_fixture_snapshots(
     fixture: &Fixture,
     docker_image: &str,
     check: bool,
+    report_dir: Option<&Path>,
 ) -> Result<usize, VerificationFailure> {
     let captured = if std::env::var_os("FORMED_SNAPSHOT_USE_EXISTING_INGRESS").is_some() {
         load_existing_ingress(fixture)?
@@ -1115,6 +1421,16 @@ fn materialize_fixture_snapshots(
             })?,
         );
         artifacts.insert(format!("render.{profile_name}.txt"), render_result.text);
+    }
+
+    if let Some(report_dir) = report_dir {
+        write_fixture_report_bundle(report_dir, fixture, &artifacts).map_err(|error| {
+            VerificationFailure {
+                layer: "report.bundle".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error,
+            }
+        })?;
     }
 
     for (relative, contents) in artifacts {
@@ -1366,6 +1682,19 @@ fn verify_semantic_expectations(
                 ),
             });
         }
+    }
+
+    if semantic.primary_location_user_owned_required
+        && !lead_node
+            .primary_location()
+            .and_then(|location| location.ownership.as_ref())
+            .is_some_and(|ownership| *ownership == Ownership::User)
+    {
+        return Err(VerificationFailure {
+            layer: "semantic.primary_location_ownership".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "lead diagnostic primary location was not user-owned".to_string(),
+        });
     }
 
     if semantic.first_action_required
@@ -2381,6 +2710,204 @@ fn select_fixtures<'a>(
             }
         })
         .collect()
+}
+
+fn family_counts_for_selected(fixtures: &[&Fixture]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for fixture in fixtures {
+        *counts.entry(fixture.family_key()).or_insert(0) += 1;
+    }
+    counts
+}
+
+fn subset_name(subset: SnapshotSubset) -> &'static str {
+    match subset {
+        SnapshotSubset::All => "all",
+        SnapshotSubset::Representative => "representative",
+    }
+}
+
+fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMetrics {
+    let promoted_fixture_count = fixtures.len();
+    let fallback_used_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.used_fallback)
+        .count();
+    let fallback_forbidden_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.fallback_forbidden)
+        .count();
+    let unexpected_fallback_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.unexpected_fallback)
+        .count();
+    let primary_location_user_owned_required_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.primary_location_user_owned_required)
+        .count();
+    let primary_location_user_owned_count = fixtures
+        .iter()
+        .filter(|fixture| {
+            fixture.primary_location_user_owned_required && fixture.primary_location_user_owned
+        })
+        .count();
+    let missing_required_primary_location_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.missing_required_primary_location)
+        .count();
+    let first_action_required_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.first_action_required)
+        .count();
+    let first_action_present_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.first_action_required && fixture.first_action_present)
+        .count();
+    let missing_required_first_action_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.missing_required_first_action)
+        .count();
+    let headline_rewritten_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.headline_rewritten)
+        .count();
+    let family_expected_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.expected_family.is_some())
+        .count();
+    let family_match_count = fixtures
+        .iter()
+        .filter(|fixture| fixture.family_match)
+        .count();
+
+    AcceptanceMetrics {
+        promoted_fixture_count,
+        fallback_used_count,
+        fallback_forbidden_count,
+        unexpected_fallback_count,
+        primary_location_user_owned_required_count,
+        primary_location_user_owned_count,
+        missing_required_primary_location_count,
+        first_action_required_count,
+        first_action_present_count,
+        missing_required_first_action_count,
+        headline_rewritten_count,
+        family_expected_count,
+        family_match_count,
+        fallback_rate: ratio(unexpected_fallback_count, fallback_forbidden_count),
+        primary_location_user_owned_rate: ratio(
+            primary_location_user_owned_count,
+            primary_location_user_owned_required_count,
+        ),
+        first_action_present_rate: ratio(first_action_present_count, first_action_required_count),
+        headline_rewritten_rate: ratio(headline_rewritten_count, promoted_fixture_count),
+        family_match_rate: ratio(family_match_count, family_expected_count),
+    }
+}
+
+fn ratio(numerator: usize, denominator: usize) -> f64 {
+    if denominator == 0 {
+        0.0
+    } else {
+        numerator as f64 / denominator as f64
+    }
+}
+
+fn write_replay_report(
+    report_dir: &Path,
+    report: &ReplayReport,
+) -> Result<(), Box<dyn std::error::Error>> {
+    fs::create_dir_all(report_dir)?;
+    fs::write(
+        report_dir.join("replay-report.json"),
+        serde_json::to_vec_pretty(report)?,
+    )?;
+    Ok(())
+}
+
+fn write_snapshot_report(
+    report_dir: &Path,
+    report: &SnapshotReport,
+) -> Result<(), Box<dyn std::error::Error>> {
+    fs::create_dir_all(report_dir)?;
+    fs::write(
+        report_dir.join("snapshot-report.json"),
+        serde_json::to_vec_pretty(report)?,
+    )?;
+    Ok(())
+}
+
+fn write_fixture_report_bundle(
+    report_dir: &Path,
+    fixture: &Fixture,
+    actual_artifacts: &BTreeMap<String, String>,
+) -> Result<(), String> {
+    let fixture_dir = report_dir.join("fixtures").join(fixture.fixture_id());
+    let actual_dir = fixture_dir.join("actual");
+    let actual_normalized_dir = fixture_dir.join("actual-normalized");
+    let expected_dir = fixture_dir.join("expected");
+    let expected_normalized_dir = fixture_dir.join("expected-normalized");
+    fs::create_dir_all(&actual_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&actual_normalized_dir).map_err(|error| error.to_string())?;
+
+    for (relative, contents) in actual_artifacts {
+        let actual_path = actual_dir.join(relative);
+        if let Some(parent) = actual_path.parent() {
+            fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+        }
+        fs::write(&actual_path, contents).map_err(|error| error.to_string())?;
+
+        let normalized_actual = normalize_snapshot_contents(Path::new(relative), contents)
+            .map_err(|error| {
+                format!("failed to normalize actual report artifact `{relative}`: {error}")
+            })?;
+        let normalized_actual_path = actual_normalized_dir.join(relative);
+        if let Some(parent) = normalized_actual_path.parent() {
+            fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+        }
+        fs::write(&normalized_actual_path, normalized_actual).map_err(|error| error.to_string())?;
+
+        let expected_path = fixture.snapshot_root().join(relative);
+        if expected_path.exists() {
+            let expected_contents =
+                fs::read_to_string(&expected_path).map_err(|error| error.to_string())?;
+            let report_expected_path = expected_dir.join(relative);
+            if let Some(parent) = report_expected_path.parent() {
+                fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+            }
+            fs::write(&report_expected_path, &expected_contents)
+                .map_err(|error| error.to_string())?;
+
+            let normalized_expected =
+                normalize_snapshot_contents(&expected_path, &expected_contents).map_err(
+                    |error| {
+                        format!(
+                            "failed to normalize expected report artifact `{}`: {error}",
+                            expected_path.display()
+                        )
+                    },
+                )?;
+            let normalized_expected_path = expected_normalized_dir.join(relative);
+            if let Some(parent) = normalized_expected_path.parent() {
+                fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+            }
+            fs::write(&normalized_expected_path, normalized_expected)
+                .map_err(|error| error.to_string())?;
+        }
+    }
+
+    fs::write(
+        fixture_dir.join("fixture.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "fixture_id": fixture.fixture_id(),
+            "family": fixture.family_key(),
+            "title": fixture.meta.title.clone(),
+        }))
+        .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    Ok(())
 }
 
 fn validate_snapshot_inputs(fixture: &Fixture) -> Result<(), Box<dyn std::error::Error>> {
@@ -4375,6 +4902,37 @@ mod tests {
         );
     }
 
+    fn acceptance_summary(
+        fixture_id: &str,
+        expected_family: Option<&str>,
+        actual_family: &str,
+    ) -> AcceptanceFixtureSummary {
+        AcceptanceFixtureSummary {
+            fixture_id: fixture_id.to_string(),
+            family_key: "syntax".to_string(),
+            title: None,
+            expected_family: expected_family.map(str::to_string),
+            actual_family: actual_family.to_string(),
+            family_match: expected_family
+                .map(|expected| expected == actual_family)
+                .unwrap_or(false),
+            used_fallback: false,
+            fallback_forbidden: false,
+            unexpected_fallback: false,
+            primary_location_path: Some("src/main.c".to_string()),
+            primary_location_user_owned_required: false,
+            primary_location_user_owned: false,
+            missing_required_primary_location: false,
+            first_action_required: false,
+            first_action_present: false,
+            missing_required_first_action: false,
+            headline_rewritten: true,
+            parse_time_ms: 12,
+            render_time_ms: 7,
+            verified: true,
+        }
+    }
+
     fn fake_wrapper_script(version: &str) -> String {
         format!(
             "#!/bin/sh\nif [ \"$1\" = \"--formed-version\" ]; then\n  printf '%s\\n' \"{version}\"\nelif [ \"$1\" = \"--formed-self-check\" ]; then\n  printf '%s\\n' '{{\"binary\":\"ok\"}}'\nelse\n  printf '%s\\n' \"packaged-{version}\"\nfi\n"
@@ -4886,6 +5444,38 @@ mod tests {
             normalize_snapshot_contents(Path::new("stderr.raw"), actual).unwrap();
 
         assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
+    fn acceptance_metrics_use_expectation_denominators() {
+        let mut required = acceptance_summary("c/syntax/case-01", Some("syntax"), "syntax");
+        required.fallback_forbidden = true;
+        required.primary_location_user_owned_required = true;
+        required.primary_location_user_owned = true;
+        required.first_action_required = true;
+        required.first_action_present = true;
+
+        let mut advisory_only = acceptance_summary("c/partial/case-01", None, "linker");
+        advisory_only.used_fallback = true;
+        advisory_only.headline_rewritten = false;
+
+        let metrics = acceptance_metrics_for(&[required, advisory_only]);
+
+        assert_eq!(metrics.promoted_fixture_count, 2);
+        assert_eq!(metrics.fallback_used_count, 1);
+        assert_eq!(metrics.fallback_forbidden_count, 1);
+        assert_eq!(metrics.unexpected_fallback_count, 0);
+        assert_eq!(metrics.primary_location_user_owned_required_count, 1);
+        assert_eq!(metrics.primary_location_user_owned_count, 1);
+        assert_eq!(metrics.first_action_required_count, 1);
+        assert_eq!(metrics.first_action_present_count, 1);
+        assert_eq!(metrics.family_expected_count, 1);
+        assert_eq!(metrics.family_match_count, 1);
+        assert_eq!(metrics.fallback_rate, 0.0);
+        assert_eq!(metrics.primary_location_user_owned_rate, 1.0);
+        assert_eq!(metrics.first_action_present_rate, 1.0);
+        assert_eq!(metrics.family_match_rate, 1.0);
+        assert_eq!(metrics.headline_rewritten_rate, 0.5);
     }
 
     #[test]

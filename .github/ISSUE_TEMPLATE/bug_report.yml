@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a release-impacting bug with support-tier and trace context.
+title: "[bug] "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: support_tier
+    attributes:
+      label: Support tier
+      description: Which support boundary does this bug affect?
+      options:
+        - GCC 15 primary render path
+        - GCC 13/14 compatibility path
+        - Older / unsupported GCC path
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - terminal renderer
+        - shadow mode
+        - passthrough / raw fallback
+        - packaging / install / release
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the actual behavior and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the exact compiler invocation or `gcc-formed` command.
+      placeholder: |
+        gcc-formed --formed-trace=always ...
+    validations:
+      required: true
+  - type: textarea
+    id: trace_bundle
+    attributes:
+      label: Trace bundle
+      description: Paste the path to `trace.json` and list whether `stderr.raw`, `ir.analysis.json`, and `diagnostics.sarif` are attached.
+      placeholder: |
+        trace.json:
+        stderr.raw:
+        ir.analysis.json:
+        diagnostics.sarif:
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, target triple, compiler version, and whether this is a primary or compatibility path.
+    validations:
+      required: true

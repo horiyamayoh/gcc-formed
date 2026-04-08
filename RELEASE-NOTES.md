@@ -2,6 +2,15 @@
 
 ## v0.1.0
 
+### First Release Scope
+
+- Linux first.
+- `x86_64-unknown-linux-musl` is the primary production artifact.
+- GCC 15 is the primary support target.
+- The terminal renderer is the primary user-facing surface.
+- GCC 13/14 remain compatibility-only paths and may fall back to conservative passthrough or shadow behavior.
+- Quality improvements are only guaranteed on the GCC 15 render path.
+
 - Establishes the `v1alpha` GCC-first workspace baseline for wrapper, capture, adapter, IR, render, trace, and corpus replay.
 - Adds release packaging support through `cargo xtask package`, generating primary/debug/source archives plus `manifest.json`, `build-info.txt`, and `SHA256SUMS`.
 - Adds `cargo xtask install`, `rollback`, and `uninstall` so packaged artifacts can be verified with checksum validation, staged self-check, and `current` symlink switching.
@@ -15,3 +24,6 @@
 
 - Release verification now supports trusted signing public key sha256 pinning, so CI and installers can bind detached signatures to a stable trust anchor instead of relying on key id alone.
 - `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is now centered on `x86_64-unknown-linux-musl`.
+- GCC 13/14 are not a primary enhanced-render target; they should be treated as conservative compatibility paths.
+- Raw fallback remains part of the shipped contract when the renderer cannot make a trustworthy improvement over preserved compiler output.
+- See [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) for the detailed support boundary and fallback semantics.

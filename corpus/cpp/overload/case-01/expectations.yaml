@@ -11,6 +11,7 @@ semantic:
     - path: src/main.cpp
       line: 5
       column: 5
+  primary_location_user_owned_required: true
   first_action_required: true
   raw_provenance_required: true
   fallback: forbidden

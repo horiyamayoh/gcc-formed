@@ -71,6 +71,9 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
     let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
     let mode = mode_decision.mode;
+    if let Some(note) = compatibility_scope_notice(backend.support_tier, &mode_decision) {
+        eprintln!("{note}");
+    }
     let capabilities = detect_capabilities();
     let profile = parsed
         .profile
@@ -918,6 +921,24 @@ fn select_mode(
     }
 }
 
+fn compatibility_scope_notice(tier: SupportTier, decision: &ModeDecision) -> Option<&'static str> {
+    match tier {
+        SupportTier::A => None,
+        SupportTier::B => match decision.mode {
+            ExecutionMode::Shadow => Some(
+                "gcc-formed: GCC 13/14 is running in compatibility mode; only conservative shadow capture is supported and enhanced render output is not guaranteed.",
+            ),
+            ExecutionMode::Passthrough => Some(
+                "gcc-formed: GCC 13/14 is running in compatibility mode; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+            ),
+            ExecutionMode::Render => None,
+        },
+        SupportTier::C => Some(
+            "gcc-formed: this compiler version is outside the first-release support scope; conservative passthrough output will be used.",
+        ),
+    }
+}
+
 fn os_to_string(value: &OsString) -> String {
     value.to_string_lossy().into_owned()
 }
@@ -1208,6 +1229,28 @@ mod tests {
                 .decision_log
                 .iter()
                 .any(|entry| entry == "tier_b_mode=shadow_raw_only")
+        );
+    }
+
+    #[test]
+    fn announces_tier_b_compatibility_passthrough() {
+        let decision = select_mode(SupportTier::B, None, false);
+        assert_eq!(
+            compatibility_scope_notice(SupportTier::B, &decision),
+            Some(
+                "gcc-formed: GCC 13/14 is running in compatibility mode; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+            )
+        );
+    }
+
+    #[test]
+    fn announces_out_of_scope_tier_c_passthrough() {
+        let decision = select_mode(SupportTier::C, None, false);
+        assert_eq!(
+            compatibility_scope_notice(SupportTier::C, &decision),
+            Some(
+                "gcc-formed: this compiler version is outside the first-release support scope; conservative passthrough output will be used."
+            )
         );
     }
 
