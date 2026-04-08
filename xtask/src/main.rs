@@ -1524,14 +1524,32 @@ fn compare_snapshot_file(
 
 fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     let contents = normalize_transient_object_paths(contents);
-    if path.file_name().and_then(|value| value.to_str()) != Some("diagnostics.sarif") {
-        return Ok(contents);
+    match path.file_name().and_then(|value| value.to_str()) {
+        Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, &contents),
+        Some("ir.facts.json") | Some("ir.analysis.json") => {
+            normalize_ir_snapshot_contents(path, &contents)
+        }
+        _ => Ok(contents),
     }
+}
 
-    let value: serde_json::Value = serde_json::from_str(&contents)
+fn normalize_sarif_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
+    let value: serde_json::Value = serde_json::from_str(contents)
         .map_err(|error| format!("failed to parse {} as JSON: {error}", path.display()))?;
     let value = normalize_sarif_snapshot_value(value);
     diag_core::canonical_json(&value)
+        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
+    let mut document: DiagnosticDocument = serde_json::from_str(contents).map_err(|error| {
+        format!(
+            "failed to parse {} as diagnostic IR: {error}",
+            path.display()
+        )
+    })?;
+    normalize_diagnostic_document_for_snapshot_compare(&mut document);
+    diag_core::canonical_json(&document)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
@@ -1583,6 +1601,145 @@ fn normalize_sarif_snapshot_value(value: serde_json::Value) -> serde_json::Value
         );
     }
     serde_json::Value::Object(normalized)
+}
+
+fn normalize_diagnostic_document_for_snapshot_compare(document: &mut DiagnosticDocument) {
+    document.document_id = normalize_transient_object_paths(&document.document_id);
+    document.producer.name = normalize_transient_object_paths(&document.producer.name);
+    document.producer.version = normalize_transient_object_paths(&document.producer.version);
+    if let Some(git_revision) = document.producer.git_revision.as_mut() {
+        *git_revision = normalize_transient_object_paths(git_revision);
+    }
+    if let Some(build_profile) = document.producer.build_profile.as_mut() {
+        *build_profile = normalize_transient_object_paths(build_profile);
+    }
+    if let Some(rulepack_version) = document.producer.rulepack_version.as_mut() {
+        *rulepack_version = normalize_transient_object_paths(rulepack_version);
+    }
+    normalize_run_info_for_snapshot_compare(&mut document.run);
+    for capture in &mut document.captures {
+        normalize_capture_for_snapshot_compare(capture);
+    }
+    for issue in &mut document.integrity_issues {
+        issue.message = normalize_transient_object_paths(&issue.message);
+    }
+    for diagnostic in &mut document.diagnostics {
+        normalize_diagnostic_node_for_snapshot_compare(diagnostic);
+    }
+    document.refresh_fingerprints();
+}
+
+fn normalize_run_info_for_snapshot_compare(run: &mut RunInfo) {
+    run.invocation_id = normalize_transient_object_paths(&run.invocation_id);
+    if let Some(invoked_as) = run.invoked_as.as_mut() {
+        *invoked_as = normalize_transient_object_paths(invoked_as);
+    }
+    for arg in &mut run.argv_redacted {
+        *arg = normalize_transient_object_paths(arg);
+    }
+    if let Some(cwd_display) = run.cwd_display.as_mut() {
+        *cwd_display = normalize_transient_object_paths(cwd_display);
+    }
+    normalize_tool_info_for_snapshot_compare(&mut run.primary_tool);
+    for tool in &mut run.secondary_tools {
+        normalize_tool_info_for_snapshot_compare(tool);
+    }
+    if let Some(target_triple) = run.target_triple.as_mut() {
+        *target_triple = normalize_transient_object_paths(target_triple);
+    }
+}
+
+fn normalize_tool_info_for_snapshot_compare(tool: &mut diag_core::ToolInfo) {
+    tool.name = normalize_transient_object_paths(&tool.name);
+    if let Some(version) = tool.version.as_mut() {
+        *version = normalize_transient_object_paths(version);
+    }
+    if let Some(component) = tool.component.as_mut() {
+        *component = normalize_transient_object_paths(component);
+    }
+    if let Some(vendor) = tool.vendor.as_mut() {
+        *vendor = normalize_transient_object_paths(vendor);
+    }
+}
+
+fn normalize_capture_for_snapshot_compare(capture: &mut CaptureArtifact) {
+    capture.id = normalize_transient_object_paths(&capture.id);
+    capture.media_type = normalize_transient_object_paths(&capture.media_type);
+    if let Some(encoding) = capture.encoding.as_mut() {
+        *encoding = normalize_transient_object_paths(encoding);
+    }
+    if let Some(digest_sha256) = capture.digest_sha256.as_mut() {
+        *digest_sha256 = normalize_transient_object_paths(digest_sha256);
+    }
+    if let Some(inline_text) = capture.inline_text.as_mut() {
+        *inline_text = normalize_transient_object_paths(inline_text);
+        capture.size_bytes = Some(inline_text.len() as u64);
+    }
+    if let Some(external_ref) = capture.external_ref.as_mut() {
+        *external_ref = normalize_transient_object_paths(external_ref);
+    }
+    if matches!(capture.kind, ArtifactKind::GccSarif) {
+        capture.size_bytes = None;
+    }
+    if let Some(produced_by) = capture.produced_by.as_mut() {
+        normalize_tool_info_for_snapshot_compare(produced_by);
+    }
+}
+
+fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::DiagnosticNode) {
+    node.id = normalize_transient_object_paths(&node.id);
+    normalize_message_text_for_snapshot_compare(&mut node.message);
+    for location in &mut node.locations {
+        normalize_location_for_snapshot_compare(location);
+    }
+    for child in &mut node.children {
+        normalize_diagnostic_node_for_snapshot_compare(child);
+    }
+    for suggestion in &mut node.suggestions {
+        suggestion.label = normalize_transient_object_paths(&suggestion.label);
+        for edit in &mut suggestion.edits {
+            edit.path = normalize_transient_object_paths(&edit.path);
+            edit.replacement = normalize_transient_object_paths(&edit.replacement);
+        }
+    }
+    for frame in node
+        .context_chains
+        .iter_mut()
+        .flat_map(|chain| &mut chain.frames)
+    {
+        frame.label = normalize_transient_object_paths(&frame.label);
+        if let Some(path) = frame.path.as_mut() {
+            *path = normalize_transient_object_paths(path);
+        }
+    }
+    if let Some(symbol_context) = node.symbol_context.as_mut() {
+        if let Some(primary_symbol) = symbol_context.primary_symbol.as_mut() {
+            *primary_symbol = normalize_transient_object_paths(primary_symbol);
+        }
+        for related_object in &mut symbol_context.related_objects {
+            *related_object = normalize_transient_object_paths(related_object);
+        }
+        if let Some(archive) = symbol_context.archive.as_mut() {
+            *archive = normalize_transient_object_paths(archive);
+        }
+    }
+}
+
+fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageText) {
+    message.raw_text = normalize_transient_object_paths(&message.raw_text);
+    if let Some(normalized_text) = message.normalized_text.as_mut() {
+        *normalized_text = normalize_transient_object_paths(normalized_text);
+    }
+    if let Some(locale) = message.locale.as_mut() {
+        *locale = normalize_transient_object_paths(locale);
+    }
+}
+
+fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
+    location.path = normalize_transient_object_paths(&location.path);
+    if let Some(display_path) = location.display_path.as_mut() {
+        *display_path = normalize_transient_object_paths(display_path);
+    }
 }
 
 fn canonical_json_for_view_model(
@@ -3748,6 +3905,151 @@ mod tests {
             normalize_snapshot_contents(Path::new("diagnostics.sarif"), expected).unwrap();
         let normalized_actual =
             normalize_snapshot_contents(Path::new("diagnostics.sarif"), actual).unwrap();
+
+        assert_eq!(normalized_expected, normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_ir_snapshots_before_compare() {
+        let expected = r#"{
+  "captures": [
+    {
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/helper.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "size_bytes": 205,
+      "storage": "inline"
+    },
+    {
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "size_bytes": 44,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "family": "linker.multiple_definition"
+      },
+      "fingerprints": {
+        "family": "expected-family",
+        "raw": "expected-raw",
+        "structural": "expected-structural"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/main.o:main.c:(.text+0x0): first defined here"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "expected-document-family",
+    "raw": "expected-document-raw",
+    "structural": "expected-document-structural"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "version": "<normalized>"
+  },
+  "run": {
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    }
+  },
+  "schema_version": "1.0.0-alpha.1"
+}"#;
+        let actual = r#"{
+  "captures": [
+    {
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/cc123456.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cc654321.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "size_bytes": 211,
+      "storage": "inline"
+    },
+    {
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "size_bytes": 987,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "family": "linker.multiple_definition"
+      },
+      "fingerprints": {
+        "family": "actual-family",
+        "raw": "actual-raw",
+        "structural": "actual-structural"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cc654321.o:main.c:(.text+0x0): first defined here"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "actual-document-family",
+    "raw": "actual-document-raw",
+    "structural": "actual-document-structural"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "version": "<normalized>"
+  },
+  "run": {
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    }
+  },
+  "schema_version": "1.0.0-alpha.1"
+}"#;
+
+        let normalized_expected =
+            normalize_snapshot_contents(Path::new("ir.analysis.json"), expected).unwrap();
+        let normalized_actual =
+            normalize_snapshot_contents(Path::new("ir.analysis.json"), actual).unwrap();
 
         assert_eq!(normalized_expected, normalized_actual);
     }
