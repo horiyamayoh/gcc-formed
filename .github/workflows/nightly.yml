@@ -54,14 +54,7 @@ jobs:
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/gcc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/gcc-formed/bin"
-          signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["key_id"])
-PY
-)"
+          signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$control_dir/SHA256SUMS.sig")"
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
@@ -72,14 +65,7 @@ PY
           control_dir="dist/gcc-formed-v0.1.0-linux-x86_64-musl"
           install_root="$RUNNER_TEMP/system-root/opt/cc-formed/x86_64-unknown-linux-musl"
           bin_dir="$RUNNER_TEMP/system-root/usr/local/bin"
-          signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["key_id"])
-PY
-)"
+          signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$control_dir/SHA256SUMS.sig")"
           cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
@@ -97,22 +83,8 @@ PY
           cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel canary
           cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --channel stable
           cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel stable > "$resolved_json"
-          primary_sha="$(python3 - "$resolved_json" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["primary_archive_sha256"])
-PY
-)"
-          signing_key_id="$(python3 - "$resolved_json" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["signing_key_id"])
-PY
-)"
+          primary_sha="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["primary_archive_sha256"])' "$resolved_json")"
+          signing_key_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["signing_key_id"])' "$resolved_json")"
           cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.1.0 --expected-primary-sha256 "$primary_sha" --expected-signing-key-id "$signing_key_id" --expected-signing-public-key-sha256 "$trusted_signing_public_key_sha256" --install-root "$install_root" --bin-dir "$bin_dir"
           "$bin_dir/gcc-formed" --formed-version
           cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
