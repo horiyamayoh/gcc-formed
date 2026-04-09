@@ -4,7 +4,9 @@ use crate::mode::{
     fallback_reason_label, select_mode_for_seam, support_tier_label,
 };
 use diag_backend_probe::SupportTier;
-use diag_backend_probe::{ProbeCache, ResolveRequest};
+use diag_backend_probe::{
+    ProbeCache, ResolveRequest, default_processing_path_for_tier, support_level_for_tier,
+};
 use diag_capture_runtime::ExecutionMode;
 use diag_trace::{
     BuildManifest, WrapperPaths, build_target_triple, default_build_manifest, trace_id,
@@ -132,6 +134,9 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, Box<dyn std::er
             "path": backend.resolved_path,
             "version": backend.version_string,
             "support_tier": format!("{:?}", backend.support_tier).to_lowercase(),
+            "version_band": snake_case_label(&backend.version_band()),
+            "processing_path": snake_case_label(&backend.default_processing_path()),
+            "support_level": snake_case_label(&backend.support_level()),
         },
         "rollout_matrix": {
             "schema_version": 1,
@@ -161,11 +166,36 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             "requested_mode": requested_mode.map(execution_mode_label),
             "hard_conflict": hard_conflict,
             "selected_mode": execution_mode_label(decision.mode),
+            "processing_path": rollout_processing_path_label(support_tier, decision.mode),
+            "support_level": snake_case_label(&support_level_for_tier(support_tier)),
             "fallback_reason": decision.fallback_reason.map(fallback_reason_label),
             "scope_notice": compatibility_scope_notice_for_seam(&compatibility_seam, &decision),
         })
     })
     .collect()
+}
+
+fn rollout_processing_path_label(support_tier: SupportTier, mode: ExecutionMode) -> String {
+    let default_processing_path = default_processing_path_for_tier(support_tier);
+    let processing_path = match mode {
+        ExecutionMode::Passthrough => diag_backend_probe::ProcessingPath::Passthrough,
+        _ if matches!(
+            default_processing_path,
+            diag_backend_probe::ProcessingPath::DualSinkStructured
+        ) =>
+        {
+            diag_backend_probe::ProcessingPath::DualSinkStructured
+        }
+        _ => diag_backend_probe::ProcessingPath::NativeTextCapture,
+    };
+    snake_case_label(&processing_path)
+}
+
+fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|value| value.as_str().map(|value| value.to_string()))
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 fn hash_file(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
@@ -307,6 +337,8 @@ mod tests {
             case["support_tier"] == "b"
                 && case["requested_mode"] == "shadow"
                 && case["selected_mode"] == "shadow"
+                && case["processing_path"] == "native_text_capture"
+                && case["support_level"] == "conservative"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
                     == "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
@@ -315,6 +347,8 @@ mod tests {
             case["support_tier"] == "c"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "passthrough"
+                && case["processing_path"] == "passthrough"
+                && case["support_level"] == "unsupported"
                 && case["fallback_reason"] == "unsupported_tier"
                 && case["scope_notice"]
                     == "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."

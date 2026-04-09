@@ -76,6 +76,15 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "shadow");
     assert_eq!(trace["support_tier"], "b");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "native_text_capture"
+    );
+    assert_eq!(
+        trace["environment_summary"]["support_level"],
+        "conservative"
+    );
     assert_eq!(trace["fallback_reason"], "shadow_mode");
 }
 
@@ -108,6 +117,12 @@ fn falls_back_to_passthrough_with_out_of_scope_backend_notice() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "passthrough");
     assert_eq!(trace["support_tier"], "c");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "passthrough"
+    );
+    assert_eq!(trace["environment_summary"]["support_level"], "unsupported");
     assert_eq!(trace["fallback_reason"], "unsupported_tier");
 }
 
@@ -186,6 +201,12 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         trace["environment_summary"]["backend_version"].as_str(),
         Some("gcc (Fake) 15.2.0")
     );
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc15_plus");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "dual_sink_structured"
+    );
+    assert_eq!(trace["environment_summary"]["support_level"], "primary");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
@@ -460,16 +481,23 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
         Some(expected_backend_path.as_str())
     );
     assert_eq!(report["backend"]["support_tier"], "a");
+    assert_eq!(report["backend"]["version_band"], "gcc15_plus");
+    assert_eq!(report["backend"]["processing_path"], "dual_sink_structured");
+    assert_eq!(report["backend"]["support_level"], "primary");
     let rollout_cases = report["rollout_matrix"]["cases"].as_array().unwrap();
     assert!(rollout_cases.iter().any(|case| {
         case["support_tier"] == "a"
             && case["requested_mode"].is_null()
             && case["selected_mode"] == "render"
+            && case["processing_path"] == "dual_sink_structured"
+            && case["support_level"] == "primary"
     }));
     assert!(rollout_cases.iter().any(|case| {
         case["support_tier"] == "b"
             && case["requested_mode"] == "shadow"
             && case["selected_mode"] == "shadow"
+            && case["processing_path"] == "native_text_capture"
+            && case["support_level"] == "conservative"
             && case["fallback_reason"] == "shadow_mode"
     }));
     assert!(report["warnings"].as_array().unwrap().is_empty());
@@ -594,6 +622,12 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         trace["environment_summary"]["backend_version"].as_str(),
         Some("gcc (Fake) 15.2.0")
     );
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc15_plus");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "passthrough"
+    );
+    assert_eq!(trace["environment_summary"]["support_level"], "primary");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
