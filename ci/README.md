@@ -2,6 +2,8 @@
 
 `pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。
 
+`cargo xtask check` は Rust workspace test だけでなく `python3 -B -m unittest discover -s ci -p test_*.py` も実行する。したがって `cargo-xtask-check` step が green であれば、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests も同じ入口で通っている。
+
 ## Layout
 
 ```text

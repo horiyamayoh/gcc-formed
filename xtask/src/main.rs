@@ -1,8 +1,9 @@
 mod commands;
 mod util;
 
-use crate::commands::{corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*};
-use crate::util::process::run;
+use crate::commands::{
+    check::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*,
+};
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
 use diag_trace::{BuildManifest, DEFAULT_PRODUCT_NAME};
@@ -228,10 +229,7 @@ enum SnapshotSubset {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Check => {
-            run("cargo", &["fmt", "--check"])?;
-            run("cargo", &["test", "--workspace"])?;
-        }
+        Commands::Check => run_check()?,
         Commands::HermeticReleaseCheck {
             vendor_dir,
             bin,

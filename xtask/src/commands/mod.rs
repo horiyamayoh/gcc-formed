@@ -1,3 +1,4 @@
+pub(crate) mod check;
 pub(crate) mod corpus;
 pub(crate) mod fuzz;
 pub(crate) mod human_eval;

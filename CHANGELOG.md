@@ -19,6 +19,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Added `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and stable evidence artifacts so a future `1.0.0` cut can seed a prior release-repo bundle, promote one signed candidate through `canary` / `beta` / `stable` without rebuilding, and retain an auditable rollback drill showing a single `current` symlink switch.
 - Added `SUPPORT.md`, maintainer runbooks for incident triage / trace bundle collection / rollback, and bug-template links so support routing no longer depends on chat history or maintainer tribal knowledge.
 - Added `GOVERNANCE.md`, strengthened `ADR-0020`, and expanded the PR template so stable-prep changes must declare `breaking` / `non-breaking` / `experimental` classification and keep post-`1.0.0` backlog items out of the current shipped contract unless they go through explicit ADR review.
+- Extended `cargo xtask check` to run the Python `ci/test_*.py` suite as well, so CI helper scripts and governance/support contract docs are checked through the same local and CI gate instead of relying on separate ad hoc commands.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

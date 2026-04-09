@@ -33,10 +33,10 @@ cargo deny check
 cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
 ```
 
-Documentation-only governance / contract changes should still run:
+`cargo xtask check` now also runs the Python `ci/test_*.py` contract suite. For a faster docs-only loop, you can run just:
 
 ```bash
-python3 -m unittest ci.test_support_boundary_docs ci.test_governance_docs
+python3 -B -m unittest discover -s ci -p 'test_*.py'
 ```
 
 If you touch release packaging, install flows, or release metadata, also validate the relevant `cargo xtask package`, `install`, `release-publish`, `release-promote`, and `install-release` paths in a clean worktree.
