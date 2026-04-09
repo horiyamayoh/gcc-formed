@@ -18,6 +18,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Ships the first public-beta artifact line as `0.2.0-beta.1` in the `v1beta` maturity line.
 - Publishes a public GitHub prerelease with the signed primary/debug/source archives, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, a full control-dir bundle, an immutable release-repo bundle, and `release-provenance.json`.
 - Adds a dedicated public-beta release workflow and `ADR-0024` so GitHub Releases, immutable release repositories, promote metadata, and support-boundary wording are governed by one policy.
+- Adds `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and `ADR-0025` so a future stable cut can seed a prior release-repo bundle, promote one signed candidate from `canary` to `beta` to `stable` without rebuilding, and retain rollback drill artifacts.
 - Documents the beta user path for install, rollback, exact version pin, and `install-release` in `PUBLIC-BETA-RELEASE.md`.
 - Verifies the canonical `x86_64-unknown-linux-musl` artifact end to end: vendored hermetic release build, signed package generation, install, rollback, system-wide pseudo-root layout, immutable release publish/promote, and exact-pin install all run against the musl payload.
 - Preserves reason-coded fallback evidence in trace, replay, snapshot, and release provenance outputs, including sink conflicts, unsupported tiers, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
@@ -28,6 +29,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - `0.2.0-beta.N` is still a public-beta line; release-candidate artifacts start at `1.0.0-rc.N`.
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers; they do not change the maturity label of the artifact they point to.
 - Release verification now supports trusted signing public key sha256 pinning, so CI and installers can bind detached signatures to a stable trust anchor instead of relying on key id alone.
+- Future stable cuts are expected to retain `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, and `rollback-drill.json`; see [STABLE-RELEASE.md](STABLE-RELEASE.md) for the runbook.
 - `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is centered on the primary `x86_64-unknown-linux-musl` artifact.
 - GCC 13/14 are compatibility-only paths and should not be described as primary enhanced-render coverage.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.

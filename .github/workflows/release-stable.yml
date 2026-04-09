@@ -1,0 +1,286 @@
+name: stable-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable artifact semver without leading v
+        required: true
+        default: 1.0.0
+      rollback_baseline_version:
+        description: Previously published artifact semver used for rollback drill
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  stable-release:
+    runs-on: ubuntu-24.04
+    env:
+      TARGET_TRIPLE: x86_64-unknown-linux-musl
+      ARTIFACT_SLUG: linux-x86_64-musl
+      SUPPORT_TIER: gcc15_primary
+      RELEASE_CHANNEL: stable
+      RELEASE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_HEX }}
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.94.1
+        with:
+          components: rustfmt
+          targets: x86_64-unknown-linux-musl
+      - name: Resolve runtime paths and stable release versions
+        env:
+          DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_ROLLBACK_BASELINE_VERSION: ${{ github.event.inputs.rollback_baseline_version }}
+        run: |
+          package_version="$(python3 - <<'PY'
+          import tomllib
+
+          with open("Cargo.toml", "rb") as handle:
+              cargo = tomllib.load(handle)
+          print(cargo["workspace"]["package"]["version"])
+          PY
+          )"
+
+          requested_version="$DISPATCH_VERSION"
+          rollback_baseline_version="$DISPATCH_ROLLBACK_BASELINE_VERSION"
+
+          if [ "$requested_version" != "$package_version" ]; then
+            echo "::error::requested stable version '$requested_version' did not match Cargo.toml workspace version '$package_version'"
+            exit 1
+          fi
+          if printf '%s' "$requested_version" | grep -q -- '-'; then
+            echo "::error::stable workflow requires a final semver without prerelease suffix: '$requested_version'"
+            exit 1
+          fi
+          if [ -z "$rollback_baseline_version" ]; then
+            echo "::error::rollback_baseline_version is required"
+            exit 1
+          fi
+          if [ "$rollback_baseline_version" = "$requested_version" ]; then
+            echo "::error::rollback_baseline_version must differ from the stable candidate version"
+            exit 1
+          fi
+
+          echo "REPORT_ROOT=$RUNNER_TEMP/stable-release" >> "$GITHUB_ENV"
+          echo "RELEASE_SEED_ROOT=$RUNNER_TEMP/stable-release-seed" >> "$GITHUB_ENV"
+          echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/stable-release-repo-root" >> "$GITHUB_ENV"
+          echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/stable-release-assets" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/stable-release-notes.md" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "ROLLBACK_BASELINE_VERSION=$rollback_baseline_version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
+          echo "PRIMARY_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
+          echo "DEBUG_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
+          echo "SOURCE_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-source.tar.gz" >> "$GITHUB_ENV"
+      - name: Ensure signing key is configured
+        run: |
+          if [ -z "$RELEASE_SIGNING_PRIVATE_KEY_HEX" ]; then
+            echo "::error::RELEASE_SIGNING_PRIVATE_KEY_HEX repository secret is required for stable releases"
+            exit 1
+          fi
+      - name: Prepare stable release directories
+        run: |
+          mkdir -p "$REPORT_ROOT/release" "$REPORT_ROOT/rc-gate" "$RELEASE_SEED_ROOT" "$RELEASE_ASSET_ROOT"
+      - name: Seed immutable release repo from previous GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "v${ROLLBACK_BASELINE_VERSION}" \
+            --dir "$RELEASE_SEED_ROOT" \
+            --pattern "gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+          bundle="$RELEASE_SEED_ROOT/gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+          tar -xzf "$bundle" -C "$RELEASE_SEED_ROOT"
+          mv \
+            "$RELEASE_SEED_ROOT/gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo" \
+            "$RELEASE_REPO_ROOT"
+      - name: cargo xtask check
+        run: cargo xtask check
+      - name: Strict RC gate
+        run: |
+          cargo xtask rc-gate \
+            --root corpus \
+            --report-dir "$REPORT_ROOT/rc-gate" \
+            --fuzz-root fuzz \
+            --metrics-manual-report eval/rc/metrics-manual-eval.json \
+            --issue-budget-report eval/rc/issue-budget.json \
+            --ux-signoff-report eval/rc/ux-signoff.json
+      - name: Vendor dependency tree
+        run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
+      - name: Hermetic release build
+        run: cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple "$TARGET_TRIPLE" > "$REPORT_ROOT/release/hermetic-release.json"
+      - name: Write release signing key
+        run: |
+          printf '%s\n' "$RELEASE_SIGNING_PRIVATE_KEY_HEX" > "$RUNNER_TEMP/release-signing.key"
+          chmod 0600 "$RUNNER_TEMP/release-signing.key"
+      - name: Signed package generation
+        run: |
+          cargo xtask package \
+            --binary "target/hermetic-release/${TARGET_TRIPLE}/release/gcc-formed" \
+            --target-triple "$TARGET_TRIPLE" \
+            --release-channel "$RELEASE_CHANNEL" \
+            --support-tier "$SUPPORT_TIER" \
+            --signing-private-key "$RUNNER_TEMP/release-signing.key" \
+            > "$REPORT_ROOT/release/package.json"
+      - name: Stable release promotion and rollback drill
+        run: |
+          cargo xtask stable-release \
+            --control-dir "$CONTROL_DIR" \
+            --repository-root "$RELEASE_REPO_ROOT" \
+            --target-triple "$TARGET_TRIPLE" \
+            --install-root "$RUNNER_TEMP/stable-install/${TARGET_TRIPLE}" \
+            --bin-dir "$RUNNER_TEMP/stable-bin" \
+            --report-dir "$REPORT_ROOT/stable-release" \
+            --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
+            > "$REPORT_ROOT/release/stable-release-command.json"
+      - name: Capture signing metadata
+        run: |
+          echo "RELEASE_SIGNING_KEY_ID=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["key_id"])' "$CONTROL_DIR/SHA256SUMS.sig")" >> "$GITHUB_ENV"
+          echo "RELEASE_SIGNING_PUBLIC_KEY_SHA256=$(python3 -c 'import hashlib, json, sys; print(hashlib.sha256(bytes.fromhex(json.load(open(sys.argv[1], "r", encoding="utf-8"))["public_key_hex"])).hexdigest())' "$CONTROL_DIR/SHA256SUMS.sig")" >> "$GITHUB_ENV"
+      - name: Assemble GitHub Release bundles
+        run: |
+          control_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
+          release_repo_dir="$RUNNER_TEMP/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
+          release_repo_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+          tar -czf "$control_bundle" -C dist "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}"
+          cp -R "$RELEASE_REPO_ROOT" "$release_repo_dir"
+          tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
+      - name: Write release provenance
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report_root = Path(os.environ["REPORT_ROOT"])
+          release_root = report_root / "release"
+          stable_root = report_root / "stable-release"
+
+          def load(path):
+              path = Path(path)
+              if not path.exists():
+                  return None
+              return json.loads(path.read_text(encoding="utf-8"))
+
+          payload = {
+              "workflow": "stable-release",
+              "github": {
+                  "repository": os.environ.get("GITHUB_REPOSITORY"),
+                  "sha": os.environ.get("GITHUB_SHA"),
+                  "ref": os.environ.get("GITHUB_REF"),
+                  "run_id": os.environ.get("GITHUB_RUN_ID"),
+                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+                  "actor": os.environ.get("GITHUB_ACTOR"),
+                  "tag": os.environ.get("RELEASE_TAG"),
+              },
+              "release": {
+                  "package_version": os.environ.get("PACKAGE_VERSION"),
+                  "rollback_baseline_version": os.environ.get("ROLLBACK_BASELINE_VERSION"),
+                  "target_triple": os.environ.get("TARGET_TRIPLE"),
+                  "release_channel": os.environ.get("RELEASE_CHANNEL"),
+                  "signing_key_id": os.environ.get("RELEASE_SIGNING_KEY_ID"),
+                  "signing_public_key_sha256": os.environ.get("RELEASE_SIGNING_PUBLIC_KEY_SHA256"),
+                  "package": load(release_root / "package.json"),
+                  "stable_release_command": load(release_root / "stable-release-command.json"),
+                  "stable_release_report": load(stable_root / "stable-release-report.json"),
+                  "promotion_evidence": load(stable_root / "promotion-evidence.json"),
+                  "rollback_drill": load(stable_root / "rollback-drill.json"),
+                  "hermetic_release": load(release_root / "hermetic-release.json"),
+                  "vendor": load(release_root / "vendor.json"),
+                  "rc_gate": load(report_root / "rc-gate" / "rc-gate-report.json"),
+                  "metrics_report": load(report_root / "rc-gate" / "metrics-report.json"),
+                  "fuzz_report": load(report_root / "rc-gate" / "fuzz-smoke-report.json"),
+                  "human_eval": load(report_root / "rc-gate" / "human-eval" / "human-eval-report.json"),
+              },
+          }
+          (release_root / "release-provenance.json").write_text(
+              json.dumps(payload, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Write release notes
+        run: |
+          cat > "$RELEASE_NOTES_PATH" <<EOF
+          # gcc-formed ${PACKAGE_VERSION}
+
+          This GitHub Release publishes stable artifact \`${PACKAGE_VERSION}\` from a single signed build and promotes the same published bits through \`canary\`, \`beta\`, and \`stable\` without rebuilding.
+
+          ## Stable Cut Evidence
+
+          - rollback baseline version: \`${ROLLBACK_BASELINE_VERSION}\`
+          - signing key id: \`${RELEASE_SIGNING_KEY_ID}\`
+          - trusted signing public key sha256: \`${RELEASE_SIGNING_PUBLIC_KEY_SHA256}\`
+          - stable release report: \`stable-release-report.json\`
+          - promotion evidence: \`promotion-evidence.json\`
+          - rollback drill: \`rollback-drill.json\`
+          - provenance bundle: \`release-provenance.json\`
+
+          ## Support Boundary
+
+          - Linux first.
+          - \`x86_64-unknown-linux-musl\` is the primary production artifact.
+          - GCC 15 is the primary enhanced-render path.
+          - The terminal renderer is the primary user-facing surface.
+          - GCC 13/14 remain compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
+          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+
+          ## Install and Rollback Paths
+
+          - Stable cut runbook: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/STABLE-RELEASE.md
+          - Support boundary: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/SUPPORT-BOUNDARY.md
+          - Known limitations: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/KNOWN-LIMITATIONS.md
+          - Release checklist: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/RELEASE-CHECKLIST.md
+
+          ## Included Assets
+
+          - primary archive
+          - debug archive
+          - source archive
+          - control-dir bundle
+          - immutable release-repo bundle
+          - \`manifest.json\`
+          - \`build-info.txt\`
+          - \`SHA256SUMS\`
+          - \`SHA256SUMS.sig\`
+          - \`stable-release-report.json\`
+          - \`stable-release-summary.md\`
+          - \`promotion-evidence.json\`
+          - \`rollback-drill.json\`
+          - \`release-provenance.json\`
+          EOF
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          assets=(
+            "$PRIMARY_ARCHIVE"
+            "$DEBUG_ARCHIVE"
+            "$SOURCE_ARCHIVE"
+            "$CONTROL_DIR/manifest.json"
+            "$CONTROL_DIR/build-info.txt"
+            "$CONTROL_DIR/SHA256SUMS"
+            "$CONTROL_DIR/SHA256SUMS.sig"
+            "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
+            "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+            "$REPORT_ROOT/stable-release/stable-release-report.json"
+            "$REPORT_ROOT/stable-release/stable-release-summary.md"
+            "$REPORT_ROOT/stable-release/promotion-evidence.json"
+            "$REPORT_ROOT/stable-release/rollback-drill.json"
+            "$REPORT_ROOT/release/release-provenance.json"
+          )
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+          fi
+      - name: Upload stable release evidence
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: stable-release-evidence
+          path: ${{ env.REPORT_ROOT }}

@@ -100,6 +100,90 @@ fn write_signing_private_key(path: &Path) {
     );
 }
 
+fn rewrite_packaged_fixture_version(
+    package: &PackageOutput,
+    signing_private_key: &Path,
+    version: &str,
+) {
+    let mut control_manifest = read_build_manifest(&package.manifest_path).unwrap();
+    control_manifest.product_version = version.to_string();
+    write_file(
+        &package.manifest_path,
+        serde_json::to_vec_pretty(&control_manifest)
+            .unwrap()
+            .as_slice(),
+    );
+
+    let build_info = fs::read_to_string(&package.build_info_path).unwrap();
+    let rewritten_build_info = build_info
+        .lines()
+        .map(|line| {
+            if line.starts_with("version: ") {
+                format!("version: {version}")
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    write_file(&package.build_info_path, rewritten_build_info.as_bytes());
+
+    let primary_archive = find_primary_archive(&package.control_dir).unwrap();
+    let staging = tempfile::tempdir().unwrap();
+    extract_tar_archive(&primary_archive, staging.path()).unwrap();
+    let extracted_root = extracted_payload_root(staging.path(), &primary_archive).unwrap();
+    let staged_manifest_path = extracted_root.join("manifest.json");
+    let mut staged_manifest = read_build_manifest(&staged_manifest_path).unwrap();
+    staged_manifest.product_version = version.to_string();
+    let staged_build_info_path = extracted_root.join("build-info.txt");
+    let staged_build_info = fs::read_to_string(&staged_build_info_path).unwrap();
+    let rewritten_staged_build_info = staged_build_info
+        .lines()
+        .map(|line| {
+            if line.starts_with("version: ") {
+                format!("version: {version}")
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    write_file(
+        &staged_build_info_path,
+        rewritten_staged_build_info.as_bytes(),
+    );
+    staged_manifest.checksums = payload_checksums(&extracted_root).unwrap();
+    write_file(
+        &staged_manifest_path,
+        serde_json::to_vec_pretty(&staged_manifest)
+            .unwrap()
+            .as_slice(),
+    );
+    let root_name = extracted_root
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap()
+        .to_string();
+    create_tar_archive(staging.path(), &root_name, &primary_archive).unwrap();
+
+    let shasums = render_sha256sums(&[
+        &package.primary_archive,
+        &package.debug_archive,
+        &package.source_archive,
+        &package.manifest_path,
+        &package.build_info_path,
+    ])
+    .unwrap();
+    write_file(&package.shasums_path, shasums.as_bytes());
+    if let Some(signature_path) = &package.shasums_signature_path {
+        let _ =
+            write_detached_signature(&package.shasums_path, signature_path, signing_private_key)
+                .unwrap();
+    }
+}
+
 fn test_signing_public_key_sha256() -> String {
     let sandbox = tempfile::tempdir().unwrap();
     let path = sandbox.path().join("release-signing.key");
@@ -1573,6 +1657,137 @@ fn install_release_rejects_mismatched_pinned_checksum() {
 }
 
 #[test]
+fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollback() {
+    let _guard = release_test_lock().lock().unwrap();
+    let baseline_version = "0.1.0";
+    let candidate_version = current_release_fixture_version();
+
+    let (baseline_sandbox, baseline_repo_root, baseline_binary_path) =
+        init_release_repo(baseline_version);
+    let baseline_signing_private_key = baseline_sandbox.path().join("release-signing.key");
+    write_signing_private_key(&baseline_signing_private_key);
+    let baseline_package = run_package_at(
+        &baseline_repo_root,
+        &PackageOptions {
+            binary: baseline_binary_path,
+            debug_binary: None,
+            target_triple: "x86_64-unknown-linux-gnu".to_string(),
+            out_dir: PathBuf::from("dist"),
+            release_channel: "stable".to_string(),
+            support_tier: "gcc15_primary".to_string(),
+            signing_private_key: Some(baseline_signing_private_key.clone()),
+        },
+    )
+    .unwrap();
+    rewrite_packaged_fixture_version(
+        &baseline_package,
+        &baseline_signing_private_key,
+        baseline_version,
+    );
+    let repository_root = baseline_sandbox.path().join("release-repo");
+    run_release_publish_at(
+        &baseline_repo_root,
+        &ReleasePublishOptions {
+            control_dir: baseline_package.control_dir,
+            repository_root: repository_root.clone(),
+        },
+    )
+    .unwrap();
+    run_release_promote_at(
+        &baseline_repo_root,
+        &ReleasePromoteOptions {
+            repository_root: repository_root.clone(),
+            target_triple: "x86_64-unknown-linux-gnu".to_string(),
+            version: baseline_version.to_string(),
+            channel: "stable".to_string(),
+        },
+    )
+    .unwrap();
+
+    let (candidate_sandbox, candidate_repo_root, candidate_binary_path) =
+        init_release_repo(candidate_version);
+    let candidate_signing_private_key = candidate_sandbox.path().join("release-signing.key");
+    write_signing_private_key(&candidate_signing_private_key);
+    let candidate_package = run_package_at(
+        &candidate_repo_root,
+        &PackageOptions {
+            binary: candidate_binary_path,
+            debug_binary: None,
+            target_triple: "x86_64-unknown-linux-gnu".to_string(),
+            out_dir: PathBuf::from("dist"),
+            release_channel: "stable".to_string(),
+            support_tier: "gcc15_primary".to_string(),
+            signing_private_key: Some(candidate_signing_private_key),
+        },
+    )
+    .unwrap();
+
+    let report = run_stable_release_at(
+        &candidate_repo_root,
+        &StableReleaseOptions {
+            control_dir: candidate_package.control_dir,
+            repository_root: repository_root.clone(),
+            target_triple: "x86_64-unknown-linux-gnu".to_string(),
+            install_root: candidate_sandbox
+                .path()
+                .join("stable-install")
+                .join("x86_64-unknown-linux-gnu"),
+            bin_dir: candidate_sandbox.path().join("stable-bin"),
+            report_dir: candidate_sandbox.path().join("stable-report"),
+            rollback_baseline_version: Some(baseline_version.to_string()),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(
+        report.previous_stable_version_before_promote.as_deref(),
+        Some(baseline_version)
+    );
+    assert!(report.no_rebuild_evidence.metadata_only_promotion);
+    assert_eq!(report.canary.resolve.resolved_version, candidate_version);
+    assert_eq!(report.beta.resolve.resolved_version, candidate_version);
+    assert_eq!(report.stable.resolve.resolved_version, candidate_version);
+    assert_eq!(report.rollback_drill.baseline_version, baseline_version);
+    assert_eq!(report.rollback_drill.candidate_version, candidate_version);
+    assert_eq!(
+        report
+            .rollback_drill
+            .pre_rollback_current_version
+            .as_deref(),
+        Some(candidate_version)
+    );
+    assert_eq!(
+        report
+            .rollback_drill
+            .post_rollback_current_version
+            .as_deref(),
+        Some(baseline_version)
+    );
+    assert_eq!(report.rollback_drill.rollback_swap_symlink_count, 1);
+    assert!(report.rollback_drill.symlink_only_switch);
+    assert_eq!(
+        current_version_name(&report.rollback_drill.install_root)
+            .unwrap()
+            .as_deref(),
+        Some("v0.1.0")
+    );
+    assert!(report.report_path.exists());
+    assert!(report.summary_path.exists());
+    assert!(
+        candidate_sandbox
+            .path()
+            .join("stable-report/rollback-drill.json")
+            .exists()
+    );
+    assert!(
+        candidate_sandbox
+            .path()
+            .join("stable-report/promotion-evidence.json")
+            .exists()
+    );
+}
+
+#[test]
 fn rollback_switches_current_symlink_to_requested_version() {
     let _guard = release_test_lock().lock().unwrap();
     let sandbox = tempfile::tempdir().unwrap();
@@ -1612,6 +1827,12 @@ fn rollback_switches_current_symlink_to_requested_version() {
     .unwrap();
 
     assert_eq!(rollback.active_version, "0.1.0");
+    assert_eq!(rollback.planned_actions.len(), 1);
+    assert_eq!(rollback.planned_actions[0].action, "swap_symlink");
+    assert_eq!(
+        rollback.planned_actions[0].path,
+        install_root.join("current")
+    );
     assert_eq!(
         current_version_name(&install_root).unwrap().as_deref(),
         Some("v0.1.0")
@@ -1660,17 +1881,17 @@ fn rollback_dry_run_reports_actions_without_switching_current_symlink() {
 
     assert!(rollback.dry_run);
     assert_eq!(rollback.active_version, "0.1.0");
+    assert_eq!(rollback.planned_actions.len(), 1);
+    assert_eq!(rollback.planned_actions[0].action, "swap_symlink");
+    assert_eq!(
+        rollback.planned_actions[0].path,
+        install_root.join("current")
+    );
     assert_eq!(
         current_version_name(&install_root).unwrap().as_deref(),
         Some("v0.1.1")
     );
     assert_binary_reports_version(&bin_dir.join("gcc-formed"), "0.1.1").unwrap();
-    assert!(
-        rollback
-            .planned_actions
-            .iter()
-            .any(|action| action.path == install_root.join("current"))
-    );
 }
 
 #[test]

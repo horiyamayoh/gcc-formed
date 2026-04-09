@@ -17,9 +17,10 @@
   - `adr-initial-set/adr-0001-wrapper-first-entrypoint.md`
   - `adr-initial-set/adr-0007-rust-as-implementation-language.md`
   - `adr-initial-set/adr-0008-linux-first-single-binary-musl-distribution.md`
-  - `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
-  - `adr-initial-set/adr-0017-dependency-allowlist-and-license-policy.md`
-  - `adr-initial-set/adr-0020-stability-promises.md`
+- `adr-initial-set/adr-0016-trace-bundle-content-and-redaction.md`
+- `adr-initial-set/adr-0017-dependency-allowlist-and-license-policy.md`
+- `adr-initial-set/adr-0020-stability-promises.md`
+- `adr-initial-set/adr-0025-stable-release-automation-and-rollback-evidence.md`
 
 ---
 
@@ -686,6 +687,7 @@ primary channel は **immutable versioned binary archive を置く内部 artifac
 2. `latest` のような mutable alias は convenience であり、製品契約の主語にしない
 3. CI は immutable version + checksum を pin する
 4. promote（canary → beta → stable）は artifact 再build ではなく metadata の昇格で行う
+5. stable cut workflow は prior GitHub Release の immutable `.release-repo.tar.gz` bundle を seed に使い、same bits を GitHub Release asset と release-repo bundle の両方へ再公開しなければならない
 
 ### 13.2 secondary channel
 
@@ -747,6 +749,7 @@ installer script がある場合、以下を守る。
 1. すべて immutable version を背後に持つ
 2. channel promote は artifact rebuild ではなく metadata 更新で行う
 3. CI/release workflow は channel 名ではなく exact version を pin する
+4. stable release workflow は publish / resolve / channel pointer の checksum と signing metadata を artifact として保存し、no-rebuild evidence を残さなければならない
 
 ### 14.2 developer machine の update 方針
 
@@ -760,6 +763,7 @@ rollback は以下の最小手順で成立しなければならない。
 2. `current` symlink を旧 version へ戻せる
 3. shell init や config migration を追加で巻き戻さなくてよい
 4. rollback 後、`--formed-version` で old version が確認できる
+5. stable cut の rollback drill は artifact として保存し、managed launcher refresh ではなく 1 回の `current` symlink switch で成立することを示さなければならない
 
 ### 14.4 config migration
 

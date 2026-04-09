@@ -46,13 +46,14 @@
 | [ADR-0020](./adr-0020-stability-promises.md) | Stability promises | Accepted | CLI / config / IR schema の変更規律を固定する |
 | [ADR-0021](./adr-0021-release-maturity-labels-and-artifact-semver-policy.md) | Release maturity labels and artifact semver policy | Accepted | `v1alpha` と `0.1.x` の混線を防ぎ、channel との境界を固定する |
 | [ADR-0024](./adr-0024-public-beta-release-channel-and-github-release-policy.md) | Public beta release channel and GitHub Release policy | Accepted | public beta artifact の公開方法と promote story を固定する |
+| [ADR-0025](./adr-0025-stable-release-automation-and-rollback-evidence.md) | Stable release automation and rollback evidence | Accepted | stable cut の same-bits promote と rollback drill 証跡を固定する |
 
 ## 3. 読み方
 
 - **0001–0006** は導入形態、structured ingress、support tier、fallback の基礎判断
 - **0007–0010** は実装言語、配布、実装境界、analysis 方針の骨格
 - **0011–0016** は出力 surface、ownership、trace/redaction の製品境界
-- **0017–0024** は dependency、corpus、render surface、stability、versioning semantics、public beta release policy の運用統制
+- **0017–0025** は dependency、corpus、render surface、stability、versioning semantics、public beta / stable release policy の運用統制
 
 最初に読む順序は `0001 → 0003 → 0006 → 0002 → 0009 → 0004/0005 → 0019 → 0016 → 0018` を推奨する。
 
@@ -66,7 +67,7 @@ ADR の状態語彙は次の 5 つに固定する。
 - **Deprecated**
 - **Rejected**
 
-v1beta 現在では `ADR-0001` から `ADR-0024` までをすべて **Accepted** とする。今後の変更は既存仕様への自由追記ではなく、ADR の追加または supersede で扱う。
+v1beta 現在では、この一覧にある ADR をすべて **Accepted** とする。今後の変更は既存仕様への自由追記ではなく、ADR の追加または supersede で扱う。
 
 ## 5. 実装への直結ポイント
 

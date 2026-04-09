@@ -1,7 +1,7 @@
 mod commands;
 mod util;
 
-use crate::commands::{corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*};
+use crate::commands::{corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*};
 use crate::util::process::run;
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -199,6 +199,22 @@ enum Commands {
         ux_signoff_report: PathBuf,
         #[arg(long)]
         allow_pending_manual_checks: bool,
+    },
+    StableRelease {
+        #[arg(long)]
+        control_dir: PathBuf,
+        #[arg(long)]
+        repository_root: PathBuf,
+        #[arg(long)]
+        target_triple: String,
+        #[arg(long)]
+        install_root: PathBuf,
+        #[arg(long)]
+        bin_dir: PathBuf,
+        #[arg(long, default_value = "target/stable-release")]
+        report_dir: PathBuf,
+        #[arg(long)]
+        rollback_baseline_version: Option<String>,
     },
     SelfCheck,
 }
@@ -539,6 +555,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if report.overall_status == GateStatus::Fail {
                 return Err("release candidate gate failed".into());
             }
+        }
+        Commands::StableRelease {
+            control_dir,
+            repository_root,
+            target_triple,
+            install_root,
+            bin_dir,
+            report_dir,
+            rollback_baseline_version,
+        } => {
+            let report = run_stable_release(StableReleaseOptions {
+                control_dir,
+                repository_root,
+                target_triple,
+                install_root,
+                bin_dir,
+                report_dir,
+                rollback_baseline_version,
+            })?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "candidate_version": report.candidate_version,
+                    "rollback_baseline_version": report.rollback_drill.baseline_version,
+                    "metadata_only_promotion": report.no_rebuild_evidence.metadata_only_promotion,
+                    "report_dir": report.report_dir,
+                    "report_path": report.report_path,
+                    "summary_path": report.summary_path,
+                }))?
+            );
         }
         Commands::SelfCheck => {
             println!(

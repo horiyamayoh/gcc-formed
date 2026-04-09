@@ -16,6 +16,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Added `cargo xtask fuzz-smoke`, checked-in `fuzz/` adversarial seeds, and automatic `fuzz-smoke-report.json` / `fuzz-evidence.json` generation so nightly and rc-gate can enforce `fuzz crash 0` without a manual `fuzz-status.json` handoff.
 - Added `cargo xtask human-eval-kit` and automatic `rc-gate/human-eval/` bundle generation so representative expert review sheets, task-study sheets, counterbalance order, and manual evidence templates are reproducible from the curated corpus instead of assembled ad hoc per RC.
 - Hardened compatibility-path UX so GCC 13/14 and out-of-scope compilers now print exact support-tier / selected-mode / fallback-reason banners, and `--formed-self-check` / `rc-gate` pin those notices in the rollout matrix to catch wording drift.
+- Added `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and stable evidence artifacts so a future `1.0.0` cut can seed a prior release-repo bundle, promote one signed candidate through `canary` / `beta` / `stable` without rebuilding, and retain an auditable rollback drill showing a single `current` symlink switch.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

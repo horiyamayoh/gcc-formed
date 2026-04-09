@@ -51,7 +51,7 @@ pub(crate) struct ReleasePublishOptions {
     pub(crate) repository_root: PathBuf,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct ReleasePublishOutput {
     pub(crate) repository_root: PathBuf,
     pub(crate) target_triple: String,
@@ -71,7 +71,7 @@ pub(crate) struct ReleasePromoteOptions {
     pub(crate) channel: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct ReleasePromoteOutput {
     pub(crate) repository_root: PathBuf,
     pub(crate) target_triple: String,
@@ -89,7 +89,7 @@ pub(crate) struct ReleaseResolveOptions {
     pub(crate) version: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct ReleaseResolveOutput {
     pub(crate) repository_root: PathBuf,
     pub(crate) target_triple: String,
@@ -157,7 +157,7 @@ pub(crate) struct InstallReleaseOptions {
     pub(crate) expected_signing_public_key_sha256: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct InstallReleaseOutput {
     pub(crate) install_root: PathBuf,
     pub(crate) bin_dir: PathBuf,
@@ -179,7 +179,7 @@ pub(crate) struct RollbackOptions {
     pub(crate) dry_run: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct RollbackOutput {
     pub(crate) install_root: PathBuf,
     pub(crate) active_version: String,
@@ -699,7 +699,7 @@ pub(crate) fn run_install_at(
             Some("activate installed version".to_string()),
         ),
     ];
-    planned_actions.extend(planned_launcher_actions(&bin_dir, &install_root));
+    planned_actions.extend(planned_launcher_actions(&bin_dir, &install_root)?);
     assert_binary_reports_version(
         &extracted_root.join("bin/gcc-formed"),
         &staged_manifest.product_version,
@@ -757,7 +757,7 @@ pub(crate) fn run_rollback_at(
         &version_root.join("bin/gcc-formed"),
         version_name.trim_start_matches('v'),
     )?;
-    let mut planned_actions = planned_launcher_actions(&bin_dir, &install_root);
+    let mut planned_actions = planned_launcher_actions(&bin_dir, &install_root)?;
     planned_actions.push(planned_action(
         "swap_symlink",
         install_root.join("current"),
@@ -2021,22 +2021,30 @@ pub(crate) fn launcher_specs(bin_dir: &Path, install_root: &Path) -> [(PathBuf, 
     ]
 }
 
-pub(crate) fn planned_launcher_actions(bin_dir: &Path, install_root: &Path) -> Vec<PlannedAction> {
-    let mut actions = vec![planned_action(
-        "create_dir",
-        bin_dir.to_path_buf(),
-        None,
-        Some("ensure launcher directory exists".to_string()),
-    )];
-    for (link_path, target) in launcher_specs(bin_dir, install_root) {
+pub(crate) fn planned_launcher_actions(
+    bin_dir: &Path,
+    install_root: &Path,
+) -> Result<Vec<PlannedAction>, Box<dyn std::error::Error>> {
+    let mut actions = Vec::new();
+    if fs::metadata(bin_dir).is_err() {
         actions.push(planned_action(
-            "swap_symlink",
-            link_path,
-            Some(target),
-            Some("refresh managed launcher".to_string()),
+            "create_dir",
+            bin_dir.to_path_buf(),
+            None,
+            Some("ensure launcher directory exists".to_string()),
         ));
     }
-    actions
+    for (link_path, target) in launcher_specs(bin_dir, install_root) {
+        if launcher_needs_refresh(&link_path, &target)? {
+            actions.push(planned_action(
+                "swap_symlink",
+                link_path,
+                Some(target),
+                Some("refresh managed launcher".to_string()),
+            ));
+        }
+    }
+    Ok(actions)
 }
 
 pub(crate) fn assert_binary_reports_version(
@@ -2103,17 +2111,35 @@ pub(crate) fn ensure_launcher_symlinks(
     install_root: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(bin_dir)?;
-    swap_symlink(
-        &bin_dir.join("gcc-formed"),
-        &install_root.join("current/bin/gcc-formed"),
-        false,
-    )?;
-    swap_symlink(
-        &bin_dir.join("g++-formed"),
-        &install_root.join("current/bin/g++-formed"),
-        false,
-    )?;
+    for (link_path, target) in launcher_specs(bin_dir, install_root) {
+        if launcher_needs_refresh(&link_path, &target)? {
+            swap_symlink(&link_path, &target, false)?;
+        }
+    }
     Ok(())
+}
+
+pub(crate) fn launcher_needs_refresh(
+    launcher_path: &Path,
+    expected_target: &Path,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    let metadata = match fs::symlink_metadata(launcher_path) {
+        Ok(metadata) => metadata,
+        Err(_) => return Ok(true),
+    };
+    if !metadata.file_type().is_symlink() {
+        return Ok(true);
+    }
+    let target = fs::read_link(launcher_path)?;
+    let resolved = if target.is_absolute() {
+        target
+    } else {
+        launcher_path
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join(target)
+    };
+    Ok(resolved != expected_target)
 }
 
 pub(crate) fn remove_managed_launchers(
