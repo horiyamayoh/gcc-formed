@@ -92,14 +92,16 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         target_triple: None,
         wrapper_mode: Some(wrapper_surface()),
     };
+    let authoritative_sarif_path = capture.authoritative_sarif_path();
+    let stderr_text = capture.stderr_text();
     let ingest_outcome = ingest_with_reason(
-        capture.sarif_path.as_deref(),
-        &String::from_utf8_lossy(&capture.stderr_bytes),
+        authoritative_sarif_path.as_deref(),
+        stderr_text.as_ref(),
         producer_for_version(env!("CARGO_PKG_VERSION")),
         run_info,
     )?;
     let mut document = ingest_outcome.document;
-    document.captures = capture.artifacts.clone();
+    document.captures = capture.capture_artifacts();
     enrich_document(&mut document, &cwd);
 
     if matches!(plan.mode(), ExecutionMode::Shadow) {
