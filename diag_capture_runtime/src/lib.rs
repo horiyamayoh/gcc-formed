@@ -1,5 +1,7 @@
-use diag_backend_probe::ProbeResult;
-use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, ToolInfo, fingerprint_for};
+use diag_backend_probe::{ProbeResult, ProcessingPath};
+use diag_core::{
+    ArtifactKind, ArtifactStorage, CaptureArtifact, IntegrityIssue, ToolInfo, fingerprint_for,
+};
 use diag_trace::{
     RetentionPolicy, WrapperPaths, secure_private_dir, secure_private_file, should_retain,
 };
@@ -22,6 +24,38 @@ pub enum ExecutionMode {
     Passthrough,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StructuredCapturePolicy {
+    Disabled,
+    SarifFile,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeTextCapturePolicy {
+    Passthrough,
+    CaptureOnly,
+    TeeToParent,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LocaleHandling {
+    Preserve,
+    ForceMessagesC,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CapturePlan {
+    pub execution_mode: ExecutionMode,
+    pub processing_path: ProcessingPath,
+    pub structured_capture: StructuredCapturePolicy,
+    pub native_text_capture: NativeTextCapturePolicy,
+    pub locale_handling: LocaleHandling,
+    pub retention_policy: RetentionPolicy,
+}
+
 #[derive(Debug, Clone)]
 pub struct CaptureRequest {
     pub backend: ProbeResult,
@@ -34,11 +68,90 @@ pub struct CaptureRequest {
     pub inject_sarif: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl CaptureRequest {
+    pub fn capture_plan(&self) -> CapturePlan {
+        CapturePlan {
+            execution_mode: self.mode,
+            processing_path: match self.mode {
+                ExecutionMode::Passthrough => ProcessingPath::Passthrough,
+                _ if self.inject_sarif => ProcessingPath::DualSinkStructured,
+                _ => ProcessingPath::NativeTextCapture,
+            },
+            structured_capture: if self.inject_sarif {
+                StructuredCapturePolicy::SarifFile
+            } else {
+                StructuredCapturePolicy::Disabled
+            },
+            native_text_capture: match self.mode {
+                ExecutionMode::Passthrough if self.capture_passthrough_stderr => {
+                    NativeTextCapturePolicy::TeeToParent
+                }
+                ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
+                ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
+                ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
+            },
+            locale_handling: if matches!(self.mode, ExecutionMode::Render) {
+                LocaleHandling::ForceMessagesC
+            } else {
+                LocaleHandling::Preserve
+            },
+            retention_policy: self.retention,
+        }
+    }
+
+    pub fn from_plan(
+        backend: ProbeResult,
+        args: Vec<OsString>,
+        cwd: PathBuf,
+        paths: WrapperPaths,
+        plan: CapturePlan,
+    ) -> Self {
+        Self {
+            backend,
+            args,
+            cwd,
+            mode: plan.execution_mode,
+            capture_passthrough_stderr: matches!(
+                (plan.execution_mode, plan.native_text_capture),
+                (
+                    ExecutionMode::Passthrough,
+                    NativeTextCapturePolicy::TeeToParent
+                )
+            ),
+            retention: plan.retention_policy,
+            paths,
+            inject_sarif: matches!(plan.structured_capture, StructuredCapturePolicy::SarifFile),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ExitStatusInfo {
     pub code: Option<i32>,
     pub signal: Option<i32>,
     pub success: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CaptureInvocation {
+    pub backend_path: String,
+    pub argv: Vec<String>,
+    pub argv_hash: String,
+    pub cwd: String,
+    pub selected_mode: ExecutionMode,
+    pub processing_path: ProcessingPath,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CaptureBundle {
+    pub invocation: CaptureInvocation,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub raw_text_artifacts: Vec<CaptureArtifact>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub structured_artifacts: Vec<CaptureArtifact>,
+    pub exit_status: ExitStatusInfo,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub integrity_issues: Vec<IntegrityIssue>,
 }
 
 #[derive(Debug)]
@@ -51,6 +164,7 @@ pub struct CaptureOutcome {
     pub retained: bool,
     pub retained_trace_dir: Option<PathBuf>,
     pub artifacts: Vec<CaptureArtifact>,
+    pub bundle: CaptureBundle,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -103,19 +217,19 @@ struct NormalizedInvocation {
 
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
     let capture_started = Instant::now();
+    let plan = request.capture_plan();
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
-    let sarif_path = if request.inject_sarif {
-        Some(temp_dir_path.join("diagnostics.sarif"))
-    } else {
-        None
+    let sarif_path = match plan.structured_capture {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile => Some(temp_dir_path.join("diagnostics.sarif")),
     };
 
     let mut command = Command::new(&request.backend.resolved_path);
     command.current_dir(&request.cwd);
     command.stdin(Stdio::inherit());
     command.stdout(Stdio::inherit());
-    let child_env_policy = child_env_policy(request.mode);
+    let child_env_policy = child_env_policy(&plan);
     apply_child_env_policy(&mut command, &child_env_policy);
 
     let mut final_args = request.args.clone();
@@ -135,22 +249,20 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
             child_env_policy,
         ),
     )?;
-    command.args(final_args);
+    command.args(&final_args);
 
-    let stderr_mode = match request.mode {
-        ExecutionMode::Passthrough if request.capture_passthrough_stderr => Stdio::piped(),
-        ExecutionMode::Passthrough => Stdio::inherit(),
-        ExecutionMode::Render | ExecutionMode::Shadow => Stdio::piped(),
+    let stderr_mode = match plan.native_text_capture {
+        NativeTextCapturePolicy::Passthrough => Stdio::inherit(),
+        NativeTextCapturePolicy::CaptureOnly | NativeTextCapturePolicy::TeeToParent => {
+            Stdio::piped()
+        }
     };
     command.stderr(stderr_mode);
     let mut child = command.spawn().map_err(|_| CaptureError::Spawn)?;
 
-    let stderr_handle = match request.mode {
-        ExecutionMode::Passthrough if request.capture_passthrough_stderr => {
-            child.stderr.take().map(spawn_tee_reader)
-        }
-        ExecutionMode::Passthrough => None,
-        ExecutionMode::Render => child.stderr.take().map(|stderr| {
+    let stderr_handle = match plan.native_text_capture {
+        NativeTextCapturePolicy::Passthrough => None,
+        NativeTextCapturePolicy::CaptureOnly => child.stderr.take().map(|stderr| {
             thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
                 let mut reader = stderr;
                 let mut buffer = Vec::new();
@@ -158,7 +270,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
                 Ok(buffer)
             })
         }),
-        ExecutionMode::Shadow => child.stderr.take().map(spawn_tee_reader),
+        NativeTextCapturePolicy::TeeToParent => child.stderr.take().map(spawn_tee_reader),
     };
 
     let status = child.wait()?;
@@ -174,7 +286,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     };
 
     let child_failed = !status.success();
-    let retained = should_retain(request.retention, false, child_failed);
+    let retained = should_retain(plan.retention_policy, false, child_failed);
     let retained_trace_dir = if retained {
         let trace_dir = request.paths.trace_root.join(temp_dir_name(&temp_dir_path));
         if trace_dir.exists() {
@@ -200,10 +312,12 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         None
     };
 
+    let exit_status = status_to_info(status);
     let artifacts = build_artifacts(&stderr_bytes, sarif_path.as_ref(), &request.backend);
+    let bundle = build_capture_bundle(request, &final_args, &plan, &exit_status, &artifacts);
 
     Ok(CaptureOutcome {
-        exit_status: status_to_info(status),
+        exit_status,
         stderr_bytes,
         sarif_path,
         temp_dir: temp_dir_path,
@@ -211,6 +325,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         retained,
         retained_trace_dir,
         artifacts,
+        bundle,
     })
 }
 
@@ -288,6 +403,61 @@ fn build_artifacts(
         });
     }
     artifacts
+}
+
+fn build_capture_bundle(
+    request: &CaptureRequest,
+    final_args: &[OsString],
+    plan: &CapturePlan,
+    exit_status: &ExitStatusInfo,
+    artifacts: &[CaptureArtifact],
+) -> CaptureBundle {
+    CaptureBundle {
+        invocation: build_capture_invocation(request, final_args, plan),
+        raw_text_artifacts: artifacts
+            .iter()
+            .filter(|artifact| {
+                matches!(
+                    artifact.kind,
+                    ArtifactKind::CompilerStderrText
+                        | ArtifactKind::LinkerStderrText
+                        | ArtifactKind::CompilerStdoutText
+                )
+            })
+            .cloned()
+            .collect(),
+        structured_artifacts: artifacts
+            .iter()
+            .filter(|artifact| {
+                matches!(
+                    artifact.kind,
+                    ArtifactKind::GccSarif | ArtifactKind::GccJson
+                )
+            })
+            .cloned()
+            .collect(),
+        exit_status: exit_status.clone(),
+        integrity_issues: Vec::new(),
+    }
+}
+
+fn build_capture_invocation(
+    request: &CaptureRequest,
+    final_args: &[OsString],
+    plan: &CapturePlan,
+) -> CaptureInvocation {
+    let argv = final_args
+        .iter()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    CaptureInvocation {
+        backend_path: request.backend.resolved_path.display().to_string(),
+        argv_hash: fingerprint_for(&argv),
+        argv,
+        cwd: request.cwd.display().to_string(),
+        selected_mode: plan.execution_mode,
+        processing_path: plan.processing_path,
+    }
 }
 
 fn tool_info(backend: &ProbeResult) -> ToolInfo {
@@ -420,14 +590,17 @@ fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
     }
 }
 
-fn child_env_policy(mode: ExecutionMode) -> ChildEnvPolicy {
+fn child_env_policy(plan: &CapturePlan) -> ChildEnvPolicy {
     let mut policy = ChildEnvPolicy::default();
-    if matches!(mode, ExecutionMode::Render) {
+    if matches!(plan.locale_handling, LocaleHandling::ForceMessagesC) {
         policy
             .set
             .insert("LC_MESSAGES".to_string(), "C".to_string());
     }
-    if matches!(mode, ExecutionMode::Render | ExecutionMode::Shadow) {
+    if matches!(
+        plan.execution_mode,
+        ExecutionMode::Render | ExecutionMode::Shadow
+    ) {
         policy.unset = vec![
             "EXPERIMENTAL_SARIF_SOCKET".to_string(),
             "GCC_DIAGNOSTICS_LOG".to_string(),
@@ -437,8 +610,35 @@ fn child_env_policy(mode: ExecutionMode) -> ChildEnvPolicy {
     policy
 }
 
+fn child_env_policy_for_mode(mode: ExecutionMode) -> ChildEnvPolicy {
+    child_env_policy(&CapturePlan {
+        execution_mode: mode,
+        processing_path: match mode {
+            ExecutionMode::Passthrough => ProcessingPath::Passthrough,
+            ExecutionMode::Render => ProcessingPath::DualSinkStructured,
+            ExecutionMode::Shadow => ProcessingPath::NativeTextCapture,
+        },
+        structured_capture: if matches!(mode, ExecutionMode::Passthrough) {
+            StructuredCapturePolicy::Disabled
+        } else {
+            StructuredCapturePolicy::SarifFile
+        },
+        native_text_capture: match mode {
+            ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
+            ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
+            ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
+        },
+        locale_handling: if matches!(mode, ExecutionMode::Render) {
+            LocaleHandling::ForceMessagesC
+        } else {
+            LocaleHandling::Preserve
+        },
+        retention_policy: RetentionPolicy::Never,
+    })
+}
+
 pub fn trace_sanitized_env_keys(mode: ExecutionMode) -> Vec<String> {
-    let policy = child_env_policy(mode);
+    let policy = child_env_policy_for_mode(mode);
     let mut keys = policy.set.into_keys().collect::<Vec<_>>();
     keys.extend(policy.unset);
     keys
@@ -529,6 +729,17 @@ mod tests {
         }
     }
 
+    fn fake_paths() -> WrapperPaths {
+        WrapperPaths {
+            config_path: PathBuf::from("/tmp/config.toml"),
+            cache_root: PathBuf::from("/tmp/cache"),
+            state_root: PathBuf::from("/tmp/state"),
+            runtime_root: PathBuf::from("/tmp/runtime"),
+            trace_root: PathBuf::from("/tmp/traces"),
+            install_root: PathBuf::from("/tmp/install"),
+        }
+    }
+
     #[test]
     fn sanitizes_sarif_path() {
         let sanitized = sanitize_sarif_path(Path::new("/tmp/a,b=c d.sarif"));
@@ -559,14 +770,7 @@ mod tests {
             mode: ExecutionMode::Render,
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Always,
-            paths: WrapperPaths {
-                config_path: PathBuf::from("/tmp/config.toml"),
-                cache_root: PathBuf::from("/tmp/cache"),
-                state_root: PathBuf::from("/tmp/state"),
-                runtime_root: PathBuf::from("/tmp/runtime"),
-                trace_root: PathBuf::from("/tmp/traces"),
-                install_root: PathBuf::from("/tmp/install"),
-            },
+            paths: fake_paths(),
             inject_sarif: true,
         };
 
@@ -580,7 +784,7 @@ mod tests {
                 ),
             ],
             Some(Path::new("/tmp/runtime/diagnostics.sarif")),
-            child_env_policy(ExecutionMode::Render),
+            child_env_policy(&request.capture_plan()),
         );
 
         assert_eq!(record.selected_mode, ExecutionMode::Render);
@@ -616,7 +820,7 @@ mod tests {
 
     #[test]
     fn render_mode_sets_locale_and_unsets_conflicting_diagnostic_env() {
-        let policy = child_env_policy(ExecutionMode::Render);
+        let policy = child_env_policy_for_mode(ExecutionMode::Render);
         assert_eq!(policy.set.get("LC_MESSAGES").map(String::as_str), Some("C"));
         assert!(policy.unset.iter().any(|key| key == "GCC_DIAGNOSTICS_LOG"));
         assert!(
@@ -635,15 +839,123 @@ mod tests {
 
     #[test]
     fn shadow_mode_only_unsets_conflicting_diagnostic_env() {
-        let policy = child_env_policy(ExecutionMode::Shadow);
+        let policy = child_env_policy_for_mode(ExecutionMode::Shadow);
         assert!(policy.set.is_empty());
         assert_eq!(policy.unset.len(), 3);
     }
 
     #[test]
     fn passthrough_mode_preserves_environment() {
-        let policy = child_env_policy(ExecutionMode::Passthrough);
+        let policy = child_env_policy_for_mode(ExecutionMode::Passthrough);
         assert!(child_env_policy_is_empty(&policy));
+    }
+
+    #[test]
+    fn capture_plan_derives_current_render_and_passthrough_policies() {
+        let render_request = CaptureRequest {
+            backend: fake_probe(),
+            args: Vec::new(),
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::OnWrapperFailure,
+            paths: fake_paths(),
+            inject_sarif: true,
+        };
+        let render_plan = render_request.capture_plan();
+        assert_eq!(render_plan.execution_mode, ExecutionMode::Render);
+        assert_eq!(
+            render_plan.processing_path,
+            ProcessingPath::DualSinkStructured
+        );
+        assert_eq!(
+            render_plan.structured_capture,
+            StructuredCapturePolicy::SarifFile
+        );
+        assert_eq!(
+            render_plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
+        );
+        assert_eq!(render_plan.locale_handling, LocaleHandling::ForceMessagesC);
+        assert_eq!(
+            render_plan.retention_policy,
+            RetentionPolicy::OnWrapperFailure
+        );
+
+        let passthrough_request = CaptureRequest {
+            backend: fake_probe(),
+            args: Vec::new(),
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Passthrough,
+            capture_passthrough_stderr: true,
+            retention: RetentionPolicy::Always,
+            paths: fake_paths(),
+            inject_sarif: false,
+        };
+        let passthrough_plan = passthrough_request.capture_plan();
+        assert_eq!(
+            passthrough_plan.processing_path,
+            ProcessingPath::Passthrough
+        );
+        assert_eq!(
+            passthrough_plan.structured_capture,
+            StructuredCapturePolicy::Disabled
+        );
+        assert_eq!(
+            passthrough_plan.native_text_capture,
+            NativeTextCapturePolicy::TeeToParent
+        );
+        assert_eq!(passthrough_plan.locale_handling, LocaleHandling::Preserve);
+        assert_eq!(passthrough_plan.retention_policy, RetentionPolicy::Always);
+    }
+
+    #[test]
+    fn capture_bundle_groups_raw_text_and_structured_artifacts() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![OsString::from("-c"), OsString::from("main.c")],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::Always,
+            paths: fake_paths(),
+            inject_sarif: true,
+        };
+        let plan = request.capture_plan();
+        let sarif_path = PathBuf::from("/tmp/runtime/diagnostics.sarif");
+        let artifacts = build_artifacts(b"stderr", Some(&sarif_path), &request.backend);
+        let exit_status = ExitStatusInfo {
+            code: Some(1),
+            signal: None,
+            success: false,
+        };
+
+        let bundle = build_capture_bundle(
+            &request,
+            &[
+                OsString::from("-c"),
+                OsString::from("main.c"),
+                OsString::from(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file=/tmp/runtime/diagnostics.sarif",
+                ),
+            ],
+            &plan,
+            &exit_status,
+            &artifacts,
+        );
+
+        assert_eq!(bundle.invocation.backend_path, "/usr/bin/gcc");
+        assert_eq!(bundle.invocation.selected_mode, ExecutionMode::Render);
+        assert_eq!(
+            bundle.invocation.processing_path,
+            ProcessingPath::DualSinkStructured
+        );
+        assert_eq!(bundle.raw_text_artifacts.len(), 1);
+        assert_eq!(bundle.raw_text_artifacts[0].id, "stderr.raw");
+        assert_eq!(bundle.structured_artifacts.len(), 1);
+        assert_eq!(bundle.structured_artifacts[0].id, "diagnostics.sarif");
+        assert_eq!(bundle.exit_status, exit_status);
+        assert!(bundle.integrity_issues.is_empty());
     }
 
     #[test]
