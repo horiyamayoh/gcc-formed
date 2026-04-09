@@ -10,6 +10,7 @@
   "updated_at": "2026-04-09",
   "reviewers": [],
   "notes": [
-    "Fill this packet after expert review / task study so rc-gate can retain the raw GCC comparison metrics that are not fully automatable yet."
+    "Fill this packet after expert review / task study so rc-gate can retain the raw GCC comparison metrics that are not fully automatable yet.",
+    "Use `cargo xtask human-eval-kit --root corpus --report-dir target/human-eval` or the `human-eval/` bundle emitted by `cargo xtask rc-gate` as the source packet."
   ]
 }

@@ -3,6 +3,9 @@ use crate::commands::corpus::{
     ReplayReport, build_replay_report, subset_name, write_replay_report,
 };
 use crate::commands::fuzz::{FuzzSmokeReport, FuzzSmokeStatus, run_fuzz_smoke};
+use crate::commands::human_eval::{
+    HumanEvalKitReport, human_eval_kit_is_complete, run_human_eval_kit,
+};
 use diag_backend_probe::{ProbeCache, ResolveRequest, SupportTier};
 use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_capture};
 use diag_trace::{RetentionPolicy, WrapperPaths, build_target_triple};
@@ -352,6 +355,9 @@ pub(crate) fn run_rc_gate(
         &rollout_matrix_report,
     )?;
 
+    let human_eval_report_dir = options.report_dir.join("human-eval");
+    let human_eval = run_human_eval_kit(&options.root, &human_eval_report_dir)?;
+
     let manual_metrics = load_manual_metrics_evidence(&options.metrics_manual_report)?;
     let normalized_manual_metrics_path = options.report_dir.join("metrics-manual-eval.json");
     write_json(&normalized_manual_metrics_path, &manual_metrics)?;
@@ -389,6 +395,7 @@ pub(crate) fn run_rc_gate(
         &bench_report,
         &deterministic_report,
         &rollout_matrix_report,
+        &human_eval,
         &metrics_report,
         &issue_budget,
         &normalized_issue_budget_path,
@@ -981,6 +988,7 @@ fn build_rc_gate_checks(
     bench: &BenchSmokeReport,
     deterministic: &DeterministicReplayReport,
     rollout: &RolloutMatrixReport,
+    human_eval: &HumanEvalKitReport,
     metrics: &RcMetricsReport,
     issue_budget: &IssueBudgetEvidence,
     issue_budget_path: &Path,
@@ -1066,11 +1074,38 @@ fn build_rc_gate_checks(
             manual: false,
             evidence_path: Some(PathBuf::from("deterministic-replay-report.json")),
         },
+        human_eval_kit_check(human_eval),
         manual_metrics_check(metrics, allow_pending_manual_checks),
         manual_issue_budget_check(issue_budget, issue_budget_path, allow_pending_manual_checks),
         fuzz_check(fuzz_smoke, fuzz, fuzz_path),
         manual_ux_check(ux, ux_path, allow_pending_manual_checks),
     ]
+}
+
+fn human_eval_kit_check(report: &HumanEvalKitReport) -> RcGateCheck {
+    let status = if human_eval_kit_is_complete(report) {
+        GateStatus::Pass
+    } else {
+        GateStatus::Fail
+    };
+    RcGateCheck {
+        id: "human_eval_kit".to_string(),
+        title: "Human Evaluation Kit".to_string(),
+        status: status.clone(),
+        summary: format!(
+            "expert_fixtures={} task_study_fixtures={} missing_required_families={}",
+            report.expert_review_fixture_count,
+            report.task_study_fixture_count,
+            if report.missing_required_families.is_empty() {
+                "none".to_string()
+            } else {
+                report.missing_required_families.join(",")
+            }
+        ),
+        blocker: status == GateStatus::Fail,
+        manual: false,
+        evidence_path: Some(PathBuf::from("human-eval/human-eval-report.json")),
+    }
 }
 
 fn manual_metrics_check(
@@ -1661,6 +1696,28 @@ mod tests {
         );
 
         let check = manual_metrics_check(&report, false);
+
+        assert_eq!(check.status, GateStatus::Fail);
+        assert!(check.blocker);
+    }
+
+    #[test]
+    fn incomplete_human_eval_kit_blocks_rc_gate() {
+        let report = HumanEvalKitReport {
+            schema_version: 1,
+            generated_at_unix_seconds: 0,
+            root: PathBuf::from("corpus"),
+            report_dir: PathBuf::from("target/human-eval"),
+            expert_review_fixture_count: 3,
+            task_study_fixture_count: 3,
+            family_counts: BTreeMap::new(),
+            covered_required_families: vec!["syntax".to_string()],
+            missing_required_families: vec!["template".to_string()],
+            fixtures: Vec::new(),
+            task_study_matrix: Vec::new(),
+        };
+
+        let check = human_eval_kit_check(&report);
 
         assert_eq!(check.status, GateStatus::Fail);
         assert!(check.blocker);

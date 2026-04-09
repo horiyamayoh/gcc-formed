@@ -5,6 +5,7 @@
   "updated_at": "2026-04-09",
   "reviewers": [],
   "notes": [
-    "Pending until M2-P0-4 records expert fixture review / task-based UX sign-off."
+    "Pending until expert fixture review / task-based UX sign-off is recorded.",
+    "Use `cargo xtask human-eval-kit --root corpus --report-dir target/human-eval` or the `human-eval/` bundle emitted by `cargo xtask rc-gate` as the review packet."
   ]
 }

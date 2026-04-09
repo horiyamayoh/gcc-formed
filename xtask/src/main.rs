@@ -1,7 +1,7 @@
 mod commands;
 mod util;
 
-use crate::commands::{corpus::*, fuzz::*, rc_gate::*, release::*};
+use crate::commands::{corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*};
 use crate::util::process::run;
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -175,6 +175,12 @@ enum Commands {
         root: PathBuf,
         #[arg(long)]
         report_dir: Option<PathBuf>,
+    },
+    HumanEvalKit {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(long, default_value = "target/human-eval")]
+        report_dir: PathBuf,
     },
     RcGate {
         #[arg(long, default_value = "corpus")]
@@ -486,6 +492,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if report.overall_status == FuzzSmokeStatus::Fail {
                 return Err("fuzz smoke failed".into());
             }
+        }
+        Commands::HumanEvalKit { root, report_dir } => {
+            let report = run_human_eval_kit(&root, &report_dir)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "root": report.root,
+                    "report_dir": report.report_dir,
+                    "expert_review_fixture_count": report.expert_review_fixture_count,
+                    "task_study_fixture_count": report.task_study_fixture_count,
+                    "family_counts": report.family_counts,
+                    "covered_required_families": report.covered_required_families,
+                    "missing_required_families": report.missing_required_families,
+                }))?
+            );
         }
         Commands::RcGate {
             root,

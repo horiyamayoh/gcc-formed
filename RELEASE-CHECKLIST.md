@@ -24,6 +24,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Advancing to `1.0.0-rc.N` additionally requires a fresh `cargo xtask rc-gate --report-dir ...` run with no blockers and attached `rc-gate-report.json` / `rc-gate-summary.md`.
 - The RC metrics packet (`metrics-report.json` + `metrics-manual-eval.json`) is attached and current.
 - The RC fuzz packet (`fuzz-smoke-report.json` + `fuzz-evidence.json`) is attached and current.
+- The RC human-eval bundle (`human-eval/README.md`, `expert-review-sheet.csv`, `task-study-sheet.csv`, template JSONs, and selected fixture artifacts) is attached and current.
 
 ## Current Beta Support Boundary
 
@@ -57,6 +58,6 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Snapshot report includes expected/actual artifacts for the representative fixtures.
 - Release smoke retains `manifest.json`, package/install JSON output, and resolve/install-release JSON output.
 - Release smoke retains `release-provenance.json` alongside signing material and build metadata.
-- RC gate retains `replay-report.json`, `bench-smoke-report.json`, `deterministic-replay-report.json`, `rollout-matrix-report.json`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, and the normalized manual evidence JSON files.
+- RC gate retains `replay-report.json`, `bench-smoke-report.json`, `deterministic-replay-report.json`, `rollout-matrix-report.json`, `human-eval/`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, and the normalized manual evidence JSON files.
 - The public GitHub Release ships `primary`, `debug`, and `source` archives, the full control bundle, the immutable release-repo bundle, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, and `release-provenance.json`.
 - Signing key rotation / revoke / emergency re-sign follows `SIGNING-KEY-OPERATIONS.md`.
