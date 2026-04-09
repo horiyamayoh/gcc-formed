@@ -69,6 +69,12 @@ pub(crate) struct AcceptanceFixtureSummary {
     pub(crate) first_action_present: bool,
     pub(crate) missing_required_first_action: bool,
     pub(crate) headline_rewritten: bool,
+    pub(crate) lead_confidence: String,
+    pub(crate) high_confidence: bool,
+    pub(crate) rendered_first_action_line: Option<usize>,
+    pub(crate) raw_line_count: usize,
+    pub(crate) rendered_line_count: usize,
+    pub(crate) diagnostic_compression_ratio: Option<f64>,
     pub(crate) parse_time_ms: u64,
     pub(crate) render_time_ms: u64,
     pub(crate) verified: bool,
@@ -413,6 +419,11 @@ pub(crate) fn collect_acceptance_fixture_summary(
         .and_then(|analysis| analysis.first_action_hint.as_ref())
         .map(|value| !value.trim().is_empty())
         .unwrap_or(false);
+    let first_action_hint = lead_node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.first_action_hint.as_deref())
+        .filter(|value| !value.trim().is_empty());
     let primary_location = lead_node.primary_location();
     let primary_location_user_owned = primary_location
         .and_then(|location| location.ownership.as_ref())
@@ -424,6 +435,29 @@ pub(crate) fn collect_acceptance_fixture_summary(
         primary_location_user_owned_required && !primary_location_user_owned;
     let first_action_required = semantic.first_action_required;
     let missing_required_first_action = first_action_required && !first_action_present;
+    let lead_confidence = lead_node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.confidence.as_ref())
+        .cloned()
+        .unwrap_or(diag_core::Confidence::Unknown);
+    let rendered_first_action_line =
+        first_rendered_action_line(&default_render_result.text, first_action_hint);
+    let raw_line_count = text_line_count(
+        &fs::read_to_string(fixture.snapshot_root().join("stderr.raw")).map_err(|error| {
+            VerificationFailure {
+                layer: "report.stderr".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error.to_string(),
+            }
+        })?,
+    );
+    let rendered_line_count = text_line_count(&default_render_result.text);
+    let diagnostic_compression_ratio = if raw_line_count > 0 && rendered_line_count > 0 {
+        Some(raw_line_count as f64 / rendered_line_count as f64)
+    } else {
+        None
+    };
 
     if let Some(report_dir) = report_dir {
         let mut artifacts = BTreeMap::new();
@@ -517,6 +551,12 @@ pub(crate) fn collect_acceptance_fixture_summary(
         first_action_present,
         missing_required_first_action,
         headline_rewritten: !analyzed_headline.is_empty() && analyzed_headline != raw_headline,
+        lead_confidence: confidence_label(&lead_confidence).to_string(),
+        high_confidence: matches!(lead_confidence, diag_core::Confidence::High),
+        rendered_first_action_line,
+        raw_line_count,
+        rendered_line_count,
+        diagnostic_compression_ratio,
         parse_time_ms: replay.parse_time_ms,
         render_time_ms,
         verified: false,
@@ -1384,6 +1424,31 @@ pub(crate) fn subset_name(subset: SnapshotSubset) -> &'static str {
         SnapshotSubset::All => "all",
         SnapshotSubset::Representative => "representative",
     }
+}
+
+pub(crate) fn confidence_label(confidence: &diag_core::Confidence) -> &'static str {
+    match confidence {
+        diag_core::Confidence::High => "high",
+        diag_core::Confidence::Medium => "medium",
+        diag_core::Confidence::Low => "low",
+        diag_core::Confidence::Unknown => "unknown",
+    }
+}
+
+pub(crate) fn text_line_count(text: &str) -> usize {
+    text.lines().filter(|line| !line.trim().is_empty()).count()
+}
+
+pub(crate) fn first_rendered_action_line(
+    rendered_text: &str,
+    first_action_hint: Option<&str>,
+) -> Option<usize> {
+    let first_action_hint = first_action_hint?;
+    let rendered_line = format!("help: {first_action_hint}");
+    rendered_text
+        .lines()
+        .enumerate()
+        .find_map(|(index, line)| (line.trim_end() == rendered_line).then_some(index + 1))
 }
 
 pub(crate) fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMetrics {

@@ -175,6 +175,8 @@ enum Commands {
         root: PathBuf,
         #[arg(long, default_value = "target/rc-gate")]
         report_dir: PathBuf,
+        #[arg(long, default_value = "eval/rc/metrics-manual-eval.json")]
+        metrics_manual_report: PathBuf,
         #[arg(long, default_value = "eval/rc/issue-budget.json")]
         issue_budget_report: PathBuf,
         #[arg(long, default_value = "eval/rc/fuzz-status.json")]
@@ -473,6 +475,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::RcGate {
             root,
             report_dir,
+            metrics_manual_report,
             issue_budget_report,
             fuzz_report,
             ux_signoff_report,
@@ -481,6 +484,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let report = run_rc_gate(RcGateOptions {
                 root,
                 report_dir,
+                metrics_manual_report,
                 issue_budget_report,
                 fuzz_report,
                 ux_signoff_report,

@@ -38,7 +38,7 @@
       "name": "cargo xtask rc-gate",
       "policy": "always",
       "failure_classification": "product",
-      "command": "cargo xtask rc-gate --root corpus --report-dir \"$REPORT_ROOT/rc-gate\" --issue-budget-report eval/rc/issue-budget.json --fuzz-report eval/rc/fuzz-status.json --ux-signoff-report eval/rc/ux-signoff.json",
+      "command": "cargo xtask rc-gate --root corpus --report-dir \"$REPORT_ROOT/rc-gate\" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-report eval/rc/fuzz-status.json --ux-signoff-report eval/rc/ux-signoff.json",
       "fixture": "subset:all",
       "gcc_version": "host",
       "support_tier": "gcc15_primary",
@@ -48,6 +48,8 @@
         "$REPORT_ROOT/rc-gate/bench-smoke-report.json",
         "$REPORT_ROOT/rc-gate/deterministic-replay-report.json",
         "$REPORT_ROOT/rc-gate/rollout-matrix-report.json",
+        "$REPORT_ROOT/rc-gate/metrics-report.json",
+        "$REPORT_ROOT/rc-gate/metrics-manual-eval.json",
         "$REPORT_ROOT/rc-gate/rc-gate-report.json",
         "$REPORT_ROOT/rc-gate/rc-gate-summary.md"
       ]

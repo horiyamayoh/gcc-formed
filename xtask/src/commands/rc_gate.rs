@@ -7,6 +7,7 @@ use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_c
 use diag_trace::{RetentionPolicy, WrapperPaths, build_target_triple};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::collections::BTreeMap;
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -20,11 +21,21 @@ const TEMPLATE_HEAVY_P95_TARGET_MS: u64 = 250;
 const UNEXPECTED_FALLBACK_RATE_TARGET: f64 = 0.001;
 const SUCCESS_PATH_BENCH_SAMPLES: usize = 20;
 const SUCCESS_PATH_WARMUP_RUNS: usize = 2;
+const REQUIRED_METRIC_FAMILIES: &[&str] = &[
+    "syntax",
+    "macro_include",
+    "template",
+    "type",
+    "overload",
+    "linker",
+];
+const FIRST_ACTION_SCREENFUL_LINE: usize = 8;
 
 #[derive(Debug, Clone)]
 pub(crate) struct RcGateOptions {
     pub(crate) root: PathBuf,
     pub(crate) report_dir: PathBuf,
+    pub(crate) metrics_manual_report: PathBuf,
     pub(crate) issue_budget_report: PathBuf,
     pub(crate) fuzz_report: PathBuf,
     pub(crate) ux_signoff_report: PathBuf,
@@ -117,6 +128,23 @@ pub(crate) struct UxSignoffEvidence {
     pub(crate) notes: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct ManualMetricsEvaluation {
+    pub(crate) schema_version: u32,
+    pub(crate) release_candidate: String,
+    pub(crate) status: ManualEvidenceStatus,
+    pub(crate) reviewed_fixture_count: usize,
+    pub(crate) high_confidence_mislead_rate: Option<f64>,
+    pub(crate) trc_improvement_percent: Option<f64>,
+    pub(crate) tfah_improvement_percent: Option<f64>,
+    pub(crate) first_fix_success_delta_points: Option<f64>,
+    pub(crate) updated_at: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) reviewers: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) notes: Vec<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub(crate) struct RolloutMatrixCase {
@@ -186,6 +214,93 @@ pub(crate) struct RcGateReport {
     pub(crate) checks: Vec<RcGateCheck>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct FallbackMetricsReport {
+    pub(crate) fallback_rate: f64,
+    pub(crate) unexpected_fallback_rate: f64,
+    pub(crate) fallback_reason_counts: BTreeMap<String, usize>,
+    pub(crate) unexpected_fallback_reason_counts: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct HighConfidenceMetricsReport {
+    pub(crate) high_confidence_fixture_count: usize,
+    pub(crate) automated_family_mismatch_count: usize,
+    pub(crate) automated_family_mismatch_rate: f64,
+    pub(crate) manual_status: ManualEvidenceStatus,
+    pub(crate) manual_reviewed_fixture_count: usize,
+    pub(crate) manual_high_confidence_mislead_rate: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct CompressionMetricsReport {
+    pub(crate) comparable_fixture_count: usize,
+    pub(crate) median_ratio: Option<f64>,
+    pub(crate) min_ratio: Option<f64>,
+    pub(crate) max_ratio: Option<f64>,
+    pub(crate) family_median_ratios: BTreeMap<String, f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct FirstActionMetricsReport {
+    pub(crate) rendered_hint_fixture_count: usize,
+    pub(crate) median_line: Option<usize>,
+    pub(crate) max_line: Option<usize>,
+    pub(crate) within_first_screenful_count: usize,
+    pub(crate) within_first_screenful_rate: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct PerformanceMetricsReport {
+    pub(crate) success_path_p95_overhead_ms: Option<u64>,
+    pub(crate) simple_failure_p95_postprocess_ms: Option<u64>,
+    pub(crate) template_heavy_p95_postprocess_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct FamilyCoverageMetricsReport {
+    pub(crate) observed_family_counts: BTreeMap<String, usize>,
+    pub(crate) required_family_count: usize,
+    pub(crate) covered_required_family_count: usize,
+    pub(crate) missing_required_families: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct CompatibilityVsPrimaryMetricsReport {
+    pub(crate) rollout_matrix_status: GateStatus,
+    pub(crate) tier_a_default_mode: Option<String>,
+    pub(crate) tier_b_default_mode: Option<String>,
+    pub(crate) tier_c_default_mode: Option<String>,
+    pub(crate) tier_b_requested_render_mode: Option<String>,
+    pub(crate) tier_b_requested_shadow_mode: Option<String>,
+    pub(crate) primary_enhanced_default: bool,
+    pub(crate) compatibility_default_is_conservative: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct RawGccComparisonMetricsReport {
+    pub(crate) compression_ratio: CompressionMetricsReport,
+    pub(crate) first_action_hint: FirstActionMetricsReport,
+    pub(crate) manual_eval_status: ManualEvidenceStatus,
+    pub(crate) manual_trc_improvement_percent: Option<f64>,
+    pub(crate) manual_tfah_improvement_percent: Option<f64>,
+    pub(crate) manual_first_fix_success_delta_points: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct RcMetricsReport {
+    pub(crate) schema_version: u32,
+    pub(crate) generated_at_unix_seconds: u64,
+    pub(crate) fallback: FallbackMetricsReport,
+    pub(crate) high_confidence: HighConfidenceMetricsReport,
+    pub(crate) raw_gcc_comparison: RawGccComparisonMetricsReport,
+    pub(crate) performance: PerformanceMetricsReport,
+    pub(crate) family_coverage: FamilyCoverageMetricsReport,
+    pub(crate) compatibility_vs_primary: CompatibilityVsPrimaryMetricsReport,
+    pub(crate) manual_evidence_path: PathBuf,
+    pub(crate) manual_evidence: ManualMetricsEvaluation,
+}
+
 pub(crate) fn run_bench_smoke(
     root: &Path,
     subset: SnapshotSubset,
@@ -235,6 +350,22 @@ pub(crate) fn run_rc_gate(
         &rollout_matrix_report,
     )?;
 
+    let manual_metrics = load_manual_metrics_evidence(&options.metrics_manual_report)?;
+    let normalized_manual_metrics_path = options.report_dir.join("metrics-manual-eval.json");
+    write_json(&normalized_manual_metrics_path, &manual_metrics)?;
+
+    let metrics_report = build_metrics_report(
+        &replay,
+        &bench_report,
+        &rollout_matrix_report,
+        &manual_metrics,
+        &normalized_manual_metrics_path,
+    );
+    write_json(
+        &options.report_dir.join("metrics-report.json"),
+        &metrics_report,
+    )?;
+
     let issue_budget = load_issue_budget_evidence(&options.issue_budget_report)?;
     let normalized_issue_budget_path = options.report_dir.join("issue-budget-evidence.json");
     write_json(&normalized_issue_budget_path, &issue_budget)?;
@@ -252,6 +383,7 @@ pub(crate) fn run_rc_gate(
         &bench_report,
         &deterministic_report,
         &rollout_matrix_report,
+        &metrics_report,
         &issue_budget,
         &normalized_issue_budget_path,
         &fuzz,
@@ -673,11 +805,176 @@ fn canonical_deterministic_replay(
     Ok(diag_core::canonical_json(&value)?)
 }
 
+fn build_metrics_report(
+    replay: &ReplayReport,
+    bench: &BenchSmokeReport,
+    rollout: &RolloutMatrixReport,
+    manual_metrics: &ManualMetricsEvaluation,
+    manual_metrics_path: &Path,
+) -> RcMetricsReport {
+    let fallback = FallbackMetricsReport {
+        fallback_rate: replay.metrics.fallback_rate,
+        unexpected_fallback_rate: replay.metrics.unexpected_fallback_count as f64
+            / replay.metrics.promoted_fixture_count.max(1) as f64,
+        fallback_reason_counts: replay.metrics.fallback_reason_counts.clone(),
+        unexpected_fallback_reason_counts: replay.metrics.unexpected_fallback_reason_counts.clone(),
+    };
+
+    let high_confidence_fixture_count = replay
+        .fixtures
+        .iter()
+        .filter(|fixture| fixture.high_confidence)
+        .count();
+    let automated_family_mismatch_count = replay
+        .fixtures
+        .iter()
+        .filter(|fixture| fixture.high_confidence && !fixture.family_match)
+        .count();
+    let automated_family_mismatch_rate =
+        automated_family_mismatch_count as f64 / high_confidence_fixture_count.max(1) as f64;
+
+    let compression = compression_metrics_from_replay(replay);
+    let first_action = first_action_metrics_from_replay(replay);
+    let family_coverage = family_coverage_metrics_from_replay(replay);
+    let compatibility_vs_primary = compatibility_metrics_from_rollout(rollout);
+
+    RcMetricsReport {
+        schema_version: RC_GATE_SCHEMA_VERSION,
+        generated_at_unix_seconds: unix_now_seconds(),
+        fallback,
+        high_confidence: HighConfidenceMetricsReport {
+            high_confidence_fixture_count,
+            automated_family_mismatch_count,
+            automated_family_mismatch_rate,
+            manual_status: manual_metrics.status.clone(),
+            manual_reviewed_fixture_count: manual_metrics.reviewed_fixture_count,
+            manual_high_confidence_mislead_rate: manual_metrics.high_confidence_mislead_rate,
+        },
+        raw_gcc_comparison: RawGccComparisonMetricsReport {
+            compression_ratio: compression,
+            first_action_hint: first_action,
+            manual_eval_status: manual_metrics.status.clone(),
+            manual_trc_improvement_percent: manual_metrics.trc_improvement_percent,
+            manual_tfah_improvement_percent: manual_metrics.tfah_improvement_percent,
+            manual_first_fix_success_delta_points: manual_metrics.first_fix_success_delta_points,
+        },
+        performance: PerformanceMetricsReport {
+            success_path_p95_overhead_ms: bench.success_path.p95_ms,
+            simple_failure_p95_postprocess_ms: bench.simple_failure.p95_ms,
+            template_heavy_p95_postprocess_ms: bench.template_heavy_failure.p95_ms,
+        },
+        family_coverage,
+        compatibility_vs_primary,
+        manual_evidence_path: relative_report_evidence_path(manual_metrics_path),
+        manual_evidence: manual_metrics.clone(),
+    }
+}
+
+fn compression_metrics_from_replay(replay: &ReplayReport) -> CompressionMetricsReport {
+    let ratios = replay
+        .fixtures
+        .iter()
+        .filter_map(|fixture| fixture.diagnostic_compression_ratio)
+        .collect::<Vec<_>>();
+    let mut ratios_by_family: BTreeMap<String, Vec<f64>> = BTreeMap::new();
+    for fixture in &replay.fixtures {
+        if let Some(ratio) = fixture.diagnostic_compression_ratio {
+            ratios_by_family
+                .entry(fixture.family_key.clone())
+                .or_default()
+                .push(ratio);
+        }
+    }
+    let family_median_ratios = ratios_by_family
+        .into_iter()
+        .filter_map(|(family, values)| median_f64(&values).map(|median| (family, median)))
+        .collect();
+
+    CompressionMetricsReport {
+        comparable_fixture_count: ratios.len(),
+        median_ratio: median_f64(&ratios),
+        min_ratio: ratios.iter().cloned().reduce(f64::min),
+        max_ratio: ratios.iter().cloned().reduce(f64::max),
+        family_median_ratios,
+    }
+}
+
+fn first_action_metrics_from_replay(replay: &ReplayReport) -> FirstActionMetricsReport {
+    let rendered_lines = replay
+        .fixtures
+        .iter()
+        .filter_map(|fixture| fixture.rendered_first_action_line)
+        .collect::<Vec<_>>();
+    let within_first_screenful_count = rendered_lines
+        .iter()
+        .filter(|line| **line <= FIRST_ACTION_SCREENFUL_LINE)
+        .count();
+    FirstActionMetricsReport {
+        rendered_hint_fixture_count: rendered_lines.len(),
+        median_line: median_usize(&rendered_lines),
+        max_line: rendered_lines.iter().copied().max(),
+        within_first_screenful_count,
+        within_first_screenful_rate: (!rendered_lines.is_empty())
+            .then_some(within_first_screenful_count as f64 / rendered_lines.len() as f64),
+    }
+}
+
+fn family_coverage_metrics_from_replay(replay: &ReplayReport) -> FamilyCoverageMetricsReport {
+    let missing_required_families = REQUIRED_METRIC_FAMILIES
+        .iter()
+        .filter(|family| !replay.selected_family_counts.contains_key(**family))
+        .map(|family| (*family).to_string())
+        .collect::<Vec<_>>();
+    FamilyCoverageMetricsReport {
+        observed_family_counts: replay.selected_family_counts.clone(),
+        required_family_count: REQUIRED_METRIC_FAMILIES.len(),
+        covered_required_family_count: REQUIRED_METRIC_FAMILIES
+            .iter()
+            .filter(|family| replay.selected_family_counts.contains_key(**family))
+            .count(),
+        missing_required_families,
+    }
+}
+
+fn compatibility_metrics_from_rollout(
+    rollout: &RolloutMatrixReport,
+) -> CompatibilityVsPrimaryMetricsReport {
+    let expected_cases = expected_rollout_matrix_cases();
+    let lookup = |support_tier: &str, requested_mode: Option<&str>, hard_conflict: bool| {
+        expected_cases
+            .iter()
+            .find(|case| {
+                case.support_tier == support_tier
+                    && case.requested_mode.as_deref() == requested_mode
+                    && case.hard_conflict == hard_conflict
+            })
+            .map(|case| case.selected_mode.clone())
+    };
+    let tier_a_default_mode = lookup("a", None, false);
+    let tier_b_default_mode = lookup("b", None, false);
+    let tier_c_default_mode = lookup("c", None, false);
+    let tier_b_requested_render_mode = lookup("b", Some("render"), false);
+    let tier_b_requested_shadow_mode = lookup("b", Some("shadow"), false);
+    CompatibilityVsPrimaryMetricsReport {
+        rollout_matrix_status: rollout.status.clone(),
+        primary_enhanced_default: tier_a_default_mode.as_deref() == Some("render"),
+        compatibility_default_is_conservative: tier_b_default_mode.as_deref()
+            == Some("passthrough")
+            && tier_c_default_mode.as_deref() == Some("passthrough"),
+        tier_a_default_mode,
+        tier_b_default_mode,
+        tier_c_default_mode,
+        tier_b_requested_render_mode,
+        tier_b_requested_shadow_mode,
+    }
+}
+
 fn build_rc_gate_checks(
     replay: &ReplayReport,
     bench: &BenchSmokeReport,
     deterministic: &DeterministicReplayReport,
     rollout: &RolloutMatrixReport,
+    metrics: &RcMetricsReport,
     issue_budget: &IssueBudgetEvidence,
     issue_budget_path: &Path,
     fuzz: &FuzzEvidence,
@@ -761,10 +1058,47 @@ fn build_rc_gate_checks(
             manual: false,
             evidence_path: Some(PathBuf::from("deterministic-replay-report.json")),
         },
+        manual_metrics_check(metrics, allow_pending_manual_checks),
         manual_issue_budget_check(issue_budget, issue_budget_path, allow_pending_manual_checks),
         manual_fuzz_check(fuzz, fuzz_path, allow_pending_manual_checks),
         manual_ux_check(ux, ux_path, allow_pending_manual_checks),
     ]
+}
+
+fn manual_metrics_check(
+    metrics: &RcMetricsReport,
+    allow_pending_manual_checks: bool,
+) -> RcGateCheck {
+    let manual = &metrics.manual_evidence;
+    let status = match manual.status {
+        ManualEvidenceStatus::Approved if manual_metrics_fields_complete(manual) => {
+            GateStatus::Pass
+        }
+        ManualEvidenceStatus::Pending => GateStatus::Pending,
+        _ => GateStatus::Fail,
+    };
+    RcGateCheck {
+        id: "metrics_packet".to_string(),
+        title: "RC Metrics Packet".to_string(),
+        status: status.clone(),
+        summary: format!(
+            "status={:?} compression_median={:?} first_action_median={:?} overhead_p95_ms={:?}",
+            manual.status,
+            metrics.raw_gcc_comparison.compression_ratio.median_ratio,
+            metrics.raw_gcc_comparison.first_action_hint.median_line,
+            metrics.performance.success_path_p95_overhead_ms
+        ),
+        blocker: check_is_blocker(&status, true, allow_pending_manual_checks),
+        manual: true,
+        evidence_path: Some(PathBuf::from("metrics-report.json")),
+    }
+}
+
+fn manual_metrics_fields_complete(manual: &ManualMetricsEvaluation) -> bool {
+    manual.high_confidence_mislead_rate.is_some()
+        && manual.trc_improvement_percent.is_some()
+        && manual.tfah_improvement_percent.is_some()
+        && manual.first_fix_success_delta_points.is_some()
 }
 
 fn manual_issue_budget_check(
@@ -948,6 +1282,27 @@ fn load_ux_signoff_evidence(path: &Path) -> Result<UxSignoffEvidence, Box<dyn st
     })
 }
 
+fn load_manual_metrics_evidence(
+    path: &Path,
+) -> Result<ManualMetricsEvaluation, Box<dyn std::error::Error>> {
+    if path.exists() {
+        return Ok(serde_json::from_slice(&fs::read(path)?)?);
+    }
+    Ok(ManualMetricsEvaluation {
+        schema_version: RC_GATE_SCHEMA_VERSION,
+        release_candidate: "1.0.0-rc.N".to_string(),
+        status: ManualEvidenceStatus::Pending,
+        reviewed_fixture_count: 0,
+        high_confidence_mislead_rate: None,
+        trc_improvement_percent: None,
+        tfah_improvement_percent: None,
+        first_fix_success_delta_points: None,
+        updated_at: "missing".to_string(),
+        reviewers: Vec::new(),
+        notes: vec![format!("missing manual evidence: {}", path.display())],
+    })
+}
+
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -964,6 +1319,24 @@ fn percentile_95(samples: &[u64]) -> Option<u64> {
     ordered.sort_unstable();
     let index = ((ordered.len() * 95).saturating_sub(1)) / 100;
     ordered.get(index).copied()
+}
+
+fn median_usize(samples: &[usize]) -> Option<usize> {
+    if samples.is_empty() {
+        return None;
+    }
+    let mut ordered = samples.to_vec();
+    ordered.sort_unstable();
+    ordered.get(ordered.len() / 2).copied()
+}
+
+fn median_f64(samples: &[f64]) -> Option<f64> {
+    if samples.is_empty() {
+        return None;
+    }
+    let mut ordered = samples.to_vec();
+    ordered.sort_by(|left, right| left.total_cmp(right));
+    ordered.get(ordered.len() / 2).copied()
 }
 
 fn is_template_heavy_family(family: &str) -> bool {
@@ -1028,6 +1401,12 @@ mod tests {
             first_action_present: true,
             missing_required_first_action: false,
             headline_rewritten: true,
+            lead_confidence: "high".to_string(),
+            high_confidence: true,
+            rendered_first_action_line: Some(3),
+            raw_line_count: 12,
+            rendered_line_count: 6,
+            diagnostic_compression_ratio: Some(2.0),
             parse_time_ms,
             render_time_ms,
             verified: true,
@@ -1046,6 +1425,64 @@ mod tests {
             metrics: acceptance_metrics_for(&fixtures),
             fixtures,
             failures: Vec::new(),
+        }
+    }
+
+    fn bench_report() -> BenchSmokeReport {
+        BenchSmokeReport {
+            schema_version: RC_GATE_SCHEMA_VERSION,
+            subset: "all".to_string(),
+            overall_status: GateStatus::Pass,
+            blockers: Vec::new(),
+            success_path: BenchScenarioReport {
+                scenario: "success_path".to_string(),
+                status: GateStatus::Pass,
+                metric: "p95_wrapper_overhead_ms".to_string(),
+                target_ms: SUCCESS_PATH_P95_TARGET_MS,
+                p95_ms: Some(3),
+                sample_count: 5,
+                samples_ms: vec![1, 2, 3, 3, 3],
+                slowest_fixtures: Vec::new(),
+                notes: Vec::new(),
+            },
+            simple_failure: BenchScenarioReport {
+                scenario: "simple_failure".to_string(),
+                status: GateStatus::Pass,
+                metric: "p95_postprocess_ms".to_string(),
+                target_ms: SIMPLE_FAILURE_P95_TARGET_MS,
+                p95_ms: Some(18),
+                sample_count: 5,
+                samples_ms: vec![10, 12, 15, 18, 18],
+                slowest_fixtures: Vec::new(),
+                notes: Vec::new(),
+            },
+            template_heavy_failure: BenchScenarioReport {
+                scenario: "template_heavy_failure".to_string(),
+                status: GateStatus::Pass,
+                metric: "p95_postprocess_ms".to_string(),
+                target_ms: TEMPLATE_HEAVY_P95_TARGET_MS,
+                p95_ms: Some(40),
+                sample_count: 5,
+                samples_ms: vec![20, 24, 30, 40, 40],
+                slowest_fixtures: Vec::new(),
+                notes: Vec::new(),
+            },
+        }
+    }
+
+    fn manual_metrics(status: ManualEvidenceStatus) -> ManualMetricsEvaluation {
+        ManualMetricsEvaluation {
+            schema_version: RC_GATE_SCHEMA_VERSION,
+            release_candidate: "1.0.0-rc.1".to_string(),
+            status,
+            reviewed_fixture_count: 10,
+            high_confidence_mislead_rate: Some(0.01),
+            trc_improvement_percent: Some(35.0),
+            tfah_improvement_percent: Some(50.0),
+            first_fix_success_delta_points: Some(20.0),
+            updated_at: "2026-04-09".to_string(),
+            reviewers: vec!["reviewer".to_string()],
+            notes: Vec::new(),
         }
     }
 
@@ -1124,6 +1561,84 @@ mod tests {
         );
 
         assert_eq!(check.status, GateStatus::Pending);
+        assert!(check.blocker);
+    }
+
+    #[test]
+    fn metrics_report_summarizes_corpus_kpis() {
+        let mut fixtures = vec![
+            fixture_summary("c/syntax/case-01", "syntax", 20, 10),
+            fixture_summary("cpp/template/case-01", "template", 40, 20),
+            fixture_summary("c/linker/case-01", "linker", 30, 10),
+        ];
+        fixtures[0].rendered_first_action_line = Some(3);
+        fixtures[0].diagnostic_compression_ratio = Some(2.0);
+        fixtures[1].rendered_first_action_line = Some(5);
+        fixtures[1].diagnostic_compression_ratio = Some(3.0);
+        fixtures[2].rendered_first_action_line = None;
+        fixtures[2].diagnostic_compression_ratio = Some(1.5);
+        fixtures[2].high_confidence = false;
+        fixtures[2].lead_confidence = "medium".to_string();
+
+        let mut replay = replay_report(fixtures);
+        replay.selected_family_counts = BTreeMap::from([
+            ("syntax".to_string(), 1),
+            ("template".to_string(), 1),
+            ("linker".to_string(), 1),
+        ]);
+        let rollout =
+            compare_rollout_matrix_cases("cargo run ...", &expected_rollout_matrix_cases());
+        let report = build_metrics_report(
+            &replay,
+            &bench_report(),
+            &rollout,
+            &manual_metrics(ManualEvidenceStatus::Pending),
+            Path::new("metrics-manual-eval.json"),
+        );
+
+        assert_eq!(
+            report.raw_gcc_comparison.compression_ratio.median_ratio,
+            Some(2.0)
+        );
+        assert_eq!(
+            report.raw_gcc_comparison.first_action_hint.median_line,
+            Some(5)
+        );
+        assert_eq!(report.performance.success_path_p95_overhead_ms, Some(3));
+        assert_eq!(
+            report.family_coverage.missing_required_families,
+            vec![
+                "macro_include".to_string(),
+                "type".to_string(),
+                "overload".to_string()
+            ]
+        );
+        assert!(report.compatibility_vs_primary.primary_enhanced_default);
+        assert!(
+            report
+                .compatibility_vs_primary
+                .compatibility_default_is_conservative
+        );
+    }
+
+    #[test]
+    fn approved_metrics_packet_requires_all_manual_fields() {
+        let replay = replay_report(vec![fixture_summary("c/syntax/case-01", "syntax", 20, 10)]);
+        let rollout =
+            compare_rollout_matrix_cases("cargo run ...", &expected_rollout_matrix_cases());
+        let mut manual = manual_metrics(ManualEvidenceStatus::Approved);
+        manual.tfah_improvement_percent = None;
+        let report = build_metrics_report(
+            &replay,
+            &bench_report(),
+            &rollout,
+            &manual,
+            Path::new("metrics-manual-eval.json"),
+        );
+
+        let check = manual_metrics_check(&report, false);
+
+        assert_eq!(check.status, GateStatus::Fail);
         assert!(check.blocker);
     }
 }

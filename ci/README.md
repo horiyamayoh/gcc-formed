@@ -1,6 +1,6 @@
 # CI Gate Artifacts
 
-`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report を保存する。
+`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report と metrics packet を保存する。
 
 ## Layout
 
@@ -17,7 +17,7 @@ $REPORT_ROOT/
       <nn>-<step>.stderr.log
 ```
 
-既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`rc-gate/` は release-candidate verdict と sub-report を保持する。`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
+既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`rc-gate/` は release-candidate verdict、`metrics-report.json`、manual evaluation packet を保持する。`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
 
 ## Status Schema
 

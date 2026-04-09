@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "release_candidate": "1.0.0-rc.N",
+  "status": "pending",
+  "reviewed_fixture_count": 0,
+  "high_confidence_mislead_rate": null,
+  "trc_improvement_percent": null,
+  "tfah_improvement_percent": null,
+  "first_fix_success_delta_points": null,
+  "updated_at": "2026-04-09",
+  "reviewers": [],
+  "notes": [
+    "Fill this packet after expert review / task study so rc-gate can retain the raw GCC comparison metrics that are not fully automatable yet."
+  ]
+}
