@@ -30,6 +30,7 @@ Security support statements should be read inside the same support boundary docu
 - Prefer the repository host's private vulnerability reporting or security advisory flow when it is enabled for this repository.
 - If no private reporting flow is available, contact the maintainers through the same private channel used to obtain release artifacts before any public disclosure.
 - Include the affected version or commit, target platform, GCC version, reproduction steps, observed impact, and whether the issue requires a specially crafted compiler invocation or source input.
+- For non-security breakage, use [SUPPORT.md](SUPPORT.md) and the linked runbooks instead of the security path.
 
 ## Response Expectations
 

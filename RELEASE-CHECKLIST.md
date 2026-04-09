@@ -52,6 +52,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - `RELEASE-NOTES.md` calls out compatibility paths and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.
 - `STABLE-RELEASE.md` exists and matches the workflow/xtask stable cut contract.
+- `SUPPORT.md` and the runbooks under `docs/runbooks/` exist, and the public bug template links to them.
 - The GitHub Release body links `SUPPORT-BOUNDARY.md`, `KNOWN-LIMITATIONS.md`, and `PUBLIC-BETA-RELEASE.md`.
 
 ## Artifact Retention

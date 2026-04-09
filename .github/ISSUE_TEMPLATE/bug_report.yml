@@ -4,6 +4,16 @@ title: "[bug] "
 labels:
   - bug
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check the support runbooks:
+
+        - [Support overview](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT.md)
+        - [Support boundary](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT-BOUNDARY.md)
+        - [Incident triage](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/incident-triage.md)
+        - [Trace bundle collection](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/trace-bundle-collection.md)
+        - [Rollback / reinstall](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/rollback.md)
   - type: dropdown
     id: support_tier
     attributes:

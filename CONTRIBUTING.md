@@ -44,6 +44,7 @@ The automated public-beta GitHub Release workflow also expects the repository se
 - If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in the user-facing docs, and the GitHub templates in the same change.
 - If a change alters compatibility-path wording, keep `diag_cli_front` runtime notices, `--formed-self-check` rollout matrix notices, `KNOWN-LIMITATIONS.md`, and `ADR-0005` aligned in the same change.
 - If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `STABLE-RELEASE.md`, `RELEASE-CHECKLIST.md`, the packaging spec, and `ADR-0025` aligned in the same change.
+- If a change alters support routing or maintainer/user recovery guidance, keep `SUPPORT.md`, `docs/runbooks/`, and `.github/ISSUE_TEMPLATE/bug_report.yml` aligned in the same change.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
 - Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` and `PUBLIC-BETA-RELEASE.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
 
