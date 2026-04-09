@@ -167,9 +167,12 @@ impl CaptureBundle {
 
     pub fn stderr_text(&self) -> Option<&str> {
         self.raw_text_artifacts.iter().find_map(|artifact| {
-            matches!(artifact.kind, ArtifactKind::CompilerStderrText)
-                .then(|| artifact.inline_text.as_deref())
-                .flatten()
+            matches!(
+                artifact.kind,
+                ArtifactKind::CompilerStderrText | ArtifactKind::LinkerStderrText
+            )
+            .then(|| artifact.inline_text.as_deref())
+            .flatten()
         })
     }
 
@@ -227,6 +230,14 @@ impl CaptureOutcome {
 
     pub fn authoritative_sarif_path(&self) -> Option<PathBuf> {
         self.bundle.authoritative_sarif_path(&self.temp_dir)
+    }
+
+    pub fn processing_path(&self) -> ProcessingPath {
+        self.bundle.plan.processing_path
+    }
+
+    pub fn sanitized_env_keys(&self) -> Vec<String> {
+        trace_sanitized_env_keys(self.bundle.plan.execution_mode)
     }
 
     pub fn injected_flags(&self) -> Vec<String> {

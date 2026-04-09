@@ -2,9 +2,7 @@ use crate::args::{ParsedArgs, os_to_string};
 use crate::backend::backend_binary_name;
 use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
-use diag_capture_runtime::{
-    CaptureOutcome, ExecutionMode, ExitStatusInfo, trace_sanitized_env_keys,
-};
+use diag_capture_runtime::{CaptureOutcome, ExecutionMode, ExitStatusInfo};
 use diag_core::{
     DiagnosticDocument, DocumentCompleteness, FallbackReason, SnapshotKind, WrapperSurface,
     snapshot_json,
@@ -52,11 +50,7 @@ pub(crate) fn maybe_write_trace(
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(mode_decision.mode, fallback_reason)),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(
-            backend,
-            mode_decision.mode,
-            capture,
-        )),
+        environment_summary: Some(trace_environment_summary(backend, capture)),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
             capture_ms: capture.capture_duration_ms,
@@ -119,11 +113,7 @@ pub(crate) fn maybe_write_passthrough_trace(
             mode_decision.fallback_reason,
         )),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(
-            backend,
-            mode_decision.mode,
-            capture,
-        )),
+        environment_summary: Some(trace_environment_summary(backend, capture)),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
             capture_ms: capture.capture_duration_ms,
@@ -245,17 +235,16 @@ fn trace_version_summary() -> TraceVersionSummary {
 
 fn trace_environment_summary(
     backend: &diag_backend_probe::ProbeResult,
-    mode: ExecutionMode,
     capture: &CaptureOutcome,
 ) -> TraceEnvironmentSummary {
     TraceEnvironmentSummary {
         backend_path: backend.resolved_path.clone(),
         backend_version: backend.version_string.clone(),
         version_band: snake_case_label(&backend.version_band()),
-        processing_path: snake_case_label(&capture.bundle.plan.processing_path),
+        processing_path: snake_case_label(&capture.processing_path()),
         support_level: snake_case_label(&backend.support_level()),
         injected_flags: capture.injected_flags(),
-        sanitized_env_keys: trace_sanitized_env_keys(mode),
+        sanitized_env_keys: capture.sanitized_env_keys(),
         temp_artifact_paths: capture.temp_artifact_paths(),
     }
 }
