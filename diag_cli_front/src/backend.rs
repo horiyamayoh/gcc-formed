@@ -1,11 +1,11 @@
 use crate::args::ParsedArgs;
 use crate::config::ConfigFile;
 use crate::mode::{
-    ModeDecision, compatibility_scope_notice, detect_capabilities,
-    detect_profile_from_capabilities, has_hard_conflict, select_mode,
+    CliCompatibilitySeam, ModeDecision, compatibility_scope_notice_for_seam, detect_capabilities,
+    detect_profile_from_capabilities, has_hard_conflict, select_mode_for_seam,
     should_capture_passthrough_stderr,
 };
-use diag_backend_probe::{ProbeCache, ProbeResult, ResolveRequest, SupportTier};
+use diag_backend_probe::{ProbeCache, ProbeResult, ResolveRequest};
 use diag_capture_runtime::{CaptureRequest, ExecutionMode};
 use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
@@ -64,7 +64,8 @@ pub(crate) fn build_execution_plan(
     let capabilities = detect_capabilities();
     let explicit_mode = parsed.mode.or(config.runtime.mode);
     let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
-    let mode_decision = select_mode(backend.support_tier, explicit_mode, hard_conflict);
+    let compatibility_seam = CliCompatibilitySeam::from_probe(&backend);
+    let mode_decision = select_mode_for_seam(&compatibility_seam, explicit_mode, hard_conflict);
     let profile = parsed
         .profile
         .or(config.render.profile)
@@ -78,10 +79,9 @@ pub(crate) fn build_execution_plan(
         .or(config.trace.retention_policy)
         .unwrap_or(RetentionPolicy::OnWrapperFailure);
     Ok(ExecutionPlan {
-        scope_notice: compatibility_scope_notice(backend.support_tier, &mode_decision),
+        scope_notice: compatibility_scope_notice_for_seam(&compatibility_seam, &mode_decision),
         capture_passthrough_stderr: should_capture_passthrough_stderr(retention_policy, debug_refs),
-        inject_sarif: mode_decision.mode != ExecutionMode::Passthrough
-            && matches!(backend.support_tier, SupportTier::A),
+        inject_sarif: compatibility_seam.should_inject_sarif(mode_decision.mode),
         backend,
         mode_decision,
         profile,

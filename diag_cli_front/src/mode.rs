@@ -1,5 +1,8 @@
 use crate::args::os_to_string;
-use diag_backend_probe::SupportTier;
+use diag_backend_probe::{
+    CapabilityProfile, ProbeResult, ProcessingPath, SupportLevel, SupportTier,
+    default_processing_path_for_tier, support_level_for_tier,
+};
 use diag_capture_runtime::ExecutionMode;
 use diag_core::{FallbackReason, LanguageMode};
 use diag_render::{DebugRefs, RenderCapabilities, RenderProfile, StreamKind};
@@ -13,6 +16,59 @@ pub(crate) struct ModeDecision {
     pub(crate) mode: ExecutionMode,
     pub(crate) fallback_reason: Option<FallbackReason>,
     pub(crate) decision_log: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CliCompatibilitySeam {
+    support_tier: SupportTier,
+    support_level: SupportLevel,
+    default_processing_path: ProcessingPath,
+    sarif_diagnostics: bool,
+}
+
+impl CliCompatibilitySeam {
+    pub(crate) fn from_probe(backend: &ProbeResult) -> Self {
+        Self::from_profile(backend.support_tier, backend.capability_profile())
+    }
+
+    pub(crate) fn from_support_tier(tier: SupportTier) -> Self {
+        Self {
+            support_tier: tier,
+            support_level: support_level_for_tier(tier),
+            default_processing_path: default_processing_path_for_tier(tier),
+            sarif_diagnostics: matches!(
+                default_processing_path_for_tier(tier),
+                ProcessingPath::DualSinkStructured
+            ),
+        }
+    }
+
+    fn from_profile(support_tier: SupportTier, profile: CapabilityProfile) -> Self {
+        Self {
+            support_tier,
+            support_level: profile.support_level,
+            default_processing_path: profile.default_processing_path,
+            sarif_diagnostics: profile.sarif_diagnostics,
+        }
+    }
+
+    fn is_primary_structured(&self) -> bool {
+        matches!(self.support_level, SupportLevel::Primary)
+            && matches!(
+                self.default_processing_path,
+                ProcessingPath::DualSinkStructured
+            )
+    }
+
+    fn is_shadow_compatibility(&self) -> bool {
+        matches!(self.support_tier, SupportTier::B)
+            && matches!(self.support_level, SupportLevel::Conservative)
+            && matches!(self.default_processing_path, ProcessingPath::Passthrough)
+    }
+
+    pub(crate) fn should_inject_sarif(&self, mode: ExecutionMode) -> bool {
+        mode != ExecutionMode::Passthrough && self.sarif_diagnostics && self.is_primary_structured()
+    }
 }
 
 pub(crate) fn is_compiler_introspection(args: &[OsString]) -> bool {
@@ -37,12 +93,22 @@ pub(crate) fn has_hard_conflict(args: &[OsString]) -> bool {
     })
 }
 
+#[cfg(test)]
 pub(crate) fn select_mode(
     tier: SupportTier,
     requested: Option<ExecutionMode>,
     hard_conflict: bool,
 ) -> ModeDecision {
-    let mut decision_log = vec![format!("support_tier={:?}", tier).to_lowercase()];
+    let seam = CliCompatibilitySeam::from_support_tier(tier);
+    select_mode_for_seam(&seam, requested, hard_conflict)
+}
+
+pub(crate) fn select_mode_for_seam(
+    seam: &CliCompatibilitySeam,
+    requested: Option<ExecutionMode>,
+    hard_conflict: bool,
+) -> ModeDecision {
+    let mut decision_log = vec![format!("support_tier={:?}", seam.support_tier).to_lowercase()];
     if hard_conflict {
         decision_log.push("hard_conflict=diagnostic_sink_override".to_string());
         return ModeDecision {
@@ -59,15 +125,15 @@ pub(crate) fn select_mode(
             decision_log,
         };
     }
-    let mode = match tier {
-        SupportTier::A => {
+    let mode = match seam.support_tier {
+        _ if seam.is_primary_structured() => {
             decision_log.push(format!(
                 "tier_a_mode={}",
                 format!("{:?}", requested.unwrap_or(ExecutionMode::Render)).to_lowercase()
             ));
             requested.unwrap_or(ExecutionMode::Render)
         }
-        SupportTier::B => match requested {
+        _ if seam.is_shadow_compatibility() => match requested {
             Some(ExecutionMode::Shadow) => {
                 decision_log.push("tier_b_mode=shadow_raw_only".to_string());
                 ExecutionMode::Shadow
@@ -82,14 +148,14 @@ pub(crate) fn select_mode(
             }
             Some(ExecutionMode::Passthrough) => ExecutionMode::Passthrough,
         },
-        SupportTier::C => {
+        _ => {
             decision_log.push("tier_c_mode=passthrough_only".to_string());
             ExecutionMode::Passthrough
         }
     };
 
     let fallback_reason = match mode {
-        ExecutionMode::Passthrough => match tier {
+        ExecutionMode::Passthrough => match seam.support_tier {
             SupportTier::A => None,
             SupportTier::B | SupportTier::C => Some(FallbackReason::UnsupportedTier),
         },
@@ -104,11 +170,20 @@ pub(crate) fn select_mode(
     }
 }
 
+#[cfg(test)]
 pub(crate) fn compatibility_scope_notice(
     tier: SupportTier,
     decision: &ModeDecision,
 ) -> Option<&'static str> {
-    match tier {
+    let seam = CliCompatibilitySeam::from_support_tier(tier);
+    compatibility_scope_notice_for_seam(&seam, decision)
+}
+
+pub(crate) fn compatibility_scope_notice_for_seam(
+    seam: &CliCompatibilitySeam,
+    decision: &ModeDecision,
+) -> Option<&'static str> {
+    match seam.support_tier {
         SupportTier::A => None,
         SupportTier::B => match decision.mode {
             ExecutionMode::Shadow => Some(
@@ -313,5 +388,55 @@ mod tests {
             detect_profile_from_capabilities(&capabilities),
             RenderProfile::Ci
         );
+    }
+
+    #[test]
+    fn probe_vocabulary_seam_preserves_primary_structured_render() {
+        let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: "/tmp/fake-gcc".into(),
+            version_string: "gcc (Fake) 15.2.0".to_string(),
+            major: 15,
+            minor: 2,
+            support_tier: SupportTier::A,
+            driver_kind: diag_backend_probe::DriverKind::Gcc,
+            add_output_sarif_supported: true,
+            version_probe_key: diag_backend_probe::ProbeKey {
+                realpath: "/tmp/fake-gcc".into(),
+                inode: 1,
+                mtime_seconds: 1,
+                size_bytes: 1,
+            },
+        });
+
+        let decision = select_mode_for_seam(&seam, None, false);
+        assert_eq!(decision.mode, ExecutionMode::Render);
+        assert_eq!(decision.fallback_reason, None);
+        assert!(seam.should_inject_sarif(decision.mode));
+    }
+
+    #[test]
+    fn probe_vocabulary_seam_preserves_tier_b_shadow_escape_hatch() {
+        let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: "/tmp/fake-gcc".into(),
+            version_string: "gcc (Fake) 13.3.0".to_string(),
+            major: 13,
+            minor: 3,
+            support_tier: SupportTier::B,
+            driver_kind: diag_backend_probe::DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: diag_backend_probe::ProbeKey {
+                realpath: "/tmp/fake-gcc".into(),
+                inode: 1,
+                mtime_seconds: 1,
+                size_bytes: 1,
+            },
+        });
+
+        let decision = select_mode_for_seam(&seam, Some(ExecutionMode::Shadow), false);
+        assert_eq!(decision.mode, ExecutionMode::Shadow);
+        assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
+        assert!(!seam.should_inject_sarif(decision.mode));
     }
 }
