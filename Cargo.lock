@@ -1140,6 +1140,8 @@ version = "0.2.0-beta.1"
 dependencies = [
  "clap",
  "diag_adapter_gcc",
+ "diag_backend_probe",
+ "diag_capture_runtime",
  "diag_core",
  "diag_enrich",
  "diag_render",

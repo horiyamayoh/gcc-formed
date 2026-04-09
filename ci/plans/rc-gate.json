@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "workflow": "rc-gate",
+  "job": "rc-gate",
+  "steps": [
+    {
+      "id": "prepare-report-directories",
+      "order": 1,
+      "name": "Prepare report directories",
+      "policy": "always",
+      "failure_classification": "instrumentation",
+      "command": "mkdir -p \"$REPORT_ROOT/rc-gate\" \"$REPORT_ROOT/gate\"",
+      "fixture": null,
+      "gcc_version": "host",
+      "support_tier": "release_candidate_gate",
+      "artifact_paths": [
+        "$REPORT_ROOT/rc-gate",
+        "$REPORT_ROOT/gate"
+      ]
+    },
+    {
+      "id": "capture-host-build-environment",
+      "order": 2,
+      "name": "Capture host build environment",
+      "policy": "always",
+      "failure_classification": "infrastructure",
+      "command": "python3 ci/gate_capture_environment.py --output \"$REPORT_ROOT/gate/build-environment.json\" --mode host --toolchain-file rust-toolchain.toml",
+      "fixture": null,
+      "gcc_version": "host",
+      "support_tier": "release_candidate_gate",
+      "artifact_paths": [
+        "$REPORT_ROOT/gate/build-environment.json"
+      ]
+    },
+    {
+      "id": "cargo-xtask-rc-gate",
+      "order": 3,
+      "name": "cargo xtask rc-gate",
+      "policy": "always",
+      "failure_classification": "product",
+      "command": "cargo xtask rc-gate --root corpus --report-dir \"$REPORT_ROOT/rc-gate\" --issue-budget-report eval/rc/issue-budget.json --fuzz-report eval/rc/fuzz-status.json --ux-signoff-report eval/rc/ux-signoff.json",
+      "fixture": "subset:all",
+      "gcc_version": "host",
+      "support_tier": "gcc15_primary",
+      "artifact_paths": [
+        "$REPORT_ROOT/rc-gate",
+        "$REPORT_ROOT/rc-gate/replay-report.json",
+        "$REPORT_ROOT/rc-gate/bench-smoke-report.json",
+        "$REPORT_ROOT/rc-gate/deterministic-replay-report.json",
+        "$REPORT_ROOT/rc-gate/rollout-matrix-report.json",
+        "$REPORT_ROOT/rc-gate/rc-gate-report.json",
+        "$REPORT_ROOT/rc-gate/rc-gate-summary.md"
+      ]
+    }
+  ]
+}

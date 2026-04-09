@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "release_candidate": "1.0.0-rc.N",
+  "status": "pending",
+  "open_p0": 0,
+  "open_p1": 0,
+  "updated_at": "2026-04-09",
+  "notes": [
+    "Replace this placeholder with the current P0/P1 bug triage result before RC sign-off."
+  ]
+}

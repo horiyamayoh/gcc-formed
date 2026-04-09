@@ -1,5 +1,9 @@
 use crate::args::WrapperIntrospection;
+use crate::mode::select_mode;
+use diag_backend_probe::SupportTier;
 use diag_backend_probe::{ProbeCache, ResolveRequest};
+use diag_capture_runtime::ExecutionMode;
+use diag_core::FallbackReason;
 use diag_trace::{
     BuildManifest, WrapperPaths, build_target_triple, default_build_manifest, trace_id,
 };
@@ -127,8 +131,37 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, Box<dyn std::er
             "version": backend.version_string,
             "support_tier": format!("{:?}", backend.support_tier).to_lowercase(),
         },
+        "rollout_matrix": {
+            "schema_version": 1,
+            "cases": rollout_matrix_cases(),
+        },
         "warnings": warnings,
     }))
+}
+
+fn rollout_matrix_cases() -> Vec<serde_json::Value> {
+    [
+        (SupportTier::A, None, false),
+        (SupportTier::A, Some(ExecutionMode::Shadow), false),
+        (SupportTier::A, Some(ExecutionMode::Passthrough), false),
+        (SupportTier::A, Some(ExecutionMode::Render), true),
+        (SupportTier::B, None, false),
+        (SupportTier::B, Some(ExecutionMode::Shadow), false),
+        (SupportTier::B, Some(ExecutionMode::Render), false),
+        (SupportTier::C, None, false),
+    ]
+    .into_iter()
+    .map(|(support_tier, requested_mode, hard_conflict)| {
+        let decision = select_mode(support_tier, requested_mode, hard_conflict);
+        json!({
+            "support_tier": support_tier_label(support_tier),
+            "requested_mode": requested_mode.map(execution_mode_label),
+            "hard_conflict": hard_conflict,
+            "selected_mode": execution_mode_label(decision.mode),
+            "fallback_reason": decision.fallback_reason.map(fallback_reason_label),
+        })
+    })
+    .collect()
 }
 
 fn hash_file(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
@@ -197,6 +230,37 @@ fn access_label(result: &Result<(), std::io::Error>) -> &'static str {
     if result.is_ok() { "ok" } else { "error" }
 }
 
+fn support_tier_label(tier: SupportTier) -> &'static str {
+    match tier {
+        SupportTier::A => "a",
+        SupportTier::B => "b",
+        SupportTier::C => "c",
+    }
+}
+
+fn execution_mode_label(mode: ExecutionMode) -> &'static str {
+    match mode {
+        ExecutionMode::Render => "render",
+        ExecutionMode::Shadow => "shadow",
+        ExecutionMode::Passthrough => "passthrough",
+    }
+}
+
+fn fallback_reason_label(reason: FallbackReason) -> &'static str {
+    match reason {
+        FallbackReason::UnsupportedTier => "unsupported_tier",
+        FallbackReason::IncompatibleSink => "incompatible_sink",
+        FallbackReason::UserOptOut => "user_opt_out",
+        FallbackReason::ShadowMode => "shadow_mode",
+        FallbackReason::SarifMissing => "sarif_missing",
+        FallbackReason::SarifParseFailed => "sarif_parse_failed",
+        FallbackReason::ResidualOnly => "residual_only",
+        FallbackReason::RendererLowConfidence => "renderer_low_confidence",
+        FallbackReason::InternalError => "internal_error",
+        FallbackReason::TimeoutOrBudget => "timeout_or_budget",
+    }
+}
+
 fn paths_are_separated(paths: &WrapperPaths) -> bool {
     let install_root = &paths.install_root;
     for mutable_root in [
@@ -256,5 +320,27 @@ mod tests {
 
         assert!(paths_are_separated(&separated));
         assert!(!paths_are_separated(&overlapping));
+    }
+
+    #[test]
+    fn rollout_matrix_covers_primary_and_compatibility_modes() {
+        let cases = rollout_matrix_cases();
+        assert!(cases.iter().any(|case| {
+            case["support_tier"] == "a"
+                && case["requested_mode"].is_null()
+                && case["selected_mode"] == "render"
+        }));
+        assert!(cases.iter().any(|case| {
+            case["support_tier"] == "b"
+                && case["requested_mode"] == "shadow"
+                && case["selected_mode"] == "shadow"
+                && case["fallback_reason"] == "shadow_mode"
+        }));
+        assert!(cases.iter().any(|case| {
+            case["support_tier"] == "c"
+                && case["requested_mode"].is_null()
+                && case["selected_mode"] == "passthrough"
+                && case["fallback_reason"] == "unsupported_tier"
+        }));
     }
 }

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release_candidate": "1.0.0-rc.N",
+  "status": "pending",
+  "updated_at": "2026-04-09",
+  "reviewers": [],
+  "notes": [
+    "Pending until M2-P0-4 records expert fixture review / task-based UX sign-off."
+  ]
+}

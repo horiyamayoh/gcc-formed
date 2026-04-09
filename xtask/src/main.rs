@@ -1,7 +1,7 @@
 mod commands;
 mod util;
 
-use crate::commands::{corpus::*, release::*};
+use crate::commands::{corpus::*, rc_gate::*, release::*};
 use crate::util::process::run;
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -162,7 +162,28 @@ enum Commands {
         #[arg(long)]
         report_dir: Option<PathBuf>,
     },
-    BenchSmoke,
+    BenchSmoke {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(long, value_enum, default_value_t = SnapshotSubset::Representative)]
+        subset: SnapshotSubset,
+        #[arg(long)]
+        report_dir: Option<PathBuf>,
+    },
+    RcGate {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(long, default_value = "target/rc-gate")]
+        report_dir: PathBuf,
+        #[arg(long, default_value = "eval/rc/issue-budget.json")]
+        issue_budget_report: PathBuf,
+        #[arg(long, default_value = "eval/rc/fuzz-status.json")]
+        fuzz_report: PathBuf,
+        #[arg(long, default_value = "eval/rc/ux-signoff.json")]
+        ux_signoff_report: PathBuf,
+        #[arg(long)]
+        allow_pending_manual_checks: bool,
+    },
     SelfCheck,
 }
 
@@ -438,15 +459,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &docker_image,
             report_dir.as_deref(),
         )?,
-        Commands::BenchSmoke => {
+        Commands::BenchSmoke {
+            root,
+            subset,
+            report_dir,
+        } => {
+            let report = run_bench_smoke(&root, subset, report_dir.as_deref())?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if report.overall_status == GateStatus::Fail {
+                return Err("bench smoke budgets failed".into());
+            }
+        }
+        Commands::RcGate {
+            root,
+            report_dir,
+            issue_budget_report,
+            fuzz_report,
+            ux_signoff_report,
+            allow_pending_manual_checks,
+        } => {
+            let report = run_rc_gate(RcGateOptions {
+                root,
+                report_dir,
+                issue_budget_report,
+                fuzz_report,
+                ux_signoff_report,
+                allow_pending_manual_checks,
+            })?;
             println!(
                 "{}",
-                serde_json::json!({
-                    "success_path_p95_ms_target": 40,
-                    "simple_failure_p95_ms_target": 80,
-                    "template_heavy_p95_ms_target": 250
-                })
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "overall_status": report.overall_status,
+                    "blocker_count": report.blockers.len(),
+                    "report_dir": report.report_dir,
+                }))?
             );
+            if report.overall_status == GateStatus::Fail {
+                return Err("release candidate gate failed".into());
+            }
         }
         Commands::SelfCheck => {
             println!(

@@ -1,0 +1,52 @@
+name: rc-gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rc-gate:
+    runs-on: ubuntu-24.04
+    env:
+      REPORT_ROOT: ${{ runner.temp }}/reports
+      GATE_PLAN: ci/plans/rc-gate.json
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.94.1
+      - name: Prepare report directories
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id prepare-report-directories \
+            --report-root "$REPORT_ROOT" \
+            --command 'mkdir -p "$REPORT_ROOT/rc-gate" "$REPORT_ROOT/gate"'
+      - name: Capture host build environment
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id capture-host-build-environment \
+            --report-root "$REPORT_ROOT" \
+            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
+      - name: cargo xtask rc-gate
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id cargo-xtask-rc-gate \
+            --report-root "$REPORT_ROOT" \
+            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --issue-budget-report eval/rc/issue-budget.json --fuzz-report eval/rc/fuzz-status.json --ux-signoff-report eval/rc/ux-signoff.json'
+      - name: Gate summary
+        if: always()
+        run: |
+          python3 ci/gate_summary.py \
+            --plan "$GATE_PLAN" \
+            --report-root "$REPORT_ROOT"
+      - name: Upload rc-gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: rc-gate-artifacts
+          path: ${{ runner.temp }}/reports
+          if-no-files-found: warn

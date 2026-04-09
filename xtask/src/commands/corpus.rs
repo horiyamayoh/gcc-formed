@@ -167,6 +167,35 @@ pub(crate) fn run_replay(
     subset: SnapshotSubset,
     report_dir: Option<&Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let report = build_replay_report(root, fixture_filter, family_filter, subset, report_dir)?;
+    if !report.failures.is_empty() {
+        report_failures("replay", &report.failures);
+        return Err("replay verification failed".into());
+    }
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "family_counts": report.family_counts,
+            "selected_family_counts": report.selected_family_counts,
+            "selected_fixture_count": report.selected_fixture_count,
+            "promoted_verified": report.promoted_verified,
+            "promoted_fixture_count": report.promoted_fixture_count,
+            "subset": report.subset,
+            "metrics": report.metrics,
+            "mode": "replay"
+        }))?
+    );
+    Ok(())
+}
+
+pub(crate) fn build_replay_report(
+    root: &Path,
+    fixture_filter: Option<&str>,
+    family_filter: Option<&str>,
+    subset: SnapshotSubset,
+    report_dir: Option<&Path>,
+) -> Result<ReplayReport, Box<dyn std::error::Error>> {
     let fixtures = discover(root)?;
     for fixture in &fixtures {
         validate_fixture(fixture)?;
@@ -217,26 +246,7 @@ pub(crate) fn run_replay(
     if let Some(report_dir) = report_dir {
         write_replay_report(report_dir, &report)?;
     }
-
-    if !failures.is_empty() {
-        report_failures("replay", &failures);
-        return Err("replay verification failed".into());
-    }
-
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&serde_json::json!({
-            "family_counts": counts,
-            "selected_family_counts": report.selected_family_counts,
-            "selected_fixture_count": selected.len(),
-            "promoted_verified": promoted_verified,
-            "promoted_fixture_count": report.promoted_fixture_count,
-            "subset": report.subset,
-            "metrics": report.metrics,
-            "mode": "replay"
-        }))?
-    );
-    Ok(())
+    Ok(report)
 }
 
 pub(crate) fn run_snapshot(

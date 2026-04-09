@@ -397,6 +397,18 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
         Some(expected_backend_path.as_str())
     );
     assert_eq!(report["backend"]["support_tier"], "a");
+    let rollout_cases = report["rollout_matrix"]["cases"].as_array().unwrap();
+    assert!(rollout_cases.iter().any(|case| {
+        case["support_tier"] == "a"
+            && case["requested_mode"].is_null()
+            && case["selected_mode"] == "render"
+    }));
+    assert!(rollout_cases.iter().any(|case| {
+        case["support_tier"] == "b"
+            && case["requested_mode"] == "shadow"
+            && case["selected_mode"] == "shadow"
+            && case["fallback_reason"] == "shadow_mode"
+    }));
     assert!(report["warnings"].as_array().unwrap().is_empty());
 }
 
