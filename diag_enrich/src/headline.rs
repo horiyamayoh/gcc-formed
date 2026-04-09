@@ -47,29 +47,51 @@ pub(crate) fn headline_for(node: &DiagnosticNode, family: &str) -> String {
             .and_then(|symbol| symbol.primary_symbol.clone())
             .map(|symbol| format!("multiple definition of `{symbol}`"))
             .unwrap_or_else(|| "duplicate symbol definition reported by linker".to_string()),
-        _ => HEADLINE_RULES
-            .iter()
-            .find(|rule| {
-                rule.family == family || (rule.family == "linker" && family.starts_with("linker."))
-            })
-            .map(|rule| {
-                if rule.family == "linker" {
-                    node.symbol_context
-                        .as_ref()
-                        .and_then(|symbol| symbol.primary_symbol.clone())
-                        .map(|symbol| format!("linker failed to resolve `{symbol}`"))
-                        .unwrap_or_else(|| rule.headline.to_string())
-                } else {
-                    rule.headline.to_string()
-                }
-            })
-            .unwrap_or_else(|| {
-                node.message
-                    .raw_text
-                    .lines()
-                    .next()
-                    .unwrap_or("diagnostic")
-                    .to_string()
-            }),
+        _ if family.contains('.') => preserved_specific_headline(node, family)
+            .unwrap_or_else(|| generic_headline(node, family)),
+        _ => generic_headline(node, family),
     }
+}
+
+fn generic_headline(node: &DiagnosticNode, family: &str) -> String {
+    HEADLINE_RULES
+        .iter()
+        .find(|rule| {
+            rule.family == family || (rule.family == "linker" && family.starts_with("linker."))
+        })
+        .map(|rule| {
+            if rule.family == "linker" {
+                node.symbol_context
+                    .as_ref()
+                    .and_then(|symbol| symbol.primary_symbol.clone())
+                    .map(|symbol| format!("linker failed to resolve `{symbol}`"))
+                    .unwrap_or_else(|| rule.headline.to_string())
+            } else {
+                rule.headline.to_string()
+            }
+        })
+        .unwrap_or_else(|| {
+            node.message
+                .raw_text
+                .lines()
+                .next()
+                .unwrap_or("diagnostic")
+                .to_string()
+        })
+}
+
+fn preserved_specific_headline(node: &DiagnosticNode, family: &str) -> Option<String> {
+    let analysis = node.analysis.as_ref()?;
+    let existing_family = analysis.family.as_deref()?;
+    if existing_family == family && !has_local_specific_override(family) {
+        return analysis.headline.clone();
+    }
+    None
+}
+
+fn has_local_specific_override(family: &str) -> bool {
+    matches!(
+        family,
+        "linker.undefined_reference" | "linker.multiple_definition"
+    )
 }

@@ -36,14 +36,15 @@
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
-          "message_contains=before"
+          "message_contains=before",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "135635888e0683afb08cdc7a69844ff3af34710f5e039bce463e7f42a0ca7892"
+        "structural": "9de4e4acfda5f5dadc782790a6916b30e64a912bf5f829794fe62765c5c74cd9"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -75,8 +76,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
-    "raw": "90c468618c626b0aba6b1ed1b469184de88a78cbd644278810d544e0f4cfedb4",
-    "structural": "e419f346cf272fe5c4e2299cc4a0d5863329e040755288b0a624ee1a5402e1cd"
+    "raw": "3b1bfad461410af37e38d2c30e330d634fb66923b5c1396d9cf7f061219e177d",
+    "structural": "4ccd7129ce90dc05db091db279a0b28401f8ba01de58113ec8e70614773f0ab7"
   },
   "producer": {
     "name": "gcc-formed",

@@ -35,9 +35,10 @@
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
         "headline": "error surfaced through macro/include context",
         "matched_conditions": [
-          "context=macro_or_include"
+          "context=macro_expansion",
+          "context=include"
         ],
-        "rule_id": "rule.family.macro_include.context_or_message"
+        "rule_id": "rule.family.macro_include.structured_or_message"
       },
       "context_chains": [
         {
@@ -65,7 +66,7 @@
       "fingerprints": {
         "family": "d233e77377443463da664a19c09e120634caf6d4d7c692599f9104ff306efadc",
         "raw": "daf01a75b3b8077e90d5ca8953352a4a190554729538855d19ba0c47769d4f14",
-        "structural": "ca91616f1bf490bca4e51e7c54ec304dce0e15e42408560d521f455dc9f77a71"
+        "structural": "b4eade24f37bfe16d2c2cefa82c395bc2388ef90896c35e545cd30898e923b56"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -97,8 +98,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "ce0948b86492019bc5e0e5c4632916f5747f6891fb283bb3c1f898b96a3a0607",
-    "structural": "9e8e938d3fa0b35950f76100f1f6039f63f1a53abd1f5a9ade34eafd4d6154aa"
+    "raw": "5d320c46661c79d0f3f99cad78368f22b9a1497d721e137e4e8cb4a7a242b9d7",
+    "structural": "f994e990a4157e34cc879701c2f065e9cc89fd4d8227ee5fc03b67689fbfffa9"
   },
   "producer": {
     "name": "gcc-formed",

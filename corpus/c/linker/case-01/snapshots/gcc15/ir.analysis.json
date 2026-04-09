@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/cckbZDpO.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccGoSlKg.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cceYXAvG.o: in function `duplicate':\nhelper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -32,10 +32,11 @@
       "analysis": {
         "confidence": "medium",
         "family": "linker.file_format_or_relocation",
-        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
-        "headline": "linker reported a failure",
+        "first_action_hint": "check object compatibility, target triple, and archive contents",
+        "headline": "linker file format or relocation failure",
         "matched_conditions": [
           "phase=link",
+          "context=linker_resolution",
           "existing_specific_family=linker.file_format_or_relocation"
         ],
         "rule_id": "rule.family.ingress_specific_override",
@@ -49,7 +50,7 @@
       "fingerprints": {
         "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "8d64592ab76890883065d290e0cf326863036c6eac9954c9cb2e23e803af66d3"
+        "structural": "17ab5141fdf8b1d81668747b2fcf9aa0cc65dfcc0cba9b0839224304b27877a0"
       },
       "id": "residual-0",
       "message": {
@@ -75,6 +76,8 @@
         "headline": "multiple definition of `duplicate`",
         "matched_conditions": [
           "phase=link",
+          "context=linker_resolution",
+          "symbol_context=present",
           "message_contains=multiple definition",
           "existing_specific_family=linker.multiple_definition"
         ],
@@ -87,13 +90,13 @@
         }
       ],
       "fingerprints": {
-        "family": "28084f2240d2f2135cca6162d09289d48e729f9da0abb36ae6e4f2fe2f4ef2bf",
-        "raw": "e49e4b33791aa1780826dd299d920d03a171a9033c80fb77bda62623e1f0073f",
-        "structural": "7d8a2e512390cbb4a72e244242230ae8d7b62fca8f631bb4d4b4ab52cefa3da2"
+        "family": "70ade3346296db6e529e8b35cb940410844127bcefcefb089e0a9f12d35a563a",
+        "raw": "22795e5500a957197f62a49cf47211b1b0774e079383afaf0a805e04c823cd44",
+        "structural": "0e651ac50f9e4e4c6a6ee89075105cdc90d123a5252c6271b4dac6e6bb0682c8"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccGoSlKg.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -115,8 +118,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "ea0761aa0e9cb4ee3f5ba84d8ab9db92cb5ec33e217cd69a86f88e93b498db83",
-    "raw": "bdd34b2fb9870f77e1cbfca9a26b614c8e1976668f3327b73374ea6480672250",
-    "structural": "491957b12939e0942ad51b953bd9ccf7e7935e2c9bd20bca0f8d1901c9837f37"
+    "raw": "22a4dcd1fed2d8ba9fae6168bc08aec07adfa7b034a6d03ed7a7912303f3e8cc",
+    "structural": "1b5de3619ad3309a5f5f67ef7a472a3f7bd79bd7c124f00493eaddfc8c000ca9"
   },
   "integrity_issues": [
     {

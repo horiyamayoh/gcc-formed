@@ -19,10 +19,11 @@
       "first_action": "fix the first parser error at the user-owned location",
       "group_id": "sarif-0-2",
       "matched_conditions": [
-        "message_contains=expected"
+        "message_contains=expected",
+        "phase=parse"
       ],
       "raw_message": "expected declaration or statement at end of input",
-      "rule_id": "rule.family.syntax.message",
+      "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
       "title": "syntax error"

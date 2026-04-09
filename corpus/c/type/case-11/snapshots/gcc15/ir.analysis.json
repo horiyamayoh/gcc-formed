@@ -30,31 +30,32 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": "medium",
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
+          "phase=semantic",
           "message_contains=passing argument"
         ],
-        "rule_id": "rule.family.type_overload.message"
+        "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "children": [
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "syntax",
             "first_action_hint": "fix the first parser error at the user-owned location",
             "headline": "syntax error",
             "matched_conditions": [
               "message_contains=expected"
             ],
-            "rule_id": "rule.family.syntax.message"
+            "rule_id": "rule.family.syntax.phase_or_message"
           },
           "fingerprints": {
             "family": "74ad94a73c83478249684caa8d6e0118f3a37fe9305a7709be673dc9623891ea",
             "raw": "df6e71d3adadee8e5e7abf7f2a42f277f19dea97caaea8d38d14a0196b41fff2",
-            "structural": "1a820e24da556afa4c23a8eba90652b562adb5efc615709289d0f68befb63d3d"
+            "structural": "e5435f25276d238ec2f049a6e1c425faa8c88234d48672415e7de25ba9000fe9"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -85,7 +86,7 @@
       "fingerprints": {
         "family": "5ef6afd9406cf86c0a5b91b13ede296a737552437d0cc4fe574c0bfc18dedc9e",
         "raw": "be79cfecd23523e17d91ae042e08c191798807ad1a04c21b25108296d4ff1778",
-        "structural": "277bdb184e52dcd08f181c7b457f07ca9bf3bab1788d60767388741ea3b1722d"
+        "structural": "3dd035f918a0cd58facfc30d65344175337b8aeae8c81622cd3537593df06bc3"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -117,8 +118,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "903bd36bd2f2a2f2aec4f760ec137f9a59bdb383eea9f65a08b8a195628e4ce6",
-    "structural": "8aa1803c3798d02f8195d89aeb6962a415a9379986a47034f92bf3b1a62ab6b1"
+    "raw": "8385b7a0fdbd529d35c29271ae9d3e7785901a897b0cb72bd001826a3dd44a70",
+    "structural": "bad7fd297758980507fa6190a31d9023d030b5fc85cec860f24ff40e7ecda894"
   },
   "producer": {
     "name": "gcc-formed",

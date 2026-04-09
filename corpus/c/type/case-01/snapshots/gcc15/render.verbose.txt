@@ -5,6 +5,6 @@ why: passing argument 1 of 'takes_int' makes integer from pointer without a cast
 | src/main.c:5:22
 |     return takes_int(value);
 because: expected 'int' but argument is of type 'const char *'
-debug: rule_id=rule.family.type_overload.message
-debug: matched_conditions=message_contains=passing argument
+debug: rule_id=rule.family.type_overload.structured_or_message
+debug: matched_conditions=phase=semantic, message_contains=passing argument
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

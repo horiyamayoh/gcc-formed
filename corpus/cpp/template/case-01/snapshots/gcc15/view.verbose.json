@@ -25,12 +25,14 @@
       "group_id": "sarif-0-0",
       "matched_conditions": [
         "context=template_instantiation",
+        "child_note_kind=template_context",
+        "phase=instantiate",
         "child_message_contains=template",
         "child_message_contains=deduction/substitution",
         "child_message_contains=deduced conflicting"
       ],
       "raw_message": "no matching function for call to 'takes_same(int, double)'",
-      "rule_id": "rule.family.template.context_or_message",
+      "rule_id": "rule.family.template.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
       "title": "template instantiation failed"

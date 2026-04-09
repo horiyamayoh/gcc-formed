@@ -176,9 +176,9 @@ mod tests {
         assert_eq!(analysis.family.as_deref(), Some("type_overload"));
         assert_eq!(
             analysis.rule_id.as_deref(),
-            Some("rule.family.type_overload.message")
+            Some("rule.family.type_overload.structured_or_message")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert_eq!(analysis.confidence, Some(Confidence::Medium));
         assert_eq!(
             analysis.headline.as_deref(),
             Some("type or overload mismatch")
@@ -186,6 +186,48 @@ mod tests {
         assert_eq!(
             analysis.first_action_hint.as_deref(),
             Some("compare the expected type and actual argument at the call site")
+        );
+    }
+
+    #[test]
+    fn classifies_type_overload_with_candidate_note_as_high_confidence() {
+        let mut node = sample_node("no matching function for call to 'consume(value)'");
+        node.children.push(DiagnosticNode {
+            id: "candidate".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Candidate,
+            message: MessageText {
+                raw_text: "candidate: void consume(const char *)".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.cpp")],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        });
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("type_overload"));
+        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert!(
+            analysis
+                .matched_conditions
+                .iter()
+                .any(|condition| condition == "child_role=candidate")
         );
     }
 
@@ -230,7 +272,7 @@ mod tests {
         assert_eq!(analysis.family.as_deref(), Some("template"));
         assert_eq!(
             analysis.rule_id.as_deref(),
-            Some("rule.family.template.context_or_message")
+            Some("rule.family.template.structured_or_message")
         );
         assert!(
             analysis
@@ -260,13 +302,13 @@ mod tests {
         assert_eq!(analysis.family.as_deref(), Some("macro_include"));
         assert_eq!(
             analysis.rule_id.as_deref(),
-            Some("rule.family.macro_include.context_or_message")
+            Some("rule.family.macro_include.structured_or_message")
         );
         assert!(
             analysis
                 .matched_conditions
                 .iter()
-                .any(|condition| condition == "context=macro_or_include")
+                .any(|condition| condition == "context=macro_expansion")
         );
         assert_eq!(analysis.confidence, Some(Confidence::High));
     }
@@ -314,6 +356,44 @@ mod tests {
             analysis.first_action_hint.as_deref(),
             Some("define the missing symbol or link the object/library that provides it")
         );
+    }
+
+    #[test]
+    fn preserves_specific_ingress_headline_and_action_without_local_override() {
+        let mut node = sample_node("/usr/bin/ld: cannot find -lmissing");
+        node.phase = Phase::Link;
+        node.locations.clear();
+        node.analysis = Some(AnalysisOverlay {
+            family: Some("linker.cannot_find_library".to_string()),
+            headline: Some("cannot find library `-lmissing`".to_string()),
+            first_action_hint: Some(
+                "check the library search path and whether the archive is installed".to_string(),
+            ),
+            confidence: None,
+            rule_id: None,
+            matched_conditions: Vec::new(),
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+        });
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(
+            analysis.family.as_deref(),
+            Some("linker.cannot_find_library")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("cannot find library `-lmissing`")
+        );
+        assert_eq!(
+            analysis.first_action_hint.as_deref(),
+            Some("check the library search path and whether the archive is installed")
+        );
+        assert_eq!(analysis.confidence, Some(Confidence::Medium));
     }
 
     #[test]
@@ -381,6 +461,10 @@ mod tests {
         assert_eq!(
             classify_ownership("/tmp/project/build/generated.c", cwd),
             Ownership::Generated
+        );
+        assert_eq!(
+            classify_ownership("/opt/custom-sdk/include/foo.h", cwd),
+            Ownership::Unknown
         );
     }
 }

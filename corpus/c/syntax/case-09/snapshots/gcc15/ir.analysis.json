@@ -36,14 +36,15 @@
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
-          "message_contains=before"
+          "message_contains=before",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "604e1afd79870d277dc62d1d4d7023e5ec89084b0c23d6d491f0f2b5c5e4820d",
         "raw": "49a8ee1e796cd1f7e8a3620fbdd04b2f9388de9565a2c8dad79e8c79b65ae002",
-        "structural": "a2eebdf2fcb16ca99979731ecd6e0bcc07687b9af58e71c69d2e0d8386991d3c"
+        "structural": "a303f0dcf65a25b13a7e50f0c7f993aaffc0ddec6c4bc0649bdb84e6b39ee997"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -78,14 +79,15 @@
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
-          "message_contains=before"
+          "message_contains=before",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "ccb547fe60567ab18367c0836b511b22ef8baa9def27cb7bae718671585f4dde",
         "raw": "ea5b0b3619d62000a2b9affe1f7523339a31b7e9e07941fccd4a159bcf010397",
-        "structural": "cc11e58ef0d723f0c45d063cc3e9db6b4b381de1a6bac42cbf665bcd4a616c5e"
+        "structural": "3db6cc1f45d1fb689a64f24a25e54480920775fa6123117397252dc12aa7fdc8"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -117,8 +119,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "b1c3ae50d824f65fa07ec3f03b6592e5f867bee3583614f2b2e4fb7549805bab",
-    "structural": "220857b26d77c9176f0ecc780986fe853c7770235595caf71879e6faf627fcbd"
+    "raw": "0b22918e6619f1600b800301cbe11020d2581890eafffc3e62709487dd466020",
+    "structural": "21c979f427c05ba5ed7b1d75ee59512c4488c2362aa2c6c76bd0a76124c5e7ed"
   },
   "producer": {
     "name": "gcc-formed",

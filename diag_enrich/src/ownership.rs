@@ -30,13 +30,16 @@ pub(crate) fn classify_ownership(path: &str, cwd: &Path) -> Ownership {
     let path = PathBuf::from(path);
     let rendered = path.display().to_string();
 
+    if rendered.is_empty() {
+        return Ownership::Unknown;
+    }
     if let Some(ownership) = matching_rule(&rendered) {
         return ownership;
     }
     if path.is_relative() || path.starts_with(cwd) {
         return Ownership::User;
     }
-    Ownership::User
+    Ownership::Unknown
 }
 
 fn matching_rule(rendered: &str) -> Option<Ownership> {

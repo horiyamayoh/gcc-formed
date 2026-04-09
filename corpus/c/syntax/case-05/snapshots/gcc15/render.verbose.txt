@@ -4,14 +4,14 @@ help: fix the first parser error at the user-owned location
 why: expected ';' before '}}' token
 | src/main.c:2:19
 |     return (1 + 2;
-debug: rule_id=rule.family.syntax.message
-debug: matched_conditions=message_contains=expected, message_contains=before
+debug: rule_id=rule.family.syntax.phase_or_message
+debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
 error: syntax error
 --> src/main.c:2:18
 help: fix the first parser error at the user-owned location
 why: expected ')' before ';' token
 | src/main.c:2:18
 |     return (1 + 2;
-debug: rule_id=rule.family.syntax.message
-debug: matched_conditions=message_contains=expected, message_contains=before
+debug: rule_id=rule.family.syntax.phase_or_message
+debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

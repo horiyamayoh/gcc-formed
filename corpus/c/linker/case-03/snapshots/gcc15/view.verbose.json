@@ -15,10 +15,12 @@
       "group_id": "residual-1",
       "matched_conditions": [
         "phase=link",
+        "context=linker_resolution",
+        "symbol_context=present",
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "/usr/bin/ld: /tmp/ccU1saff.o:(.data+0x0): multiple definition of `shared'; /tmp/ccsciDGG.o:(.data+0x0): first defined here",
+      "raw_message": "/usr/bin/ld: /tmp/ccwiWxML.o:(.data+0x0): multiple definition of `shared'; /tmp/ccBY6xSg.o:(.data+0x0): first defined here",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -35,17 +37,18 @@
       ],
       "excerpts": [],
       "family": "linker.file_format_or_relocation",
-      "first_action": "check the missing/duplicate symbol and the object or library inputs",
+      "first_action": "check object compatibility, target triple, and archive contents",
       "group_id": "residual-0",
       "matched_conditions": [
         "phase=link",
+        "context=linker_resolution",
         "existing_specific_family=linker.file_format_or_relocation"
       ],
       "raw_message": "collect2: error: ld returned 1 exit status",
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
-      "title": "linker reported a failure"
+      "title": "linker file format or relocation failure"
     }
   ],
   "summary": {

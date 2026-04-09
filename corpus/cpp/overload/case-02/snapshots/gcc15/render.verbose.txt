@@ -4,8 +4,8 @@ help: compare the expected type and actual argument at the call site
 why: invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
-debug: rule_id=rule.family.type_overload.message
-debug: matched_conditions=message_contains=invalid conversion
+debug: rule_id=rule.family.type_overload.structured_or_message
+debug: matched_conditions=phase=semantic, message_contains=invalid conversion
 note: initializing argument 1 of 'void takes_int(int)'
 --> src/main.cpp:1:16
 note: wrapper confidence is low; verify against the preserved raw diagnostics

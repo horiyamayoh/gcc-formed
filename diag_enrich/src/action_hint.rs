@@ -33,7 +33,7 @@ const ACTION_HINT_RULES: &[ActionHintRule] = &[
     },
 ];
 
-pub(crate) fn action_hint_for(_node: &DiagnosticNode, family: &str) -> String {
+pub(crate) fn action_hint_for(node: &DiagnosticNode, family: &str) -> String {
     match family {
         "linker.undefined_reference" => {
             "define the missing symbol or link the object/library that provides it".to_string()
@@ -42,14 +42,36 @@ pub(crate) fn action_hint_for(_node: &DiagnosticNode, family: &str) -> String {
             "remove the duplicate definition or make the symbol internal to one translation unit"
                 .to_string()
         }
-        _ => ACTION_HINT_RULES
-            .iter()
-            .find(|rule| {
-                rule.family == family || (rule.family == "linker" && family.starts_with("linker."))
-            })
-            .map(|rule| rule.first_action_hint.to_string())
-            .unwrap_or_else(|| {
-                "inspect the preserved raw diagnostics for the first corrective action".to_string()
-            }),
+        _ if family.contains('.') => preserved_specific_action_hint(node, family)
+            .unwrap_or_else(|| generic_action_hint(family)),
+        _ => generic_action_hint(family),
     }
+}
+
+fn generic_action_hint(family: &str) -> String {
+    ACTION_HINT_RULES
+        .iter()
+        .find(|rule| {
+            rule.family == family || (rule.family == "linker" && family.starts_with("linker."))
+        })
+        .map(|rule| rule.first_action_hint.to_string())
+        .unwrap_or_else(|| {
+            "inspect the preserved raw diagnostics for the first corrective action".to_string()
+        })
+}
+
+fn preserved_specific_action_hint(node: &DiagnosticNode, family: &str) -> Option<String> {
+    let analysis = node.analysis.as_ref()?;
+    let existing_family = analysis.family.as_deref()?;
+    if existing_family == family && !has_local_specific_override(family) {
+        return analysis.first_action_hint.clone();
+    }
+    None
+}
+
+fn has_local_specific_override(family: &str) -> bool {
+    matches!(
+        family,
+        "linker.undefined_reference" | "linker.multiple_definition"
+    )
 }

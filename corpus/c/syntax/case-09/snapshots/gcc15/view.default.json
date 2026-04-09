@@ -20,10 +20,11 @@
       "group_id": "sarif-0-1",
       "matched_conditions": [
         "message_contains=expected",
-        "message_contains=before"
+        "message_contains=before",
+        "phase=parse"
       ],
       "raw_message": "expected expression before '}}' token",
-      "rule_id": "rule.family.syntax.message",
+      "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
       "title": "syntax error"

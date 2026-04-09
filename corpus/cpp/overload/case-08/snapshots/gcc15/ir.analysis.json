@@ -35,26 +35,29 @@
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
+          "child_role=candidate",
+          "phase=semantic",
           "message_contains=no matching"
         ],
-        "rule_id": "rule.family.type_overload.message"
+        "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "children": [
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
+              "phase=semantic",
               "message_contains=candidate"
             ],
-            "rule_id": "rule.family.type_overload.message"
+            "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "a6a8093e9730dfd23fd0aaf076302b34b9c238f541650cca15709441c46f64fc",
             "raw": "846c6239c3f4f1a0875c6216a86209cca13169760312c3362da67c37bd34c45b",
-            "structural": "a2eaa4c53096fce7aab59abed9ec540ac0b156dcd12e524ab7fb85362dbfa387"
+            "structural": "e2a883f7cdcd693b20ae2a23d69474556fcddca314e193ef907203a9ed6328d6"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
@@ -125,19 +128,20 @@
         },
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
+              "phase=semantic",
               "message_contains=invalid conversion"
             ],
-            "rule_id": "rule.family.type_overload.message"
+            "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
             "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-            "structural": "9b82ab284f032ae59da419f7c54424c7e8dc1affd1dd9848e78b6932701fbf7d"
+            "structural": "f2b8dd5fbec6b5173d00565ed59eb83db4af7881aeecf15c1f2a306aeada9db9"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -208,19 +212,20 @@
         },
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
+              "phase=semantic",
               "message_contains=candidate"
             ],
-            "rule_id": "rule.family.type_overload.message"
+            "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "cfdaf730b0afd1f2553293ce3a5ddc1e133638848606ca98be5a014c1011beba",
             "raw": "aeead032b9e45607e06e6557537835b0dcc43c6ce40c0247b9182b3f58c13241",
-            "structural": "abd12c19d2bfbabda1df090f8b143613f07adabe5366d7817707c1d955785634"
+            "structural": "35f289100a8337c356176f4404a29cff332d6fbea70102584f7e990cb221a686"
           },
           "id": "sarif-0-0-related-5",
           "locations": [
@@ -291,19 +296,20 @@
         },
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
+              "phase=semantic",
               "message_contains=invalid conversion"
             ],
-            "rule_id": "rule.family.type_overload.message"
+            "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "fff3321b2d8c701ef142339d8eee359a99c34c2d5d9cc972c3479be43164a734",
             "raw": "dda2415f5a8b50911539da02f5603cf1616293ae5ede2648549b9b205b5f3806",
-            "structural": "05001cea7ab46b48dd5c4af6abb1ae26fc8bf04143645b52b969bc012705c8f6"
+            "structural": "7db3ef143796b21fd309af20483c25fa2358e22a986bc7e221ea8312bf0cfd54"
           },
           "id": "sarif-0-0-related-7",
           "locations": [
@@ -376,7 +382,7 @@
       "fingerprints": {
         "family": "c27aaced0b9e5541c8fa546e86f31f2cee31851c688875a65347f78d48358fb8",
         "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
-        "structural": "8c25b21f403ec4ea4a13dfd0e0e27b142402600afbc78714bb3853af4e4a8aef"
+        "structural": "ae194c18c4b7cef497218ade2263d76949ef1d9b5fbc4c958673c3e893d1df86"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -408,8 +414,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "204c3082fab42d5556def7ccc80cd3be306d29e398c11ed2119979e5953c04b3",
-    "structural": "124dae35eb20c128529a19e0194cb6ef8916634b40d9b79a02d743b0edef09de"
+    "raw": "ebdabc27ff7b3e4951a45b8dd71916d31b481380c8d885117eb83f4af0988280",
+    "structural": "9d6fa2d02f590bdd39f129ebbc3531d220be58c53a428d858c068babd0019d1d"
   },
   "producer": {
     "name": "gcc-formed",

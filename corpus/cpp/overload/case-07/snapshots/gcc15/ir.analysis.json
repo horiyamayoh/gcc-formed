@@ -30,19 +30,20 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": "medium",
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
+          "phase=semantic",
           "message_contains=invalid conversion"
         ],
-        "rule_id": "rule.family.type_overload.message"
+        "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "6a2a5e104cee19b7cd847cc021698709de0696d15a43dbf7f2d52d88baaebc6a",
         "raw": "6dfc7f826c76e7631d308e3dbf22bf07896113e1f1d07e6d7843c617e5d19a74",
-        "structural": "bcb0911ee938ebd56625edf2c15d3784edae442b79e826815879954acaa031e6"
+        "structural": "6980e10a65b340c9fe2eec30b959adbb1a905525ac9b90e8e222cd79b7c53b4d"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -116,8 +117,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "665e1d74312138a597b3731bb86d586dc5c550e219581fbcdd200b2261d61590",
-    "structural": "4abbab1731c74777d79f197a5bc1562d5951b7555380225f9044c55a58a9f3f3"
+    "raw": "d96bda940dc47d4f2760f5dec05f2d49b4e7ac9c7d623f40493ddf0ff7ff75df",
+    "structural": "18af372ad640c340d97db6b60fe402400edc7c2acc177bf40b81139fc77f41d0"
   },
   "producer": {
     "name": "gcc-formed",

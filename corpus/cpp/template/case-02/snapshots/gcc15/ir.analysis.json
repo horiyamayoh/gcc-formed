@@ -36,27 +36,30 @@
         "headline": "template instantiation failed",
         "matched_conditions": [
           "context=template_instantiation",
+          "child_note_kind=template_context",
+          "phase=instantiate",
           "child_message_contains=template",
           "child_message_contains=deduction/substitution"
         ],
-        "rule_id": "rule.family.template.context_or_message"
+        "rule_id": "rule.family.template.structured_or_message"
       },
       "children": [
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
             "matched_conditions": [
+              "phase=instantiate",
               "message_contains=template"
             ],
-            "rule_id": "rule.family.template.context_or_message"
+            "rule_id": "rule.family.template.structured_or_message"
           },
           "fingerprints": {
             "family": "3e4045960d8f44ed16b033687c29697ca4a4ab65530821b54542ad3fffd199d1",
             "raw": "28eee383a74287b5aaf69ec20781abf4bd903642dea8f63a8a30645ffe169675",
-            "structural": "7ac054ef4a633327b8c041a16c89d0b21c103f18b837ccec17e623d37749684c"
+            "structural": "d443bcd0e5db4d4d07adcd72ca959990a1b4097fde1e421efcd4536a88408b42"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
@@ -85,19 +88,21 @@
         },
         {
           "analysis": {
-            "confidence": "high",
+            "confidence": "medium",
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
             "matched_conditions": [
-              "message_contains=template"
+              "phase=instantiate",
+              "message_contains=template",
+              "message_contains=deduction/substitution"
             ],
-            "rule_id": "rule.family.template.context_or_message"
+            "rule_id": "rule.family.template.structured_or_message"
           },
           "fingerprints": {
             "family": "515ea3abe8a7c2170ea9cd2fb4f1b84e05cefe4c6004fd02177e5597407dbf27",
             "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
-            "structural": "705e53a338abdcb8946435ea0edb006e7f8c889d7361ac4440b98e56e9e719f6"
+            "structural": "bd448a9d6d242630a435d59235a9f5030dba1e5a08aa0e44e83a137fd33a2fe7"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
@@ -189,7 +194,7 @@
       "fingerprints": {
         "family": "b4422b02581814564cc559bc5b339dc44cbde4c664e4e63985d6efe71d2a7971",
         "raw": "86a96b4fd554b267c32c609ad0818d8bef50e361299fdb19c7318d5a05cdab34",
-        "structural": "1a44518dc83c310edc59afaaced8cd523891af23131ce2469105cb306a0b3613"
+        "structural": "1768f0c35602bb1f59a2a924a48778f968626105ace29a905d609ab4a00da1a6"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -221,8 +226,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
-    "raw": "2861235805efd38059915357a9084b6819ce7a9d4848fcb848cb5fd5a6ca89bc",
-    "structural": "a96b6f9e050a33702061d0aa7c14de0b0a6492cb81abb3a8621aebd1d6c6ee1f"
+    "raw": "505e313ef97b8de7c4da2de5dffd1a432fd5b1d23914919958867184f20124ad",
+    "structural": "12d18c654161b944fb3d66f651b1fb01d8a07d223a7382c59f621c9b50e2bffa"
   },
   "producer": {
     "name": "gcc-formed",

@@ -15,6 +15,8 @@
       "group_id": "residual-1",
       "matched_conditions": [
         "phase=link",
+        "context=linker_resolution",
+        "symbol_context=present",
         "message_contains=undefined reference",
         "existing_specific_family=linker.undefined_reference"
       ],

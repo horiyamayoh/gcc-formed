@@ -36,14 +36,15 @@
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
-          "message_contains=before"
+          "message_contains=before",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "e5e5380bdea9ec665158cc18b81bd1f7ac351307125d66cd1899d4948f3cbd8c",
         "raw": "c325ce1ab487532c58d61baca170572bb8d2f085dd88ea8f271f5fdc097debb1",
-        "structural": "a4f6f6c04a1b4bbad20520b3ad21bc151667a1b19fd4e93bc247f38f57c32759"
+        "structural": "9de4d8d8aa5c32658cb73d27e226ffc61f8aac070eaf557e1fa72353293ba67b"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -77,14 +78,15 @@
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
         "matched_conditions": [
-          "message_contains=expected"
+          "message_contains=expected",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "1f6b3d794b5ad468fb38b8da1d3641df94c0c2dbebb3d226e80b30eb4f227ad3",
         "raw": "fc3ebac37cc8eac98ef430b53abdb4068cdec47fb2554165cb4d4e9ba8f164b2",
-        "structural": "de2da96eed023bf8a33a07688e0e73585bdb0889959e0ab784523eee6bb652b7"
+        "structural": "bd2f3cf629a8871f577ffa1d671d3e8c8c0a92a9586827a20f059c930d90f7c4"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -118,14 +120,15 @@
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
         "matched_conditions": [
-          "message_contains=expected"
+          "message_contains=expected",
+          "phase=parse"
         ],
-        "rule_id": "rule.family.syntax.message"
+        "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
         "family": "62ec51a69ab1fbc4dbb6d42aa20622207af6e4bc1e7c4174cda1e32ba5ae02f8",
         "raw": "5f927caf8e2a26f37435e5ce135c9c0277c8428a617841c5134b747badca2381",
-        "structural": "fa19199ce87f007792dbeac22a4654de9030020e0274825ed4b928967607286f"
+        "structural": "78aeb223169a5721d1a41f494aad6b05ee4945d1c1c9f89d9309fa32ef49501f"
       },
       "id": "sarif-0-2",
       "locations": [
@@ -157,8 +160,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
-    "raw": "b6a63fa0d751bad0b353d3e533637405e0231bd9ce2d3b54aa5f2e94ca8be899",
-    "structural": "8d7fd49910e8dc51cf50c5257e7557472396da489d7abeeae670ed2c4d63cbdb"
+    "raw": "f5845657c9cf561d158b21b5cad500b3ecaf73dc966b9628cb914764e1481a35",
+    "structural": "b05cc865e5360fb1275639ab72c6a56a129139801ab19e05afb9502ed3701e3d"
   },
   "producer": {
     "name": "gcc-formed",

@@ -6,6 +6,6 @@ why: 'Box' has no member named 'missing'
 | int main(void) { Box box = {1}; return READ_FIELD(box); }
 through macro expansion:
   - src/main.c:3:40 in expansion of macro 'READ_FIELD'
-debug: rule_id=rule.family.macro_include.context_or_message
-debug: matched_conditions=context=macro_or_include
+debug: rule_id=rule.family.macro_include.structured_or_message
+debug: matched_conditions=context=macro_expansion
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
