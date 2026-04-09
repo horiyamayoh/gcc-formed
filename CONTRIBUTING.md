@@ -33,6 +33,12 @@ cargo deny check
 cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
 ```
 
+Documentation-only governance / contract changes should still run:
+
+```bash
+python3 -m unittest ci.test_support_boundary_docs ci.test_governance_docs
+```
+
 If you touch release packaging, install flows, or release metadata, also validate the relevant `cargo xtask package`, `install`, `release-publish`, `release-promote`, and `install-release` paths in a clean worktree.
 
 The automated public-beta GitHub Release workflow also expects the repository secret `RELEASE_SIGNING_PRIVATE_KEY_HEX` to be configured before a signed prerelease tag is pushed.
@@ -40,7 +46,10 @@ The automated public-beta GitHub Release workflow also expects the repository se
 ## Change Policy
 
 - Prefer behavior-preserving fixes over silent contract drift.
+- Classify every contract-adjacent change with [GOVERNANCE.md](GOVERNANCE.md) and fill the matching sections in `.github/pull_request_template.md`.
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
+- If a change is classified as `breaking`, include the migration / rollout impact in the PR and align `GOVERNANCE.md`, `ADR-0020`, and the affected contract docs in the same change.
+- If a change is classified as `experimental`, keep it opt-in, disabled by default, and outside `SUPPORT-BOUNDARY.md` and release promises until it graduates through ADR review.
 - If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in the user-facing docs, and the GitHub templates in the same change.
 - If a change alters compatibility-path wording, keep `diag_cli_front` runtime notices, `--formed-self-check` rollout matrix notices, `KNOWN-LIMITATIONS.md`, and `ADR-0005` aligned in the same change.
 - If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `STABLE-RELEASE.md`, `RELEASE-CHECKLIST.md`, the packaging spec, and `ADR-0025` aligned in the same change.

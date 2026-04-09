@@ -43,12 +43,21 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Do not expand primary support to non-Linux artifacts.
 - Do not claim that raw fallback has been eliminated.
 
+## Governance Freeze
+
+- `GOVERNANCE.md` exists and stays aligned with `ADR-0020` and `.github/pull_request_template.md`.
+- Contract-affecting changes since the last artifact are classified as `breaking`, `non-breaking`, or `experimental`.
+- `breaking` changes carry an ADR update/supersede plus migration or rollout notes.
+- `experimental` changes remain opt-in and outside `SUPPORT-BOUNDARY.md` and shipped release promises.
+- No post-`1.0.0` backlog item is silently promoted into the current support boundary.
+
 ## Release Notes Gate
 
 - README states the current beta-baseline scope in one screen.
 - README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
 - `SUPPORT-BOUNDARY.md` exists and matches the wording reused in README, release notes, limitations, security, and contributing docs.
 - README links to `VERSIONING.md` and distinguishes maturity labels from artifact semver.
+- README links `GOVERNANCE.md`, and the governance freeze wording is consistent with `ADR-0020`, contributing guidance, and the PR template.
 - `RELEASE-NOTES.md` calls out compatibility paths and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.
 - `STABLE-RELEASE.md` exists and matches the workflow/xtask stable cut contract.

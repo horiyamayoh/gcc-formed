@@ -42,7 +42,8 @@ Examples:
 - `README.md` should state both the current maturity label and current artifact line.
 - `CHANGELOG.md` and `RELEASE-NOTES.md` should use artifact semver headings and call out the current maturity line in prose.
 - `SECURITY.md`, `KNOWN-LIMITATIONS.md`, `RELEASE-CHECKLIST.md`, and `PUBLIC-BETA-RELEASE.md` should describe support and guarantees using the same vocabulary.
+- `GOVERNANCE.md` should define which contract changes are `breaking`, `non-breaking`, or `experimental`, and which backlog remains post-`1.0.0` only.
 
 ## Authority
 
-This summary is governed by [ADR-0021](adr-initial-set/adr-0021-release-maturity-labels-and-artifact-semver-policy.md).
+This summary is governed by [ADR-0021](adr-initial-set/adr-0021-release-maturity-labels-and-artifact-semver-policy.md) and the broader change-control policy in [GOVERNANCE.md](GOVERNANCE.md).

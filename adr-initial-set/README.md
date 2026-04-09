@@ -43,7 +43,7 @@
 | [ADR-0017](./adr-0017-dependency-allowlist-and-license-policy.md) | Dependency allowlist and license policy | Accepted | release artifact の品質と法務境界を固定する |
 | [ADR-0018](./adr-0018-corpus-governance.md) | Corpus governance | Accepted | fixture 追加・sanitize・review の統制を固定する |
 | [ADR-0019](./adr-0019-render-modes.md) | Render modes | Accepted | concise / default / verbose / raw の surface を固定する |
-| [ADR-0020](./adr-0020-stability-promises.md) | Stability promises | Accepted | CLI / config / IR schema の変更規律を固定する |
+| [ADR-0020](./adr-0020-stability-promises.md) | Stability promises | Accepted | CLI / config / IR / renderer / release contract の change classification と governance freeze を固定する |
 | [ADR-0021](./adr-0021-release-maturity-labels-and-artifact-semver-policy.md) | Release maturity labels and artifact semver policy | Accepted | `v1alpha` と `0.1.x` の混線を防ぎ、channel との境界を固定する |
 | [ADR-0024](./adr-0024-public-beta-release-channel-and-github-release-policy.md) | Public beta release channel and GitHub Release policy | Accepted | public beta artifact の公開方法と promote story を固定する |
 | [ADR-0025](./adr-0025-stable-release-automation-and-rollback-evidence.md) | Stable release automation and rollback evidence | Accepted | stable cut の same-bits promote と rollback drill 証跡を固定する |

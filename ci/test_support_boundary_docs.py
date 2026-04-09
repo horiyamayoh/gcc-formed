@@ -32,11 +32,16 @@ DOCS_WITH_CANONICAL_COPY = [
 PR_TEMPLATE_HEADINGS = [
     "## Goal",
     "## Why Now",
+    "## Milestone / Work Package",
+    "## Change Classification",
     "## Read Docs",
+    "## Contract Surfaces",
     "## Files Touched",
+    "## Constraints",
     "## Out Of Scope",
     "## Acceptance Criteria",
     "## Commands Run",
+    "## Docs Updated",
     "## Snapshot / Corpus / Docs Update Rationale",
     "## Support Tier Impact",
     "## Trace / Fallback Impact",
@@ -61,6 +66,8 @@ class SupportBoundaryDocsTest(unittest.TestCase):
         self.assertIn("GCC 15 primary enhanced-render path", text)
         self.assertIn("GCC 13/14 compatibility-only path", text)
         self.assertIn("SUPPORT-BOUNDARY.md", text)
+        self.assertIn("GOVERNANCE.md", text)
+        self.assertIn("adr-0020-stability-promises.md", text)
 
     def test_bug_template_uses_canonical_support_tier_labels(self) -> None:
         text = (REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml").read_text(

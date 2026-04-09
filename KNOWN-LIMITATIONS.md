@@ -50,6 +50,7 @@ You should expect raw fallback when:
 - Elimination of passthrough, shadow mode, or raw fallback.
 - Release-candidate or stable artifacts (`1.0.0-rc.N`, `1.0.0`).
 - Stable general-availability support promises beyond the documented `v1beta` / `0.2.0-beta.N` scope.
+- Backlog items reserved for post-`1.0.0` expansion; see [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Bug Reports
 
