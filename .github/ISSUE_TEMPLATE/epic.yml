@@ -1,0 +1,62 @@
+name: Epic
+description: Create a parent issue for one milestone-scale vNext objective.
+title: "[epic] "
+labels:
+  - enhancement
+  - kind:epic
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the one milestone-scale outcome this epic owns.
+    validations:
+      required: true
+  - type: textarea
+    id: doctrine
+    attributes:
+      label: Why this matters to doctrine
+      description: Link the doctrine / change-design / execution-model reason for doing this now.
+    validations:
+      required: true
+  - type: textarea
+    id: completion
+    attributes:
+      label: Completion criteria
+      description: List the exit conditions that make this epic done.
+      placeholder: |
+        - ...
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List blocked-by ADRs, epics, or external prerequisites.
+  - type: textarea
+    id: work_packages
+    attributes:
+      label: Generates these work package classes
+      description: List the child work package categories this epic should spawn.
+      placeholder: |
+        - docs rewrite
+        - no-behavior-change abstraction
+        - regression tests
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: State what this epic must not absorb.
+    validations:
+      required: true
+  - type: textarea
+    id: no_go
+    attributes:
+      label: No-go conditions
+      description: State the conditions under which this epic should not proceed or expand.
+    validations:
+      required: true

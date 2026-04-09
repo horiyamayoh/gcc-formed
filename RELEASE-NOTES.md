@@ -8,10 +8,12 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
+- `GCC15+` is the primary fidelity reference path.
+- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ### Highlights
 
@@ -25,7 +27,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Documents the beta user path for install, rollback, exact version pin, and `install-release` in `PUBLIC-BETA-RELEASE.md`.
 - Verifies the canonical `x86_64-unknown-linux-musl` artifact end to end: vendored hermetic release build, signed package generation, install, rollback, system-wide pseudo-root layout, immutable release publish/promote, and exact-pin install all run against the musl payload.
 - Preserves reason-coded fallback evidence in trace, replay, snapshot, and release provenance outputs, including sink conflicts, unsupported tiers, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
-- Keeps release scope intentionally narrow: GCC 15 primary support, Linux-first runtime assumptions, and fail-open fallback behavior remain the shipped contract.
+- Keeps release scope intentionally narrow: `GCC15+` remains the primary fidelity reference path, Linux-first runtime assumptions remain intact, and fail-open fallback behavior remains part of the shipped contract.
 
 ## Known Limits
 
@@ -34,7 +36,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Release verification now supports trusted signing public key sha256 pinning, so CI and installers can bind detached signatures to a stable trust anchor instead of relying on key id alone.
 - Future stable cuts are expected to retain `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, and `rollback-drill.json`; see [STABLE-RELEASE.md](STABLE-RELEASE.md) for the runbook.
 - `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is centered on the primary `x86_64-unknown-linux-musl` artifact.
-- GCC 13/14 are compatibility-only paths and should not be described as primary enhanced-render coverage.
+- Current beta artifacts do not claim identical guarantees across all `VersionBand` values.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
 - See [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) for the detailed support boundary and fallback semantics, and [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) for the public artifact and install story.
 

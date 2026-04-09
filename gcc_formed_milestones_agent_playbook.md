@@ -1,4 +1,19 @@
 # gcc-formed 成長マイルストーン兼コーディングエージェント実行プレイブック
+
+> **Legacy notice**
+>
+> This file reflects the pre-vNext delivery model and is kept only as historical reference.
+> It is **not** the planning authority for current vNext work.
+>
+> The authoritative order is:
+>
+> 1. `SUPPORT-BOUNDARY.md`
+> 2. `EXECUTION-MODEL.md`
+> 3. current ADRs
+> 4. current contract docs
+> 5. GitHub Issues / Sub-issues / Project fields
+>
+> If this file conflicts with those documents, this file loses.
 - 対象リポジトリ: `horiyamayoh/gcc-formed`
 - 対象ブランチ: `main`
 - 作成日: 2026-04-08

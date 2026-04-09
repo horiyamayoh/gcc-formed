@@ -5,230 +5,154 @@
 - **artifact semver 系列**: `0.2.0-beta.N`
 - **一般利用向け安定版**: 未提供
 - **日付**: 2026-04-09
-- **実装状況**: Phase 1 MVP の Rust workspace を同梱。仕様書と ADR は実装契約の正本として維持する。
+- **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 
-`gcc-formed` は、GCC first / Linux first の C/C++ 診断 UX 基盤を定義する spec-first リポジトリである。目標は「コンパイラの生出力を prettier にすること」ではなく、wrapper・adapter・Diagnostic IR・renderer・quality gate を分離した実装可能な製品基線を固めることにある。
+`gcc-formed` は、GCC をラップし、C/C++ のコンパイルエラーやリンクエラーを**より短く、より根因に近く、より誠実に**提示するためのリポジトリである。
 
-成熟度ラベルと artifact semver の使い分けは [VERSIONING.md](VERSIONING.md) に固定する。現在の baseline は **`v1beta` という成熟度ラベル**と**`0.2.0-beta.N` という artifact 系列**を別物として扱う。
+目標は GCC の生出力を単に prettier にすることではない。  
+目標は、**GCC 9〜15 にまたがる複数の capture / ingest 経路を持ちながら、1 つの UX 原則で価値を返すこと**である。
 
-## 現在の support boundary
+---
 
-現在の public beta artifact 系列 (`0.2.0-beta.N`、先頭 artifact は `0.2.0-beta.1`) の support boundary wording は [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md) に固定する。README でも同じ文言をそのまま使う。
+## プロダクト原則
 
-- Linux first.
-- `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
-- The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+`gcc-formed` は、次の原則を repo 全体の正本として採用する。
 
-現在の public beta baseline で**保証しないもの**は [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md) と [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md) にまとめてある。
+- **GCC 15+ は最良の reference path だが、唯一の product path ではない。**
+- **GCC 13–14 と GCC 9–12 も first-class product bands である。**  
+  保証や fidelity は異なってよいが、issue / test / quality gate / roadmap 上の正規対象から外してはならない。
+- **capture path は複数でも、UX 原則は 1 つである。**
+- **raw fallback は shipped contract の一部である。**  
+  wrapper は、根拠なく compiler-owned facts を隠してはならない。
+- **default TTY は native GCC より読みにくくなってはならない。**  
+  色、長さ、ノイズ量、視線誘導で負けるなら、表示か fallback を見直す。
 
-release repository の `canary` / `beta` / `stable` channel は配布先ポインタであり、成熟度ラベルそのものではない。たとえば `0.2.0-beta.1` artifact が `beta` channel に載っていても、それは引き続き `v1beta` の artifact であり、`1.0.0 stable` を意味しない。
+---
 
-## このリポジトリにあるもの
+## 現在の support posture
 
-- [gcc-formed-architecture-proposal.md](gcc-formed-architecture-proposal.md): 上位設計と v1alpha の意思決定候補
-- [diagnostic-ir-v1alpha-spec.md](diagnostic-ir-v1alpha-spec.md): 正規化 IR の実装契約
-- [gcc-adapter-ingestion-spec.md](gcc-adapter-ingestion-spec.md): GCC 呼び出しと structured ingestion の実装契約
-- [rendering-ux-contract-spec.md](rendering-ux-contract-spec.md): terminal / CI renderer の実装契約
-- [quality-corpus-test-gate-spec.md](quality-corpus-test-gate-spec.md): corpus-driven 品質 gate の実装契約
-- [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md): 配布・install・rollback・release engineering の実装契約
-- [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始時の最小順序
-- [adr-initial-set/README.md](adr-initial-set/README.md): Accepted baseline の ADR 一覧
-- [CHANGELOG.md](CHANGELOG.md): 外部向けの変更履歴
-- [VERSIONING.md](VERSIONING.md): 成熟度ラベル / artifact semver / release channel の用語契約
-- [GOVERNANCE.md](GOVERNANCE.md): stable-prep governance freeze、change classification、pre-/post-`1.0.0` backlog の分離
-- [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md): `v1beta` / `0.2.0-beta.N` の support boundary の正本
-- [KNOWN-LIMITATIONS.md](KNOWN-LIMITATIONS.md): 初回公開時点で保証しない範囲と raw fallback の意味
-- [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md): 初回公開用の release blocker / non-goals / 出荷前確認項目
-- [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md): GitHub Releases 上の public beta artifact / install / rollback / exact-pin install の手順
-- [STABLE-RELEASE.md](STABLE-RELEASE.md): 将来の stable cut で same-bits promote / rollback drill / evidence artifact を残す runbook
-- [SUPPORT.md](SUPPORT.md): support tier / public bug report / runbook 導線の正本
-- [SIGNING-KEY-OPERATIONS.md](SIGNING-KEY-OPERATIONS.md): signing key rotation / revoke / emergency re-sign と provenance 保持
-- [SECURITY.md](SECURITY.md): 脆弱性報告とサポート方針
-- [CONTRIBUTING.md](CONTRIBUTING.md): 変更提案時の gate と contribution 方針
-- [corpus/README.md](corpus/README.md): curated corpus の beta-bar target と shadow-to-curated promotion 手順
-- [eval/rc/README.md](eval/rc/README.md): RC gate が ingest する manual metrics / issue budget / UX sign-off evidence の置き場
-- [fuzz/README.md](fuzz/README.md): deterministic fuzz / adversarial smoke suite
+SupportLevel / ProcessingPath / RawPreservationLevel の正本は [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md) に置く。  
+README では要点だけを再掲する。
 
-## 現在の基線
+| VersionBand | 典型的な ProcessingPath | 現在の beta support level | 位置づけ |
+|---|---|---|---|
+| GCC 15+ | `DualSinkStructured` | `Preview` | 最高 fidelity の reference path |
+| GCC 13–14 | `SingleSinkStructured` / `NativeTextCapture` | `Experimental` | in-scope product path。reference path より保証は狭い |
+| GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `Experimental` | in-scope product path。価値の幅はより限定的 |
+| Unknown / other | `Passthrough` | `PassthroughOnly` | fail-open と provenance 保持を優先 |
 
-- 仕様上の正本は 5 本の主要仕様書と `adr-initial-set/` 配下の ADR 20 本
-- 実装は Cargo workspace として存在し、wrapper CLI、IR、adapter、renderer、trace、testkit、xtask を含む
-- `cargo xtask package` により release artifact / control file の最小セットを生成でき、必要なら `SHA256SUMS.sig` を Ed25519 で付与できる
-- `cargo xtask install` / `rollback` / `uninstall` により versioned root + symlink switch の install story をローカルで検証でき、署名付き release は signing key id と trusted signing public key sha256 pin の両方で検証できる
-- `cargo xtask install --dry-run` / `rollback --dry-run` / `uninstall --dry-run` は実変更なしで symlink switch / 配置先 / 削除対象を JSON として確認できる
-- `cargo xtask vendor` / `hermetic-release-check` により vendored dependency + offline locked release build を検証できる
-- `cargo xtask release-publish` / `release-promote` / `release-resolve` / `install-release` により immutable version repository, metadata-only channel promote, exact-version + checksum pin install を検証できる
-- `cargo xtask stable-release` により seeded release-repo を使った canary → beta → stable の same-bits promote、exact-pin candidate install、rollback drill、`stable-release-report.json` / `stable-release-summary.md` / `promotion-evidence.json` / `rollback-drill.json` の保存を 1 command で実行できる
-- public GitHub Releases には signed primary/debug/source archives, control-dir bundle, immutable release-repo bundle, `SHA256SUMS`, `SHA256SUMS.sig`, `manifest.json`, `build-info.txt`, `release-provenance.json` を載せる
-- `/opt/cc-formed/...` + `/usr/local/bin` 相当の system-wide layout も pseudo-root smoke で検証している
-- GCC 15 representative corpus に対する acceptance report と snapshot report を `cargo xtask replay --report-dir ...` / `cargo xtask snapshot --report-dir ...` で保存でき、どちらの report も reason-coded fallback 件数を保持する
-- renderer は template / overload / macro/include / linker の group card を profile-aware に圧縮し、enhanced path でも `--formed-profile=raw_fallback` への導線を残す
-- GitHub Actions は gate ごとに `gate-summary.{json,md}` と `build-environment.json` を artifact として保存し、step failure の class と `rustc` / `cargo` / Docker / GCC version を残す
-- `cargo xtask check` は `cargo fmt --check`、`cargo test --workspace`、`python3 -B -m unittest discover -s ci -p test_*.py` をまとめて実行し、Rust workspace だけでなく CI / docs contract drift も local/CI の同じ入口で検知する
-- GitHub Actions は release smoke ごとに `release-provenance.json` を artifact として保存し、publish/promote/install 系の出荷証跡を残す
-- `cargo xtask human-eval-kit` は representative fixture 16 件から repeatable な review bundle を生成し、expert review sheet、task-study sheet、counterbalance matrix、manual evidence template を `target/human-eval/` 配下へ保存できる
-- `cargo xtask rc-gate` は curated replay / rollout matrix / benchmark smoke / deterministic replay / fuzz smoke / human-eval bundle と manual RC evidence を 1 コマンドで集約し、`human-eval/`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, `rc-gate-report.json`, `rc-gate-summary.md` を出力できる
-- Trace bundle は `unsupported_tier` / `incompatible_sink` / `shadow_mode` / `sarif_missing` / `sarif_parse_failed` / `renderer_low_confidence` などの fallback reason を保持し、fail-open 経路を後追いできる
-- `--formed-self-check` は install/runtime/backend 状態に加えて canonical rollout mode matrix と exact compatibility scope notices を JSON で返し、RC gate が wrapper policy drift を検知できる
-- `diag_enrich` は context chain / phase / semantic role / symbol context / ownership を優先した deterministic rule input を使い、message substring 判定は fallback に限定する
-- `diag_render` は user-owned location / confidence / phase / semantic role を踏まえて lead group を決め、lead が low-confidence のときは関連する 2 件目 group を展開できる
-- `diag_render` の profile budget は `default` / `concise` / `verbose` / `ci` ごとに固定され、warning suppression・excerpt 数・template/macro/include 圧縮・child note 表示が deterministic に揃う。partial document では mixed fallback の `raw:` sub-block を残し、enhanced path の transient object path は `<temp-object>` に正規化する
-- 今後の判断追加や変更は、仕様書への追記ではなく ADR の追加または supersede で行う
-- contract-adjacent change は [GOVERNANCE.md](GOVERNANCE.md) に従って `breaking` / `non-breaking` / `experimental` に分類し、review と docs 更新を同じ change で完結させる
+---
 
-## 実装ワークスペース
+## この repo の読み方
 
-- `diag_core`: Diagnostic IR、validation、canonical JSON、fingerprints
-- `diag_backend_probe`: backend discovery と support tier 判定
-- `diag_capture_runtime`: child spawn、stderr capture、SARIF sidecar 注入
-- `diag_adapter_gcc`: GCC SARIF ingest と residual text 取り込み
-- `diag_enrich`: family/ownership/headline/first action の付与
-- `diag_render`: terminal/CI/raw fallback renderer
-- `diag_trace`: XDG path、trace bundle、build manifest
-- `diag_testkit`: corpus fixture loader と validation
-- `diag_cli_front`: `gcc-formed` wrapper CLI。`src/main.rs` は dispatch のみとし、internals は `args` / `config` / `mode` / `backend` / `execute` / `render` / `self_check` に分割している
-- `xtask`: `check`, `replay`, `snapshot`, `bench-smoke`, `fuzz-smoke`, `human-eval-kit`, `rc-gate`, `stable-release`, `self-check`, `package`, `install`, `rollback`, `uninstall`, `vendor`, `hermetic-release-check`, `release-publish`, `release-promote`, `release-resolve`, `install-release`
+上から下へ読む。
+
+1. [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md)  
+   現在の public wording と beta support posture の正本
+2. [EXECUTION-MODEL.md](EXECUTION-MODEL.md)  
+   Epic を切る前提、Issue 正本主義、nightly agent 運用の正本
+3. [diagnostic-ir-v1alpha-spec.md](diagnostic-ir-v1alpha-spec.md)  
+   正規化 IR の実装契約
+4. [gcc-adapter-ingestion-spec.md](gcc-adapter-ingestion-spec.md)  
+   capture / ingest の実装契約
+5. [rendering-ux-contract-spec.md](rendering-ux-contract-spec.md)  
+   renderer と disclosure の実装契約
+6. [quality-corpus-test-gate-spec.md](quality-corpus-test-gate-spec.md)  
+   corpus-driven quality gate の実装契約
+7. [adr-initial-set/README.md](adr-initial-set/README.md)  
+   採択済み ADR の索引
+8. [VERSIONING.md](VERSIONING.md) / [GOVERNANCE.md](GOVERNANCE.md)  
+   成熟度ラベル、artifact 系列、変更分類の用語契約
+
+---
+
+## vNext で何を変えるのか
+
+vNext では、repo の主語を単一 tier から外し、次の 4 概念に分ける。
+
+- **VersionBand**  
+  `GCC15+` / `GCC13-14` / `GCC9-12` / `Unknown`
+- **CapabilityProfile**  
+  `dual_sink`, `sarif`, `json`, `native_text_capture`, `tty_color_control`, `caret_control`, `parseable_fixits` など
+- **ProcessingPath**  
+  `DualSinkStructured` / `SingleSinkStructured` / `NativeTextCapture` / `Passthrough`
+- **SupportLevel**  
+  `Preview` / `Experimental` / `PassthroughOnly`
+
+重要なのは、**GCC 15 を特別扱いしてよいが、GCC 15 だけを“プロダクト”にしてはならない**という点である。
+
+---
+
+## リポジトリにあるもの
+
+### 契約文書
+
+- [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md): public wording と support posture の正本
+- [EXECUTION-MODEL.md](EXECUTION-MODEL.md): delivery system の正本
+- [diagnostic-ir-v1alpha-spec.md](diagnostic-ir-v1alpha-spec.md): IR 契約
+- [gcc-adapter-ingestion-spec.md](gcc-adapter-ingestion-spec.md): capture / ingest 契約
+- [rendering-ux-contract-spec.md](rendering-ux-contract-spec.md): terminal / CI renderer 契約
+- [quality-corpus-test-gate-spec.md](quality-corpus-test-gate-spec.md): quality gate 契約
+- [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md): packaging / install / rollback / release engineering 契約
+- [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始順の正本
+- [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md): 公開 beta artifact の install / rollback / exact-pin 契約
+- [adr-initial-set/README.md](adr-initial-set/README.md): ADR 索引
+- [VERSIONING.md](VERSIONING.md): 成熟度ラベルと artifact semver
+- [GOVERNANCE.md](GOVERNANCE.md): 変更分類と freeze ルール
+
+### 実装ワークスペース
+
+- `diag_backend_probe`: VersionBand / CapabilityProfile の解決
+- `diag_capture_runtime`: child spawn、capture、artifact 収集
+- `diag_adapter_gcc`: GCC structured artifact / raw text の ingest
+- `diag_core`: Diagnostic IR、validation、fallback metadata
+- `diag_enrich`: family / confidence / first-action / ownership などの分析
+- `diag_render`: view model、layout、theme、TTY / CI 表示
+- `diag_trace`: trace bundle と provenance
+- `diag_testkit`: corpus fixture loader / validation
+- `diag_cli_front`: wrapper CLI
+- `xtask`: replay / snapshot / fuzz / human-eval / package / install / release 操作用
+
+---
+
+## 開発ルール
+
+- **Issue が正本、prompt は派生物**  
+  nightly agent に渡す prompt は Issue から生成する。
+- **1 Issue = 1 PR = 1 主目的**
+- **architecture first, then behavior**
+- **contract change は docs / ADR / tests を同じ change に含める**
+- **renderer を触る変更は default TTY 非劣化を自分で証明する**
+
+詳しくは [EXECUTION-MODEL.md](EXECUTION-MODEL.md) を参照。
+
+---
 
 ## 開発開始
 
 ```bash
-rustup target add x86_64-unknown-linux-musl
 cargo xtask check
-cargo xtask replay --root corpus
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
-cargo xtask fuzz-smoke --root fuzz --report-dir target/fuzz-smoke
-cargo xtask human-eval-kit --root corpus --report-dir target/human-eval
-cargo xtask rc-gate --report-dir target/rc-gate --fuzz-root fuzz --metrics-manual-report eval/rc/metrics-manual-eval.json --allow-pending-manual-checks
-cargo xtask vendor --output-dir vendor
-cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
-cargo xtask package --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed --target-triple x86_64-unknown-linux-musl
+cargo xtask replay --root corpus
 ```
 
-GitHub Releases から public beta artifact を取得して install / rollback / exact version pin install を行う手順は [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) にまとめてある。public user 向けの導線はこの文書を正本とする。
+Path-aware の実装が進んだら、band ごとの replay / snapshot / quality gate を追加で回す。  
+個別の release / install / rollback / stable-promotion 手順は [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
 
-将来の stable cut で canary / beta / stable の same-bits promote と rollback drill artifact を残す runbook は [STABLE-RELEASE.md](STABLE-RELEASE.md) にまとめてある。stable artifact を publish していない現時点でも、automation contract 自体はこの文書を正本とする。
+公開 beta artifact の install / rollback / exact-pin は [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) を参照。
 
-support tier ごとの triage、trace bundle 採取、rollback / reinstall の運用 runbook は [SUPPORT.md](SUPPORT.md) と [docs/runbooks/README.md](docs/runbooks/README.md) にまとめてある。
+---
 
-GitHub CI と同じ `gcc:15` snapshot gate を WSL2 の rootless Docker で再現する最小例:
+## いま README に書かないもの
 
-```bash
-sudo apt-get update
-sudo apt-get install -y uidmap
-sudo modprobe nf_tables
+README は overview 専用である。  
+次は README に詳細列挙しない。
 
-export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
-dockerd-rootless.sh >"${HOME}/.cache/dockerd-rootless.log" 2>&1 &
+- fallback reason の全列挙
+- 現時点の xtask サブコマンド詳細
+- すべての release artifact の完全な目録
+- すべての known limitations の本文
+- historic GCC 15-only wording の再掲
 
-until docker info >/dev/null 2>&1; do sleep 1; done
-docker run --rm hello-world
-cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
-```
-
-`dockerd-rootless-setuptool.sh check` が前提不足を出す場合は、その指示に従って `uidmap` と kernel module を先に揃える。systemd なしの WSL2 session では `dockerd-rootless.sh` を直接起動するのが最短。
-
-生成された control dir を使って install / rollback / uninstall を検証する最小例:
-
-```bash
-control_dir=dist/gcc-formed-v0.2.0-beta.1-linux-x86_64-musl
-install_root="$HOME/.local/opt/cc-formed/x86_64-unknown-linux-musl"
-bin_dir="$HOME/.local/bin"
-
-cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir" --dry-run
-cargo xtask install --control-dir "$control_dir" --install-root "$install_root" --bin-dir "$bin_dir"
-"$bin_dir/gcc-formed" --formed-version
-cargo xtask rollback --install-root "$install_root" --bin-dir "$bin_dir" --version 0.2.0-beta.1
-cargo xtask uninstall --install-root "$install_root" --bin-dir "$bin_dir" --mode purge-install
-```
-
-署名付き release を作って signing key id + trusted public key sha256 pin で検証する最小例:
-
-```bash
-signing_private_key="$PWD/release-signing.key"
-control_dir=dist/gcc-formed-v0.2.0-beta.1-linux-x86_64-musl
-
-cargo xtask package \
-  --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed \
-  --target-triple x86_64-unknown-linux-musl \
-  --signing-private-key "$signing_private_key"
-
-signing_key_id="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    print(json.load(handle)["key_id"])
-PY
-)"
-
-signing_public_key_sha256="$(python3 - "$control_dir/SHA256SUMS.sig" <<'PY'
-import hashlib
-import json
-import sys
-
-with open(sys.argv[1], "r", encoding="utf-8") as handle:
-    envelope = json.load(handle)
-    print(hashlib.sha256(bytes.fromhex(envelope["public_key_hex"])).hexdigest())
-PY
-)"
-
-cargo xtask install \
-  --control-dir "$control_dir" \
-  --install-root "$install_root" \
-  --bin-dir "$bin_dir" \
-  --expected-signing-key-id "$signing_key_id" \
-  --expected-signing-public-key-sha256 "$signing_public_key_sha256"
-```
-
-immutable release repository と exact pin install を検証する最小例:
-
-```bash
-repo_root="$PWD/.release-repo"
-
-cargo xtask release-publish --control-dir "$control_dir" --repository-root "$repo_root"
-cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.2.0-beta.1 --channel canary
-cargo xtask release-promote --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --version 0.2.0-beta.1 --channel beta
-cargo xtask release-resolve --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel beta
-cargo xtask install-release --repository-root "$repo_root" --target-triple x86_64-unknown-linux-musl --channel beta --install-root "$install_root" --bin-dir "$bin_dir"
-```
-
-CI の exact version + checksum pin を再現したい場合は、`release-resolve` の JSON 出力から `resolved_version` と `primary_archive_sha256` を取り出し、`install-release --version ... --expected-primary-sha256 ...` を使う。署名も併用するなら `signing_key_id` と `signing_public_key_sha256` を取り出し、`--expected-signing-key-id ... --expected-signing-public-key-sha256 ...` を追加する。local smoke では `SHA256SUMS.sig` から計算してもよいが、production CI と public beta install は trusted public key sha256 を release notes か別管理チャネルで pin する。
-
-ここでの `beta` は release repository channel 名であり、`v1beta` という成熟度ラベルと同じ意味ではない。`beta` channel も exact version を背後に持つ distribution pointer である。
-
-system-wide layout を pseudo-root で検証する最小例:
-
-```bash
-system_root="$PWD/.system-root"
-install_root="$system_root/opt/cc-formed/x86_64-unknown-linux-musl"
-bin_dir="$system_root/usr/local/bin"
-
-cargo xtask install \
-  --control-dir "$control_dir" \
-  --install-root "$install_root" \
-  --bin-dir "$bin_dir" \
-  --expected-signing-key-id "$signing_key_id" \
-  --expected-signing-public-key-sha256 "$signing_public_key_sha256"
-```
-
-`cargo xtask package` は clean git worktree を前提とする。本命の production artifact は `x86_64-unknown-linux-musl` であり、`x86_64-unknown-linux-gnu` は compatibility smoke / 例外経路として扱う。GCC 13/14 も同様に primary render path ではなく、compatibility support として扱う。
-
-## 実装に入る順序
-
-最初の実装順は [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md) に固定してある。v1alpha の初手は次の 6 段階のみを対象とする。
-
-1. backend resolution
-2. capture runtime
-3. GCC 15 shadow
-4. SARIF parser
-5. render
-6. raw fallback
-
-## 補足
-
-- この README は repo overview 専用であり、ADR 索引本文は [adr-initial-set/README.md](adr-initial-set/README.md) に置く
-- 参照パスはこのリポジトリ直下を基準に正規化してある
+詳細はそれぞれの契約文書に置き、README は**方針と導線だけ**を保持する。

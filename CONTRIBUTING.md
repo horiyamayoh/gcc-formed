@@ -10,10 +10,12 @@ Keep support-boundary wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDAR
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
+- `GCC15+` is the primary fidelity reference path.
+- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ## Local Prerequisites
 
@@ -50,12 +52,13 @@ The automated public-beta GitHub Release workflow also expects the repository se
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
 - If a change is classified as `breaking`, include the migration / rollout impact in the PR and align `GOVERNANCE.md`, `ADR-0020`, and the affected contract docs in the same change.
 - If a change is classified as `experimental`, keep it opt-in, disabled by default, and outside `SUPPORT-BOUNDARY.md` and release promises until it graduates through ADR review.
-- If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in the user-facing docs, and the GitHub templates in the same change.
-- If a change alters compatibility-path wording, keep `diag_cli_front` runtime notices, `--formed-self-check` rollout matrix notices, `KNOWN-LIMITATIONS.md`, and `ADR-0005` aligned in the same change.
-- If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `STABLE-RELEASE.md`, `RELEASE-CHECKLIST.md`, the packaging spec, and `ADR-0025` aligned in the same change.
+- If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in user-facing docs, and the GitHub templates in the same change.
+- If a change alters public `VersionBand` / `ProcessingPath` wording while runtime still emits legacy internal tier-style fields, keep the user-facing docs canonical and either align the runtime in the same change or explicitly document the temporary mismatch in `KNOWN-LIMITATIONS.md`.
+- If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `STABLE-RELEASE.md`, `RELEASE-CHECKLIST.md`, the packaging spec, and the related ADRs aligned in the same change.
 - If a change alters support routing or maintainer/user recovery guidance, keep `SUPPORT.md`, `docs/runbooks/`, and `.github/ISSUE_TEMPLATE/bug_report.yml` aligned in the same change.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
 - Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` and `PUBLIC-BETA-RELEASE.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
+- Keep work item state in GitHub, not in chat. Use the active milestone epic, its sub-issues, and the session handoff format from [docs/runbooks/agent-handoff.md](docs/runbooks/agent-handoff.md).
 
 ## Corpus Workflow
 

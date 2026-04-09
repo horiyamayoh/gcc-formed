@@ -1,0 +1,104 @@
+name: Work package
+description: Create one agent-ready implementation issue with bounded scope.
+title: "[wp] "
+labels:
+  - enhancement
+  - kind:work-package
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: State the one main objective for this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: why_now
+    attributes:
+      label: Why now
+      description: Explain why this belongs in the active milestone now.
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent epic or ADR
+      description: Link the parent epic and any blocking ADR.
+      placeholder: "#123, ADR-0033"
+    validations:
+      required: true
+  - type: checkboxes
+    id: band
+    attributes:
+      label: Affected band
+      options:
+        - label: GCC15+
+        - label: GCC13-14
+        - label: GCC9-12
+        - label: Cross-cutting
+  - type: checkboxes
+    id: processing_path
+    attributes:
+      label: Processing path
+      options:
+        - label: DualSinkStructured
+        - label: SingleSinkStructured
+        - label: NativeTextCapture
+        - label: Passthrough
+        - label: Cross-path
+  - type: textarea
+    id: allowed
+    attributes:
+      label: Allowed files
+      description: List the files or directories this issue may touch.
+    validations:
+      required: true
+  - type: textarea
+    id: forbidden
+    attributes:
+      label: Forbidden surfaces
+      description: List the files, layers, or docs this issue must not touch.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use yes/no criteria only.
+      placeholder: |
+        - ...
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands
+      description: Minimum verification commands for the implementer and reviewer.
+      placeholder: |
+        cargo xtask check
+        cargo xtask replay --root corpus
+    validations:
+      required: true
+  - type: textarea
+    id: docs_impact
+    attributes:
+      label: Docs impact
+      description: State which contract docs, templates, or runbooks must update in the same change.
+    validations:
+      required: true
+  - type: textarea
+    id: stop_conditions
+    attributes:
+      label: Stop conditions
+      description: State when the implementer must stop and report instead of broadening scope.
+    validations:
+      required: true
+  - type: textarea
+    id: reviewer_evidence
+    attributes:
+      label: Reviewer evidence
+      description: State the required tests, reports, or screenshots.
+    validations:
+      required: true

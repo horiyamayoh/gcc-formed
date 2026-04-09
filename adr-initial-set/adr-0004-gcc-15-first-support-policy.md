@@ -1,6 +1,6 @@
 # ADR-0004: GCC 15-first support policy
 
-- **Status**: Accepted
+- **Status**: Superseded
 - **Date**: 2026-04-07
 
 ## Context
@@ -29,7 +29,7 @@
 ## Supersedes/Related
 
 - **Supersedes**: None
-- **Related**: `ADR-0003`, `ADR-0005`, `ADR-0018`
+- **Related**: `ADR-0003`, `ADR-0018`, `ADR-0026`, `ADR-0029`
 
 ## Source Specs
 

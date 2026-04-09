@@ -230,10 +230,11 @@ jobs:
 
           - Linux first.
           - \`x86_64-unknown-linux-musl\` is the primary production artifact.
-          - GCC 15 is the primary enhanced-render path.
           - The terminal renderer is the primary user-facing surface.
-          - GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+          - \`GCC15+\`, \`GCC13-14\`, and \`GCC9-12\` are all in-scope product bands.
+          - \`GCC15+\` is the primary fidelity reference path.
+          - \`GCC13-14\` and \`GCC9-12\` are product paths with narrower guarantees and different capture constraints.
+          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
           ## Install Paths
 
@@ -265,7 +266,7 @@ jobs:
           ## Known Limits
 
           - \`${PACKAGE_VERSION}\` remains a public-beta artifact, not a release candidate or stable release.
-          - GCC 13/14 remain compatibility-only paths.
+          - Current beta artifacts do not claim identical guarantees across all \`VersionBand\` values.
           - Raw fallback remains part of the shipped contract.
           EOF
       - name: Publish GitHub prerelease

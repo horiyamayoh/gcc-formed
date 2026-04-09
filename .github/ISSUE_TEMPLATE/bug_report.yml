@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a release-impacting bug with support-tier and trace context.
+description: Report a bug with VersionBand, ProcessingPath, fallback, and UX context.
 title: "[bug] "
 labels:
   - bug
@@ -7,35 +7,65 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before filing, check the support runbooks:
+        Before filing, check the support docs:
 
-        - [Support overview](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT.md)
         - [Support boundary](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT-BOUNDARY.md)
+        - [Support overview](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT.md)
+        - [Execution model](https://github.com/horiyamayoh/gcc-formed/blob/main/EXECUTION-MODEL.md)
         - [Incident triage](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/incident-triage.md)
         - [Trace bundle collection](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/trace-bundle-collection.md)
         - [Rollback / reinstall](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/rollback.md)
+
+        Please file bugs in terms of **VersionBand** and **ProcessingPath**, not old support-tier wording.
   - type: dropdown
-    id: support_tier
+    id: version_band
     attributes:
-      label: Support tier
-      description: Which support boundary does this bug affect? Keep wording aligned with SUPPORT-BOUNDARY.md.
+      label: Version band
+      description: Which compiler band was involved?
       options:
-        - GCC 15 primary enhanced-render path
-        - GCC 13/14 compatibility-only path
-        - Older / unsupported path
+        - GCC 15+
+        - GCC 13-14
+        - GCC 9-12
+        - Unknown / other
+    validations:
+      required: true
+  - type: dropdown
+    id: processing_path
+    attributes:
+      label: Processing path
+      description: If known, which path was resolved for this run?
+      options:
+        - DualSinkStructured
+        - SingleSinkStructured
+        - NativeTextCapture
+        - Passthrough
+        - Unknown
     validations:
       required: true
   - type: dropdown
     id: surface
     attributes:
-      label: Surface
+      label: User surface
       options:
-        - terminal renderer
-        - shadow mode
-        - passthrough / raw fallback
-        - packaging / install / release
+        - TTY renderer
+        - CI renderer
+        - Probe / capture
+        - Analysis / compaction
+        - Raw fallback / disclosure
+        - Packaging / install / release
     validations:
       required: true
+  - type: checkboxes
+    id: symptoms
+    attributes:
+      label: Symptoms
+      options:
+        - label: Color or pointing was worse than native GCC
+        - label: Output became longer without helping the first fix
+        - label: Template / stdlib / overload noise was not suppressed enough
+        - label: Root cause or first action looked wrong
+        - label: Provenance / raw fallback / confidence was hidden or misleading
+        - label: Wrapper crashed, stalled, or silently changed path
   - type: textarea
     id: summary
     attributes:
@@ -49,25 +79,44 @@ body:
       label: Reproduction
       description: Include the exact compiler invocation or `gcc-formed` command.
       placeholder: |
-        gcc-formed --formed-trace=always ...
+        gcc-formed ...
+        # or the exact compiler command that reproduces the issue
     validations:
       required: true
   - type: textarea
-    id: trace_bundle
+    id: expected_behavior
     attributes:
-      label: Trace bundle
-      description: Paste the path to `trace.json` and list whether `stderr.raw`, `ir.analysis.json`, and `diagnostics.sarif` are attached.
+      label: What should have happened instead?
+      description: Focus on first-fix usability, compression, honesty, and fallback behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Attached artifacts
+      description: Paste paths, snippets, or filenames for attached evidence.
       placeholder: |
         trace.json:
         stderr.raw:
-        ir.analysis.json:
         diagnostics.sarif:
+        diagnostics.json:
+        ir.analysis.json:
+        tty transcript / screenshot:
+        --formed-self-check output:
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Include OS, target triple, compiler version, terminal renderer vs passthrough/raw fallback, and whether this is the primary GCC 15 path or a compatibility-only path.
+      description: Include OS / distro, terminal, wrapper version, compiler version, target triple, locale, and any environment variables that may affect output.
+      placeholder: |
+        OS / distro:
+        terminal:
+        gcc version:
+        gcc-formed version:
+        target triple:
+        locale:
+        NO_COLOR / CLICOLOR / TERM:
     validations:
       required: true
