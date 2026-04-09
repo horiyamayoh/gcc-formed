@@ -110,6 +110,9 @@ pub struct TraceVersionSummary {
 pub struct TraceEnvironmentSummary {
     pub backend_path: PathBuf,
     pub backend_version: String,
+    pub version_band: String,
+    pub processing_path: String,
+    pub support_level: String,
     #[serde(default)]
     pub injected_flags: Vec<String>,
     #[serde(default)]

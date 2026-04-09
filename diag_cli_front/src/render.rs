@@ -251,10 +251,33 @@ fn trace_environment_summary(
     TraceEnvironmentSummary {
         backend_path: backend.resolved_path.clone(),
         backend_version: backend.version_string.clone(),
+        version_band: snake_case_label(&backend.version_band()),
+        processing_path: snake_case_label(&resolved_processing_path(backend, mode)),
+        support_level: snake_case_label(&backend.support_level()),
         injected_flags: trace_injected_flags(capture),
         sanitized_env_keys: trace_sanitized_env_keys(mode),
         temp_artifact_paths: trace_temp_artifact_paths(capture),
     }
+}
+
+fn resolved_processing_path(
+    backend: &diag_backend_probe::ProbeResult,
+    mode: ExecutionMode,
+) -> diag_backend_probe::ProcessingPath {
+    match mode {
+        ExecutionMode::Passthrough => diag_backend_probe::ProcessingPath::Passthrough,
+        _ if backend.capability_profile().dual_sink => {
+            diag_backend_probe::ProcessingPath::DualSinkStructured
+        }
+        _ => diag_backend_probe::ProcessingPath::NativeTextCapture,
+    }
+}
+
+fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|value| value.as_str().map(|value| value.to_string()))
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 fn trace_injected_flags(capture: &CaptureOutcome) -> Vec<String> {
