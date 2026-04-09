@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::env;
 use std::ffi::OsStr;
 use std::fs;
@@ -21,6 +21,50 @@ pub enum SupportTier {
     C,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VersionBand {
+    Gcc15Plus,
+    Gcc13_14,
+    Gcc9_12,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SupportLevel {
+    Primary,
+    Supported,
+    Conservative,
+    Experimental,
+    Unsupported,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProcessingPath {
+    DualSinkStructured,
+    SingleSinkStructured,
+    NativeTextCapture,
+    Passthrough,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CapabilityProfile {
+    pub version_band: VersionBand,
+    pub support_level: SupportLevel,
+    pub native_text_capture: bool,
+    pub json_diagnostics: bool,
+    pub sarif_diagnostics: bool,
+    pub dual_sink: bool,
+    pub tty_color_control: bool,
+    pub caret_control: bool,
+    pub parseable_fixits: bool,
+    pub locale_stabilization: bool,
+    pub default_processing_path: ProcessingPath,
+    pub allowed_processing_paths: BTreeSet<ProcessingPath>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ProbeKey {
     pub realpath: PathBuf,
@@ -40,6 +84,24 @@ pub struct ProbeResult {
     pub driver_kind: DriverKind,
     pub add_output_sarif_supported: bool,
     pub version_probe_key: ProbeKey,
+}
+
+impl ProbeResult {
+    pub fn version_band(&self) -> VersionBand {
+        version_band_for_major(self.major)
+    }
+
+    pub fn support_level(&self) -> SupportLevel {
+        support_level_for_tier(self.support_tier)
+    }
+
+    pub fn default_processing_path(&self) -> ProcessingPath {
+        default_processing_path_for_tier(self.support_tier)
+    }
+
+    pub fn capability_profile(&self) -> CapabilityProfile {
+        capability_profile_for_probe(self)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -143,6 +205,119 @@ pub fn support_tier_for_major(major: u32) -> SupportTier {
     }
 }
 
+pub fn version_band_for_major(major: u32) -> VersionBand {
+    match major {
+        15.. => VersionBand::Gcc15Plus,
+        13 | 14 => VersionBand::Gcc13_14,
+        9..=12 => VersionBand::Gcc9_12,
+        _ => VersionBand::Unknown,
+    }
+}
+
+pub fn support_level_for_tier(tier: SupportTier) -> SupportLevel {
+    match tier {
+        SupportTier::A => SupportLevel::Primary,
+        SupportTier::B => SupportLevel::Conservative,
+        SupportTier::C => SupportLevel::Unsupported,
+    }
+}
+
+pub fn default_processing_path_for_tier(tier: SupportTier) -> ProcessingPath {
+    match tier {
+        SupportTier::A => ProcessingPath::DualSinkStructured,
+        SupportTier::B | SupportTier::C => ProcessingPath::Passthrough,
+    }
+}
+
+pub fn capability_profile_for_major(major: u32) -> CapabilityProfile {
+    capability_profile_for_compatibility(
+        version_band_for_major(major),
+        support_tier_for_major(major),
+        major >= 15,
+    )
+}
+
+pub fn capability_profile_for_probe(probe: &ProbeResult) -> CapabilityProfile {
+    capability_profile_for_compatibility(
+        probe.version_band(),
+        probe.support_tier,
+        probe.add_output_sarif_supported,
+    )
+}
+
+fn capability_profile_for_compatibility(
+    version_band: VersionBand,
+    support_tier: SupportTier,
+    add_output_sarif_supported: bool,
+) -> CapabilityProfile {
+    // Keep the new vocabulary behind a probe-local compatibility seam until a
+    // later issue installs dedicated path/capability probing.
+    let sarif_diagnostics = add_output_sarif_supported;
+    let dual_sink = sarif_diagnostics;
+
+    match version_band {
+        VersionBand::Gcc15Plus => CapabilityProfile {
+            version_band,
+            support_level: support_level_for_tier(support_tier),
+            native_text_capture: true,
+            json_diagnostics: false,
+            sarif_diagnostics,
+            dual_sink,
+            tty_color_control: false,
+            caret_control: false,
+            parseable_fixits: false,
+            locale_stabilization: false,
+            default_processing_path: default_processing_path_for_tier(support_tier),
+            allowed_processing_paths: BTreeSet::from([
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough,
+            ]),
+        },
+        VersionBand::Gcc13_14 => CapabilityProfile {
+            version_band,
+            support_level: support_level_for_tier(support_tier),
+            native_text_capture: true,
+            json_diagnostics: false,
+            sarif_diagnostics,
+            dual_sink,
+            tty_color_control: false,
+            caret_control: false,
+            parseable_fixits: false,
+            locale_stabilization: false,
+            default_processing_path: default_processing_path_for_tier(support_tier),
+            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
+        },
+        VersionBand::Gcc9_12 => CapabilityProfile {
+            version_band,
+            support_level: support_level_for_tier(support_tier),
+            native_text_capture: true,
+            json_diagnostics: false,
+            sarif_diagnostics,
+            dual_sink,
+            tty_color_control: false,
+            caret_control: false,
+            parseable_fixits: false,
+            locale_stabilization: false,
+            default_processing_path: default_processing_path_for_tier(support_tier),
+            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
+        },
+        VersionBand::Unknown => CapabilityProfile {
+            version_band,
+            support_level: support_level_for_tier(support_tier),
+            native_text_capture: true,
+            json_diagnostics: false,
+            sarif_diagnostics,
+            dual_sink,
+            tty_color_control: false,
+            caret_control: false,
+            parseable_fixits: false,
+            locale_stabilization: false,
+            default_processing_path: default_processing_path_for_tier(support_tier),
+            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
+        },
+    }
+}
+
 fn parse_version(line: &str) -> Result<(u32, u32), ProbeError> {
     for token in line.split_whitespace() {
         let parts = token.split('.').collect::<Vec<_>>();
@@ -226,6 +401,95 @@ mod tests {
         assert_eq!(support_tier_for_major(15), SupportTier::A);
         assert_eq!(support_tier_for_major(13), SupportTier::B);
         assert_eq!(support_tier_for_major(12), SupportTier::C);
+    }
+
+    #[test]
+    fn maps_version_bands() {
+        assert_eq!(version_band_for_major(15), VersionBand::Gcc15Plus);
+        assert_eq!(version_band_for_major(13), VersionBand::Gcc13_14);
+        assert_eq!(version_band_for_major(9), VersionBand::Gcc9_12);
+        assert_eq!(version_band_for_major(8), VersionBand::Unknown);
+    }
+
+    #[test]
+    fn maps_support_levels_and_default_processing_paths_from_legacy_tiers() {
+        assert_eq!(
+            support_level_for_tier(SupportTier::A),
+            SupportLevel::Primary
+        );
+        assert_eq!(
+            support_level_for_tier(SupportTier::B),
+            SupportLevel::Conservative
+        );
+        assert_eq!(
+            support_level_for_tier(SupportTier::C),
+            SupportLevel::Unsupported
+        );
+        assert_eq!(
+            default_processing_path_for_tier(SupportTier::A),
+            ProcessingPath::DualSinkStructured
+        );
+        assert_eq!(
+            default_processing_path_for_tier(SupportTier::B),
+            ProcessingPath::Passthrough
+        );
+    }
+
+    #[test]
+    fn builds_capability_profiles_without_mutating_legacy_surface() {
+        let gcc15 = capability_profile_for_major(15);
+        assert_eq!(gcc15.version_band, VersionBand::Gcc15Plus);
+        assert_eq!(gcc15.support_level, SupportLevel::Primary);
+        assert!(gcc15.sarif_diagnostics);
+        assert!(gcc15.dual_sink);
+        assert!(!gcc15.json_diagnostics);
+        assert!(
+            gcc15
+                .allowed_processing_paths
+                .contains(&ProcessingPath::DualSinkStructured)
+        );
+
+        let gcc13 = capability_profile_for_major(13);
+        assert_eq!(gcc13.version_band, VersionBand::Gcc13_14);
+        assert_eq!(gcc13.support_level, SupportLevel::Conservative);
+        assert!(!gcc13.json_diagnostics);
+        assert!(!gcc13.sarif_diagnostics);
+        assert_eq!(gcc13.default_processing_path, ProcessingPath::Passthrough);
+
+        let gcc8 = capability_profile_for_major(8);
+        assert_eq!(gcc8.version_band, VersionBand::Unknown);
+        assert_eq!(gcc8.support_level, SupportLevel::Unsupported);
+        assert_eq!(gcc8.default_processing_path, ProcessingPath::Passthrough);
+    }
+
+    #[test]
+    fn exposes_probe_result_accessors_additively() {
+        let probe = ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: PathBuf::from("/usr/bin/gcc"),
+            version_string: "gcc (GCC) 15.1.0".to_string(),
+            major: 15,
+            minor: 1,
+            support_tier: SupportTier::A,
+            driver_kind: DriverKind::Gcc,
+            add_output_sarif_supported: true,
+            version_probe_key: ProbeKey {
+                realpath: PathBuf::from("/usr/bin/gcc"),
+                inode: 1,
+                mtime_seconds: 0,
+                size_bytes: 1,
+            },
+        };
+
+        assert_eq!(probe.version_band(), VersionBand::Gcc15Plus);
+        assert_eq!(probe.support_level(), SupportLevel::Primary);
+        assert_eq!(
+            probe.default_processing_path(),
+            ProcessingPath::DualSinkStructured
+        );
+        assert!(probe.capability_profile().dual_sink);
+        assert_eq!(probe.support_tier, SupportTier::A);
+        assert!(probe.add_output_sarif_supported);
     }
 
     #[test]
