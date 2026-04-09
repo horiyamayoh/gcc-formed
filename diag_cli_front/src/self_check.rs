@@ -1,7 +1,7 @@
 use crate::args::WrapperIntrospection;
 use crate::mode::{
-    compatibility_scope_notice, execution_mode_label, fallback_reason_label, select_mode,
-    support_tier_label,
+    CliCompatibilitySeam, compatibility_scope_notice_for_seam, execution_mode_label,
+    fallback_reason_label, select_mode_for_seam, support_tier_label,
 };
 use diag_backend_probe::SupportTier;
 use diag_backend_probe::{ProbeCache, ResolveRequest};
@@ -154,14 +154,15 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
     ]
     .into_iter()
     .map(|(support_tier, requested_mode, hard_conflict)| {
-        let decision = select_mode(support_tier, requested_mode, hard_conflict);
+        let compatibility_seam = CliCompatibilitySeam::from_support_tier(support_tier);
+        let decision = select_mode_for_seam(&compatibility_seam, requested_mode, hard_conflict);
         json!({
             "support_tier": support_tier_label(support_tier),
             "requested_mode": requested_mode.map(execution_mode_label),
             "hard_conflict": hard_conflict,
             "selected_mode": execution_mode_label(decision.mode),
             "fallback_reason": decision.fallback_reason.map(fallback_reason_label),
-            "scope_notice": compatibility_scope_notice(support_tier, &decision),
+            "scope_notice": compatibility_scope_notice_for_seam(&compatibility_seam, &decision),
         })
     })
     .collect()
