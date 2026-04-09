@@ -1,6 +1,6 @@
 use crate::args::{ParsedArgs, os_to_string};
-use crate::execute::{backend_binary_name, is_ci, language_mode_from_invocation};
-use crate::mode::ModeDecision;
+use crate::backend::backend_binary_name;
+use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
 use diag_capture_runtime::{
     CaptureOutcome, ExecutionMode, ExitStatusInfo, trace_sanitized_env_keys,
@@ -13,8 +13,8 @@ use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{
     TraceArtifactRef, TraceCapabilities, TraceChildExit, TraceEnvelope, TraceEnvironmentSummary,
     TraceFingerprintSummary, TraceParserResultSummary, TraceRedactionStatus, TraceTiming,
-    TraceVersionSummary, WrapperPaths, build_target_triple, secure_private_file, write_trace,
-    write_trace_at,
+    TraceVersionSummary, WrapperPaths, build_target_triple, secure_private_file, trace_id,
+    write_trace, write_trace_at,
 };
 use std::env;
 use std::fs;
@@ -110,7 +110,7 @@ pub(crate) fn maybe_write_passthrough_trace(
     }
 
     let trace = TraceEnvelope {
-        trace_id: diag_trace::trace_id(),
+        trace_id: trace_id(),
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),

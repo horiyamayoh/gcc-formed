@@ -1,10 +1,12 @@
 use crate::args::os_to_string;
 use diag_backend_probe::SupportTier;
 use diag_capture_runtime::ExecutionMode;
-use diag_core::FallbackReason;
-use diag_render::DebugRefs;
+use diag_core::{FallbackReason, LanguageMode};
+use diag_render::{DebugRefs, RenderCapabilities, RenderProfile, StreamKind};
 use diag_trace::RetentionPolicy;
+use std::env;
 use std::ffi::OsString;
+use std::io::IsTerminal;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ModeDecision {
@@ -133,6 +135,49 @@ pub(crate) fn should_capture_passthrough_stderr(
     ) || matches!(debug_refs, DebugRefs::CaptureRef)
 }
 
+pub(crate) fn detect_capabilities() -> RenderCapabilities {
+    let stderr = std::io::stderr();
+    let is_terminal = stderr.is_terminal();
+    let width = env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .or(Some(100));
+    RenderCapabilities {
+        stream_kind: if is_ci() {
+            StreamKind::CiLog
+        } else if is_terminal {
+            StreamKind::Tty
+        } else {
+            StreamKind::Pipe
+        },
+        width_columns: width,
+        ansi_color: is_terminal,
+        unicode: false,
+        hyperlinks: false,
+        interactive: is_terminal,
+    }
+}
+
+pub(crate) fn detect_profile_from_capabilities(capabilities: &RenderCapabilities) -> RenderProfile {
+    match capabilities.stream_kind {
+        StreamKind::CiLog => RenderProfile::Ci,
+        StreamKind::Tty if capabilities.interactive => RenderProfile::Default,
+        _ => RenderProfile::Concise,
+    }
+}
+
+pub(crate) fn is_ci() -> bool {
+    env::var_os("CI").is_some()
+}
+
+pub(crate) fn language_mode_from_invocation(invoked_as: &str) -> LanguageMode {
+    if invoked_as.contains("g++") || invoked_as.contains("c++") {
+        LanguageMode::Cpp
+    } else {
+        LanguageMode::C
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,5 +255,21 @@ mod tests {
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::TraceId
         ));
+    }
+
+    #[test]
+    fn ci_profile_follows_capabilities() {
+        let capabilities = RenderCapabilities {
+            stream_kind: StreamKind::CiLog,
+            width_columns: Some(120),
+            ansi_color: false,
+            unicode: false,
+            hyperlinks: false,
+            interactive: false,
+        };
+        assert_eq!(
+            detect_profile_from_capabilities(&capabilities),
+            RenderProfile::Ci
+        );
     }
 }

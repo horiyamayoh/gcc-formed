@@ -6,6 +6,10 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ## [Unreleased]
 
+### Changed
+
+- Refactored `diag_cli_front` into `args`, `config`, `mode`, `backend`, `execute`, `render`, and `self_check` modules so `src/main.rs` is dispatch-only while preserving the existing CLI contract, trace output, and self-check behavior.
+
 ## [0.2.0-beta.1] - 2026-04-09
 
 ### Added
