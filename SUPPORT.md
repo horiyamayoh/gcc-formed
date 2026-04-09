@@ -8,10 +8,12 @@ Keep wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
+- `GCC15+` is the primary fidelity reference path.
+- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ## First Routing
 
@@ -20,14 +22,18 @@ Keep wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - Packaging, install, rollback, or release issues: start with [docs/runbooks/rollback.md](docs/runbooks/rollback.md).
 - Runtime triage and maintainer initial response: use [docs/runbooks/incident-triage.md](docs/runbooks/incident-triage.md).
 - Trace capture and redaction: use [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md).
+- Session handoff and resumability: use [docs/runbooks/agent-handoff.md](docs/runbooks/agent-handoff.md).
 
-## Support Tier Routing
+## VersionBand / ProcessingPath Routing
 
-- Tier A: GCC 15 primary enhanced-render path on the supported Linux target. Treat this as the highest-priority product path.
-- Tier B: GCC 13/14 compatibility-only path. Expect conservative passthrough or shadow behavior, and verify the compatibility banner before escalating as a renderer regression.
-- Tier C: older or unsupported compiler path. These reports are still useful, but confirm whether the observed behavior is already covered by the documented compatibility/out-of-scope wording before treating it as a blocker.
+- `GCC15+`: highest-priority reference path. Treat regressions here as product-path issues.
+- `GCC13-14`: in-scope `Experimental` path. Check whether the observed path was `NativeTextCapture` or `SingleSinkStructured`, and evaluate the complaint against the current support boundary before treating it as a stop-ship regression.
+- `GCC9-12`: in-scope `Experimental` path with narrower expected wins. Fail-open behavior or honest passthrough may still be the correct result.
+- `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
 
-You can confirm the active tier and local path layout with:
+Current runtime and trace output may still expose legacy internal tier-oriented fields until the M1 vocabulary migration lands. Attach those raw fields as evidence, but use `VersionBand`, `ProcessingPath`, and `SupportLevel` as the canonical public labels in new issues and PRs.
+
+You can confirm the local wrapper layout and capture backend with:
 
 ```bash
 gcc-formed --formed-self-check
@@ -40,7 +46,7 @@ For non-security incidents, ask for this minimum packet before deep triage:
 1. `gcc-formed --formed-version=verbose`
 2. `gcc-formed --formed-self-check`
 3. The exact failing command line
-4. The support-tier classification chosen in the bug template
+4. The `VersionBand`, `ProcessingPath`, and user surface chosen in the bug template
 5. A trace bundle or an explicit note that no trace bundle was captured
 
 The detailed collection steps live in [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md).

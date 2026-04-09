@@ -1,0 +1,21 @@
+# Default owner for the repository.
+* @horiyamayoh
+
+# Architecture and core diagnostic path ownership.
+/diag_backend_probe/ @horiyamayoh
+/diag_capture_runtime/ @horiyamayoh
+/diag_adapter_gcc/ @horiyamayoh
+/diag_core/ @horiyamayoh
+/diag_enrich/ @horiyamayoh
+/diag_render/ @horiyamayoh
+/diag_trace/ @horiyamayoh
+/diag_testkit/ @horiyamayoh
+/diag_cli_front/ @horiyamayoh
+/xtask/ @horiyamayoh
+
+# Contract docs and process control.
+/adr-initial-set/ @horiyamayoh
+/*.md @horiyamayoh
+/.github/ @horiyamayoh
+/.github/workflows/ @horiyamayoh
+/.github/CODEOWNERS @horiyamayoh

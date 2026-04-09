@@ -26,9 +26,9 @@
 |---|---|---|---|
 | [ADR-0001](./adr-0001-wrapper-first-entrypoint.md) | Wrapper-first compiler-compatible entrypoint | Accepted | 導入障壁を最小化する |
 | [ADR-0002](./adr-0002-diagnostic-ir-as-product-core.md) | Diagnostic IR as product core | Accepted | adapter / renderer / analysis を疎結合化する |
-| [ADR-0003](./adr-0003-structured-first-gcc-ingress.md) | Structured-first GCC ingress | Accepted | GCC diagnostics の authoritative source を固定する |
-| [ADR-0004](./adr-0004-gcc-15-first-support-policy.md) | GCC 15-first support policy | Accepted | 公式サポートの品質主張を明確化する |
-| [ADR-0005](./adr-0005-gcc-13-14-compatibility-tier.md) | GCC 13–14 compatibility tier | Accepted | 互換 path と production claim を切り分ける |
+| [ADR-0003](./adr-0003-structured-first-gcc-ingress.md) | Structured-first GCC ingress | Superseded | GCC diagnostics の authoritative source を固定した v1alpha baseline |
+| [ADR-0004](./adr-0004-gcc-15-first-support-policy.md) | GCC 15-first support policy | Superseded | GCC 15 中心の v1alpha 品質主張を固定した historical baseline |
+| [ADR-0005](./adr-0005-gcc-13-14-compatibility-tier.md) | GCC 13–14 compatibility tier | Superseded | compatibility tier を固定した v1alpha baseline |
 | [ADR-0006](./adr-0006-fail-open-fallback-and-provenance.md) | Fail-open fallback and provenance | Accepted | wrapper failure が build failure を悪化させないようにする |
 | [ADR-0007](./adr-0007-rust-as-implementation-language.md) | Rust as implementation language | Accepted | 長期品質と配布性を両立する |
 | [ADR-0008](./adr-0008-linux-first-single-binary-musl-distribution.md) | Linux-first single-binary musl distribution | Accepted | install / rollback / support を安定化する |
@@ -47,6 +47,14 @@
 | [ADR-0021](./adr-0021-release-maturity-labels-and-artifact-semver-policy.md) | Release maturity labels and artifact semver policy | Accepted | `v1alpha` と `0.1.x` の混線を防ぎ、channel との境界を固定する |
 | [ADR-0024](./adr-0024-public-beta-release-channel-and-github-release-policy.md) | Public beta release channel and GitHub Release policy | Accepted | public beta artifact の公開方法と promote story を固定する |
 | [ADR-0025](./adr-0025-stable-release-automation-and-rollback-evidence.md) | Stable release automation and rollback evidence | Accepted | stable cut の same-bits promote と rollback drill 証跡を固定する |
+| [ADR-0026](./adr-0026-capability-profile-replaces-support-tier.md) | Capability Profile replaces Support Tier | Accepted | バージョン帯・能力・公開保証を分離する |
+| [ADR-0027](./adr-0027-processing-path-separate-from-support-level.md) | Processing Path is separate from Support Level | Accepted | runtime path と public claim の混線を止める |
+| [ADR-0028](./adr-0028-capturebundle-only-ingest-entry.md) | CaptureBundle becomes the only ingest entry | Accepted | ingest 境界を path-aware に統一する |
+| [ADR-0029](./adr-0029-path-b-and-c-are-first-class-product-paths.md) | Path B and Path C are first-class product paths | Accepted | GCC 13–14 / 9–12 を roadmap / tests / issues 上の正規対象にする |
+| [ADR-0030](./adr-0030-theme-layout-separated-from-analysis-view-model.md) | Theme/Layout separated from analysis/view model | Accepted | 表示変更と意味論変更を分離する |
+| [ADR-0031](./adr-0031-native-non-regression-for-tty-default.md) | Native non-regression for TTY default | Accepted | default TTY を stop-ship 基準で守る |
+| [ADR-0032](./adr-0032-rulepack-externalization-policy.md) | Rulepack externalization policy | Accepted | 判定規則を長期保守可能な形へ出す |
+| [ADR-0033](./adr-0033-execution-model-precedes-epic-generation.md) | Execution Model precedes Epic generation | Accepted | Epic より先に delivery system を固定する |
 
 ## 3. 読み方
 
@@ -55,7 +63,7 @@
 - **0011–0016** は出力 surface、ownership、trace/redaction の製品境界
 - **0017–0025** は dependency、corpus、render surface、stability、versioning semantics、public beta / stable release policy の運用統制
 
-最初に読む順序は `0001 → 0003 → 0006 → 0002 → 0009 → 0004/0005 → 0019 → 0016 → 0018` を推奨する。
+最初に読む順序は `0001 → 0002 → 0006 → 0009 → 0026 → 0027 → 0028 → 0029 → 0030 → 0031 → 0033` を推奨する。
 
 ## 4. ステータス運用
 
@@ -67,7 +75,8 @@ ADR の状態語彙は次の 5 つに固定する。
 - **Deprecated**
 - **Rejected**
 
-v1beta 現在では、この一覧にある ADR をすべて **Accepted** とする。今後の変更は既存仕様への自由追記ではなく、ADR の追加または supersede で扱う。
+vNext 現在では、この一覧の status 列を正本とする。  
+Superseded ADR は historical baseline として残し、現在の判断は Accepted ADR を優先する。今後の変更は既存仕様への自由追記ではなく、ADR の追加または supersede で扱う。
 
 ## 5. 実装への直結ポイント
 

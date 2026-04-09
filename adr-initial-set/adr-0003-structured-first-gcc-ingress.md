@@ -1,6 +1,6 @@
 # ADR-0003: Structured-first GCC ingress
 
-- **Status**: Accepted
+- **Status**: Superseded
 - **Date**: 2026-04-07
 
 ## Context
@@ -29,7 +29,7 @@ GCC には SARIF や JSON などの structured diagnostics capability があり�
 ## Supersedes/Related
 
 - **Supersedes**: None
-- **Related**: `ADR-0002`, `ADR-0004`, `ADR-0005`, `ADR-0013`, `ADR-0014`
+- **Related**: `ADR-0002`, `ADR-0013`, `ADR-0014`, `ADR-0028`, `ADR-0029`
 
 ## Source Specs
 

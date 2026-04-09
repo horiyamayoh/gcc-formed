@@ -31,16 +31,19 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
+- `GCC15+` is the primary fidelity reference path.
+- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ## Explicit Non-Goals
 
 - Do not label `0.2.0-beta.N` artifacts as `1.0.0-rc.N` or `1.0.0 stable`.
-- Do not describe GCC 13/14 as primary enhanced-render coverage.
-- Do not expand primary support to non-Linux artifacts.
+- Do not claim that all `VersionBand` values have identical guarantees before the path-aware quality gates exist.
+- Do not widen the support boundary beyond `SUPPORT-BOUNDARY.md`.
+- Do not expand production claims to non-Linux artifacts.
 - Do not claim that raw fallback has been eliminated.
 
 ## Governance Freeze
@@ -55,10 +58,10 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 - README states the current beta-baseline scope in one screen.
 - README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
-- `SUPPORT-BOUNDARY.md` exists and matches the wording reused in README, release notes, limitations, security, and contributing docs.
+- `SUPPORT-BOUNDARY.md` exists and remains the canonical wording source for README summary text, release notes, limitations, security, and contributing docs.
 - README links to `VERSIONING.md` and distinguishes maturity labels from artifact semver.
 - README links `GOVERNANCE.md`, and the governance freeze wording is consistent with `ADR-0020`, contributing guidance, and the PR template.
-- `RELEASE-NOTES.md` calls out compatibility paths and raw fallback semantics.
+- `RELEASE-NOTES.md` calls out current `VersionBand` posture and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.
 - `STABLE-RELEASE.md` exists and matches the workflow/xtask stable cut contract.
 - `SUPPORT.md` and the runbooks under `docs/runbooks/` exist, and the public bug template links to them.

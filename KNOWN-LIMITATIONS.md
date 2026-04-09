@@ -2,35 +2,25 @@
 
 `gcc-formed` is currently in the `v1beta` maturity line, and the current artifact line is `0.2.0-beta.N`. The current public-beta baseline is intentionally narrow.
 
-The exact support-boundary wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md). This file repeats the same contract before listing additional detail.
+The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md). This file summarizes the current limits and known gaps around that contract.
 
-## Current Support Boundary
+## Current Beta Posture
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
 - The terminal renderer is the primary user-facing surface.
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- `GCC15+` is the primary fidelity reference path.
+- `GCC13-14` and `GCC9-12` are in-scope product bands, but with narrower guarantees and path-dependent capture constraints.
+- Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
-## Primary Contract Detail
+## Known Constraints
 
-- Runtime assumptions stay Linux-first.
-- `x86_64-unknown-linux-musl` is the primary production artifact.
-- GCC 15 is the primary enhanced-render path.
-- The terminal renderer is the primary user-facing surface.
-
-## Compatibility Paths
-
-- GCC 13/14 are compatibility-only paths and may use conservative passthrough or shadow behavior instead of the primary enhanced-render path.
-- `x86_64-unknown-linux-gnu` is a compatibility smoke and exception path, not the primary shipped artifact.
-- Older GCC versions are outside the first-release support scope and should be expected to fall back to passthrough behavior.
-
-When the wrapper selects a compatibility path, it emits an explicit banner before the compiler output so issue reports can identify the path without inspecting `trace.json` first. Keep the runtime strings aligned with these exact forms:
-
-- `gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.`
-- `gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.`
-- `gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.`
+- Not every `VersionBand` currently has the same fidelity or the same raw-preservation guarantees.
+- `ProcessingPath` may vary by invocation, diagnostics sink, or explicit mode request.
+- `x86_64-unknown-linux-gnu` remains a compatibility smoke and exception path, not the primary shipped artifact.
+- Older or unknown compiler variants may still resolve conservatively to passthrough behavior.
+- Current runtime and self-check output still expose some legacy tier-oriented fields and notices. Treat those as implementation detail and use `VersionBand` / `ProcessingPath` / `SupportLevel` as the canonical public vocabulary in new issues.
+- Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
 
 ## Raw Fallback
 
@@ -38,26 +28,26 @@ Raw fallback remains part of the shipped contract when the wrapper cannot produc
 
 You should expect raw fallback when:
 
-- the backend is outside the primary GCC 15 render path
+- the selected path is still the most conservative trustworthy option for the observed compiler band
 - the invocation forces an incompatible diagnostics sink
 - structured capture is unavailable or incomplete
 - the renderer cannot produce a higher-confidence document than the preserved raw diagnostics
 
 ## What Is Not Guaranteed Yet
 
-- Enhanced render quality outside the GCC 15 primary path.
+- Identical guarantees across all `VersionBand` values.
 - Non-Linux production artifacts.
-- Elimination of passthrough, shadow mode, or raw fallback.
+- Elimination of passthrough, shadow-mode-like conservative behavior, or raw fallback.
 - Release-candidate or stable artifacts (`1.0.0-rc.N`, `1.0.0`).
 - Stable general-availability support promises beyond the documented `v1beta` / `0.2.0-beta.N` scope.
 - Backlog items reserved for post-`1.0.0` expansion; see [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Bug Reports
 
-When reporting a bug, include the compatibility banner line or support tier and a trace bundle when possible. The shortest path is:
+When reporting a bug, include the selected `VersionBand`, `ProcessingPath` if known, and a trace bundle when possible. The shortest path is:
 
 ```bash
 gcc-formed --formed-trace=always ...
 ```
 
-Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory.
+Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory. If runtime output still shows legacy internal classification fields, attach them verbatim as evidence rather than translating them by hand.

@@ -16,8 +16,7 @@ Important fields:
 - `paths.state_root`
 - `paths.runtime_root`
 - `paths.install_root`
-- `backend.support_tier`
-- `rollout_matrix`
+- backend classification fields and rollout matrix data
 
 On a default Linux/XDG layout, `trace_root` is typically under `$XDG_STATE_HOME/cc-formed/traces` or `~/.local/state/cc-formed/traces`.
 
@@ -38,7 +37,7 @@ Collect at least:
 - `trace.json`
 - preserved `stderr.raw`
 - normalized IR such as `ir.analysis.json` when present
-- `diagnostics.sarif` when present
+- any structured diagnostics artifact such as `diagnostics.sarif` or `diagnostics.json`
 
 The quickest way is to attach the whole trace directory after review, not only `trace.json`.
 
@@ -54,12 +53,13 @@ Before sharing the bundle, review it for:
 
 If you must redact, keep these fields intact whenever possible:
 
-- selected mode
-- support tier
+- the reported `VersionBand` / `ProcessingPath` if known
 - fallback reason
 - backend version
 - target triple
-- artifact file names (`trace.json`, `stderr.raw`, `ir.analysis.json`, `diagnostics.sarif`)
+- artifact file names (`trace.json`, `stderr.raw`, `ir.analysis.json`, `diagnostics.sarif`, `diagnostics.json`)
+
+If current runtime still emits legacy internal classification fields, preserve them verbatim in the trace rather than rewriting them by hand.
 
 Do not upload trace bundles to public issues for embargoed or security-sensitive problems; use [SECURITY.md](../../SECURITY.md).
 
@@ -70,5 +70,5 @@ If a full trace bundle cannot be shared, include:
 1. `gcc-formed --formed-version=verbose`
 2. `gcc-formed --formed-self-check`
 3. the failing command line with any necessary redaction
-4. the compatibility banner line, if one was printed
+4. the observed path notice or compatibility/fallback line, if one was printed
 5. a note describing which trace artifacts were available locally

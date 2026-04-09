@@ -6,51 +6,51 @@
 
 -
 
-## Milestone / Work Package
+## Parent Issue / Work Package
 
-- Milestone:
+- Parent issue:
 - Work package:
+- Milestone:
+
+## Workstream / Band / Layer
+
+- Workstream:
+- VersionBand:
+- ProcessingPath(s):
+- Layer:
 
 ## Change Classification
 
-- [ ] Non-breaking
-- [ ] Breaking
-- [ ] Experimental
-- [ ] No contract surface changed; internal-only refactor
+- [ ] Internal-only refactor
+- [ ] Behavior change
+- [ ] Contract change
+- [ ] ADR required or updated
 - Why this classification is correct:
-- ADR / supersede required:
 
 ## Read Docs
 
 - [ ] `README.md`
-- [ ] `GOVERNANCE.md`
-- [ ] `adr-initial-set/adr-0020-stability-promises.md`
-- [ ] `gcc-formed-architecture-proposal.md`
-- [ ] `quality-corpus-test-gate-spec.md`
-- [ ] `packaging-runtime-operations-spec.md`
+- [ ] `SUPPORT-BOUNDARY.md`
+- [ ] `EXECUTION-MODEL.md`
+- [ ] Relevant ADR(s)
+- [ ] Relevant spec(s)
 - [ ] `CONTRIBUTING.md`
 - [ ] Other:
 
 ## Contract Surfaces
 
 - [ ] CLI surface
-- [ ] Config / environment contract
+- [ ] Probe / capture / environment contract
 - [ ] IR schema semantics / machine output
-- [ ] Renderer wording / confidence / fallback notices
-- [ ] Release / install / rollback / signing contract
-- [ ] Support boundary / runbooks
+- [ ] Analysis / rule semantics
+- [ ] Renderer wording / color / disclosure / budgets
+- [ ] Support boundary / runbooks / templates
+- [ ] Packaging / install / rollback / release
 - [ ] No contract surface changed
 
-## Files Touched
+## In Scope
 
 -
-
-## Constraints
-
-- [ ] support boundary を広げない
-- [ ] fail-open を壊さない
-- [ ] raw fallback を隠さない
-- [ ] post-`1.0.0` backlog item を current support boundary に入れていない
 
 ## Out Of Scope
 
@@ -60,38 +60,62 @@
 
 -
 
-## Commands Run
+## Evidence
+
+- Acceptance evidence:
+
+### Commands Run
 
 - [ ] `cargo xtask check`
+- [ ] `cargo test --workspace`
 - [ ] `cargo xtask replay --root corpus`
-- [ ] `cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15`
-- [ ] `cargo deny check`
-- [ ] `cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl`
+- [ ] Path-specific smoke / snapshot commands are listed below
 - [ ] Other:
 
-## Docs Updated
-
-- [ ] `CHANGELOG.md`
-- [ ] `RELEASE-NOTES.md`
-- [ ] `README.md`
-- [ ] `GOVERNANCE.md` / ADR (if contract changed)
-
-## Snapshot / Corpus / Docs Update Rationale
+### Reports / traces / screenshots
 
 -
 
-## Support Tier Impact
+## Pause / Resume
 
-- [ ] GCC 15 primary enhanced-render path
-- [ ] GCC 13/14 compatibility-only path
-- [ ] Older / unsupported path
-- [ ] Packaging / install / release only
-- [ ] This change updates `SUPPORT-BOUNDARY.md` and the copied wording in user-facing docs.
+- Stop condition not hit:
+- Next recommended action if paused:
 
-## Trace / Fallback Impact
+## Path Impact
 
-- [ ] No trace or fallback behavior change.
-- [ ] Trace bundle content changed.
-- [ ] Raw fallback conditions changed.
-- [ ] Passthrough / shadow compatibility behavior changed.
-- Evidence:
+- [ ] `GCC15+`
+- [ ] `GCC13-14`
+- [ ] `GCC9-12`
+- [ ] `Unknown` / passthrough only
+- ProcessingPath selection changed:
+- RawPreservationLevel changed:
+- Support wording changed:
+
+## Non-Negotiables
+
+- [ ] fail-open remains intact
+- [ ] compiler-owned facts / provenance are not hidden
+- [ ] default TTY is not made less legible than native
+- [ ] no undocumented widening or narrowing of support boundary
+- [ ] issue / docs / tests were updated together when contract changed
+
+## Docs Updated
+
+- [ ] `README.md`
+- [ ] `SUPPORT-BOUNDARY.md`
+- [ ] `EXECUTION-MODEL.md`
+- [ ] Relevant spec(s)
+- [ ] ADR(s)
+- [ ] Issue template / PR template / runbook wording
+- [ ] No docs update needed
+
+## Human Review Requested
+
+- [ ] Quick
+- [ ] Deep
+- [ ] Design
+
+## Risk / Rollback
+
+- Risk:
+- Rollback plan:

@@ -1,6 +1,6 @@
 # ADR-0005: GCC 13–14 compatibility tier
 
-- **Status**: Accepted
+- **Status**: Superseded
 - **Date**: 2026-04-07
 
 ## Context
@@ -30,7 +30,7 @@ GCC 13–14 には structured diagnostics の一部があるが、GCC 15 と同�
 ## Supersedes/Related
 
 - **Supersedes**: None
-- **Related**: `ADR-0004`, `ADR-0006`, `ADR-0018`
+- **Related**: `ADR-0006`, `ADR-0018`, `ADR-0027`, `ADR-0029`
 
 ## Source Specs
 
