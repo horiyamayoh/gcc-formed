@@ -7,5 +7,6 @@ version.workspace = true
 
 [dependencies]
 diag_core.workspace = true
+regex.workspace = true
 serde.workspace = true
 thiserror.workspace = true

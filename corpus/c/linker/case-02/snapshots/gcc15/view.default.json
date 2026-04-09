@@ -21,6 +21,9 @@
         "existing_specific_family=linker.undefined_reference"
       ],
       "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "raw_sub_block": [
+        "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",

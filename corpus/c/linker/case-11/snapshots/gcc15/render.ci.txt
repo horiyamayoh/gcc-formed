@@ -1,6 +1,8 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 linker: error: multiple definition of `duplicate_symbol`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccWt7UHY.o:main.c:(.text+0x0): first defined here
+why: helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; <temp-object>:main.c:(.text+0x0): first defined here
 linker: symbol `duplicate_symbol`
+raw:
+  helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; <temp-object>:main.c:(.text+0x0): first defined here
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

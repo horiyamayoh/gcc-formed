@@ -21,6 +21,9 @@
         "existing_specific_family=linker.undefined_reference"
       ],
       "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "raw_sub_block": [
+        "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -45,6 +48,9 @@
         "existing_specific_family=linker.file_format_or_relocation"
       ],
       "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",

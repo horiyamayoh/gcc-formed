@@ -20,7 +20,10 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccC2D2rR.o:main.c:(.text+0x0): first defined here",
+      "raw_sub_block": [
+        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccC2D2rR.o:main.c:(.text+0x0): first defined here"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -45,6 +48,9 @@
         "existing_specific_family=linker.file_format_or_relocation"
       ],
       "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",

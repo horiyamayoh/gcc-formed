@@ -3,6 +3,8 @@ error: undefined reference to `missing_symbol`
 help: define the missing symbol or link the object/library that provides it
 why: main.c:(.text+0x5): undefined reference to `missing_symbol'
 linker: symbol `missing_symbol`
+raw:
+  main.c:(.text+0x5): undefined reference to `missing_symbol'
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=undefined reference, existing_specific_family=linker.undefined_reference
 debug: suppression_reason=preserved_specific_family_from_ingress
@@ -10,6 +12,8 @@ error: linker file format or relocation failure
 help: check object compatibility, target triple, and archive contents
 why: collect2: error: ld returned 1 exit status
 linker: original linker diagnostics are preserved
+raw:
+  collect2: error: ld returned 1 exit status
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, existing_specific_family=linker.file_format_or_relocation
 debug: suppression_reason=preserved_specific_family_from_ingress

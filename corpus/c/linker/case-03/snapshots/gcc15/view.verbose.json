@@ -20,7 +20,10 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "/usr/bin/ld: /tmp/ccwiWxML.o:(.data+0x0): multiple definition of `shared'; /tmp/ccBY6xSg.o:(.data+0x0): first defined here",
+      "raw_message": "/usr/bin/ld: /tmp/ccseUCiy.o:(.data+0x0): multiple definition of `shared'; /tmp/ccXYePCc.o:(.data+0x0): first defined here",
+      "raw_sub_block": [
+        "/usr/bin/ld: /tmp/ccseUCiy.o:(.data+0x0): multiple definition of `shared'; /tmp/ccXYePCc.o:(.data+0x0): first defined here"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
@@ -45,6 +48,9 @@
         "existing_specific_family=linker.file_format_or_relocation"
       ],
       "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",

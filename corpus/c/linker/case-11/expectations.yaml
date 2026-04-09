@@ -15,3 +15,7 @@ render:
     first_screenful_max_lines: 16
     path_first_required: true
     color_meaning_forbidden: true
+    required_substrings:
+      - "<temp-object>:main.c:(.text+0x0): first defined here"
+    forbidden_substrings:
+      - "/tmp/"

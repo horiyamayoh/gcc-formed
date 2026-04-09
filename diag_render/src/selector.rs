@@ -1,6 +1,8 @@
 use crate::budget::{WarningFailureMode, budget_for};
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
-use diag_core::{Confidence, DiagnosticNode, Ownership, Phase, SemanticRole, Severity};
+use diag_core::{
+    Confidence, DiagnosticNode, NodeCompleteness, Ownership, Phase, SemanticRole, Severity,
+};
 
 #[derive(Debug)]
 pub struct Selection {
@@ -34,10 +36,21 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
         });
     }
 
-    let expanded_groups = match request.profile {
+    let mut expanded_groups = match request.profile {
         RenderProfile::Default if !has_failure => 2,
         _ => budget.expanded_groups,
     };
+    if diagnostics.len() > expanded_groups
+        && matches!(
+            request.profile,
+            RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci
+        )
+        && diagnostics
+            .first()
+            .is_some_and(|node| is_low_confidence(node) || is_summary_only(node))
+    {
+        expanded_groups = expanded_groups.max(2);
+    }
     let expanded = diagnostics.into_iter().take(expanded_groups).collect();
     Selection {
         cards: expanded,
@@ -161,4 +174,31 @@ fn semantic_role_rank(role: &SemanticRole) -> u8 {
         SemanticRole::Passthrough => 1,
         SemanticRole::Unknown => 0,
     }
+}
+
+fn is_low_confidence(node: &DiagnosticNode) -> bool {
+    matches!(
+        node.analysis
+            .as_ref()
+            .and_then(|analysis| analysis.confidence.as_ref()),
+        Some(Confidence::Low) | Some(Confidence::Unknown) | None
+    )
+}
+
+fn is_summary_only(node: &DiagnosticNode) -> bool {
+    matches!(
+        node.semantic_role,
+        SemanticRole::Summary | SemanticRole::Passthrough
+    ) || matches!(node.node_completeness, NodeCompleteness::Passthrough)
+        || (matches!(node.node_completeness, NodeCompleteness::Partial)
+            && node.primary_location().is_none()
+            && node.symbol_context.is_none()
+            && !has_first_action(node))
+}
+
+fn has_first_action(node: &DiagnosticNode) -> bool {
+    node.analysis
+        .as_ref()
+        .and_then(|analysis| analysis.first_action_hint.as_ref())
+        .is_some_and(|hint| !hint.trim().is_empty())
 }

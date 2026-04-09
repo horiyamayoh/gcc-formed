@@ -1,2 +1,2 @@
-/usr/bin/ld: /tmp/ccwiWxML.o:(.data+0x0): multiple definition of `shared'; /tmp/ccBY6xSg.o:(.data+0x0): first defined here
+/usr/bin/ld: /tmp/ccseUCiy.o:(.data+0x0): multiple definition of `shared'; /tmp/ccXYePCc.o:(.data+0x0): first defined here
 collect2: error: ld returned 1 exit status

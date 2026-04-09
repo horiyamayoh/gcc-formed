@@ -30,7 +30,10 @@ render:
     color_meaning_forbidden: true
     required_substrings:
       - "linker: error: multiple definition of `duplicate`"
+      - "<temp-object>:main.c:(.text+0x0): first defined here"
       - "raw: rerun with --formed-profile=raw_fallback"
+    forbidden_substrings:
+      - "/tmp/"
 integrity:
   allowed_issue_codes: []
 performance:

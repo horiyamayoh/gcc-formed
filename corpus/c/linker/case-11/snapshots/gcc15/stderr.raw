@@ -1,3 +1,3 @@
-/usr/bin/ld: /tmp/cc5UgzFl.o: in function `duplicate_symbol':
-helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccWt7UHY.o:main.c:(.text+0x0): first defined here
+/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':
+helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here
 collect2: error: ld returned 1 exit status

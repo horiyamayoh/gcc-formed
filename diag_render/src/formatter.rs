@@ -1,6 +1,8 @@
 use crate::budget::{WarningFailureMode, budget_for};
 use crate::view_model::RenderViewModel;
 use crate::{DebugRefs, RenderProfile, RenderRequest, RenderResult};
+use regex::Regex;
+use std::sync::OnceLock;
 
 pub fn emit(
     request: &RenderRequest,
@@ -43,7 +45,10 @@ pub fn emit(
         if let Some(first_action) = card.first_action.as_ref() {
             lines.push(format!("help: {first_action}"));
         }
-        lines.push(format!("why: {}", first_line(&card.raw_message)));
+        lines.push(format!(
+            "why: {}",
+            display_raw_line(&card.raw_message, request.profile)
+        ));
         for excerpt in &card.excerpts {
             lines.push(format!("| {}", excerpt.location));
             for source in &excerpt.lines {
@@ -58,6 +63,12 @@ pub fn emit(
         }
         for notice in &card.collapsed_notices {
             lines.push(format!("note: {notice}"));
+        }
+        if !card.raw_sub_block.is_empty() {
+            lines.push("raw:".to_string());
+            for raw_line in &card.raw_sub_block {
+                lines.push(format!("  {}", display_raw_line(raw_line, request.profile)));
+            }
         }
         if matches!(request.profile, RenderProfile::Verbose)
             || matches!(request.debug_refs, DebugRefs::CaptureRef)
@@ -132,4 +143,26 @@ fn first_line(raw_message: &str) -> String {
         .next()
         .unwrap_or(raw_message)
         .to_string()
+}
+
+fn display_raw_line(raw_message: &str, profile: RenderProfile) -> String {
+    let line = first_line(raw_message);
+    match profile {
+        RenderProfile::RawFallback => line,
+        _ => sanitize_transient_object_paths(&line),
+    }
+}
+
+fn sanitize_transient_object_paths(text: &str) -> String {
+    transient_object_path_pattern()
+        .replace_all(text, "<temp-object>")
+        .into_owned()
+}
+
+fn transient_object_path_pattern() -> &'static Regex {
+    static PATTERN: OnceLock<Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        Regex::new(r#"(?:(?:/private)?/tmp|/var/folders/[^:\s]+/T)/cc[^:\s'"`]+\.o"#)
+            .expect("valid transient object path regex")
+    })
 }

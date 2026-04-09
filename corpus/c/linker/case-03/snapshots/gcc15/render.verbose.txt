@@ -1,8 +1,10 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: multiple definition of `shared`
 help: remove the duplicate definition or make the symbol internal to one translation unit
-why: /usr/bin/ld: /tmp/ccwiWxML.o:(.data+0x0): multiple definition of `shared'; /tmp/ccBY6xSg.o:(.data+0x0): first defined here
+why: /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
 linker: symbol `shared`
+raw:
+  /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=multiple definition, existing_specific_family=linker.multiple_definition
 debug: suppression_reason=preserved_specific_family_from_ingress
@@ -10,6 +12,8 @@ error: linker file format or relocation failure
 help: check object compatibility, target triple, and archive contents
 why: collect2: error: ld returned 1 exit status
 linker: original linker diagnostics are preserved
+raw:
+  collect2: error: ld returned 1 exit status
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, existing_specific_family=linker.file_format_or_relocation
 debug: suppression_reason=preserved_specific_family_from_ingress

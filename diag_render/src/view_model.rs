@@ -1,7 +1,7 @@
 use crate::excerpt::load_excerpt;
 use crate::family::summarize_supporting_evidence;
 use crate::{RenderProfile, RenderRequest};
-use diag_core::{Confidence, DiagnosticNode, Severity};
+use diag_core::{Confidence, DiagnosticNode, DocumentCompleteness, NodeCompleteness, Severity};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +26,8 @@ pub struct RenderGroupCard {
     pub context_lines: Vec<String>,
     pub child_notes: Vec<String>,
     pub collapsed_notices: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub raw_sub_block: Vec<String>,
     pub rule_id: Option<String>,
     pub matched_conditions: Vec<String>,
     pub suppression_reason: Option<String>,
@@ -107,6 +109,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     .then_some(
         "note: wrapper confidence is low; verify against the preserved raw diagnostics".to_string(),
     );
+    let raw_sub_block = raw_sub_block(request, node);
 
     RenderGroupCard {
         group_id: node.id.clone(),
@@ -122,6 +125,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         context_lines,
         child_notes,
         collapsed_notices,
+        raw_sub_block,
         rule_id: node
             .analysis
             .as_ref()
@@ -188,4 +192,33 @@ fn raw_title(node: &DiagnosticNode) -> String {
         .next()
         .unwrap_or("diagnostic")
         .to_string()
+}
+
+fn raw_sub_block(request: &RenderRequest, node: &DiagnosticNode) -> Vec<String> {
+    if !matches!(
+        request.document.document_completeness,
+        DocumentCompleteness::Partial
+    ) || !matches!(
+        node.node_completeness,
+        NodeCompleteness::Partial | NodeCompleteness::Passthrough
+    ) {
+        return Vec::new();
+    }
+
+    node.message
+        .raw_text
+        .lines()
+        .take(raw_sub_block_budget(request.profile))
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| line.to_string())
+        .collect()
+}
+
+fn raw_sub_block_budget(profile: RenderProfile) -> usize {
+    match profile {
+        RenderProfile::Verbose => 4,
+        RenderProfile::Default => 2,
+        RenderProfile::Concise | RenderProfile::Ci => 1,
+        RenderProfile::RawFallback => 0,
+    }
 }

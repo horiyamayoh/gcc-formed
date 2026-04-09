@@ -561,6 +561,66 @@ mod tests {
     }
 
     #[test]
+    fn low_confidence_primary_group_expands_second_group() {
+        let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .confidence = Some(diag_core::Confidence::Low);
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "supporting-note".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Note,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "candidate expects an int parameter".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![Location {
+                    path: "src/main.c".to_string(),
+                    line: 1,
+                    column: 5,
+                    end_line: None,
+                    end_column: None,
+                    display_path: None,
+                    ownership: Some(Ownership::User),
+                }],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: Some(AnalysisOverlay {
+                    family: Some("type_overload".to_string()),
+                    headline: Some("candidate expects an int parameter".to_string()),
+                    first_action_hint: None,
+                    confidence: Some(diag_core::Confidence::High),
+                    rule_id: Some("rule.family.type_overload.note".to_string()),
+                    matched_conditions: vec!["semantic_role=root".to_string()],
+                    suppression_reason: None,
+                    collapsed_child_ids: Vec::new(),
+                    collapsed_chain_ids: Vec::new(),
+                }),
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.cards[0].id, "root");
+        assert_eq!(selection.cards[1].id, "supporting-note");
+    }
+
+    #[test]
     fn low_confidence_render_uses_raw_title_and_honesty_notice() {
         let mut request = sample_request();
         request.document.diagnostics[0].message.raw_text =
@@ -589,6 +649,63 @@ mod tests {
                 .text
                 .contains("help: start from the first user-owned template frame")
         );
+    }
+
+    #[test]
+    fn partial_render_emits_mixed_fallback_raw_block() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        request.document.diagnostics[0].message.raw_text =
+            "src/main.c:2:13: error: expected ';' before '}' token".to_string();
+
+        let output = render(request).unwrap();
+
+        assert!(!output.used_fallback);
+        assert!(output.text.contains(
+            "note: some compiler details were not fully structured; original diagnostics are preserved"
+        ));
+        assert!(
+            output
+                .text
+                .contains("raw:\n  src/main.c:2:13: error: expected ';' before '}' token")
+        );
+    }
+
+    #[test]
+    fn ci_render_sanitizes_transient_object_paths() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Ci;
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request.document.diagnostics[0].phase = Phase::Link;
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        request.document.diagnostics[0].locations.clear();
+        request.document.diagnostics[0].message.raw_text =
+            "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here".to_string();
+        request.document.diagnostics[0].analysis = Some(AnalysisOverlay {
+            family: Some("linker.multiple_definition".to_string()),
+            headline: Some("multiple definition of `duplicate`".to_string()),
+            first_action_hint: Some(
+                "remove the duplicate definition or make the symbol internal to one translation unit"
+                    .to_string(),
+            ),
+            confidence: Some(diag_core::Confidence::High),
+            rule_id: Some("rule.family.linker.multiple_definition".to_string()),
+            matched_conditions: vec!["symbol_context=present".to_string()],
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+        });
+
+        let output = render(request).unwrap();
+
+        assert!(output.text.contains(
+            "why: helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here"
+        ));
+        assert!(output.text.contains(
+            "raw:\n  helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here"
+        ));
+        assert!(!output.text.contains("/tmp/ccnwX900.o"));
     }
 
     #[test]

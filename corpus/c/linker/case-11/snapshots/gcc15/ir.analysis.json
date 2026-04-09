@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/cc5UgzFl.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccWt7UHY.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -90,13 +90,13 @@
         }
       ],
       "fingerprints": {
-        "family": "6bed57cb90881041c407f5dfe506ba4c5c1d4c98ef19b3e1985f17c217db41f4",
-        "raw": "f451ba7c1d959578d0aed2b07ddf416dde67576320909becdc995122cf8482dd",
-        "structural": "f740efb7639482eeb0e914d14226e7a5f5f84dc605de43072e6af5d728c52811"
+        "family": "2376963b3ff029ef3c86414eceed41651392d5e9ff62dbe91a02902c4b76b2db",
+        "raw": "169c504be950ce147f1c646197fb2780e474503dd83488481bb068cc808a49b7",
+        "structural": "b150ecc4107df92f10e180efd8bac2559942429aa61f2d3916defc89f950f820"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccWt7UHY.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -118,8 +118,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "ea0761aa0e9cb4ee3f5ba84d8ab9db92cb5ec33e217cd69a86f88e93b498db83",
-    "raw": "9f37d8c854c0dfb388efa66613c3c002ffc8afdd128522dce7199df3c6529455",
-    "structural": "ead97a1ac4d914a49ec6aa0bfaffc10a9b5a51836f6385c14ca50e35612e8d35"
+    "raw": "f58d1714277121b44c07c1b1408e480f1308d5fcb5d3f9ff1d07fd689c34f20f",
+    "structural": "18debd2ccc6c255727dfd0b49d516c01178c0ed75f768bf30a7d2ad142b36ed6"
   },
   "integrity_issues": [
     {

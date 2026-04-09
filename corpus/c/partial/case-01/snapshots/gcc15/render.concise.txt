@@ -3,4 +3,6 @@ error: undefined reference to `missing_symbol`
 help: define the missing symbol or link the object/library that provides it
 why: main.c:(.text+0x5): undefined reference to `missing_symbol'
 linker: symbol `missing_symbol`
+raw:
+  main.c:(.text+0x5): undefined reference to `missing_symbol'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
