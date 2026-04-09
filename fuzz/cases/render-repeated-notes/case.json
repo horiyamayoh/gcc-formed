@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "render-repeated-notes",
+  "description": "many repeated child notes stay deterministic and bounded",
+  "time_budget_ms": 1000,
+  "kind": "render_synthetic",
+  "scenario": "repeated_notes",
+  "profile": "default",
+  "repeat_count": 512,
+  "expect_used_fallback": false,
+  "required_substrings": [
+    "syntax error",
+    "omitted"
+  ],
+  "forbidden_substrings": [
+    "\u001b["
+  ]
+}

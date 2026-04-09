@@ -1,0 +1,3 @@
+C:\bad\path\helper.obj: undefined reference to `missing_symbol'
+note: [31mnot an ANSI escape, but still noisy residual text
+collect2: error: ld returned 1 exit status

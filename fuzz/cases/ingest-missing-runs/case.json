@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "ingest-missing-runs",
+  "description": "SARIF without runs falls back cleanly",
+  "time_budget_ms": 1000,
+  "kind": "sarif_ingest",
+  "sarif_asset": "input.sarif.json",
+  "stderr_asset": "stderr.txt",
+  "expect_fallback_reason": "sarif_parse_failed",
+  "expect_document_completeness": "failed",
+  "expect_min_diagnostic_count": 1
+}

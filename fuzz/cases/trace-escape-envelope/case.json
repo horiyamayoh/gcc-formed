@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "trace-escape-envelope",
+  "description": "trace serialization keeps control bytes JSON-safe",
+  "time_budget_ms": 1000,
+  "kind": "trace_synthetic",
+  "scenario": "escape_envelope",
+  "forbidden_substrings": [
+    "\u001b["
+  ]
+}

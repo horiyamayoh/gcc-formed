@@ -2,6 +2,7 @@ use crate::SnapshotSubset;
 use crate::commands::corpus::{
     ReplayReport, build_replay_report, subset_name, write_replay_report,
 };
+use crate::commands::fuzz::{FuzzSmokeReport, FuzzSmokeStatus, run_fuzz_smoke};
 use diag_backend_probe::{ProbeCache, ResolveRequest, SupportTier};
 use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_capture};
 use diag_trace::{RetentionPolicy, WrapperPaths, build_target_triple};
@@ -37,7 +38,8 @@ pub(crate) struct RcGateOptions {
     pub(crate) report_dir: PathBuf,
     pub(crate) metrics_manual_report: PathBuf,
     pub(crate) issue_budget_report: PathBuf,
-    pub(crate) fuzz_report: PathBuf,
+    pub(crate) fuzz_root: PathBuf,
+    pub(crate) fuzz_report: Option<PathBuf>,
     pub(crate) ux_signoff_report: PathBuf,
     pub(crate) allow_pending_manual_checks: bool,
 }
@@ -370,9 +372,13 @@ pub(crate) fn run_rc_gate(
     let normalized_issue_budget_path = options.report_dir.join("issue-budget-evidence.json");
     write_json(&normalized_issue_budget_path, &issue_budget)?;
 
-    let fuzz = load_fuzz_evidence(&options.fuzz_report)?;
+    let fuzz_smoke = run_fuzz_smoke(&options.fuzz_root, Some(&options.report_dir))?;
+    let fuzz = fuzz_evidence_from_report(&fuzz_smoke);
     let normalized_fuzz_path = options.report_dir.join("fuzz-evidence.json");
     write_json(&normalized_fuzz_path, &fuzz)?;
+    if let Some(path) = options.fuzz_report.as_ref() {
+        write_json(path, &fuzz)?;
+    }
 
     let ux = load_ux_signoff_evidence(&options.ux_signoff_report)?;
     let normalized_ux_path = options.report_dir.join("ux-signoff-evidence.json");
@@ -386,6 +392,7 @@ pub(crate) fn run_rc_gate(
         &metrics_report,
         &issue_budget,
         &normalized_issue_budget_path,
+        &fuzz_smoke,
         &fuzz,
         &normalized_fuzz_path,
         &ux,
@@ -977,6 +984,7 @@ fn build_rc_gate_checks(
     metrics: &RcMetricsReport,
     issue_budget: &IssueBudgetEvidence,
     issue_budget_path: &Path,
+    fuzz_smoke: &FuzzSmokeReport,
     fuzz: &FuzzEvidence,
     fuzz_path: &Path,
     ux: &UxSignoffEvidence,
@@ -1060,7 +1068,7 @@ fn build_rc_gate_checks(
         },
         manual_metrics_check(metrics, allow_pending_manual_checks),
         manual_issue_budget_check(issue_budget, issue_budget_path, allow_pending_manual_checks),
-        manual_fuzz_check(fuzz, fuzz_path, allow_pending_manual_checks),
+        fuzz_check(fuzz_smoke, fuzz, fuzz_path),
         manual_ux_check(ux, ux_path, allow_pending_manual_checks),
     ]
 }
@@ -1129,28 +1137,30 @@ fn manual_issue_budget_check(
     }
 }
 
-fn manual_fuzz_check(
-    fuzz: &FuzzEvidence,
-    fuzz_path: &Path,
-    allow_pending_manual_checks: bool,
-) -> RcGateCheck {
-    let status = match fuzz.status {
-        ManualEvidenceStatus::Approved if fuzz.crash_count == 0 && fuzz.corpus_replay_passed => {
-            GateStatus::Pass
-        }
-        ManualEvidenceStatus::Pending => GateStatus::Pending,
-        _ => GateStatus::Fail,
+fn fuzz_check(fuzz_smoke: &FuzzSmokeReport, fuzz: &FuzzEvidence, fuzz_path: &Path) -> RcGateCheck {
+    let status = if fuzz_smoke.overall_status == FuzzSmokeStatus::Pass
+        && fuzz.crash_count == 0
+        && fuzz.corpus_replay_passed
+    {
+        GateStatus::Pass
+    } else {
+        GateStatus::Fail
     };
     RcGateCheck {
         id: "fuzz".to_string(),
         title: "Fuzz Crash 0".to_string(),
         status: status.clone(),
         summary: format!(
-            "status={:?} crash_count={} corpus_replay_passed={}",
-            fuzz.status, fuzz.crash_count, fuzz.corpus_replay_passed
+            "status={:?} crash_count={} corpus_replay_passed={} seed_cases={} failed_cases={} budget_violations={}",
+            fuzz.status,
+            fuzz.crash_count,
+            fuzz.corpus_replay_passed,
+            fuzz_smoke.case_count,
+            fuzz_smoke.failed_case_count,
+            fuzz_smoke.budget_violation_count
         ),
-        blocker: check_is_blocker(&status, true, allow_pending_manual_checks),
-        manual: true,
+        blocker: status == GateStatus::Fail,
+        manual: false,
         evidence_path: Some(relative_report_evidence_path(fuzz_path)),
     }
 }
@@ -1253,19 +1263,33 @@ fn load_issue_budget_evidence(
     })
 }
 
-fn load_fuzz_evidence(path: &Path) -> Result<FuzzEvidence, Box<dyn std::error::Error>> {
-    if path.exists() {
-        return Ok(serde_json::from_slice(&fs::read(path)?)?);
+fn fuzz_evidence_from_report(report: &FuzzSmokeReport) -> FuzzEvidence {
+    let mut notes = report
+        .cases
+        .iter()
+        .filter(|case| case.status != crate::commands::fuzz::FuzzCaseStatus::Pass)
+        .map(|case| format!("{}: {}", case.id, case.summary))
+        .take(5)
+        .collect::<Vec<_>>();
+    if notes.is_empty() {
+        notes.push(format!(
+            "seed suite passed with {} cases",
+            report.case_count
+        ));
     }
-    Ok(FuzzEvidence {
+    FuzzEvidence {
         schema_version: RC_GATE_SCHEMA_VERSION,
         release_candidate: "1.0.0-rc.N".to_string(),
-        status: ManualEvidenceStatus::Pending,
-        crash_count: 0,
-        corpus_replay_passed: false,
-        updated_at: "missing".to_string(),
-        notes: vec![format!("missing manual evidence: {}", path.display())],
-    })
+        status: if report.overall_status == FuzzSmokeStatus::Pass {
+            ManualEvidenceStatus::Approved
+        } else {
+            ManualEvidenceStatus::Rejected
+        },
+        crash_count: report.crash_count,
+        corpus_replay_passed: report.corpus_replay_passed,
+        updated_at: unix_now_seconds().to_string(),
+        notes,
+    }
 }
 
 fn load_ux_signoff_evidence(path: &Path) -> Result<UxSignoffEvidence, Box<dyn std::error::Error>> {

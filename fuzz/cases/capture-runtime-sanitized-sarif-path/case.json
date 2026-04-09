@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "capture-runtime-sanitized-sarif-path",
+  "description": "capture runtime sanitizes unsafe sarif paths and keeps artifacts",
+  "time_budget_ms": 1500,
+  "kind": "capture_runtime",
+  "stderr_asset": "stderr.txt",
+  "sarif_asset": "input.sarif.json",
+  "mode": "render",
+  "inject_sarif": true,
+  "capture_passthrough_stderr": false,
+  "retain_trace": true,
+  "expect_artifact_ids": [
+    "stderr.raw",
+    "diagnostics.sarif"
+  ]
+}

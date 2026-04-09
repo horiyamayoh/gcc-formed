@@ -20,49 +20,74 @@ pub fn emit(
             let first_line = card
                 .canonical_location
                 .as_ref()
-                .map(|location| format!("{location}: {}: {}", card.severity, card.title))
+                .map(|location| {
+                    format!(
+                        "{}: {}: {}",
+                        sanitize_display_line(location, true),
+                        card.severity,
+                        sanitize_display_line(&card.title, true)
+                    )
+                })
                 .unwrap_or_else(|| {
                     if card
                         .family
                         .as_deref()
                         .is_some_and(|family| family.starts_with("linker"))
                     {
-                        format!("linker: {}: {}", card.severity, card.title)
+                        format!(
+                            "linker: {}: {}",
+                            card.severity,
+                            sanitize_display_line(&card.title, true)
+                        )
                     } else {
-                        format!("{}: {}", card.severity, card.title)
+                        format!(
+                            "{}: {}",
+                            card.severity,
+                            sanitize_display_line(&card.title, true)
+                        )
                     }
                 });
             lines.push(first_line);
         } else {
-            lines.push(format!("{}: {}", card.severity, card.title));
+            lines.push(format!(
+                "{}: {}",
+                card.severity,
+                sanitize_display_line(&card.title, true)
+            ));
             if let Some(location) = card.canonical_location.as_ref() {
-                lines.push(format!("--> {location}"));
+                lines.push(format!("--> {}", sanitize_display_line(location, true)));
             }
         }
         if let Some(confidence_notice) = card.confidence_notice.as_ref() {
             lines.push(confidence_notice.clone());
         }
         if let Some(first_action) = card.first_action.as_ref() {
-            lines.push(format!("help: {first_action}"));
+            lines.push(format!(
+                "help: {}",
+                sanitize_display_line(first_action, true)
+            ));
         }
         lines.push(format!(
             "why: {}",
             display_raw_line(&card.raw_message, request.profile)
         ));
         for excerpt in &card.excerpts {
-            lines.push(format!("| {}", excerpt.location));
+            lines.push(format!(
+                "| {}",
+                sanitize_display_line(&excerpt.location, true)
+            ));
             for source in &excerpt.lines {
-                lines.push(format!("| {source}"));
+                lines.push(format!("| {}", sanitize_display_line(source, true)));
             }
         }
         for context in &card.context_lines {
-            lines.push(context.clone());
+            lines.push(sanitize_display_line(context, true));
         }
         for note in &card.child_notes {
-            lines.push(format!("note: {note}"));
+            lines.push(format!("note: {}", sanitize_display_line(note, true)));
         }
         for notice in &card.collapsed_notices {
-            lines.push(format!("note: {notice}"));
+            lines.push(format!("note: {}", sanitize_display_line(notice, true)));
         }
         if !card.raw_sub_block.is_empty() {
             lines.push("raw:".to_string());
@@ -147,16 +172,34 @@ fn first_line(raw_message: &str) -> String {
 
 fn display_raw_line(raw_message: &str, profile: RenderProfile) -> String {
     let line = first_line(raw_message);
-    match profile {
-        RenderProfile::RawFallback => line,
-        _ => sanitize_transient_object_paths(&line),
-    }
+    sanitize_display_line(&line, !matches!(profile, RenderProfile::RawFallback))
+}
+
+pub(crate) fn sanitize_display_line(text: &str, sanitize_temp_objects: bool) -> String {
+    let sanitized = if sanitize_temp_objects {
+        sanitize_transient_object_paths(text)
+    } else {
+        text.to_string()
+    };
+    escape_control_chars(&sanitized)
 }
 
 fn sanitize_transient_object_paths(text: &str) -> String {
     transient_object_path_pattern()
         .replace_all(text, "<temp-object>")
         .into_owned()
+}
+
+fn escape_control_chars(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for character in text.chars() {
+        if character.is_control() && character != '\n' && character != '\t' {
+            escaped.push_str(&format!("\\x{:02x}", character as u32));
+        } else {
+            escaped.push(character);
+        }
+    }
+    escaped
 }
 
 fn transient_object_path_pattern() -> &'static Regex {

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "render-partial-escape",
+  "description": "partial render escapes terminal control bytes in raw sub-blocks",
+  "time_budget_ms": 1000,
+  "kind": "render_synthetic",
+  "scenario": "partial_escape",
+  "profile": "ci",
+  "repeat_count": 32,
+  "expect_used_fallback": false,
+  "required_substrings": [
+    "\\x1b[31m",
+    "raw:"
+  ],
+  "forbidden_substrings": [
+    "\u001b["
+  ]
+}

@@ -1,7 +1,7 @@
 mod commands;
 mod util;
 
-use crate::commands::{corpus::*, rc_gate::*, release::*};
+use crate::commands::{corpus::*, fuzz::*, rc_gate::*, release::*};
 use crate::util::process::run;
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -170,6 +170,12 @@ enum Commands {
         #[arg(long)]
         report_dir: Option<PathBuf>,
     },
+    FuzzSmoke {
+        #[arg(long, default_value = "fuzz")]
+        root: PathBuf,
+        #[arg(long)]
+        report_dir: Option<PathBuf>,
+    },
     RcGate {
         #[arg(long, default_value = "corpus")]
         root: PathBuf,
@@ -179,8 +185,10 @@ enum Commands {
         metrics_manual_report: PathBuf,
         #[arg(long, default_value = "eval/rc/issue-budget.json")]
         issue_budget_report: PathBuf,
-        #[arg(long, default_value = "eval/rc/fuzz-status.json")]
-        fuzz_report: PathBuf,
+        #[arg(long, default_value = "fuzz")]
+        fuzz_root: PathBuf,
+        #[arg(long)]
+        fuzz_report: Option<PathBuf>,
         #[arg(long, default_value = "eval/rc/ux-signoff.json")]
         ux_signoff_report: PathBuf,
         #[arg(long)]
@@ -472,11 +480,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Err("bench smoke budgets failed".into());
             }
         }
+        Commands::FuzzSmoke { root, report_dir } => {
+            let report = run_fuzz_smoke(&root, report_dir.as_deref())?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if report.overall_status == FuzzSmokeStatus::Fail {
+                return Err("fuzz smoke failed".into());
+            }
+        }
         Commands::RcGate {
             root,
             report_dir,
             metrics_manual_report,
             issue_budget_report,
+            fuzz_root,
             fuzz_report,
             ux_signoff_report,
             allow_pending_manual_checks,
@@ -486,6 +502,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 report_dir,
                 metrics_manual_report,
                 issue_budget_report,
+                fuzz_root,
                 fuzz_report,
                 ux_signoff_report,
                 allow_pending_manual_checks,

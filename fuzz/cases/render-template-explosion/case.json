@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "render-template-explosion",
+  "description": "deep template context stays renderable without panic",
+  "time_budget_ms": 1500,
+  "kind": "render_synthetic",
+  "scenario": "template_explosion",
+  "profile": "verbose",
+  "repeat_count": 64,
+  "depth": 256,
+  "expect_used_fallback": false,
+  "required_substrings": [
+    "template instantiation failed",
+    "while instantiating:",
+    "omitted"
+  ],
+  "forbidden_substrings": [
+    "\u001b["
+  ]
+}

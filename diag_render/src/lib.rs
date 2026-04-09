@@ -821,4 +821,69 @@ mod tests {
             vec!["omitted 2 additional note(s)"]
         );
     }
+
+    #[test]
+    fn enhanced_render_escapes_terminal_control_sequences() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].message.raw_text =
+            "\u{001b}[31mexpected ';' before '}' token".to_string();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .headline = Some("\u{001b}[31msyntax error".to_string());
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "note-esc".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Parse,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "saw escape sequence \u{001b}[0m in source".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: Vec::new(),
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+
+        let output = render(request).unwrap();
+
+        assert!(!output.text.contains('\u{001b}'));
+        assert!(output.text.contains("\\x1b[31msyntax error"));
+        assert!(
+            output
+                .text
+                .contains("\\x1b[31mexpected ';' before '}' token")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: saw escape sequence \\x1b[0m in source")
+        );
+    }
+
+    #[test]
+    fn fallback_render_escapes_terminal_control_sequences() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::RawFallback;
+        request.document.diagnostics[0].message.raw_text =
+            "\u{001b}[31mraw compiler stderr".to_string();
+
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert!(!output.text.contains('\u{001b}'));
+        assert!(output.text.contains("\\x1b[31mraw compiler stderr"));
+    }
 }

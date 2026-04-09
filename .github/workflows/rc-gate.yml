@@ -36,7 +36,7 @@ jobs:
             --plan "$GATE_PLAN" \
             --step-id cargo-xtask-rc-gate \
             --report-root "$REPORT_ROOT" \
-            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-report eval/rc/fuzz-status.json --ux-signoff-report eval/rc/ux-signoff.json'
+            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz --ux-signoff-report eval/rc/ux-signoff.json'
       - name: Gate summary
         if: always()
         run: |

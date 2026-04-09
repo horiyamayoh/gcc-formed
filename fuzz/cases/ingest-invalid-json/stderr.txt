@@ -1,0 +1,3 @@
+src/main.c:4:1: error: expected ';' before '}' token
+    4 | }
+      | ^

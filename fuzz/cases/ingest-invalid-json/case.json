@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "ingest-invalid-json",
+  "description": "malformed SARIF degrades to a failed document without panic",
+  "time_budget_ms": 1000,
+  "kind": "sarif_ingest",
+  "sarif_asset": "input.sarif",
+  "stderr_asset": "stderr.txt",
+  "expect_fallback_reason": "sarif_parse_failed",
+  "expect_document_completeness": "failed",
+  "expect_min_diagnostic_count": 1
+}

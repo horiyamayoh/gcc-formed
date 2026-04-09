@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "residual-ansi-passthrough",
+  "description": "broken paths and unclassified linker text still classify without panic",
+  "time_budget_ms": 1000,
+  "kind": "residual_classify",
+  "stderr_asset": "stderr.txt",
+  "include_passthrough": true,
+  "expect_min_nodes": 2,
+  "expect_family_prefixes": [
+    "linker.undefined_reference",
+    "passthrough"
+  ]
+}

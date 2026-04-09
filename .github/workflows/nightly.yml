@@ -121,6 +121,17 @@ jobs:
             --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask bench-smoke > "$REPORT_ROOT/release/bench-smoke.json"'
+      - name: cargo xtask fuzz-smoke
+        if: matrix.release_blocker
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id cargo-xtask-fuzz-smoke \
+            --report-root "$REPORT_ROOT" \
+            --matrix-gcc-version "$MATRIX_GCC_VERSION" \
+            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --release-blocker "$RELEASE_BLOCKER" \
+            --command 'cargo xtask fuzz-smoke --root fuzz --report-dir "$REPORT_ROOT/release"'
       - name: Build wrapper binary in matrix image
         run: |
           command=$(cat <<'EOF'
@@ -345,6 +356,7 @@ jobs:
                   "hermetic_release": load("hermetic-release.json"),
                   "vendor": load("vendor.json"),
                   "bench_smoke": load("bench-smoke.json"),
+                  "fuzz_smoke": load("fuzz-smoke-report.json"),
               },
           }
           (report_root / "release-provenance.json").write_text(

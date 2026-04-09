@@ -1,0 +1,2 @@
+src/main.c:3:15: error: no matching function for call to 'expect_ptr(int&)'
+src/main.c:3:15: note: template argument deduction/substitution failed:

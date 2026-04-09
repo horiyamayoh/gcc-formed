@@ -13,6 +13,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Changed `cargo xtask bench-smoke` from a target-only stub into a measured benchmark smoke that reports success-path overhead, simple failure p95, and template-heavy failure p95.
 - Extended `replay-report.json` fixture summaries with lead confidence, rendered first-action line, raw/rendered line counts, and compression ratios so RC metrics can be derived from corpus replay instead of ad hoc scripts.
 - Added `metrics-report.json` and `eval/rc/metrics-manual-eval.json` so rc-gate now retains automated fallback/compression/performance/family-coverage metrics plus the manual raw-GCC comparison packet for TRC / TFAH / first-fix / high-confidence mislead.
+- Added `cargo xtask fuzz-smoke`, checked-in `fuzz/` adversarial seeds, and automatic `fuzz-smoke-report.json` / `fuzz-evidence.json` generation so nightly and rc-gate can enforce `fuzz crash 0` without a manual `fuzz-status.json` handoff.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

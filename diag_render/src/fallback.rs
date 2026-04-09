@@ -1,3 +1,4 @@
+use crate::formatter::sanitize_display_line;
 use crate::{DebugRefs, RenderRequest, RenderResult};
 use diag_core::FallbackReason;
 
@@ -30,7 +31,7 @@ pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason)
         }
     }
     for line in raw_lines {
-        lines.push(format!("  {line}"));
+        lines.push(format!("  {}", sanitize_display_line(&line, false)));
     }
     if matches!(request.debug_refs, DebugRefs::TraceId) {
         lines.push(format!("trace: {}", request.document.run.invocation_id));

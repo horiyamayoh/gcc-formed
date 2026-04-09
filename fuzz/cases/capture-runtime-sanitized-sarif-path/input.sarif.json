@@ -1,0 +1,28 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "message": {
+            "text": "no matching function for call to 'expect_ptr(int&)'"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/main.c"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 15
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

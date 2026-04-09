@@ -103,8 +103,22 @@
       ]
     },
     {
-      "id": "build-wrapper-binary-matrix-image",
+      "id": "cargo-xtask-fuzz-smoke",
       "order": 8,
+      "name": "cargo xtask fuzz-smoke",
+      "policy": "release_blocker_only",
+      "failure_classification": "product",
+      "command": "cargo xtask fuzz-smoke --root fuzz --report-dir \"$REPORT_ROOT/release\"",
+      "fixture": "seed-suite:fuzz",
+      "gcc_version": "host",
+      "support_tier": "repository_gate",
+      "artifact_paths": [
+        "$REPORT_ROOT/release/fuzz-smoke-report.json"
+      ]
+    },
+    {
+      "id": "build-wrapper-binary-matrix-image",
+      "order": 9,
       "name": "Build wrapper binary in matrix image",
       "policy": "always",
       "failure_classification": "product",
@@ -116,7 +130,7 @@
     },
     {
       "id": "wrapper-self-check-matrix-image",
-      "order": 9,
+      "order": 10,
       "name": "Wrapper self-check in matrix image",
       "policy": "always",
       "failure_classification": "product",
@@ -131,7 +145,7 @@
     },
     {
       "id": "representative-gcc15-snapshot-check",
-      "order": 10,
+      "order": 11,
       "name": "Representative GCC 15 snapshot check",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -146,7 +160,7 @@
     },
     {
       "id": "vendor-dependency-tree",
-      "order": 11,
+      "order": 12,
       "name": "Vendor dependency tree",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -160,7 +174,7 @@
     },
     {
       "id": "hermetic-release-build-smoke",
-      "order": 12,
+      "order": 13,
       "name": "Hermetic release build smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -174,7 +188,7 @@
     },
     {
       "id": "release-packaging-smoke",
-      "order": 13,
+      "order": 14,
       "name": "Release packaging smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -189,7 +203,7 @@
     },
     {
       "id": "release-install-smoke",
-      "order": 14,
+      "order": 15,
       "name": "Release install smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -205,7 +219,7 @@
     },
     {
       "id": "rollback-symlink-smoke",
-      "order": 15,
+      "order": 16,
       "name": "Rollback symlink smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -219,7 +233,7 @@
     },
     {
       "id": "system-wide-layout-smoke",
-      "order": 16,
+      "order": 17,
       "name": "System-wide layout smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -235,7 +249,7 @@
     },
     {
       "id": "release-repository-promote-and-pin-smoke",
-      "order": 17,
+      "order": 18,
       "name": "Release repository promote and pin smoke",
       "policy": "release_blocker_only",
       "failure_classification": "product",
@@ -255,7 +269,7 @@
     },
     {
       "id": "release-provenance-manifest",
-      "order": 18,
+      "order": 19,
       "name": "Release provenance manifest",
       "policy": "always",
       "failure_classification": "instrumentation",
@@ -269,7 +283,7 @@
     },
     {
       "id": "dependency-and-license-gate",
-      "order": 19,
+      "order": 20,
       "name": "Dependency and license gate",
       "policy": "release_blocker_only",
       "failure_classification": "product",
