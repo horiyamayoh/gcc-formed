@@ -112,16 +112,47 @@ pub(crate) fn compatibility_scope_notice(
         SupportTier::A => None,
         SupportTier::B => match decision.mode {
             ExecutionMode::Shadow => Some(
-                "gcc-formed: GCC 13/14 is running in compatibility mode; only conservative shadow capture is supported and enhanced render output is not guaranteed.",
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.",
             ),
             ExecutionMode::Passthrough => Some(
-                "gcc-formed: GCC 13/14 is running in compatibility mode; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
             ),
             ExecutionMode::Render => None,
         },
         SupportTier::C => Some(
-            "gcc-formed: this compiler version is outside the first-release support scope; conservative passthrough output will be used.",
+            "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.",
         ),
+    }
+}
+
+pub(crate) fn support_tier_label(tier: SupportTier) -> &'static str {
+    match tier {
+        SupportTier::A => "a",
+        SupportTier::B => "b",
+        SupportTier::C => "c",
+    }
+}
+
+pub(crate) fn execution_mode_label(mode: ExecutionMode) -> &'static str {
+    match mode {
+        ExecutionMode::Render => "render",
+        ExecutionMode::Shadow => "shadow",
+        ExecutionMode::Passthrough => "passthrough",
+    }
+}
+
+pub(crate) fn fallback_reason_label(reason: FallbackReason) -> &'static str {
+    match reason {
+        FallbackReason::UnsupportedTier => "unsupported_tier",
+        FallbackReason::IncompatibleSink => "incompatible_sink",
+        FallbackReason::UserOptOut => "user_opt_out",
+        FallbackReason::ShadowMode => "shadow_mode",
+        FallbackReason::SarifMissing => "sarif_missing",
+        FallbackReason::SarifParseFailed => "sarif_parse_failed",
+        FallbackReason::ResidualOnly => "residual_only",
+        FallbackReason::RendererLowConfidence => "renderer_low_confidence",
+        FallbackReason::InternalError => "internal_error",
+        FallbackReason::TimeoutOrBudget => "timeout_or_budget",
     }
 }
 
@@ -217,7 +248,18 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: GCC 13/14 is running in compatibility mode; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+            )
+        );
+    }
+
+    #[test]
+    fn announces_tier_b_compatibility_shadow() {
+        let decision = select_mode(SupportTier::B, Some(ExecutionMode::Shadow), false);
+        assert_eq!(
+            compatibility_scope_notice(SupportTier::B, &decision),
+            Some(
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
             )
         );
     }
@@ -228,7 +270,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::C, &decision),
             Some(
-                "gcc-formed: this compiler version is outside the first-release support scope; conservative passthrough output will be used."
+                "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
             )
         );
     }

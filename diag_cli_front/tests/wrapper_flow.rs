@@ -40,12 +40,75 @@ fn falls_back_to_passthrough_with_fake_gcc13_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "gcc-formed: GCC 13/14 is running in compatibility mode",
+            expected_tier_b_passthrough_notice(),
         ))
         .stderr(predicate::str::contains(
             "main.c:4:1: error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains("help:").not());
+}
+
+#[test]
+fn shadows_with_fake_gcc13_backend_and_honest_notice() {
+    let temp = fixture("13.3.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("--formed-mode=shadow")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected_tier_b_shadow_notice()))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("error: syntax error").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "shadow");
+    assert_eq!(trace["support_tier"], "b");
+    assert_eq!(trace["fallback_reason"], "shadow_mode");
+}
+
+#[test]
+fn falls_back_to_passthrough_with_out_of_scope_backend_notice() {
+    let temp = fixture("12.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_passthrough_notice(),
+        ))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("help:").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "passthrough");
+    assert_eq!(trace["support_tier"], "c");
+    assert_eq!(trace["fallback_reason"], "unsupported_tier");
 }
 
 #[cfg(unix)]
@@ -731,6 +794,18 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
         .filter_map(|line| line.split_once('='))
         .map(|(key, value)| (key.to_string(), value.to_string()))
         .collect()
+}
+
+fn expected_tier_b_passthrough_notice() -> &'static str {
+    "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+}
+
+fn expected_tier_b_shadow_notice() -> &'static str {
+    "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
+}
+
+fn expected_tier_c_passthrough_notice() -> &'static str {
+    "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
 }
 
 #[cfg(unix)]

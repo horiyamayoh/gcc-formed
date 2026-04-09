@@ -1,9 +1,11 @@
 use crate::args::WrapperIntrospection;
-use crate::mode::select_mode;
+use crate::mode::{
+    compatibility_scope_notice, execution_mode_label, fallback_reason_label, select_mode,
+    support_tier_label,
+};
 use diag_backend_probe::SupportTier;
 use diag_backend_probe::{ProbeCache, ResolveRequest};
 use diag_capture_runtime::ExecutionMode;
-use diag_core::FallbackReason;
 use diag_trace::{
     BuildManifest, WrapperPaths, build_target_triple, default_build_manifest, trace_id,
 };
@@ -159,6 +161,7 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             "hard_conflict": hard_conflict,
             "selected_mode": execution_mode_label(decision.mode),
             "fallback_reason": decision.fallback_reason.map(fallback_reason_label),
+            "scope_notice": compatibility_scope_notice(support_tier, &decision),
         })
     })
     .collect()
@@ -228,37 +231,6 @@ fn probe_write_access(path: &Path) -> Result<(), std::io::Error> {
 
 fn access_label(result: &Result<(), std::io::Error>) -> &'static str {
     if result.is_ok() { "ok" } else { "error" }
-}
-
-fn support_tier_label(tier: SupportTier) -> &'static str {
-    match tier {
-        SupportTier::A => "a",
-        SupportTier::B => "b",
-        SupportTier::C => "c",
-    }
-}
-
-fn execution_mode_label(mode: ExecutionMode) -> &'static str {
-    match mode {
-        ExecutionMode::Render => "render",
-        ExecutionMode::Shadow => "shadow",
-        ExecutionMode::Passthrough => "passthrough",
-    }
-}
-
-fn fallback_reason_label(reason: FallbackReason) -> &'static str {
-    match reason {
-        FallbackReason::UnsupportedTier => "unsupported_tier",
-        FallbackReason::IncompatibleSink => "incompatible_sink",
-        FallbackReason::UserOptOut => "user_opt_out",
-        FallbackReason::ShadowMode => "shadow_mode",
-        FallbackReason::SarifMissing => "sarif_missing",
-        FallbackReason::SarifParseFailed => "sarif_parse_failed",
-        FallbackReason::ResidualOnly => "residual_only",
-        FallbackReason::RendererLowConfidence => "renderer_low_confidence",
-        FallbackReason::InternalError => "internal_error",
-        FallbackReason::TimeoutOrBudget => "timeout_or_budget",
-    }
 }
 
 fn paths_are_separated(paths: &WrapperPaths) -> bool {
@@ -335,12 +307,16 @@ mod tests {
                 && case["requested_mode"] == "shadow"
                 && case["selected_mode"] == "shadow"
                 && case["fallback_reason"] == "shadow_mode"
+                && case["scope_notice"]
+                    == "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
         }));
         assert!(cases.iter().any(|case| {
             case["support_tier"] == "c"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "passthrough"
                 && case["fallback_reason"] == "unsupported_tier"
+                && case["scope_notice"]
+                    == "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
         }));
     }
 }

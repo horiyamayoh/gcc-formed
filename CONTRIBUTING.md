@@ -42,6 +42,7 @@ The automated public-beta GitHub Release workflow also expects the repository se
 - Prefer behavior-preserving fixes over silent contract drift.
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
 - If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in the user-facing docs, and the GitHub templates in the same change.
+- If a change alters compatibility-path wording, keep `diag_cli_front` runtime notices, `--formed-self-check` rollout matrix notices, `KNOWN-LIMITATIONS.md`, and `ADR-0005` aligned in the same change.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
 - Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` and `PUBLIC-BETA-RELEASE.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
 

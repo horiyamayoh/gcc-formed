@@ -26,6 +26,12 @@ The exact support-boundary wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOU
 - `x86_64-unknown-linux-gnu` is a compatibility smoke and exception path, not the primary shipped artifact.
 - Older GCC versions are outside the first-release support scope and should be expected to fall back to passthrough behavior.
 
+When the wrapper selects a compatibility path, it emits an explicit banner before the compiler output so issue reports can identify the path without inspecting `trace.json` first. Keep the runtime strings aligned with these exact forms:
+
+- `gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.`
+- `gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.`
+- `gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.`
+
 ## Raw Fallback
 
 Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
@@ -47,7 +53,7 @@ You should expect raw fallback when:
 
 ## Bug Reports
 
-When reporting a bug, include the support tier and a trace bundle when possible. The shortest path is:
+When reporting a bug, include the compatibility banner line or support tier and a trace bundle when possible. The shortest path is:
 
 ```bash
 gcc-formed --formed-trace=always ...

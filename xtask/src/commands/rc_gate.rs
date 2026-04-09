@@ -158,6 +158,8 @@ pub(crate) struct RolloutMatrixCase {
     pub(crate) hard_conflict: bool,
     pub(crate) selected_mode: String,
     pub(crate) fallback_reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) scope_notice: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -728,14 +730,22 @@ fn compare_rollout_matrix_cases(
 
 fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
     vec![
-        rollout_case("a", None, false, "render", None),
-        rollout_case("a", Some("shadow"), false, "shadow", Some("shadow_mode")),
+        rollout_case("a", None, false, "render", None, None),
+        rollout_case(
+            "a",
+            Some("shadow"),
+            false,
+            "shadow",
+            Some("shadow_mode"),
+            None,
+        ),
         rollout_case(
             "a",
             Some("passthrough"),
             false,
             "passthrough",
             Some("user_opt_out"),
+            None,
         ),
         rollout_case(
             "a",
@@ -743,17 +753,48 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             true,
             "passthrough",
             Some("incompatible_sink"),
+            None,
         ),
-        rollout_case("b", None, false, "passthrough", Some("unsupported_tier")),
-        rollout_case("b", Some("shadow"), false, "shadow", Some("shadow_mode")),
+        rollout_case(
+            "b",
+            None,
+            false,
+            "passthrough",
+            Some("unsupported_tier"),
+            Some(
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+            ),
+        ),
+        rollout_case(
+            "b",
+            Some("shadow"),
+            false,
+            "shadow",
+            Some("shadow_mode"),
+            Some(
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.",
+            ),
+        ),
         rollout_case(
             "b",
             Some("render"),
             false,
             "passthrough",
             Some("unsupported_tier"),
+            Some(
+                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+            ),
         ),
-        rollout_case("c", None, false, "passthrough", Some("unsupported_tier")),
+        rollout_case(
+            "c",
+            None,
+            false,
+            "passthrough",
+            Some("unsupported_tier"),
+            Some(
+                "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.",
+            ),
+        ),
     ]
 }
 
@@ -763,6 +804,7 @@ fn rollout_case(
     hard_conflict: bool,
     selected_mode: &str,
     fallback_reason: Option<&str>,
+    scope_notice: Option<&str>,
 ) -> RolloutMatrixCase {
     RolloutMatrixCase {
         support_tier: support_tier.to_string(),
@@ -770,6 +812,7 @@ fn rollout_case(
         hard_conflict,
         selected_mode: selected_mode.to_string(),
         fallback_reason: fallback_reason.map(str::to_string),
+        scope_notice: scope_notice.map(str::to_string),
     }
 }
 
