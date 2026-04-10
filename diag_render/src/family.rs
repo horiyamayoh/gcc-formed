@@ -1,6 +1,7 @@
-use crate::RenderProfile;
+use crate::RenderRequest;
 use crate::budget::budget_for;
-use diag_core::{ContextChainKind, ContextFrame, DiagnosticNode};
+use diag_core::{ContextChainKind, ContextFrame, DiagnosticNode, Ownership};
+use std::path::Path;
 
 #[derive(Debug, Default)]
 pub struct SupportingEvidence {
@@ -10,26 +11,30 @@ pub struct SupportingEvidence {
 }
 
 pub fn summarize_supporting_evidence(
+    request: &RenderRequest,
     node: &DiagnosticNode,
-    profile: RenderProfile,
 ) -> SupportingEvidence {
     let family = node
         .analysis
         .as_ref()
         .and_then(|analysis| analysis.family.as_deref())
         .unwrap_or("unknown");
-    let budget = budget_for(profile);
+    let budget = budget_for(request.profile);
 
     match family {
-        "template" => summarize_template(node, budget.template_frames),
-        "macro_include" => summarize_macro_include(node, budget.macro_include_frames),
-        "type_overload" => summarize_overload(node, budget.candidate_notes),
-        family if family.starts_with("linker") => summarize_linker(node),
-        _ => summarize_generic(node, profile),
+        "template" => summarize_template(request, node, budget.template_frames),
+        "macro_include" => summarize_macro_include(request, node, budget.macro_include_frames),
+        "type_overload" => summarize_overload(request, node, budget.candidate_notes),
+        family if family.starts_with("linker") => summarize_linker(request, node),
+        _ => summarize_generic(request, node),
     }
 }
 
-fn summarize_template(node: &DiagnosticNode, frame_limit: usize) -> SupportingEvidence {
+fn summarize_template(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frame_limit: usize,
+) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     let Some(chain) = node
         .context_chains
@@ -47,7 +52,7 @@ fn summarize_template(node: &DiagnosticNode, frame_limit: usize) -> SupportingEv
         &mut evidence.context_lines,
         "while instantiating:".to_string(),
     );
-    let visible = summarize_frames(&chain.frames, frame_limit);
+    let visible = summarize_frames(request, node, &chain.frames, frame_limit);
     for frame in &visible {
         push_unique(&mut evidence.context_lines, format!("  - {frame}"));
     }
@@ -65,7 +70,11 @@ fn summarize_template(node: &DiagnosticNode, frame_limit: usize) -> SupportingEv
     evidence
 }
 
-fn summarize_macro_include(node: &DiagnosticNode, frame_limit: usize) -> SupportingEvidence {
+fn summarize_macro_include(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frame_limit: usize,
+) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     let macro_chain = node
         .context_chains
@@ -81,7 +90,7 @@ fn summarize_macro_include(node: &DiagnosticNode, frame_limit: usize) -> Support
             &mut evidence.context_lines,
             "through macro expansion:".to_string(),
         );
-        let visible = summarize_frames(&chain.frames, frame_limit);
+        let visible = summarize_frames(request, node, &chain.frames, frame_limit);
         for frame in &visible {
             push_unique(&mut evidence.context_lines, format!("  - {frame}"));
         }
@@ -102,7 +111,7 @@ fn summarize_macro_include(node: &DiagnosticNode, frame_limit: usize) -> Support
             &mut evidence.context_lines,
             "from include chain:".to_string(),
         );
-        let visible = summarize_frames(&chain.frames, frame_limit);
+        let visible = summarize_frames(request, node, &chain.frames, frame_limit);
         for frame in &visible {
             push_unique(&mut evidence.context_lines, format!("  - {frame}"));
         }
@@ -128,23 +137,28 @@ fn summarize_macro_include(node: &DiagnosticNode, frame_limit: usize) -> Support
     evidence
 }
 
-fn summarize_overload(node: &DiagnosticNode, note_limit: usize) -> SupportingEvidence {
+fn summarize_overload(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    note_limit: usize,
+) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
-    let mut rendered = Vec::new();
-
-    for child in &node.children {
-        let note = child
-            .message
-            .raw_text
-            .lines()
-            .next()
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-        if note.is_empty() {
-            continue;
-        }
-        if note.starts_with("candidate ") {
+    let mut rendered = node
+        .children
+        .iter()
+        .enumerate()
+        .filter_map(|(index, child)| {
+            let note = child
+                .message
+                .raw_text
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            if note.is_empty() {
+                return None;
+            }
             let location = child
                 .primary_location()
                 .map(|location| {
@@ -154,14 +168,18 @@ fn summarize_overload(node: &DiagnosticNode, note_limit: usize) -> SupportingEvi
                     )
                 })
                 .unwrap_or_default();
-            rendered.push(format!("because: {note}{location}"));
-        } else {
-            rendered.push(format!("because: {note}"));
-        }
-    }
+            let rendered = if note.starts_with("candidate ") {
+                format!("because: {note}{location}")
+            } else {
+                format!("because: {note}")
+            };
+            Some((child_rank(request, child), index, rendered))
+        })
+        .collect::<Vec<_>>();
+    rendered.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| left.1.cmp(&right.1)));
 
     let mut unique_rendered = Vec::new();
-    for line in rendered {
+    for (_, _, line) in rendered {
         push_unique(&mut unique_rendered, line);
     }
 
@@ -186,7 +204,7 @@ fn summarize_overload(node: &DiagnosticNode, note_limit: usize) -> SupportingEvi
     evidence
 }
 
-fn summarize_linker(node: &DiagnosticNode) -> SupportingEvidence {
+fn summarize_linker(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     if let Some(symbol) = node
         .symbol_context
@@ -205,7 +223,13 @@ fn summarize_linker(node: &DiagnosticNode) -> SupportingEvidence {
     }
 
     if let Some(symbol_context) = node.symbol_context.as_ref() {
-        for object in symbol_context.related_objects.iter().take(3) {
+        let mut related_objects = symbol_context.related_objects.clone();
+        related_objects.sort_by(|left, right| {
+            linker_object_rank(request, right)
+                .cmp(&linker_object_rank(request, left))
+                .then_with(|| left.cmp(right))
+        });
+        for object in related_objects.into_iter().take(3) {
             push_unique(
                 &mut evidence.context_lines,
                 format!("linker: referenced from {object}"),
@@ -222,11 +246,11 @@ fn summarize_linker(node: &DiagnosticNode) -> SupportingEvidence {
     evidence
 }
 
-fn summarize_generic(node: &DiagnosticNode, profile: RenderProfile) -> SupportingEvidence {
-    let budget = budget_for(profile);
-    let limit = match profile {
-        RenderProfile::Verbose => usize::MAX,
-        RenderProfile::RawFallback => 0,
+fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
+    let budget = budget_for(request.profile);
+    let limit = match request.profile {
+        crate::RenderProfile::Verbose => usize::MAX,
+        crate::RenderProfile::RawFallback => 0,
         _ => 3,
     };
     let mut evidence = SupportingEvidence::default();
@@ -244,35 +268,36 @@ fn summarize_generic(node: &DiagnosticNode, profile: RenderProfile) -> Supportin
             push_unique(&mut evidence.context_lines, format!("{label}: preserved"));
             continue;
         }
-        for frame in chain.frames.iter().take(limit) {
-            push_unique(
-                &mut evidence.context_lines,
-                format!("{label}: {}", format_frame(frame)),
-            );
+        for frame in summarize_frames(request, node, &chain.frames, limit) {
+            push_unique(&mut evidence.context_lines, format!("{label}: {frame}"));
         }
-        if chain.frames.len() > limit {
+        let unique_count = dedup_frames(&chain.frames).len();
+        if unique_count > limit {
             push_unique(
                 &mut evidence.context_lines,
-                format!("omitted {} {label} frames", chain.frames.len() - limit),
+                format!("omitted {} {label} frames", unique_count - limit),
             );
         }
     }
 
-    let mut notes = Vec::new();
-    for child in &node.children {
-        let note = child
-            .message
-            .raw_text
-            .lines()
-            .next()
-            .unwrap_or_default()
-            .trim();
-        if !note.is_empty() {
-            push_unique(&mut notes, note.to_string());
-        }
-    }
+    let mut notes = node
+        .children
+        .iter()
+        .enumerate()
+        .filter_map(|(index, child)| {
+            let note = child
+                .message
+                .raw_text
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .trim();
+            (!note.is_empty()).then(|| (child_rank(request, child), index, note.to_string()))
+        })
+        .collect::<Vec<_>>();
+    notes.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| left.1.cmp(&right.1)));
     let note_limit = budget.candidate_notes.min(limit);
-    for note in notes.iter().take(note_limit) {
+    for (_, _, note) in notes.iter().take(note_limit) {
         push_unique(&mut evidence.child_notes, note.clone());
     }
     if notes.len() > evidence.child_notes.len() {
@@ -288,7 +313,12 @@ fn summarize_generic(node: &DiagnosticNode, profile: RenderProfile) -> Supportin
     evidence
 }
 
-fn summarize_frames(frames: &[ContextFrame], frame_limit: usize) -> Vec<String> {
+fn summarize_frames(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<String> {
     if frames.is_empty() || frame_limit == 0 {
         return Vec::new();
     }
@@ -301,22 +331,30 @@ fn summarize_frames(frames: &[ContextFrame], frame_limit: usize) -> Vec<String> 
             .collect();
     }
 
-    let mut visible = Vec::new();
-    if let Some(first) = unique.first() {
-        visible.push(format_frame(first));
-    }
-    if frame_limit > 1 {
-        for frame in unique.iter().skip(1).take(frame_limit.saturating_sub(2)) {
-            visible.push(format_frame(frame));
-        }
-        if let Some(last) = unique.last() {
-            let rendered_last = format_frame(last);
-            if !visible.iter().any(|entry| entry == &rendered_last) {
-                visible.push(rendered_last);
-            }
+    let mut selected = Vec::new();
+    push_index(&mut selected, 0);
+    for (index, frame) in unique.iter().enumerate() {
+        if frame
+            .path
+            .as_deref()
+            .is_some_and(|path| is_user_owned_path(request, node, path))
+        {
+            push_index(&mut selected, index);
         }
     }
-    visible
+    push_index(&mut selected, unique.len().saturating_sub(1));
+    for index in 0..unique.len() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            break;
+        }
+    }
+    selected.truncate(frame_limit);
+    selected.sort_unstable();
+    selected
+        .into_iter()
+        .map(|index| format_frame(&unique[index]))
+        .collect()
 }
 
 fn dedup_frames(frames: &[ContextFrame]) -> Vec<ContextFrame> {
@@ -365,6 +403,68 @@ fn format_frame(frame: &ContextFrame) -> String {
     }
     rendered.push_str(&label);
     rendered
+}
+
+fn child_rank(request: &RenderRequest, node: &DiagnosticNode) -> u8 {
+    node.primary_location()
+        .map(|location| ownership_rank(request, &location.path, location.ownership.as_ref()))
+        .unwrap_or(0)
+}
+
+fn ownership_rank(request: &RenderRequest, path: &str, ownership: Option<&Ownership>) -> u8 {
+    match ownership {
+        Some(Ownership::User) => 4,
+        Some(Ownership::Vendor) => 3,
+        Some(Ownership::Generated) => 2,
+        Some(Ownership::System) => 1,
+        None if looks_workspace_owned(request, path) => 3,
+        _ => 0,
+    }
+}
+
+fn is_user_owned_path(request: &RenderRequest, node: &DiagnosticNode, path: &str) -> bool {
+    node.locations.iter().any(|location| {
+        location.path == path && matches!(location.ownership, Some(Ownership::User))
+    }) || looks_workspace_owned(request, path)
+}
+
+fn looks_workspace_owned(request: &RenderRequest, path: &str) -> bool {
+    let path = Path::new(path);
+    path.is_relative()
+        || request
+            .cwd
+            .as_ref()
+            .is_some_and(|cwd| path.strip_prefix(cwd).is_ok())
+        || path
+            .components()
+            .next()
+            .is_some_and(|component| component.as_os_str() == "src")
+}
+
+fn linker_object_rank(request: &RenderRequest, object: &str) -> u8 {
+    if object.contains("/tmp/cc") || object.contains("/var/folders/") {
+        return 0;
+    }
+    if looks_workspace_owned(request, object) {
+        return 4;
+    }
+    if object.ends_with(".c")
+        || object.ends_with(".cc")
+        || object.ends_with(".cpp")
+        || object.ends_with(".cxx")
+    {
+        return 3;
+    }
+    if object.ends_with(".o") || object.ends_with(".a") {
+        return 2;
+    }
+    1
+}
+
+fn push_index(indices: &mut Vec<usize>, index: usize) {
+    if !indices.iter().any(|existing| *existing == index) {
+        indices.push(index);
+    }
 }
 
 fn push_unique(lines: &mut Vec<String>, line: String) {

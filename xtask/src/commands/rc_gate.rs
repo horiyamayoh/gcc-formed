@@ -1,6 +1,6 @@
 use crate::SnapshotSubset;
 use crate::commands::corpus::{
-    ReplayReport, build_replay_report, subset_name, write_replay_report,
+    NativeParityReport, ReplayReport, build_replay_report, subset_name, write_replay_report,
 };
 use crate::commands::fuzz::{FuzzSmokeReport, FuzzSmokeStatus, run_fuzz_smoke};
 use crate::commands::human_eval::{
@@ -295,11 +295,19 @@ pub(crate) struct RawGccComparisonMetricsReport {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub(crate) struct NativeParityMetricsReport {
+    pub(crate) covered_dimensions: BTreeMap<String, usize>,
+    pub(crate) failure_counts_by_dimension: BTreeMap<String, usize>,
+    pub(crate) failing_fixture_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub(crate) struct RcMetricsReport {
     pub(crate) schema_version: u32,
     pub(crate) generated_at_unix_seconds: u64,
     pub(crate) fallback: FallbackMetricsReport,
     pub(crate) high_confidence: HighConfidenceMetricsReport,
+    pub(crate) native_parity: NativeParityMetricsReport,
     pub(crate) raw_gcc_comparison: RawGccComparisonMetricsReport,
     pub(crate) performance: PerformanceMetricsReport,
     pub(crate) family_coverage: FamilyCoverageMetricsReport,
@@ -569,6 +577,7 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
             inject_sarif: backend.support_tier == SupportTier::A,
+            preserve_native_color: false,
         })?;
         cleanup_capture(&outcome)?;
     }
@@ -589,6 +598,7 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
             inject_sarif: backend.support_tier == SupportTier::A,
+            preserve_native_color: false,
         })?;
         let wrapper_ms = outcome.capture_duration_ms;
         wrapper_samples.push(wrapper_ms);
@@ -907,6 +917,7 @@ fn build_metrics_report(
             manual_reviewed_fixture_count: manual_metrics.reviewed_fixture_count,
             manual_high_confidence_mislead_rate: manual_metrics.high_confidence_mislead_rate,
         },
+        native_parity: native_parity_metrics_from_report(&replay.native_parity),
         raw_gcc_comparison: RawGccComparisonMetricsReport {
             compression_ratio: compression,
             first_action_hint: first_action,
@@ -924,6 +935,14 @@ fn build_metrics_report(
         compatibility_vs_primary,
         manual_evidence_path: relative_report_evidence_path(manual_metrics_path),
         manual_evidence: manual_metrics.clone(),
+    }
+}
+
+fn native_parity_metrics_from_report(report: &NativeParityReport) -> NativeParityMetricsReport {
+    NativeParityMetricsReport {
+        covered_dimensions: report.covered_dimensions.clone(),
+        failure_counts_by_dimension: report.failure_counts_by_dimension.clone(),
+        failing_fixture_count: report.failing_fixtures.len(),
     }
 }
 
@@ -1090,6 +1109,24 @@ fn build_rc_gate_checks(
             blocker: replay.metrics.unexpected_fallback_count > 0,
             manual: false,
             evidence_path: Some(PathBuf::from("replay-report.json")),
+        },
+        RcGateCheck {
+            id: "native_parity_stop_ship".to_string(),
+            title: "Native Parity Stop-Ship".to_string(),
+            status: if replay.native_parity.failing_fixtures.is_empty() {
+                GateStatus::Pass
+            } else {
+                GateStatus::Fail
+            },
+            summary: format!(
+                "coverage={} failure_counts={}",
+                replay.native_parity.covered_dimensions.len(),
+                serde_json::to_string(&replay.native_parity.failure_counts_by_dimension)
+                    .unwrap_or_else(|_| "{}".to_string())
+            ),
+            blocker: !replay.native_parity.failing_fixtures.is_empty(),
+            manual: false,
+            evidence_path: Some(PathBuf::from("native-parity-report.json")),
         },
         RcGateCheck {
             id: "benchmark_budget".to_string(),
@@ -1475,7 +1512,9 @@ fn unix_now_seconds() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::corpus::{AcceptanceFixtureSummary, ReplayReport, acceptance_metrics_for};
+    use crate::commands::corpus::{
+        AcceptanceFixtureSummary, NativeParityReport, ReplayReport, acceptance_metrics_for,
+    };
     use std::collections::BTreeMap;
 
     fn fixture_summary(
@@ -1506,6 +1545,14 @@ mod tests {
             lead_confidence: "high".to_string(),
             high_confidence: true,
             rendered_first_action_line: Some(3),
+            omission_notice_present: false,
+            partial_notice_present: false,
+            raw_diagnostics_hint_present: true,
+            raw_sub_block_present: false,
+            low_confidence_notice_present: false,
+            within_first_screenful_budget: true,
+            first_action_within_budget: None,
+            native_parity_dimensions: Vec::new(),
             raw_line_count: 12,
             rendered_line_count: 6,
             diagnostic_compression_ratio: Some(2.0),
@@ -1525,6 +1572,7 @@ mod tests {
             promoted_failed: 0,
             subset: "all".to_string(),
             metrics: acceptance_metrics_for(&fixtures),
+            native_parity: NativeParityReport::default(),
             fixtures,
             failures: Vec::new(),
         }

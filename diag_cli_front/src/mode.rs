@@ -24,6 +24,7 @@ pub(crate) struct CliCompatibilitySeam {
     support_level: SupportLevel,
     default_processing_path: ProcessingPath,
     sarif_diagnostics: bool,
+    tty_color_control: bool,
 }
 
 impl CliCompatibilitySeam {
@@ -40,6 +41,7 @@ impl CliCompatibilitySeam {
                 default_processing_path_for_tier(tier),
                 ProcessingPath::DualSinkStructured
             ),
+            tty_color_control: matches!(tier, SupportTier::A),
         }
     }
 
@@ -49,6 +51,7 @@ impl CliCompatibilitySeam {
             support_level: profile.support_level,
             default_processing_path: profile.default_processing_path,
             sarif_diagnostics: profile.sarif_diagnostics,
+            tty_color_control: profile.tty_color_control,
         }
     }
 
@@ -68,6 +71,21 @@ impl CliCompatibilitySeam {
 
     pub(crate) fn should_inject_sarif(&self, mode: ExecutionMode) -> bool {
         mode != ExecutionMode::Passthrough && self.sarif_diagnostics && self.is_primary_structured()
+    }
+
+    pub(crate) fn should_preserve_tty_color(
+        &self,
+        mode: ExecutionMode,
+        capabilities: &RenderCapabilities,
+        forwarded_args: &[OsString],
+    ) -> bool {
+        mode == ExecutionMode::Render
+            && self.is_primary_structured()
+            && self.tty_color_control
+            && matches!(capabilities.stream_kind, StreamKind::Tty)
+            && capabilities.interactive
+            && capabilities.ansi_color
+            && !has_color_control_override(forwarded_args)
     }
 }
 
@@ -90,6 +108,15 @@ pub(crate) fn has_hard_conflict(args: &[OsString]) -> bool {
             || value.starts_with("-fdiagnostics-set-output=")
             || value == "-fdiagnostics-parseable-fixits"
             || value == "-fdiagnostics-generate-patch"
+    })
+}
+
+pub(crate) fn has_color_control_override(args: &[OsString]) -> bool {
+    args.iter().any(|arg| {
+        let value = os_to_string(arg);
+        value == "-fno-diagnostics-color"
+            || value.starts_with("-fdiagnostics-color=")
+            || value.starts_with("-fdiagnostics-color ")
     })
 }
 
@@ -413,6 +440,18 @@ mod tests {
         assert_eq!(decision.mode, ExecutionMode::Render);
         assert_eq!(decision.fallback_reason, None);
         assert!(seam.should_inject_sarif(decision.mode));
+        assert!(seam.should_preserve_tty_color(
+            decision.mode,
+            &RenderCapabilities {
+                stream_kind: StreamKind::Tty,
+                width_columns: Some(100),
+                ansi_color: true,
+                unicode: false,
+                hyperlinks: false,
+                interactive: true,
+            },
+            &[]
+        ));
     }
 
     #[test]
@@ -438,5 +477,33 @@ mod tests {
         assert_eq!(decision.mode, ExecutionMode::Shadow);
         assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
         assert!(!seam.should_inject_sarif(decision.mode));
+    }
+
+    #[test]
+    fn tty_color_preservation_requires_tty_and_no_user_override() {
+        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::A);
+        let tty_capabilities = RenderCapabilities {
+            stream_kind: StreamKind::Tty,
+            width_columns: Some(100),
+            ansi_color: true,
+            unicode: false,
+            hyperlinks: false,
+            interactive: true,
+        };
+
+        assert!(seam.should_preserve_tty_color(ExecutionMode::Render, &tty_capabilities, &[]));
+        assert!(!seam.should_preserve_tty_color(
+            ExecutionMode::Render,
+            &RenderCapabilities {
+                stream_kind: StreamKind::Pipe,
+                ..tty_capabilities
+            },
+            &[]
+        ));
+        assert!(!seam.should_preserve_tty_color(
+            ExecutionMode::Render,
+            &tty_capabilities,
+            &[OsString::from("-fdiagnostics-color=never")]
+        ));
     }
 }

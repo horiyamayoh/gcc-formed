@@ -3,7 +3,9 @@ mod excerpt;
 mod fallback;
 mod family;
 mod formatter;
+mod layout;
 mod selector;
+mod theme;
 mod view_model;
 
 use diag_core::{DiagnosticDocument, DocumentCompleteness, FallbackReason, IntegrityIssue};
@@ -734,8 +736,7 @@ mod tests {
             ],
         }];
 
-        let evidence =
-            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
         assert_eq!(evidence.context_lines[0], "through macro expansion:");
         assert!(
             evidence
@@ -773,8 +774,7 @@ mod tests {
                 .collect(),
         }];
 
-        let evidence =
-            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
         assert_eq!(evidence.context_lines[0], "while instantiating:");
         assert_eq!(evidence.context_lines.len(), 7);
         assert_eq!(
@@ -813,8 +813,7 @@ mod tests {
             })
             .collect();
 
-        let evidence =
-            summarize_supporting_evidence(&request.document.diagnostics[0], request.profile);
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
         assert_eq!(evidence.child_notes.len(), 3);
         assert_eq!(
             evidence.collapsed_notices,

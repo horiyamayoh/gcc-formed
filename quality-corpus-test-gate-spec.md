@@ -146,6 +146,7 @@ text snapshot は重要だが、それだけでは brittle である。
 - canonical IR snapshot
 - view model snapshot
 - final text snapshot
+- native-parity expectation fields for stop-ship dimensions such as line budget, disclosure honesty, first-action visibility, and noisy-family compaction
 
 ### 原則 4: same input, same output, same verdict
 

@@ -587,6 +587,8 @@ wrapper は compile semantics の owner ではない。
 ただし:
 
 - `shadow` mode では **preserve SHOULD**
+- `TTY render` mode では、user が color policy を明示していなければ native color を preserve してよい
+- `non-TTY` / `CI` では color-preserving flags を追加してはならない
 - `render` mode で wrapper が上書きした場合、その事実は trace に残す **SHOULD**
 
 ### 13.4 衝突時の user-visible ルール
@@ -665,7 +667,7 @@ GCC 所有診断は structured facts として、external tool 診断は raw res
 
 ```text
 -fdiagnostics-add-output=sarif:version=2.1,file=<tmp>/diagnostics.sarif
--fdiagnostics-color=never
+-fdiagnostics-color=always
 -fdiagnostics-urls=never
 -fmessage-length=0
 ```
@@ -673,7 +675,8 @@ GCC 所有診断は structured facts として、external tool 診断は raw res
 補足:
 
 - `version=2.1` を固定し、`2.2-prerelease` は使わない [R2]
-- `color=never` と `urls=never` は raw capture を escape-free にするため
+- `color=always` は TTY render path で native compiler color を保全するための安全な注入であり、user が color policy を指定している場合は上書きしない
+- `urls=never` は raw capture を escape-free にするため
 - `message-length=0` は raw fallback / residual grouping の安定化のため
 
 ### 15.3 child 実行フロー

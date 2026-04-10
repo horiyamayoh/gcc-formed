@@ -45,6 +45,7 @@
       "artifact_paths": [
         "$REPORT_ROOT/rc-gate",
         "$REPORT_ROOT/rc-gate/replay-report.json",
+        "$REPORT_ROOT/rc-gate/native-parity-report.json",
         "$REPORT_ROOT/rc-gate/bench-smoke-report.json",
         "$REPORT_ROOT/rc-gate/deterministic-replay-report.json",
         "$REPORT_ROOT/rc-gate/rollout-matrix-report.json",

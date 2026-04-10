@@ -85,7 +85,8 @@
       "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/replay",
-        "$REPORT_ROOT/replay/replay-report.json"
+        "$REPORT_ROOT/replay/replay-report.json",
+        "$REPORT_ROOT/replay/native-parity-report.json"
       ]
     },
     {

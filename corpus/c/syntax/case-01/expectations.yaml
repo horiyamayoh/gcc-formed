@@ -20,6 +20,8 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 20
+    first_action_max_line: 3
+    raw_diagnostics_hint_required: true
   concise:
     omission_notice_required: false
     first_screenful_max_lines: 14
@@ -28,8 +30,10 @@ render:
     first_screenful_max_lines: 40
   ci:
     first_screenful_max_lines: 12
+    first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
+    raw_diagnostics_hint_required: true
 integrity:
   allowed_issue_codes: []
 performance:

@@ -252,6 +252,7 @@ renderer は概念上、以下の入力と出力を持つ。
 - `unicode = true` であっても、v1alpha の canonical output は ASCII safe であるべきである。
 - `hyperlinks = true` でも、link は補助であり、path text 自体を省略してはならない。
 - `width_columns = unknown` の場合、renderer は profile 既定幅を使う。
+- native compiler color の保全は capture/runtime の契約であり、renderer は ANSI color の有無に依存して意味を運んではならない。
 
 ### 7.3 `RenderResult`
 

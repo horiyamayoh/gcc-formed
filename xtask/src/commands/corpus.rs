@@ -28,6 +28,7 @@ use std::process::Command;
 use std::time::Instant;
 
 pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
+    "c/partial/case-01",
     "c/syntax/case-01",
     "c/syntax/case-02",
     "c/syntax/case-05",
@@ -78,12 +79,47 @@ pub(crate) struct AcceptanceFixtureSummary {
     pub(crate) lead_confidence: String,
     pub(crate) high_confidence: bool,
     pub(crate) rendered_first_action_line: Option<usize>,
+    pub(crate) omission_notice_present: bool,
+    pub(crate) partial_notice_present: bool,
+    pub(crate) raw_diagnostics_hint_present: bool,
+    pub(crate) raw_sub_block_present: bool,
+    pub(crate) low_confidence_notice_present: bool,
+    pub(crate) within_first_screenful_budget: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) first_action_within_budget: Option<bool>,
+    pub(crate) native_parity_dimensions: Vec<String>,
     pub(crate) raw_line_count: usize,
     pub(crate) rendered_line_count: usize,
     pub(crate) diagnostic_compression_ratio: Option<f64>,
     pub(crate) parse_time_ms: u64,
     pub(crate) render_time_ms: u64,
     pub(crate) verified: bool,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum NativeParityDimension {
+    ColorMeaning,
+    LineBudget,
+    DisclosureHonesty,
+    Compaction,
+    FirstActionVisibility,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct NativeParityFailureSummary {
+    pub(crate) fixture_id: String,
+    pub(crate) dimension: NativeParityDimension,
+    pub(crate) layer: String,
+    pub(crate) summary: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub(crate) struct NativeParityReport {
+    pub(crate) covered_dimensions: BTreeMap<String, usize>,
+    pub(crate) failure_counts_by_dimension: BTreeMap<String, usize>,
+    pub(crate) fixtures_by_dimension: BTreeMap<String, Vec<String>>,
+    pub(crate) failing_fixtures: Vec<NativeParityFailureSummary>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -120,6 +156,7 @@ pub(crate) struct ReplayReport {
     pub(crate) promoted_failed: usize,
     pub(crate) subset: String,
     pub(crate) metrics: AcceptanceMetrics,
+    pub(crate) native_parity: NativeParityReport,
     pub(crate) fixtures: Vec<AcceptanceFixtureSummary>,
     pub(crate) failures: Vec<VerificationFailure>,
 }
@@ -195,6 +232,7 @@ pub(crate) fn run_replay(
             "promoted_fixture_count": report.promoted_fixture_count,
             "subset": report.subset,
             "metrics": report.metrics,
+            "native_parity": report.native_parity,
             "mode": "replay"
         }))?
     );
@@ -252,6 +290,7 @@ pub(crate) fn build_replay_report(
         promoted_failed: summaries.len().saturating_sub(promoted_verified),
         subset: subset_name(subset).to_string(),
         metrics: acceptance_metrics_for(&summaries),
+        native_parity: native_parity_report_for(&selected, &failures),
         fixtures: summaries,
         failures: failures.clone(),
     };
@@ -449,6 +488,12 @@ pub(crate) fn collect_acceptance_fixture_summary(
         .unwrap_or(diag_core::Confidence::Unknown);
     let rendered_first_action_line =
         first_rendered_action_line(&default_render_result.text, first_action_hint);
+    let omission_notice_present = contains_omission_notice(&default_render_result.text);
+    let partial_notice_present = contains_partial_notice(&default_render_result.text);
+    let raw_diagnostics_hint_present = contains_raw_diagnostics_hint(&default_render_result.text);
+    let raw_sub_block_present = contains_raw_sub_block(&default_render_result.text);
+    let low_confidence_notice_present =
+        contains_low_confidence_notice(&default_render_result.text);
     let raw_line_count = text_line_count(
         &fs::read_to_string(fixture.snapshot_root().join("stderr.raw")).map_err(|error| {
             VerificationFailure {
@@ -459,6 +504,22 @@ pub(crate) fn collect_acceptance_fixture_summary(
         })?,
     );
     let rendered_line_count = text_line_count(&default_render_result.text);
+    let default_expectations = fixture.expectations.render.default.as_ref();
+    let within_first_screenful_budget = default_expectations
+        .and_then(|expectations| expectations.first_screenful_max_lines)
+        .map(|max_lines| rendered_line_count <= max_lines)
+        .unwrap_or(true);
+    let first_action_within_budget = default_expectations
+        .and_then(|expectations| expectations.first_action_max_line)
+        .map(|max_line| {
+            rendered_first_action_line
+                .map(|line| line <= max_line)
+                .unwrap_or(false)
+        });
+    let native_parity_dimensions = native_parity_dimensions_for_fixture(fixture)
+        .into_iter()
+        .map(dimension_label)
+        .collect();
     let diagnostic_compression_ratio = if raw_line_count > 0 && rendered_line_count > 0 {
         Some(raw_line_count as f64 / rendered_line_count as f64)
     } else {
@@ -560,6 +621,14 @@ pub(crate) fn collect_acceptance_fixture_summary(
         lead_confidence: confidence_label(&lead_confidence).to_string(),
         high_confidence: matches!(lead_confidence, diag_core::Confidence::High),
         rendered_first_action_line,
+        omission_notice_present,
+        partial_notice_present,
+        raw_diagnostics_hint_present,
+        raw_sub_block_present,
+        low_confidence_notice_present,
+        within_first_screenful_budget,
+        first_action_within_budget,
+        native_parity_dimensions,
         raw_line_count,
         rendered_line_count,
         diagnostic_compression_ratio,
@@ -1005,6 +1074,7 @@ pub(crate) fn capture_bundle_for_fixture(
             processing_path: ProcessingPath::DualSinkStructured,
             structured_capture: StructuredCapturePolicy::SarifFile,
             native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+            preserve_native_color: false,
             locale_handling: LocaleHandling::ForceMessagesC,
             retention_policy: RetentionPolicy::Never,
         },
@@ -1223,18 +1293,81 @@ pub(crate) fn verify_render_expectations(
     text: &str,
     lead_path: Option<&str>,
 ) -> Result<(), VerificationFailure> {
-    if expectations.omission_notice_required == Some(true) && !text.contains("omitted") {
+    let omission_notice_present = contains_omission_notice(text);
+    if expectations.omission_notice_required == Some(true) && !omission_notice_present {
         return Err(VerificationFailure {
             layer: format!("render.{profile_name}.omission_notice"),
             fixture_id: fixture.fixture_id().to_string(),
             summary: "required omission notice was missing".to_string(),
         });
     }
-    if expectations.omission_notice_required == Some(false) && text.contains("omitted") {
+    if expectations.omission_notice_required == Some(false) && omission_notice_present {
         return Err(VerificationFailure {
             layer: format!("render.{profile_name}.omission_notice"),
             fixture_id: fixture.fixture_id().to_string(),
             summary: "unexpected omission notice was present".to_string(),
+        });
+    }
+    let partial_notice_present = contains_partial_notice(text);
+    if expectations.partial_notice_required == Some(true) && !partial_notice_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.partial_notice"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "required partial-document notice was missing".to_string(),
+        });
+    }
+    if expectations.partial_notice_required == Some(false) && partial_notice_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.partial_notice"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "unexpected partial-document notice was present".to_string(),
+        });
+    }
+    let raw_hint_present = contains_raw_diagnostics_hint(text);
+    if expectations.raw_diagnostics_hint_required == Some(true) && !raw_hint_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.raw_disclosure"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "required raw diagnostics hint was missing".to_string(),
+        });
+    }
+    if expectations.raw_diagnostics_hint_required == Some(false) && raw_hint_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.raw_disclosure"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "unexpected raw diagnostics hint was present".to_string(),
+        });
+    }
+    let raw_sub_block_present = contains_raw_sub_block(text);
+    if expectations.raw_sub_block_required == Some(true) && !raw_sub_block_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.raw_sub_block"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "required raw sub-block was missing".to_string(),
+        });
+    }
+    if expectations.raw_sub_block_required == Some(false) && raw_sub_block_present {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.raw_sub_block"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "unexpected raw sub-block was present".to_string(),
+        });
+    }
+    let low_confidence_notice_present = contains_low_confidence_notice(text);
+    if expectations.low_confidence_notice_required == Some(true) && !low_confidence_notice_present
+    {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.low_confidence_notice"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "required low-confidence honesty notice was missing".to_string(),
+        });
+    }
+    if expectations.low_confidence_notice_required == Some(false) && low_confidence_notice_present
+    {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.low_confidence_notice"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "unexpected low-confidence honesty notice was present".to_string(),
         });
     }
     if let Some(max_lines) = expectations.first_screenful_max_lines {
@@ -1244,6 +1377,22 @@ pub(crate) fn verify_render_expectations(
                 layer: format!("render.{profile_name}.line_budget"),
                 fixture_id: fixture.fixture_id().to_string(),
                 summary: format!("rendered {lines} lines, budget is {max_lines}"),
+            });
+        }
+    }
+    if let Some(max_line) = expectations.first_action_max_line {
+        let Some(line) = first_help_line(text) else {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.first_action_visibility"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: "required help line was missing".to_string(),
+            });
+        };
+        if line > max_line {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.first_action_visibility"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("help line {line} exceeded budget line {max_line}"),
             });
         }
     }
@@ -1264,6 +1413,24 @@ pub(crate) fn verify_render_expectations(
             fixture_id: fixture.fixture_id().to_string(),
             summary: "render output used ANSI escapes".to_string(),
         });
+    }
+    for required in &expectations.compaction_required_substrings {
+        if !text.contains(required) {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.compaction"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("required compaction substring missing: `{required}`"),
+            });
+        }
+    }
+    for forbidden in &expectations.compaction_forbidden_substrings {
+        if text.contains(forbidden) {
+            return Err(VerificationFailure {
+                layer: format!("render.{profile_name}.compaction"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("forbidden compaction substring present: `{forbidden}`"),
+            });
+        }
     }
     for required in &expectations.required_substrings {
         if !text.contains(required) {
@@ -1486,6 +1653,151 @@ pub(crate) fn first_rendered_action_line(
         .find_map(|(index, line)| (line.trim_end() == rendered_line).then_some(index + 1))
 }
 
+pub(crate) fn first_help_line(rendered_text: &str) -> Option<usize> {
+    rendered_text
+        .lines()
+        .enumerate()
+        .find_map(|(index, line)| line.starts_with("help: ").then_some(index + 1))
+}
+
+pub(crate) fn contains_omission_notice(text: &str) -> bool {
+    text.contains("omitted")
+}
+
+pub(crate) fn contains_partial_notice(text: &str) -> bool {
+    text.contains("some compiler details were not fully structured")
+}
+
+pub(crate) fn contains_raw_diagnostics_hint(text: &str) -> bool {
+    text.contains("raw: rerun with --formed-profile=raw_fallback")
+}
+
+pub(crate) fn contains_raw_sub_block(text: &str) -> bool {
+    text.lines().any(|line| line.trim_end() == "raw:")
+}
+
+pub(crate) fn contains_low_confidence_notice(text: &str) -> bool {
+    text.contains("wrapper confidence is low; verify against the preserved raw diagnostics")
+}
+
+pub(crate) fn native_parity_dimensions_for_fixture(fixture: &Fixture) -> Vec<NativeParityDimension> {
+    let mut dimensions = Vec::new();
+    for (_, expectations) in fixture.expectations.render.named_profiles() {
+        for dimension in native_parity_dimensions_for_expectations(expectations) {
+            if !dimensions.iter().any(|existing| *existing == dimension) {
+                dimensions.push(dimension);
+            }
+        }
+    }
+    dimensions
+}
+
+pub(crate) fn native_parity_dimensions_for_expectations(
+    expectations: &RenderProfileExpectations,
+) -> Vec<NativeParityDimension> {
+    let mut dimensions = Vec::new();
+    if expectations.first_screenful_max_lines.is_some() {
+        dimensions.push(NativeParityDimension::LineBudget);
+    }
+    if expectations.first_action_max_line.is_some() {
+        dimensions.push(NativeParityDimension::FirstActionVisibility);
+    }
+    if expectations.omission_notice_required.is_some()
+        || expectations.partial_notice_required.is_some()
+        || expectations.raw_diagnostics_hint_required.is_some()
+        || expectations.raw_sub_block_required.is_some()
+        || expectations.low_confidence_notice_required.is_some()
+    {
+        dimensions.push(NativeParityDimension::DisclosureHonesty);
+    }
+    if expectations.color_meaning_forbidden == Some(true) {
+        dimensions.push(NativeParityDimension::ColorMeaning);
+    }
+    if !expectations.compaction_required_substrings.is_empty()
+        || !expectations.compaction_forbidden_substrings.is_empty()
+    {
+        dimensions.push(NativeParityDimension::Compaction);
+    }
+    dimensions
+}
+
+pub(crate) fn dimension_label(dimension: NativeParityDimension) -> String {
+    serde_json::to_value(dimension)
+        .ok()
+        .and_then(|value| value.as_str().map(|value| value.to_string()))
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
+pub(crate) fn native_parity_dimension_for_layer(
+    layer: &str,
+) -> Option<NativeParityDimension> {
+    if layer.ends_with(".ansi") {
+        return Some(NativeParityDimension::ColorMeaning);
+    }
+    if layer.ends_with(".line_budget") {
+        return Some(NativeParityDimension::LineBudget);
+    }
+    if layer.ends_with(".first_action_visibility") {
+        return Some(NativeParityDimension::FirstActionVisibility);
+    }
+    if layer.ends_with(".omission_notice")
+        || layer.ends_with(".partial_notice")
+        || layer.ends_with(".raw_disclosure")
+        || layer.ends_with(".raw_sub_block")
+        || layer.ends_with(".low_confidence_notice")
+    {
+        return Some(NativeParityDimension::DisclosureHonesty);
+    }
+    if layer.ends_with(".compaction") {
+        return Some(NativeParityDimension::Compaction);
+    }
+    None
+}
+
+pub(crate) fn native_parity_report_for(
+    fixtures: &[&Fixture],
+    failures: &[VerificationFailure],
+) -> NativeParityReport {
+    let mut covered_dimensions = BTreeMap::new();
+    let mut fixtures_by_dimension: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for fixture in fixtures {
+        for dimension in native_parity_dimensions_for_fixture(fixture) {
+            let label = dimension_label(dimension);
+            *covered_dimensions.entry(label.clone()).or_insert(0) += 1;
+            let fixtures_for_dimension = fixtures_by_dimension.entry(label).or_default();
+            if !fixtures_for_dimension
+                .iter()
+                .any(|existing| existing == fixture.fixture_id())
+            {
+                fixtures_for_dimension.push(fixture.fixture_id().to_string());
+            }
+        }
+    }
+
+    let mut failure_counts_by_dimension = BTreeMap::new();
+    let mut failing_fixtures = Vec::new();
+    for failure in failures {
+        let Some(dimension) = native_parity_dimension_for_layer(&failure.layer) else {
+            continue;
+        };
+        let label = dimension_label(dimension);
+        *failure_counts_by_dimension.entry(label).or_insert(0) += 1;
+        failing_fixtures.push(NativeParityFailureSummary {
+            fixture_id: failure.fixture_id.clone(),
+            dimension,
+            layer: failure.layer.clone(),
+            summary: failure.summary.clone(),
+        });
+    }
+
+    NativeParityReport {
+        covered_dimensions,
+        failure_counts_by_dimension,
+        fixtures_by_dimension,
+        failing_fixtures,
+    }
+}
+
 pub(crate) fn acceptance_metrics_for(fixtures: &[AcceptanceFixtureSummary]) -> AcceptanceMetrics {
     let promoted_fixture_count = fixtures.len();
     let fallback_used_count = fixtures
@@ -1629,6 +1941,10 @@ pub(crate) fn write_replay_report(
     fs::write(
         report_dir.join("replay-report.json"),
         serde_json::to_vec_pretty(report)?,
+    )?;
+    fs::write(
+        report_dir.join("native-parity-report.json"),
+        serde_json::to_vec_pretty(&report.native_parity)?,
     )?;
     Ok(())
 }

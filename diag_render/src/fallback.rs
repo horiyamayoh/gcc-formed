@@ -1,4 +1,4 @@
-use crate::formatter::sanitize_display_line;
+use crate::theme::sanitize_display_line;
 use crate::{DebugRefs, RenderRequest, RenderResult};
 use diag_core::FallbackReason;
 
