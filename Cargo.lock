@@ -319,6 +319,7 @@ dependencies = [
  "diag_core",
  "regex",
  "serde",
+ "serde_json",
  "thiserror",
 ]
 

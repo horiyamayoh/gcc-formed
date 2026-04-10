@@ -1,6 +1,5 @@
 use crate::budget::{WarningFailureMode, budget_for};
-use crate::family::RendererFamilyKind;
-use crate::family::renderer_family_kind;
+use crate::family::renderer_specificity_rank;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
     Confidence, DiagnosticNode, NodeCompleteness, Ownership, Phase, SemanticRole, Severity,
@@ -145,14 +144,6 @@ fn phase_rank(phase: &Phase) -> u8 {
 }
 
 fn specificity_rank(node: &DiagnosticNode) -> u8 {
-    let family_rank = match renderer_family_kind(node) {
-        RendererFamilyKind::Unknown => 0,
-        RendererFamilyKind::Linker => 3,
-        RendererFamilyKind::Syntax
-        | RendererFamilyKind::Template
-        | RendererFamilyKind::MacroInclude
-        | RendererFamilyKind::TypeOverload => 2,
-    };
     let symbol_rank = u8::from(node.symbol_context.is_some());
     let first_action_rank = node
         .analysis
@@ -160,7 +151,7 @@ fn specificity_rank(node: &DiagnosticNode) -> u8 {
         .and_then(|analysis| analysis.first_action_hint.as_ref())
         .map(|hint| !hint.trim().is_empty())
         .unwrap_or(false);
-    family_rank + symbol_rank + u8::from(first_action_rank)
+    renderer_specificity_rank(node) + symbol_rank + u8::from(first_action_rank)
 }
 
 fn semantic_role_rank(role: &SemanticRole) -> u8 {
@@ -201,4 +192,62 @@ fn has_first_action(node: &DiagnosticNode) -> bool {
         .as_ref()
         .and_then(|analysis| analysis.first_action_hint.as_ref())
         .is_some_and(|hint| !hint.trim().is_empty())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diag_core::{
+        AnalysisOverlay, DiagnosticNode, MessageText, NodeCompleteness, Origin, Phase, Provenance,
+        ProvenanceSource, SemanticRole, Severity,
+    };
+
+    fn sample_node(family: &str) -> DiagnosticNode {
+        DiagnosticNode {
+            id: family.to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Error,
+            semantic_role: SemanticRole::Root,
+            message: MessageText {
+                raw_text: "message".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: Vec::new(),
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: Some(AnalysisOverlay {
+                family: Some(family.to_string()),
+                headline: Some("headline".to_string()),
+                first_action_hint: Some("hint".to_string()),
+                confidence: None,
+                rule_id: Some("rule".to_string()),
+                matched_conditions: Vec::new(),
+                suppression_reason: None,
+                collapsed_child_ids: Vec::new(),
+                collapsed_chain_ids: Vec::new(),
+            }),
+            fingerprints: None,
+        }
+    }
+
+    #[test]
+    fn specificity_rank_uses_rulepack_policy() {
+        assert!(
+            specificity_rank(&sample_node("linker.undefined_reference"))
+                > specificity_rank(&sample_node("template"))
+        );
+        assert!(
+            specificity_rank(&sample_node("template"))
+                > specificity_rank(&sample_node("linker.file_format_or_relocation"))
+        );
+    }
 }

@@ -1,10 +1,18 @@
-use crate::RenderRequest;
 use crate::budget::budget_for;
+use crate::{RenderProfile, RenderRequest};
 use diag_core::{
     Confidence, ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness,
     NodeCompleteness, Ownership, ProvenanceSource,
 };
+use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::path::Path;
+use std::sync::OnceLock;
+
+const RENDER_RULEPACK_JSON: &str = include_str!("../../rules/render.rulepack.json");
+const RENDER_RULEPACK_SCHEMA_VERSION: &str = "diag_render_rulepack/v1alpha1";
+
+static RENDER_RULEPACK: OnceLock<RenderRulepack> = OnceLock::new();
 
 #[derive(Debug, Default)]
 pub struct SupportingEvidence {
@@ -13,7 +21,8 @@ pub struct SupportingEvidence {
     pub collapsed_notices: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub(crate) enum RendererFamilyKind {
     Unknown,
     Syntax,
@@ -23,36 +32,157 @@ pub(crate) enum RendererFamilyKind {
     Linker,
 }
 
-pub(crate) fn renderer_family_kind(node: &DiagnosticNode) -> RendererFamilyKind {
-    match node
-        .analysis
+#[derive(Debug, Deserialize)]
+struct RenderRulepack {
+    schema_version: String,
+    rulepack_version: String,
+    family_policies: Vec<RendererFamilyPolicy>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RendererFamilyPolicy {
+    kind: RendererFamilyKind,
+    #[serde(default)]
+    match_exact: Option<String>,
+    #[serde(default)]
+    match_prefix: Option<String>,
+    #[serde(default)]
+    exclude_exact: Option<String>,
+    specificity_rank: u8,
+    band_c_conservative_useful_subset: bool,
+    #[serde(default)]
+    conservative_limits: Option<ProfileLimitPolicy>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ProfileLimitPolicy {
+    verbose: usize,
+    default: usize,
+    concise: usize,
+    ci: usize,
+    raw_fallback: usize,
+}
+
+fn render_rulepack() -> &'static RenderRulepack {
+    RENDER_RULEPACK.get_or_init(load_render_rulepack)
+}
+
+fn load_render_rulepack() -> RenderRulepack {
+    let rulepack: RenderRulepack = serde_json::from_str(RENDER_RULEPACK_JSON)
+        .expect("checked-in render.rulepack.json must parse");
+    rulepack.validate();
+    rulepack
+}
+
+impl RenderRulepack {
+    fn validate(&self) {
+        assert_eq!(
+            self.schema_version, RENDER_RULEPACK_SCHEMA_VERSION,
+            "checked-in render rulepack schema_version drifted"
+        );
+        assert!(
+            !self.rulepack_version.trim().is_empty(),
+            "checked-in render rulepack_version must be non-empty"
+        );
+        assert!(
+            !self.family_policies.is_empty(),
+            "checked-in render rulepack must define family_policies"
+        );
+
+        let mut seen_kinds = BTreeSet::new();
+        for policy in &self.family_policies {
+            assert!(
+                policy.kind != RendererFamilyKind::Unknown,
+                "checked-in render rulepack must not define unknown family policies"
+            );
+            assert!(
+                seen_kinds.insert(policy.kind),
+                "duplicate renderer family policy in checked-in render rulepack: {:?}",
+                policy.kind
+            );
+            assert!(
+                policy.match_exact.is_some() ^ policy.match_prefix.is_some(),
+                "renderer family policy must set exactly one of match_exact/match_prefix"
+            );
+            if let Some(match_exact) = policy.match_exact.as_deref() {
+                assert!(
+                    !match_exact.trim().is_empty(),
+                    "renderer family match_exact must be non-empty"
+                );
+            }
+            if let Some(match_prefix) = policy.match_prefix.as_deref() {
+                assert!(
+                    !match_prefix.trim().is_empty(),
+                    "renderer family match_prefix must be non-empty"
+                );
+            }
+        }
+    }
+
+    fn policy_for_family(&self, family: &str) -> Option<&RendererFamilyPolicy> {
+        self.family_policies
+            .iter()
+            .find(|policy| policy.matches(family))
+    }
+
+    fn policy_for_kind(&self, kind: RendererFamilyKind) -> Option<&RendererFamilyPolicy> {
+        self.family_policies
+            .iter()
+            .find(|policy| policy.kind == kind)
+    }
+}
+
+impl RendererFamilyPolicy {
+    fn matches(&self, family: &str) -> bool {
+        if self.exclude_exact.as_deref() == Some(family) {
+            return false;
+        }
+
+        self.match_exact.as_deref() == Some(family)
+            || self
+                .match_prefix
+                .as_deref()
+                .is_some_and(|prefix| family.starts_with(prefix))
+    }
+
+    fn conservative_limit(&self, profile: RenderProfile) -> Option<usize> {
+        self.conservative_limits
+            .as_ref()
+            .map(|limits| match profile {
+                RenderProfile::Verbose => limits.verbose,
+                RenderProfile::Default => limits.default,
+                RenderProfile::Concise => limits.concise,
+                RenderProfile::Ci => limits.ci,
+                RenderProfile::RawFallback => limits.raw_fallback,
+            })
+    }
+}
+
+fn renderer_family_policy(node: &DiagnosticNode) -> Option<&'static RendererFamilyPolicy> {
+    node.analysis
         .as_ref()
         .and_then(|analysis| analysis.family.as_deref())
-    {
-        Some("syntax") => RendererFamilyKind::Syntax,
-        Some("template") => RendererFamilyKind::Template,
-        Some("macro_include") => RendererFamilyKind::MacroInclude,
-        Some("type_overload") => RendererFamilyKind::TypeOverload,
-        Some(family)
-            if family.starts_with("linker.") && family != "linker.file_format_or_relocation" =>
-        {
-            RendererFamilyKind::Linker
-        }
-        _ => RendererFamilyKind::Unknown,
-    }
+        .and_then(|family| render_rulepack().policy_for_family(family))
+}
+
+pub(crate) fn renderer_family_kind(node: &DiagnosticNode) -> RendererFamilyKind {
+    renderer_family_policy(node)
+        .map(|policy| policy.kind)
+        .unwrap_or(RendererFamilyKind::Unknown)
+}
+
+pub(crate) fn renderer_specificity_rank(node: &DiagnosticNode) -> u8 {
+    renderer_family_policy(node)
+        .map(|policy| policy.specificity_rank)
+        .unwrap_or(0)
 }
 
 pub(crate) fn is_conservative_useful_subset_card(
     request: &RenderRequest,
     node: &DiagnosticNode,
 ) -> bool {
-    matches!(
-        renderer_family_kind(node),
-        RendererFamilyKind::Syntax
-            | RendererFamilyKind::Template
-            | RendererFamilyKind::TypeOverload
-            | RendererFamilyKind::Linker
-    ) && matches!(band_c_gcc_major(request), Some(9..=12))
+    renderer_family_policy(node).is_some_and(|policy| policy.band_c_conservative_useful_subset)
+        && matches!(band_c_gcc_major(request), Some(9..=12))
         && matches!(
             request.document.document_completeness,
             DocumentCompleteness::Partial
@@ -607,12 +737,12 @@ fn constrained_template_frames(
         return default_limit;
     }
 
-    default_limit.min(match request.profile {
-        crate::RenderProfile::Verbose => 6,
-        crate::RenderProfile::Default => 3,
-        crate::RenderProfile::Concise | crate::RenderProfile::Ci => 2,
-        crate::RenderProfile::RawFallback => 0,
-    })
+    default_limit.min(
+        render_rulepack()
+            .policy_for_kind(RendererFamilyKind::Template)
+            .and_then(|policy| policy.conservative_limit(request.profile))
+            .unwrap_or(default_limit),
+    )
 }
 
 fn constrained_candidate_notes(
@@ -624,12 +754,12 @@ fn constrained_candidate_notes(
         return default_limit;
     }
 
-    default_limit.min(match request.profile {
-        crate::RenderProfile::Verbose => 3,
-        crate::RenderProfile::Default => 2,
-        crate::RenderProfile::Concise | crate::RenderProfile::Ci => 1,
-        crate::RenderProfile::RawFallback => 0,
-    })
+    default_limit.min(
+        render_rulepack()
+            .policy_for_kind(RendererFamilyKind::TypeOverload)
+            .and_then(|policy| policy.conservative_limit(request.profile))
+            .unwrap_or(default_limit),
+    )
 }
 
 fn linker_object_limit(request: &RenderRequest, conservative: bool) -> usize {
@@ -637,13 +767,10 @@ fn linker_object_limit(request: &RenderRequest, conservative: bool) -> usize {
         return 3;
     }
 
-    match request.profile {
-        crate::RenderProfile::Verbose => 2,
-        crate::RenderProfile::Default
-        | crate::RenderProfile::Concise
-        | crate::RenderProfile::Ci => 1,
-        crate::RenderProfile::RawFallback => 0,
-    }
+    render_rulepack()
+        .policy_for_kind(RendererFamilyKind::Linker)
+        .and_then(|policy| policy.conservative_limit(request.profile))
+        .unwrap_or(3)
 }
 
 fn push_index(indices: &mut Vec<usize>, index: usize) {
@@ -664,5 +791,192 @@ fn frame_rank(request: &RenderRequest, node: &DiagnosticNode, frame: &ContextFra
 fn push_unique(lines: &mut Vec<String>, line: String) {
     if !lines.iter().any(|existing| existing == &line) {
         lines.push(line);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        DebugRefs, PathPolicy, RenderCapabilities, SourceExcerptPolicy, TypeDisplayPolicy,
+        WarningVisibility,
+    };
+    use diag_core::{
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument,
+        LanguageMode, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
+        ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
+        WrapperSurface,
+    };
+
+    fn sample_request() -> RenderRequest {
+        RenderRequest {
+            document: DiagnosticDocument {
+                document_id: "doc".to_string(),
+                schema_version: "1".to_string(),
+                document_completeness: DocumentCompleteness::Complete,
+                producer: ProducerInfo {
+                    name: "gcc-formed".to_string(),
+                    version: "0.1.0".to_string(),
+                    git_revision: None,
+                    build_profile: None,
+                    rulepack_version: None,
+                },
+                run: RunInfo {
+                    invocation_id: "inv".to_string(),
+                    invoked_as: Some("gcc-formed".to_string()),
+                    argv_redacted: vec![
+                        "gcc".to_string(),
+                        "-c".to_string(),
+                        "src/main.cpp".to_string(),
+                    ],
+                    cwd_display: Some("/tmp/project".to_string()),
+                    exit_status: 1,
+                    primary_tool: ToolInfo {
+                        name: "gcc".to_string(),
+                        version: Some("15.1.0".to_string()),
+                        component: None,
+                        vendor: Some("GNU".to_string()),
+                    },
+                    secondary_tools: Vec::new(),
+                    language_mode: Some(LanguageMode::Cpp),
+                    target_triple: None,
+                    wrapper_mode: Some(WrapperSurface::Terminal),
+                },
+                captures: vec![CaptureArtifact {
+                    id: "stderr.raw".to_string(),
+                    kind: ArtifactKind::CompilerStderrText,
+                    media_type: "text/plain".to_string(),
+                    encoding: Some("utf-8".to_string()),
+                    digest_sha256: None,
+                    size_bytes: Some(12),
+                    storage: ArtifactStorage::Inline,
+                    inline_text: Some("stderr".to_string()),
+                    external_ref: None,
+                    produced_by: None,
+                }],
+                integrity_issues: Vec::new(),
+                diagnostics: vec![sample_node("syntax")],
+                fingerprints: None,
+            },
+            profile: RenderProfile::Default,
+            capabilities: RenderCapabilities {
+                stream_kind: crate::StreamKind::Tty,
+                width_columns: Some(100),
+                ansi_color: false,
+                unicode: false,
+                hyperlinks: false,
+                interactive: false,
+            },
+            cwd: Some("/tmp/project".into()),
+            path_policy: PathPolicy::RelativeToCwd,
+            warning_visibility: WarningVisibility::Auto,
+            debug_refs: DebugRefs::None,
+            type_display_policy: TypeDisplayPolicy::CompactSafe,
+            source_excerpt_policy: SourceExcerptPolicy::Auto,
+        }
+    }
+
+    fn sample_node(family: &str) -> DiagnosticNode {
+        DiagnosticNode {
+            id: format!("node-{family}"),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Error,
+            semantic_role: SemanticRole::Root,
+            message: MessageText {
+                raw_text: "message".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![Location {
+                path: "src/main.cpp".to_string(),
+                line: 5,
+                column: 7,
+                end_line: None,
+                end_column: None,
+                display_path: None,
+                ownership: Some(Ownership::User),
+            }],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: Some(AnalysisOverlay {
+                family: Some(family.to_string()),
+                headline: Some("headline".to_string()),
+                first_action_hint: Some("hint".to_string()),
+                confidence: Some(Confidence::High),
+                rule_id: Some("rule".to_string()),
+                matched_conditions: vec!["matched=true".to_string()],
+                suppression_reason: None,
+                collapsed_child_ids: Vec::new(),
+                collapsed_chain_ids: Vec::new(),
+            }),
+            fingerprints: None,
+        }
+    }
+
+    #[test]
+    fn loads_checked_in_render_rulepack() {
+        let rulepack = render_rulepack();
+        assert_eq!(rulepack.rulepack_version, "phase1");
+        assert!(
+            rulepack
+                .policy_for_kind(RendererFamilyKind::Linker)
+                .is_some_and(|policy| policy.match_prefix.as_deref() == Some("linker."))
+        );
+    }
+
+    #[test]
+    fn renderer_family_kind_uses_rulepack_matching_policy() {
+        assert_eq!(
+            renderer_family_kind(&sample_node("macro_include")),
+            RendererFamilyKind::MacroInclude
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("linker.undefined_reference")),
+            RendererFamilyKind::Linker
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("linker.file_format_or_relocation")),
+            RendererFamilyKind::Unknown
+        );
+    }
+
+    #[test]
+    fn conservative_useful_subset_respects_rulepack_family_flags() {
+        let mut request = sample_request();
+        request.document.run.primary_tool.version = Some("12.3.0".to_string());
+        request.document.document_completeness = DocumentCompleteness::Partial;
+
+        let mut template = sample_node("template");
+        template.node_completeness = NodeCompleteness::Partial;
+        template.provenance.source = ProvenanceSource::ResidualText;
+        template.analysis.as_mut().unwrap().confidence = Some(Confidence::Low);
+        assert!(is_conservative_useful_subset_card(&request, &template));
+
+        let mut macro_include = sample_node("macro_include");
+        macro_include.node_completeness = NodeCompleteness::Partial;
+        macro_include.provenance.source = ProvenanceSource::ResidualText;
+        macro_include.analysis.as_mut().unwrap().confidence = Some(Confidence::Low);
+        assert!(!is_conservative_useful_subset_card(
+            &request,
+            &macro_include
+        ));
+    }
+
+    #[test]
+    fn conservative_limits_come_from_rulepack_policy() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Ci;
+
+        assert_eq!(constrained_template_frames(&request, 20, true), 2);
+        assert_eq!(constrained_candidate_notes(&request, 8, true), 1);
+        assert_eq!(linker_object_limit(&request, true), 1);
     }
 }

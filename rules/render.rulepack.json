@@ -1,0 +1,58 @@
+{
+  "schema_version": "diag_render_rulepack/v1alpha1",
+  "rulepack_version": "phase1",
+  "family_policies": [
+    {
+      "kind": "syntax",
+      "match_exact": "syntax",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "template",
+      "match_exact": "template",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true,
+      "conservative_limits": {
+        "verbose": 6,
+        "default": 3,
+        "concise": 2,
+        "ci": 2,
+        "raw_fallback": 0
+      }
+    },
+    {
+      "kind": "macro_include",
+      "match_exact": "macro_include",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": false
+    },
+    {
+      "kind": "type_overload",
+      "match_exact": "type_overload",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true,
+      "conservative_limits": {
+        "verbose": 3,
+        "default": 2,
+        "concise": 1,
+        "ci": 1,
+        "raw_fallback": 0
+      }
+    },
+    {
+      "kind": "linker",
+      "match_prefix": "linker.",
+      "exclude_exact": "linker.file_format_or_relocation",
+      "specificity_rank": 3,
+      "band_c_conservative_useful_subset": true,
+      "conservative_limits": {
+        "verbose": 2,
+        "default": 1,
+        "concise": 1,
+        "ci": 1,
+        "raw_fallback": 0
+      }
+    }
+  ]
+}
