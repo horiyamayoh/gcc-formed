@@ -1,6 +1,6 @@
 use crate::SnapshotSubset;
 use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version, tool_for_backend};
-use diag_backend_probe::ProcessingPath;
+use diag_backend_probe::{ProcessingPath, VersionBand};
 use diag_capture_runtime::{
     CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
     NativeTextCapturePolicy, StructuredCapturePolicy,
@@ -29,6 +29,7 @@ use std::time::Instant;
 
 pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/partial/case-01",
+    "c/partial/case-07",
     "c/syntax/case-01",
     "c/syntax/case-02",
     "c/syntax/case-05",
@@ -38,6 +39,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "cpp/template/case-01",
     "cpp/template/case-02",
     "cpp/template/case-05",
+    "cpp/template/case-13",
     "c/type/case-01",
     "cpp/overload/case-01",
     "cpp/overload/case-02",
@@ -61,6 +63,9 @@ pub(crate) struct AcceptanceFixtureSummary {
     pub(crate) fixture_id: String,
     pub(crate) family_key: String,
     pub(crate) title: Option<String>,
+    pub(crate) support_band: String,
+    pub(crate) processing_path: String,
+    pub(crate) fallback_contract: String,
     pub(crate) expected_family: Option<String>,
     pub(crate) actual_family: String,
     pub(crate) family_match: bool,
@@ -150,6 +155,7 @@ pub(crate) struct AcceptanceMetrics {
 pub(crate) struct ReplayReport {
     pub(crate) family_counts: BTreeMap<String, usize>,
     pub(crate) selected_family_counts: BTreeMap<String, usize>,
+    pub(crate) coverage: FixtureCoverageReport,
     pub(crate) selected_fixture_count: usize,
     pub(crate) promoted_fixture_count: usize,
     pub(crate) promoted_verified: usize,
@@ -203,10 +209,28 @@ pub(crate) struct SnapshotFixtureOutcome {
     pub(crate) check_failure: Option<VerificationFailure>,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum FallbackContract {
+    BoundedRender,
+    HonestFallback,
+    FallbackAllowed,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub(crate) struct FixtureCoverageReport {
+    pub(crate) counts_by_support_band: BTreeMap<String, usize>,
+    pub(crate) counts_by_processing_path: BTreeMap<String, usize>,
+    pub(crate) counts_by_fallback_contract: BTreeMap<String, usize>,
+    pub(crate) counts_by_band_path: BTreeMap<String, usize>,
+    pub(crate) fixture_ids_by_band_path: BTreeMap<String, Vec<String>>,
+    pub(crate) missing_required_band_paths: Vec<String>,
+}
+
 #[derive(Debug)]
 pub(crate) struct CapturedIngress {
     pub(crate) stderr_text: String,
-    pub(crate) sarif_text: String,
+    pub(crate) sarif_text: Option<String>,
 }
 
 pub(crate) fn run_replay(
@@ -227,6 +251,7 @@ pub(crate) fn run_replay(
         serde_json::to_string_pretty(&serde_json::json!({
             "family_counts": report.family_counts,
             "selected_family_counts": report.selected_family_counts,
+            "coverage": report.coverage,
             "selected_fixture_count": report.selected_fixture_count,
             "promoted_verified": report.promoted_verified,
             "promoted_fixture_count": report.promoted_fixture_count,
@@ -257,6 +282,7 @@ pub(crate) fn build_replay_report(
         return Err("no fixtures matched replay selection".into());
     }
     let selected_family_counts = family_counts_for_selected(&selected);
+    let coverage = fixture_coverage_report_for(&selected, fixture_filter, family_filter, subset);
 
     let mut failures = Vec::new();
     let mut promoted_verified = 0usize;
@@ -280,10 +306,21 @@ pub(crate) fn build_replay_report(
             }
         }
     }
+    if !coverage.missing_required_band_paths.is_empty() {
+        failures.push(VerificationFailure {
+            layer: "coverage.band_path".to_string(),
+            fixture_id: "corpus".to_string(),
+            summary: format!(
+                "representative coverage missing required band/path combinations: {}",
+                coverage.missing_required_band_paths.join(", ")
+            ),
+        });
+    }
 
     let report = ReplayReport {
         family_counts: counts.clone(),
         selected_family_counts,
+        coverage,
         selected_fixture_count: selected.len(),
         promoted_fixture_count: summaries.len(),
         promoted_verified,
@@ -492,8 +529,7 @@ pub(crate) fn collect_acceptance_fixture_summary(
     let partial_notice_present = contains_partial_notice(&default_render_result.text);
     let raw_diagnostics_hint_present = contains_raw_diagnostics_hint(&default_render_result.text);
     let raw_sub_block_present = contains_raw_sub_block(&default_render_result.text);
-    let low_confidence_notice_present =
-        contains_low_confidence_notice(&default_render_result.text);
+    let low_confidence_notice_present = contains_low_confidence_notice(&default_render_result.text);
     let raw_line_count = text_line_count(
         &fs::read_to_string(fixture.snapshot_root().join("stderr.raw")).map_err(|error| {
             VerificationFailure {
@@ -539,16 +575,9 @@ pub(crate) fn collect_acceptance_fixture_summary(
                 }
             })?,
         );
-        artifacts.insert(
-            "diagnostics.sarif".to_string(),
-            fs::read_to_string(snapshot_root.join("diagnostics.sarif")).map_err(|error| {
-                VerificationFailure {
-                    layer: "report.sarif".to_string(),
-                    fixture_id: fixture.fixture_id().to_string(),
-                    summary: error.to_string(),
-                }
-            })?,
-        );
+        if let Ok(sarif_text) = fs::read_to_string(snapshot_root.join("diagnostics.sarif")) {
+            artifacts.insert("diagnostics.sarif".to_string(), sarif_text);
+        }
         artifacts.insert(
             "ir.facts.json".to_string(),
             snapshot_json(&replay.document, SnapshotKind::FactsOnly).map_err(|error| {
@@ -603,6 +632,10 @@ pub(crate) fn collect_acceptance_fixture_summary(
         fixture_id: fixture.fixture_id().to_string(),
         family_key: fixture.family_key(),
         title: fixture.meta.title.clone(),
+        support_band: version_band_label(fixture_support_band(fixture)).to_string(),
+        processing_path: processing_path_label(fixture_processing_path(fixture)).to_string(),
+        fallback_contract: fallback_contract_label(fallback_contract_for_fixture(fixture))
+            .to_string(),
         expected_family: Some(semantic.family.clone()),
         actual_family,
         family_match,
@@ -798,6 +831,8 @@ pub(crate) fn materialize_fixture_snapshots(
         summary: error.to_string(),
     })?;
     let temp_root = tempdir.path();
+    let fixture_capture_plan = capture_plan_for_fixture(fixture);
+    let temp_sarif_path = temp_root.join("diagnostics.sarif");
     fs::write(temp_root.join("stderr.raw"), &captured.stderr_text).map_err(|error| {
         VerificationFailure {
             layer: "snapshot".to_string(),
@@ -805,18 +840,27 @@ pub(crate) fn materialize_fixture_snapshots(
             summary: error.to_string(),
         }
     })?;
-    fs::write(temp_root.join("diagnostics.sarif"), &captured.sarif_text).map_err(|error| {
-        VerificationFailure {
-            layer: "snapshot".to_string(),
-            fixture_id: fixture.fixture_id().to_string(),
-            summary: error.to_string(),
-        }
+    fs::write(
+        &temp_sarif_path,
+        captured.sarif_text.clone().unwrap_or_default(),
+    )
+    .map_err(|error| VerificationFailure {
+        layer: "snapshot".to_string(),
+        fixture_id: fixture.fixture_id().to_string(),
+        summary: error.to_string(),
     })?;
 
     let replay = replay_document_from_ingress(
         fixture,
         &captured.stderr_text,
-        temp_root.join("diagnostics.sarif").as_path(),
+        if matches!(
+            fixture_capture_plan.plan.structured_capture,
+            StructuredCapturePolicy::Disabled
+        ) {
+            None
+        } else {
+            Some(temp_sarif_path.as_path())
+        },
     )
     .map_err(|error| VerificationFailure {
         layer: "snapshot".to_string(),
@@ -841,7 +885,10 @@ pub(crate) fn materialize_fixture_snapshots(
 
     let mut artifacts = BTreeMap::new();
     artifacts.insert("stderr.raw".to_string(), captured.stderr_text.clone());
-    artifacts.insert("diagnostics.sarif".to_string(), captured.sarif_text.clone());
+    artifacts.insert(
+        "diagnostics.sarif".to_string(),
+        captured.sarif_text.clone().unwrap_or_default(),
+    );
     artifacts.insert(
         "ir.facts.json".to_string(),
         snapshot_json(&replay.document, SnapshotKind::FactsOnly).map_err(|error| {
@@ -944,16 +991,31 @@ pub(crate) fn load_existing_ingress(
     let snapshot_root = fixture.snapshot_root();
     let stderr_path = snapshot_root.join("stderr.raw");
     let sarif_path = snapshot_root.join("diagnostics.sarif");
+    let processing_path = fixture_processing_path(fixture);
     let stderr_text = fs::read_to_string(&stderr_path).map_err(|error| VerificationFailure {
         layer: "capture".to_string(),
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", stderr_path.display()),
     })?;
-    let sarif_text = fs::read_to_string(&sarif_path).map_err(|error| VerificationFailure {
-        layer: "capture".to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary: format!("failed to read {}: {error}", sarif_path.display()),
-    })?;
+    let sarif_text = match fs::read_to_string(&sarif_path) {
+        Ok(text) if text.trim().is_empty() => None,
+        Ok(text) => Some(text),
+        Err(_)
+            if matches!(
+                processing_path,
+                ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough
+            ) =>
+        {
+            None
+        }
+        Err(error) => {
+            return Err(VerificationFailure {
+                layer: "capture".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("failed to read {}: {error}", sarif_path.display()),
+            });
+        }
+    };
     Ok(CapturedIngress {
         stderr_text,
         sarif_text,
@@ -965,12 +1027,10 @@ pub(crate) fn replay_fixture_document(
 ) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
     let snapshot_root = fixture.snapshot_root();
     let stderr_text = fs::read_to_string(snapshot_root.join("stderr.raw"))?;
+    let sarif_path =
+        expected_sarif_path_for_fixture(fixture, Some(snapshot_root.join("diagnostics.sarif")));
     let parse_start = Instant::now();
-    let replay = replay_document_from_ingress(
-        fixture,
-        &stderr_text,
-        snapshot_root.join("diagnostics.sarif").as_path(),
-    )?;
+    let replay = replay_document_from_ingress(fixture, &stderr_text, sarif_path.as_deref())?;
     Ok(ReplayOutcomeAndDocument {
         parse_time_ms: elapsed_ms(parse_start),
         ..replay
@@ -987,7 +1047,7 @@ pub(crate) struct ReplayOutcomeAndDocument {
 pub(crate) fn replay_document_from_ingress(
     fixture: &Fixture,
     stderr_text: &str,
-    sarif_path: &Path,
+    sarif_path: Option<&Path>,
 ) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
     // Temporary migration shim while replay callers still hand explicit fixture assets.
     let bundle = capture_bundle_for_fixture(fixture, stderr_text, sarif_path)?;
@@ -1036,7 +1096,7 @@ pub(crate) fn run_info_for_fixture(fixture: &Fixture) -> RunInfo {
 pub(crate) fn capture_bundle_for_fixture(
     fixture: &Fixture,
     stderr_text: &str,
-    sarif_path: &Path,
+    sarif_path: Option<&Path>,
 ) -> Result<CaptureBundle, Box<dyn std::error::Error>> {
     let compiler = tool_for_backend(
         compiler_binary_for_fixture(fixture),
@@ -1044,6 +1104,7 @@ pub(crate) fn capture_bundle_for_fixture(
     );
     let run_info = run_info_for_fixture(fixture);
     let argv = run_info.argv_redacted.clone();
+    let fixture_capture_plan = capture_plan_for_fixture(fixture);
     let raw_text_artifacts = vec![CaptureArtifact {
         id: "stderr.raw".to_string(),
         kind: ArtifactKind::CompilerStderrText,
@@ -1056,35 +1117,35 @@ pub(crate) fn capture_bundle_for_fixture(
         external_ref: None,
         produced_by: Some(compiler.clone()),
     }];
-    let structured_artifacts = vec![CaptureArtifact {
-        id: "diagnostics.sarif".to_string(),
-        kind: ArtifactKind::GccSarif,
-        media_type: "application/sarif+json".to_string(),
-        encoding: Some("utf-8".to_string()),
-        digest_sha256: None,
-        size_bytes: Some(fs::metadata(sarif_path)?.len()),
-        storage: ArtifactStorage::ExternalRef,
-        inline_text: None,
-        external_ref: Some(sarif_path.display().to_string()),
-        produced_by: Some(compiler),
-    }];
+    let structured_artifacts =
+        expected_sarif_path_for_fixture(fixture, sarif_path.map(Path::to_path_buf))
+            .map(|path| CaptureArtifact {
+                id: "diagnostics.sarif".to_string(),
+                kind: ArtifactKind::GccSarif,
+                media_type: "application/sarif+json".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: fs::metadata(&path).ok().map(|metadata| metadata.len()),
+                storage: if path.exists() {
+                    ArtifactStorage::ExternalRef
+                } else {
+                    ArtifactStorage::Unavailable
+                },
+                inline_text: None,
+                external_ref: path.exists().then(|| path.display().to_string()),
+                produced_by: Some(compiler),
+            })
+            .into_iter()
+            .collect::<Vec<_>>();
     Ok(CaptureBundle {
-        plan: CapturePlan {
-            execution_mode: ExecutionMode::Render,
-            processing_path: ProcessingPath::DualSinkStructured,
-            structured_capture: StructuredCapturePolicy::SarifFile,
-            native_text_capture: NativeTextCapturePolicy::CaptureOnly,
-            preserve_native_color: false,
-            locale_handling: LocaleHandling::ForceMessagesC,
-            retention_policy: RetentionPolicy::Never,
-        },
+        plan: fixture_capture_plan.plan,
         invocation: CaptureInvocation {
             backend_path: compiler_binary_for_fixture(fixture).to_string(),
             argv_hash: fingerprint_for(&argv),
             argv,
             cwd: fixture.root.display().to_string(),
-            selected_mode: ExecutionMode::Render,
-            processing_path: ProcessingPath::DualSinkStructured,
+            selected_mode: fixture_capture_plan.plan.execution_mode,
+            processing_path: fixture_capture_plan.plan.processing_path,
         },
         raw_text_artifacts,
         structured_artifacts,
@@ -1354,16 +1415,14 @@ pub(crate) fn verify_render_expectations(
         });
     }
     let low_confidence_notice_present = contains_low_confidence_notice(text);
-    if expectations.low_confidence_notice_required == Some(true) && !low_confidence_notice_present
-    {
+    if expectations.low_confidence_notice_required == Some(true) && !low_confidence_notice_present {
         return Err(VerificationFailure {
             layer: format!("render.{profile_name}.low_confidence_notice"),
             fixture_id: fixture.fixture_id().to_string(),
             summary: "required low-confidence honesty notice was missing".to_string(),
         });
     }
-    if expectations.low_confidence_notice_required == Some(false) && low_confidence_notice_present
-    {
+    if expectations.low_confidence_notice_required == Some(false) && low_confidence_notice_present {
         return Err(VerificationFailure {
             layer: format!("render.{profile_name}.low_confidence_notice"),
             fixture_id: fixture.fixture_id().to_string(),
@@ -1641,6 +1700,250 @@ pub(crate) fn text_line_count(text: &str) -> usize {
     text.lines().filter(|line| !line.trim().is_empty()).count()
 }
 
+pub(crate) fn fixture_support_band(fixture: &Fixture) -> VersionBand {
+    match fixture.invoke.major_version_selector.parse::<u32>().ok() {
+        Some(major) if major >= 15 => VersionBand::Gcc15Plus,
+        Some(13 | 14) => VersionBand::Gcc13_14,
+        Some(9..=12) => VersionBand::Gcc9_12,
+        _ => VersionBand::Unknown,
+    }
+}
+
+pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
+    if fixture_has_any_tag(
+        fixture,
+        &[
+            "processing_path:single_sink_structured",
+            "single_sink_structured",
+        ],
+    ) {
+        return ProcessingPath::SingleSinkStructured;
+    }
+    if fixture_has_any_tag(
+        fixture,
+        &["processing_path:native_text_capture", "native_text_capture"],
+    ) {
+        return ProcessingPath::NativeTextCapture;
+    }
+    if fixture_has_any_tag(fixture, &["processing_path:passthrough", "passthrough"]) {
+        return ProcessingPath::Passthrough;
+    }
+    if fixture_has_any_tag(
+        fixture,
+        &[
+            "processing_path:dual_sink_structured",
+            "dual_sink_structured",
+            "sarif",
+        ],
+    ) {
+        return ProcessingPath::DualSinkStructured;
+    }
+
+    match fixture.invoke.required_support_tier.as_str() {
+        "A" => ProcessingPath::DualSinkStructured,
+        "B" => {
+            if fixture.invoke.expected_mode == "passthrough"
+                || fixture.expectations.expected_mode == "passthrough"
+            {
+                ProcessingPath::Passthrough
+            } else {
+                ProcessingPath::NativeTextCapture
+            }
+        }
+        _ => ProcessingPath::Passthrough,
+    }
+}
+
+pub(crate) fn fallback_contract_for_fixture(fixture: &Fixture) -> FallbackContract {
+    if fixture_has_any_tag(
+        fixture,
+        &["fallback_contract:bounded_render", "bounded_render"],
+    ) {
+        return FallbackContract::BoundedRender;
+    }
+    if fixture_has_any_tag(
+        fixture,
+        &["fallback_contract:honest_fallback", "honest_fallback"],
+    ) {
+        return FallbackContract::HonestFallback;
+    }
+
+    match fixture
+        .expectations
+        .semantic
+        .as_ref()
+        .and_then(|semantic| semantic.fallback)
+    {
+        Some(ExpectedFallback::Forbidden) => FallbackContract::BoundedRender,
+        Some(ExpectedFallback::Required) => FallbackContract::HonestFallback,
+        Some(ExpectedFallback::Allowed) | None => FallbackContract::FallbackAllowed,
+    }
+}
+
+pub(crate) fn version_band_label(band: VersionBand) -> &'static str {
+    match band {
+        VersionBand::Gcc15Plus => "gcc15_plus",
+        VersionBand::Gcc13_14 => "gcc13_14",
+        VersionBand::Gcc9_12 => "gcc9_12",
+        VersionBand::Unknown => "unknown",
+    }
+}
+
+pub(crate) fn processing_path_label(path: ProcessingPath) -> &'static str {
+    match path {
+        ProcessingPath::DualSinkStructured => "dual_sink_structured",
+        ProcessingPath::SingleSinkStructured => "single_sink_structured",
+        ProcessingPath::NativeTextCapture => "native_text_capture",
+        ProcessingPath::Passthrough => "passthrough",
+    }
+}
+
+pub(crate) fn fallback_contract_label(contract: FallbackContract) -> &'static str {
+    match contract {
+        FallbackContract::BoundedRender => "bounded_render",
+        FallbackContract::HonestFallback => "honest_fallback",
+        FallbackContract::FallbackAllowed => "fallback_allowed",
+    }
+}
+
+pub(crate) fn fixture_coverage_report_for(
+    fixtures: &[&Fixture],
+    fixture_filter: Option<&str>,
+    family_filter: Option<&str>,
+    subset: SnapshotSubset,
+) -> FixtureCoverageReport {
+    let mut report = FixtureCoverageReport::default();
+    for fixture in fixtures {
+        let band = version_band_label(fixture_support_band(fixture)).to_string();
+        let path = processing_path_label(fixture_processing_path(fixture)).to_string();
+        let fallback_contract =
+            fallback_contract_label(fallback_contract_for_fixture(fixture)).to_string();
+        let band_path = format!("{band}/{path}");
+
+        *report
+            .counts_by_support_band
+            .entry(band.clone())
+            .or_insert(0) += 1;
+        *report
+            .counts_by_processing_path
+            .entry(path.clone())
+            .or_insert(0) += 1;
+        *report
+            .counts_by_fallback_contract
+            .entry(fallback_contract)
+            .or_insert(0) += 1;
+        *report
+            .counts_by_band_path
+            .entry(band_path.clone())
+            .or_insert(0) += 1;
+        report
+            .fixture_ids_by_band_path
+            .entry(band_path)
+            .or_default()
+            .push(fixture.fixture_id().to_string());
+    }
+
+    for fixture_ids in report.fixture_ids_by_band_path.values_mut() {
+        fixture_ids.sort();
+        fixture_ids.dedup();
+    }
+
+    if fixture_filter.is_none()
+        && family_filter.is_none()
+        && matches!(subset, SnapshotSubset::Representative)
+    {
+        report.missing_required_band_paths = required_representative_band_paths()
+            .into_iter()
+            .filter(|required| !report.counts_by_band_path.contains_key(required))
+            .collect();
+    }
+
+    report
+}
+
+pub(crate) fn fixture_has_any_tag(fixture: &Fixture, needles: &[&str]) -> bool {
+    fixture
+        .meta
+        .tags
+        .iter()
+        .any(|tag| needles.iter().any(|needle| tag == needle))
+}
+
+pub(crate) fn required_representative_band_paths() -> Vec<String> {
+    vec![
+        "gcc13_14/native_text_capture".to_string(),
+        "gcc13_14/single_sink_structured".to_string(),
+    ]
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct FixtureCapturePlan {
+    pub(crate) plan: CapturePlan,
+}
+
+pub(crate) fn capture_plan_for_fixture(fixture: &Fixture) -> FixtureCapturePlan {
+    let execution_mode = match fixture.expectations.expected_mode.as_str() {
+        "shadow" => ExecutionMode::Shadow,
+        "passthrough" => ExecutionMode::Passthrough,
+        _ => ExecutionMode::Render,
+    };
+    let processing_path = fixture_processing_path(fixture);
+    let structured_capture = match processing_path {
+        ProcessingPath::DualSinkStructured => StructuredCapturePolicy::SarifFile,
+        ProcessingPath::SingleSinkStructured => StructuredCapturePolicy::SingleSinkSarifFile,
+        ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough => {
+            StructuredCapturePolicy::Disabled
+        }
+    };
+    let native_text_capture = match execution_mode {
+        ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
+        ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
+        ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
+    };
+
+    FixtureCapturePlan {
+        plan: CapturePlan {
+            execution_mode,
+            processing_path,
+            structured_capture,
+            native_text_capture,
+            preserve_native_color: false,
+            locale_handling: LocaleHandling::ForceMessagesC,
+            retention_policy: RetentionPolicy::Never,
+        },
+    }
+}
+
+pub(crate) fn expected_sarif_path_for_fixture(
+    fixture: &Fixture,
+    sarif_path: Option<std::path::PathBuf>,
+) -> Option<std::path::PathBuf> {
+    match fixture_processing_path(fixture) {
+        ProcessingPath::DualSinkStructured | ProcessingPath::SingleSinkStructured => {
+            sarif_path.or_else(|| Some(fixture.snapshot_root().join("diagnostics.sarif")))
+        }
+        ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough => None,
+    }
+}
+
+pub(crate) fn discover_single_sink_sarif(root: &Path) -> Result<Option<String>, String> {
+    let mut candidates = fs::read_dir(root)
+        .map_err(|error| format!("failed to read {}: {error}", root.display()))?
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let path = entry.path();
+            (path.extension().and_then(|ext| ext.to_str()) == Some("sarif")).then_some(path)
+        })
+        .collect::<Vec<_>>();
+    candidates.sort();
+    let Some(path) = candidates.last() else {
+        return Ok(None);
+    };
+    let text = fs::read_to_string(path)
+        .map_err(|error| format!("failed to read {}: {error}", path.display()))?;
+    Ok((!text.trim().is_empty()).then_some(text))
+}
+
 pub(crate) fn first_rendered_action_line(
     rendered_text: &str,
     first_action_hint: Option<&str>,
@@ -1680,7 +1983,9 @@ pub(crate) fn contains_low_confidence_notice(text: &str) -> bool {
     text.contains("wrapper confidence is low; verify against the preserved raw diagnostics")
 }
 
-pub(crate) fn native_parity_dimensions_for_fixture(fixture: &Fixture) -> Vec<NativeParityDimension> {
+pub(crate) fn native_parity_dimensions_for_fixture(
+    fixture: &Fixture,
+) -> Vec<NativeParityDimension> {
     let mut dimensions = Vec::new();
     for (_, expectations) in fixture.expectations.render.named_profiles() {
         for dimension in native_parity_dimensions_for_expectations(expectations) {
@@ -1728,9 +2033,7 @@ pub(crate) fn dimension_label(dimension: NativeParityDimension) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-pub(crate) fn native_parity_dimension_for_layer(
-    layer: &str,
-) -> Option<NativeParityDimension> {
+pub(crate) fn native_parity_dimension_for_layer(layer: &str) -> Option<NativeParityDimension> {
     if layer.ends_with(".ansi") {
         return Some(NativeParityDimension::ColorMeaning);
     }
@@ -2085,13 +2388,20 @@ pub(crate) fn capture_fixture_ingress(
     )?;
 
     let compiler = compiler_binary_for_fixture(fixture);
+    let fixture_capture_plan = capture_plan_for_fixture(fixture);
     let mut shell_args = vec![compiler.to_string()];
     if let Some(standard) = fixture.invoke.standard.as_ref() {
         shell_args.push(format!("-std={standard}"));
     }
     shell_args.extend(fixture.invoke.argv.iter().cloned());
-    shell_args
-        .push("-fdiagnostics-add-output=sarif:version=2.1,file=diagnostics.sarif".to_string());
+    match fixture_capture_plan.plan.structured_capture {
+        StructuredCapturePolicy::Disabled => {}
+        StructuredCapturePolicy::SarifFile => shell_args
+            .push("-fdiagnostics-add-output=sarif:version=2.1,file=diagnostics.sarif".to_string()),
+        StructuredCapturePolicy::SingleSinkSarifFile => {
+            shell_args.push("-fdiagnostics-format=sarif-file".to_string());
+        }
+    }
     let command_line = format!(
         "set -euo pipefail; {} 1>stdout.raw 2>stderr.raw || true",
         shell_args
@@ -2136,17 +2446,30 @@ pub(crate) fn capture_fixture_ingress(
     }
 
     let stderr_path = sandbox.path().join("stderr.raw");
-    let sarif_path = sandbox.path().join("diagnostics.sarif");
     let stderr_text = fs::read_to_string(&stderr_path).map_err(|error| VerificationFailure {
         layer: "capture".to_string(),
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", stderr_path.display()),
     })?;
-    let sarif_text = fs::read_to_string(&sarif_path).map_err(|error| VerificationFailure {
-        layer: "capture".to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary: format!("failed to read {}: {error}", sarif_path.display()),
-    })?;
+    let sarif_text = match fixture_capture_plan.plan.structured_capture {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile => {
+            let sarif_path = sandbox.path().join("diagnostics.sarif");
+            Some(
+                fs::read_to_string(&sarif_path).map_err(|error| VerificationFailure {
+                    layer: "capture".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: format!("failed to read {}: {error}", sarif_path.display()),
+                })?,
+            )
+        }
+        StructuredCapturePolicy::SingleSinkSarifFile => discover_single_sink_sarif(sandbox.path())
+            .map_err(|error| VerificationFailure {
+                layer: "capture".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error,
+            })?,
+    };
     Ok(CapturedIngress {
         stderr_text,
         sarif_text,
@@ -2254,4 +2577,163 @@ pub(crate) fn enforce_minimum_corpus_shape(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diag_core::Severity;
+    use diag_testkit::{
+        FixtureExpectations, FixtureInvoke, FixtureMeta, IntegrityExpectations,
+        PerformanceExpectations, RenderExpectations, SemanticExpectations,
+    };
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    fn fixture_with_tags(
+        fixture_id: &str,
+        major_version_selector: &str,
+        expected_mode: &str,
+        tags: &[&str],
+        fallback: Option<ExpectedFallback>,
+    ) -> Fixture {
+        Fixture {
+            root: PathBuf::from(format!("/tmp/{fixture_id}")),
+            invoke: FixtureInvoke {
+                language: "c".to_string(),
+                standard: Some("c11".to_string()),
+                target_compiler_family: "gcc".to_string(),
+                required_support_tier: if major_version_selector == "15" {
+                    "A".to_string()
+                } else {
+                    "B".to_string()
+                },
+                major_version_selector: major_version_selector.to_string(),
+                argv: vec!["-c".to_string(), "src/main.c".to_string()],
+                cwd_policy: "fixture_root".to_string(),
+                env_overrides: BTreeMap::new(),
+                source_readability_expectation: "readable".to_string(),
+                linker_involvement: false,
+                expected_mode: expected_mode.to_string(),
+                canonical_path_policy: "relative_to_cwd".to_string(),
+            },
+            expectations: FixtureExpectations {
+                schema_version: 1,
+                fixture_id: fixture_id.to_string(),
+                support_tier: if major_version_selector == "15" {
+                    "A".to_string()
+                } else {
+                    "B".to_string()
+                },
+                expected_mode: expected_mode.to_string(),
+                family: Some("syntax".to_string()),
+                semantic: Some(SemanticExpectations {
+                    family: "syntax".to_string(),
+                    severity: Severity::Error,
+                    lead_group_any_of: vec!["residual-0".to_string()],
+                    primary_locations: Vec::new(),
+                    primary_location_user_owned_required: false,
+                    first_action_required: false,
+                    raw_provenance_required: false,
+                    fallback,
+                    confidence_min: None,
+                }),
+                render: RenderExpectations::default(),
+                integrity: IntegrityExpectations::default(),
+                performance: PerformanceExpectations::default(),
+            },
+            meta: FixtureMeta {
+                corpus_id: Some(fixture_id.to_string()),
+                title: Some(fixture_id.to_string()),
+                tags: tags.iter().map(|tag| (*tag).to_string()).collect(),
+                ownership: None,
+                provenance: None,
+                reviewer: None,
+                redaction_class: None,
+                owner_team: None,
+                last_reviewed: None,
+                reviewers: Vec::new(),
+                promotion_status: Some("curated".to_string()),
+                known_version_drift_notes: Vec::new(),
+            },
+        }
+    }
+
+    #[test]
+    fn explicit_fixture_tags_override_band_b_default_processing_path() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-band-b-01",
+            "14",
+            "render",
+            &["band:gcc13_14", "processing_path:single_sink_structured"],
+            Some(ExpectedFallback::Forbidden),
+        );
+
+        assert_eq!(
+            fixture_processing_path(&fixture),
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(
+            fallback_contract_for_fixture(&fixture),
+            FallbackContract::BoundedRender
+        );
+    }
+
+    #[test]
+    fn representative_coverage_requires_band_b_native_and_single_sink_paths() {
+        let native_fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+                "fallback_contract:honest_fallback",
+            ],
+            Some(ExpectedFallback::Required),
+        );
+
+        let coverage = fixture_coverage_report_for(
+            &[&native_fixture],
+            None,
+            None,
+            SnapshotSubset::Representative,
+        );
+
+        assert_eq!(
+            coverage.missing_required_band_paths,
+            vec!["gcc13_14/single_sink_structured".to_string()]
+        );
+    }
+
+    #[test]
+    fn capture_bundle_tracks_missing_single_sink_artifact_as_unavailable() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-band-b-single-sink",
+            "14",
+            "render",
+            &["band:gcc13_14", "processing_path:single_sink_structured"],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let missing = fixture.root.join("snapshots/gcc15/diagnostics.sarif");
+
+        let bundle =
+            capture_bundle_for_fixture(&fixture, "main.c:1:1: error: broken", Some(&missing))
+                .expect("bundle");
+
+        assert_eq!(
+            bundle.plan.processing_path,
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(
+            bundle.plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkSarifFile
+        );
+        assert_eq!(bundle.structured_artifacts.len(), 1);
+        assert_eq!(
+            bundle.structured_artifacts[0].storage,
+            ArtifactStorage::Unavailable
+        );
+    }
 }

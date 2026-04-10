@@ -1,11 +1,11 @@
-corpus_id: cpp/template/case-13
-title: GCC13 single-sink structured template deduction failure
+corpus_id: c/partial/case-07
+title: GCC13 native-text capture preserves linker evidence with bounded render
 tags:
-- template
+- partial
 - phase1
 - beta-bar
 - 'band:gcc13_14'
-- 'processing_path:single_sink_structured'
+- 'processing_path:native_text_capture'
 - 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro

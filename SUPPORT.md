@@ -12,6 +12,8 @@ Keep wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
 - `GCC15+` is the primary fidelity reference path.
 - `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `GCC13-14` remains a first-class beta path inside that narrower contract.
+- `GCC9-12` is a product path with narrower guarantees and different capture constraints.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
@@ -27,7 +29,7 @@ Keep wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 ## VersionBand / ProcessingPath Routing
 
 - `GCC15+`: highest-priority reference path. Treat regressions here as product-path issues.
-- `GCC13-14`: in-scope `Experimental` path. Check whether the observed path was `NativeTextCapture` or `SingleSinkStructured`, and evaluate the complaint against the current support boundary before treating it as a stop-ship regression.
+- `GCC13-14`: in-scope first-class beta path. Check whether the observed path was `NativeTextCapture` or `SingleSinkStructured`, and evaluate the complaint against the current support boundary before treating it as a stop-ship regression.
 - `GCC9-12`: in-scope `Experimental` path with narrower expected wins. Fail-open behavior or honest passthrough may still be the correct result.
 - `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
 

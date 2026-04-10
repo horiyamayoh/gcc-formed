@@ -1,4 +1,7 @@
-use crate::args::{parse_debug_refs, parse_mode, parse_profile, parse_retention_policy};
+use crate::args::{
+    parse_debug_refs, parse_mode, parse_processing_path, parse_profile, parse_retention_policy,
+};
+use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_render::{DebugRefs, PathPolicy, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
@@ -31,6 +34,8 @@ pub(crate) struct BackendSection {
 pub(crate) struct RuntimeSection {
     #[serde(default, deserialize_with = "deserialize_optional_mode")]
     pub(crate) mode: Option<ExecutionMode>,
+    #[serde(default, deserialize_with = "deserialize_optional_processing_path")]
+    pub(crate) processing_path: Option<ProcessingPath>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -84,6 +89,10 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
         },
         runtime: RuntimeSection {
             mode: overlay.runtime.mode.or(base.runtime.mode),
+            processing_path: overlay
+                .runtime
+                .processing_path
+                .or(base.runtime.processing_path),
         },
         render: RenderSection {
             profile: overlay.render.profile.or(base.render.profile),
@@ -106,6 +115,18 @@ where
     let value = Option::<String>::deserialize(deserializer)?;
     value
         .map(|value| parse_mode(&value).map_err(serde::de::Error::custom))
+        .transpose()
+}
+
+fn deserialize_optional_processing_path<'de, D>(
+    deserializer: D,
+) -> Result<Option<ProcessingPath>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    value
+        .map(|value| parse_processing_path(&value).map_err(serde::de::Error::custom))
         .transpose()
 }
 
@@ -170,6 +191,7 @@ mod tests {
             },
             runtime: RuntimeSection {
                 mode: Some(ExecutionMode::Shadow),
+                processing_path: Some(ProcessingPath::NativeTextCapture),
             },
             render: RenderSection {
                 profile: Some(RenderProfile::Verbose),
@@ -185,6 +207,7 @@ mod tests {
             backend: BackendSection { gcc: None },
             runtime: RuntimeSection {
                 mode: Some(ExecutionMode::Render),
+                processing_path: Some(ProcessingPath::SingleSinkStructured),
             },
             render: RenderSection {
                 profile: None,
@@ -200,6 +223,10 @@ mod tests {
         assert_eq!(merged.schema_version, Some(1));
         assert_eq!(merged.backend.gcc, Some(PathBuf::from("/usr/bin/gcc")));
         assert_eq!(merged.runtime.mode, Some(ExecutionMode::Render));
+        assert_eq!(
+            merged.runtime.processing_path,
+            Some(ProcessingPath::SingleSinkStructured)
+        );
         assert_eq!(merged.render.profile, Some(RenderProfile::Verbose));
         assert_eq!(merged.render.path_policy, Some(PathPolicy::RelativeToCwd));
         assert_eq!(merged.render.debug_refs, Some(DebugRefs::CaptureRef));

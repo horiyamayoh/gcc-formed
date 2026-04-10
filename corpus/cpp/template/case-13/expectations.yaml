@@ -1,6 +1,6 @@
 schema_version: 1
 fixture_id: cpp/template/case-13
-support_tier: A
+support_tier: B
 expected_mode: render
 semantic:
   family: template
@@ -13,7 +13,11 @@ semantic:
 render:
   default:
     first_screenful_max_lines: 24
+    first_action_max_line: 3
+    raw_diagnostics_hint_required: true
   ci:
     first_screenful_max_lines: 16
+    first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
+    raw_diagnostics_hint_required: true

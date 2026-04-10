@@ -51,6 +51,7 @@ How much native / raw compiler output is preserved in the same run.
 - `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
 - `GCC15+` is the primary fidelity reference path.
 - `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
+- `GCC13-14` is a first-class beta product band inside that narrower contract.
 - They are part of the product surface, not merely incidental fallback behavior.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
@@ -63,13 +64,13 @@ How much native / raw compiler output is preserved in the same run.
 | VersionBand | Typical ProcessingPath | RawPreservationLevel | SupportLevel | Current expectation |
 |---|---|---|---|---|
 | `GCC15+` | `DualSinkStructured` | `NativeAndStructuredSameRun` | `Preview` | Highest-fidelity reference path |
-| `GCC13-14` | `SingleSinkStructured`, `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `Experimental` | Meaningful improvements where evidence is strong |
+| `GCC13-14` | `NativeTextCapture`, `SingleSinkStructured` | path-dependent; do not assume same-run native+structured | `Experimental` | First-class beta path with narrower fidelity than GCC15+ |
 | `GCC9-12` | `SingleSinkStructured` (JSON), `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `Experimental` | Wins on simple / type / linker / basic-template cases |
 | `Unknown` | `Passthrough` | `RawOnly` | `PassthroughOnly` | Do not break the build or hide facts |
 
 ### Interpretive notes
 
-- “first-class product band” means: present in specs, tests, issue taxonomy, quality gates, and roadmap.
+- “first-class product band” means: present in specs, tests, issue taxonomy, quality gates, roadmap, and corpus tagging.
 - It does **not** mean that all bands have identical fidelity or identical raw-preservation guarantees.
 - If a run resolves to `Passthrough`, that is still a valid shipped behavior when it is the most trustworthy choice.
 

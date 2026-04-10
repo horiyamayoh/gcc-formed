@@ -7,6 +7,7 @@ use diag_capture_runtime::ExecutionMode;
 use diag_core::{FallbackReason, LanguageMode};
 use diag_render::{DebugRefs, RenderCapabilities, RenderProfile, StreamKind};
 use diag_trace::RetentionPolicy;
+use std::collections::BTreeSet;
 use std::env;
 use std::ffi::OsString;
 use std::io::IsTerminal;
@@ -23,6 +24,7 @@ pub(crate) struct CliCompatibilitySeam {
     support_tier: SupportTier,
     support_level: SupportLevel,
     default_processing_path: ProcessingPath,
+    allowed_processing_paths: BTreeSet<ProcessingPath>,
     sarif_diagnostics: bool,
     tty_color_control: bool,
 }
@@ -33,12 +35,14 @@ impl CliCompatibilitySeam {
     }
 
     pub(crate) fn from_support_tier(tier: SupportTier) -> Self {
+        let default_processing_path = default_processing_path_for_tier(tier);
         Self {
             support_tier: tier,
             support_level: support_level_for_tier(tier),
-            default_processing_path: default_processing_path_for_tier(tier),
+            default_processing_path,
+            allowed_processing_paths: allowed_processing_paths_for_tier(tier),
             sarif_diagnostics: matches!(
-                default_processing_path_for_tier(tier),
+                default_processing_path,
                 ProcessingPath::DualSinkStructured
             ),
             tty_color_control: matches!(tier, SupportTier::A),
@@ -50,6 +54,7 @@ impl CliCompatibilitySeam {
             support_tier,
             support_level: profile.support_level,
             default_processing_path: profile.default_processing_path,
+            allowed_processing_paths: profile.allowed_processing_paths,
             sarif_diagnostics: profile.sarif_diagnostics,
             tty_color_control: profile.tty_color_control,
         }
@@ -63,10 +68,47 @@ impl CliCompatibilitySeam {
             )
     }
 
-    fn is_shadow_compatibility(&self) -> bool {
+    fn is_native_text_default(&self) -> bool {
         matches!(self.support_tier, SupportTier::B)
             && matches!(self.support_level, SupportLevel::Conservative)
-            && matches!(self.default_processing_path, ProcessingPath::Passthrough)
+            && matches!(
+                self.default_processing_path,
+                ProcessingPath::NativeTextCapture
+            )
+    }
+
+    fn allows_processing_path(&self, path: ProcessingPath) -> bool {
+        self.allowed_processing_paths.contains(&path)
+    }
+
+    fn select_processing_path(
+        &self,
+        mode: ExecutionMode,
+        requested: Option<ProcessingPath>,
+    ) -> Result<ProcessingPath, String> {
+        if matches!(mode, ExecutionMode::Passthrough) {
+            return Ok(ProcessingPath::Passthrough);
+        }
+
+        let selected = requested.unwrap_or(self.default_processing_path);
+        if matches!(selected, ProcessingPath::Passthrough) {
+            return Err("passthrough processing path requires passthrough mode".to_string());
+        }
+        if !self.allows_processing_path(selected) {
+            return Err(format!(
+                "requested processing path `{}` is not supported for this backend",
+                processing_path_label(selected)
+            ));
+        }
+        if matches!(mode, ExecutionMode::Shadow)
+            && matches!(selected, ProcessingPath::SingleSinkStructured)
+        {
+            return Err(
+                "single_sink_structured is only supported with render mode on this backend"
+                    .to_string(),
+            );
+        }
+        Ok(selected)
     }
 
     pub(crate) fn should_inject_sarif(&self, mode: ExecutionMode) -> bool {
@@ -160,18 +202,18 @@ pub(crate) fn select_mode_for_seam(
             ));
             requested.unwrap_or(ExecutionMode::Render)
         }
-        _ if seam.is_shadow_compatibility() => match requested {
+        _ if seam.is_native_text_default() => match requested {
             Some(ExecutionMode::Shadow) => {
-                decision_log.push("tier_b_mode=shadow_raw_only".to_string());
+                decision_log.push("tier_b_mode=shadow_native_text".to_string());
                 ExecutionMode::Shadow
             }
             Some(ExecutionMode::Render) => {
-                decision_log.push("tier_b_render_unsupported=passthrough".to_string());
-                ExecutionMode::Passthrough
+                decision_log.push("tier_b_requested_render=native_text".to_string());
+                ExecutionMode::Render
             }
             None => {
-                decision_log.push("tier_b_default=passthrough".to_string());
-                ExecutionMode::Passthrough
+                decision_log.push("tier_b_default=native_text".to_string());
+                ExecutionMode::Render
             }
             Some(ExecutionMode::Passthrough) => ExecutionMode::Passthrough,
         },
@@ -197,33 +239,93 @@ pub(crate) fn select_mode_for_seam(
     }
 }
 
+pub(crate) fn select_processing_path_for_seam(
+    seam: &CliCompatibilitySeam,
+    decision: &ModeDecision,
+    requested: Option<ProcessingPath>,
+) -> ProcessingPath {
+    seam.select_processing_path(decision.mode, requested)
+        .unwrap_or_else(|_| match decision.mode {
+            ExecutionMode::Passthrough => ProcessingPath::Passthrough,
+            ExecutionMode::Shadow => {
+                if seam.is_primary_structured() {
+                    ProcessingPath::DualSinkStructured
+                } else {
+                    ProcessingPath::NativeTextCapture
+                }
+            }
+            ExecutionMode::Render if seam.is_primary_structured() => {
+                ProcessingPath::DualSinkStructured
+            }
+            ExecutionMode::Render => seam.default_processing_path,
+        })
+}
+
 #[cfg(test)]
 pub(crate) fn compatibility_scope_notice(
     tier: SupportTier,
     decision: &ModeDecision,
 ) -> Option<&'static str> {
     let seam = CliCompatibilitySeam::from_support_tier(tier);
-    compatibility_scope_notice_for_seam(&seam, decision)
+    compatibility_scope_notice_for_path(
+        &seam,
+        decision,
+        select_processing_path_for_seam(&seam, decision, None),
+    )
 }
 
-pub(crate) fn compatibility_scope_notice_for_seam(
+pub(crate) fn compatibility_scope_notice_for_path(
     seam: &CliCompatibilitySeam,
     decision: &ModeDecision,
+    processing_path: ProcessingPath,
 ) -> Option<&'static str> {
     match seam.support_tier {
         SupportTier::A => None,
-        SupportTier::B => match decision.mode {
-            ExecutionMode::Shadow => Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.",
+        SupportTier::B => match (decision.mode, processing_path, decision.fallback_reason) {
+            (ExecutionMode::Shadow, _, _) => Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in.",
             ),
-            ExecutionMode::Passthrough => Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+            (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
             ),
-            ExecutionMode::Render => None,
+            (ExecutionMode::Passthrough, _, _) => Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
+            ),
+            (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
+            ),
+            (ExecutionMode::Render, _, _) => Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in.",
+            ),
         },
         SupportTier::C => Some(
             "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.",
         ),
+    }
+}
+
+fn allowed_processing_paths_for_tier(tier: SupportTier) -> BTreeSet<ProcessingPath> {
+    match tier {
+        SupportTier::A => BTreeSet::from([
+            ProcessingPath::DualSinkStructured,
+            ProcessingPath::NativeTextCapture,
+            ProcessingPath::Passthrough,
+        ]),
+        SupportTier::B => BTreeSet::from([
+            ProcessingPath::SingleSinkStructured,
+            ProcessingPath::NativeTextCapture,
+            ProcessingPath::Passthrough,
+        ]),
+        SupportTier::C => BTreeSet::from([ProcessingPath::Passthrough]),
+    }
+}
+
+fn processing_path_label(path: ProcessingPath) -> &'static str {
+    match path {
+        ProcessingPath::DualSinkStructured => "dual_sink_structured",
+        ProcessingPath::SingleSinkStructured => "single_sink_structured",
+        ProcessingPath::NativeTextCapture => "native_text_capture",
+        ProcessingPath::Passthrough => "passthrough",
     }
 }
 
@@ -340,17 +442,30 @@ mod tests {
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "tier_b_mode=shadow_raw_only")
+                .any(|entry| entry == "tier_b_mode=shadow_native_text")
         );
     }
 
     #[test]
-    fn announces_tier_b_compatibility_passthrough() {
+    fn selects_tier_b_native_text_render_by_default() {
+        let decision = select_mode(SupportTier::B, None, false);
+        assert_eq!(decision.mode, ExecutionMode::Render);
+        assert_eq!(decision.fallback_reason, None);
+        assert!(
+            decision
+                .decision_log
+                .iter()
+                .any(|entry| entry == "tier_b_default=native_text")
+        );
+    }
+
+    #[test]
+    fn announces_tier_b_native_text_default_render() {
         let decision = select_mode(SupportTier::B, None, false);
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in."
             )
         );
     }
@@ -361,7 +476,37 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
+            )
+        );
+    }
+
+    #[test]
+    fn selects_single_sink_structured_when_requested_for_tier_b_render() {
+        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::B);
+        let decision = select_mode_for_seam(&seam, None, false);
+        assert_eq!(
+            select_processing_path_for_seam(
+                &seam,
+                &decision,
+                Some(ProcessingPath::SingleSinkStructured)
+            ),
+            ProcessingPath::SingleSinkStructured
+        );
+    }
+
+    #[test]
+    fn announces_single_sink_structured_tradeoff_for_tier_b() {
+        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::B);
+        let decision = select_mode_for_seam(&seam, None, false);
+        assert_eq!(
+            compatibility_scope_notice_for_path(
+                &seam,
+                &decision,
+                ProcessingPath::SingleSinkStructured
+            ),
+            Some(
+                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
             )
         );
     }

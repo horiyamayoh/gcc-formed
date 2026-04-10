@@ -26,26 +26,133 @@ fn renders_with_fake_gcc15_backend() {
 }
 
 #[test]
-fn falls_back_to_passthrough_with_fake_gcc13_backend() {
+fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
     let temp = fixture("13.3.0");
     let backend = temp.path().join("fake-gcc");
     let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
 
     Command::cargo_bin("gcc-formed")
         .unwrap()
         .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
         .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected_tier_b_native_text_notice()))
+        .stderr(predicate::str::contains(
+            "note: some compiler details were not fully structured; original diagnostics are preserved",
+        ))
+        .stderr(predicate::str::contains(
+            "error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains(
+            "help: verify the first compiler-reported location against the preserved raw diagnostics",
+        ))
+        .stderr(predicate::str::contains(
+            "why: main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "native_text_capture"
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("partial")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
+    );
+}
+
+#[test]
+fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
+    let temp = fixture("13.3.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("--formed-processing-path=single_sink_structured")
         .arg("-c")
         .arg(&source)
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            expected_tier_b_passthrough_notice(),
+            expected_tier_b_single_sink_notice(),
         ))
+        .stderr(predicate::str::contains("error: syntax error"))
         .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
+            "help: fix the first parser error at the user-owned location",
         ))
-        .stderr(predicate::str::contains("help:").not());
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "single_sink_structured"
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str() == Some("-fdiagnostics-format=sarif-file"))
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("parsed")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=structured"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=none"))
+    );
+    assert!(!temp.path().join("source.sarif").exists());
 }
 
 #[test]
@@ -784,7 +891,7 @@ fn missing_sarif_falls_back_with_reason_coded_trace() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "error: showing a conservative wrapper view",
+            "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
             "main.c:4:1: error: expected ';' before '}' token",
@@ -801,7 +908,7 @@ fn missing_sarif_falls_back_with_reason_coded_trace() {
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
-        Some("passthrough")
+        Some("partial")
     );
     assert!(
         trace["decision_log"]
@@ -898,12 +1005,16 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn expected_tier_b_passthrough_notice() -> &'static str {
-    "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved."
+fn expected_tier_b_native_text_notice() -> &'static str {
+    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in."
+}
+
+fn expected_tier_b_single_sink_notice() -> &'static str {
+    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
 }
 
 fn expected_tier_b_shadow_notice() -> &'static str {
-    "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed."
+    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
 }
 
 fn expected_tier_c_passthrough_notice() -> &'static str {
@@ -940,12 +1051,14 @@ if [[ "${{1:-}}" == "--version" ]]; then
   echo "gcc (Fake) {version}"
   exit 0
 fi
-sarif=""
-for arg in "$@"; do
-  if [[ "$arg" == -fdiagnostics-add-output=sarif:version=2.1,file=* ]]; then
-    sarif="${{arg#-fdiagnostics-add-output=sarif:version=2.1,file=}}"
-  fi
-done
+	sarif=""
+	for arg in "$@"; do
+	  if [[ "$arg" == -fdiagnostics-add-output=sarif:version=2.1,file=* ]]; then
+	    sarif="${{arg#-fdiagnostics-add-output=sarif:version=2.1,file=}}"
+	  elif [[ "$arg" == "-fdiagnostics-format=sarif-file" ]]; then
+	    sarif="source.sarif"
+	  fi
+	done
 if [[ -n "$sarif" ]]; then
   case "{sarif_mode}" in
     valid)
@@ -989,10 +1102,12 @@ if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
     printf 'GCC_EXTRA_DIAGNOSTIC_OUTPUT=%s\n' "${{GCC_EXTRA_DIAGNOSTIC_OUTPUT-__unset__}}"
     printf 'EXPERIMENTAL_SARIF_SOCKET=%s\n' "${{EXPERIMENTAL_SARIF_SOCKET-__unset__}}"
   }} >"${{FORMED_TEST_ENV_DUMP}}"
-fi
-echo "main.c:4:1: error: expected ';' before '}}' token" >&2
-exit 1
-"#
+	fi
+	if [[ "$sarif" != "source.sarif" ]]; then
+	  echo "main.c:4:1: error: expected ';' before '}}' token" >&2
+	fi
+	exit 1
+	"#
     );
     let backend = temp.path().join("fake-gcc");
     fs::write(&backend, script).unwrap();

@@ -54,6 +54,9 @@ fn acceptance_summary(
         fixture_id: fixture_id.to_string(),
         family_key: "syntax".to_string(),
         title: None,
+        support_band: "gcc15_plus".to_string(),
+        processing_path: "dual_sink_structured".to_string(),
+        fallback_contract: "bounded_render".to_string(),
         expected_family: expected_family.map(str::to_string),
         actual_family: actual_family.to_string(),
         family_match: expected_family

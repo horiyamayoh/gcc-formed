@@ -1,0 +1,130 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 153,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "7f98dc59f25f716a8e068cd103ea22168224efea722345698957117e13c8364b",
+        "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
+        "structural": "2a0e0bad230ea5b3bf158e5f6aadd2141da11da037d2756b3866d24070cf5840"
+      },
+      "id": "residual-0",
+      "message": {
+        "raw_text": "collect2: error: ld returned 1 exit status"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "35155cedab8bd4415762543d4b47a4b627b598a3ba153def66207eb0dda9fd6a",
+        "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
+        "structural": "fae5e5754f9378c49a26c6e2da9beb3a867409e0d469466a155869c6acf57640"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error",
+      "symbol_context": {
+        "primary_symbol": "missing_symbol"
+      }
+    },
+    {
+      "fingerprints": {
+        "family": "e56254e28b88784bad96298ab711c00b4c5d025f08a5e8c5efaf7069ae2d28d1",
+        "raw": "2480a1621c398d1060b984c735b4f7a13de7baa850d4c20ac34743585acafedf",
+        "structural": "1d1e7db45e1c5ba895e4ccba5cdc5af00822e7ac04e5b407fdd78b9605cd5129"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "067fea2323098d11c1a0293b337b06a456f7146d0d1d9d1269ecfbb9926a6ae0",
+    "structural": "02b7e8f9558eceea4748e4d26fd2238716bbdb774a90079ef9bf7b2cf0170cb0"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

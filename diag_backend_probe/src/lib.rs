@@ -225,7 +225,8 @@ pub fn support_level_for_tier(tier: SupportTier) -> SupportLevel {
 pub fn default_processing_path_for_tier(tier: SupportTier) -> ProcessingPath {
     match tier {
         SupportTier::A => ProcessingPath::DualSinkStructured,
-        SupportTier::B | SupportTier::C => ProcessingPath::Passthrough,
+        SupportTier::B => ProcessingPath::NativeTextCapture,
+        SupportTier::C => ProcessingPath::Passthrough,
     }
 }
 
@@ -285,7 +286,11 @@ fn capability_profile_for_compatibility(
             parseable_fixits: false,
             locale_stabilization: false,
             default_processing_path: default_processing_path_for_tier(support_tier),
-            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
+            allowed_processing_paths: BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ]),
         },
         VersionBand::Gcc9_12 => CapabilityProfile {
             version_band,
@@ -431,7 +436,7 @@ mod tests {
         );
         assert_eq!(
             default_processing_path_for_tier(SupportTier::B),
-            ProcessingPath::Passthrough
+            ProcessingPath::NativeTextCapture
         );
     }
 
@@ -456,7 +461,20 @@ mod tests {
         assert!(!gcc13.json_diagnostics);
         assert!(!gcc13.sarif_diagnostics);
         assert!(!gcc13.tty_color_control);
-        assert_eq!(gcc13.default_processing_path, ProcessingPath::Passthrough);
+        assert_eq!(
+            gcc13.default_processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert!(
+            gcc13
+                .allowed_processing_paths
+                .contains(&ProcessingPath::SingleSinkStructured)
+        );
+        assert!(
+            gcc13
+                .allowed_processing_paths
+                .contains(&ProcessingPath::NativeTextCapture)
+        );
 
         let gcc8 = capability_profile_for_major(8);
         assert_eq!(gcc8.version_band, VersionBand::Unknown);

@@ -784,6 +784,137 @@ mod tests {
     }
 
     #[test]
+    fn template_supporting_evidence_prioritizes_user_owned_frames_when_compacted() {
+        let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("template".to_string());
+        request.document.diagnostics[0].context_chains = vec![ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: vec![
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("/usr/include/alpha.hpp".to_string()),
+                    line: Some(3),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("/usr/include/beta.hpp".to_string()),
+                    line: Some(4),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("/usr/include/gamma.hpp".to_string()),
+                    line: Some(5),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("src/main.cpp".to_string()),
+                    line: Some(6),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("/usr/include/delta.hpp".to_string()),
+                    line: Some(7),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "instantiated from here".to_string(),
+                    path: Some("/usr/include/epsilon.hpp".to_string()),
+                    line: Some(8),
+                    column: Some(1),
+                },
+            ],
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        assert_eq!(evidence.context_lines[0], "while instantiating:");
+        assert!(evidence.context_lines[1].contains("src/main.cpp:6:1"));
+        assert!(
+            evidence
+                .context_lines
+                .contains(&"omitted 1 internal template frames".to_string())
+        );
+    }
+
+    #[test]
+    fn overload_supporting_evidence_uses_best_owned_location_for_candidate_notes() {
+        let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("type_overload".to_string());
+
+        let mut system_note = request.document.diagnostics[0].clone();
+        system_note.id = "system-note".to_string();
+        system_note.message.raw_text = "candidate conversion remains internal".to_string();
+        system_note.locations = vec![Location {
+            path: "/usr/include/vector".to_string(),
+            line: 18,
+            column: 7,
+            end_line: None,
+            end_column: None,
+            display_path: None,
+            ownership: Some(Ownership::System),
+        }];
+        system_note.children = Vec::new();
+        system_note.suggestions = Vec::new();
+        system_note.context_chains = Vec::new();
+        system_note.symbol_context = None;
+        system_note.analysis = None;
+        system_note.node_completeness = NodeCompleteness::Complete;
+
+        let mut user_note = request.document.diagnostics[0].clone();
+        user_note.id = "user-note".to_string();
+        user_note.message.raw_text = "candidate conversion matches the call site".to_string();
+        user_note.locations = vec![
+            Location {
+                path: "/usr/include/vector".to_string(),
+                line: 19,
+                column: 3,
+                end_line: None,
+                end_column: None,
+                display_path: None,
+                ownership: Some(Ownership::System),
+            },
+            Location {
+                path: "src/main.cpp".to_string(),
+                line: 21,
+                column: 9,
+                end_line: None,
+                end_column: None,
+                display_path: None,
+                ownership: Some(Ownership::User),
+            },
+        ];
+        user_note.children = Vec::new();
+        user_note.suggestions = Vec::new();
+        user_note.context_chains = Vec::new();
+        user_note.symbol_context = None;
+        user_note.analysis = None;
+        user_note.node_completeness = NodeCompleteness::Complete;
+
+        request.document.diagnostics[0].children = vec![system_note, user_note];
+
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        assert_eq!(
+            evidence.context_lines[0],
+            "because: candidate conversion matches the call site at src/main.cpp:21:9"
+        );
+        assert_eq!(
+            evidence.context_lines[1],
+            "because: candidate conversion remains internal at /usr/include/vector:18:7"
+        );
+    }
+
+    #[test]
     fn generic_notes_emit_omission_notice() {
         let mut request = sample_request();
         request.document.diagnostics[0].children = (1..=5)

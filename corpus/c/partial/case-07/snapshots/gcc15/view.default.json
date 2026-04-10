@@ -1,0 +1,38 @@
+{
+  "cards": [
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [
+        "linker: symbol `missing_symbol`"
+      ],
+      "excerpts": [],
+      "family": "linker.undefined_reference",
+      "first_action": "define the missing symbol or link the object/library that provides it",
+      "group_id": "residual-1",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "symbol_context=present",
+        "message_contains=undefined reference",
+        "existing_specific_family=linker.undefined_reference"
+      ],
+      "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "raw_sub_block": [
+        "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "undefined reference to `missing_symbol`"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

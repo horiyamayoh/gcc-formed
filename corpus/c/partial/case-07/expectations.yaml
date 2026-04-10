@@ -1,0 +1,40 @@
+schema_version: 1
+fixture_id: c/partial/case-07
+support_tier: B
+expected_mode: render
+semantic:
+  family: linker.undefined_reference
+  severity: error
+  lead_group_any_of:
+    - residual-0
+    - residual-1
+  first_action_required: true
+  raw_provenance_required: true
+  fallback: forbidden
+  confidence_min: medium
+render:
+  default:
+    omission_notice_required: false
+    first_screenful_max_lines: 24
+    first_action_max_line: 3
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
+    required_substrings:
+      - "note: some compiler details were not fully structured; original diagnostics are preserved"
+      - "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  ci:
+    first_screenful_max_lines: 16
+    first_action_max_line: 3
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
+    color_meaning_forbidden: true
+    required_substrings:
+      - "linker: error: undefined reference to `missing_symbol`"
+      - "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+integrity:
+  allowed_issue_codes: []
+performance:
+  parse_time_ms_max: 50
+  render_time_ms_max: 40

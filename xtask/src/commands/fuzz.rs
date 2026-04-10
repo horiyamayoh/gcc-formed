@@ -642,7 +642,11 @@ fn run_capture_runtime_case(
             RetentionPolicy::Never
         },
         paths,
-        inject_sarif,
+        structured_capture: if inject_sarif {
+            StructuredCapturePolicy::SarifFile
+        } else {
+            StructuredCapturePolicy::Disabled
+        },
         preserve_native_color: false,
     };
 

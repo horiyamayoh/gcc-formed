@@ -159,8 +159,7 @@ fn summarize_overload(
             if note.is_empty() {
                 return None;
             }
-            let location = child
-                .primary_location()
+            let location = best_location(request, child)
                 .map(|location| {
                     format!(
                         " at {}:{}:{}",
@@ -350,7 +349,11 @@ fn summarize_frames(
         }
     }
     selected.truncate(frame_limit);
-    selected.sort_unstable();
+    selected.sort_by(|left, right| {
+        frame_rank(request, node, &unique[*right])
+            .cmp(&frame_rank(request, node, &unique[*left]))
+            .then_with(|| left.cmp(right))
+    });
     selected
         .into_iter()
         .map(|index| format_frame(&unique[index]))
@@ -406,9 +409,27 @@ fn format_frame(frame: &ContextFrame) -> String {
 }
 
 fn child_rank(request: &RenderRequest, node: &DiagnosticNode) -> u8 {
-    node.primary_location()
+    node.locations
+        .iter()
         .map(|location| ownership_rank(request, &location.path, location.ownership.as_ref()))
+        .max()
         .unwrap_or(0)
+}
+
+fn best_location<'a>(
+    request: &RenderRequest,
+    node: &'a DiagnosticNode,
+) -> Option<&'a diag_core::Location> {
+    node.locations
+        .iter()
+        .enumerate()
+        .max_by_key(|(index, location)| {
+            (
+                ownership_rank(request, &location.path, location.ownership.as_ref()),
+                u8::from(*index == 0),
+            )
+        })
+        .map(|(_, location)| location)
 }
 
 fn ownership_rank(request: &RenderRequest, path: &str, ownership: Option<&Ownership>) -> u8 {
@@ -465,6 +486,15 @@ fn push_index(indices: &mut Vec<usize>, index: usize) {
     if !indices.iter().any(|existing| *existing == index) {
         indices.push(index);
     }
+}
+
+fn frame_rank(request: &RenderRequest, node: &DiagnosticNode, frame: &ContextFrame) -> u8 {
+    u8::from(
+        frame
+            .path
+            .as_deref()
+            .is_some_and(|path| is_user_owned_path(request, node, path)),
+    )
 }
 
 fn push_unique(lines: &mut Vec<String>, line: String) {

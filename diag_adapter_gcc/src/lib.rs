@@ -144,16 +144,19 @@ pub fn ingest_bundle(
     };
 
     let residual_nodes = classify(stderr_text, !has_authoritative_sarif);
+    let has_renderable_residual = residual_nodes.iter().any(|node| {
+        !matches!(node.semantic_role, SemanticRole::Passthrough)
+            && !matches!(node.node_completeness, NodeCompleteness::Passthrough)
+    });
     if document.diagnostics.is_empty() && residual_nodes.is_empty() && !stderr_text.is_empty() {
         if !matches!(document.document_completeness, DocumentCompleteness::Failed) {
             document.document_completeness = DocumentCompleteness::Passthrough;
         }
         document.diagnostics.push(passthrough_node(stderr_text));
     } else if !residual_nodes.is_empty() {
-        if matches!(
-            document.document_completeness,
-            DocumentCompleteness::Complete
-        ) {
+        if has_renderable_residual
+            && !matches!(document.document_completeness, DocumentCompleteness::Failed)
+        {
             document.document_completeness = DocumentCompleteness::Partial;
         }
         document.diagnostics.extend(residual_nodes);
@@ -1227,14 +1230,15 @@ mod tests {
         assert_eq!(outcome.fallback_reason, Some(FallbackReason::SarifMissing));
         assert_eq!(
             outcome.document.document_completeness,
-            DocumentCompleteness::Passthrough
+            DocumentCompleteness::Partial
         );
         assert!(outcome.document.diagnostics.iter().any(|node| {
-            matches!(node.semantic_role, SemanticRole::Passthrough)
+            matches!(node.semantic_role, SemanticRole::Root)
                 && node
                     .message
                     .raw_text
                     .contains("expected ';' before '}' token")
+                && node.primary_location().is_some()
         }));
         assert!(
             outcome.document.integrity_issues[0]
@@ -1335,12 +1339,46 @@ mod tests {
         assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
         assert_eq!(report.confidence_ceiling, Confidence::Low);
         assert!(report.fallback_reason.is_none());
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert!(report.document.diagnostics.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Root)
+                && node
+                    .message
+                    .raw_text
+                    .contains("expected ';' before '}' token")
+                && node.primary_location().is_some()
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_keeps_unclassified_residuals_on_passthrough_document() {
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(
+                None,
+                "totally unstructured compiler output\n",
+                &run,
+            ),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Passthrough
+        );
         assert!(report.document.diagnostics.iter().any(|node| {
             matches!(node.semantic_role, SemanticRole::Passthrough)
                 && node
                     .message
                     .raw_text
-                    .contains("expected ';' before '}' token")
+                    .contains("totally unstructured compiler output")
         }));
     }
 

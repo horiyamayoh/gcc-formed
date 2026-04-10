@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 
 pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> {
     let mut grouped = BTreeMap::<String, Vec<String>>::new();
+    let mut compiler_nodes = Vec::new();
     let mut passthrough = Vec::new();
     let undefined_reference =
         Regex::new(r"undefined reference to [`'](?P<symbol>[^`']+)[`']").expect("regex");
@@ -17,8 +18,22 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     let file_format =
         Regex::new(r"(file format not recognized|relocation truncated)").expect("regex");
     let assembler = Regex::new(r"(?i)(^as:|^assembler:|assembler messages)").expect("regex");
+    let compiler_diagnostic = Regex::new(
+        r"^(?P<path>[[:alnum:]_./+-]+):(?P<line>\d+):(?P<column>\d+): (?P<severity>fatal error|error|warning|note): (?P<message>.+)$",
+    )
+    .expect("regex");
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
+        if let Some(capture) = compiler_diagnostic.captures(line) {
+            if include_passthrough {
+                compiler_nodes.push(compiler_diagnostic_node(
+                    compiler_nodes.len(),
+                    line,
+                    &capture,
+                ));
+            }
+            continue;
+        }
         if let Some(capture) = undefined_reference.captures(line) {
             let symbol = capture["symbol"].to_string();
             grouped
@@ -67,9 +82,10 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
         passthrough.push(line.to_string());
     }
 
-    let mut nodes = Vec::new();
+    let mut nodes = compiler_nodes;
+    let grouped_base_index = nodes.len();
     for (index, (key, lines)) in grouped.into_iter().enumerate() {
-        nodes.push(group_to_node(index, &key, &lines));
+        nodes.push(group_to_node(grouped_base_index + index, &key, &lines));
     }
     if include_passthrough && !passthrough.is_empty() {
         nodes.push(DiagnosticNode {
@@ -110,6 +126,81 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
         });
     }
     nodes
+}
+
+fn compiler_diagnostic_node(
+    index: usize,
+    line: &str,
+    capture: &regex::Captures<'_>,
+) -> DiagnosticNode {
+    let message = capture["message"].to_string();
+    let severity = match &capture["severity"] {
+        "fatal error" | "error" => Severity::Error,
+        "warning" => Severity::Warning,
+        "note" => Severity::Note,
+        _ => Severity::Unknown,
+    };
+    let family = if message.contains("expected ")
+        || message.contains(" before ")
+        || message.contains(" after ")
+    {
+        "compiler.syntax"
+    } else {
+        "compiler.residual"
+    };
+
+    DiagnosticNode {
+        id: format!("residual-compiler-{index}"),
+        origin: Origin::Gcc,
+        phase: if family == "compiler.syntax" {
+            Phase::Parse
+        } else {
+            Phase::Semantic
+        },
+        severity,
+        semantic_role: SemanticRole::Root,
+        message: MessageText {
+            raw_text: line.to_string(),
+            normalized_text: None,
+            locale: None,
+        },
+        locations: vec![Location {
+            path: capture["path"].to_string(),
+            line: capture["line"].parse().unwrap_or(1),
+            column: capture["column"].parse().unwrap_or(1),
+            end_line: None,
+            end_column: None,
+            display_path: None,
+            ownership: None,
+        }],
+        children: Vec::new(),
+        suggestions: Vec::new(),
+        context_chains: Vec::new(),
+        symbol_context: None,
+        node_completeness: NodeCompleteness::Partial,
+        provenance: Provenance {
+            source: ProvenanceSource::ResidualText,
+            capture_refs: vec!["stderr.raw".to_string()],
+        },
+        analysis: Some(AnalysisOverlay {
+            family: Some(family.to_string()),
+            headline: Some(message.clone()),
+            first_action_hint: Some(
+                "verify the first compiler-reported location against the preserved raw diagnostics"
+                    .to_string(),
+            ),
+            confidence: Some(Confidence::Low),
+            rule_id: Some("rule.residual.compiler_line".to_string()),
+            matched_conditions: vec![
+                "residual_group=compiler_diagnostic".to_string(),
+                format!("severity={}", &capture["severity"]),
+            ],
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+        }),
+        fingerprints: None,
+    }
 }
 
 fn group_to_node(index: usize, key: &str, lines: &[String]) -> DiagnosticNode {
@@ -265,6 +356,31 @@ fn parse_locations(lines: &[String]) -> Vec<Location> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn classifies_simple_compiler_error_as_renderable_node() {
+        let nodes = classify("main.c:4:1: error: expected ';' before '}' token\n", true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Parse);
+        assert_eq!(nodes[0].node_completeness, NodeCompleteness::Partial);
+        assert_eq!(nodes[0].locations[0].path, "main.c");
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("compiler.syntax")
+        );
+    }
+
+    #[test]
+    fn keeps_unclassified_lines_in_passthrough_bucket() {
+        let nodes = classify("totally unstructured compiler output\n", true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
+        assert_eq!(nodes[0].node_completeness, NodeCompleteness::Passthrough);
+    }
 
     #[test]
     fn groups_undefined_reference_residuals() {

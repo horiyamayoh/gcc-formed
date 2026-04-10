@@ -576,7 +576,11 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
-            inject_sarif: backend.support_tier == SupportTier::A,
+            structured_capture: if backend.support_tier == SupportTier::A {
+                diag_capture_runtime::StructuredCapturePolicy::SarifFile
+            } else {
+                diag_capture_runtime::StructuredCapturePolicy::Disabled
+            },
             preserve_native_color: false,
         })?;
         cleanup_capture(&outcome)?;
@@ -597,7 +601,11 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
-            inject_sarif: backend.support_tier == SupportTier::A,
+            structured_capture: if backend.support_tier == SupportTier::A {
+                diag_capture_runtime::StructuredCapturePolicy::SarifFile
+            } else {
+                diag_capture_runtime::StructuredCapturePolicy::Disabled
+            },
             preserve_native_color: false,
         })?;
         let wrapper_ms = outcome.capture_duration_ms;
@@ -1513,7 +1521,8 @@ fn unix_now_seconds() -> u64 {
 mod tests {
     use super::*;
     use crate::commands::corpus::{
-        AcceptanceFixtureSummary, NativeParityReport, ReplayReport, acceptance_metrics_for,
+        AcceptanceFixtureSummary, FixtureCoverageReport, NativeParityReport, ReplayReport,
+        acceptance_metrics_for,
     };
     use std::collections::BTreeMap;
 
@@ -1527,6 +1536,9 @@ mod tests {
             fixture_id: fixture_id.to_string(),
             family_key: family_key.to_string(),
             title: None,
+            support_band: "gcc15_plus".to_string(),
+            processing_path: "dual_sink_structured".to_string(),
+            fallback_contract: "bounded_render".to_string(),
             expected_family: Some(family_key.to_string()),
             actual_family: family_key.to_string(),
             family_match: true,
@@ -1566,6 +1578,7 @@ mod tests {
         ReplayReport {
             family_counts: BTreeMap::new(),
             selected_family_counts: BTreeMap::new(),
+            coverage: FixtureCoverageReport::default(),
             selected_fixture_count: fixtures.len(),
             promoted_fixture_count: fixtures.len(),
             promoted_verified: fixtures.len(),

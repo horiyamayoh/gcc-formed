@@ -30,6 +30,7 @@ pub enum ExecutionMode {
 pub enum StructuredCapturePolicy {
     Disabled,
     SarifFile,
+    SingleSinkSarifFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -67,7 +68,7 @@ pub struct CaptureRequest {
     pub capture_passthrough_stderr: bool,
     pub retention: RetentionPolicy,
     pub paths: WrapperPaths,
-    pub inject_sarif: bool,
+    pub structured_capture: StructuredCapturePolicy,
     pub preserve_native_color: bool,
 }
 
@@ -75,16 +76,17 @@ impl CaptureRequest {
     pub fn capture_plan(&self) -> CapturePlan {
         CapturePlan {
             execution_mode: self.mode,
-            processing_path: match self.mode {
-                ExecutionMode::Passthrough => ProcessingPath::Passthrough,
-                _ if self.inject_sarif => ProcessingPath::DualSinkStructured,
-                _ => ProcessingPath::NativeTextCapture,
+            processing_path: match self.structured_capture {
+                StructuredCapturePolicy::SarifFile => ProcessingPath::DualSinkStructured,
+                StructuredCapturePolicy::SingleSinkSarifFile => {
+                    ProcessingPath::SingleSinkStructured
+                }
+                StructuredCapturePolicy::Disabled => match self.mode {
+                    ExecutionMode::Passthrough => ProcessingPath::Passthrough,
+                    _ => ProcessingPath::NativeTextCapture,
+                },
             },
-            structured_capture: if self.inject_sarif {
-                StructuredCapturePolicy::SarifFile
-            } else {
-                StructuredCapturePolicy::Disabled
-            },
+            structured_capture: self.structured_capture,
             native_text_capture: match self.mode {
                 ExecutionMode::Passthrough if self.capture_passthrough_stderr => {
                     NativeTextCapturePolicy::TeeToParent
@@ -124,7 +126,7 @@ impl CaptureRequest {
             ),
             retention: plan.retention_policy,
             paths,
-            inject_sarif: matches!(plan.structured_capture, StructuredCapturePolicy::SarifFile),
+            structured_capture: plan.structured_capture,
             preserve_native_color: plan.preserve_native_color,
         }
     }
@@ -183,17 +185,27 @@ impl CaptureBundle {
     pub fn authoritative_sarif_path(&self, temp_dir: &Path) -> Option<PathBuf> {
         match self.plan.structured_capture {
             StructuredCapturePolicy::Disabled => None,
-            StructuredCapturePolicy::SarifFile => Some(temp_dir.join("diagnostics.sarif")),
+            StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
+                Some(temp_dir.join("diagnostics.sarif"))
+            }
         }
     }
 
     pub fn injected_flags(&self, temp_dir: &Path) -> Vec<String> {
         let mut flags = Vec::new();
-        if let Some(path) = self.authoritative_sarif_path(temp_dir) {
-            flags.push(format!(
-                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                sanitize_sarif_path(&path)
-            ));
+        match self.plan.structured_capture {
+            StructuredCapturePolicy::Disabled => {}
+            StructuredCapturePolicy::SarifFile => {
+                if let Some(path) = self.authoritative_sarif_path(temp_dir) {
+                    flags.push(format!(
+                        "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                        sanitize_sarif_path(&path)
+                    ));
+                }
+            }
+            StructuredCapturePolicy::SingleSinkSarifFile => {
+                flags.push("-fdiagnostics-format=sarif-file".to_string());
+            }
         }
         if self.plan.preserve_native_color {
             flags.push("-fdiagnostics-color=always".to_string());
@@ -304,14 +316,40 @@ struct NormalizedInvocation {
     injected_flag_count: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct ArtifactFingerprint {
+    modified_ns: u128,
+    size_bytes: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct DiscoveredStructuredArtifact {
+    path: PathBuf,
+    existed_before: bool,
+}
+
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
     let capture_started = Instant::now();
     let plan = request.capture_plan();
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
-    let sarif_path = match plan.structured_capture {
+    let expected_sarif_path = match plan.structured_capture {
         StructuredCapturePolicy::Disabled => None,
-        StructuredCapturePolicy::SarifFile => Some(temp_dir_path.join("diagnostics.sarif")),
+        StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
+            Some(temp_dir_path.join("diagnostics.sarif"))
+        }
+    };
+    let injected_sarif_path = match plan.structured_capture {
+        StructuredCapturePolicy::SarifFile => expected_sarif_path.clone(),
+        StructuredCapturePolicy::Disabled | StructuredCapturePolicy::SingleSinkSarifFile => None,
+    };
+    let single_sink_snapshot = if matches!(
+        plan.structured_capture,
+        StructuredCapturePolicy::SingleSinkSarifFile
+    ) {
+        Some(snapshot_structured_artifacts(&request.cwd)?)
+    } else {
+        None
     };
 
     let mut command = Command::new(&request.backend.resolved_path);
@@ -322,11 +360,19 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     apply_child_env_policy(&mut command, &child_env_policy);
 
     let mut final_args = request.args.clone();
-    if let Some(sarif_path) = sarif_path.as_ref() {
-        final_args.push(OsString::from(format!(
-            "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-            sanitize_sarif_path(sarif_path)
-        )));
+    match plan.structured_capture {
+        StructuredCapturePolicy::Disabled => {}
+        StructuredCapturePolicy::SarifFile => {
+            if let Some(sarif_path) = injected_sarif_path.as_ref() {
+                final_args.push(OsString::from(format!(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                    sanitize_sarif_path(sarif_path)
+                )));
+            }
+        }
+        StructuredCapturePolicy::SingleSinkSarifFile => {
+            final_args.push(OsString::from("-fdiagnostics-format=sarif-file"));
+        }
     }
     let invocation_path = temp_dir_path.join("invocation.json");
     write_invocation_record(
@@ -334,7 +380,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         &build_invocation_record(
             request,
             &final_args,
-            sarif_path.as_deref(),
+            injected_sarif_path.as_deref(),
             child_env_policy,
         ),
     )?;
@@ -363,7 +409,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     };
 
     let status = child.wait()?;
-    if let Some(path) = sarif_path.as_ref().filter(|path| path.exists()) {
+    if let Some(path) = injected_sarif_path.as_ref().filter(|path| path.exists()) {
         secure_private_file(path)?;
     }
     let stderr_bytes = match stderr_handle {
@@ -372,6 +418,21 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
             .unwrap_or_else(|_| Ok(Vec::new()))
             .unwrap_or_default(),
         None => Vec::new(),
+    };
+
+    let single_sink_sarif_path = if let Some(snapshot) = single_sink_snapshot.as_ref() {
+        discover_structured_artifact(&request.cwd, snapshot)?
+            .map(|artifact| preserve_discovered_artifact(&artifact, &temp_dir_path))
+            .transpose()?
+    } else {
+        None
+    };
+    let sarif_path = match plan.structured_capture {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile => injected_sarif_path,
+        StructuredCapturePolicy::SingleSinkSarifFile => {
+            single_sink_sarif_path.or(expected_sarif_path)
+        }
     };
 
     let child_failed = !status.success();
@@ -492,6 +553,74 @@ fn build_artifacts(
         });
     }
     artifacts
+}
+
+fn snapshot_structured_artifacts(
+    dir: &Path,
+) -> Result<BTreeMap<PathBuf, ArtifactFingerprint>, std::io::Error> {
+    let mut entries = BTreeMap::new();
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|ext| ext.to_str()) != Some("sarif") {
+            continue;
+        }
+        let metadata = entry.metadata()?;
+        if !metadata.is_file() {
+            continue;
+        }
+        entries.insert(path, artifact_fingerprint(&metadata));
+    }
+    Ok(entries)
+}
+
+fn artifact_fingerprint(metadata: &fs::Metadata) -> ArtifactFingerprint {
+    let modified_ns = metadata
+        .modified()
+        .ok()
+        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    ArtifactFingerprint {
+        modified_ns,
+        size_bytes: metadata.len(),
+    }
+}
+
+fn discover_structured_artifact(
+    dir: &Path,
+    before: &BTreeMap<PathBuf, ArtifactFingerprint>,
+) -> Result<Option<DiscoveredStructuredArtifact>, std::io::Error> {
+    let after = snapshot_structured_artifacts(dir)?;
+    let mut changed = after
+        .into_iter()
+        .filter_map(|(path, fingerprint)| {
+            let existed_before = before.contains_key(&path);
+            (before.get(&path) != Some(&fingerprint)).then_some((
+                fingerprint.modified_ns,
+                path.clone(),
+                DiscoveredStructuredArtifact {
+                    path,
+                    existed_before,
+                },
+            ))
+        })
+        .collect::<Vec<_>>();
+    changed.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| right.1.cmp(&left.1)));
+    Ok(changed.into_iter().map(|(_, _, artifact)| artifact).next())
+}
+
+fn preserve_discovered_artifact(
+    artifact: &DiscoveredStructuredArtifact,
+    temp_dir: &Path,
+) -> Result<PathBuf, std::io::Error> {
+    let preserved_path = temp_dir.join("diagnostics.sarif");
+    fs::copy(&artifact.path, &preserved_path)?;
+    secure_private_file(&preserved_path)?;
+    if !artifact.existed_before {
+        let _ = fs::remove_file(&artifact.path);
+    }
+    Ok(preserved_path)
 }
 
 fn build_capture_bundle(
@@ -656,7 +785,9 @@ fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
             _ if arg.starts_with("-D") => define_count += 1,
             _ if arg.starts_with("-fdiagnostics-") => {
                 diagnostics_flag_count += 1;
-                if arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=") {
+                if arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
+                    || arg == "-fdiagnostics-format=sarif-file"
+                {
                     injected_flag_count += 1;
                 }
             }
@@ -862,7 +993,7 @@ mod tests {
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
-            inject_sarif: true,
+            structured_capture: StructuredCapturePolicy::SarifFile,
             preserve_native_color: true,
         };
 
@@ -953,7 +1084,7 @@ mod tests {
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::OnWrapperFailure,
             paths: fake_paths(),
-            inject_sarif: true,
+            structured_capture: StructuredCapturePolicy::SarifFile,
             preserve_native_color: false,
         };
         let render_plan = render_request.capture_plan();
@@ -984,7 +1115,7 @@ mod tests {
             capture_passthrough_stderr: true,
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
-            inject_sarif: false,
+            structured_capture: StructuredCapturePolicy::Disabled,
             preserve_native_color: false,
         };
         let passthrough_plan = passthrough_request.capture_plan();
@@ -1041,6 +1172,51 @@ mod tests {
     }
 
     #[test]
+    fn single_sink_capture_plan_uses_explicit_structured_path() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: Vec::new(),
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::OnWrapperFailure,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::SingleSinkSarifFile,
+            preserve_native_color: false,
+        };
+
+        let plan = request.capture_plan();
+        assert_eq!(plan.processing_path, ProcessingPath::SingleSinkStructured);
+        assert_eq!(
+            plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkSarifFile
+        );
+        let bundle = CaptureBundle {
+            plan,
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                argv: Vec::new(),
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::SingleSinkStructured,
+            },
+            raw_text_artifacts: Vec::new(),
+            structured_artifacts: Vec::new(),
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+        assert_eq!(
+            bundle.injected_flags(Path::new("/tmp/runtime")),
+            vec!["-fdiagnostics-format=sarif-file".to_string()]
+        );
+    }
+
+    #[test]
     fn capture_bundle_groups_raw_text_and_structured_artifacts() {
         let request = CaptureRequest {
             backend: fake_probe(),
@@ -1050,7 +1226,7 @@ mod tests {
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
-            inject_sarif: true,
+            structured_capture: StructuredCapturePolicy::SarifFile,
             preserve_native_color: false,
         };
         let plan = request.capture_plan();
@@ -1207,5 +1383,17 @@ mod tests {
         assert_eq!(normalized.define_count, 1);
         assert_eq!(normalized.diagnostics_flag_count, 0);
         assert_eq!(normalized.injected_flag_count, 0);
+    }
+
+    #[test]
+    fn normalizes_single_sink_flag_as_injected_diagnostic_flag() {
+        let normalized = normalize_invocation(&[
+            "-c".to_string(),
+            "main.c".to_string(),
+            "-fdiagnostics-format=sarif-file".to_string(),
+        ]);
+
+        assert_eq!(normalized.diagnostics_flag_count, 1);
+        assert_eq!(normalized.injected_flag_count, 1);
     }
 }

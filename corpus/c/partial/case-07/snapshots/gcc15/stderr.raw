@@ -1,0 +1,3 @@
+/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':
+main.c:(.text+0x5): undefined reference to `missing_symbol'
+collect2: error: ld returned 1 exit status

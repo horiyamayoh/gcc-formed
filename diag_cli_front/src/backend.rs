@@ -1,9 +1,9 @@
 use crate::args::ParsedArgs;
 use crate::config::ConfigFile;
 use crate::mode::{
-    CliCompatibilitySeam, ModeDecision, compatibility_scope_notice_for_seam, detect_capabilities,
+    CliCompatibilitySeam, ModeDecision, compatibility_scope_notice_for_path, detect_capabilities,
     detect_profile_from_capabilities, has_hard_conflict, select_mode_for_seam,
-    should_capture_passthrough_stderr,
+    select_processing_path_for_seam, should_capture_passthrough_stderr,
 };
 use diag_backend_probe::{ProbeCache, ProbeResult, ProcessingPath, ResolveRequest};
 use diag_capture_runtime::{
@@ -52,15 +52,20 @@ impl ExecutionPlan {
 fn build_capture_plan(
     compatibility_seam: &CliCompatibilitySeam,
     mode: ExecutionMode,
+    processing_path: ProcessingPath,
     retention_policy: RetentionPolicy,
     debug_refs: DebugRefs,
     capabilities: &RenderCapabilities,
     forwarded_args: &[OsString],
 ) -> CapturePlan {
-    let structured_capture = if compatibility_seam.should_inject_sarif(mode) {
-        StructuredCapturePolicy::SarifFile
-    } else {
-        StructuredCapturePolicy::Disabled
+    let structured_capture = match processing_path {
+        ProcessingPath::DualSinkStructured if compatibility_seam.should_inject_sarif(mode) => {
+            StructuredCapturePolicy::SarifFile
+        }
+        ProcessingPath::SingleSinkStructured => StructuredCapturePolicy::SingleSinkSarifFile,
+        ProcessingPath::DualSinkStructured
+        | ProcessingPath::NativeTextCapture
+        | ProcessingPath::Passthrough => StructuredCapturePolicy::Disabled,
     };
     let native_text_capture = match mode {
         ExecutionMode::Passthrough
@@ -75,13 +80,7 @@ fn build_capture_plan(
 
     CapturePlan {
         execution_mode: mode,
-        processing_path: match mode {
-            ExecutionMode::Passthrough => ProcessingPath::Passthrough,
-            _ if matches!(structured_capture, StructuredCapturePolicy::SarifFile) => {
-                ProcessingPath::DualSinkStructured
-            }
-            _ => ProcessingPath::NativeTextCapture,
-        },
+        processing_path,
         structured_capture,
         native_text_capture,
         preserve_native_color: compatibility_seam.should_preserve_tty_color(
@@ -111,9 +110,15 @@ pub(crate) fn build_execution_plan(
     })?;
     let capabilities = detect_capabilities();
     let explicit_mode = parsed.mode.or(config.runtime.mode);
+    let requested_processing_path = parsed.processing_path.or(config.runtime.processing_path);
     let hard_conflict = has_hard_conflict(&parsed.forwarded_args);
     let compatibility_seam = CliCompatibilitySeam::from_probe(&backend);
     let mode_decision = select_mode_for_seam(&compatibility_seam, explicit_mode, hard_conflict);
+    let processing_path = select_processing_path_for_seam(
+        &compatibility_seam,
+        &mode_decision,
+        requested_processing_path,
+    );
     let profile = parsed
         .profile
         .or(config.render.profile)
@@ -126,16 +131,22 @@ pub(crate) fn build_execution_plan(
         .trace
         .or(config.trace.retention_policy)
         .unwrap_or(RetentionPolicy::OnWrapperFailure);
+    let capture_plan = build_capture_plan(
+        &compatibility_seam,
+        mode_decision.mode,
+        processing_path,
+        retention_policy,
+        debug_refs,
+        &capabilities,
+        &parsed.forwarded_args,
+    );
     Ok(ExecutionPlan {
-        scope_notice: compatibility_scope_notice_for_seam(&compatibility_seam, &mode_decision),
-        capture_plan: build_capture_plan(
+        scope_notice: compatibility_scope_notice_for_path(
             &compatibility_seam,
-            mode_decision.mode,
-            retention_policy,
-            debug_refs,
-            &capabilities,
-            &parsed.forwarded_args,
+            &mode_decision,
+            capture_plan.processing_path,
         ),
+        capture_plan,
         backend,
         mode_decision,
         profile,
@@ -184,6 +195,7 @@ mod tests {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::A),
             ExecutionMode::Render,
+            ProcessingPath::DualSinkStructured,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
             &tty_capabilities(),
@@ -207,6 +219,7 @@ mod tests {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::B),
             ExecutionMode::Shadow,
+            ProcessingPath::NativeTextCapture,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
             &pipe_capabilities(),
@@ -228,6 +241,7 @@ mod tests {
         let passthrough = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::B),
             ExecutionMode::Passthrough,
+            ProcessingPath::Passthrough,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
             &pipe_capabilities(),
@@ -243,6 +257,7 @@ mod tests {
         let retained = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::B),
             ExecutionMode::Passthrough,
+            ProcessingPath::Passthrough,
             RetentionPolicy::Always,
             DebugRefs::None,
             &pipe_capabilities(),
@@ -256,6 +271,7 @@ mod tests {
         let debug_capture_ref = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::B),
             ExecutionMode::Passthrough,
+            ProcessingPath::Passthrough,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::CaptureRef,
             &pipe_capabilities(),
@@ -264,6 +280,29 @@ mod tests {
         assert_eq!(
             debug_capture_ref.native_text_capture,
             NativeTextCapturePolicy::TeeToParent
+        );
+    }
+
+    #[test]
+    fn tier_b_single_sink_structured_plan_uses_explicit_sarif_file_capture() {
+        let plan = build_capture_plan(
+            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            ExecutionMode::Render,
+            ProcessingPath::SingleSinkStructured,
+            RetentionPolicy::OnWrapperFailure,
+            DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
+        );
+
+        assert_eq!(plan.processing_path, ProcessingPath::SingleSinkStructured);
+        assert_eq!(
+            plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkSarifFile
+        );
+        assert_eq!(
+            plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
         );
     }
 }

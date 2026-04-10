@@ -1,3 +1,4 @@
+use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_render::{DebugRefs, RenderProfile};
 use diag_trace::RetentionPolicy;
@@ -7,6 +8,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Default)]
 pub(crate) struct ParsedArgs {
     pub(crate) mode: Option<ExecutionMode>,
+    pub(crate) processing_path: Option<ProcessingPath>,
     pub(crate) profile: Option<RenderProfile>,
     pub(crate) backend: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
@@ -22,6 +24,8 @@ impl ParsedArgs {
             let value = arg.to_string_lossy();
             if let Some(mode) = value.strip_prefix("--formed-mode=") {
                 parsed.mode = Some(parse_mode(mode)?);
+            } else if let Some(path) = value.strip_prefix("--formed-processing-path=") {
+                parsed.processing_path = Some(parse_processing_path(path)?);
             } else if let Some(profile) = value.strip_prefix("--formed-profile=") {
                 parsed.profile = Some(parse_profile(profile)?);
             } else if let Some(path) = value.strip_prefix("--formed-backend-gcc=") {
@@ -63,6 +67,18 @@ pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, Box<dyn std::erro
         "shadow" => Ok(ExecutionMode::Shadow),
         "passthrough" => Ok(ExecutionMode::Passthrough),
         _ => Err(format!("unsupported mode: {value}").into()),
+    }
+}
+
+pub(crate) fn parse_processing_path(
+    value: &str,
+) -> Result<ProcessingPath, Box<dyn std::error::Error>> {
+    match value {
+        "dual_sink_structured" => Ok(ProcessingPath::DualSinkStructured),
+        "single_sink_structured" => Ok(ProcessingPath::SingleSinkStructured),
+        "native_text_capture" => Ok(ProcessingPath::NativeTextCapture),
+        "passthrough" => Ok(ProcessingPath::Passthrough),
+        _ => Err(format!("unsupported processing path: {value}").into()),
     }
 }
 
@@ -111,6 +127,7 @@ mod tests {
         let parsed = ParsedArgs::parse(vec![
             OsString::from("gcc-formed"),
             OsString::from("--formed-mode=shadow"),
+            OsString::from("--formed-processing-path=single_sink_structured"),
             OsString::from("--formed-profile=ci"),
             OsString::from("--formed-trace=always"),
             OsString::from("--formed-debug-refs=trace_id"),
@@ -120,6 +137,10 @@ mod tests {
         .expect("parsed args");
 
         assert_eq!(parsed.mode, Some(ExecutionMode::Shadow));
+        assert_eq!(
+            parsed.processing_path,
+            Some(ProcessingPath::SingleSinkStructured)
+        );
         assert_eq!(parsed.profile, Some(RenderProfile::Ci));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
         assert_eq!(parsed.debug_refs, Some(DebugRefs::TraceId));

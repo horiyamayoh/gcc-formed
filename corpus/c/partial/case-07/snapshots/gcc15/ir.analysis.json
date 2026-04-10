@@ -1,0 +1,168 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 153,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.file_format_or_relocation",
+        "first_action_hint": "check object compatibility, target triple, and archive contents",
+        "headline": "linker file format or relocation failure",
+        "matched_conditions": [
+          "phase=link",
+          "context=linker_resolution",
+          "existing_specific_family=linker.file_format_or_relocation"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
+        "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
+        "structural": "17ab5141fdf8b1d81668747b2fcf9aa0cc65dfcc0cba9b0839224304b27877a0"
+      },
+      "id": "residual-0",
+      "message": {
+        "raw_text": "collect2: error: ld returned 1 exit status"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker.undefined_reference",
+        "first_action_hint": "define the missing symbol or link the object/library that provides it",
+        "headline": "undefined reference to `missing_symbol`",
+        "matched_conditions": [
+          "phase=link",
+          "context=linker_resolution",
+          "symbol_context=present",
+          "message_contains=undefined reference",
+          "existing_specific_family=linker.undefined_reference"
+        ],
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
+      },
+      "context_chains": [
+        {
+          "kind": "linker_resolution"
+        }
+      ],
+      "fingerprints": {
+        "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
+        "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
+        "structural": "632155146468ebaa230fadbad7bdb81f8a8426780f29112c424c97f6c8a99dbe"
+      },
+      "id": "residual-1",
+      "message": {
+        "raw_text": "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      },
+      "node_completeness": "partial",
+      "origin": "linker",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error",
+      "symbol_context": {
+        "primary_symbol": "missing_symbol"
+      }
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "0e7535ae01acf62a8aaa941ca4e5d61a2952a872cad676f91bb7e6bd3fb361fe",
+        "raw": "2480a1621c398d1060b984c735b4f7a13de7baa850d4c20ac34743585acafedf",
+        "structural": "44915d68f509a73466666a4f273e71220c687a67750a1e05db40dc7e1292135d"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "df880c6a9b513d8a5591987ef6a0cf3753764c2b4bb000eee4367a2390e4f7dd",
+    "raw": "96d3b066954d84744eda38e707ecbdcbc3074e1ee028f8b358bfc45023628b85",
+    "structural": "ec272d018e784969c0efff8fdb4342b0c6983aa742724e992a6bf8adecd73fe7"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
