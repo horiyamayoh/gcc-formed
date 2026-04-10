@@ -9,6 +9,7 @@ version.workspace = true
 diag_backend_probe.workspace = true
 diag_capture_runtime.workspace = true
 diag_core.workspace = true
+diag_rulepack.workspace = true
 diag_residual_text.workspace = true
 diag_trace.workspace = true
 serde.workspace = true

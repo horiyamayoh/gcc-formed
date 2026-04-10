@@ -4,15 +4,10 @@ use diag_core::{
     Confidence, ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness,
     NodeCompleteness, Ownership, ProvenanceSource,
 };
-use serde::Deserialize;
-use std::collections::BTreeSet;
+use diag_rulepack::{
+    RenderRulepack, RendererFamilyKind, RendererFamilyPolicy, checked_in_rulepack,
+};
 use std::path::Path;
-use std::sync::OnceLock;
-
-const RENDER_RULEPACK_JSON: &str = include_str!("../../rules/render.rulepack.json");
-const RENDER_RULEPACK_SCHEMA_VERSION: &str = "diag_render_rulepack/v1alpha1";
-
-static RENDER_RULEPACK: OnceLock<RenderRulepack> = OnceLock::new();
 
 #[derive(Debug, Default)]
 pub struct SupportingEvidence {
@@ -21,141 +16,8 @@ pub struct SupportingEvidence {
     pub collapsed_notices: Vec<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub(crate) enum RendererFamilyKind {
-    Unknown,
-    Syntax,
-    Template,
-    MacroInclude,
-    TypeOverload,
-    Linker,
-}
-
-#[derive(Debug, Deserialize)]
-struct RenderRulepack {
-    schema_version: String,
-    rulepack_version: String,
-    family_policies: Vec<RendererFamilyPolicy>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RendererFamilyPolicy {
-    kind: RendererFamilyKind,
-    #[serde(default)]
-    match_exact: Option<String>,
-    #[serde(default)]
-    match_prefix: Option<String>,
-    #[serde(default)]
-    exclude_exact: Option<String>,
-    specificity_rank: u8,
-    band_c_conservative_useful_subset: bool,
-    #[serde(default)]
-    conservative_limits: Option<ProfileLimitPolicy>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ProfileLimitPolicy {
-    verbose: usize,
-    default: usize,
-    concise: usize,
-    ci: usize,
-    raw_fallback: usize,
-}
-
 fn render_rulepack() -> &'static RenderRulepack {
-    RENDER_RULEPACK.get_or_init(load_render_rulepack)
-}
-
-fn load_render_rulepack() -> RenderRulepack {
-    let rulepack: RenderRulepack = serde_json::from_str(RENDER_RULEPACK_JSON)
-        .expect("checked-in render.rulepack.json must parse");
-    rulepack.validate();
-    rulepack
-}
-
-impl RenderRulepack {
-    fn validate(&self) {
-        assert_eq!(
-            self.schema_version, RENDER_RULEPACK_SCHEMA_VERSION,
-            "checked-in render rulepack schema_version drifted"
-        );
-        assert!(
-            !self.rulepack_version.trim().is_empty(),
-            "checked-in render rulepack_version must be non-empty"
-        );
-        assert!(
-            !self.family_policies.is_empty(),
-            "checked-in render rulepack must define family_policies"
-        );
-
-        let mut seen_kinds = BTreeSet::new();
-        for policy in &self.family_policies {
-            assert!(
-                policy.kind != RendererFamilyKind::Unknown,
-                "checked-in render rulepack must not define unknown family policies"
-            );
-            assert!(
-                seen_kinds.insert(policy.kind),
-                "duplicate renderer family policy in checked-in render rulepack: {:?}",
-                policy.kind
-            );
-            assert!(
-                policy.match_exact.is_some() ^ policy.match_prefix.is_some(),
-                "renderer family policy must set exactly one of match_exact/match_prefix"
-            );
-            if let Some(match_exact) = policy.match_exact.as_deref() {
-                assert!(
-                    !match_exact.trim().is_empty(),
-                    "renderer family match_exact must be non-empty"
-                );
-            }
-            if let Some(match_prefix) = policy.match_prefix.as_deref() {
-                assert!(
-                    !match_prefix.trim().is_empty(),
-                    "renderer family match_prefix must be non-empty"
-                );
-            }
-        }
-    }
-
-    fn policy_for_family(&self, family: &str) -> Option<&RendererFamilyPolicy> {
-        self.family_policies
-            .iter()
-            .find(|policy| policy.matches(family))
-    }
-
-    fn policy_for_kind(&self, kind: RendererFamilyKind) -> Option<&RendererFamilyPolicy> {
-        self.family_policies
-            .iter()
-            .find(|policy| policy.kind == kind)
-    }
-}
-
-impl RendererFamilyPolicy {
-    fn matches(&self, family: &str) -> bool {
-        if self.exclude_exact.as_deref() == Some(family) {
-            return false;
-        }
-
-        self.match_exact.as_deref() == Some(family)
-            || self
-                .match_prefix
-                .as_deref()
-                .is_some_and(|prefix| family.starts_with(prefix))
-    }
-
-    fn conservative_limit(&self, profile: RenderProfile) -> Option<usize> {
-        self.conservative_limits
-            .as_ref()
-            .map(|limits| match profile {
-                RenderProfile::Verbose => limits.verbose,
-                RenderProfile::Default => limits.default,
-                RenderProfile::Concise => limits.concise,
-                RenderProfile::Ci => limits.ci,
-                RenderProfile::RawFallback => limits.raw_fallback,
-            })
-    }
+    checked_in_rulepack().render()
 }
 
 fn renderer_family_policy(node: &DiagnosticNode) -> Option<&'static RendererFamilyPolicy> {
@@ -740,7 +602,7 @@ fn constrained_template_frames(
     default_limit.min(
         render_rulepack()
             .policy_for_kind(RendererFamilyKind::Template)
-            .and_then(|policy| policy.conservative_limit(request.profile))
+            .and_then(|policy| conservative_limit(policy, request.profile))
             .unwrap_or(default_limit),
     )
 }
@@ -757,7 +619,7 @@ fn constrained_candidate_notes(
     default_limit.min(
         render_rulepack()
             .policy_for_kind(RendererFamilyKind::TypeOverload)
-            .and_then(|policy| policy.conservative_limit(request.profile))
+            .and_then(|policy| conservative_limit(policy, request.profile))
             .unwrap_or(default_limit),
     )
 }
@@ -769,8 +631,21 @@ fn linker_object_limit(request: &RenderRequest, conservative: bool) -> usize {
 
     render_rulepack()
         .policy_for_kind(RendererFamilyKind::Linker)
-        .and_then(|policy| policy.conservative_limit(request.profile))
+        .and_then(|policy| conservative_limit(policy, request.profile))
         .unwrap_or(3)
+}
+
+fn conservative_limit(policy: &RendererFamilyPolicy, profile: RenderProfile) -> Option<usize> {
+    policy
+        .conservative_limits
+        .as_ref()
+        .map(|limits| match profile {
+            RenderProfile::Verbose => limits.verbose,
+            RenderProfile::Default => limits.default,
+            RenderProfile::Concise => limits.concise,
+            RenderProfile::Ci => limits.ci,
+            RenderProfile::RawFallback => limits.raw_fallback,
+        })
 }
 
 fn push_index(indices: &mut Vec<usize>, index: usize) {
@@ -802,10 +677,10 @@ mod tests {
         WarningVisibility,
     };
     use diag_core::{
-        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument,
-        LanguageMode, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
-        ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
-        WrapperSurface,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
+        DiagnosticDocument, LanguageMode, Location, MessageText, NodeCompleteness, Origin,
+        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
+        Severity, SymbolContext, ToolInfo, WrapperSurface,
     };
 
     fn sample_request() -> RenderRequest {
@@ -921,10 +796,25 @@ mod tests {
         }
     }
 
+    fn sample_linker_node(family: &str) -> DiagnosticNode {
+        let mut node = sample_node(family);
+        node.symbol_context = Some(SymbolContext {
+            primary_symbol: Some("foo".to_string()),
+            related_objects: vec![
+                "obj/vendor.o".to_string(),
+                "src/main.o".to_string(),
+                "lib/helper.o".to_string(),
+            ],
+            archive: Some("libfoo.a".to_string()),
+        });
+        node
+    }
+
     #[test]
     fn loads_checked_in_render_rulepack() {
         let rulepack = render_rulepack();
         assert_eq!(rulepack.rulepack_version, "phase1");
+        assert!(std::ptr::eq(rulepack, checked_in_rulepack().render()));
         assert!(
             rulepack
                 .policy_for_kind(RendererFamilyKind::Linker)
@@ -978,5 +868,54 @@ mod tests {
         assert_eq!(constrained_template_frames(&request, 20, true), 2);
         assert_eq!(constrained_candidate_notes(&request, 8, true), 1);
         assert_eq!(linker_object_limit(&request, true), 1);
+    }
+
+    #[test]
+    fn linker_cannot_find_library_uses_shared_linker_policy() {
+        let request = sample_request();
+        let mut node = sample_linker_node("linker.cannot_find_library");
+        node.symbol_context.as_mut().unwrap().primary_symbol = None;
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert_eq!(renderer_family_kind(&node), RendererFamilyKind::Linker);
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line == "linker: original linker diagnostics are preserved")
+        );
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line == "linker: archive libfoo.a")
+        );
+    }
+
+    #[test]
+    fn excluded_file_format_family_uses_generic_evidence_path() {
+        let request = sample_request();
+        let mut node = sample_linker_node("linker.file_format_or_relocation");
+        node.context_chains = vec![ContextChain {
+            kind: ContextChainKind::LinkerResolution,
+            frames: Vec::new(),
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert_eq!(renderer_family_kind(&node), RendererFamilyKind::Unknown);
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line == "linker: preserved")
+        );
+        assert!(
+            !evidence
+                .context_lines
+                .iter()
+                .any(|line| line.starts_with("linker: symbol `"))
+        );
     }
 }

@@ -1,10 +1,9 @@
 use diag_core::{Confidence, ContextChainKind, DiagnosticNode, Ownership, Phase, SemanticRole};
-use serde::Deserialize;
-use std::collections::BTreeSet;
-use std::sync::OnceLock;
-
-const RULEPACK_JSON: &str = include_str!("../../rules/enrich.rulepack.json");
-const RULEPACK_SCHEMA_VERSION: &str = "diag_enrich_rulepack/v1alpha1";
+use diag_rulepack::{
+    ChildNoteConditionKind, ConfidenceClauseConfig, ConfidencePolicyConfig, ConfidenceSignal,
+    ContextConditionKind, EnrichRulepack, FamilyRuleConfig, MatchStrategyConfig,
+    PhaseAnnotationWhen, TermGroupConfig, checked_in_rulepack,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FamilyDecision {
@@ -13,170 +12,6 @@ pub(crate) struct FamilyDecision {
     pub(crate) matched_conditions: Vec<String>,
     pub(crate) suppression_reason: Option<String>,
 }
-
-#[derive(Debug, Clone, Deserialize)]
-struct EnrichRulepack {
-    schema_version: String,
-    rulepack_version: String,
-    ingress_specific_override_rule_id: String,
-    unknown_fallback: FallbackRuleConfig,
-    passthrough_fallback: FallbackRuleConfig,
-    rules: Vec<FamilyRuleConfig>,
-    default_confidence_policy: ConfidencePolicyConfig,
-    confidence_policies: Vec<ConfidencePolicyConfig>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct FallbackRuleConfig {
-    family: String,
-    rule_id: String,
-    matched_conditions: Vec<String>,
-    suppression_reason: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct FamilyRuleConfig {
-    rule_id: String,
-    family: String,
-    match_strategy: MatchStrategyConfig,
-    #[serde(default)]
-    message_groups: Vec<TermGroupConfig>,
-    #[serde(default)]
-    child_message_groups: Vec<TermGroupConfig>,
-    #[serde(default)]
-    candidate_child_terms: Vec<String>,
-    #[serde(default)]
-    contexts: Vec<ContextConditionConfig>,
-    #[serde(default)]
-    child_notes: Vec<ChildNoteConditionConfig>,
-    #[serde(default)]
-    symbol_context_condition: Option<String>,
-    #[serde(default)]
-    candidate_child_condition: Option<String>,
-    #[serde(default)]
-    semantic_role_condition: Option<String>,
-    #[serde(default)]
-    phase_annotations: Vec<PhaseAnnotationConfig>,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum MatchStrategyConfig {
-    StructuredOrMessage,
-    PhaseOrMessage,
-    SemanticRole,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct TermGroupConfig {
-    prefix: String,
-    terms: Vec<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ContextConditionConfig {
-    kind: ContextConditionKind,
-    condition: String,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ContextConditionKind {
-    TemplateInstantiation,
-    MacroExpansion,
-    Include,
-    LinkerResolution,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ChildNoteConditionConfig {
-    kind: ChildNoteConditionKind,
-    condition: String,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ChildNoteConditionKind {
-    TemplateContext,
-    MacroExpansion,
-    Include,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct PhaseAnnotationConfig {
-    phase: Phase,
-    condition: String,
-    when: PhaseAnnotationWhen,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum PhaseAnnotationWhen {
-    RuleMatched,
-    MessageTerms,
-    MessageOrCandidate,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ConfidencePolicyConfig {
-    #[serde(default)]
-    family: Option<String>,
-    #[serde(default)]
-    fixed: Option<ConfidenceLevelConfig>,
-    #[serde(default)]
-    high_when_any: Vec<ConfidenceClauseConfig>,
-    #[serde(default)]
-    medium_when_any: Vec<ConfidenceClauseConfig>,
-    default_confidence: ConfidenceLevelConfig,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ConfidenceClauseConfig {
-    all: Vec<ConfidenceSignal>,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ConfidenceSignal {
-    UserOwnedLocation,
-    PrimaryOwnershipUser,
-    PhaseParse,
-    PhaseSemantic,
-    PhaseInstantiate,
-    PhaseLink,
-    TemplateContext,
-    MacroContext,
-    IncludeContext,
-    LinkerContext,
-    SymbolContext,
-    CandidateChild,
-    TemplateChild,
-    MacroChild,
-    IncludeChild,
-    LexicalSignal,
-    StructuredSignal,
-    ExistingSpecificFamily,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum ConfidenceLevelConfig {
-    High,
-    Medium,
-    Low,
-}
-
-impl From<ConfidenceLevelConfig> for Confidence {
-    fn from(value: ConfidenceLevelConfig) -> Self {
-        match value {
-            ConfidenceLevelConfig::High => Confidence::High,
-            ConfidenceLevelConfig::Medium => Confidence::Medium,
-            ConfidenceLevelConfig::Low => Confidence::Low,
-        }
-    }
-}
-
-static RULEPACK: OnceLock<EnrichRulepack> = OnceLock::new();
 
 #[derive(Debug)]
 struct RuleInput<'a> {
@@ -321,99 +156,7 @@ pub(crate) fn classify_confidence(node: &DiagnosticNode, decision: &FamilyDecisi
 }
 
 fn rulepack() -> &'static EnrichRulepack {
-    RULEPACK.get_or_init(load_rulepack)
-}
-
-fn load_rulepack() -> EnrichRulepack {
-    let rulepack: EnrichRulepack =
-        serde_json::from_str(RULEPACK_JSON).expect("checked-in enrich.rulepack.json must parse");
-    rulepack.validate();
-    rulepack
-}
-
-impl EnrichRulepack {
-    fn validate(&self) {
-        assert_eq!(
-            self.schema_version, RULEPACK_SCHEMA_VERSION,
-            "checked-in enrich rulepack schema_version drifted"
-        );
-        assert!(
-            !self.rulepack_version.trim().is_empty(),
-            "checked-in enrich rulepack_version must be non-empty"
-        );
-        assert!(
-            !self.rules.is_empty(),
-            "checked-in enrich rulepack must define at least one family rule"
-        );
-
-        let mut families = BTreeSet::new();
-        let mut rule_ids = BTreeSet::new();
-        for rule in &self.rules {
-            assert!(
-                families.insert(rule.family.as_str()),
-                "duplicate family rule in checked-in enrich rulepack: {}",
-                rule.family
-            );
-            assert!(
-                rule_ids.insert(rule.rule_id.as_str()),
-                "duplicate rule id in checked-in enrich rulepack: {}",
-                rule.rule_id
-            );
-        }
-
-        let mut confidence_families = BTreeSet::new();
-        for policy in &self.confidence_policies {
-            let family = policy
-                .family
-                .as_deref()
-                .expect("family confidence policies must name a family");
-            assert!(
-                confidence_families.insert(family),
-                "duplicate confidence policy in checked-in enrich rulepack: {family}"
-            );
-        }
-
-        for family in [
-            "syntax",
-            "type_overload",
-            "template",
-            "macro_include",
-            "linker",
-        ] {
-            assert!(
-                self.confidence_policies
-                    .iter()
-                    .any(|policy| policy.family.as_deref() == Some(family)),
-                "missing confidence policy in checked-in enrich rulepack: {family}"
-            );
-        }
-    }
-
-    fn rule(&self, family: &str) -> &FamilyRuleConfig {
-        self.rules
-            .iter()
-            .find(|rule| rule.family == family)
-            .unwrap_or_else(|| {
-                panic!("missing family rule in checked-in enrich rulepack: {family}")
-            })
-    }
-
-    fn confidence_policy_for(&self, family: &str) -> &ConfidencePolicyConfig {
-        self.confidence_policies
-            .iter()
-            .find(|policy| policy.family.as_deref() == Some(family))
-            .or_else(|| {
-                family
-                    .starts_with("linker.")
-                    .then(|| {
-                        self.confidence_policies
-                            .iter()
-                            .find(|policy| policy.family.as_deref() == Some("linker"))
-                    })
-                    .flatten()
-            })
-            .unwrap_or(&self.default_confidence_policy)
-    }
+    checked_in_rulepack().enrich()
 }
 
 fn match_family_rule(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
@@ -792,6 +535,7 @@ mod tests {
         let rulepack = rulepack();
         assert_eq!(rulepack.rulepack_version, "phase1");
         assert_eq!(rulepack.rules.len(), 6);
+        assert!(std::ptr::eq(rulepack, checked_in_rulepack().enrich()));
         assert_eq!(
             rulepack.rule("syntax").rule_id,
             "rule.family.syntax.phase_or_message"

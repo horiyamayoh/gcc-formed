@@ -242,6 +242,7 @@ dependencies = [
  "diag_capture_runtime",
  "diag_core",
  "diag_residual_text",
+ "diag_rulepack",
  "diag_trace",
  "serde",
  "serde_json",
@@ -307,6 +308,7 @@ name = "diag_enrich"
 version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
+ "diag_rulepack",
  "regex",
  "serde",
  "serde_json",
@@ -317,6 +319,7 @@ name = "diag_render"
 version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
+ "diag_rulepack",
  "regex",
  "serde",
  "serde_json",
@@ -328,6 +331,7 @@ name = "diag_residual_text"
 version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
+ "diag_rulepack",
  "regex",
  "serde",
  "serde_json",
@@ -338,8 +342,7 @@ name = "diag_rulepack"
 version = "0.2.0-beta.1"
 dependencies = [
  "diag_core",
- "diag_enrich",
- "diag_residual_text",
+ "regex",
  "serde",
  "serde_json",
  "sha2",

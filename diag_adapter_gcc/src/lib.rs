@@ -11,6 +11,7 @@ use diag_core::{
     RunInfo, SemanticRole, Severity, SourceAuthority, ToolInfo,
 };
 use diag_residual_text::classify;
+use diag_rulepack::checked_in_rulepack_version;
 use diag_trace::RetentionPolicy;
 use serde_json::Value;
 use std::fs;
@@ -1496,7 +1497,7 @@ pub fn producer_for_version(version: &str) -> ProducerInfo {
         version: version.to_string(),
         git_revision: option_env!("FORMED_GIT_COMMIT").map(ToString::to_string),
         build_profile: option_env!("FORMED_BUILD_PROFILE").map(ToString::to_string),
-        rulepack_version: Some("phase1".to_string()),
+        rulepack_version: Some(checked_in_rulepack_version().to_string()),
     }
 }
 
@@ -1527,6 +1528,15 @@ mod tests {
             target_triple: None,
             wrapper_mode: Some(WrapperSurface::Terminal),
         }
+    }
+
+    #[test]
+    fn producer_uses_checked_in_rulepack_version() {
+        let producer = producer_for_version("0.1.0");
+        assert_eq!(
+            producer.rulepack_version.as_deref(),
+            Some(checked_in_rulepack_version())
+        );
     }
 
     #[test]

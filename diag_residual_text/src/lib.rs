@@ -3,111 +3,12 @@ use diag_core::{
     MessageText, NodeCompleteness, Origin, Phase, Provenance, ProvenanceSource, SemanticRole,
     Severity, SymbolContext,
 };
+use diag_rulepack::{
+    CompilerResidualKind, CompilerResidualSeed, HeadlineStrategy, LinkerResidualSeed,
+    ResidualRulepack, checked_in_rulepack,
+};
 use regex::Regex;
-use serde::Deserialize;
-use std::collections::{BTreeMap, BTreeSet, btree_map::Entry};
-use std::sync::OnceLock;
-
-const RESIDUAL_RULEPACK_JSON: &str = include_str!("../../rules/residual.rulepack.json");
-const RESIDUAL_RULEPACK_SCHEMA_VERSION: &str = "diag_residual_rulepack/v1alpha1";
-
-static RESIDUAL_RULEPACK: OnceLock<ResidualRulepackRoot> = OnceLock::new();
-
-#[derive(Debug, Deserialize)]
-struct ResidualRulepackRoot {
-    schema_version: String,
-    rulepack_version: String,
-    residual: ResidualSection,
-}
-
-#[derive(Debug, Deserialize)]
-struct ResidualSection {
-    compiler_groups: Vec<CompilerResidualSeed>,
-    compiler_note_rules: CompilerNoteRules,
-    linker_groups: Vec<LinkerResidualSeed>,
-    passthrough: PassthroughResidualSeed,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "snake_case")]
-enum CompilerResidualKind {
-    Syntax,
-    Template,
-    TypeOverload,
-    Unknown,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-enum HeadlineStrategy {
-    FixedText,
-    MessagePassthrough,
-}
-
-#[derive(Debug, Deserialize)]
-struct CompilerResidualSeed {
-    kind: CompilerResidualKind,
-    family: String,
-    phase: Phase,
-    rule_id: String,
-    headline_strategy: HeadlineStrategy,
-    headline: Option<String>,
-    first_action_hint: String,
-    #[serde(default)]
-    match_any: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CompilerNoteRules {
-    #[serde(default)]
-    template_context_any: Vec<String>,
-    #[serde(default)]
-    candidate_contains: Vec<String>,
-    candidate_numbered_prefix: String,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "snake_case")]
-enum LinkerResidualKind {
-    UndefinedReference,
-    MultipleDefinition,
-    CannotFindLibrary,
-    FileFormatOrRelocation,
-    Collect2Error,
-    AssemblerError,
-}
-
-#[derive(Debug, Deserialize)]
-struct LinkerResidualSeed {
-    kind: LinkerResidualKind,
-    family: String,
-    origin: Origin,
-    phase: Phase,
-    rule_id: String,
-    #[serde(default)]
-    group_key: Option<String>,
-    #[serde(default)]
-    group_key_template: Option<String>,
-    #[serde(default)]
-    match_regex: Option<String>,
-    #[serde(default)]
-    match_prefix: Option<String>,
-    #[serde(default)]
-    requires_colon: bool,
-    #[serde(default)]
-    symbol_capture: Option<String>,
-    headline_template: String,
-    first_action_hint: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct PassthroughResidualSeed {
-    family: String,
-    phase: Phase,
-    rule_id: String,
-    headline: String,
-    first_action_hint: String,
-}
+use std::collections::{BTreeMap, btree_map::Entry};
 
 #[derive(Debug)]
 struct CompilerResidualBlock {
@@ -199,138 +100,8 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     nodes
 }
 
-fn residual_rulepack() -> &'static ResidualRulepackRoot {
-    RESIDUAL_RULEPACK.get_or_init(load_residual_rulepack)
-}
-
-fn load_residual_rulepack() -> ResidualRulepackRoot {
-    let rulepack: ResidualRulepackRoot = serde_json::from_str(RESIDUAL_RULEPACK_JSON)
-        .expect("checked-in residual.rulepack.json must parse");
-    rulepack.validate();
-    rulepack
-}
-
-impl ResidualRulepackRoot {
-    fn validate(&self) {
-        assert_eq!(
-            self.schema_version, RESIDUAL_RULEPACK_SCHEMA_VERSION,
-            "checked-in residual rulepack schema_version drifted"
-        );
-        assert!(
-            !self.rulepack_version.trim().is_empty(),
-            "checked-in residual rulepack_version must be non-empty"
-        );
-
-        let mut compiler_kinds = BTreeSet::new();
-        for entry in &self.residual.compiler_groups {
-            assert!(
-                compiler_kinds.insert(entry.kind),
-                "duplicate compiler residual kind in checked-in residual rulepack"
-            );
-            assert!(
-                !entry.family.trim().is_empty(),
-                "compiler residual family must be non-empty"
-            );
-            assert!(
-                !entry.rule_id.trim().is_empty(),
-                "compiler residual rule_id must be non-empty"
-            );
-            assert!(
-                !entry.first_action_hint.trim().is_empty(),
-                "compiler residual first_action_hint must be non-empty"
-            );
-            if matches!(entry.headline_strategy, HeadlineStrategy::FixedText) {
-                assert!(
-                    entry
-                        .headline
-                        .as_deref()
-                        .is_some_and(|headline| !headline.trim().is_empty()),
-                    "fixed_text compiler residual seeds must include headline"
-                );
-            }
-        }
-        assert!(
-            compiler_kinds.contains(&CompilerResidualKind::Unknown),
-            "checked-in residual rulepack must include unknown compiler seed"
-        );
-
-        assert!(
-            !self
-                .residual
-                .compiler_note_rules
-                .candidate_numbered_prefix
-                .trim()
-                .is_empty(),
-            "compiler_note_rules.candidate_numbered_prefix must be non-empty"
-        );
-
-        let mut linker_kinds = BTreeSet::new();
-        for entry in &self.residual.linker_groups {
-            assert!(
-                linker_kinds.insert(entry.kind),
-                "duplicate linker residual kind in checked-in residual rulepack"
-            );
-            assert!(
-                !entry.family.trim().is_empty(),
-                "linker residual family must be non-empty"
-            );
-            assert!(
-                !entry.rule_id.trim().is_empty(),
-                "linker residual rule_id must be non-empty"
-            );
-            assert!(
-                !entry.headline_template.trim().is_empty(),
-                "linker residual headline_template must be non-empty"
-            );
-            assert!(
-                !entry.first_action_hint.trim().is_empty(),
-                "linker residual first_action_hint must be non-empty"
-            );
-            assert!(
-                entry.group_key.is_some() ^ entry.group_key_template.is_some(),
-                "linker residual rules must set exactly one of group_key/group_key_template"
-            );
-            assert!(
-                entry.match_regex.is_some() || entry.match_prefix.is_some(),
-                "linker residual rules must set match_regex or match_prefix"
-            );
-            if let Some(pattern) = &entry.match_regex {
-                Regex::new(pattern).unwrap_or_else(|error| {
-                    panic!("invalid linker residual regex `{pattern}`: {error}")
-                });
-            }
-        }
-
-        assert!(
-            !self.residual.passthrough.family.trim().is_empty(),
-            "passthrough family must be non-empty"
-        );
-        assert!(
-            !self.residual.passthrough.rule_id.trim().is_empty(),
-            "passthrough rule_id must be non-empty"
-        );
-        assert!(
-            !self.residual.passthrough.headline.trim().is_empty(),
-            "passthrough headline must be non-empty"
-        );
-        assert!(
-            !self
-                .residual
-                .passthrough
-                .first_action_hint
-                .trim()
-                .is_empty(),
-            "passthrough first_action_hint must be non-empty"
-        );
-    }
-
-    fn compiler_seed(&self, kind: CompilerResidualKind) -> &CompilerResidualSeed {
-        self.residual
-            .compiler_groups
-            .iter()
-            .find(|entry| entry.kind == kind)
-            .unwrap_or_else(|| panic!("missing compiler residual seed for {kind:?}"))
-    }
+fn residual_rulepack() -> &'static ResidualRulepack {
+    checked_in_rulepack().residual()
 }
 
 fn compiled_linker_seeds() -> Vec<CompiledLinkerSeed> {
@@ -831,11 +602,13 @@ fn parse_locations(lines: &[String]) -> Vec<Location> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use diag_rulepack::LinkerResidualKind;
 
     #[test]
     fn loads_checked_in_residual_rulepack() {
         let rulepack = residual_rulepack();
         assert_eq!(rulepack.rulepack_version, "phase1");
+        assert!(std::ptr::eq(rulepack, checked_in_rulepack().residual()));
         assert_eq!(
             rulepack
                 .compiler_seed(CompilerResidualKind::Template)
@@ -947,5 +720,82 @@ main.cpp:8:15: note:   required from here\n";
                 .and_then(|analysis| analysis.family.as_deref())
                 == Some("linker.undefined_reference")
         }));
+    }
+
+    #[test]
+    fn groups_collect2_residuals_under_file_format_family() {
+        let stderr = "collect2: error: ld returned 1 exit status";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        let analysis = nodes[0].analysis.as_ref().unwrap();
+        assert_eq!(
+            analysis.family.as_deref(),
+            Some("linker.file_format_or_relocation")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("linker file format or relocation failure")
+        );
+        assert!(
+            analysis
+                .matched_conditions
+                .iter()
+                .any(|condition| condition == "residual_group=collect2")
+        );
+    }
+
+    #[test]
+    fn groups_cannot_find_library_residuals() {
+        let stderr = "/usr/bin/ld: cannot find -lssl";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        let analysis = nodes[0].analysis.as_ref().unwrap();
+        assert_eq!(
+            analysis.family.as_deref(),
+            Some("linker.cannot_find_library")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("cannot find library `-lssl`")
+        );
+    }
+
+    #[test]
+    fn groups_multiple_definition_residuals() {
+        let stderr = "/usr/bin/ld: util.o:(.text+0x0): multiple definition of `foo'";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        let analysis = nodes[0].analysis.as_ref().unwrap();
+        assert_eq!(
+            analysis.family.as_deref(),
+            Some("linker.multiple_definition")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("multiple definition of `foo`")
+        );
+    }
+
+    #[test]
+    fn groups_file_format_residuals() {
+        let stderr =
+            "/usr/bin/ld: archive.a: file format not recognized; treating as linker script";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        let analysis = nodes[0].analysis.as_ref().unwrap();
+        assert_eq!(
+            analysis.family.as_deref(),
+            Some("linker.file_format_or_relocation")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("linker file format or relocation failure")
+        );
+        assert!(
+            analysis
+                .matched_conditions
+                .iter()
+                .any(|condition| condition == "residual_group=file-format")
+        );
     }
 }

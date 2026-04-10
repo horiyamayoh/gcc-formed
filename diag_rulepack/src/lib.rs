@@ -1,21 +1,32 @@
 use diag_core::Phase;
+use regex::Regex;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
+use std::sync::OnceLock;
 
 pub const RULEPACK_MANIFEST_SCHEMA_VERSION: &str = "diag_rulepack_manifest/v1alpha1";
-pub const RULEPACK_SECTION_SCHEMA_VERSION: &str = "diag_rulepack_section/v1alpha1";
+pub const ENRICH_RULEPACK_SCHEMA_VERSION: &str = "diag_enrich_rulepack/v1alpha1";
+pub const RESIDUAL_RULEPACK_SCHEMA_VERSION: &str = "diag_residual_rulepack/v1alpha1";
+pub const RENDER_RULEPACK_SCHEMA_VERSION: &str = "diag_render_rulepack/v1alpha1";
 pub const CHECKED_IN_RULEPACK_VERSION: &str = "phase1";
 pub const CHECKED_IN_MANIFEST_FILE: &str = "diag_rulepack.manifest.phase1.json";
+
 #[cfg(test)]
 const CHECKED_IN_SECTION_FILES: &[&str] = &[
     CHECKED_IN_MANIFEST_FILE,
-    "diag_rulepack.enrich_family.phase1.json",
-    "diag_rulepack.enrich_wording.phase1.json",
-    "diag_rulepack.residual.phase1.json",
+    "enrich.rulepack.json",
+    "residual.rulepack.json",
+    "render.rulepack.json",
 ];
+
+const CHECKED_IN_MANIFEST_RAW: &[u8] =
+    include_bytes!("../../rules/diag_rulepack.manifest.phase1.json");
+const CHECKED_IN_ENRICH_RAW: &[u8] = include_bytes!("../../rules/enrich.rulepack.json");
+const CHECKED_IN_RESIDUAL_RAW: &[u8] = include_bytes!("../../rules/residual.rulepack.json");
+const CHECKED_IN_RENDER_RAW: &[u8] = include_bytes!("../../rules/render.rulepack.json");
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RulepackManifest {
@@ -36,56 +47,188 @@ pub struct ManifestSection {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum SectionKind {
-    EnrichFamily,
-    EnrichWording,
+    Enrich,
     Residual,
+    Render,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EnrichRulepack {
+    pub schema_version: String,
+    pub rulepack_version: String,
+    pub ingress_specific_override_rule_id: String,
+    pub unknown_fallback: FallbackRuleConfig,
+    pub passthrough_fallback: FallbackRuleConfig,
+    pub rules: Vec<FamilyRuleConfig>,
+    pub default_confidence_policy: ConfidencePolicyConfig,
+    pub confidence_policies: Vec<ConfidencePolicyConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FallbackRuleConfig {
+    pub family: String,
+    pub rule_id: String,
+    pub matched_conditions: Vec<String>,
+    pub suppression_reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FamilyRuleConfig {
+    pub rule_id: String,
+    pub family: String,
+    pub match_strategy: MatchStrategyConfig,
+    #[serde(default)]
+    pub message_groups: Vec<TermGroupConfig>,
+    #[serde(default)]
+    pub child_message_groups: Vec<TermGroupConfig>,
+    #[serde(default)]
+    pub candidate_child_terms: Vec<String>,
+    #[serde(default)]
+    pub contexts: Vec<ContextConditionConfig>,
+    #[serde(default)]
+    pub child_notes: Vec<ChildNoteConditionConfig>,
+    #[serde(default)]
+    pub symbol_context_condition: Option<String>,
+    #[serde(default)]
+    pub candidate_child_condition: Option<String>,
+    #[serde(default)]
+    pub semantic_role_condition: Option<String>,
+    #[serde(default)]
+    pub phase_annotations: Vec<PhaseAnnotationConfig>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum MatchStrategy {
+pub enum MatchStrategyConfig {
     StructuredOrMessage,
     PhaseOrMessage,
     SemanticRole,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TermGroupConfig {
+    pub prefix: String,
+    pub terms: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ContextConditionConfig {
+    pub kind: ContextConditionKind,
+    pub condition: String,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum TextStrategy {
-    FixedText,
-    MessagePassthrough,
-    FirstMessageLine,
+pub enum ContextConditionKind {
+    TemplateInstantiation,
+    MacroExpansion,
+    Include,
+    LinkerResolution,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EnrichFamilySection {
+pub struct ChildNoteConditionConfig {
+    pub kind: ChildNoteConditionKind,
+    pub condition: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ChildNoteConditionKind {
+    TemplateContext,
+    MacroExpansion,
+    Include,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PhaseAnnotationConfig {
+    pub phase: Phase,
+    pub condition: String,
+    pub when: PhaseAnnotationWhen,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum PhaseAnnotationWhen {
+    RuleMatched,
+    MessageTerms,
+    MessageOrCandidate,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ConfidencePolicyConfig {
+    #[serde(default)]
+    pub family: Option<String>,
+    #[serde(default)]
+    pub fixed: Option<ConfidenceLevelConfig>,
+    #[serde(default)]
+    pub high_when_any: Vec<ConfidenceClauseConfig>,
+    #[serde(default)]
+    pub medium_when_any: Vec<ConfidenceClauseConfig>,
+    pub default_confidence: ConfidenceLevelConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ConfidenceClauseConfig {
+    pub all: Vec<ConfidenceSignal>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ConfidenceSignal {
+    UserOwnedLocation,
+    PrimaryOwnershipUser,
+    PhaseParse,
+    PhaseSemantic,
+    PhaseInstantiate,
+    PhaseLink,
+    TemplateContext,
+    MacroContext,
+    IncludeContext,
+    LinkerContext,
+    SymbolContext,
+    CandidateChild,
+    TemplateChild,
+    MacroChild,
+    IncludeChild,
+    LexicalSignal,
+    StructuredSignal,
+    ExistingSpecificFamily,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ConfidenceLevelConfig {
+    High,
+    Medium,
+    Low,
+}
+
+impl From<ConfidenceLevelConfig> for diag_core::Confidence {
+    fn from(value: ConfidenceLevelConfig) -> Self {
+        match value {
+            ConfidenceLevelConfig::High => diag_core::Confidence::High,
+            ConfidenceLevelConfig::Medium => diag_core::Confidence::Medium,
+            ConfidenceLevelConfig::Low => diag_core::Confidence::Low,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ResidualRulepack {
     pub schema_version: String,
     pub rulepack_version: String,
-    pub kind: SectionKind,
-    pub fallback_family: String,
-    pub fallback_rule_id: String,
-    pub ingress_specific_override_rule_id: String,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub ingress_specific_family_overrides: Vec<String>,
-    pub rules: Vec<EnrichFamilyRule>,
+    pub wording: WordingSection,
+    pub residual: ResidualSection,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EnrichFamilyRule {
-    pub rule_id: String,
-    pub family: String,
-    pub match_strategy: MatchStrategy,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct EnrichWordingSection {
-    pub schema_version: String,
-    pub rulepack_version: String,
-    pub kind: SectionKind,
-    pub fallback: FallbackWording,
-    pub headlines: Vec<FamilyText>,
-    pub action_hints: Vec<FamilyText>,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+pub struct WordingSection {
+    pub default_headline_strategy: HeadlineFallbackStrategy,
+    pub default_action_hint: String,
+    pub generic_linker_symbol_headline_template: String,
+    pub generic_headlines: Vec<FamilyText>,
+    pub generic_action_hints: Vec<FamilyText>,
     pub specific_overrides: Vec<SpecificWordingOverride>,
 }
 
@@ -96,24 +239,23 @@ pub struct FamilyText {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct FallbackWording {
-    pub headline_strategy: TextStrategy,
-    pub first_action_hint: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SpecificWordingOverride {
     pub family: String,
     pub headline_template: String,
+    pub headline_without_symbol: String,
     pub first_action_hint: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum HeadlineFallbackStrategy {
+    FirstMessageLine,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ResidualSection {
-    pub schema_version: String,
-    pub rulepack_version: String,
-    pub kind: SectionKind,
     pub compiler_groups: Vec<CompilerResidualSeed>,
+    pub compiler_note_rules: CompilerNoteRules,
     pub linker_groups: Vec<LinkerResidualSeed>,
     pub passthrough: PassthroughResidualSeed,
 }
@@ -127,34 +269,65 @@ pub enum CompilerResidualKind {
     Unknown,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum HeadlineStrategy {
+    FixedText,
+    MessagePassthrough,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CompilerResidualSeed {
     pub kind: CompilerResidualKind,
     pub family: String,
     pub phase: Phase,
     pub rule_id: String,
-    pub headline_strategy: TextStrategy,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headline_strategy: HeadlineStrategy,
     pub headline: Option<String>,
     pub first_action_hint: String,
+    #[serde(default)]
+    pub match_any: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CompilerNoteRules {
+    #[serde(default)]
+    pub template_context_any: Vec<String>,
+    #[serde(default)]
+    pub candidate_contains: Vec<String>,
+    pub candidate_numbered_prefix: String,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum LinkerResidualKind {
-    AssemblerError,
+    UndefinedReference,
+    MultipleDefinition,
     CannotFindLibrary,
     FileFormatOrRelocation,
-    MultipleDefinition,
-    UndefinedReference,
+    Collect2Error,
+    AssemblerError,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct LinkerResidualSeed {
     pub kind: LinkerResidualKind,
     pub family: String,
+    pub origin: diag_core::Origin,
     pub phase: Phase,
     pub rule_id: String,
+    #[serde(default)]
+    pub group_key: Option<String>,
+    #[serde(default)]
+    pub group_key_template: Option<String>,
+    #[serde(default)]
+    pub match_regex: Option<String>,
+    #[serde(default)]
+    pub match_prefix: Option<String>,
+    #[serde(default)]
+    pub requires_colon: bool,
+    #[serde(default)]
+    pub symbol_capture: Option<String>,
     pub headline_template: String,
     pub first_action_hint: String,
 }
@@ -168,12 +341,54 @@ pub struct PassthroughResidualSeed {
     pub first_action_hint: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RenderRulepack {
+    pub schema_version: String,
+    pub rulepack_version: String,
+    pub family_policies: Vec<RendererFamilyPolicy>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RendererFamilyKind {
+    Unknown,
+    Syntax,
+    Template,
+    MacroInclude,
+    TypeOverload,
+    Linker,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RendererFamilyPolicy {
+    pub kind: RendererFamilyKind,
+    #[serde(default)]
+    pub match_exact: Option<String>,
+    #[serde(default)]
+    pub match_prefix: Option<String>,
+    #[serde(default)]
+    pub exclude_exact: Option<String>,
+    pub specificity_rank: u8,
+    pub band_c_conservative_useful_subset: bool,
+    #[serde(default)]
+    pub conservative_limits: Option<ProfileLimitPolicy>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProfileLimitPolicy {
+    pub verbose: usize,
+    pub default: usize,
+    pub concise: usize,
+    pub ci: usize,
+    pub raw_fallback: usize,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LoadedRulepack {
     manifest: RulepackManifest,
-    enrich_family: EnrichFamilySection,
-    enrich_wording: EnrichWordingSection,
-    residual: ResidualSection,
+    enrich: EnrichRulepack,
+    residual: ResidualRulepack,
+    render: RenderRulepack,
 }
 
 impl LoadedRulepack {
@@ -185,63 +400,99 @@ impl LoadedRulepack {
         &self.manifest
     }
 
-    pub fn enrich_family_section(&self) -> &EnrichFamilySection {
-        &self.enrich_family
+    pub fn enrich(&self) -> &EnrichRulepack {
+        &self.enrich
     }
 
-    pub fn enrich_wording_section(&self) -> &EnrichWordingSection {
-        &self.enrich_wording
-    }
-
-    pub fn residual_section(&self) -> &ResidualSection {
+    pub fn residual(&self) -> &ResidualRulepack {
         &self.residual
     }
 
-    pub fn enrich_rule(&self, family: &str) -> Option<&EnrichFamilyRule> {
-        self.enrich_family
-            .rules
+    pub fn render(&self) -> &RenderRulepack {
+        &self.render
+    }
+}
+
+impl EnrichRulepack {
+    pub fn rule(&self, family: &str) -> &FamilyRuleConfig {
+        self.rules
             .iter()
             .find(|rule| rule.family == family)
+            .unwrap_or_else(|| {
+                panic!("missing family rule in checked-in enrich rulepack: {family}")
+            })
     }
 
-    pub fn generic_headline(&self, family: &str) -> Option<&str> {
-        self.enrich_wording
-            .headlines
+    pub fn confidence_policy_for(&self, family: &str) -> &ConfidencePolicyConfig {
+        self.confidence_policies
             .iter()
-            .find(|entry| entry.family == family)
-            .map(|entry| entry.text.as_str())
+            .find(|policy| policy.family.as_deref() == Some(family))
+            .or_else(|| {
+                family
+                    .starts_with("linker.")
+                    .then(|| {
+                        self.confidence_policies
+                            .iter()
+                            .find(|policy| policy.family.as_deref() == Some("linker"))
+                    })
+                    .flatten()
+            })
+            .unwrap_or(&self.default_confidence_policy)
     }
+}
 
-    pub fn generic_action_hint(&self, family: &str) -> Option<&str> {
-        self.enrich_wording
-            .action_hints
-            .iter()
-            .find(|entry| entry.family == family)
-            .map(|entry| entry.text.as_str())
-    }
-
-    pub fn specific_wording_override(&self, family: &str) -> Option<&SpecificWordingOverride> {
-        self.enrich_wording
-            .specific_overrides
-            .iter()
-            .find(|entry| entry.family == family)
-    }
-
-    pub fn compiler_residual_seed(
-        &self,
-        kind: CompilerResidualKind,
-    ) -> Option<&CompilerResidualSeed> {
+impl ResidualRulepack {
+    pub fn compiler_seed(&self, kind: CompilerResidualKind) -> &CompilerResidualSeed {
         self.residual
             .compiler_groups
             .iter()
             .find(|entry| entry.kind == kind)
+            .unwrap_or_else(|| panic!("missing compiler residual seed for {kind:?}"))
     }
 
-    pub fn linker_residual_seed(&self, kind: LinkerResidualKind) -> Option<&LinkerResidualSeed> {
-        self.residual
-            .linker_groups
+    pub fn generic_headline(&self, family: &str) -> Option<&str> {
+        generic_family_text(&self.wording.generic_headlines, family)
+            .map(|entry| entry.text.as_str())
+    }
+
+    pub fn generic_action_hint(&self, family: &str) -> Option<&str> {
+        generic_family_text(&self.wording.generic_action_hints, family)
+            .map(|entry| entry.text.as_str())
+    }
+
+    pub fn specific_wording_override(&self, family: &str) -> Option<&SpecificWordingOverride> {
+        self.wording
+            .specific_overrides
             .iter()
-            .find(|entry| entry.kind == kind)
+            .find(|entry| entry.family == family)
+    }
+}
+
+impl RenderRulepack {
+    pub fn policy_for_family(&self, family: &str) -> Option<&RendererFamilyPolicy> {
+        self.family_policies
+            .iter()
+            .find(|policy| policy.matches(family))
+    }
+
+    pub fn policy_for_kind(&self, kind: RendererFamilyKind) -> Option<&RendererFamilyPolicy> {
+        self.family_policies
+            .iter()
+            .find(|policy| policy.kind == kind)
+    }
+}
+
+impl RendererFamilyPolicy {
+    pub fn matches(&self, family: &str) -> bool {
+        if self.exclude_exact.as_deref() == Some(family) {
+            return false;
+        }
+
+        self.match_exact.as_deref() == Some(family)
+            || self
+                .match_prefix
+                .as_deref()
+                .is_some_and(|prefix| family.starts_with(prefix))
     }
 }
 
@@ -269,6 +520,8 @@ pub enum RulepackError {
     InvalidRulepack { path: PathBuf, message: String },
 }
 
+static CHECKED_IN_RULEPACK: OnceLock<LoadedRulepack> = OnceLock::new();
+
 pub fn checked_in_rules_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -280,8 +533,20 @@ pub fn checked_in_manifest_path() -> PathBuf {
     checked_in_rules_dir().join(CHECKED_IN_MANIFEST_FILE)
 }
 
+pub fn checked_in_rulepack() -> &'static LoadedRulepack {
+    CHECKED_IN_RULEPACK.get_or_init(|| {
+        load_embedded_rulepack().unwrap_or_else(|error| {
+            panic!("checked-in diag_rulepack must validate at runtime: {error}");
+        })
+    })
+}
+
+pub fn checked_in_rulepack_version() -> &'static str {
+    checked_in_rulepack().version()
+}
+
 pub fn load_checked_in_rulepack() -> Result<LoadedRulepack, RulepackError> {
-    load_rulepack_from_manifest(checked_in_manifest_path())
+    Ok(checked_in_rulepack().clone())
 }
 
 pub fn load_rulepack_from_manifest(
@@ -289,21 +554,43 @@ pub fn load_rulepack_from_manifest(
 ) -> Result<LoadedRulepack, RulepackError> {
     let manifest_path = manifest_path.as_ref().to_path_buf();
     let manifest_raw = read_raw_file(&manifest_path)?;
-    let manifest: RulepackManifest = parse_json(&manifest_path, &manifest_raw)?;
-    validate_manifest(&manifest, &manifest_path)?;
+    load_rulepack_from_raw(&manifest_path, &manifest_raw, |section_path| {
+        read_raw_file(section_path)
+    })
+}
 
-    let manifest_dir = manifest_path
-        .parent()
-        .ok_or_else(|| invalid_rulepack(&manifest_path, "manifest path has no parent"))?;
+fn load_embedded_rulepack() -> Result<LoadedRulepack, RulepackError> {
+    load_rulepack_from_raw(
+        Path::new(CHECKED_IN_MANIFEST_FILE),
+        CHECKED_IN_MANIFEST_RAW,
+        |section_path| {
+            embedded_section_raw(section_path.to_str().unwrap_or_default())
+                .map(|raw| raw.to_vec())
+                .ok_or_else(|| invalid_rulepack(section_path, "embedded section not found"))
+        },
+    )
+}
 
-    let mut enrich_family = None;
-    let mut enrich_wording = None;
+fn load_rulepack_from_raw<F>(
+    manifest_path: &Path,
+    manifest_raw: &[u8],
+    mut read_section: F,
+) -> Result<LoadedRulepack, RulepackError>
+where
+    F: FnMut(&Path) -> Result<Vec<u8>, RulepackError>,
+{
+    let manifest: RulepackManifest = parse_json(manifest_path, manifest_raw)?;
+    validate_manifest(&manifest, manifest_path)?;
+
+    let manifest_dir = manifest_path.parent().unwrap_or(Path::new("."));
+    let mut enrich = None;
     let mut residual = None;
+    let mut render = None;
 
     for section in &manifest.sections {
         let section_path = manifest_dir.join(&section.path);
-        let section_raw = read_raw_file(&section_path)?;
-        let actual_digest = hex_sha256(&section_raw);
+        let raw = read_section(&section_path)?;
+        let actual_digest = hex_sha256(&raw);
         if actual_digest != section.sha256 {
             return Err(RulepackError::DigestMismatch {
                 path: section_path,
@@ -313,49 +600,45 @@ pub fn load_rulepack_from_manifest(
         }
 
         match section.kind {
-            SectionKind::EnrichFamily => {
-                let parsed: EnrichFamilySection = parse_json(&section_path, &section_raw)?;
-                validate_enrich_family_section(&parsed, &section_path, &manifest.rulepack_version)?;
-                enrich_family = Some(parsed);
-            }
-            SectionKind::EnrichWording => {
-                let parsed: EnrichWordingSection = parse_json(&section_path, &section_raw)?;
-                validate_enrich_wording_section(
-                    &parsed,
-                    &section_path,
-                    &manifest.rulepack_version,
-                )?;
-                enrich_wording = Some(parsed);
+            SectionKind::Enrich => {
+                let parsed: EnrichRulepack = parse_json(&section_path, &raw)?;
+                validate_enrich_rulepack(&parsed, &section_path, &manifest.rulepack_version)?;
+                enrich = Some(parsed);
             }
             SectionKind::Residual => {
-                let parsed: ResidualSection = parse_json(&section_path, &section_raw)?;
-                validate_residual_section(&parsed, &section_path, &manifest.rulepack_version)?;
+                let parsed: ResidualRulepack = parse_json(&section_path, &raw)?;
+                validate_residual_rulepack(&parsed, &section_path, &manifest.rulepack_version)?;
                 residual = Some(parsed);
+            }
+            SectionKind::Render => {
+                let parsed: RenderRulepack = parse_json(&section_path, &raw)?;
+                validate_render_rulepack(&parsed, &section_path, &manifest.rulepack_version)?;
+                render = Some(parsed);
             }
         }
     }
 
     Ok(LoadedRulepack {
         manifest,
-        enrich_family: enrich_family.ok_or_else(|| {
-            invalid_rulepack(
-                &manifest_path,
-                "manifest did not resolve an enrich_family section",
-            )
-        })?,
-        enrich_wording: enrich_wording.ok_or_else(|| {
-            invalid_rulepack(
-                &manifest_path,
-                "manifest did not resolve an enrich_wording section",
-            )
+        enrich: enrich.ok_or_else(|| {
+            invalid_rulepack(manifest_path, "manifest did not resolve an enrich section")
         })?,
         residual: residual.ok_or_else(|| {
-            invalid_rulepack(
-                &manifest_path,
-                "manifest did not resolve a residual section",
-            )
+            invalid_rulepack(manifest_path, "manifest did not resolve a residual section")
+        })?,
+        render: render.ok_or_else(|| {
+            invalid_rulepack(manifest_path, "manifest did not resolve a render section")
         })?,
     })
+}
+
+fn embedded_section_raw(path: &str) -> Option<&'static [u8]> {
+    match path {
+        "enrich.rulepack.json" => Some(CHECKED_IN_ENRICH_RAW),
+        "residual.rulepack.json" => Some(CHECKED_IN_RESIDUAL_RAW),
+        "render.rulepack.json" => Some(CHECKED_IN_RENDER_RAW),
+        _ => None,
+    }
 }
 
 fn read_raw_file(path: &Path) -> Result<Vec<u8>, RulepackError> {
@@ -385,151 +668,238 @@ fn validate_manifest(manifest: &RulepackManifest, path: &Path) -> Result<(), Rul
             "manifest must include at least one section",
         ));
     }
-    ensure_sections_sorted_and_unique(&manifest.sections, path)?;
+
+    let mut section_kinds = BTreeSet::new();
+    let mut section_paths = BTreeSet::new();
     for section in &manifest.sections {
+        if !section_kinds.insert(section.kind) {
+            return Err(invalid_rulepack(
+                path,
+                "manifest contains duplicate section kinds",
+            ));
+        }
+        if !section_paths.insert(section.path.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                "manifest contains duplicate section paths",
+            ));
+        }
         ensure_relative_json_path(&section.path, path)?;
         ensure_sha256_hex(&section.sha256, path, &section.path)?;
     }
     Ok(())
 }
 
-fn validate_enrich_family_section(
-    section: &EnrichFamilySection,
+fn validate_enrich_rulepack(
+    rulepack: &EnrichRulepack,
     path: &Path,
     expected_version: &str,
 ) -> Result<(), RulepackError> {
     validate_section_header(
-        &section.schema_version,
-        &section.rulepack_version,
-        section.kind,
-        SectionKind::EnrichFamily,
+        &rulepack.schema_version,
+        &rulepack.rulepack_version,
+        ENRICH_RULEPACK_SCHEMA_VERSION,
         path,
         expected_version,
     )?;
-    ensure_non_empty(&section.fallback_family, path, "fallback_family")?;
-    ensure_non_empty(&section.fallback_rule_id, path, "fallback_rule_id")?;
     ensure_non_empty(
-        &section.ingress_specific_override_rule_id,
+        &rulepack.ingress_specific_override_rule_id,
         path,
         "ingress_specific_override_rule_id",
     )?;
-    if section.rules.is_empty() {
+    ensure_fallback_rule(&rulepack.unknown_fallback, path, "unknown_fallback")?;
+    ensure_fallback_rule(&rulepack.passthrough_fallback, path, "passthrough_fallback")?;
+    if rulepack.rules.is_empty() {
         return Err(invalid_rulepack(
             path,
-            "enrich_family rules must be non-empty",
+            "checked-in enrich rulepack must define at least one family rule",
         ));
     }
-    ensure_strings_sorted_and_unique(
-        &section.ingress_specific_family_overrides,
-        path,
-        "ingress_specific_family_overrides",
-    )?;
-    ensure_vec_sorted_and_unique(&section.rules, path, "enrich_family rules", |rule| {
-        rule.rule_id.as_str()
-    })?;
-    for rule in &section.rules {
+
+    let mut families = BTreeSet::new();
+    let mut rule_ids = BTreeSet::new();
+    for rule in &rulepack.rules {
+        if !families.insert(rule.family.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate family rule in checked-in enrich rulepack: {}",
+                    rule.family
+                ),
+            ));
+        }
+        if !rule_ids.insert(rule.rule_id.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate rule id in checked-in enrich rulepack: {}",
+                    rule.rule_id
+                ),
+            ));
+        }
         ensure_non_empty(&rule.rule_id, path, "rule.rule_id")?;
         ensure_non_empty(&rule.family, path, "rule.family")?;
+        ensure_non_empty_groups(&rule.message_groups, path, "rule.message_groups")?;
+        ensure_non_empty_groups(
+            &rule.child_message_groups,
+            path,
+            "rule.child_message_groups",
+        )?;
+        ensure_non_empty_strings(
+            &rule.candidate_child_terms,
+            path,
+            "rule.candidate_child_terms",
+        )?;
+        ensure_conditions_non_empty(&rule.contexts, path, "rule.contexts")?;
+        ensure_conditions_non_empty(&rule.child_notes, path, "rule.child_notes")?;
+        if let Some(condition) = &rule.symbol_context_condition {
+            ensure_non_empty(condition, path, "rule.symbol_context_condition")?;
+        }
+        if let Some(condition) = &rule.candidate_child_condition {
+            ensure_non_empty(condition, path, "rule.candidate_child_condition")?;
+        }
+        if let Some(condition) = &rule.semantic_role_condition {
+            ensure_non_empty(condition, path, "rule.semantic_role_condition")?;
+        }
+        for annotation in &rule.phase_annotations {
+            ensure_non_empty(
+                &annotation.condition,
+                path,
+                "rule.phase_annotations.condition",
+            )?;
+        }
+    }
+
+    let mut confidence_families = BTreeSet::new();
+    for policy in &rulepack.confidence_policies {
+        let family = policy.family.as_deref().ok_or_else(|| {
+            invalid_rulepack(path, "family confidence policies must name a family")
+        })?;
+        if !confidence_families.insert(family) {
+            return Err(invalid_rulepack(
+                path,
+                &format!("duplicate confidence policy in checked-in enrich rulepack: {family}"),
+            ));
+        }
+        validate_confidence_policy(policy, path)?;
+    }
+    validate_confidence_policy(&rulepack.default_confidence_policy, path)?;
+
+    for family in [
+        "syntax",
+        "type_overload",
+        "template",
+        "macro_include",
+        "linker",
+    ] {
+        if !rulepack
+            .confidence_policies
+            .iter()
+            .any(|policy| policy.family.as_deref() == Some(family))
+        {
+            return Err(invalid_rulepack(
+                path,
+                &format!("missing confidence policy in checked-in enrich rulepack: {family}"),
+            ));
+        }
     }
     Ok(())
 }
 
-fn validate_enrich_wording_section(
-    section: &EnrichWordingSection,
+fn validate_residual_rulepack(
+    rulepack: &ResidualRulepack,
     path: &Path,
     expected_version: &str,
 ) -> Result<(), RulepackError> {
     validate_section_header(
-        &section.schema_version,
-        &section.rulepack_version,
-        section.kind,
-        SectionKind::EnrichWording,
+        &rulepack.schema_version,
+        &rulepack.rulepack_version,
+        RESIDUAL_RULEPACK_SCHEMA_VERSION,
         path,
         expected_version,
     )?;
     ensure_non_empty(
-        &section.fallback.first_action_hint,
+        &rulepack.wording.default_action_hint,
         path,
-        "fallback.first_action_hint",
+        "wording.default_action_hint",
     )?;
-    ensure_vec_sorted_and_unique(&section.headlines, path, "headlines", |entry| {
-        entry.family.as_str()
-    })?;
-    ensure_vec_sorted_and_unique(&section.action_hints, path, "action_hints", |entry| {
-        entry.family.as_str()
-    })?;
-    ensure_vec_sorted_and_unique(
-        &section.specific_overrides,
+    ensure_non_empty(
+        &rulepack.wording.generic_linker_symbol_headline_template,
         path,
-        "specific_overrides",
-        |entry| entry.family.as_str(),
+        "wording.generic_linker_symbol_headline_template",
     )?;
-    let headline_families: BTreeSet<_> = section
-        .headlines
-        .iter()
-        .map(|entry| entry.family.as_str())
-        .collect();
-    let action_families: BTreeSet<_> = section
-        .action_hints
-        .iter()
-        .map(|entry| entry.family.as_str())
-        .collect();
+
+    let mut headline_families = BTreeSet::new();
+    let mut action_families = BTreeSet::new();
+    let mut specific_families = BTreeSet::new();
+    for entry in &rulepack.wording.generic_headlines {
+        ensure_non_empty(&entry.family, path, "wording.generic_headlines.family")?;
+        ensure_non_empty(&entry.text, path, "wording.generic_headlines.text")?;
+        if !headline_families.insert(entry.family.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate generic headline family in residual rulepack: {}",
+                    entry.family
+                ),
+            ));
+        }
+    }
+    for entry in &rulepack.wording.generic_action_hints {
+        ensure_non_empty(&entry.family, path, "wording.generic_action_hints.family")?;
+        ensure_non_empty(&entry.text, path, "wording.generic_action_hints.text")?;
+        if !action_families.insert(entry.family.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate generic action family in residual rulepack: {}",
+                    entry.family
+                ),
+            ));
+        }
+    }
     if headline_families != action_families {
         return Err(invalid_rulepack(
             path,
-            "headlines and action_hints must cover the same family set",
+            "generic headline/action family sets must stay aligned",
         ));
     }
-    for entry in &section.headlines {
-        ensure_non_empty(&entry.family, path, "headline.family")?;
-        ensure_non_empty(&entry.text, path, "headline.text")?;
-    }
-    for entry in &section.action_hints {
-        ensure_non_empty(&entry.family, path, "action_hint.family")?;
-        ensure_non_empty(&entry.text, path, "action_hint.text")?;
-    }
-    for entry in &section.specific_overrides {
-        ensure_non_empty(&entry.family, path, "specific_override.family")?;
+    for entry in &rulepack.wording.specific_overrides {
+        ensure_non_empty(&entry.family, path, "wording.specific_overrides.family")?;
         ensure_non_empty(
             &entry.headline_template,
             path,
-            "specific_override.headline_template",
+            "wording.specific_overrides.headline_template",
+        )?;
+        ensure_non_empty(
+            &entry.headline_without_symbol,
+            path,
+            "wording.specific_overrides.headline_without_symbol",
         )?;
         ensure_non_empty(
             &entry.first_action_hint,
             path,
-            "specific_override.first_action_hint",
+            "wording.specific_overrides.first_action_hint",
         )?;
+        if !specific_families.insert(entry.family.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate specific wording family in residual rulepack: {}",
+                    entry.family
+                ),
+            ));
+        }
     }
-    Ok(())
-}
 
-fn validate_residual_section(
-    section: &ResidualSection,
-    path: &Path,
-    expected_version: &str,
-) -> Result<(), RulepackError> {
-    validate_section_header(
-        &section.schema_version,
-        &section.rulepack_version,
-        section.kind,
-        SectionKind::Residual,
-        path,
-        expected_version,
-    )?;
-    ensure_vec_sorted_and_unique(&section.compiler_groups, path, "compiler_groups", |entry| {
-        compiler_residual_kind_key(entry.kind)
-    })?;
-    ensure_vec_sorted_and_unique(&section.linker_groups, path, "linker_groups", |entry| {
-        linker_residual_kind_key(entry.kind)
-    })?;
-    if section.compiler_groups.is_empty() || section.linker_groups.is_empty() {
-        return Err(invalid_rulepack(
-            path,
-            "residual section must include compiler_groups and linker_groups",
-        ));
-    }
-    for entry in &section.compiler_groups {
+    let mut compiler_kinds = BTreeSet::new();
+    for entry in &rulepack.residual.compiler_groups {
+        if !compiler_kinds.insert(entry.kind) {
+            return Err(invalid_rulepack(
+                path,
+                "duplicate compiler residual kind in checked-in residual rulepack",
+            ));
+        }
         ensure_non_empty(&entry.family, path, "compiler_group.family")?;
         ensure_non_empty(&entry.rule_id, path, "compiler_group.rule_id")?;
         ensure_non_empty(
@@ -537,27 +907,51 @@ fn validate_residual_section(
             path,
             "compiler_group.first_action_hint",
         )?;
-        match entry.headline_strategy {
-            TextStrategy::FixedText => {
-                let Some(headline) = entry.headline.as_deref() else {
-                    return Err(invalid_rulepack(
-                        path,
-                        "compiler_group fixed_text entries must set headline",
-                    ));
-                };
-                ensure_non_empty(headline, path, "compiler_group.headline")?;
-            }
-            TextStrategy::MessagePassthrough | TextStrategy::FirstMessageLine => {
-                if entry.headline.is_some() {
-                    return Err(invalid_rulepack(
-                        path,
-                        "compiler_group non-fixed headline strategies must omit headline",
-                    ));
-                }
-            }
+        ensure_non_empty_strings(&entry.match_any, path, "compiler_group.match_any")?;
+        if matches!(entry.headline_strategy, HeadlineStrategy::FixedText) {
+            let Some(headline) = entry.headline.as_deref() else {
+                return Err(invalid_rulepack(
+                    path,
+                    "fixed_text compiler residual seeds must include headline",
+                ));
+            };
+            ensure_non_empty(headline, path, "compiler_group.headline")?;
         }
     }
-    for entry in &section.linker_groups {
+    if !compiler_kinds.contains(&CompilerResidualKind::Unknown) {
+        return Err(invalid_rulepack(
+            path,
+            "checked-in residual rulepack must include unknown compiler seed",
+        ));
+    }
+
+    ensure_non_empty(
+        &rulepack
+            .residual
+            .compiler_note_rules
+            .candidate_numbered_prefix,
+        path,
+        "compiler_note_rules.candidate_numbered_prefix",
+    )?;
+    ensure_non_empty_strings(
+        &rulepack.residual.compiler_note_rules.template_context_any,
+        path,
+        "compiler_note_rules.template_context_any",
+    )?;
+    ensure_non_empty_strings(
+        &rulepack.residual.compiler_note_rules.candidate_contains,
+        path,
+        "compiler_note_rules.candidate_contains",
+    )?;
+
+    let mut linker_kinds = BTreeSet::new();
+    for entry in &rulepack.residual.linker_groups {
+        if !linker_kinds.insert(entry.kind) {
+            return Err(invalid_rulepack(
+                path,
+                "duplicate linker residual kind in checked-in residual rulepack",
+            ));
+        }
         ensure_non_empty(&entry.family, path, "linker_group.family")?;
         ensure_non_empty(&entry.rule_id, path, "linker_group.rule_id")?;
         ensure_non_empty(
@@ -570,27 +964,127 @@ fn validate_residual_section(
             path,
             "linker_group.first_action_hint",
         )?;
+        if entry.group_key.is_some() == entry.group_key_template.is_some() {
+            return Err(invalid_rulepack(
+                path,
+                "linker residual rules must set exactly one of group_key/group_key_template",
+            ));
+        }
+        if entry.match_regex.is_none() && entry.match_prefix.is_none() {
+            return Err(invalid_rulepack(
+                path,
+                "linker residual rules must set match_regex or match_prefix",
+            ));
+        }
+        if let Some(group_key) = &entry.group_key {
+            ensure_non_empty(group_key, path, "linker_group.group_key")?;
+        }
+        if let Some(group_key_template) = &entry.group_key_template {
+            ensure_non_empty(group_key_template, path, "linker_group.group_key_template")?;
+        }
+        if let Some(pattern) = &entry.match_regex {
+            ensure_non_empty(pattern, path, "linker_group.match_regex")?;
+            Regex::new(pattern).map_err(|error| {
+                invalid_rulepack(
+                    path,
+                    &format!("invalid linker residual regex `{pattern}`: {error}"),
+                )
+            })?;
+        }
+        if let Some(prefix) = &entry.match_prefix {
+            ensure_non_empty(prefix, path, "linker_group.match_prefix")?;
+        }
+        if let Some(symbol_capture) = &entry.symbol_capture {
+            ensure_non_empty(symbol_capture, path, "linker_group.symbol_capture")?;
+        }
     }
-    ensure_non_empty(&section.passthrough.family, path, "passthrough.family")?;
-    ensure_non_empty(&section.passthrough.rule_id, path, "passthrough.rule_id")?;
-    ensure_non_empty(&section.passthrough.headline, path, "passthrough.headline")?;
+
     ensure_non_empty(
-        &section.passthrough.first_action_hint,
+        &rulepack.residual.passthrough.family,
+        path,
+        "passthrough.family",
+    )?;
+    ensure_non_empty(
+        &rulepack.residual.passthrough.rule_id,
+        path,
+        "passthrough.rule_id",
+    )?;
+    ensure_non_empty(
+        &rulepack.residual.passthrough.headline,
+        path,
+        "passthrough.headline",
+    )?;
+    ensure_non_empty(
+        &rulepack.residual.passthrough.first_action_hint,
         path,
         "passthrough.first_action_hint",
     )?;
     Ok(())
 }
 
-fn validate_section_header(
-    schema_version: &str,
-    rulepack_version: &str,
-    actual_kind: SectionKind,
-    expected_kind: SectionKind,
+fn validate_render_rulepack(
+    rulepack: &RenderRulepack,
     path: &Path,
     expected_version: &str,
 ) -> Result<(), RulepackError> {
-    ensure_schema_version(schema_version, RULEPACK_SECTION_SCHEMA_VERSION, path)?;
+    validate_section_header(
+        &rulepack.schema_version,
+        &rulepack.rulepack_version,
+        RENDER_RULEPACK_SCHEMA_VERSION,
+        path,
+        expected_version,
+    )?;
+    if rulepack.family_policies.is_empty() {
+        return Err(invalid_rulepack(
+            path,
+            "checked-in render rulepack must define family_policies",
+        ));
+    }
+
+    let mut seen_kinds = BTreeSet::new();
+    for policy in &rulepack.family_policies {
+        if policy.kind == RendererFamilyKind::Unknown {
+            return Err(invalid_rulepack(
+                path,
+                "checked-in render rulepack must not define unknown family policies",
+            ));
+        }
+        if !seen_kinds.insert(policy.kind) {
+            return Err(invalid_rulepack(
+                path,
+                &format!(
+                    "duplicate renderer family policy in checked-in render rulepack: {:?}",
+                    policy.kind
+                ),
+            ));
+        }
+        if policy.match_exact.is_some() == policy.match_prefix.is_some() {
+            return Err(invalid_rulepack(
+                path,
+                "renderer family policy must set exactly one of match_exact/match_prefix",
+            ));
+        }
+        if let Some(match_exact) = policy.match_exact.as_deref() {
+            ensure_non_empty(match_exact, path, "render.match_exact")?;
+        }
+        if let Some(match_prefix) = policy.match_prefix.as_deref() {
+            ensure_non_empty(match_prefix, path, "render.match_prefix")?;
+        }
+        if let Some(exclude_exact) = policy.exclude_exact.as_deref() {
+            ensure_non_empty(exclude_exact, path, "render.exclude_exact")?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_section_header(
+    schema_version: &str,
+    rulepack_version: &str,
+    expected_schema: &str,
+    path: &Path,
+    expected_version: &str,
+) -> Result<(), RulepackError> {
+    ensure_schema_version(schema_version, expected_schema, path)?;
     ensure_version_id(rulepack_version, path, "rulepack_version")?;
     if rulepack_version != expected_version {
         return Err(invalid_rulepack(
@@ -601,14 +1095,103 @@ fn validate_section_header(
             ),
         ));
     }
-    if actual_kind != expected_kind {
-        return Err(invalid_rulepack(
-            path,
-            &format!(
-                "section kind {:?} does not match manifest entry {:?}",
-                actual_kind, expected_kind
-            ),
-        ));
+    Ok(())
+}
+
+fn generic_family_text<'a>(entries: &'a [FamilyText], family: &str) -> Option<&'a FamilyText> {
+    entries.iter().find(|entry| {
+        entry.family == family || (entry.family == "linker" && family.starts_with("linker."))
+    })
+}
+
+fn ensure_fallback_rule(
+    fallback: &FallbackRuleConfig,
+    path: &Path,
+    label: &str,
+) -> Result<(), RulepackError> {
+    ensure_non_empty(&fallback.family, path, &format!("{label}.family"))?;
+    ensure_non_empty(&fallback.rule_id, path, &format!("{label}.rule_id"))?;
+    ensure_non_empty(
+        &fallback.suppression_reason,
+        path,
+        &format!("{label}.suppression_reason"),
+    )?;
+    ensure_non_empty_strings(
+        &fallback.matched_conditions,
+        path,
+        &format!("{label}.matched_conditions"),
+    )?;
+    Ok(())
+}
+
+fn validate_confidence_policy(
+    policy: &ConfidencePolicyConfig,
+    path: &Path,
+) -> Result<(), RulepackError> {
+    for clause in policy
+        .high_when_any
+        .iter()
+        .chain(policy.medium_when_any.iter())
+    {
+        if clause.all.is_empty() {
+            return Err(invalid_rulepack(
+                path,
+                "confidence clauses must include at least one signal",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn ensure_non_empty_groups(
+    groups: &[TermGroupConfig],
+    path: &Path,
+    label: &str,
+) -> Result<(), RulepackError> {
+    for group in groups {
+        ensure_non_empty(&group.prefix, path, &format!("{label}.prefix"))?;
+        ensure_non_empty_strings(&group.terms, path, &format!("{label}.terms"))?;
+    }
+    Ok(())
+}
+
+fn ensure_conditions_non_empty<T>(
+    conditions: &[T],
+    path: &Path,
+    label: &str,
+) -> Result<(), RulepackError>
+where
+    T: ConditionField,
+{
+    for condition in conditions {
+        ensure_non_empty(condition.condition(), path, label)?;
+    }
+    Ok(())
+}
+
+trait ConditionField {
+    fn condition(&self) -> &str;
+}
+
+impl ConditionField for ContextConditionConfig {
+    fn condition(&self) -> &str {
+        &self.condition
+    }
+}
+
+impl ConditionField for ChildNoteConditionConfig {
+    fn condition(&self) -> &str {
+        &self.condition
+    }
+}
+
+fn ensure_non_empty_strings(
+    values: &[String],
+    path: &Path,
+    label: &str,
+) -> Result<(), RulepackError> {
+    for value in values {
+        ensure_non_empty(value, path, label)?;
     }
     Ok(())
 }
@@ -619,47 +1202,63 @@ fn ensure_schema_version(actual: &str, expected: &str, path: &Path) -> Result<()
     } else {
         Err(invalid_rulepack(
             path,
-            &format!("schema_version must be {expected}, got {actual}"),
+            &format!("expected schema_version {expected}, got {actual}"),
         ))
     }
 }
 
-fn ensure_version_id(value: &str, path: &Path, field_name: &str) -> Result<(), RulepackError> {
-    if value.is_empty()
-        || !value.chars().all(|ch| {
+fn ensure_version_id(value: &str, path: &Path, field: &str) -> Result<(), RulepackError> {
+    ensure_non_empty(value, path, field)?;
+    let mut chars = value.chars();
+    let Some(first) = chars.next() else {
+        unreachable!("ensure_non_empty returned ok for an empty string");
+    };
+    if !first.is_ascii_lowercase()
+        || !chars.all(|ch| {
             ch.is_ascii_lowercase() || ch.is_ascii_digit() || matches!(ch, '.' | '_' | '-')
         })
     {
         return Err(invalid_rulepack(
             path,
-            &format!("{field_name} must be a non-empty lowercase ascii version identifier"),
+            &format!(
+                "{field} must start with a lowercase ASCII letter and contain only lowercase ASCII letters, digits, '.', '_' or '-'"
+            ),
         ));
     }
     Ok(())
 }
 
-fn ensure_relative_json_path(path_value: &str, path: &Path) -> Result<(), RulepackError> {
-    let section_path = Path::new(path_value);
-    if !section_path
-        .extension()
-        .is_some_and(|extension| extension == "json")
-    {
-        return Err(invalid_rulepack(
+fn ensure_non_empty(value: &str, path: &Path, field: &str) -> Result<(), RulepackError> {
+    if value.trim().is_empty() {
+        Err(invalid_rulepack(
             path,
-            &format!("section path {path_value} must end with .json"),
-        ));
+            &format!("{field} must be non-empty"),
+        ))
+    } else {
+        Ok(())
     }
-    if section_path.is_absolute()
-        || section_path.components().any(|component| {
-            matches!(
-                component,
-                Component::ParentDir | Component::RootDir | Component::Prefix(_)
-            )
-        })
-    {
+}
+
+fn ensure_relative_json_path(value: &str, path: &Path) -> Result<(), RulepackError> {
+    if value.trim().is_empty() {
+        return Err(invalid_rulepack(path, "section paths must be non-empty"));
+    }
+    let section_path = Path::new(value);
+    if section_path.is_absolute() {
+        return Err(invalid_rulepack(path, "section paths must be relative"));
+    }
+    for component in section_path.components() {
+        if !matches!(component, Component::Normal(_)) {
+            return Err(invalid_rulepack(
+                path,
+                "section paths must be normalized relative JSON paths",
+            ));
+        }
+    }
+    if section_path.extension().and_then(|ext| ext.to_str()) != Some("json") {
         return Err(invalid_rulepack(
             path,
-            &format!("section path {path_value} must be a normalized relative path"),
+            "section paths must reference JSON files",
         ));
     }
     Ok(())
@@ -671,251 +1270,31 @@ fn ensure_sha256_hex(value: &str, path: &Path, label: &str) -> Result<(), Rulepa
     } else {
         Err(invalid_rulepack(
             path,
-            &format!("{label} must be a 64-character sha256 hex digest"),
+            &format!("{label} must be a 64-character SHA-256 hex digest"),
         ))
-    }
-}
-
-fn ensure_sections_sorted_and_unique(
-    sections: &[ManifestSection],
-    path: &Path,
-) -> Result<(), RulepackError> {
-    let mut last_kind = None;
-    let mut kinds = BTreeSet::new();
-    let mut section_paths = BTreeSet::new();
-    for section in sections {
-        if let Some(previous) = last_kind {
-            if previous >= section.kind {
-                return Err(invalid_rulepack(
-                    path,
-                    "manifest sections must be sorted by kind without duplicates",
-                ));
-            }
-        }
-        last_kind = Some(section.kind);
-        if !kinds.insert(section.kind) {
-            return Err(invalid_rulepack(
-                path,
-                "manifest sections must not repeat the same kind",
-            ));
-        }
-        if !section_paths.insert(section.path.as_str()) {
-            return Err(invalid_rulepack(
-                path,
-                "manifest sections must not repeat the same path",
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn ensure_vec_sorted_and_unique<T, F>(
-    values: &[T],
-    path: &Path,
-    label: &str,
-    key_fn: F,
-) -> Result<(), RulepackError>
-where
-    F: Fn(&T) -> &str,
-{
-    let mut previous = None::<&str>;
-    let mut seen = BTreeSet::new();
-    for value in values {
-        let key = key_fn(value);
-        if let Some(last) = previous {
-            if last >= key {
-                return Err(invalid_rulepack(
-                    path,
-                    &format!("{label} must be sorted by key without duplicates"),
-                ));
-            }
-        }
-        previous = Some(key);
-        if !seen.insert(key) {
-            return Err(invalid_rulepack(
-                path,
-                &format!("{label} must not repeat the same key"),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn ensure_strings_sorted_and_unique(
-    values: &[String],
-    path: &Path,
-    label: &str,
-) -> Result<(), RulepackError> {
-    let mut previous = None::<&str>;
-    let mut seen = BTreeSet::new();
-    for value in values {
-        ensure_non_empty(value, path, label)?;
-        let key = value.as_str();
-        if let Some(last) = previous {
-            if last >= key {
-                return Err(invalid_rulepack(
-                    path,
-                    &format!("{label} must be sorted without duplicates"),
-                ));
-            }
-        }
-        previous = Some(key);
-        if !seen.insert(key) {
-            return Err(invalid_rulepack(
-                path,
-                &format!("{label} must not repeat values"),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn ensure_non_empty(value: &str, path: &Path, label: &str) -> Result<(), RulepackError> {
-    if value.trim().is_empty() {
-        Err(invalid_rulepack(
-            path,
-            &format!("{label} must be non-empty"),
-        ))
-    } else {
-        Ok(())
-    }
-}
-
-fn compiler_residual_kind_key(kind: CompilerResidualKind) -> &'static str {
-    match kind {
-        CompilerResidualKind::Syntax => "syntax",
-        CompilerResidualKind::Template => "template",
-        CompilerResidualKind::TypeOverload => "type_overload",
-        CompilerResidualKind::Unknown => "unknown",
-    }
-}
-
-fn linker_residual_kind_key(kind: LinkerResidualKind) -> &'static str {
-    match kind {
-        LinkerResidualKind::AssemblerError => "assembler_error",
-        LinkerResidualKind::CannotFindLibrary => "cannot_find_library",
-        LinkerResidualKind::FileFormatOrRelocation => "file_format_or_relocation",
-        LinkerResidualKind::MultipleDefinition => "multiple_definition",
-        LinkerResidualKind::UndefinedReference => "undefined_reference",
-    }
-}
-
-fn invalid_rulepack(path: &Path, message: &str) -> RulepackError {
-    RulepackError::InvalidRulepack {
-        path: path.to_path_buf(),
-        message: message.to_string(),
     }
 }
 
 fn hex_sha256(raw: &[u8]) -> String {
     let digest = Sha256::digest(raw);
-    let mut output = String::with_capacity(digest.len() * 2);
+    let mut rendered = String::with_capacity(digest.len() * 2);
     for byte in digest {
-        output.push_str(&format!("{byte:02x}"));
+        rendered.push_str(&format!("{byte:02x}"));
     }
-    output
+    rendered
+}
+
+fn invalid_rulepack(path: &Path, message: impl Into<String>) -> RulepackError {
+    RulepackError::InvalidRulepack {
+        path: path.to_path_buf(),
+        message: message.into(),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diag_core::{
-        AnalysisOverlay, Confidence, ContextChain, ContextChainKind, DiagnosticDocument,
-        DiagnosticNode, DocumentCompleteness, Location, MessageText, NodeCompleteness, Origin,
-        ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, SymbolContext,
-        ToolInfo,
-    };
-    use diag_enrich::enrich_document;
-    use diag_residual_text::classify;
-    use std::path::Path;
     use tempfile::TempDir;
-
-    fn sample_document(node: DiagnosticNode) -> DiagnosticDocument {
-        DiagnosticDocument {
-            document_id: "doc".to_string(),
-            schema_version: "1".to_string(),
-            document_completeness: DocumentCompleteness::Complete,
-            producer: ProducerInfo {
-                name: "gcc-formed".to_string(),
-                version: "0.1.0".to_string(),
-                git_revision: None,
-                build_profile: None,
-                rulepack_version: Some(CHECKED_IN_RULEPACK_VERSION.to_string()),
-            },
-            run: RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: None,
-                argv_redacted: Vec::new(),
-                cwd_display: None,
-                exit_status: 1,
-                primary_tool: ToolInfo {
-                    name: "gcc".to_string(),
-                    version: None,
-                    component: None,
-                    vendor: None,
-                },
-                secondary_tools: Vec::new(),
-                language_mode: None,
-                target_triple: None,
-                wrapper_mode: None,
-            },
-            captures: Vec::new(),
-            integrity_issues: Vec::new(),
-            diagnostics: vec![node],
-            fingerprints: None,
-        }
-    }
-
-    fn sample_location(path: &str) -> Location {
-        Location {
-            path: path.to_string(),
-            line: 3,
-            column: 1,
-            end_line: None,
-            end_column: None,
-            display_path: None,
-            ownership: None,
-        }
-    }
-
-    fn sample_context_chain(kind: ContextChainKind, label: &str) -> ContextChain {
-        ContextChain {
-            kind,
-            frames: vec![diag_core::ContextFrame {
-                label: label.to_string(),
-                path: Some("src/main.cpp".to_string()),
-                line: Some(6),
-                column: Some(15),
-            }],
-        }
-    }
-
-    fn sample_node(message: &str) -> DiagnosticNode {
-        DiagnosticNode {
-            id: "n1".to_string(),
-            origin: Origin::Gcc,
-            phase: Phase::Semantic,
-            severity: Severity::Error,
-            semantic_role: SemanticRole::Root,
-            message: MessageText {
-                raw_text: message.to_string(),
-                normalized_text: None,
-                locale: None,
-            },
-            locations: vec![sample_location("src/main.c")],
-            children: Vec::new(),
-            suggestions: Vec::new(),
-            context_chains: Vec::new(),
-            symbol_context: None,
-            node_completeness: NodeCompleteness::Complete,
-            provenance: Provenance {
-                source: ProvenanceSource::Compiler,
-                capture_refs: vec!["stderr.raw".to_string()],
-            },
-            analysis: None,
-            fingerprints: None,
-        }
-    }
 
     fn copy_checked_in_rulepack(temp_dir: &TempDir) -> PathBuf {
         for file_name in CHECKED_IN_SECTION_FILES {
@@ -930,339 +1309,51 @@ mod tests {
 
     #[test]
     fn loads_checked_in_phase1_rulepack() {
-        let rulepack = load_checked_in_rulepack().unwrap();
+        let rulepack = checked_in_rulepack();
         assert_eq!(rulepack.version(), CHECKED_IN_RULEPACK_VERSION);
         assert_eq!(rulepack.manifest().sections.len(), 3);
         assert_eq!(
+            rulepack.enrich().rule("syntax").rule_id,
+            "rule.family.syntax.phase_or_message"
+        );
+        assert_eq!(
             rulepack
-                .enrich_family_section()
-                .ingress_specific_family_overrides,
-            vec![
-                "linker.cannot_find_library".to_string(),
-                "linker.file_format_or_relocation".to_string(),
-                "linker.multiple_definition".to_string(),
-                "linker.undefined_reference".to_string(),
-            ]
+                .residual()
+                .compiler_seed(CompilerResidualKind::Template)
+                .headline
+                .as_deref(),
+            Some("template instantiation failed")
+        );
+        assert!(
+            rulepack
+                .render()
+                .policy_for_kind(RendererFamilyKind::Linker)
+                .is_some()
         );
     }
 
     #[test]
-    fn checked_in_contract_matches_enrich_phase1_outputs() {
-        let rulepack = load_checked_in_rulepack().unwrap();
-
-        let mut syntax_node = sample_node("expected ';' before '}' token");
-        syntax_node.phase = Phase::Parse;
-        let mut syntax_document = sample_document(syntax_node);
-        enrich_document(&mut syntax_document, Path::new("/tmp/project"));
-        let analysis = syntax_document.diagnostics[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(rulepack.enrich_rule("syntax").unwrap().rule_id.as_str())
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some(rulepack.generic_headline("syntax").unwrap())
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(rulepack.generic_action_hint("syntax").unwrap())
-        );
-
-        let type_node = sample_node("invalid conversion from 'const char*' to 'int'");
-        let mut type_document = sample_document(type_node);
-        enrich_document(&mut type_document, Path::new("/tmp/project"));
-        let analysis = type_document.diagnostics[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(
-                rulepack
-                    .enrich_rule("type_overload")
-                    .unwrap()
-                    .rule_id
-                    .as_str()
-            )
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some(rulepack.generic_headline("type_overload").unwrap())
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(rulepack.generic_action_hint("type_overload").unwrap())
-        );
-
-        let mut template_node = sample_node("no matching function for call to 'expect_ptr(int&)'");
-        template_node.phase = Phase::Instantiate;
-        template_node.context_chains = vec![sample_context_chain(
-            ContextChainKind::TemplateInstantiation,
-            "required from here",
-        )];
-        template_node.children.push(DiagnosticNode {
-            id: "child".to_string(),
-            origin: Origin::Gcc,
-            phase: Phase::Instantiate,
-            severity: Severity::Note,
-            semantic_role: SemanticRole::Supporting,
-            message: MessageText {
-                raw_text: "template argument deduction/substitution failed:".to_string(),
-                normalized_text: None,
-                locale: None,
-            },
-            locations: vec![sample_location("src/main.cpp")],
-            children: Vec::new(),
-            suggestions: Vec::new(),
-            context_chains: Vec::new(),
-            symbol_context: None,
-            node_completeness: NodeCompleteness::Complete,
-            provenance: Provenance {
-                source: ProvenanceSource::Compiler,
-                capture_refs: vec!["stderr.raw".to_string()],
-            },
-            analysis: None,
-            fingerprints: None,
-        });
-        let mut template_document = sample_document(template_node);
-        enrich_document(&mut template_document, Path::new("/tmp/project"));
-        let analysis = template_document.diagnostics[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(rulepack.enrich_rule("template").unwrap().rule_id.as_str())
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some(rulepack.generic_headline("template").unwrap())
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(rulepack.generic_action_hint("template").unwrap())
-        );
-
-        let mut macro_node = sample_node("'Box' has no member named 'missing_field'");
-        macro_node.context_chains = vec![sample_context_chain(
-            ContextChainKind::MacroExpansion,
-            "in expansion of macro 'READ_FIELD'",
-        )];
-        let mut macro_document = sample_document(macro_node);
-        enrich_document(&mut macro_document, Path::new("/tmp/project"));
-        let analysis = macro_document.diagnostics[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(
-                rulepack
-                    .enrich_rule("macro_include")
-                    .unwrap()
-                    .rule_id
-                    .as_str()
-            )
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some(rulepack.generic_headline("macro_include").unwrap())
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(rulepack.generic_action_hint("macro_include").unwrap())
-        );
-
-        let mut passthrough_node = sample_node("wrapper preserved stderr");
-        passthrough_node.semantic_role = SemanticRole::Passthrough;
-        let mut passthrough_document = sample_document(passthrough_node);
-        enrich_document(&mut passthrough_document, Path::new("/tmp/project"));
-        let analysis = passthrough_document.diagnostics[0]
-            .analysis
-            .as_ref()
-            .unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(
-                rulepack
-                    .enrich_rule("passthrough")
-                    .unwrap()
-                    .rule_id
-                    .as_str()
-            )
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some(rulepack.generic_headline("passthrough").unwrap())
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(rulepack.generic_action_hint("passthrough").unwrap())
-        );
-
-        let mut linker_node = sample_node("collect2: error: ld returned 1 exit status");
-        linker_node.phase = Phase::Link;
-        linker_node.locations.clear();
-        linker_node.symbol_context = Some(SymbolContext {
-            primary_symbol: Some("missing_symbol".to_string()),
-            related_objects: Vec::new(),
-            archive: None,
-        });
-        linker_node.analysis = Some(AnalysisOverlay {
-            family: Some("linker.undefined_reference".to_string()),
-            headline: None,
-            first_action_hint: None,
-            confidence: Some(Confidence::Medium),
-            rule_id: None,
-            matched_conditions: Vec::new(),
-            suppression_reason: None,
-            collapsed_child_ids: Vec::new(),
-            collapsed_chain_ids: Vec::new(),
-        });
-        let mut linker_document = sample_document(linker_node);
-        enrich_document(&mut linker_document, Path::new("/tmp/project"));
-        let analysis = linker_document.diagnostics[0].analysis.as_ref().unwrap();
-        let override_rule = rulepack
-            .specific_wording_override("linker.undefined_reference")
-            .unwrap();
-        assert_eq!(
-            analysis.rule_id.as_deref(),
-            Some(
-                rulepack
-                    .enrich_family_section()
-                    .ingress_specific_override_rule_id
-                    .as_str()
-            )
-        );
-        assert_eq!(
-            analysis.headline.as_deref(),
-            Some("undefined reference to `missing_symbol`")
-        );
-        assert_eq!(
-            analysis.first_action_hint.as_deref(),
-            Some(override_rule.first_action_hint.as_str())
-        );
-        assert_eq!(
-            override_rule.headline_template,
-            "undefined reference to `{symbol}`"
-        );
-    }
-
-    #[test]
-    fn checked_in_contract_matches_residual_phase1_seeds() {
-        let rulepack = load_checked_in_rulepack().unwrap();
-
-        let syntax_line = "src/main.c:3:1: error: expected ';' before '}' token";
-        let syntax = classify(syntax_line, true);
-        let syntax_analysis = syntax[0].analysis.as_ref().unwrap();
-        let syntax_seed = rulepack
-            .compiler_residual_seed(CompilerResidualKind::Syntax)
-            .unwrap();
-        assert_eq!(
-            syntax_analysis.family.as_deref(),
-            Some(syntax_seed.family.as_str())
-        );
-        assert_eq!(
-            syntax_analysis.rule_id.as_deref(),
-            Some(syntax_seed.rule_id.as_str())
-        );
-        assert_eq!(
-            syntax_analysis.headline.as_deref(),
-            Some("expected ';' before '}' token")
-        );
-        assert_eq!(
-            syntax_analysis.first_action_hint.as_deref(),
-            Some(syntax_seed.first_action_hint.as_str())
-        );
-
-        let type_line = "src/main.cpp:4:2: error: invalid conversion from 'const char*' to 'int'";
-        let type_nodes = classify(type_line, true);
-        let type_analysis = type_nodes[0].analysis.as_ref().unwrap();
-        let type_seed = rulepack
-            .compiler_residual_seed(CompilerResidualKind::TypeOverload)
-            .unwrap();
-        assert_eq!(
-            type_analysis.family.as_deref(),
-            Some(type_seed.family.as_str())
-        );
-        assert_eq!(
-            type_analysis.rule_id.as_deref(),
-            Some(type_seed.rule_id.as_str())
-        );
-        assert_eq!(
-            type_analysis.headline.as_deref(),
-            type_seed.headline.as_deref()
-        );
-        assert_eq!(
-            type_analysis.first_action_hint.as_deref(),
-            Some(type_seed.first_action_hint.as_str())
-        );
-
-        let template_line =
-            "src/main.cpp:4:2: error: template argument deduction/substitution failed:";
-        let template_nodes = classify(template_line, true);
-        let template_analysis = template_nodes[0].analysis.as_ref().unwrap();
-        let template_seed = rulepack
-            .compiler_residual_seed(CompilerResidualKind::Template)
-            .unwrap();
-        assert_eq!(
-            template_analysis.family.as_deref(),
-            Some(template_seed.family.as_str())
-        );
-        assert_eq!(
-            template_analysis.rule_id.as_deref(),
-            Some(template_seed.rule_id.as_str())
-        );
-        assert_eq!(
-            template_analysis.headline.as_deref(),
-            template_seed.headline.as_deref()
-        );
-
-        let linker_stderr = "main.c:3: undefined reference to `missing_symbol`";
-        let linker_nodes = classify(linker_stderr, true);
-        let linker_seed = rulepack
-            .linker_residual_seed(LinkerResidualKind::UndefinedReference)
-            .unwrap();
-        let linker_analysis = linker_nodes[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            linker_analysis.family.as_deref(),
-            Some(linker_seed.family.as_str())
-        );
-        assert_eq!(
-            linker_analysis.rule_id.as_deref(),
-            Some(linker_seed.rule_id.as_str())
-        );
-        assert_eq!(
-            linker_analysis.first_action_hint.as_deref(),
-            Some(linker_seed.first_action_hint.as_str())
-        );
-        assert_eq!(
-            linker_analysis.headline.as_deref(),
-            Some("undefined reference to `missing_symbol`")
-        );
-
-        let passthrough_nodes = classify("opaque residual line", true);
-        let passthrough = passthrough_nodes
-            .iter()
-            .find(|node| node.semantic_role == SemanticRole::Passthrough)
-            .unwrap();
-        let passthrough_analysis = passthrough.analysis.as_ref().unwrap();
-        assert_eq!(
-            passthrough_analysis.family.as_deref(),
-            Some(rulepack.residual_section().passthrough.family.as_str())
-        );
-        assert_eq!(
-            passthrough_analysis.rule_id.as_deref(),
-            Some(rulepack.residual_section().passthrough.rule_id.as_str())
-        );
-        assert_eq!(
-            passthrough_analysis.headline.as_deref(),
-            Some(rulepack.residual_section().passthrough.headline.as_str())
-        );
+    fn on_disk_loader_matches_embedded_rulepack() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let loaded = load_rulepack_from_manifest(manifest_path).unwrap();
+        assert_eq!(loaded, checked_in_rulepack().clone());
     }
 
     #[test]
     fn rejects_section_digest_mismatch() {
         let temp_dir = TempDir::new().unwrap();
         let manifest_path = copy_checked_in_rulepack(&temp_dir);
-        let residual_path = temp_dir.path().join("diag_rulepack.residual.phase1.json");
-        let mutated = fs::read_to_string(&residual_path)
-            .unwrap()
-            .replace("\"phase\": \"semantic\"", "\"phase\": \"analyze\"");
-        fs::write(&residual_path, mutated).unwrap();
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest.sections[0].sha256 = "0".repeat(64);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
 
-        let error = load_rulepack_from_manifest(manifest_path).unwrap_err();
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
         assert!(matches!(error, RulepackError::DigestMismatch { .. }));
     }
 
@@ -1270,16 +1361,79 @@ mod tests {
     fn rejects_mixed_section_version_ids() {
         let temp_dir = TempDir::new().unwrap();
         let manifest_path = copy_checked_in_rulepack(&temp_dir);
-        let section_path = temp_dir
-            .path()
-            .join("diag_rulepack.enrich_wording.phase1.json");
-        let mutated = fs::read_to_string(&section_path).unwrap().replace(
-            "\"rulepack_version\": \"phase1\"",
-            "\"rulepack_version\": \"phase9\"",
-        );
-        fs::write(&section_path, mutated).unwrap();
+        let residual_path = temp_dir.path().join("residual.rulepack.json");
+        let mut residual: ResidualRulepack =
+            serde_json::from_slice(&fs::read(&residual_path).unwrap()).unwrap();
+        residual.rulepack_version = "phase0".to_string();
+        let residual_raw = serde_json::to_vec_pretty(&residual).unwrap();
+        fs::write(&residual_path, &residual_raw).unwrap();
 
-        let error = load_rulepack_from_manifest(manifest_path).unwrap_err();
-        assert!(matches!(error, RulepackError::DigestMismatch { .. }));
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest
+            .sections
+            .iter_mut()
+            .find(|section| section.path == "residual.rulepack.json")
+            .unwrap()
+            .sha256 = hex_sha256(&residual_raw);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("does not match manifest"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_manifest_version_id() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest.rulepack_version = "Phase 1".to_string();
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(
+                    message.contains("rulepack_version must start with a lowercase ASCII letter")
+                );
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_non_normalized_section_paths() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest.sections[0].path = "./enrich.rulepack.json".to_string();
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("normalized relative JSON paths"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
     }
 }

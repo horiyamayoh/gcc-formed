@@ -7,12 +7,11 @@ version.workspace = true
 
 [dependencies]
 diag_core.workspace = true
+regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-diag_enrich.workspace = true
-diag_residual_text.workspace = true
 tempfile.workspace = true
