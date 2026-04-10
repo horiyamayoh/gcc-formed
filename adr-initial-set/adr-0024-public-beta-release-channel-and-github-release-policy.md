@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0024: Public beta release channel and GitHub Release policy
 
 - **Status**: Accepted
@@ -53,8 +67,8 @@ beta では「artifact を作れる」だけでは不十分である。GitHub Re
 
 ## Source Specs
 
-- `../packaging-runtime-operations-spec.md`
-- `../RELEASE-NOTES.md`
-- `../RELEASE-CHECKLIST.md`
-- `../PUBLIC-BETA-RELEASE.md`
-- `../SIGNING-KEY-OPERATIONS.md`
+- `../docs/specs/packaging-runtime-operations-spec.md`
+- `../docs/releases/RELEASE-NOTES.md`
+- `../docs/releases/RELEASE-CHECKLIST.md`
+- `../docs/releases/PUBLIC-BETA-RELEASE.md`
+- `../docs/releases/SIGNING-KEY-OPERATIONS.md`

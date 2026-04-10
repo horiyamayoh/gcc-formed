@@ -2,11 +2,11 @@
 
 ## Project Baseline
 
-`gcc-formed` is a spec-first repository with the current `v1beta` maturity label and the `0.2.0-beta.N` artifact line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [VERSIONING.md](VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
+`gcc-formed` is a spec-first repository with the current `v1beta` maturity label and the `0.2.0-beta.N` artifact line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
 
 ## Current Support Boundary
 
-Keep support-boundary wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
+Keep support-boundary wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -48,21 +48,21 @@ The automated public-beta GitHub Release workflow also expects the repository se
 ## Change Policy
 
 - Prefer behavior-preserving fixes over silent contract drift.
-- Classify every contract-adjacent change with [GOVERNANCE.md](GOVERNANCE.md) and fill the matching sections in `.github/pull_request_template.md`.
+- Classify every contract-adjacent change with [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md) and fill the matching sections in `.github/pull_request_template.md`.
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
-- If a change is classified as `breaking`, include the migration / rollout impact in the PR and align `GOVERNANCE.md`, `ADR-0020`, and the affected contract docs in the same change.
-- If a change is classified as `experimental`, keep it opt-in, disabled by default, and outside `SUPPORT-BOUNDARY.md` and release promises until it graduates through ADR review.
-- If a change alters the support boundary, update `SUPPORT-BOUNDARY.md`, the copied wording in user-facing docs, and the GitHub templates in the same change.
-- If a change alters public `VersionBand` / `ProcessingPath` wording while runtime still emits legacy internal tier-style fields, keep the user-facing docs canonical and either align the runtime in the same change or explicitly document the temporary mismatch in `KNOWN-LIMITATIONS.md`.
-- If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `STABLE-RELEASE.md`, `RELEASE-CHECKLIST.md`, the packaging spec, and the related ADRs aligned in the same change.
+- If a change is classified as `breaking`, include the migration / rollout impact in the PR and align `docs/policies/GOVERNANCE.md`, `ADR-0020`, and the affected contract docs in the same change.
+- If a change is classified as `experimental`, keep it opt-in, disabled by default, and outside `docs/support/SUPPORT-BOUNDARY.md` and release promises until it graduates through ADR review.
+- If a change alters the support boundary, update `docs/support/SUPPORT-BOUNDARY.md`, the copied wording in user-facing docs, and the GitHub templates in the same change.
+- If a change alters public `VersionBand` / `ProcessingPath` wording while runtime still emits legacy internal tier-style fields, keep the user-facing docs canonical and either align the runtime in the same change or explicitly document the temporary mismatch in `docs/support/KNOWN-LIMITATIONS.md`.
+- If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `docs/releases/STABLE-RELEASE.md`, `docs/releases/RELEASE-CHECKLIST.md`, the packaging spec, and the related ADRs aligned in the same change.
 - If a change alters support routing or maintainer/user recovery guidance, keep `SUPPORT.md`, `docs/runbooks/`, and `.github/ISSUE_TEMPLATE/bug_report.yml` aligned in the same change.
 - Keep corpus expectations, snapshots, and docs aligned. If a promoted fixture changes, update the canonical expectation and rerun the replay and snapshot gates.
-- Update `CHANGELOG.md` for user-visible changes. Keep `RELEASE-NOTES.md` and `PUBLIC-BETA-RELEASE.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `VERSIONING.md`.
+- Update `CHANGELOG.md` for user-visible changes. Keep `docs/releases/RELEASE-NOTES.md` and `docs/releases/PUBLIC-BETA-RELEASE.md` aligned with the shipped baseline scope and the current maturity / artifact wording from `docs/policies/VERSIONING.md`.
 - Keep work item state in GitHub, not in chat. Use the active milestone epic, its sub-issues, and the session handoff format from [docs/runbooks/agent-handoff.md](docs/runbooks/agent-handoff.md).
 
 ## Corpus Workflow
 
-- Keep the hand-authored corpus within the current beta-bar target described in [corpus/README.md](corpus/README.md): 80 to 120 fixtures while preserving the composition quota from `quality-corpus-test-gate-spec.md`.
+- Keep the hand-authored corpus within the current beta-bar target described in [corpus/README.md](corpus/README.md): 80 to 120 fixtures while preserving the composition quota from `docs/specs/quality-corpus-test-gate-spec.md`.
 - When a harvested trace graduates into the corpus, sanitize it first, minimize it to a bounded repro, then commit fixture metadata and GCC 15 snapshots in the same change.
 - Prefer semantic expectations that catch family, fallback, provenance, and first-action regressions without overfitting transient line or quote drift.
 - Use render expectation assertions such as `required_substrings` / `forbidden_substrings` when a promoted fixture needs to pin family-specific headings, omission notices, or the raw fallback escape hatch without snapshotting every line detail.

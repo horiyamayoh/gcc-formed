@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0013: SARIF egress scope
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ GCC ingress では SARIF が一次情報源になるが、製品内部の analys
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.2.3、19
-- `../gcc-adapter-ingestion-spec.md` の SARIF ingest / residual handling 関連節
-- `../diagnostic-ir-v1alpha-spec.md` の export / external reference 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.2.3、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の SARIF ingest / residual handling 関連節
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の export / external reference 関連節

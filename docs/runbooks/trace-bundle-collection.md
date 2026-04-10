@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Current operational procedure and support response guidance.
+do_not_use_for: Historical planning context or superseded delivery models.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Current operational procedure and support response guidance.
+> Do not use for: Historical planning context or superseded delivery models.
+
 # Trace Bundle Collection
 
 Trace collection is opt-in. It should be enabled only for debugging or support, and the resulting bundle should be reviewed before sharing.

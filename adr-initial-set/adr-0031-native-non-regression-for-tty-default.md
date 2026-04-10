@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0031: Native non-regression for TTY default
 
 - **Status**: Accepted
@@ -34,7 +48,7 @@ v1alpha では render quality 自体は重視していたが、default TTY non-r
 
 ## Source Specs
 
-- `../gcc-formed-vnext-change-design.md`
-- `../SUPPORT-BOUNDARY.md`
-- `../rendering-ux-contract-spec.md`
-- `../quality-corpus-test-gate-spec.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/support/SUPPORT-BOUNDARY.md`
+- `../docs/specs/rendering-ux-contract-spec.md`
+- `../docs/specs/quality-corpus-test-gate-spec.md`

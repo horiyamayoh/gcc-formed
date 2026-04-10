@@ -220,7 +220,7 @@ fn init_release_repo(version: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
     write_file(&repo_root.join(".gitignore"), b"/dist\n");
     write_file(&repo_root.join("README.md"), b"# gcc-formed\n");
     write_file(
-        &repo_root.join("RELEASE-NOTES.md"),
+        &repo_root.join("docs/releases/RELEASE-NOTES.md"),
         b"# Release Notes\n\n- Initial release packaging smoke fixture.\n",
     );
     write_file(&repo_root.join("LICENSE"), b"Apache-2.0\n");

@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0010: Deterministic rule engine; no AI core dependency
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ v1alpha の価値は「賢そうに見える説明」ではなく、root cause r
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の前提 3、6.1.5、19
-- `../diagnostic-ir-v1alpha-spec.md` の analysis / overlay 関連節
-- `../quality-corpus-test-gate-spec.md` の KPI と gate 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の前提 3、6.1.5、19
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の analysis / overlay 関連節
+- `../docs/specs/quality-corpus-test-gate-spec.md` の KPI と gate 関連節

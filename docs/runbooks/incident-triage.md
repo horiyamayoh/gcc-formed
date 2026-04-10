@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Current operational procedure and support response guidance.
+do_not_use_for: Historical planning context or superseded delivery models.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Current operational procedure and support response guidance.
+> Do not use for: Historical planning context or superseded delivery models.
+
 # Incident Triage Runbook
 
 Use this runbook when a bug report or internal incident arrives and you need to decide the first action without rereading the whole repo.
@@ -55,7 +69,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 ### TTY renderer / CI renderer / raw fallback
 
 1. Confirm the selected mode, available backend classification, and fallback reason from `trace.json` or `--formed-self-check`.
-2. Compare the output against [SUPPORT-BOUNDARY.md](../../SUPPORT-BOUNDARY.md) and [KNOWN-LIMITATIONS.md](../../KNOWN-LIMITATIONS.md).
+2. Compare the output against [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) and [KNOWN-LIMITATIONS.md](../support/KNOWN-LIMITATIONS.md).
 3. If needed, reproduce with `--formed-trace=always` and follow [trace-bundle-collection.md](trace-bundle-collection.md).
 
 ### Probe / capture / analysis
@@ -68,7 +82,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 
 1. Confirm the install root, target triple, and access checks from `--formed-self-check`.
 2. For end-user recovery, follow [rollback.md](rollback.md).
-3. For stable-cut evidence or channel-promotion questions, also inspect [STABLE-RELEASE.md](../../STABLE-RELEASE.md).
+3. For stable-cut evidence or channel-promotion questions, also inspect [STABLE-RELEASE.md](../releases/STABLE-RELEASE.md).
 
 ## 4. Initial Severity Decision
 

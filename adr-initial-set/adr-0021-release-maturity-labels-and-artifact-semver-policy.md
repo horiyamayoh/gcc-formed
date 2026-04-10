@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0021: Release maturity labels and artifact semver policy
 
 - **Status**: Accepted
@@ -47,7 +61,7 @@ spec-first repository として beta / rc / stable へ進む前に、support pos
 ## Source Specs
 
 - `../README.md`
-- `../RELEASE-NOTES.md`
-- `../RELEASE-CHECKLIST.md`
-- `../KNOWN-LIMITATIONS.md`
+- `../docs/releases/RELEASE-NOTES.md`
+- `../docs/releases/RELEASE-CHECKLIST.md`
+- `../docs/support/KNOWN-LIMITATIONS.md`
 - `../SECURITY.md`

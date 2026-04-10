@@ -238,12 +238,12 @@ jobs:
 
           ## Install Paths
 
-          - Direct install / rollback path: see \`PUBLIC-BETA-RELEASE.md\` and use the \`.control.tar.gz\` bundle.
+          - Direct install / rollback path: see \`docs/releases/PUBLIC-BETA-RELEASE.md\` and use the \`.control.tar.gz\` bundle.
           - Exact-pin release-repository path: use the \`.release-repo.tar.gz\` bundle together with \`cargo xtask install-release\`.
           - Current docs:
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/PUBLIC-BETA-RELEASE.md
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/SUPPORT-BOUNDARY.md
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/KNOWN-LIMITATIONS.md
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/PUBLIC-BETA-RELEASE.md
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/SUPPORT-BOUNDARY.md
+            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/KNOWN-LIMITATIONS.md
 
           ## Signing
 

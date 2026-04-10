@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0009: Library + CLI layering
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ wrapper、adapter、IR、analysis、renderer を 1 枚の CLI 実装に閉じ込
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の推奨アーキテクチャ、19
-- `../diagnostic-ir-v1alpha-spec.md` の 27
-- `../gcc-adapter-ingestion-spec.md` の 31
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の推奨アーキテクチャ、19
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の 27
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の 31

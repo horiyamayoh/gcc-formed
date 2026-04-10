@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0025: Stable release automation and rollback evidence
 
 - **Status**: Accepted
@@ -37,7 +51,7 @@ stable では「同じ signed candidate を canary / beta / stable へ metadata-
 
 ## Source Specs
 
-- `../packaging-runtime-operations-spec.md`
-- `../RELEASE-CHECKLIST.md`
-- `../RELEASE-NOTES.md`
-- `../STABLE-RELEASE.md`
+- `../docs/specs/packaging-runtime-operations-spec.md`
+- `../docs/releases/RELEASE-CHECKLIST.md`
+- `../docs/releases/RELEASE-NOTES.md`
+- `../docs/releases/STABLE-RELEASE.md`

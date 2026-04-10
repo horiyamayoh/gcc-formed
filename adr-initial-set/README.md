@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted ADR index and decision reading order.
+do_not_use_for: Historical-only superseded policy as current truth.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted ADR index and decision reading order.
+> Do not use for: Historical-only superseded policy as current truth.
+
 # gcc-formed / cc-formed ADR 初版セット
 
 - **文書種別**: Architecture Decision Record（ADR）索引
@@ -6,13 +20,14 @@
 - **日付**: 2026-04-09
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **関連文書**:
-  - `../gcc-formed-architecture-proposal.md`
-  - `../diagnostic-ir-v1alpha-spec.md`
-  - `../gcc-adapter-ingestion-spec.md`
-  - `../rendering-ux-contract-spec.md`
-  - `../quality-corpus-test-gate-spec.md`
-  - `../packaging-runtime-operations-spec.md`
-  - `../implementation-bootstrap-sequence.md`
+  - `../docs/architecture/gcc-formed-vnext-change-design.md`
+  - `../docs/support/SUPPORT-BOUNDARY.md`
+  - `../docs/specs/diagnostic-ir-v1alpha-spec.md`
+  - `../docs/specs/gcc-adapter-ingestion-spec.md`
+  - `../docs/specs/rendering-ux-contract-spec.md`
+  - `../docs/specs/quality-corpus-test-gate-spec.md`
+  - `../docs/specs/packaging-runtime-operations-spec.md`
+  - `../docs/process/implementation-bootstrap-sequence.md`
 
 ---
 
@@ -22,13 +37,12 @@
 
 ## 2. 含まれる ADR 一覧
 
+### Accepted ADRs
+
 | ADR | Title | Status | 目的 |
 |---|---|---|---|
 | [ADR-0001](./adr-0001-wrapper-first-entrypoint.md) | Wrapper-first compiler-compatible entrypoint | Accepted | 導入障壁を最小化する |
 | [ADR-0002](./adr-0002-diagnostic-ir-as-product-core.md) | Diagnostic IR as product core | Accepted | adapter / renderer / analysis を疎結合化する |
-| [ADR-0003](./adr-0003-structured-first-gcc-ingress.md) | Structured-first GCC ingress | Superseded | GCC diagnostics の authoritative source を固定した v1alpha baseline |
-| [ADR-0004](./adr-0004-gcc-15-first-support-policy.md) | GCC 15-first support policy | Superseded | GCC 15 中心の v1alpha 品質主張を固定した historical baseline |
-| [ADR-0005](./adr-0005-gcc-13-14-compatibility-tier.md) | GCC 13–14 compatibility tier | Superseded | compatibility tier を固定した v1alpha baseline |
 | [ADR-0006](./adr-0006-fail-open-fallback-and-provenance.md) | Fail-open fallback and provenance | Accepted | wrapper failure が build failure を悪化させないようにする |
 | [ADR-0007](./adr-0007-rust-as-implementation-language.md) | Rust as implementation language | Accepted | 長期品質と配布性を両立する |
 | [ADR-0008](./adr-0008-linux-first-single-binary-musl-distribution.md) | Linux-first single-binary musl distribution | Accepted | install / rollback / support を安定化する |
@@ -56,9 +70,19 @@
 | [ADR-0032](./adr-0032-rulepack-externalization-policy.md) | Rulepack externalization policy | Accepted | 判定規則を長期保守可能な形へ出す |
 | [ADR-0033](./adr-0033-execution-model-precedes-epic-generation.md) | Execution Model precedes Epic generation | Accepted | Epic より先に delivery system を固定する |
 
+### Historical-Only Superseded ADRs
+
+Superseded ADR は provenance のために残す。現在の判断には使わず、historical baseline としてだけ扱う。
+
+| ADR | Title | Status | 目的 |
+|---|---|---|---|
+| [ADR-0003](./superseded/adr-0003-structured-first-gcc-ingress.md) | Structured-first GCC ingress | Superseded | GCC diagnostics の authoritative source を固定した v1alpha baseline |
+| [ADR-0004](./superseded/adr-0004-gcc-15-first-support-policy.md) | Historical single-band support policy | Superseded | GCC 15 中心の v1alpha 品質主張を固定した historical baseline |
+| [ADR-0005](./superseded/adr-0005-gcc-13-14-compatibility-tier.md) | GCC 13–14 compatibility tier | Superseded | compatibility tier を固定した v1alpha baseline |
+
 ## 3. 読み方
 
-- **0001–0006** は導入形態、structured ingress、support tier、fallback の基礎判断
+- **0001–0006** は導入形態、structured ingress、legacy single-tier baseline、fallback の基礎判断
 - **0007–0010** は実装言語、配布、実装境界、analysis 方針の骨格
 - **0011–0016** は出力 surface、ownership、trace/redaction の製品境界
 - **0017–0025** は dependency、corpus、render surface、stability、versioning semantics、public beta / stable release policy の運用統制

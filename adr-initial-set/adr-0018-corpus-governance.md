@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0018: Corpus governance
 
 - **Status**: Accepted
@@ -33,5 +47,5 @@
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の KPI、6.1.9、19
-- `../quality-corpus-test-gate-spec.md` の全体
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の KPI、6.1.9、19
+- `../docs/specs/quality-corpus-test-gate-spec.md` の全体

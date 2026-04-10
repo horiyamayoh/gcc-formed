@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Repo overview and current reading order.
+do_not_use_for: Historical provenance or low-level implementation details.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Repo overview and current reading order.
+> Do not use for: Historical provenance or low-level implementation details.
+
 # gcc-formed
 
 - **状態**: Public Beta
@@ -11,6 +25,8 @@
 
 目標は GCC の生出力を単に prettier にすることではない。  
 目標は、**GCC 9〜15 にまたがる複数の capture / ingest 経路を持ちながら、1 つの UX 原則で価値を返すこと**である。
+
+AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md) である。
 
 ---
 
@@ -31,7 +47,7 @@
 
 ## 現在の support posture
 
-SupportLevel / ProcessingPath / RawPreservationLevel の正本は [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md) に置く。  
+SupportLevel / ProcessingPath / RawPreservationLevel の正本は [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md) に置く。  
 README では要点だけを再掲する。
 
 Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` と explicit `SingleSinkStructured` (JSON) を別 path として扱う。
@@ -49,22 +65,24 @@ Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` 
 
 上から下へ読む。
 
-1. [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md)  
+1. [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)  
    現在の public wording と beta support posture の正本
-2. [EXECUTION-MODEL.md](EXECUTION-MODEL.md)  
+2. [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)  
    Epic を切る前提、Issue 正本主義、nightly agent 運用の正本
-3. [diagnostic-ir-v1alpha-spec.md](diagnostic-ir-v1alpha-spec.md)  
+3. [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md)  
    正規化 IR の実装契約
-4. [gcc-adapter-ingestion-spec.md](gcc-adapter-ingestion-spec.md)  
+4. [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md)  
    capture / ingest の実装契約
-5. [rendering-ux-contract-spec.md](rendering-ux-contract-spec.md)  
+5. [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md)  
    renderer と disclosure の実装契約
-6. [quality-corpus-test-gate-spec.md](quality-corpus-test-gate-spec.md)  
+6. [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md)  
    corpus-driven quality gate の実装契約
 7. [adr-initial-set/README.md](adr-initial-set/README.md)  
    採択済み ADR の索引
-8. [VERSIONING.md](VERSIONING.md) / [GOVERNANCE.md](GOVERNANCE.md)  
+8. [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) / [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md)  
    成熟度ラベル、artifact 系列、変更分類の用語契約
+
+全体の文書索引は [docs/README.md](docs/README.md) を参照。
 
 ---
 
@@ -89,18 +107,18 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 
 ### 契約文書
 
-- [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md): public wording と support posture の正本
-- [EXECUTION-MODEL.md](EXECUTION-MODEL.md): delivery system の正本
-- [diagnostic-ir-v1alpha-spec.md](diagnostic-ir-v1alpha-spec.md): IR 契約
-- [gcc-adapter-ingestion-spec.md](gcc-adapter-ingestion-spec.md): capture / ingest 契約
-- [rendering-ux-contract-spec.md](rendering-ux-contract-spec.md): terminal / CI renderer 契約
-- [quality-corpus-test-gate-spec.md](quality-corpus-test-gate-spec.md): quality gate 契約
-- [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md): packaging / install / rollback / release engineering 契約
-- [implementation-bootstrap-sequence.md](implementation-bootstrap-sequence.md): 実装開始順の正本
-- [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md): 公開 beta artifact の install / rollback / exact-pin 契約
+- [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md): public wording と support posture の正本
+- [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md): delivery system の正本
+- [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md): IR 契約
+- [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md): capture / ingest 契約
+- [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md): terminal / CI renderer 契約
+- [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): quality gate 契約
+- [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md): packaging / install / rollback / release engineering 契約
+- [docs/process/implementation-bootstrap-sequence.md](docs/process/implementation-bootstrap-sequence.md): 実装開始順の正本
+- [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md): 公開 beta artifact の install / rollback / exact-pin 契約
 - [adr-initial-set/README.md](adr-initial-set/README.md): ADR 索引
-- [VERSIONING.md](VERSIONING.md): 成熟度ラベルと artifact semver
-- [GOVERNANCE.md](GOVERNANCE.md): 変更分類と freeze ルール
+- [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md): 成熟度ラベルと artifact semver
+- [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md): 変更分類と freeze ルール
 
 ### 実装ワークスペース
 
@@ -126,7 +144,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 - **contract change は docs / ADR / tests を同じ change に含める**
 - **renderer を触る変更は default TTY 非劣化を自分で証明する**
 
-詳しくは [EXECUTION-MODEL.md](EXECUTION-MODEL.md) を参照。
+詳しくは [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md) を参照。
 
 ---
 
@@ -140,9 +158,9 @@ cargo xtask replay --root corpus
 ```
 
 Path-aware の実装が進んだら、band ごとの replay / snapshot / quality gate を追加で回す。  
-個別の release / install / rollback / stable-promotion 手順は [packaging-runtime-operations-spec.md](packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
+個別の release / install / rollback / stable-promotion 手順は [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
 
-公開 beta artifact の install / rollback / exact-pin は [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) を参照。
+公開 beta artifact の install / rollback / exact-pin は [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md) を参照。
 
 ---
 

@@ -21,17 +21,18 @@ CANONICAL_LINES = [
 ]
 
 DOCS_WITH_CANONICAL_COPY = [
-    "SUPPORT-BOUNDARY.md",
-    "RELEASE-NOTES.md",
-    "RELEASE-CHECKLIST.md",
+    "docs/support/SUPPORT-BOUNDARY.md",
+    "docs/releases/RELEASE-NOTES.md",
+    "docs/releases/RELEASE-CHECKLIST.md",
     "SECURITY.md",
     "CONTRIBUTING.md",
 ]
 
 README_REQUIRED_SNIPPETS = [
-    "[SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md)",
-    "[EXECUTION-MODEL.md](EXECUTION-MODEL.md)",
-    "[PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md)",
+    "[AGENTS.md](AGENTS.md)",
+    "[docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)",
+    "[docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)",
+    "[docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md)",
     "**GCC 15+ は最良の reference path だが、唯一の product path ではない。**",
     "**GCC 13–14 と GCC 9–12 も first-class product bands である。**",
     "**raw fallback は shipped contract の一部である。**",
@@ -86,8 +87,8 @@ class SupportBoundaryDocsTest(unittest.TestCase):
                 self.assertIn(heading, text)
         self.assertIn("VersionBand", text)
         self.assertIn("ProcessingPath", text)
-        self.assertIn("SUPPORT-BOUNDARY.md", text)
-        self.assertIn("EXECUTION-MODEL.md", text)
+        self.assertIn("docs/support/SUPPORT-BOUNDARY.md", text)
+        self.assertIn("docs/process/EXECUTION-MODEL.md", text)
         self.assertIn("Acceptance evidence:", text)
         self.assertIn("Stop condition not hit:", text)
         self.assertIn("Next recommended action if paused:", text)
@@ -98,8 +99,8 @@ class SupportBoundaryDocsTest(unittest.TestCase):
         )
         self.assertIn("Version band", text)
         self.assertIn("Processing path", text)
-        self.assertIn("SUPPORT-BOUNDARY.md", text)
-        self.assertIn("EXECUTION-MODEL.md", text)
+        self.assertIn("docs/support/SUPPORT-BOUNDARY.md", text)
+        self.assertIn("docs/process/EXECUTION-MODEL.md", text)
 
     def test_issue_templates_for_epic_and_work_package_exist(self) -> None:
         epic = (REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "epic.yml").read_text(

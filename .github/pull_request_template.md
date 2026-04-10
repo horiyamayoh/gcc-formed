@@ -30,8 +30,8 @@
 ## Read Docs
 
 - [ ] `README.md`
-- [ ] `SUPPORT-BOUNDARY.md`
-- [ ] `EXECUTION-MODEL.md`
+- [ ] `docs/support/SUPPORT-BOUNDARY.md`
+- [ ] `docs/process/EXECUTION-MODEL.md`
 - [ ] Relevant ADR(s)
 - [ ] Relevant spec(s)
 - [ ] `CONTRIBUTING.md`
@@ -102,8 +102,8 @@
 ## Docs Updated
 
 - [ ] `README.md`
-- [ ] `SUPPORT-BOUNDARY.md`
-- [ ] `EXECUTION-MODEL.md`
+- [ ] `docs/support/SUPPORT-BOUNDARY.md`
+- [ ] `docs/process/EXECUTION-MODEL.md`
 - [ ] Relevant spec(s)
 - [ ] ADR(s)
 - [ ] Issue template / PR template / runbook wording

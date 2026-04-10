@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0017: Dependency allowlist and license policy
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ build path に入る CLI は dependency risk を低く保ち、release artifact 
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の配布 / 品質 / release 関連節、19
-- `../packaging-runtime-operations-spec.md` の 12、17、19
-- `../quality-corpus-test-gate-spec.md` の release / rollout gate 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の配布 / 品質 / release 関連節、19
+- `../docs/specs/packaging-runtime-operations-spec.md` の 12、17、19
+- `../docs/specs/quality-corpus-test-gate-spec.md` の release / rollout gate 関連節

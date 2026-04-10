@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0019: Render modes
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ terminal、CI、reduced fallback の各状況で同じ情報密度を押し付�
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.1.4、19
-- `../rendering-ux-contract-spec.md` の profile / density / raw fallback 関連節
-- `../gcc-adapter-ingestion-spec.md` の mode selection / user-facing fallback 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.1.4、19
+- `../docs/specs/rendering-ux-contract-spec.md` の profile / density / raw fallback 関連節
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の mode selection / user-facing fallback 関連節

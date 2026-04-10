@@ -1064,7 +1064,7 @@ pub(crate) fn ensure_release_inputs(
 ) -> Result<(), Box<dyn std::error::Error>> {
     for relative in [
         "README.md",
-        "RELEASE-NOTES.md",
+        "docs/releases/RELEASE-NOTES.md",
         "LICENSE",
         "NOTICE",
         "Cargo.lock",
@@ -1181,8 +1181,8 @@ pub(crate) fn stage_release_payload(
         &stage_root.join("share/doc/gcc-formed/README.md"),
     )?;
     copy_release_file(
-        &workspace_root.join("RELEASE-NOTES.md"),
-        &stage_root.join("share/doc/gcc-formed/RELEASE-NOTES.md"),
+        &workspace_root.join("docs/releases/RELEASE-NOTES.md"),
+        &stage_root.join("share/doc/gcc-formed/docs/releases/RELEASE-NOTES.md"),
     )?;
     copy_release_file(
         &workspace_root.join("LICENSE"),
@@ -1262,7 +1262,7 @@ pub(crate) fn payload_checksums(
         "bin/gcc-formed",
         "bin/g++-formed",
         "share/doc/gcc-formed/README.md",
-        "share/doc/gcc-formed/RELEASE-NOTES.md",
+        "share/doc/gcc-formed/docs/releases/RELEASE-NOTES.md",
         "share/licenses/gcc-formed/LICENSE",
         "share/licenses/gcc-formed/NOTICE",
         "build-info.txt",

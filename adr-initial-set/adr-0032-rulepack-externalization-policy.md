@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0032: Rulepack externalization policy
 
 - **Status**: Accepted
@@ -33,7 +47,7 @@ family classification, first-action hint, compaction, residual grouping が Rust
 
 ## Source Specs
 
-- `../gcc-formed-vnext-change-design.md`
-- `../quality-corpus-test-gate-spec.md`
-- `../rendering-ux-contract-spec.md`
-- `../EXECUTION-MODEL.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/specs/quality-corpus-test-gate-spec.md`
+- `../docs/specs/rendering-ux-contract-spec.md`
+- `../docs/process/EXECUTION-MODEL.md`

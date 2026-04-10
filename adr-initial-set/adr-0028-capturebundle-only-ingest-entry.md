@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0028: CaptureBundle becomes the only ingest entry
 
 - **Status**: Accepted
@@ -35,7 +49,7 @@ vNext では Path A/B/C を同じ ingest 境界へ流し込み、runtime と ada
 
 ## Source Specs
 
-- `../gcc-formed-vnext-change-design.md`
-- `../gcc-adapter-ingestion-spec.md`
-- `../diagnostic-ir-v1alpha-spec.md`
-- `../implementation-bootstrap-sequence.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/specs/gcc-adapter-ingestion-spec.md`
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md`
+- `../docs/process/implementation-bootstrap-sequence.md`

@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0006: Fail-open fallback and provenance
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ compiler wrapper は build path の最前面に入るため、wrapper 自身の�
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.1.7、KPI、19
-- `../gcc-adapter-ingestion-spec.md` の 1、30、32、33、34
-- `../diagnostic-ir-v1alpha-spec.md` の provenance 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.1.7、KPI、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の 1、30、32、33、34
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の provenance 関連節

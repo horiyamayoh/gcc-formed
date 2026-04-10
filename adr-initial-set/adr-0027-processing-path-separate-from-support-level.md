@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0027: Processing Path is separate from Support Level
 
 - **Status**: Accepted
@@ -5,7 +19,7 @@
 
 ## Context
 
-現行 repo は GCC version/support tier から runtime mode と public wording を直接決めている。そのため `GCC13-14` やそれ未満の経路は compatibility-only や passthrough に寄りやすく、「実際にどの path で価値を返したのか」と「その artifact がどの程度保証するか」が混線する。
+現行 repo は GCC version と単一 tier vocabulary から runtime mode と public wording を直接決めている。そのため `GCC13-14` やそれ未満の経路は狭い補助帯域や passthrough に寄りやすく、「実際にどの path で価値を返したのか」と「その artifact がどの程度保証するか」が混線する。
 
 vNext では同じ compiler band でも `TTY default`, `CI`, `explicit structured mode` で最適 path が変わりうる。runtime path と support claim は別概念として固定する必要がある。
 
@@ -35,7 +49,7 @@ vNext では同じ compiler band でも `TTY default`, `CI`, `explicit structure
 
 ## Source Specs
 
-- `../gcc-formed-vnext-change-design.md`
-- `../SUPPORT-BOUNDARY.md`
-- `../EXECUTION-MODEL.md`
-- `../implementation-bootstrap-sequence.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/support/SUPPORT-BOUNDARY.md`
+- `../docs/process/EXECUTION-MODEL.md`
+- `../docs/process/implementation-bootstrap-sequence.md`

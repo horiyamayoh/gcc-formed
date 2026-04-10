@@ -1,0 +1,56 @@
+---
+doc_role: history-only
+lifecycle_status: superseded
+audience: both
+use_for: Historical design provenance and superseded decisions.
+do_not_use_for: Current implementation decisions or current public support claims.
+supersedes: []
+superseded_by:
+  - ../adr-0026-capability-profile-replaces-support-tier.md
+  - ../adr-0027-processing-path-separate-from-support-level.md
+  - ../adr-0029-path-b-and-c-are-first-class-product-paths.md
+---
+> [!IMPORTANT]
+> Authority: `history-only` / `superseded`
+> Use for: Historical design provenance and superseded decisions.
+> Do not use for: Current implementation decisions or current public support claims.
+
+# ADR-0005: GCC 13–14 compatibility tier
+
+- **Status**: Superseded
+- **Date**: 2026-04-07
+
+## Context
+
+GCC 13–14 には structured diagnostics の一部があるが、GCC 15 と同じ fidelity を前提にした rendering contract はまだ置けない。互換 path を持ちつつ production claim を抑制しないと、v1alpha の品質主張が過剰になる。
+
+## Decision
+
+- GCC 13–14 は compatibility tier とし、v1alpha では production rendering の対象外とする
+- 必要に応じて compatibility path や replay / rerun fallback を許容する
+- unsupported / degraded / passthrough の区別を user-visible に保つ
+- compatibility path では support tier・selected mode・fallback reason を user-visible banner と self-check rollout matrix の両方に出し、issue report だけでも primary path と混同しないようにする
+- GCC <=12 は passthrough only 扱いとする
+
+## Consequences
+
+- v1alpha の fidelity claim を守りやすい
+- implementation は degrade path と raw fallback を明確に持つ必要がある
+- corpus と benchmark は tier 別に分けて評価する必要がある
+
+## Out of Scope
+
+- GCC 13–14 を GCC 15 同等に render する保証
+- legacy compiler 向けの複雑な text normalization
+- downgrade path の美観最適化
+
+## Supersedes/Related
+
+- **Supersedes**: None
+- **Related**: `ADR-0006`, `ADR-0018`, `ADR-0027`, `ADR-0029`
+
+## Source Specs
+
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の前提 1、6.1.2、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の support tier 方針、19、20、32、33、34
+- `../docs/specs/quality-corpus-test-gate-spec.md` の compatibility matrix 関連節

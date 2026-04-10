@@ -230,10 +230,10 @@ jobs:
 
           ## Install and Rollback Paths
 
-          - Stable cut runbook: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/STABLE-RELEASE.md
-          - Support boundary: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/SUPPORT-BOUNDARY.md
-          - Known limitations: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/KNOWN-LIMITATIONS.md
-          - Release checklist: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/RELEASE-CHECKLIST.md
+          - Stable cut runbook: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/STABLE-RELEASE.md
+          - Support boundary: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/SUPPORT-BOUNDARY.md
+          - Known limitations: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/KNOWN-LIMITATIONS.md
+          - Release checklist: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/RELEASE-CHECKLIST.md
 
           ## Included Assets
 

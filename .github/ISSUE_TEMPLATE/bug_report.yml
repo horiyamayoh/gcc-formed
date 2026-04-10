@@ -9,9 +9,9 @@ body:
       value: |
         Before filing, check the support docs:
 
-        - [Support boundary](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT-BOUNDARY.md)
+        - [Support boundary](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/support/SUPPORT-BOUNDARY.md)
         - [Support overview](https://github.com/horiyamayoh/gcc-formed/blob/main/SUPPORT.md)
-        - [Execution model](https://github.com/horiyamayoh/gcc-formed/blob/main/EXECUTION-MODEL.md)
+        - [Execution model](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/process/EXECUTION-MODEL.md)
         - [Incident triage](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/incident-triage.md)
         - [Trace bundle collection](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/trace-bundle-collection.md)
         - [Rollback / reinstall](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/rollback.md)

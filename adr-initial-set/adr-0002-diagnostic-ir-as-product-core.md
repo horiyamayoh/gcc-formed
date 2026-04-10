@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0002: Diagnostic IR as product core
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ compiler 出力をその場の表示形式に依存したまま扱うと、rende
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 1、6.1.3、19
-- `../diagnostic-ir-v1alpha-spec.md` の 1、27、28
-- `../rendering-ux-contract-spec.md` の 1
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 1、6.1.3、19
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の 1、27、28
+- `../docs/specs/rendering-ux-contract-spec.md` の 1

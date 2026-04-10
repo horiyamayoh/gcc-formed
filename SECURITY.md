@@ -6,7 +6,7 @@
 
 ## Current Support Boundary
 
-Security support statements should be read inside the same support boundary documented in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
+Security support statements should be read inside the same support boundary documented in [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.

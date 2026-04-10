@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0001: Wrapper-first compiler-compatible entrypoint
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の Executive Summary、6.1.1、19
-- `../gcc-adapter-ingestion-spec.md` の 1、31、32、33
-- `../packaging-runtime-operations-spec.md` の 7.2、18.2
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の Executive Summary、6.1.1、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の 1、31、32、33
+- `../docs/specs/packaging-runtime-operations-spec.md` の 7.2、18.2

@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Current operational procedure and support response guidance.
+do_not_use_for: Historical planning context or superseded delivery models.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Current operational procedure and support response guidance.
+> Do not use for: Historical planning context or superseded delivery models.
+
 # Agent Handoff
 
 Use this runbook whenever a coding session may pause, the active agent context may be lost, or work needs to transfer between maintainers and agents.

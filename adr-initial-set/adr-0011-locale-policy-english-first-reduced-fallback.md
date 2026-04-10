@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0011: Locale policy: English-first, reduced fallback
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ v1alpha の renderer は compiler facts を圧縮して再提示するが、loca
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 19
-- `../rendering-ux-contract-spec.md` の locale / label catalog 関連節
-- `../gcc-adapter-ingestion-spec.md` の locale / environment sanitization 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 19
+- `../docs/specs/rendering-ux-contract-spec.md` の locale / label catalog 関連節
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の locale / environment sanitization 関連節

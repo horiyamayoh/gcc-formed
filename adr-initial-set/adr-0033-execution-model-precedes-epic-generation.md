@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0033: Execution Model precedes Epic generation
 
 - **Status**: Accepted
@@ -32,7 +46,7 @@ nightly agent 前提の開発では、Issue の切り方・レビューの仕方
 
 ## Source Specs
 
-- `../EXECUTION-MODEL.md`
-- `../gcc-formed-vnext-change-design.md`
-- `../implementation-bootstrap-sequence.md`
+- `../docs/process/EXECUTION-MODEL.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/process/implementation-bootstrap-sequence.md`
 - `../docs/runbooks/agent-handoff.md`

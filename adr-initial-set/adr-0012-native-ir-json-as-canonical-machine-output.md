@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0012: Native IR JSON as canonical machine-readable output
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ adapter と renderer の境界を安定させるには、機械可読出力の�
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.2.3、19
-- `../diagnostic-ir-v1alpha-spec.md` の serialization / export 関連節、28
-- `../rendering-ux-contract-spec.md` の machine-readable projection 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.2.3、19
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の serialization / export 関連節、28
+- `../docs/specs/rendering-ux-contract-spec.md` の machine-readable projection 関連節

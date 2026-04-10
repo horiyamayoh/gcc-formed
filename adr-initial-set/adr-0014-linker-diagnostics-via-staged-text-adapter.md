@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0014: Linker diagnostics via staged text adapter
 
 - **Status**: Accepted
@@ -33,6 +47,6 @@ linker diagnostics は compiler front-end より非構造で、一貫した stru
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.1.5、6.2.2、19
-- `../gcc-adapter-ingestion-spec.md` の residual text / linker family 関連節、31、32、33
-- `../rendering-ux-contract-spec.md` の linker family 表示契約
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.1.5、6.2.2、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の residual text / linker family 関連節、31、32、33
+- `../docs/specs/rendering-ux-contract-spec.md` の linker family 表示契約

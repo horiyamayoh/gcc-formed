@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0020: Stability promises
 
 - **Status**: Accepted
@@ -12,12 +26,12 @@ public beta、RC gate、stable release automation、support runbooks まで main
 ## Decision
 
 - stability promise は少なくとも CLI surface、config / environment contract、IR schema semantics、renderer wording / confidence / fallback notices、release/install/rollback/signing contract、support boundary / runbook routing に対して定義する
-- contract surface を触る change は `breaking` / `non-breaking` / `experimental` のいずれかに明示分類し、review は `../GOVERNANCE.md` の change matrix に従う
+- contract surface を触る change は `breaking` / `non-breaking` / `experimental` のいずれかに明示分類し、review は `../docs/policies/GOVERNANCE.md` の change matrix に従う
 - `breaking` change は ADR の追加または supersede、migration / rollout impact の説明、関連 docs / changelog / release notes 更新を同時に要求する
 - `non-breaking` change は additive か behavior-preserving の範囲に限り、既存 flag / field / notice / manifest / support promise の意味を silently 変えてはならない
 - `experimental` change は opt-in かつ disabled-by-default とし、support boundary と release promise の外側に置く。stable path を silent に置き換えてはならない
 - v1alpha / v1beta / stable-prep baseline の変更は仕様書への自由追記ではなく、ADR の追加または supersede で行う
-- pre-`1.0.0` must-have backlog と post-`1.0.0` backlog は `../GOVERNANCE.md` に切り分け、post-`1.0.0` backlog を current support boundary に紛れ込ませない
+- pre-`1.0.0` must-have backlog と post-`1.0.0` backlog は `../docs/policies/GOVERNANCE.md` に切り分け、post-`1.0.0` backlog を current support boundary に紛れ込ませない
 - post-`1.0.0` の `breaking` change は次の major version か、明示的に versioned な replacement lane を要求する
 
 ## Consequences
@@ -41,8 +55,8 @@ public beta、RC gate、stable release automation、support runbooks まで main
 
 ## Source Specs
 
-- `../GOVERNANCE.md`
-- `../gcc-formed-architecture-proposal.md` の 19
-- `../diagnostic-ir-v1alpha-spec.md` の enum / schema stability 関連節
-- `../packaging-runtime-operations-spec.md` の version / install / promote 関連節
-- `../rendering-ux-contract-spec.md` の canonical output / label stability 関連節
+- `../docs/policies/GOVERNANCE.md`
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 19
+- `../docs/specs/diagnostic-ir-v1alpha-spec.md` の enum / schema stability 関連節
+- `../docs/specs/packaging-runtime-operations-spec.md` の version / install / promote 関連節
+- `../docs/specs/rendering-ux-contract-spec.md` の canonical output / label stability 関連節

@@ -4,7 +4,7 @@
 
 ## Current Support Boundary
 
-Keep wording aligned with [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
+Keep wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.

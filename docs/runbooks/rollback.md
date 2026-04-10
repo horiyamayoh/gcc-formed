@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Current operational procedure and support response guidance.
+do_not_use_for: Historical planning context or superseded delivery models.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Current operational procedure and support response guidance.
+> Do not use for: Historical planning context or superseded delivery models.
+
 # Rollback, Uninstall, And Reinstall
 
 Use this runbook when a shipped artifact has to be backed out or reinstalled without guessing at the install layout.
@@ -106,4 +120,4 @@ cargo xtask install-release \
   --bin-dir "<bin-dir>"
 ```
 
-If the reinstall is part of a stable-cut investigation, cross-check the evidence in [STABLE-RELEASE.md](../../STABLE-RELEASE.md).
+If the reinstall is part of a stable-cut investigation, cross-check the evidence in [STABLE-RELEASE.md](../releases/STABLE-RELEASE.md).

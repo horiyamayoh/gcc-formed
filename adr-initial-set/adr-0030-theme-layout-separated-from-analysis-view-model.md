@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0030: Theme/Layout separated from analysis/view model
 
 - **Status**: Accepted
@@ -35,7 +49,7 @@ vNext では Path A/B/C が増えるため、表示差分を renderer 深部へ�
 
 ## Source Specs
 
-- `../gcc-formed-vnext-change-design.md`
-- `../rendering-ux-contract-spec.md`
-- `../EXECUTION-MODEL.md`
-- `../implementation-bootstrap-sequence.md`
+- `../docs/architecture/gcc-formed-vnext-change-design.md`
+- `../docs/specs/rendering-ux-contract-spec.md`
+- `../docs/process/EXECUTION-MODEL.md`
+- `../docs/process/implementation-bootstrap-sequence.md`

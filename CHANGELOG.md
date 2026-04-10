@@ -16,9 +16,9 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Added `cargo xtask fuzz-smoke`, checked-in `fuzz/` adversarial seeds, and automatic `fuzz-smoke-report.json` / `fuzz-evidence.json` generation so nightly and rc-gate can enforce `fuzz crash 0` without a manual `fuzz-status.json` handoff.
 - Added `cargo xtask human-eval-kit` and automatic `rc-gate/human-eval/` bundle generation so representative expert review sheets, task-study sheets, counterbalance order, and manual evidence templates are reproducible from the curated corpus instead of assembled ad hoc per RC.
 - Hardened compatibility-path UX so GCC 13/14 and out-of-scope compilers now print exact support-tier / selected-mode / fallback-reason banners, and `--formed-self-check` / `rc-gate` pin those notices in the rollout matrix to catch wording drift.
-- Added `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and stable evidence artifacts so a future `1.0.0` cut can seed a prior release-repo bundle, promote one signed candidate through `canary` / `beta` / `stable` without rebuilding, and retain an auditable rollback drill showing a single `current` symlink switch.
+- Added `cargo xtask stable-release`, `release-stable.yml`, `docs/releases/STABLE-RELEASE.md`, and stable evidence artifacts so a future `1.0.0` cut can seed a prior release-repo bundle, promote one signed candidate through `canary` / `beta` / `stable` without rebuilding, and retain an auditable rollback drill showing a single `current` symlink switch.
 - Added `SUPPORT.md`, maintainer runbooks for incident triage / trace bundle collection / rollback, and bug-template links so support routing no longer depends on chat history or maintainer tribal knowledge.
-- Added `GOVERNANCE.md`, strengthened `ADR-0020`, and expanded the PR template so stable-prep changes must declare `breaking` / `non-breaking` / `experimental` classification and keep post-`1.0.0` backlog items out of the current shipped contract unless they go through explicit ADR review.
+- Added `docs/policies/GOVERNANCE.md`, strengthened `ADR-0020`, and expanded the PR template so stable-prep changes must declare `breaking` / `non-breaking` / `experimental` classification and keep post-`1.0.0` backlog items out of the current shipped contract unless they go through explicit ADR review.
 - Extended `cargo xtask check` to run the Python `ci/test_*.py` suite as well, so CI helper scripts and governance/support contract docs are checked through the same local and CI gate instead of relying on separate ad hoc commands.
 
 ## [0.2.0-beta.1] - 2026-04-09
@@ -31,13 +31,13 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Added reason-coded fallback taxonomy to trace and replay/snapshot outputs so unsupported tiers, sink conflicts, SARIF loss/parse failures, and renderer fallback decisions can be counted instead of reported as ad hoc strings.
 - Added 12 new GCC 15 fixtures across syntax, type mismatch, macro/include, linker, overload, and template families so the hand-authored corpus now reaches the 80-fixture beta bar.
 - Added corpus governance metadata to the newly promoted GCC 15 fixtures and linked the corpus workflow guide from the top-level README.
-- Added `SUPPORT-BOUNDARY.md` as the canonical wording for the current support boundary and aligned the copied wording across user-facing docs and GitHub templates.
+- Added `docs/support/SUPPORT-BOUNDARY.md` as the canonical wording for the current support boundary and aligned the copied wording across user-facing docs and GitHub templates.
 - Added first-release scope, known limitations, and release checklist documents to make the GCC 15 primary contract and GCC 13/14 compatibility path explicit.
 - Added issue and pull request templates that require support-tier and trace-bundle context for release-impacting changes.
 - Added three more promoted representative fixtures so the GCC 15 acceptance/snapshot gate now covers multiple syntax, type-overload, and linker cases instead of a single exemplar.
-- Added `VERSIONING.md`, `ADR-0021`, and `ADR-0024` to separate maturity labels, artifact semver, release channels, and the GitHub public-beta release policy.
+- Added `docs/policies/VERSIONING.md`, `ADR-0021`, and `ADR-0024` to separate maturity labels, artifact semver, release channels, and the GitHub public-beta release policy.
 - Added `corpus/README.md` to document the harvested-trace to committed-fixture promotion flow.
-- Added `PUBLIC-BETA-RELEASE.md` and a dedicated GitHub Release workflow so signed public-beta artifacts, control bundles, immutable release-repo bundles, and exact-pin install instructions are part of the shipped release path.
+- Added `docs/releases/PUBLIC-BETA-RELEASE.md` and a dedicated GitHub Release workflow so signed public-beta artifacts, control bundles, immutable release-repo bundles, and exact-pin install instructions are part of the shipped release path.
 
 ### Changed
 

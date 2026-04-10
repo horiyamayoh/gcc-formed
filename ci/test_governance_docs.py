@@ -31,7 +31,7 @@ POST_STABLE_BACKLOG_ITEMS = [
 
 class GovernanceDocsTest(unittest.TestCase):
     def test_governance_doc_has_change_classes_and_backlog_split(self) -> None:
-        text = (REPO_ROOT / "GOVERNANCE.md").read_text(encoding="utf-8")
+        text = (REPO_ROOT / "docs/policies/GOVERNANCE.md").read_text(encoding="utf-8")
         for heading in GOVERNANCE_HEADINGS:
             with self.subTest(heading=heading):
                 self.assertIn(heading, text)
@@ -43,15 +43,21 @@ class GovernanceDocsTest(unittest.TestCase):
         text = (REPO_ROOT / "adr-initial-set" / "adr-0020-stability-promises.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("../GOVERNANCE.md", text)
+        self.assertIn("../docs/policies/GOVERNANCE.md", text)
         self.assertIn("`breaking` / `non-breaking` / `experimental`", text)
         self.assertIn("post-`1.0.0`", text)
 
     def test_reader_docs_link_governance(self) -> None:
-        for relative_path in ["README.md", "VERSIONING.md", "CONTRIBUTING.md", "RELEASE-CHECKLIST.md"]:
+        expected_references = {
+            "README.md": "docs/policies/GOVERNANCE.md",
+            "docs/policies/VERSIONING.md": "(GOVERNANCE.md)",
+            "CONTRIBUTING.md": "docs/policies/GOVERNANCE.md",
+            "docs/releases/RELEASE-CHECKLIST.md": "../policies/GOVERNANCE.md",
+        }
+        for relative_path, expected in expected_references.items():
             with self.subTest(path=relative_path):
                 text = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
-                self.assertIn("GOVERNANCE.md", text)
+                self.assertIn(expected, text)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,17 @@
+---
+doc_role: current-authority
+lifecycle_status: accepted-baseline
+audience: both
+use_for: Accepted design decisions that constrain implementation.
+do_not_use_for: Historical superseded policy or workflow detail outside the decision.
+supersedes: []
+superseded_by: []
+---
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: Accepted design decisions that constrain implementation.
+> Do not use for: Historical superseded policy or workflow detail outside the decision.
+
 # ADR-0016: Trace bundle content and redaction
 
 - **Status**: Accepted
@@ -33,7 +47,7 @@ wrapper failures や fidelity defects を支援するには raw stderr、structu
 
 ## Source Specs
 
-- `../gcc-formed-architecture-proposal.md` の 6.1.8、19
-- `../gcc-adapter-ingestion-spec.md` の artifact retention / integrity issue 関連節
-- `../packaging-runtime-operations-spec.md` の XDG / trace / security 関連節
-- `../quality-corpus-test-gate-spec.md` の shadow telemetry / trace harvesting 関連節
+- `../docs/history/architecture/gcc-formed-architecture-proposal.md` の 6.1.8、19
+- `../docs/specs/gcc-adapter-ingestion-spec.md` の artifact retention / integrity issue 関連節
+- `../docs/specs/packaging-runtime-operations-spec.md` の XDG / trace / security 関連節
+- `../docs/specs/quality-corpus-test-gate-spec.md` の shadow telemetry / trace harvesting 関連節
