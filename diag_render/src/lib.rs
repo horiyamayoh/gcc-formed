@@ -430,6 +430,31 @@ mod tests {
     }
 
     #[test]
+    fn selector_does_not_boost_unknown_family_over_useful_subset() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].id = "z-syntax".to_string();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("syntax".to_string());
+
+        let mut opaque = request.document.diagnostics[0].clone();
+        opaque.id = "a-opaque".to_string();
+        opaque.message.raw_text = "opaque compatibility residual".to_string();
+        let analysis = opaque.analysis.as_mut().unwrap();
+        analysis.family = Some("compiler.residual".to_string());
+        analysis.headline = Some("opaque compatibility residual".to_string());
+        analysis.rule_id = Some("rule.residual.compiler_unknown".to_string());
+
+        request.document.diagnostics.push(opaque);
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "z-syntax");
+    }
+
+    #[test]
     fn default_profile_suppresses_warnings_after_failure() {
         let mut request = sample_request();
         request
@@ -654,6 +679,80 @@ mod tests {
     }
 
     #[test]
+    fn band_c_useful_subset_render_strengthens_notice_and_raw_label() {
+        let mut request = sample_request();
+        request.document.run.primary_tool.version = Some("12.2.0".to_string());
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
+        request.document.diagnostics[0].message.raw_text =
+            "src/main.cpp:5:7: error: no matching function for call to 'takes(int)'".to_string();
+        request.document.diagnostics[0].locations[0].path = "src/main.cpp".to_string();
+        request.document.diagnostics[0].locations[0].line = 5;
+        request.document.diagnostics[0].locations[0].column = 7;
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("type_overload".to_string());
+        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.first_action_hint =
+            Some("compare the expected type and actual argument at the call site".to_string());
+        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
+        analysis.matched_conditions = vec!["family=type_overload".to_string()];
+
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "candidate-1".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Candidate,
+            message: MessageText {
+                raw_text: "src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![Location {
+                path: "src/main.cpp".to_string(),
+                line: 2,
+                column: 6,
+                end_line: None,
+                end_column: None,
+                display_path: None,
+                ownership: Some(Ownership::User),
+            }],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::ResidualText,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+
+        let output = render(request).unwrap();
+
+        assert!(output.text.contains(
+            "note: GCC 9-12 native-text summaries are conservative; verify against the preserved raw diagnostics"
+        ));
+        assert!(output.text.contains("raw compiler excerpt:"));
+        assert!(
+            output
+                .text
+                .contains("candidate 1: 'void takes(int, int)' at src/main.cpp:2:6")
+        );
+        assert!(!output.text.contains("because:"));
+        assert!(
+            !output
+                .text
+                .contains("help: compare the expected type and actual argument at the call site")
+        );
+    }
+
+    #[test]
     fn partial_render_emits_mixed_fallback_raw_block() {
         let mut request = sample_request();
         request.document.document_completeness = DocumentCompleteness::Partial;
@@ -780,6 +879,39 @@ mod tests {
         assert_eq!(
             evidence.context_lines[6],
             "omitted 2 internal template frames"
+        );
+    }
+
+    #[test]
+    fn band_c_template_supporting_evidence_uses_tighter_budget() {
+        let mut request = sample_request();
+        request.document.run.primary_tool.version = Some("12.3.0".to_string());
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("template".to_string());
+        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.rule_id = Some("rule.residual.compiler_template".to_string());
+        analysis.matched_conditions = vec!["family=template".to_string()];
+        request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
+        request.document.diagnostics[0].context_chains = vec![ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: (1..=7)
+                .map(|index| ContextFrame {
+                    label: format!("instantiated from here #{index}"),
+                    path: Some(format!("src/t{index}.hpp")),
+                    line: Some(index),
+                    column: Some(1),
+                })
+                .collect(),
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        assert_eq!(evidence.context_lines[0], "while instantiating:");
+        assert_eq!(evidence.context_lines.len(), 5);
+        assert_eq!(
+            evidence.context_lines[4],
+            "omitted 4 internal template frames"
         );
     }
 
@@ -911,6 +1043,59 @@ mod tests {
         assert_eq!(
             evidence.context_lines[1],
             "because: candidate conversion remains internal at /usr/include/vector:18:7"
+        );
+    }
+
+    #[test]
+    fn band_c_overload_supporting_evidence_stays_neutral() {
+        let mut request = sample_request();
+        request.document.run.primary_tool.version = Some("12.1.0".to_string());
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("type_overload".to_string());
+        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
+        analysis.matched_conditions = vec!["family=type_overload".to_string()];
+
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "candidate".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Candidate,
+            message: MessageText {
+                raw_text: "src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![Location {
+                path: "src/main.cpp".to_string(),
+                line: 2,
+                column: 6,
+                end_line: None,
+                end_column: None,
+                display_path: None,
+                ownership: Some(Ownership::User),
+            }],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::ResidualText,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        assert_eq!(
+            evidence.context_lines,
+            vec!["candidate 1: 'void takes(int, int)' at src/main.cpp:2:6"]
         );
     }
 

@@ -1,6 +1,9 @@
 use crate::RenderRequest;
 use crate::budget::budget_for;
-use diag_core::{ContextChainKind, ContextFrame, DiagnosticNode, Ownership};
+use diag_core::{
+    Confidence, ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness,
+    NodeCompleteness, Ownership, ProvenanceSource,
+};
 use std::path::Path;
 
 #[derive(Debug, Default)]
@@ -10,22 +13,94 @@ pub struct SupportingEvidence {
     pub collapsed_notices: Vec<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RendererFamilyKind {
+    Unknown,
+    Syntax,
+    Template,
+    MacroInclude,
+    TypeOverload,
+    Linker,
+}
+
+pub(crate) fn renderer_family_kind(node: &DiagnosticNode) -> RendererFamilyKind {
+    match node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref())
+    {
+        Some("syntax") => RendererFamilyKind::Syntax,
+        Some("template") => RendererFamilyKind::Template,
+        Some("macro_include") => RendererFamilyKind::MacroInclude,
+        Some("type_overload") => RendererFamilyKind::TypeOverload,
+        Some(family)
+            if family.starts_with("linker.") && family != "linker.file_format_or_relocation" =>
+        {
+            RendererFamilyKind::Linker
+        }
+        _ => RendererFamilyKind::Unknown,
+    }
+}
+
+pub(crate) fn is_conservative_useful_subset_card(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> bool {
+    matches!(
+        renderer_family_kind(node),
+        RendererFamilyKind::Syntax
+            | RendererFamilyKind::Template
+            | RendererFamilyKind::TypeOverload
+            | RendererFamilyKind::Linker
+    ) && matches!(band_c_gcc_major(request), Some(9..=12))
+        && matches!(
+            request.document.document_completeness,
+            DocumentCompleteness::Partial
+        )
+        && matches!(
+            node.node_completeness,
+            NodeCompleteness::Partial | NodeCompleteness::Passthrough
+        )
+        && matches!(node.provenance.source, ProvenanceSource::ResidualText)
+        && matches!(
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.confidence.as_ref()),
+            Some(Confidence::Low) | Some(Confidence::Unknown) | None
+        )
+}
+
 pub fn summarize_supporting_evidence(
     request: &RenderRequest,
     node: &DiagnosticNode,
 ) -> SupportingEvidence {
-    let family = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.family.as_deref())
-        .unwrap_or("unknown");
     let budget = budget_for(request.profile);
+    let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
 
-    match family {
-        "template" => summarize_template(request, node, budget.template_frames),
-        "macro_include" => summarize_macro_include(request, node, budget.macro_include_frames),
-        "type_overload" => summarize_overload(request, node, budget.candidate_notes),
-        family if family.starts_with("linker") => summarize_linker(request, node),
+    match renderer_family_kind(node) {
+        RendererFamilyKind::Template => summarize_template(
+            request,
+            node,
+            constrained_template_frames(
+                request,
+                budget.template_frames,
+                conservative_useful_subset,
+            ),
+        ),
+        RendererFamilyKind::MacroInclude => {
+            summarize_macro_include(request, node, budget.macro_include_frames)
+        }
+        RendererFamilyKind::TypeOverload => summarize_overload(
+            request,
+            node,
+            constrained_candidate_notes(
+                request,
+                budget.candidate_notes,
+                conservative_useful_subset,
+            ),
+            conservative_useful_subset,
+        ),
+        RendererFamilyKind::Linker => summarize_linker(request, node, conservative_useful_subset),
         _ => summarize_generic(request, node),
     }
 }
@@ -141,6 +216,7 @@ fn summarize_overload(
     request: &RenderRequest,
     node: &DiagnosticNode,
     note_limit: usize,
+    conservative: bool,
 ) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     let mut rendered = node
@@ -148,14 +224,7 @@ fn summarize_overload(
         .iter()
         .enumerate()
         .filter_map(|(index, child)| {
-            let note = child
-                .message
-                .raw_text
-                .lines()
-                .next()
-                .unwrap_or_default()
-                .trim()
-                .to_string();
+            let note = normalized_child_note(request, child);
             if note.is_empty() {
                 return None;
             }
@@ -167,7 +236,11 @@ fn summarize_overload(
                     )
                 })
                 .unwrap_or_default();
-            let rendered = if note.starts_with("candidate ") {
+            let rendered = if conservative && note.starts_with("candidate ") {
+                format!("{note}{location}")
+            } else if conservative {
+                format!("compiler note: {note}{location}")
+            } else if note.starts_with("candidate ") {
                 format!("because: {note}{location}")
             } else {
                 format!("because: {note}")
@@ -203,7 +276,11 @@ fn summarize_overload(
     evidence
 }
 
-fn summarize_linker(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
+fn summarize_linker(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    conservative: bool,
+) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     if let Some(symbol) = node
         .symbol_context
@@ -228,7 +305,10 @@ fn summarize_linker(request: &RenderRequest, node: &DiagnosticNode) -> Supportin
                 .cmp(&linker_object_rank(request, left))
                 .then_with(|| left.cmp(right))
         });
-        for object in related_objects.into_iter().take(3) {
+        for object in related_objects
+            .into_iter()
+            .take(linker_object_limit(request, conservative))
+        {
             push_unique(
                 &mut evidence.context_lines,
                 format!("linker: referenced from {object}"),
@@ -432,6 +512,27 @@ fn best_location<'a>(
         .map(|(_, location)| location)
 }
 
+fn normalized_child_note(request: &RenderRequest, node: &DiagnosticNode) -> String {
+    let mut note = node
+        .message
+        .raw_text
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    if let Some(location) = best_location(request, node) {
+        let prefix = format!("{}:{}:{}:", location.path, location.line, location.column);
+        if let Some(stripped) = note.strip_prefix(&prefix) {
+            note = stripped.trim().to_string();
+        }
+    }
+    if let Some(stripped) = note.strip_prefix("note:") {
+        note = stripped.trim().to_string();
+    }
+    note
+}
+
 fn ownership_rank(request: &RenderRequest, path: &str, ownership: Option<&Ownership>) -> u8 {
     match ownership {
         Some(Ownership::User) => 4,
@@ -480,6 +581,69 @@ fn linker_object_rank(request: &RenderRequest, object: &str) -> u8 {
         return 2;
     }
     1
+}
+
+fn band_c_gcc_major(request: &RenderRequest) -> Option<u32> {
+    request
+        .document
+        .run
+        .primary_tool
+        .version
+        .as_deref()
+        .and_then(|version| {
+            version
+                .split(|ch: char| !ch.is_ascii_digit())
+                .find(|part| !part.is_empty())
+        })
+        .and_then(|major| major.parse().ok())
+}
+
+fn constrained_template_frames(
+    request: &RenderRequest,
+    default_limit: usize,
+    conservative: bool,
+) -> usize {
+    if !conservative {
+        return default_limit;
+    }
+
+    default_limit.min(match request.profile {
+        crate::RenderProfile::Verbose => 6,
+        crate::RenderProfile::Default => 3,
+        crate::RenderProfile::Concise | crate::RenderProfile::Ci => 2,
+        crate::RenderProfile::RawFallback => 0,
+    })
+}
+
+fn constrained_candidate_notes(
+    request: &RenderRequest,
+    default_limit: usize,
+    conservative: bool,
+) -> usize {
+    if !conservative {
+        return default_limit;
+    }
+
+    default_limit.min(match request.profile {
+        crate::RenderProfile::Verbose => 3,
+        crate::RenderProfile::Default => 2,
+        crate::RenderProfile::Concise | crate::RenderProfile::Ci => 1,
+        crate::RenderProfile::RawFallback => 0,
+    })
+}
+
+fn linker_object_limit(request: &RenderRequest, conservative: bool) -> usize {
+    if !conservative {
+        return 3;
+    }
+
+    match request.profile {
+        crate::RenderProfile::Verbose => 2,
+        crate::RenderProfile::Default
+        | crate::RenderProfile::Concise
+        | crate::RenderProfile::Ci => 1,
+        crate::RenderProfile::RawFallback => 0,
+    }
 }
 
 fn push_index(indices: &mut Vec<usize>, index: usize) {

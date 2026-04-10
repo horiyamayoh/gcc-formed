@@ -1,4 +1,6 @@
 use crate::budget::{WarningFailureMode, budget_for};
+use crate::family::RendererFamilyKind;
+use crate::family::renderer_family_kind;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
     Confidence, DiagnosticNode, NodeCompleteness, Ownership, Phase, SemanticRole, Severity,
@@ -143,16 +145,14 @@ fn phase_rank(phase: &Phase) -> u8 {
 }
 
 fn specificity_rank(node: &DiagnosticNode) -> u8 {
-    let family_rank = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.family.as_deref())
-        .map(|family| match family {
-            "unknown" | "passthrough" | "linker.file_format_or_relocation" => 0,
-            family if family.starts_with("linker.") => 3,
-            _ => 2,
-        })
-        .unwrap_or(0);
+    let family_rank = match renderer_family_kind(node) {
+        RendererFamilyKind::Unknown => 0,
+        RendererFamilyKind::Linker => 3,
+        RendererFamilyKind::Syntax
+        | RendererFamilyKind::Template
+        | RendererFamilyKind::MacroInclude
+        | RendererFamilyKind::TypeOverload => 2,
+    };
     let symbol_rank = u8::from(node.symbol_context.is_some());
     let first_action_rank = node
         .analysis

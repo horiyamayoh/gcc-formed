@@ -1,6 +1,6 @@
 use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
-use crate::family::summarize_supporting_evidence;
+use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{Confidence, DiagnosticNode, DocumentCompleteness, NodeCompleteness, Severity};
 use serde::{Deserialize, Serialize};
@@ -78,6 +78,7 @@ pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewM
 
 fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard {
     let policy = render_policy(request.profile);
+    let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
     let confidence = node
         .analysis
         .as_ref()
@@ -107,11 +108,15 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let context_lines = supporting_evidence.context_lines;
     let child_notes = supporting_evidence.child_notes;
     let collapsed_notices = supporting_evidence.collapsed_notices;
-    let confidence_notice = matches!(
-        confidence,
-        Some(Confidence::Low) | Some(Confidence::Unknown) | None
-    )
-    .then_some(policy.disclosure.low_confidence_notice.to_string());
+    let confidence_notice = if conservative_useful_subset {
+        Some(conservative_band_c_notice().to_string())
+    } else {
+        matches!(
+            confidence,
+            Some(Confidence::Low) | Some(Confidence::Unknown) | None
+        )
+        .then_some(policy.disclosure.low_confidence_notice.to_string())
+    };
     let raw_sub_block = raw_sub_block(request, node);
 
     RenderGroupCard {
@@ -128,7 +133,11 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         context_lines,
         child_notes,
         collapsed_notices,
-        raw_block_label: policy.disclosure.raw_block_label.to_string(),
+        raw_block_label: if conservative_useful_subset {
+            conservative_raw_block_label().to_string()
+        } else {
+            policy.disclosure.raw_block_label.to_string()
+        },
         raw_sub_block,
         rule_id: node
             .analysis
@@ -225,4 +234,12 @@ fn default_raw_block_label() -> String {
 
 fn is_default_raw_block_label(label: &str) -> bool {
     label == "raw:"
+}
+
+fn conservative_band_c_notice() -> &'static str {
+    "note: GCC 9-12 native-text summaries are conservative; verify against the preserved raw diagnostics"
+}
+
+fn conservative_raw_block_label() -> &'static str {
+    "raw compiler excerpt:"
 }
