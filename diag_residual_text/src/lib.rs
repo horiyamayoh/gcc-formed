@@ -51,11 +51,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
             }
             continue;
         }
-        flush_compiler_block(
-            &mut compiler_nodes,
-            &mut passthrough,
-            &mut compiler_block,
-        );
+        flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
         if let Some(capture) = undefined_reference.captures(line) {
             let symbol = capture["symbol"].to_string();
             grouped
@@ -103,11 +99,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
         }
         passthrough.push(line.to_string());
     }
-    flush_compiler_block(
-        &mut compiler_nodes,
-        &mut passthrough,
-        &mut compiler_block,
-    );
+    flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
     let mut nodes = compiler_nodes;
     let grouped_base_index = nodes.len();
@@ -278,9 +270,7 @@ fn compiler_diagnostic_node(
 
 fn compiler_residual_kind(message: &str) -> CompilerResidualKind {
     let lowered = message.to_lowercase();
-    if lowered.contains("expected ")
-        || lowered.contains(" before ")
-        || lowered.contains(" after ")
+    if lowered.contains("expected ") || lowered.contains(" before ") || lowered.contains(" after ")
     {
         CompilerResidualKind::Syntax
     } else if lowered.contains("template")
@@ -354,11 +344,7 @@ fn compiler_diagnostic_seed(
     }
 }
 
-fn attach_compiler_note(
-    node: &mut DiagnosticNode,
-    line: &str,
-    capture: &regex::Captures<'_>,
-) {
+fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::Captures<'_>) {
     let message = capture["message"].to_string();
     let lowered = message.to_lowercase();
     let role = if lowered.contains("candidate:") || is_numbered_candidate_message(&lowered) {
@@ -440,7 +426,12 @@ fn push_context_chain(node: &mut DiagnosticNode, line: &str, capture: &regex::Ca
             frames: vec![frame],
         });
     }
-    if !node.message.raw_text.lines().any(|existing| existing == line) {
+    if !node
+        .message
+        .raw_text
+        .lines()
+        .any(|existing| existing == line)
+    {
         node.message.raw_text.push('\n');
         node.message.raw_text.push_str(line);
     }
@@ -660,7 +651,12 @@ main.c:4:1: note: extra opaque detail\n";
         let nodes = classify(stderr, true);
         assert_eq!(nodes.len(), 1);
         assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
-        assert!(nodes[0].message.raw_text.contains("unsupported compiler wording"));
+        assert!(
+            nodes[0]
+                .message
+                .raw_text
+                .contains("unsupported compiler wording")
+        );
         assert!(nodes[0].message.raw_text.contains("extra opaque detail"));
     }
 
@@ -698,10 +694,12 @@ main.cpp:8:15: note:   required from here\n";
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("template")
         );
-        assert!(nodes[0]
-            .context_chains
-            .iter()
-            .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation)));
+        assert!(
+            nodes[0]
+                .context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+        );
         assert_eq!(nodes[0].children.len(), 2);
     }
 

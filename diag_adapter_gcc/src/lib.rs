@@ -50,12 +50,18 @@ pub struct IngestReport {
     pub fallback_reason: Option<FallbackReason>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum StructuredInput<'a> {
     AvailableSarif(&'a Path),
     MissingSarif,
     Unsupported(&'a CaptureArtifact),
     None,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ResidualContract {
+    BoundedRender,
+    FailOpen,
 }
 
 pub fn ingest(
@@ -148,6 +154,7 @@ pub fn ingest_bundle(
         !matches!(node.semantic_role, SemanticRole::Passthrough)
             && !matches!(node.node_completeness, NodeCompleteness::Passthrough)
     });
+    let residual_contract = residual_contract_for(stderr_text, has_renderable_residual);
     if document.diagnostics.is_empty() && residual_nodes.is_empty() && !stderr_text.is_empty() {
         if !matches!(document.document_completeness, DocumentCompleteness::Failed) {
             document.document_completeness = DocumentCompleteness::Passthrough;
@@ -165,6 +172,18 @@ pub fn ingest_bundle(
         augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
+
+    let (fallback_grade, fallback_reason) = match structured_input {
+        StructuredInput::None | StructuredInput::Unsupported(_) => residual_outcome_for_contract(
+            residual_contract,
+            source_authority,
+            fallback_grade,
+            fallback_reason,
+        ),
+        StructuredInput::AvailableSarif(_) | StructuredInput::MissingSarif => {
+            (fallback_grade, fallback_reason)
+        }
+    };
 
     let warnings = document.integrity_issues.clone();
     Ok(IngestReport {
@@ -225,6 +244,33 @@ fn fallback_grade_for_residual(stderr_text: &str) -> FallbackGrade {
         FallbackGrade::None
     } else {
         FallbackGrade::Compatibility
+    }
+}
+
+fn residual_contract_for(stderr_text: &str, has_renderable_residual: bool) -> ResidualContract {
+    if stderr_text.trim().is_empty() || has_renderable_residual {
+        ResidualContract::BoundedRender
+    } else {
+        ResidualContract::FailOpen
+    }
+}
+
+fn residual_outcome_for_contract(
+    contract: ResidualContract,
+    source_authority: SourceAuthority,
+    fallback_grade: FallbackGrade,
+    fallback_reason: Option<FallbackReason>,
+) -> (FallbackGrade, Option<FallbackReason>) {
+    if !matches!(source_authority, SourceAuthority::ResidualText) {
+        return (fallback_grade, fallback_reason);
+    }
+
+    match contract {
+        ResidualContract::BoundedRender => (fallback_grade, fallback_reason),
+        ResidualContract::FailOpen => (
+            FallbackGrade::FailOpen,
+            fallback_reason.or(Some(FallbackReason::ResidualOnly)),
+        ),
     }
 }
 
@@ -1354,6 +1400,116 @@ mod tests {
     }
 
     #[test]
+    fn ingest_bundle_recognizes_type_overload_residual_useful_subset() {
+        let run = base_run_info();
+        let stderr = "\
+src/main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\
+src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(None, stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert_eq!(report.fallback_reason, None);
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert_eq!(report.document.diagnostics.len(), 1);
+        assert_eq!(
+            report.document.diagnostics[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("type_overload")
+        );
+        assert!(
+            report.document.diagnostics[0]
+                .children
+                .iter()
+                .any(|child| matches!(child.semantic_role, SemanticRole::Candidate))
+        );
+    }
+
+    #[test]
+    fn ingest_bundle_recognizes_template_residual_useful_subset() {
+        let run = base_run_info();
+        let stderr = "\
+src/main.cpp:8:15: error: no matching function for call to 'expect_ptr(int&)'\n\
+src/main.cpp:3:7: note: template argument deduction/substitution failed:\n\
+src/main.cpp:8:15: note:   required from here\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(None, stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert_eq!(report.fallback_reason, None);
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert_eq!(
+            report.document.diagnostics[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert!(
+            report.document.diagnostics[0]
+                .context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+        );
+    }
+
+    #[test]
+    fn ingest_bundle_recognizes_linker_residual_useful_subset() {
+        let run = base_run_info();
+        let stderr = "\
+/usr/bin/ld: main.o: in function `main':\n\
+main.c:(.text+0x15): undefined reference to `foo`\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(None, stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert_eq!(report.fallback_reason, None);
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert_eq!(
+            report.document.diagnostics[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("linker.undefined_reference")
+        );
+    }
+
+    #[test]
     fn ingest_bundle_keeps_unclassified_residuals_on_passthrough_document() {
         let run = base_run_info();
         let report = ingest_bundle(
@@ -1379,6 +1535,40 @@ mod tests {
                     .message
                     .raw_text
                     .contains("totally unstructured compiler output")
+        }));
+        assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
+        assert_eq!(report.fallback_reason, Some(FallbackReason::ResidualOnly));
+    }
+
+    #[test]
+    fn ingest_bundle_fail_opens_on_opaque_compiler_residuals() {
+        let run = base_run_info();
+        let stderr = "\
+src/main.c:4:1: error: opaque compiler wording here\n\
+src/main.c:4:1: note: extra opaque detail\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(None, stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert_eq!(report.fallback_reason, Some(FallbackReason::ResidualOnly));
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Passthrough
+        );
+        assert!(report.document.diagnostics.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Passthrough)
+                && node
+                    .message
+                    .raw_text
+                    .contains("opaque compiler wording here")
         }));
     }
 

@@ -50,7 +50,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
             "error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains(
-            "help: verify the first compiler-reported location against the preserved raw diagnostics",
+            "help: fix the first parser error at the user-owned location",
         ))
         .stderr(predicate::str::contains(
             "why: main.c:4:1: error: expected ';' before '}' token",
@@ -239,7 +239,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
             "main.c:4:1: error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains(
-            "help: verify the first compiler-reported location against the preserved raw diagnostics",
+            "help: fix the first parser error at the user-owned location",
         ))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
@@ -279,6 +279,131 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
             .unwrap()
             .iter()
             .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
+    );
+}
+
+#[test]
+fn renders_with_fake_gcc12_type_overload_useful_subset() {
+    let temp = fixture_with_stderr(
+        "12.2.0",
+        "\
+main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\
+main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n",
+    );
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.cpp");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_native_text_notice(),
+        ))
+        .stderr(predicate::str::contains("type or overload mismatch"))
+        .stderr(predicate::str::contains(
+            "compare the expected type and actual argument at the call site",
+        ))
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "native_text_capture"
+    );
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("partial")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
+    );
+}
+
+#[test]
+fn fails_open_with_fake_gcc12_opaque_native_text_residual() {
+    let temp = fixture_with_stderr(
+        "12.2.0",
+        "\
+main.c:4:1: error: opaque compiler wording here\n\
+main.c:4:1: note: extra opaque detail\n",
+    );
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_native_text_notice(),
+        ))
+        .stderr(predicate::str::contains(
+            "error: showing a conservative wrapper view",
+        ))
+        .stderr(predicate::str::contains("opaque compiler wording here"));
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
+    assert_eq!(trace["fallback_reason"], "residual_only");
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("passthrough")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
     );
 }
 
@@ -1071,9 +1196,23 @@ fn fixture(version: &str) -> TempDir {
     fixture_with_sarif_mode(version, "valid")
 }
 
+fn fixture_with_stderr(version: &str, stderr: &str) -> TempDir {
+    fixture_with_sarif_mode_and_stderr(version, "valid", stderr)
+}
+
 fn fixture_with_sarif_mode(version: &str, sarif_mode: &str) -> TempDir {
+    fixture_with_sarif_mode_and_stderr(
+        version,
+        sarif_mode,
+        "main.c:4:1: error: expected ';' before '}' token\n",
+    )
+}
+
+fn fixture_with_sarif_mode_and_stderr(version: &str, sarif_mode: &str, stderr: &str) -> TempDir {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("main.c"), "int main(void) { return 0 }\n").unwrap();
+    fs::write(temp.path().join("main.cpp"), "int main() { return 0; }\n").unwrap();
+    fs::write(temp.path().join("stderr.txt"), stderr).unwrap();
     let script = format!(
         r#"#!/usr/bin/env bash
 set -euo pipefail
@@ -1134,7 +1273,7 @@ if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
   }} >"${{FORMED_TEST_ENV_DUMP}}"
 	fi
 	if [[ "$sarif" != "source.sarif" ]]; then
-	  echo "main.c:4:1: error: expected ';' before '}}' token" >&2
+	  cat "$(dirname "$0")/stderr.txt" >&2
 	fi
 	exit 1
 	"#
