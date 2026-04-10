@@ -7,6 +7,8 @@ tags:
 - representative
 - 'band:gcc9_12'
 - 'processing_path:native_text_capture'
+- 'surface:default'
+- 'surface:ci'
 - 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro

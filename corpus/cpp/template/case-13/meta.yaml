@@ -4,8 +4,11 @@ tags:
 - template
 - phase1
 - beta-bar
+- representative
 - 'band:gcc13_14'
 - 'processing_path:single_sink_structured'
+- 'surface:default'
+- 'surface:ci'
 - 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro

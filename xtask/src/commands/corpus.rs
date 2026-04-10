@@ -222,14 +222,25 @@ pub(crate) enum FallbackContract {
     FallbackAllowed,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum FixtureSurface {
+    Default,
+    Ci,
+}
+
 #[derive(Debug, Clone, Default, Serialize)]
 pub(crate) struct FixtureCoverageReport {
     pub(crate) counts_by_support_band: BTreeMap<String, usize>,
     pub(crate) counts_by_processing_path: BTreeMap<String, usize>,
+    pub(crate) counts_by_surface: BTreeMap<String, usize>,
     pub(crate) counts_by_fallback_contract: BTreeMap<String, usize>,
     pub(crate) counts_by_band_path: BTreeMap<String, usize>,
     pub(crate) fixture_ids_by_band_path: BTreeMap<String, Vec<String>>,
     pub(crate) missing_required_band_paths: Vec<String>,
+    pub(crate) counts_by_band_path_surface: BTreeMap<String, usize>,
+    pub(crate) fixture_ids_by_band_path_surface: BTreeMap<String, Vec<String>>,
+    pub(crate) missing_required_band_path_surfaces: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -325,6 +336,16 @@ pub(crate) fn build_replay_report(
             summary: format!(
                 "representative coverage missing required band/path combinations: {}",
                 coverage.missing_required_band_paths.join(", ")
+            ),
+        });
+    }
+    if !coverage.missing_required_band_path_surfaces.is_empty() {
+        failures.push(VerificationFailure {
+            layer: "coverage.band_path_surface".to_string(),
+            fixture_id: "corpus".to_string(),
+            summary: format!(
+                "representative coverage missing required band/path/surface combinations: {}",
+                coverage.missing_required_band_path_surfaces.join(", ")
             ),
         });
     }
@@ -1825,6 +1846,13 @@ pub(crate) fn fallback_contract_label(contract: FallbackContract) -> &'static st
     }
 }
 
+pub(crate) fn fixture_surface_label(surface: FixtureSurface) -> &'static str {
+    match surface {
+        FixtureSurface::Default => "default",
+        FixtureSurface::Ci => "ci",
+    }
+}
+
 pub(crate) fn fixture_coverage_report_for(
     fixtures: &[&Fixture],
     fixture_filter: Option<&str>,
@@ -1860,9 +1888,28 @@ pub(crate) fn fixture_coverage_report_for(
             .entry(band_path)
             .or_default()
             .push(fixture.fixture_id().to_string());
+
+        for surface in fixture_surfaces(fixture) {
+            let surface = fixture_surface_label(surface).to_string();
+            let band_path_surface = format!("{band}/{path}/{surface}");
+            *report.counts_by_surface.entry(surface).or_insert(0) += 1;
+            *report
+                .counts_by_band_path_surface
+                .entry(band_path_surface.clone())
+                .or_insert(0) += 1;
+            report
+                .fixture_ids_by_band_path_surface
+                .entry(band_path_surface)
+                .or_default()
+                .push(fixture.fixture_id().to_string());
+        }
     }
 
     for fixture_ids in report.fixture_ids_by_band_path.values_mut() {
+        fixture_ids.sort();
+        fixture_ids.dedup();
+    }
+    for fixture_ids in report.fixture_ids_by_band_path_surface.values_mut() {
         fixture_ids.sort();
         fixture_ids.dedup();
     }
@@ -1874,6 +1921,10 @@ pub(crate) fn fixture_coverage_report_for(
         report.missing_required_band_paths = required_representative_band_paths()
             .into_iter()
             .filter(|required| !report.counts_by_band_path.contains_key(required))
+            .collect();
+        report.missing_required_band_path_surfaces = required_representative_band_path_surfaces()
+            .into_iter()
+            .filter(|required| !report.counts_by_band_path_surface.contains_key(required))
             .collect();
     }
 
@@ -1895,6 +1946,40 @@ pub(crate) fn required_representative_band_paths() -> Vec<String> {
         "gcc9_12/native_text_capture".to_string(),
         "gcc9_12/single_sink_structured".to_string(),
     ]
+}
+
+pub(crate) fn required_representative_band_path_surfaces() -> Vec<String> {
+    required_representative_band_paths()
+        .into_iter()
+        .flat_map(|band_path| {
+            [FixtureSurface::Default, FixtureSurface::Ci]
+                .into_iter()
+                .map(move |surface| format!("{band_path}/{}", fixture_surface_label(surface)))
+        })
+        .collect()
+}
+
+pub(crate) fn fixture_surfaces(fixture: &Fixture) -> Vec<FixtureSurface> {
+    let mut surfaces = Vec::new();
+    if fixture_has_any_tag(fixture, &["surface:default"]) {
+        surfaces.push(FixtureSurface::Default);
+    }
+    if fixture_has_any_tag(fixture, &["surface:ci"]) {
+        surfaces.push(FixtureSurface::Ci);
+    }
+    if !surfaces.is_empty() {
+        surfaces.sort();
+        surfaces.dedup();
+        return surfaces;
+    }
+
+    if fixture.expectations.render.default.is_some() {
+        surfaces.push(FixtureSurface::Default);
+    }
+    if fixture.expectations.render.ci.is_some() {
+        surfaces.push(FixtureSurface::Ci);
+    }
+    surfaces
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -2775,6 +2860,59 @@ mod tests {
                 "gcc13_14/single_sink_structured".to_string(),
                 "gcc9_12/native_text_capture".to_string(),
                 "gcc9_12/single_sink_structured".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn fixture_surface_tags_override_profile_inference() {
+        let mut fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &["surface:default"],
+            Some(ExpectedFallback::Forbidden),
+        );
+        fixture.expectations.render.default = Some(RenderProfileExpectations::default());
+        fixture.expectations.render.ci = Some(RenderProfileExpectations::default());
+
+        assert_eq!(fixture_surfaces(&fixture), vec![FixtureSurface::Default]);
+    }
+
+    #[test]
+    fn representative_coverage_requires_band_path_surface_cells() {
+        let mut native_fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+                "surface:default",
+                "fallback_contract:honest_fallback",
+            ],
+            Some(ExpectedFallback::Required),
+        );
+        native_fixture.expectations.render.default = Some(RenderProfileExpectations::default());
+
+        let coverage = fixture_coverage_report_for(
+            &[&native_fixture],
+            None,
+            None,
+            SnapshotSubset::Representative,
+        );
+
+        assert_eq!(
+            coverage.missing_required_band_path_surfaces,
+            vec![
+                "gcc13_14/native_text_capture/ci".to_string(),
+                "gcc13_14/single_sink_structured/default".to_string(),
+                "gcc13_14/single_sink_structured/ci".to_string(),
+                "gcc9_12/native_text_capture/default".to_string(),
+                "gcc9_12/native_text_capture/ci".to_string(),
+                "gcc9_12/single_sink_structured/default".to_string(),
+                "gcc9_12/single_sink_structured/ci".to_string(),
             ]
         );
     }
