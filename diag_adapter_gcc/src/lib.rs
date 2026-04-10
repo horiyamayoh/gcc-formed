@@ -52,8 +52,10 @@ pub struct IngestReport {
 
 #[derive(Debug, Clone, Copy)]
 enum StructuredInput<'a> {
-    AvailableSarif(&'a Path),
-    MissingSarif,
+    AvailableSarif(&'a CaptureArtifact),
+    MissingSarif(&'a CaptureArtifact),
+    AvailableGccJson(&'a CaptureArtifact),
+    MissingGccJson(&'a CaptureArtifact),
     Unsupported(&'a CaptureArtifact),
     None,
 }
@@ -78,12 +80,15 @@ pub fn ingest_bundle(
     policy: IngestPolicy,
 ) -> Result<IngestReport, AdapterError> {
     let structured_input = structured_input(bundle);
-    let has_authoritative_sarif = matches!(structured_input, StructuredInput::AvailableSarif(_));
+    let has_authoritative_structured = matches!(
+        structured_input,
+        StructuredInput::AvailableSarif(_) | StructuredInput::AvailableGccJson(_)
+    );
     let stderr_text = bundle.stderr_text().unwrap_or_default();
 
     let (mut document, source_authority, fallback_grade, fallback_reason) = match structured_input {
-        StructuredInput::AvailableSarif(path) => {
-            match from_sarif(path, policy.producer.clone(), policy.run.clone()) {
+        StructuredInput::AvailableSarif(artifact) => {
+            match from_sarif_artifact(artifact, policy.producer.clone(), policy.run.clone()) {
                 Ok(document) => (
                     document,
                     SourceAuthority::Structured,
@@ -98,7 +103,7 @@ pub fn ingest_bundle(
                         format!(
                             "failed to parse authoritative SARIF; preserving raw diagnostics: {error}"
                         ),
-                        Some("diagnostics.sarif"),
+                        Some(artifact.id.as_str()),
                     ),
                     source_authority_for_residual(stderr_text),
                     FallbackGrade::FailOpen,
@@ -106,7 +111,7 @@ pub fn ingest_bundle(
                 ),
             }
         }
-        StructuredInput::MissingSarif => (
+        StructuredInput::MissingSarif(artifact) => (
             fallback_document(
                 policy.producer,
                 policy.run,
@@ -114,11 +119,49 @@ pub fn ingest_bundle(
                 stderr_text,
                 "expected authoritative SARIF was not produced; preserving raw diagnostics"
                     .to_string(),
-                Some("diagnostics.sarif"),
+                Some(artifact.id.as_str()),
             ),
             source_authority_for_residual(stderr_text),
             FallbackGrade::FailOpen,
             Some(FallbackReason::SarifMissing),
+        ),
+        StructuredInput::AvailableGccJson(artifact) => {
+            match from_gcc_json_artifact(artifact, policy.producer.clone(), policy.run.clone()) {
+                Ok(document) => (
+                    document,
+                    SourceAuthority::Structured,
+                    FallbackGrade::None,
+                    None,
+                ),
+                Err(error) => (
+                    failed_document(
+                        policy.producer,
+                        policy.run,
+                        stderr_text,
+                        format!(
+                            "failed to parse structured GCC JSON; preserving raw diagnostics: {error}"
+                        ),
+                        Some(artifact.id.as_str()),
+                    ),
+                    source_authority_for_residual(stderr_text),
+                    FallbackGrade::FailOpen,
+                    None,
+                ),
+            }
+        }
+        StructuredInput::MissingGccJson(artifact) => (
+            fallback_document(
+                policy.producer,
+                policy.run,
+                DocumentCompleteness::Passthrough,
+                stderr_text,
+                "expected structured GCC JSON was not produced; preserving raw diagnostics"
+                    .to_string(),
+                Some(artifact.id.as_str()),
+            ),
+            source_authority_for_residual(stderr_text),
+            FallbackGrade::FailOpen,
+            None,
         ),
         StructuredInput::Unsupported(artifact) => {
             let mut document = passthrough_document(policy.producer, policy.run);
@@ -149,7 +192,7 @@ pub fn ingest_bundle(
         ),
     };
 
-    let residual_nodes = classify(stderr_text, !has_authoritative_sarif);
+    let residual_nodes = classify(stderr_text, !has_authoritative_structured);
     let has_renderable_residual = residual_nodes.iter().any(|node| {
         !matches!(node.semantic_role, SemanticRole::Passthrough)
             && !matches!(node.node_completeness, NodeCompleteness::Passthrough)
@@ -168,7 +211,7 @@ pub fn ingest_bundle(
         }
         document.diagnostics.extend(residual_nodes);
     }
-    if has_authoritative_sarif {
+    if has_authoritative_structured {
         augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
@@ -180,9 +223,10 @@ pub fn ingest_bundle(
             fallback_grade,
             fallback_reason,
         ),
-        StructuredInput::AvailableSarif(_) | StructuredInput::MissingSarif => {
-            (fallback_grade, fallback_reason)
-        }
+        StructuredInput::AvailableSarif(_)
+        | StructuredInput::MissingSarif(_)
+        | StructuredInput::AvailableGccJson(_)
+        | StructuredInput::MissingGccJson(_) => (fallback_grade, fallback_reason),
     };
 
     let warnings = document.integrity_issues.clone();
@@ -218,10 +262,21 @@ fn structured_input(bundle: &CaptureBundle) -> StructuredInput<'_> {
         .iter()
         .find(|artifact| matches!(artifact.kind, ArtifactKind::GccSarif))
     {
-        if let Some(path) = artifact.external_ref.as_deref() {
-            return StructuredInput::AvailableSarif(Path::new(path));
+        if structured_artifact_payload_available(artifact) {
+            return StructuredInput::AvailableSarif(artifact);
         }
-        return StructuredInput::MissingSarif;
+        return StructuredInput::MissingSarif(artifact);
+    }
+
+    if let Some(artifact) = bundle
+        .structured_artifacts
+        .iter()
+        .find(|artifact| matches!(artifact.kind, ArtifactKind::GccJson))
+    {
+        if structured_artifact_payload_available(artifact) {
+            return StructuredInput::AvailableGccJson(artifact);
+        }
+        return StructuredInput::MissingGccJson(artifact);
     }
 
     bundle
@@ -229,6 +284,10 @@ fn structured_input(bundle: &CaptureBundle) -> StructuredInput<'_> {
         .first()
         .map(StructuredInput::Unsupported)
         .unwrap_or(StructuredInput::None)
+}
+
+fn structured_artifact_payload_available(artifact: &CaptureArtifact) -> bool {
+    artifact.inline_text.is_some() || artifact.external_ref.is_some()
 }
 
 fn source_authority_for_residual(stderr_text: &str) -> SourceAuthority {
@@ -384,6 +443,24 @@ pub fn from_sarif(
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
     let json = fs::read_to_string(sarif_path)?;
+    from_sarif_payload(&json, "diagnostics.sarif", producer, run)
+}
+
+fn from_sarif_artifact(
+    artifact: &CaptureArtifact,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<DiagnosticDocument, AdapterError> {
+    let json = read_structured_artifact_text(artifact)?;
+    from_sarif_payload(&json, &artifact.id, producer, run)
+}
+
+fn from_sarif_payload(
+    json: &str,
+    capture_ref: &str,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<DiagnosticDocument, AdapterError> {
     let root: Value = serde_json::from_str(&json)?;
     let version = root
         .get("version")
@@ -417,7 +494,7 @@ pub fn from_sarif(
             .cloned()
             .unwrap_or_default();
         for (result_index, result) in results.iter().enumerate() {
-            let node = result_to_node(run_index, result_index, result);
+            let node = result_to_node(run_index, result_index, result, capture_ref);
             document.diagnostics.push(node);
         }
     }
@@ -430,7 +507,7 @@ pub fn from_sarif(
             message: "SARIF contained no diagnostic results".to_string(),
             provenance: Some(Provenance {
                 source: ProvenanceSource::Compiler,
-                capture_refs: vec!["diagnostics.sarif".to_string()],
+                capture_refs: vec![capture_ref.to_string()],
             }),
         });
     }
@@ -438,7 +515,29 @@ pub fn from_sarif(
     Ok(document)
 }
 
-fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> DiagnosticNode {
+fn read_structured_artifact_text(artifact: &CaptureArtifact) -> Result<String, AdapterError> {
+    if let Some(text) = artifact.inline_text.as_ref() {
+        return Ok(text.clone());
+    }
+
+    let path = artifact.external_ref.as_deref().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!(
+                "structured artifact '{}' has no readable payload",
+                artifact.id
+            ),
+        )
+    })?;
+    Ok(fs::read_to_string(path)?)
+}
+
+fn result_to_node(
+    run_index: usize,
+    result_index: usize,
+    result: &Value,
+    capture_ref: &str,
+) -> DiagnosticNode {
     let raw_text = result
         .get("message")
         .and_then(|message| message.get("text").or_else(|| message.get("markdown")))
@@ -457,7 +556,7 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
     };
     let locations = parse_locations(result);
     let context_chains = parse_context_chains(result);
-    let children = parse_related_locations(run_index, result_index, result);
+    let children = parse_related_locations(run_index, result_index, result, capture_ref);
     let completeness = if locations.is_empty() {
         NodeCompleteness::Partial
     } else {
@@ -483,7 +582,7 @@ fn result_to_node(run_index: usize, result_index: usize, result: &Value) -> Diag
         node_completeness: completeness,
         provenance: Provenance {
             source: ProvenanceSource::Compiler,
-            capture_refs: vec!["diagnostics.sarif".to_string()],
+            capture_refs: vec![capture_ref.to_string()],
         },
         analysis: Some(AnalysisOverlay {
             family: Some(family_decision.family.clone()),
@@ -554,6 +653,7 @@ fn parse_related_locations(
     run_index: usize,
     result_index: usize,
     result: &Value,
+    capture_ref: &str,
 ) -> Vec<DiagnosticNode> {
     let related = result
         .get("relatedLocations")
@@ -591,7 +691,7 @@ fn parse_related_locations(
                 node_completeness: NodeCompleteness::Partial,
                 provenance: Provenance {
                     source: ProvenanceSource::Compiler,
-                    capture_refs: vec!["diagnostics.sarif".to_string()],
+                    capture_refs: vec![capture_ref.to_string()],
                 },
                 analysis: None,
                 fingerprints: None,
@@ -663,6 +763,332 @@ fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
         }
     }
     chains
+}
+
+fn from_gcc_json_artifact(
+    artifact: &CaptureArtifact,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<DiagnosticDocument, AdapterError> {
+    let json = read_structured_artifact_text(artifact)?;
+    from_gcc_json_payload(&json, &artifact.id, producer, run)
+}
+
+fn from_gcc_json_payload(
+    json: &str,
+    capture_ref: &str,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<DiagnosticDocument, AdapterError> {
+    let diagnostics: Vec<Value> = serde_json::from_str(json)?;
+    let mut document = DiagnosticDocument {
+        document_id: format!("gcc-json-{}", run.invocation_id),
+        schema_version: diag_core::IR_SPEC_VERSION.to_string(),
+        document_completeness: DocumentCompleteness::Complete,
+        producer,
+        run,
+        captures: Vec::new(),
+        integrity_issues: Vec::new(),
+        diagnostics: Vec::new(),
+        fingerprints: None,
+    };
+    let mut has_partial_nodes = false;
+
+    for (index, diagnostic) in diagnostics.iter().enumerate() {
+        if !diagnostic.is_object() {
+            has_partial_nodes = true;
+            document.integrity_issues.push(IntegrityIssue {
+                severity: IssueSeverity::Warning,
+                stage: IssueStage::Parse,
+                message: format!("GCC JSON diagnostic #{index} was not an object"),
+                provenance: Some(Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec![capture_ref.to_string()],
+                }),
+            });
+            continue;
+        }
+
+        let node =
+            gcc_json_diagnostic_to_node(format!("json-{index}"), diagnostic, capture_ref, true);
+        has_partial_nodes |= node_is_partial(&node);
+        document.diagnostics.push(node);
+    }
+
+    if document.diagnostics.is_empty() {
+        document.document_completeness = DocumentCompleteness::Partial;
+        document.integrity_issues.push(IntegrityIssue {
+            severity: IssueSeverity::Warning,
+            stage: IssueStage::Parse,
+            message: "GCC JSON contained no diagnostic entries".to_string(),
+            provenance: Some(Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec![capture_ref.to_string()],
+            }),
+        });
+    } else if has_partial_nodes {
+        document.document_completeness = DocumentCompleteness::Partial;
+    }
+
+    Ok(document)
+}
+
+fn gcc_json_diagnostic_to_node(
+    id: String,
+    diagnostic: &Value,
+    capture_ref: &str,
+    is_root: bool,
+) -> DiagnosticNode {
+    let raw_text = json_message_text(diagnostic.get("message"))
+        .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
+    let child_messages = json_child_messages(diagnostic);
+    let family_seed = combined_message_seed(&raw_text, &child_messages);
+    let family_decision = classify_family_seed(&family_seed);
+    let locations = parse_gcc_json_locations(diagnostic);
+    let children = parse_gcc_json_children(&id, diagnostic, capture_ref);
+    let context_chains = parse_gcc_json_context_chains(&raw_text, &children);
+    let completeness = if locations.is_empty() {
+        NodeCompleteness::Partial
+    } else {
+        NodeCompleteness::Complete
+    };
+    let severity = gcc_json_severity(diagnostic.get("kind").and_then(Value::as_str));
+    let semantic_role = if is_root {
+        SemanticRole::Root
+    } else {
+        infer_related_role(&raw_text)
+    };
+    let phase = if is_root {
+        infer_phase(&family_seed, &context_chains)
+    } else {
+        infer_related_phase(&raw_text)
+    };
+
+    DiagnosticNode {
+        id,
+        origin: Origin::Gcc,
+        phase,
+        severity,
+        semantic_role,
+        message: MessageText {
+            raw_text: raw_text.clone(),
+            normalized_text: None,
+            locale: None,
+        },
+        locations,
+        children,
+        suggestions: Vec::new(),
+        context_chains,
+        symbol_context: None,
+        node_completeness: completeness,
+        provenance: Provenance {
+            source: ProvenanceSource::Compiler,
+            capture_refs: vec![capture_ref.to_string()],
+        },
+        analysis: is_root.then_some(AnalysisOverlay {
+            family: Some(family_decision.family.clone()),
+            headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
+            first_action_hint: Some(first_action_hint(family_decision.family.as_str())),
+            confidence: Some(Confidence::Medium),
+            rule_id: Some(family_decision.rule_id),
+            matched_conditions: family_decision.matched_conditions,
+            suppression_reason: family_decision.suppression_reason,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+        }),
+        fingerprints: is_root.then_some(FingerprintSet {
+            raw: diag_core::fingerprint_for(&raw_text),
+            structural: diag_core::fingerprint_for(diagnostic),
+            family: diag_core::fingerprint_for(&family_decision.family),
+        }),
+    }
+}
+
+fn parse_gcc_json_locations(diagnostic: &Value) -> Vec<Location> {
+    diagnostic
+        .get("locations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(gcc_json_location)
+        .collect()
+}
+
+fn gcc_json_location(location: &Value) -> Option<Location> {
+    let primary = location
+        .get("caret")
+        .or_else(|| location.get("start"))
+        .or_else(|| location.get("finish"));
+    let finish = location.get("finish");
+    let path = primary
+        .and_then(gcc_json_point_file)
+        .or_else(|| finish.and_then(gcc_json_point_file))?;
+    let line = primary
+        .and_then(gcc_json_point_line)
+        .or_else(|| finish.and_then(gcc_json_point_line))
+        .unwrap_or(1);
+    let column = primary
+        .and_then(gcc_json_point_column)
+        .or_else(|| finish.and_then(gcc_json_point_column))
+        .unwrap_or(1);
+
+    Some(Location {
+        path,
+        line,
+        column,
+        end_line: finish.and_then(gcc_json_point_line),
+        end_column: finish.and_then(gcc_json_point_column),
+        display_path: None,
+        ownership: None,
+    })
+}
+
+fn gcc_json_point_file(point: &Value) -> Option<String> {
+    point
+        .get("file")
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
+fn gcc_json_point_line(point: &Value) -> Option<u32> {
+    point
+        .get("line")
+        .and_then(Value::as_u64)
+        .map(|value| value as u32)
+}
+
+fn gcc_json_point_column(point: &Value) -> Option<u32> {
+    point
+        .get("column")
+        .and_then(Value::as_u64)
+        .or_else(|| point.get("display-column").and_then(Value::as_u64))
+        .or_else(|| point.get("byte-column").and_then(Value::as_u64))
+        .map(|value| value as u32)
+}
+
+fn parse_gcc_json_children(
+    parent_id: &str,
+    diagnostic: &Value,
+    capture_ref: &str,
+) -> Vec<DiagnosticNode> {
+    diagnostic
+        .get("children")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .enumerate()
+        .filter(|(_, child)| child.is_object())
+        .map(|(index, child)| {
+            gcc_json_diagnostic_to_node(
+                format!("{parent_id}-child-{index}"),
+                child,
+                capture_ref,
+                false,
+            )
+        })
+        .collect()
+}
+
+fn json_message_text(message: Option<&Value>) -> Option<String> {
+    let message = message?;
+    message.as_str().map(ToString::to_string).or_else(|| {
+        message
+            .get("text")
+            .or_else(|| message.get("markdown"))
+            .and_then(Value::as_str)
+            .map(ToString::to_string)
+    })
+}
+
+fn json_child_messages(diagnostic: &Value) -> Vec<String> {
+    diagnostic
+        .get("children")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|child| json_message_text(child.get("message")))
+        .collect()
+}
+
+fn parse_gcc_json_context_chains(message: &str, children: &[DiagnosticNode]) -> Vec<ContextChain> {
+    let mut chains = Vec::new();
+    let lowered = message.to_lowercase();
+    if lowered.contains("template") {
+        chains.push(ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: Vec::new(),
+        });
+    }
+    if lowered.contains("macro") {
+        chains.push(ContextChain {
+            kind: ContextChainKind::MacroExpansion,
+            frames: Vec::new(),
+        });
+    }
+    if lowered.contains("include") {
+        chains.push(ContextChain {
+            kind: ContextChainKind::Include,
+            frames: Vec::new(),
+        });
+    }
+
+    for child in children {
+        let frame = context_frame_from_node(child);
+        let lowered = child.message.raw_text.to_lowercase();
+        if lowered.contains("template")
+            || lowered.contains("required from")
+            || lowered.contains("deduction/substitution")
+            || lowered.contains("deduced conflicting")
+        {
+            push_chain_frame(
+                &mut chains,
+                ContextChainKind::TemplateInstantiation,
+                frame.clone(),
+            );
+        }
+        if lowered.contains("macro") {
+            push_chain_frame(&mut chains, ContextChainKind::MacroExpansion, frame.clone());
+        }
+        if lowered.contains("include")
+            || child
+                .message
+                .raw_text
+                .trim_start()
+                .starts_with("In file included from ")
+            || child.message.raw_text.trim_start().starts_with("from ")
+        {
+            push_chain_frame(&mut chains, ContextChainKind::Include, frame);
+        }
+    }
+
+    chains
+}
+
+fn context_frame_from_node(node: &DiagnosticNode) -> diag_core::ContextFrame {
+    let location = node.primary_location();
+    diag_core::ContextFrame {
+        label: node.message.raw_text.trim().to_string(),
+        path: location.map(|location| location.path.clone()),
+        line: location.map(|location| location.line),
+        column: location.map(|location| location.column),
+    }
+}
+
+fn gcc_json_severity(kind: Option<&str>) -> Severity {
+    match kind.unwrap_or("error") {
+        "fatal error" | "fatal" => Severity::Fatal,
+        "warning" => Severity::Warning,
+        "note" => Severity::Note,
+        "remark" => Severity::Remark,
+        "info" => Severity::Info,
+        "error" => Severity::Error,
+        _ => Severity::Error,
+    }
+}
+
+fn node_is_partial(node: &DiagnosticNode) -> bool {
+    matches!(node.node_completeness, NodeCompleteness::Partial)
+        || node.children.iter().any(node_is_partial)
 }
 
 fn infer_phase(message: &str, context_chains: &[ContextChain]) -> Phase {
@@ -1138,6 +1564,36 @@ mod tests {
     }
 
     #[test]
+    fn parses_minimal_gcc_json() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":4,"column":1},
+                    "finish":{"file":"src/main.c","line":4,"column":4}
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            producer_for_version("0.1.0"),
+            base_run_info(),
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics.len(), 1);
+        assert_eq!(document.diagnostics[0].locations[0].path, "src/main.c");
+        assert_eq!(document.diagnostics[0].locations[0].end_column, Some(4));
+        assert_eq!(
+            document.diagnostics[0].provenance.capture_refs,
+            vec!["diagnostics.json".to_string()]
+        );
+    }
+
+    #[test]
     fn ignores_message_less_related_locations() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("diag.sarif");
@@ -1262,6 +1718,56 @@ mod tests {
     }
 
     #[test]
+    fn parses_gcc_json_children_as_structured_notes() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'takes(int)'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":5,"column":5}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"candidate 1: 'void takes(int, int)'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":1,"column":6}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics[0].children.len(), 1);
+        assert_eq!(
+            document.diagnostics[0].children[0].semantic_role,
+            SemanticRole::Candidate
+        );
+        assert_eq!(
+            document.diagnostics[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("type_overload")
+        );
+    }
+
+    #[test]
     fn fail_opens_when_authoritative_sarif_is_missing() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("missing.sarif");
@@ -1363,6 +1869,65 @@ mod tests {
         assert!(report.fallback_reason.is_none());
         assert!(report.warnings.is_empty());
         assert_eq!(report.document.diagnostics.len(), 1);
+    }
+
+    #[test]
+    fn ingest_bundle_reports_structured_authority_for_valid_gcc_json() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diagnostics.json");
+        fs::write(
+            &path,
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":4,"column":1}
+                  }
+                ]
+              }
+            ]"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, "", &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: None,
+            external_ref: Some(path.display().to_string()),
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(report.fallback_grade, FallbackGrade::None);
+        assert_eq!(report.confidence_ceiling, Confidence::Medium);
+        assert!(report.fallback_reason.is_none());
+        assert!(report.warnings.is_empty());
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Complete
+        );
+        assert_eq!(report.document.diagnostics.len(), 1);
+        assert_eq!(
+            report.document.diagnostics[0].provenance.capture_refs,
+            vec!["diagnostics.json".to_string()]
+        );
     }
 
     #[test]
@@ -1573,13 +2138,21 @@ src/main.c:4:1: note: extra opaque detail\n";
     }
 
     #[test]
-    fn ingest_bundle_accepts_future_structured_artifact_with_warning() {
+    fn ingest_bundle_marks_partial_for_incomplete_gcc_json() {
         let run = base_run_info();
-        let mut bundle = compatibility_bundle_from_legacy_inputs(
-            None,
-            "src/main.c:4:1: error: expected ';' before '}' token\n",
-            &run,
-        );
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diagnostics.json");
+        fs::write(
+            &path,
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token"
+              }
+            ]"#,
+        )
+        .unwrap();
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, "", &run);
         bundle.structured_artifacts.push(CaptureArtifact {
             id: "diagnostics.json".to_string(),
             kind: ArtifactKind::GccJson,
@@ -1589,7 +2162,51 @@ src/main.c:4:1: note: extra opaque detail\n";
             size_bytes: None,
             storage: ArtifactStorage::ExternalRef,
             inline_text: None,
-            external_ref: Some("/tmp/diagnostics.json".to_string()),
+            external_ref: Some(path.display().to_string()),
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(report.fallback_grade, FallbackGrade::None);
+        assert_eq!(report.confidence_ceiling, Confidence::Medium);
+        assert!(report.fallback_reason.is_none());
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert_eq!(
+            report.document.diagnostics[0].node_completeness,
+            NodeCompleteness::Partial
+        );
+    }
+
+    #[test]
+    fn ingest_bundle_fail_opens_on_invalid_gcc_json() {
+        let run = base_run_info();
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diagnostics.json");
+        fs::write(&path, "[").unwrap();
+        let stderr = "src/main.c:4:1: error: expected ';' before '}' token\n";
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, stderr, &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: None,
+            external_ref: Some(path.display().to_string()),
             produced_by: Some(run.primary_tool.clone()),
         });
 
@@ -1603,13 +2220,22 @@ src/main.c:4:1: note: extra opaque detail\n";
         .unwrap();
 
         assert_eq!(report.source_authority, SourceAuthority::ResidualText);
-        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
         assert_eq!(report.confidence_ceiling, Confidence::Low);
         assert!(report.fallback_reason.is_none());
-        assert!(report.warnings.iter().any(|issue| {
+        assert_eq!(
+            report.document.document_completeness,
+            DocumentCompleteness::Failed
+        );
+        assert!(report.document.integrity_issues.iter().any(|issue| {
             issue
                 .message
-                .contains("structured artifact 'diagnostics.json' is not yet supported")
+                .contains("failed to parse structured GCC JSON")
+        }));
+        assert!(report.document.diagnostics.iter().any(|node| {
+            node.message
+                .raw_text
+                .contains("expected ';' before '}' token")
         }));
     }
 
