@@ -4,14 +4,109 @@ use diag_core::{
     Severity, SymbolContext,
 };
 use regex::Regex;
-use std::collections::BTreeMap;
+use serde::Deserialize;
+use std::collections::{BTreeMap, BTreeSet, btree_map::Entry};
+use std::sync::OnceLock;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+const RESIDUAL_RULEPACK_JSON: &str = include_str!("../../rules/residual.rulepack.json");
+const RESIDUAL_RULEPACK_SCHEMA_VERSION: &str = "diag_residual_rulepack/v1alpha1";
+
+static RESIDUAL_RULEPACK: OnceLock<ResidualRulepackRoot> = OnceLock::new();
+
+#[derive(Debug, Deserialize)]
+struct ResidualRulepackRoot {
+    schema_version: String,
+    rulepack_version: String,
+    residual: ResidualSection,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResidualSection {
+    compiler_groups: Vec<CompilerResidualSeed>,
+    compiler_note_rules: CompilerNoteRules,
+    linker_groups: Vec<LinkerResidualSeed>,
+    passthrough: PassthroughResidualSeed,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
 enum CompilerResidualKind {
     Syntax,
-    TypeOverload,
     Template,
+    TypeOverload,
     Unknown,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum HeadlineStrategy {
+    FixedText,
+    MessagePassthrough,
+}
+
+#[derive(Debug, Deserialize)]
+struct CompilerResidualSeed {
+    kind: CompilerResidualKind,
+    family: String,
+    phase: Phase,
+    rule_id: String,
+    headline_strategy: HeadlineStrategy,
+    headline: Option<String>,
+    first_action_hint: String,
+    #[serde(default)]
+    match_any: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CompilerNoteRules {
+    #[serde(default)]
+    template_context_any: Vec<String>,
+    #[serde(default)]
+    candidate_contains: Vec<String>,
+    candidate_numbered_prefix: String,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+enum LinkerResidualKind {
+    UndefinedReference,
+    MultipleDefinition,
+    CannotFindLibrary,
+    FileFormatOrRelocation,
+    Collect2Error,
+    AssemblerError,
+}
+
+#[derive(Debug, Deserialize)]
+struct LinkerResidualSeed {
+    kind: LinkerResidualKind,
+    family: String,
+    origin: Origin,
+    phase: Phase,
+    rule_id: String,
+    #[serde(default)]
+    group_key: Option<String>,
+    #[serde(default)]
+    group_key_template: Option<String>,
+    #[serde(default)]
+    match_regex: Option<String>,
+    #[serde(default)]
+    match_prefix: Option<String>,
+    #[serde(default)]
+    requires_colon: bool,
+    #[serde(default)]
+    symbol_capture: Option<String>,
+    headline_template: String,
+    first_action_hint: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct PassthroughResidualSeed {
+    family: String,
+    phase: Phase,
+    rule_id: String,
+    headline: String,
+    first_action_hint: String,
 }
 
 #[derive(Debug)]
@@ -20,23 +115,36 @@ struct CompilerResidualBlock {
     raw_lines: Vec<String>,
 }
 
+#[derive(Debug)]
+struct GroupedResidual {
+    rule: &'static LinkerResidualSeed,
+    template_values: BTreeMap<String, String>,
+    lines: Vec<String>,
+}
+
+#[derive(Debug)]
+struct CompiledLinkerSeed {
+    rule: &'static LinkerResidualSeed,
+    regex: Option<Regex>,
+}
+
+#[derive(Debug)]
+struct LinkerMatch {
+    rule: &'static LinkerResidualSeed,
+    group_key: String,
+    template_values: BTreeMap<String, String>,
+}
+
 pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> {
-    let mut grouped = BTreeMap::<String, Vec<String>>::new();
+    let mut grouped = BTreeMap::<String, GroupedResidual>::new();
     let mut compiler_nodes = Vec::new();
     let mut passthrough = Vec::new();
     let mut compiler_block = None::<CompilerResidualBlock>;
-    let undefined_reference =
-        Regex::new(r"undefined reference to [`'](?P<symbol>[^`']+)[`']").expect("regex");
-    let multiple_definition =
-        Regex::new(r"multiple definition of [`'](?P<symbol>[^`']+)[`']").expect("regex");
-    let cannot_find = Regex::new(r"cannot find -l(?P<library>\S+)").expect("regex");
-    let file_format =
-        Regex::new(r"(file format not recognized|relocation truncated)").expect("regex");
-    let assembler = Regex::new(r"(?i)(^as:|^assembler:|assembler messages)").expect("regex");
     let compiler_diagnostic = Regex::new(
         r"^(?P<path>[[:alnum:]_./+-]+):(?P<line>\d+):(?P<column>\d+): (?P<severity>fatal error|error|warning|note): (?P<message>.+)$",
     )
     .expect("regex");
+    let linker_matchers = compiled_linker_seeds();
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
         if let Some(capture) = compiler_diagnostic.captures(line) {
@@ -51,100 +159,241 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
             }
             continue;
         }
+
         flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
-        if let Some(capture) = undefined_reference.captures(line) {
-            let symbol = capture["symbol"].to_string();
-            grouped
-                .entry(format!("undefined:{symbol}"))
-                .or_default()
-                .push(line.to_string());
+
+        if let Some(linker_match) = match_linker_group(line, &linker_matchers) {
+            match grouped.entry(linker_match.group_key) {
+                Entry::Occupied(mut entry) => {
+                    entry.get_mut().lines.push(line.to_string());
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(GroupedResidual {
+                        rule: linker_match.rule,
+                        template_values: linker_match.template_values,
+                        lines: vec![line.to_string()],
+                    });
+                }
+            }
             continue;
         }
-        if let Some(capture) = multiple_definition.captures(line) {
-            let symbol = capture["symbol"].to_string();
-            grouped
-                .entry(format!("multiple:{symbol}"))
-                .or_default()
-                .push(line.to_string());
-            continue;
-        }
-        if let Some(capture) = cannot_find.captures(line) {
-            let library = capture["library"].to_string();
-            grouped
-                .entry(format!("library:{library}"))
-                .or_default()
-                .push(line.to_string());
-            continue;
-        }
-        if file_format.is_match(line) {
-            grouped
-                .entry("file-format".to_string())
-                .or_default()
-                .push(line.to_string());
-            continue;
-        }
-        if line.starts_with("collect2: error:") {
-            grouped
-                .entry("collect2".to_string())
-                .or_default()
-                .push(line.to_string());
-            continue;
-        }
-        if assembler.is_match(line) && line.contains(':') {
-            grouped
-                .entry("assembler".to_string())
-                .or_default()
-                .push(line.to_string());
-            continue;
-        }
+
         passthrough.push(line.to_string());
     }
     flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
     let mut nodes = compiler_nodes;
     let grouped_base_index = nodes.len();
-    for (index, (key, lines)) in grouped.into_iter().enumerate() {
-        nodes.push(group_to_node(grouped_base_index + index, &key, &lines));
+    for (index, (key, group)) in grouped.into_iter().enumerate() {
+        nodes.push(group_to_node(
+            grouped_base_index + index,
+            &key,
+            group.rule,
+            &group.template_values,
+            &group.lines,
+        ));
     }
     if include_passthrough && !passthrough.is_empty() {
-        nodes.push(DiagnosticNode {
-            id: "residual-passthrough".to_string(),
-            origin: Origin::ExternalTool,
-            phase: Phase::Link,
-            severity: Severity::Error,
-            semantic_role: SemanticRole::Passthrough,
-            message: MessageText {
-                raw_text: passthrough.join("\n"),
-                normalized_text: None,
-                locale: None,
-            },
-            locations: Vec::new(),
-            children: Vec::new(),
-            suggestions: Vec::new(),
-            context_chains: Vec::new(),
-            symbol_context: None,
-            node_completeness: NodeCompleteness::Passthrough,
-            provenance: Provenance {
-                source: ProvenanceSource::ResidualText,
-                capture_refs: vec!["stderr.raw".to_string()],
-            },
-            analysis: Some(AnalysisOverlay {
-                family: Some("passthrough".to_string()),
-                headline: Some("unclassified residual diagnostics".to_string()),
-                first_action_hint: Some(
-                    "inspect the preserved compiler stderr for details".to_string(),
-                ),
-                confidence: Some(Confidence::Low),
-                rule_id: Some("rule.residual.passthrough".to_string()),
-                matched_conditions: vec!["residual_group=passthrough".to_string()],
-                suppression_reason: None,
-                collapsed_child_ids: Vec::new(),
-                collapsed_chain_ids: Vec::new(),
-            }),
-            fingerprints: None,
-        });
+        nodes.push(passthrough_node(&passthrough));
     }
     nodes
+}
+
+fn residual_rulepack() -> &'static ResidualRulepackRoot {
+    RESIDUAL_RULEPACK.get_or_init(load_residual_rulepack)
+}
+
+fn load_residual_rulepack() -> ResidualRulepackRoot {
+    let rulepack: ResidualRulepackRoot = serde_json::from_str(RESIDUAL_RULEPACK_JSON)
+        .expect("checked-in residual.rulepack.json must parse");
+    rulepack.validate();
+    rulepack
+}
+
+impl ResidualRulepackRoot {
+    fn validate(&self) {
+        assert_eq!(
+            self.schema_version, RESIDUAL_RULEPACK_SCHEMA_VERSION,
+            "checked-in residual rulepack schema_version drifted"
+        );
+        assert!(
+            !self.rulepack_version.trim().is_empty(),
+            "checked-in residual rulepack_version must be non-empty"
+        );
+
+        let mut compiler_kinds = BTreeSet::new();
+        for entry in &self.residual.compiler_groups {
+            assert!(
+                compiler_kinds.insert(entry.kind),
+                "duplicate compiler residual kind in checked-in residual rulepack"
+            );
+            assert!(
+                !entry.family.trim().is_empty(),
+                "compiler residual family must be non-empty"
+            );
+            assert!(
+                !entry.rule_id.trim().is_empty(),
+                "compiler residual rule_id must be non-empty"
+            );
+            assert!(
+                !entry.first_action_hint.trim().is_empty(),
+                "compiler residual first_action_hint must be non-empty"
+            );
+            if matches!(entry.headline_strategy, HeadlineStrategy::FixedText) {
+                assert!(
+                    entry
+                        .headline
+                        .as_deref()
+                        .is_some_and(|headline| !headline.trim().is_empty()),
+                    "fixed_text compiler residual seeds must include headline"
+                );
+            }
+        }
+        assert!(
+            compiler_kinds.contains(&CompilerResidualKind::Unknown),
+            "checked-in residual rulepack must include unknown compiler seed"
+        );
+
+        assert!(
+            !self
+                .residual
+                .compiler_note_rules
+                .candidate_numbered_prefix
+                .trim()
+                .is_empty(),
+            "compiler_note_rules.candidate_numbered_prefix must be non-empty"
+        );
+
+        let mut linker_kinds = BTreeSet::new();
+        for entry in &self.residual.linker_groups {
+            assert!(
+                linker_kinds.insert(entry.kind),
+                "duplicate linker residual kind in checked-in residual rulepack"
+            );
+            assert!(
+                !entry.family.trim().is_empty(),
+                "linker residual family must be non-empty"
+            );
+            assert!(
+                !entry.rule_id.trim().is_empty(),
+                "linker residual rule_id must be non-empty"
+            );
+            assert!(
+                !entry.headline_template.trim().is_empty(),
+                "linker residual headline_template must be non-empty"
+            );
+            assert!(
+                !entry.first_action_hint.trim().is_empty(),
+                "linker residual first_action_hint must be non-empty"
+            );
+            assert!(
+                entry.group_key.is_some() ^ entry.group_key_template.is_some(),
+                "linker residual rules must set exactly one of group_key/group_key_template"
+            );
+            assert!(
+                entry.match_regex.is_some() || entry.match_prefix.is_some(),
+                "linker residual rules must set match_regex or match_prefix"
+            );
+            if let Some(pattern) = &entry.match_regex {
+                Regex::new(pattern).unwrap_or_else(|error| {
+                    panic!("invalid linker residual regex `{pattern}`: {error}")
+                });
+            }
+        }
+
+        assert!(
+            !self.residual.passthrough.family.trim().is_empty(),
+            "passthrough family must be non-empty"
+        );
+        assert!(
+            !self.residual.passthrough.rule_id.trim().is_empty(),
+            "passthrough rule_id must be non-empty"
+        );
+        assert!(
+            !self.residual.passthrough.headline.trim().is_empty(),
+            "passthrough headline must be non-empty"
+        );
+        assert!(
+            !self
+                .residual
+                .passthrough
+                .first_action_hint
+                .trim()
+                .is_empty(),
+            "passthrough first_action_hint must be non-empty"
+        );
+    }
+
+    fn compiler_seed(&self, kind: CompilerResidualKind) -> &CompilerResidualSeed {
+        self.residual
+            .compiler_groups
+            .iter()
+            .find(|entry| entry.kind == kind)
+            .unwrap_or_else(|| panic!("missing compiler residual seed for {kind:?}"))
+    }
+}
+
+fn compiled_linker_seeds() -> Vec<CompiledLinkerSeed> {
+    residual_rulepack()
+        .residual
+        .linker_groups
+        .iter()
+        .map(|rule| CompiledLinkerSeed {
+            rule,
+            regex: rule
+                .match_regex
+                .as_ref()
+                .map(|pattern| Regex::new(pattern).expect("validated linker residual regex")),
+        })
+        .collect()
+}
+
+fn match_linker_group(line: &str, matchers: &[CompiledLinkerSeed]) -> Option<LinkerMatch> {
+    for matcher in matchers {
+        if matcher.rule.requires_colon && !line.contains(':') {
+            continue;
+        }
+        if let Some(regex) = &matcher.regex {
+            if let Some(capture) = regex.captures(line) {
+                let template_values = capture_template_values(regex, &capture);
+                return Some(LinkerMatch {
+                    rule: matcher.rule,
+                    group_key: linker_group_key(matcher.rule, &template_values),
+                    template_values,
+                });
+            }
+        }
+        if let Some(prefix) = &matcher.rule.match_prefix {
+            if line.starts_with(prefix) {
+                return Some(LinkerMatch {
+                    rule: matcher.rule,
+                    group_key: linker_group_key(matcher.rule, &BTreeMap::new()),
+                    template_values: BTreeMap::new(),
+                });
+            }
+        }
+    }
+    None
+}
+
+fn capture_template_values(
+    regex: &Regex,
+    capture: &regex::Captures<'_>,
+) -> BTreeMap<String, String> {
+    let mut values = BTreeMap::new();
+    for name in regex.capture_names().flatten() {
+        if let Some(value) = capture.name(name) {
+            values.insert(name.to_string(), value.as_str().to_string());
+        }
+    }
+    values
+}
+
+fn linker_group_key(rule: &LinkerResidualSeed, values: &BTreeMap<String, String>) -> String {
+    rule.group_key
+        .as_deref()
+        .map(ToString::to_string)
+        .unwrap_or_else(|| render_template(&rule.group_key_template.clone().unwrap(), values))
 }
 
 fn ingest_compiler_diagnostic_line(
@@ -221,13 +470,12 @@ fn compiler_diagnostic_node(
         "note" => Severity::Note,
         _ => Severity::Unknown,
     };
-    let (family, phase, headline, first_action_hint, rule_id, matched_conditions) =
-        compiler_diagnostic_seed(kind, &message);
+    let seed = residual_rulepack().compiler_seed(kind);
 
     DiagnosticNode {
         id: format!("residual-compiler-{index}"),
         origin: Origin::Gcc,
-        phase,
+        phase: seed.phase.clone(),
         severity,
         semantic_role: SemanticRole::Root,
         message: MessageText {
@@ -235,15 +483,7 @@ fn compiler_diagnostic_node(
             normalized_text: None,
             locale: None,
         },
-        locations: vec![Location {
-            path: capture["path"].to_string(),
-            line: capture["line"].parse().unwrap_or(1),
-            column: capture["column"].parse().unwrap_or(1),
-            end_line: None,
-            end_column: None,
-            display_path: None,
-            ownership: None,
-        }],
+        locations: vec![compiler_location(capture)],
         children: Vec::new(),
         suggestions: Vec::new(),
         context_chains: Vec::new(),
@@ -254,12 +494,15 @@ fn compiler_diagnostic_node(
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(family),
-            headline: Some(headline),
-            first_action_hint: Some(first_action_hint),
+            family: Some(seed.family.clone()),
+            headline: Some(compiler_headline(seed, &message)),
+            first_action_hint: Some(seed.first_action_hint.clone()),
             confidence: Some(Confidence::Low),
-            rule_id: Some(rule_id),
-            matched_conditions,
+            rule_id: Some(seed.rule_id.clone()),
+            matched_conditions: vec![
+                "residual_group=compiler_diagnostic".to_string(),
+                format!("family={}", seed.family),
+            ],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
@@ -270,84 +513,35 @@ fn compiler_diagnostic_node(
 
 fn compiler_residual_kind(message: &str) -> CompilerResidualKind {
     let lowered = message.to_lowercase();
-    if lowered.contains("expected ") || lowered.contains(" before ") || lowered.contains(" after ")
-    {
-        CompilerResidualKind::Syntax
-    } else if lowered.contains("template")
-        || lowered.contains("deduction/substitution")
-        || lowered.contains("deduced conflicting")
-    {
-        CompilerResidualKind::Template
-    } else if lowered.contains("cannot convert")
-        || lowered.contains("no matching")
-        || lowered.contains("invalid conversion")
-        || lowered.contains("incompatible type")
-        || lowered.contains("passing argument")
-    {
-        CompilerResidualKind::TypeOverload
-    } else {
-        CompilerResidualKind::Unknown
-    }
+    residual_rulepack()
+        .residual
+        .compiler_groups
+        .iter()
+        .find(|seed| {
+            seed.kind != CompilerResidualKind::Unknown
+                && seed
+                    .match_any
+                    .iter()
+                    .any(|needle| lowered.contains(needle.as_str()))
+        })
+        .map(|seed| seed.kind)
+        .unwrap_or(CompilerResidualKind::Unknown)
 }
 
-fn compiler_diagnostic_seed(
-    kind: CompilerResidualKind,
-    message: &str,
-) -> (String, Phase, String, String, String, Vec<String>) {
-    match kind {
-        CompilerResidualKind::Syntax => (
-            "syntax".to_string(),
-            Phase::Parse,
-            message.to_string(),
-            "verify the first compiler-reported location against the preserved raw diagnostics"
-                .to_string(),
-            "rule.residual.compiler_line".to_string(),
-            vec![
-                "residual_group=compiler_diagnostic".to_string(),
-                "family=syntax".to_string(),
-            ],
-        ),
-        CompilerResidualKind::TypeOverload => (
-            "type_overload".to_string(),
-            Phase::Semantic,
-            "type or overload mismatch".to_string(),
-            "compare the expected type and actual argument at the call site".to_string(),
-            "rule.residual.compiler_type_overload".to_string(),
-            vec![
-                "residual_group=compiler_diagnostic".to_string(),
-                "family=type_overload".to_string(),
-            ],
-        ),
-        CompilerResidualKind::Template => (
-            "template".to_string(),
-            Phase::Instantiate,
-            "template instantiation failed".to_string(),
-            "start from the first user-owned template frame and match template arguments"
-                .to_string(),
-            "rule.residual.compiler_template".to_string(),
-            vec![
-                "residual_group=compiler_diagnostic".to_string(),
-                "family=template".to_string(),
-            ],
-        ),
-        CompilerResidualKind::Unknown => (
-            "compiler.residual".to_string(),
-            Phase::Semantic,
-            message.to_string(),
-            "inspect the preserved raw diagnostics for the first corrective action".to_string(),
-            "rule.residual.compiler_unknown".to_string(),
-            vec![
-                "residual_group=compiler_diagnostic".to_string(),
-                "family=compiler.residual".to_string(),
-            ],
-        ),
+fn compiler_headline(seed: &CompilerResidualSeed, message: &str) -> String {
+    match seed.headline_strategy {
+        HeadlineStrategy::FixedText => seed
+            .headline
+            .clone()
+            .expect("validated fixed_text compiler residual headline"),
+        HeadlineStrategy::MessagePassthrough => message.to_string(),
     }
 }
 
 fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::Captures<'_>) {
     let message = capture["message"].to_string();
     let lowered = message.to_lowercase();
-    let role = if lowered.contains("candidate:") || is_numbered_candidate_message(&lowered) {
+    let role = if is_candidate_message(&lowered) {
         SemanticRole::Candidate
     } else {
         SemanticRole::Supporting
@@ -359,16 +553,14 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
     };
 
     if is_template_context_message(&lowered) {
-        node.phase = Phase::Instantiate;
+        let template_seed = residual_rulepack().compiler_seed(CompilerResidualKind::Template);
+        node.phase = template_seed.phase.clone();
         push_context_chain(node, line, capture);
         if let Some(analysis) = node.analysis.as_mut() {
-            analysis.family = Some("template".to_string());
-            analysis.headline = Some("template instantiation failed".to_string());
-            analysis.first_action_hint = Some(
-                "start from the first user-owned template frame and match template arguments"
-                    .to_string(),
-            );
-            analysis.rule_id = Some("rule.residual.compiler_template".to_string());
+            analysis.family = Some(template_seed.family.clone());
+            analysis.headline = Some(compiler_headline(template_seed, &message));
+            analysis.first_action_hint = Some(template_seed.first_action_hint.clone());
+            analysis.rule_id = Some(template_seed.rule_id.clone());
             if !analysis
                 .matched_conditions
                 .iter()
@@ -438,14 +630,32 @@ fn push_context_chain(node: &mut DiagnosticNode, line: &str, capture: &regex::Ca
 }
 
 fn is_template_context_message(message: &str) -> bool {
-    message.contains("template")
-        || message.contains("required from")
-        || message.contains("required by substitution")
-        || message.contains("deduction/substitution")
+    residual_rulepack()
+        .residual
+        .compiler_note_rules
+        .template_context_any
+        .iter()
+        .any(|needle| message.contains(needle))
 }
 
-fn is_numbered_candidate_message(message: &str) -> bool {
-    let Some(rest) = message.trim().strip_prefix("candidate ") else {
+fn is_candidate_message(message: &str) -> bool {
+    residual_rulepack()
+        .residual
+        .compiler_note_rules
+        .candidate_contains
+        .iter()
+        .any(|needle| message.contains(needle))
+        || is_numbered_candidate_message(
+            message,
+            &residual_rulepack()
+                .residual
+                .compiler_note_rules
+                .candidate_numbered_prefix,
+        )
+}
+
+fn is_numbered_candidate_message(message: &str, prefix: &str) -> bool {
+    let Some(rest) = message.trim().strip_prefix(prefix) else {
         return false;
     };
     let digit_len = rest.chars().take_while(|ch| ch.is_ascii_digit()).count();
@@ -464,67 +674,17 @@ fn compiler_location(capture: &regex::Captures<'_>) -> Location {
     }
 }
 
-fn group_to_node(index: usize, key: &str, lines: &[String]) -> DiagnosticNode {
-    let (headline, first_action_hint, symbol_context, family) =
-        if let Some(symbol) = key.strip_prefix("undefined:") {
-            (
-                format!("undefined reference to `{symbol}`"),
-                "define the missing symbol or link the object/library that provides it".to_string(),
-                Some(SymbolContext {
-                    primary_symbol: Some(symbol.to_string()),
-                    related_objects: Vec::new(),
-                    archive: None,
-                }),
-                "linker.undefined_reference".to_string(),
-            )
-        } else if let Some(symbol) = key.strip_prefix("multiple:") {
-            (
-            format!("multiple definition of `{symbol}`"),
-            "remove the duplicate definition or make the symbol `static`/`inline` as appropriate"
-                .to_string(),
-            Some(SymbolContext {
-                primary_symbol: Some(symbol.to_string()),
-                related_objects: Vec::new(),
-                archive: None,
-            }),
-            "linker.multiple_definition".to_string(),
-        )
-        } else if let Some(library) = key.strip_prefix("library:") {
-            (
-                format!("cannot find library `-l{library}`"),
-                "check the library search path and whether the archive is installed".to_string(),
-                None,
-                "linker.cannot_find_library".to_string(),
-            )
-        } else if key == "assembler" {
-            (
-                "assembler reported an error".to_string(),
-                "inspect the assembly-related stderr lines and the referenced source location"
-                    .to_string(),
-                None,
-                "assembler.error".to_string(),
-            )
-        } else {
-            (
-                "linker file format or relocation failure".to_string(),
-                "check object compatibility, target triple, and archive contents".to_string(),
-                None,
-                "linker.file_format_or_relocation".to_string(),
-            )
-        };
-
+fn group_to_node(
+    index: usize,
+    key: &str,
+    rule: &LinkerResidualSeed,
+    template_values: &BTreeMap<String, String>,
+    lines: &[String],
+) -> DiagnosticNode {
     DiagnosticNode {
         id: format!("residual-{index}"),
-        origin: if family.starts_with("assembler") {
-            Origin::ExternalTool
-        } else {
-            Origin::Linker
-        },
-        phase: if family.starts_with("assembler") {
-            Phase::Assemble
-        } else {
-            Phase::Link
-        },
+        origin: rule.origin.clone(),
+        phase: rule.phase.clone(),
         severity: Severity::Error,
         semantic_role: SemanticRole::Root,
         message: MessageText {
@@ -570,18 +730,26 @@ fn group_to_node(index: usize, key: &str, lines: &[String]) -> DiagnosticNode {
             kind: ContextChainKind::LinkerResolution,
             frames: Vec::new(),
         }],
-        symbol_context,
+        symbol_context: rule
+            .symbol_capture
+            .as_ref()
+            .and_then(|capture_name| template_values.get(capture_name))
+            .map(|symbol| SymbolContext {
+                primary_symbol: Some(symbol.clone()),
+                related_objects: Vec::new(),
+                archive: None,
+            }),
         node_completeness: NodeCompleteness::Partial,
         provenance: Provenance {
             source: ProvenanceSource::ResidualText,
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(family),
-            headline: Some(headline),
-            first_action_hint: Some(first_action_hint),
+            family: Some(rule.family.clone()),
+            headline: Some(render_template(&rule.headline_template, template_values)),
+            first_action_hint: Some(rule.first_action_hint.clone()),
             confidence: Some(Confidence::Medium),
-            rule_id: Some("rule.residual.linker_group".to_string()),
+            rule_id: Some(rule.rule_id.clone()),
             matched_conditions: vec![format!("residual_group={key}")],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
@@ -589,6 +757,52 @@ fn group_to_node(index: usize, key: &str, lines: &[String]) -> DiagnosticNode {
         }),
         fingerprints: None,
     }
+}
+
+fn passthrough_node(lines: &[String]) -> DiagnosticNode {
+    let passthrough = &residual_rulepack().residual.passthrough;
+    DiagnosticNode {
+        id: "residual-passthrough".to_string(),
+        origin: Origin::ExternalTool,
+        phase: passthrough.phase.clone(),
+        severity: Severity::Error,
+        semantic_role: SemanticRole::Passthrough,
+        message: MessageText {
+            raw_text: lines.join("\n"),
+            normalized_text: None,
+            locale: None,
+        },
+        locations: Vec::new(),
+        children: Vec::new(),
+        suggestions: Vec::new(),
+        context_chains: Vec::new(),
+        symbol_context: None,
+        node_completeness: NodeCompleteness::Passthrough,
+        provenance: Provenance {
+            source: ProvenanceSource::ResidualText,
+            capture_refs: vec!["stderr.raw".to_string()],
+        },
+        analysis: Some(AnalysisOverlay {
+            family: Some(passthrough.family.clone()),
+            headline: Some(passthrough.headline.clone()),
+            first_action_hint: Some(passthrough.first_action_hint.clone()),
+            confidence: Some(Confidence::Low),
+            rule_id: Some(passthrough.rule_id.clone()),
+            matched_conditions: vec!["residual_group=passthrough".to_string()],
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+        }),
+        fingerprints: None,
+    }
+}
+
+fn render_template(template: &str, values: &BTreeMap<String, String>) -> String {
+    let mut rendered = template.to_string();
+    for (key, value) in values {
+        rendered = rendered.replace(&format!("{{{key}}}"), value);
+    }
+    rendered
 }
 
 fn parse_locations(lines: &[String]) -> Vec<Location> {
@@ -617,6 +831,26 @@ fn parse_locations(lines: &[String]) -> Vec<Location> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn loads_checked_in_residual_rulepack() {
+        let rulepack = residual_rulepack();
+        assert_eq!(rulepack.rulepack_version, "phase1");
+        assert_eq!(
+            rulepack
+                .compiler_seed(CompilerResidualKind::Template)
+                .headline
+                .as_deref(),
+            Some("template instantiation failed")
+        );
+        assert!(
+            rulepack
+                .residual
+                .linker_groups
+                .iter()
+                .any(|entry| entry.kind == LinkerResidualKind::Collect2Error)
+        );
+    }
 
     #[test]
     fn classifies_simple_compiler_error_as_renderable_node() {
@@ -710,8 +944,7 @@ main.cpp:8:15: note:   required from here\n";
         assert!(nodes.iter().any(|node| {
             node.analysis
                 .as_ref()
-                .and_then(|a| a.family.clone())
-                .as_deref()
+                .and_then(|analysis| analysis.family.as_deref())
                 == Some("linker.undefined_reference")
         }));
     }

@@ -1,0 +1,221 @@
+{
+  "schema_version": "diag_residual_rulepack/v1alpha1",
+  "rulepack_version": "phase1",
+  "wording": {
+    "default_headline_strategy": "first_message_line",
+    "default_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+    "generic_linker_symbol_headline_template": "linker failed to resolve `{symbol}`",
+    "generic_headlines": [
+      {
+        "family": "linker",
+        "text": "linker reported a failure"
+      },
+      {
+        "family": "macro_include",
+        "text": "error surfaced through macro/include context"
+      },
+      {
+        "family": "passthrough",
+        "text": "showing conservative wrapper view"
+      },
+      {
+        "family": "syntax",
+        "text": "syntax error"
+      },
+      {
+        "family": "template",
+        "text": "template instantiation failed"
+      },
+      {
+        "family": "type_overload",
+        "text": "type or overload mismatch"
+      }
+    ],
+    "generic_action_hints": [
+      {
+        "family": "linker",
+        "text": "check the missing/duplicate symbol and the object or library inputs"
+      },
+      {
+        "family": "macro_include",
+        "text": "inspect the user-owned macro invocation or include edge that reaches the failing line"
+      },
+      {
+        "family": "passthrough",
+        "text": "inspect the preserved raw diagnostics for the first corrective action"
+      },
+      {
+        "family": "syntax",
+        "text": "fix the first parser error at the user-owned location"
+      },
+      {
+        "family": "template",
+        "text": "start from the first user-owned template frame and match template arguments"
+      },
+      {
+        "family": "type_overload",
+        "text": "compare the expected type and actual argument at the call site"
+      }
+    ],
+    "specific_overrides": [
+      {
+        "family": "linker.multiple_definition",
+        "headline_template": "multiple definition of `{symbol}`",
+        "headline_without_symbol": "duplicate symbol definition reported by linker",
+        "first_action_hint": "remove the duplicate definition or make the symbol internal to one translation unit"
+      },
+      {
+        "family": "linker.undefined_reference",
+        "headline_template": "undefined reference to `{symbol}`",
+        "headline_without_symbol": "undefined reference reported by linker",
+        "first_action_hint": "define the missing symbol or link the object/library that provides it"
+      }
+    ]
+  },
+  "residual": {
+    "compiler_groups": [
+      {
+        "kind": "syntax",
+        "family": "syntax",
+        "phase": "parse",
+        "rule_id": "rule.residual.compiler_line",
+        "headline_strategy": "message_passthrough",
+        "first_action_hint": "verify the first compiler-reported location against the preserved raw diagnostics",
+        "match_any": [
+          "expected ",
+          " before ",
+          " after "
+        ]
+      },
+      {
+        "kind": "template",
+        "family": "template",
+        "phase": "instantiate",
+        "rule_id": "rule.residual.compiler_template",
+        "headline_strategy": "fixed_text",
+        "headline": "template instantiation failed",
+        "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "match_any": [
+          "template",
+          "deduction/substitution",
+          "deduced conflicting"
+        ]
+      },
+      {
+        "kind": "type_overload",
+        "family": "type_overload",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_type_overload",
+        "headline_strategy": "fixed_text",
+        "headline": "type or overload mismatch",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "match_any": [
+          "cannot convert",
+          "no matching",
+          "invalid conversion",
+          "incompatible type",
+          "passing argument"
+        ]
+      },
+      {
+        "kind": "unknown",
+        "family": "compiler.residual",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_unknown",
+        "headline_strategy": "message_passthrough",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "match_any": []
+      }
+    ],
+    "compiler_note_rules": {
+      "template_context_any": [
+        "template",
+        "required from",
+        "required by substitution",
+        "deduction/substitution"
+      ],
+      "candidate_contains": [
+        "candidate:"
+      ],
+      "candidate_numbered_prefix": "candidate "
+    },
+    "linker_groups": [
+      {
+        "kind": "undefined_reference",
+        "family": "linker.undefined_reference",
+        "origin": "linker",
+        "phase": "link",
+        "rule_id": "rule.residual.linker_group",
+        "group_key_template": "undefined:{symbol}",
+        "match_regex": "undefined reference to [`'](?P<symbol>[^`']+)[`']",
+        "symbol_capture": "symbol",
+        "headline_template": "undefined reference to `{symbol}`",
+        "first_action_hint": "define the missing symbol or link the object/library that provides it"
+      },
+      {
+        "kind": "multiple_definition",
+        "family": "linker.multiple_definition",
+        "origin": "linker",
+        "phase": "link",
+        "rule_id": "rule.residual.linker_group",
+        "group_key_template": "multiple:{symbol}",
+        "match_regex": "multiple definition of [`'](?P<symbol>[^`']+)[`']",
+        "symbol_capture": "symbol",
+        "headline_template": "multiple definition of `{symbol}`",
+        "first_action_hint": "remove the duplicate definition or make the symbol `static`/`inline` as appropriate"
+      },
+      {
+        "kind": "cannot_find_library",
+        "family": "linker.cannot_find_library",
+        "origin": "linker",
+        "phase": "link",
+        "rule_id": "rule.residual.linker_group",
+        "group_key_template": "library:{library}",
+        "match_regex": "cannot find -l(?P<library>\\S+)",
+        "headline_template": "cannot find library `-l{library}`",
+        "first_action_hint": "check the library search path and whether the archive is installed"
+      },
+      {
+        "kind": "file_format_or_relocation",
+        "family": "linker.file_format_or_relocation",
+        "origin": "linker",
+        "phase": "link",
+        "rule_id": "rule.residual.linker_group",
+        "group_key": "file-format",
+        "match_regex": "(file format not recognized|relocation truncated)",
+        "headline_template": "linker file format or relocation failure",
+        "first_action_hint": "check object compatibility, target triple, and archive contents"
+      },
+      {
+        "kind": "collect2_error",
+        "family": "linker.file_format_or_relocation",
+        "origin": "linker",
+        "phase": "link",
+        "rule_id": "rule.residual.linker_group",
+        "group_key": "collect2",
+        "match_prefix": "collect2: error:",
+        "headline_template": "linker file format or relocation failure",
+        "first_action_hint": "check object compatibility, target triple, and archive contents"
+      },
+      {
+        "kind": "assembler_error",
+        "family": "assembler.error",
+        "origin": "external_tool",
+        "phase": "assemble",
+        "rule_id": "rule.residual.linker_group",
+        "group_key": "assembler",
+        "match_regex": "(?i)(^as:|^assembler:|assembler messages)",
+        "requires_colon": true,
+        "headline_template": "assembler reported an error",
+        "first_action_hint": "inspect the assembly-related stderr lines and the referenced source location"
+      }
+    ],
+    "passthrough": {
+      "family": "passthrough",
+      "phase": "link",
+      "rule_id": "rule.residual.passthrough",
+      "headline": "unclassified residual diagnostics",
+      "first_action_hint": "inspect the preserved compiler stderr for details"
+    }
+  }
+}
