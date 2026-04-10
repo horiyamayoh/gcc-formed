@@ -6,6 +6,7 @@ use diag_trace::{
     RetentionPolicy, WrapperPaths, secure_private_dir, secure_private_file, should_retain,
 };
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::env;
 use std::ffi::OsString;
@@ -144,6 +145,7 @@ pub struct CaptureInvocation {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CaptureBundle {
+    pub plan: CapturePlan,
     pub invocation: CaptureInvocation,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub raw_text_artifacts: Vec<CaptureArtifact>,
@@ -152,6 +154,53 @@ pub struct CaptureBundle {
     pub exit_status: ExitStatusInfo,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub integrity_issues: Vec<IntegrityIssue>,
+}
+
+impl CaptureBundle {
+    pub fn capture_artifacts(&self) -> Vec<CaptureArtifact> {
+        let mut artifacts =
+            Vec::with_capacity(self.raw_text_artifacts.len() + self.structured_artifacts.len());
+        artifacts.extend(self.raw_text_artifacts.clone());
+        artifacts.extend(self.structured_artifacts.clone());
+        artifacts
+    }
+
+    pub fn stderr_text(&self) -> Option<&str> {
+        self.raw_text_artifacts.iter().find_map(|artifact| {
+            matches!(
+                artifact.kind,
+                ArtifactKind::CompilerStderrText | ArtifactKind::LinkerStderrText
+            )
+            .then(|| artifact.inline_text.as_deref())
+            .flatten()
+        })
+    }
+
+    pub fn authoritative_sarif_path(&self, temp_dir: &Path) -> Option<PathBuf> {
+        match self.plan.structured_capture {
+            StructuredCapturePolicy::Disabled => None,
+            StructuredCapturePolicy::SarifFile => Some(temp_dir.join("diagnostics.sarif")),
+        }
+    }
+
+    pub fn injected_flags(&self, temp_dir: &Path) -> Vec<String> {
+        self.authoritative_sarif_path(temp_dir)
+            .map(|path| {
+                vec![format!(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                    sanitize_sarif_path(&path)
+                )]
+            })
+            .unwrap_or_default()
+    }
+
+    pub fn temp_artifact_paths(&self, temp_dir: &Path) -> Vec<PathBuf> {
+        let mut paths = vec![temp_dir.to_path_buf(), temp_dir.join("invocation.json")];
+        if let Some(path) = self.authoritative_sarif_path(temp_dir) {
+            paths.push(path);
+        }
+        paths
+    }
 }
 
 #[derive(Debug)]
@@ -165,6 +214,39 @@ pub struct CaptureOutcome {
     pub retained_trace_dir: Option<PathBuf>,
     pub artifacts: Vec<CaptureArtifact>,
     pub bundle: CaptureBundle,
+}
+
+impl CaptureOutcome {
+    pub fn capture_artifacts(&self) -> Vec<CaptureArtifact> {
+        self.bundle.capture_artifacts()
+    }
+
+    pub fn stderr_text(&self) -> Cow<'_, str> {
+        self.bundle
+            .stderr_text()
+            .map(Cow::Borrowed)
+            .unwrap_or_else(|| String::from_utf8_lossy(&self.stderr_bytes))
+    }
+
+    pub fn authoritative_sarif_path(&self) -> Option<PathBuf> {
+        self.bundle.authoritative_sarif_path(&self.temp_dir)
+    }
+
+    pub fn processing_path(&self) -> ProcessingPath {
+        self.bundle.plan.processing_path
+    }
+
+    pub fn sanitized_env_keys(&self) -> Vec<String> {
+        trace_sanitized_env_keys(self.bundle.plan.execution_mode)
+    }
+
+    pub fn injected_flags(&self) -> Vec<String> {
+        self.bundle.injected_flags(&self.temp_dir)
+    }
+
+    pub fn temp_artifact_paths(&self) -> Vec<PathBuf> {
+        self.bundle.temp_artifact_paths(&self.temp_dir)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -413,6 +495,7 @@ fn build_capture_bundle(
     artifacts: &[CaptureArtifact],
 ) -> CaptureBundle {
     CaptureBundle {
+        plan: *plan,
         invocation: build_capture_invocation(request, final_args, plan),
         raw_text_artifacts: artifacts
             .iter()
@@ -956,6 +1039,81 @@ mod tests {
         assert_eq!(bundle.structured_artifacts[0].id, "diagnostics.sarif");
         assert_eq!(bundle.exit_status, exit_status);
         assert!(bundle.integrity_issues.is_empty());
+    }
+
+    #[test]
+    fn bundle_helpers_preserve_injected_flag_and_temp_paths_when_sarif_is_missing() {
+        let bundle = CaptureBundle {
+            plan: CapturePlan {
+                execution_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::DualSinkStructured,
+                structured_capture: StructuredCapturePolicy::SarifFile,
+                native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+                locale_handling: LocaleHandling::ForceMessagesC,
+                retention_policy: RetentionPolicy::Always,
+            },
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                argv: vec!["-c".to_string(), "main.c".to_string()],
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::DualSinkStructured,
+            },
+            raw_text_artifacts: vec![CaptureArtifact {
+                id: "stderr.raw".to_string(),
+                kind: ArtifactKind::CompilerStderrText,
+                media_type: "text/plain".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: Some(6),
+                storage: ArtifactStorage::Inline,
+                inline_text: Some("stderr".to_string()),
+                external_ref: None,
+                produced_by: Some(tool_info(&fake_probe())),
+            }],
+            structured_artifacts: vec![CaptureArtifact {
+                id: "diagnostics.sarif".to_string(),
+                kind: ArtifactKind::GccSarif,
+                media_type: "application/sarif+json".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: None,
+                storage: ArtifactStorage::Unavailable,
+                inline_text: None,
+                external_ref: None,
+                produced_by: Some(tool_info(&fake_probe())),
+            }],
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+
+        let temp_dir = PathBuf::from("/tmp/runtime/formed-123");
+        assert_eq!(
+            bundle.authoritative_sarif_path(&temp_dir),
+            Some(temp_dir.join("diagnostics.sarif"))
+        );
+        assert_eq!(
+            bundle.injected_flags(&temp_dir),
+            vec![format!(
+                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                temp_dir.join("diagnostics.sarif").display()
+            )]
+        );
+        assert_eq!(
+            bundle.temp_artifact_paths(&temp_dir),
+            vec![
+                temp_dir.clone(),
+                temp_dir.join("invocation.json"),
+                temp_dir.join("diagnostics.sarif"),
+            ]
+        );
+        assert_eq!(bundle.stderr_text(), Some("stderr"));
+        assert_eq!(bundle.capture_artifacts().len(), 2);
     }
 
     #[test]

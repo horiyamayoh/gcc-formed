@@ -2,9 +2,7 @@ use crate::args::{ParsedArgs, os_to_string};
 use crate::backend::backend_binary_name;
 use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
-use diag_capture_runtime::{
-    CaptureOutcome, ExecutionMode, ExitStatusInfo, trace_sanitized_env_keys,
-};
+use diag_capture_runtime::{CaptureOutcome, ExecutionMode, ExitStatusInfo};
 use diag_core::{
     DiagnosticDocument, DocumentCompleteness, FallbackReason, SnapshotKind, WrapperSurface,
     snapshot_json,
@@ -18,7 +16,7 @@ use diag_trace::{
 };
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 pub(crate) fn maybe_write_trace(
     paths: &WrapperPaths,
@@ -52,18 +50,14 @@ pub(crate) fn maybe_write_trace(
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(mode_decision.mode, fallback_reason)),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(
-            backend,
-            mode_decision.mode,
-            capture,
-        )),
+        environment_summary: Some(trace_environment_summary(backend, capture)),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
             capture_ms: capture.capture_duration_ms,
             render_ms: render_duration_ms,
             total_ms: total_duration_ms,
         }),
-        child_exit: Some(trace_child_exit(&capture.exit_status)),
+        child_exit: Some(trace_child_exit(&capture.bundle.exit_status)),
         parser_result_summary: Some(parsed_parser_result_summary(document, fallback_reason)),
         fingerprint_summary: trace_fingerprint_summary_from_document(document),
         redaction_status: Some(trace_redaction_status(
@@ -119,19 +113,15 @@ pub(crate) fn maybe_write_passthrough_trace(
             mode_decision.fallback_reason,
         )),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(
-            backend,
-            mode_decision.mode,
-            capture,
-        )),
+        environment_summary: Some(trace_environment_summary(backend, capture)),
         capabilities: Some(trace_capabilities(capabilities)),
         timing: Some(TraceTiming {
             capture_ms: capture.capture_duration_ms,
             render_ms: None,
             total_ms: total_duration_ms,
         }),
-        child_exit: Some(trace_child_exit(&capture.exit_status)),
-        parser_result_summary: Some(skipped_parser_result_summary(&capture.artifacts)),
+        child_exit: Some(trace_child_exit(&capture.bundle.exit_status)),
+        parser_result_summary: Some(skipped_parser_result_summary(&capture.capture_artifacts())),
         fingerprint_summary: Some(trace_fingerprint_summary_from_capture(capture)),
         redaction_status: Some(trace_redaction_status(
             mode_decision.mode,
@@ -141,7 +131,7 @@ pub(crate) fn maybe_write_passthrough_trace(
         fallback_reason: mode_decision.fallback_reason,
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(
-            &capture.artifacts,
+            &capture.capture_artifacts(),
             retained_trace_dir.map(|path| path.as_path()),
         ),
     };
@@ -245,31 +235,17 @@ fn trace_version_summary() -> TraceVersionSummary {
 
 fn trace_environment_summary(
     backend: &diag_backend_probe::ProbeResult,
-    mode: ExecutionMode,
     capture: &CaptureOutcome,
 ) -> TraceEnvironmentSummary {
     TraceEnvironmentSummary {
         backend_path: backend.resolved_path.clone(),
         backend_version: backend.version_string.clone(),
         version_band: snake_case_label(&backend.version_band()),
-        processing_path: snake_case_label(&resolved_processing_path(backend, mode)),
+        processing_path: snake_case_label(&capture.processing_path()),
         support_level: snake_case_label(&backend.support_level()),
-        injected_flags: trace_injected_flags(capture),
-        sanitized_env_keys: trace_sanitized_env_keys(mode),
-        temp_artifact_paths: trace_temp_artifact_paths(capture),
-    }
-}
-
-fn resolved_processing_path(
-    backend: &diag_backend_probe::ProbeResult,
-    mode: ExecutionMode,
-) -> diag_backend_probe::ProcessingPath {
-    match mode {
-        ExecutionMode::Passthrough => diag_backend_probe::ProcessingPath::Passthrough,
-        _ if backend.capability_profile().dual_sink => {
-            diag_backend_probe::ProcessingPath::DualSinkStructured
-        }
-        _ => diag_backend_probe::ProcessingPath::NativeTextCapture,
+        injected_flags: capture.injected_flags(),
+        sanitized_env_keys: capture.sanitized_env_keys(),
+        temp_artifact_paths: capture.temp_artifact_paths(),
     }
 }
 
@@ -278,30 +254,6 @@ fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
         .ok()
         .and_then(|value| value.as_str().map(|value| value.to_string()))
         .unwrap_or_else(|| "unknown".to_string())
-}
-
-fn trace_injected_flags(capture: &CaptureOutcome) -> Vec<String> {
-    capture
-        .sarif_path
-        .as_ref()
-        .map(|path| {
-            vec![format!(
-                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                path.display()
-            )]
-        })
-        .unwrap_or_default()
-}
-
-fn trace_temp_artifact_paths(capture: &CaptureOutcome) -> Vec<PathBuf> {
-    let mut paths = vec![
-        capture.temp_dir.clone(),
-        capture.temp_dir.join("invocation.json"),
-    ];
-    if let Some(sarif_path) = capture.sarif_path.as_ref() {
-        paths.push(sarif_path.clone());
-    }
-    paths
 }
 
 fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
