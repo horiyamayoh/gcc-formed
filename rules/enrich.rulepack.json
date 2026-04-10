@@ -1,0 +1,447 @@
+{
+  "schema_version": "diag_enrich_rulepack/v1alpha1",
+  "rulepack_version": "phase1",
+  "ingress_specific_override_rule_id": "rule.family.ingress_specific_override",
+  "unknown_fallback": {
+    "family": "unknown",
+    "rule_id": "rule.family.unknown",
+    "matched_conditions": [
+      "no_family_rule_matched"
+    ],
+    "suppression_reason": "generic_fallback"
+  },
+  "passthrough_fallback": {
+    "family": "passthrough",
+    "rule_id": "rule.family.passthrough.semantic_role",
+    "matched_conditions": [
+      "no_family_rule_matched"
+    ],
+    "suppression_reason": "generic_fallback"
+  },
+  "rules": [
+    {
+      "rule_id": "rule.family.linker.structured_or_message",
+      "family": "linker",
+      "match_strategy": "structured_or_message",
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "undefined reference",
+            "multiple definition",
+            "cannot find -l",
+            "cannot find"
+          ]
+        }
+      ],
+      "contexts": [
+        {
+          "kind": "linker_resolution",
+          "condition": "context=linker_resolution"
+        }
+      ],
+      "symbol_context_condition": "symbol_context=present",
+      "phase_annotations": [
+        {
+          "phase": "link",
+          "condition": "phase=link",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.template.structured_or_message",
+      "family": "template",
+      "match_strategy": "structured_or_message",
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "template",
+            "deduction/substitution",
+            "deduced conflicting"
+          ]
+        }
+      ],
+      "child_message_groups": [
+        {
+          "prefix": "child_message_contains",
+          "terms": [
+            "template",
+            "deduction/substitution",
+            "deduced conflicting"
+          ]
+        }
+      ],
+      "contexts": [
+        {
+          "kind": "template_instantiation",
+          "condition": "context=template_instantiation"
+        }
+      ],
+      "child_notes": [
+        {
+          "kind": "template_context",
+          "condition": "child_note_kind=template_context"
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "instantiate",
+          "condition": "phase=instantiate",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.macro_include.structured_or_message",
+      "family": "macro_include",
+      "match_strategy": "structured_or_message",
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "macro"
+          ]
+        },
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "include",
+            "included from"
+          ]
+        }
+      ],
+      "child_message_groups": [
+        {
+          "prefix": "child_message_contains",
+          "terms": [
+            "macro"
+          ]
+        },
+        {
+          "prefix": "child_message_contains",
+          "terms": [
+            "include",
+            "included from"
+          ]
+        }
+      ],
+      "contexts": [
+        {
+          "kind": "macro_expansion",
+          "condition": "context=macro_expansion"
+        },
+        {
+          "kind": "include",
+          "condition": "context=include"
+        }
+      ],
+      "child_notes": [
+        {
+          "kind": "macro_expansion",
+          "condition": "child_note_kind=macro_expansion"
+        },
+        {
+          "kind": "include",
+          "condition": "child_note_kind=include"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.type_overload.structured_or_message",
+      "family": "type_overload",
+      "match_strategy": "structured_or_message",
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "cannot convert",
+            "invalid conversion",
+            "no matching",
+            "candidate",
+            "incompatible type",
+            "passing argument"
+          ]
+        }
+      ],
+      "candidate_child_terms": [
+        "candidate "
+      ],
+      "candidate_child_condition": "child_role=candidate",
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "message_terms"
+        },
+        {
+          "phase": "instantiate",
+          "condition": "phase=instantiate",
+          "when": "message_or_candidate"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "family": "syntax",
+      "match_strategy": "phase_or_message",
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "expected",
+            "before",
+            "missing"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "parse",
+          "condition": "phase=parse",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.passthrough.semantic_role",
+      "family": "passthrough",
+      "match_strategy": "semantic_role",
+      "semantic_role_condition": "semantic_role=passthrough"
+    }
+  ],
+  "default_confidence_policy": {
+    "high_when_any": [
+      {
+        "all": [
+          "primary_ownership_user",
+          "structured_signal"
+        ]
+      }
+    ],
+    "medium_when_any": [
+      {
+        "all": [
+          "structured_signal"
+        ]
+      },
+      {
+        "all": [
+          "lexical_signal"
+        ]
+      }
+    ],
+    "default_confidence": "low"
+  },
+  "confidence_policies": [
+    {
+      "family": "passthrough",
+      "fixed": "low",
+      "default_confidence": "low"
+    },
+    {
+      "family": "unknown",
+      "fixed": "low",
+      "default_confidence": "low"
+    },
+    {
+      "family": "syntax",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "phase_parse",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "phase_parse"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "type_overload",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "candidate_child"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "candidate_child"
+          ]
+        },
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "template",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "template_context"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "template_child"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "existing_specific_family"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "template_context"
+          ]
+        },
+        {
+          "all": [
+            "template_child"
+          ]
+        },
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        },
+        {
+          "all": [
+            "existing_specific_family"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "macro_include",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "macro_context"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "include_context"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "macro_child"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "include_child"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "macro_context"
+          ]
+        },
+        {
+          "all": [
+            "include_context"
+          ]
+        },
+        {
+          "all": [
+            "macro_child"
+          ]
+        },
+        {
+          "all": [
+            "include_child"
+          ]
+        },
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "linker",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "symbol_context"
+          ]
+        },
+        {
+          "all": [
+            "user_owned_location",
+            "existing_specific_family"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "phase_link"
+          ]
+        },
+        {
+          "all": [
+            "linker_context"
+          ]
+        },
+        {
+          "all": [
+            "symbol_context"
+          ]
+        },
+        {
+          "all": [
+            "existing_specific_family"
+          ]
+        },
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    }
+  ]
+}

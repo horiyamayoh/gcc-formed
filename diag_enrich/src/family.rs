@@ -1,4 +1,10 @@
 use diag_core::{Confidence, ContextChainKind, DiagnosticNode, Ownership, Phase, SemanticRole};
+use serde::Deserialize;
+use std::collections::BTreeSet;
+use std::sync::OnceLock;
+
+const RULEPACK_JSON: &str = include_str!("../../rules/enrich.rulepack.json");
+const RULEPACK_SCHEMA_VERSION: &str = "diag_enrich_rulepack/v1alpha1";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FamilyDecision {
@@ -8,67 +14,169 @@ pub(crate) struct FamilyDecision {
     pub(crate) suppression_reason: Option<String>,
 }
 
-type RuleMatcher = fn(&RuleInput<'_>) -> Option<Vec<String>>;
-
-#[derive(Debug, Clone, Copy)]
-struct FamilyRule {
-    id: &'static str,
-    family: &'static str,
-    matcher: RuleMatcher,
+#[derive(Debug, Clone, Deserialize)]
+struct EnrichRulepack {
+    schema_version: String,
+    rulepack_version: String,
+    ingress_specific_override_rule_id: String,
+    unknown_fallback: FallbackRuleConfig,
+    passthrough_fallback: FallbackRuleConfig,
+    rules: Vec<FamilyRuleConfig>,
+    default_confidence_policy: ConfidencePolicyConfig,
+    confidence_policies: Vec<ConfidencePolicyConfig>,
 }
 
-const LINKER_MESSAGE_TERMS: &[&str] = &[
-    "undefined reference",
-    "multiple definition",
-    "cannot find -l",
-    "cannot find",
-];
-const TEMPLATE_MESSAGE_TERMS: &[&str] =
-    &["template", "deduction/substitution", "deduced conflicting"];
-const MACRO_MESSAGE_TERMS: &[&str] = &["macro"];
-const INCLUDE_MESSAGE_TERMS: &[&str] = &["include", "included from"];
-const TYPE_OVERLOAD_MESSAGE_TERMS: &[&str] = &[
-    "cannot convert",
-    "invalid conversion",
-    "no matching",
-    "candidate",
-    "incompatible type",
-    "passing argument",
-];
-const SYNTAX_MESSAGE_TERMS: &[&str] = &["expected", "before", "missing"];
+#[derive(Debug, Clone, Deserialize)]
+struct FallbackRuleConfig {
+    family: String,
+    rule_id: String,
+    matched_conditions: Vec<String>,
+    suppression_reason: String,
+}
 
-const FAMILY_RULES: &[FamilyRule] = &[
-    FamilyRule {
-        id: "rule.family.linker.structured_or_message",
-        family: "linker",
-        matcher: match_linker,
-    },
-    FamilyRule {
-        id: "rule.family.template.structured_or_message",
-        family: "template",
-        matcher: match_template,
-    },
-    FamilyRule {
-        id: "rule.family.macro_include.structured_or_message",
-        family: "macro_include",
-        matcher: match_macro_include,
-    },
-    FamilyRule {
-        id: "rule.family.type_overload.structured_or_message",
-        family: "type_overload",
-        matcher: match_type_overload,
-    },
-    FamilyRule {
-        id: "rule.family.syntax.phase_or_message",
-        family: "syntax",
-        matcher: match_syntax,
-    },
-    FamilyRule {
-        id: "rule.family.passthrough.semantic_role",
-        family: "passthrough",
-        matcher: match_passthrough,
-    },
-];
+#[derive(Debug, Clone, Deserialize)]
+struct FamilyRuleConfig {
+    rule_id: String,
+    family: String,
+    match_strategy: MatchStrategyConfig,
+    #[serde(default)]
+    message_groups: Vec<TermGroupConfig>,
+    #[serde(default)]
+    child_message_groups: Vec<TermGroupConfig>,
+    #[serde(default)]
+    candidate_child_terms: Vec<String>,
+    #[serde(default)]
+    contexts: Vec<ContextConditionConfig>,
+    #[serde(default)]
+    child_notes: Vec<ChildNoteConditionConfig>,
+    #[serde(default)]
+    symbol_context_condition: Option<String>,
+    #[serde(default)]
+    candidate_child_condition: Option<String>,
+    #[serde(default)]
+    semantic_role_condition: Option<String>,
+    #[serde(default)]
+    phase_annotations: Vec<PhaseAnnotationConfig>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum MatchStrategyConfig {
+    StructuredOrMessage,
+    PhaseOrMessage,
+    SemanticRole,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct TermGroupConfig {
+    prefix: String,
+    terms: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ContextConditionConfig {
+    kind: ContextConditionKind,
+    condition: String,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum ContextConditionKind {
+    TemplateInstantiation,
+    MacroExpansion,
+    Include,
+    LinkerResolution,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ChildNoteConditionConfig {
+    kind: ChildNoteConditionKind,
+    condition: String,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum ChildNoteConditionKind {
+    TemplateContext,
+    MacroExpansion,
+    Include,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct PhaseAnnotationConfig {
+    phase: Phase,
+    condition: String,
+    when: PhaseAnnotationWhen,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum PhaseAnnotationWhen {
+    RuleMatched,
+    MessageTerms,
+    MessageOrCandidate,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ConfidencePolicyConfig {
+    #[serde(default)]
+    family: Option<String>,
+    #[serde(default)]
+    fixed: Option<ConfidenceLevelConfig>,
+    #[serde(default)]
+    high_when_any: Vec<ConfidenceClauseConfig>,
+    #[serde(default)]
+    medium_when_any: Vec<ConfidenceClauseConfig>,
+    default_confidence: ConfidenceLevelConfig,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ConfidenceClauseConfig {
+    all: Vec<ConfidenceSignal>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum ConfidenceSignal {
+    UserOwnedLocation,
+    PrimaryOwnershipUser,
+    PhaseParse,
+    PhaseSemantic,
+    PhaseInstantiate,
+    PhaseLink,
+    TemplateContext,
+    MacroContext,
+    IncludeContext,
+    LinkerContext,
+    SymbolContext,
+    CandidateChild,
+    TemplateChild,
+    MacroChild,
+    IncludeChild,
+    LexicalSignal,
+    StructuredSignal,
+    ExistingSpecificFamily,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum ConfidenceLevelConfig {
+    High,
+    Medium,
+    Low,
+}
+
+impl From<ConfidenceLevelConfig> for Confidence {
+    fn from(value: ConfidenceLevelConfig) -> Self {
+        match value {
+            ConfidenceLevelConfig::High => Confidence::High,
+            ConfidenceLevelConfig::Medium => Confidence::Medium,
+            ConfidenceLevelConfig::Low => Confidence::Low,
+        }
+    }
+}
+
+static RULEPACK: OnceLock<EnrichRulepack> = OnceLock::new();
 
 #[derive(Debug)]
 struct RuleInput<'a> {
@@ -90,6 +198,11 @@ struct RuleInput<'a> {
 
 impl<'a> RuleInput<'a> {
     fn from(node: &'a DiagnosticNode) -> Self {
+        let rulepack = rulepack();
+        let template_rule = rulepack.rule("template");
+        let macro_include_rule = rulepack.rule("macro_include");
+        let type_overload_rule = rulepack.rule("type_overload");
+
         let message = node.message.raw_text.to_lowercase();
         let child_messages = node
             .children
@@ -97,6 +210,17 @@ impl<'a> RuleInput<'a> {
             .map(|child| child.message.raw_text.to_lowercase())
             .collect::<Vec<_>>()
             .join("\n");
+
+        let macro_terms = macro_include_rule
+            .child_message_groups
+            .first()
+            .map(|group| group.terms.as_slice())
+            .unwrap_or(&[]);
+        let include_terms = macro_include_rule
+            .child_message_groups
+            .get(1)
+            .map(|group| group.terms.as_slice())
+            .unwrap_or(&[]);
 
         Self {
             node,
@@ -128,40 +252,58 @@ impl<'a> RuleInput<'a> {
             has_symbol_context: node.symbol_context.is_some(),
             has_candidate_child: node.children.iter().any(|child| {
                 matches!(child.semantic_role, SemanticRole::Candidate)
-                    || has_any_pattern(&child.message.raw_text.to_lowercase(), &["candidate "])
+                    || has_any_pattern(
+                        &child.message.raw_text.to_lowercase(),
+                        &type_overload_rule.candidate_child_terms,
+                    )
             }),
             has_template_child: node.children.iter().any(|child| {
                 has_any_pattern(
                     &child.message.raw_text.to_lowercase(),
-                    TEMPLATE_MESSAGE_TERMS,
+                    &flatten_terms(&template_rule.child_message_groups),
                 )
             }),
-            has_macro_child: node.children.iter().any(|child| {
-                has_any_pattern(&child.message.raw_text.to_lowercase(), MACRO_MESSAGE_TERMS)
-            }),
+            has_macro_child: node
+                .children
+                .iter()
+                .any(|child| has_any_pattern(&child.message.raw_text.to_lowercase(), macro_terms)),
             has_include_child: node.children.iter().any(|child| {
-                has_any_pattern(
-                    &child.message.raw_text.to_lowercase(),
-                    INCLUDE_MESSAGE_TERMS,
-                )
+                has_any_pattern(&child.message.raw_text.to_lowercase(), include_terms)
             }),
         }
     }
 
-    fn message_conditions(&self, prefix: &str, patterns: &[&str]) -> Vec<String> {
-        matching_conditions(prefix, &self.message, patterns)
+    fn message_conditions(&self, group: &TermGroupConfig) -> Vec<String> {
+        matching_conditions(&group.prefix, &self.message, &group.terms)
     }
 
-    fn child_message_conditions(&self, prefix: &str, patterns: &[&str]) -> Vec<String> {
-        matching_conditions(prefix, &self.child_messages, patterns)
+    fn child_message_conditions(&self, group: &TermGroupConfig) -> Vec<String> {
+        matching_conditions(&group.prefix, &self.child_messages, &group.terms)
+    }
+
+    fn has_context(&self, kind: ContextConditionKind) -> bool {
+        match kind {
+            ContextConditionKind::TemplateInstantiation => self.has_template_context,
+            ContextConditionKind::MacroExpansion => self.has_macro_context,
+            ContextConditionKind::Include => self.has_include_context,
+            ContextConditionKind::LinkerResolution => self.has_linker_context,
+        }
+    }
+
+    fn has_child_note_kind(&self, kind: ChildNoteConditionKind) -> bool {
+        match kind {
+            ChildNoteConditionKind::TemplateContext => self.has_template_child,
+            ChildNoteConditionKind::MacroExpansion => self.has_macro_child,
+            ChildNoteConditionKind::Include => self.has_include_child,
+        }
     }
 }
 
 pub(crate) fn classify_family(node: &DiagnosticNode) -> FamilyDecision {
     let input = RuleInput::from(node);
 
-    for rule in FAMILY_RULES {
-        if let Some(matched_conditions) = (rule.matcher)(&input) {
+    for rule in &rulepack().rules {
+        if let Some(matched_conditions) = match_family_rule(&input, rule) {
             return finalize_family_decision(node, rule, matched_conditions);
         }
     }
@@ -170,215 +312,256 @@ pub(crate) fn classify_family(node: &DiagnosticNode) -> FamilyDecision {
 }
 
 pub(crate) fn classify_confidence(node: &DiagnosticNode, decision: &FamilyDecision) -> Confidence {
-    if matches!(decision.family.as_str(), "passthrough" | "unknown") {
-        return Confidence::Low;
-    }
-
     let input = RuleInput::from(node);
-    let lexical_signal_count = lexical_signal_count(decision);
-    let has_structured_signal = has_structured_signal(decision);
-    let has_specific_family = decision
-        .matched_conditions
-        .iter()
-        .any(|condition| condition.starts_with("existing_specific_family="));
+    evaluate_confidence_policy(
+        &input,
+        decision,
+        rulepack().confidence_policy_for(decision.family.as_str()),
+    )
+}
 
-    match decision.family.as_str() {
-        "syntax" => {
-            if input.has_user_owned_location
-                && matches!(node.phase, Phase::Parse)
-                && lexical_signal_count > 0
-            {
-                Confidence::High
-            } else if matches!(node.phase, Phase::Parse)
-                || (input.has_user_owned_location && lexical_signal_count > 0)
-            {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
+fn rulepack() -> &'static EnrichRulepack {
+    RULEPACK.get_or_init(load_rulepack)
+}
+
+fn load_rulepack() -> EnrichRulepack {
+    let rulepack: EnrichRulepack =
+        serde_json::from_str(RULEPACK_JSON).expect("checked-in enrich.rulepack.json must parse");
+    rulepack.validate();
+    rulepack
+}
+
+impl EnrichRulepack {
+    fn validate(&self) {
+        assert_eq!(
+            self.schema_version, RULEPACK_SCHEMA_VERSION,
+            "checked-in enrich rulepack schema_version drifted"
+        );
+        assert!(
+            !self.rulepack_version.trim().is_empty(),
+            "checked-in enrich rulepack_version must be non-empty"
+        );
+        assert!(
+            !self.rules.is_empty(),
+            "checked-in enrich rulepack must define at least one family rule"
+        );
+
+        let mut families = BTreeSet::new();
+        let mut rule_ids = BTreeSet::new();
+        for rule in &self.rules {
+            assert!(
+                families.insert(rule.family.as_str()),
+                "duplicate family rule in checked-in enrich rulepack: {}",
+                rule.family
+            );
+            assert!(
+                rule_ids.insert(rule.rule_id.as_str()),
+                "duplicate rule id in checked-in enrich rulepack: {}",
+                rule.rule_id
+            );
         }
-        "type_overload" => {
-            if input.has_user_owned_location && input.has_candidate_child {
-                Confidence::High
-            } else if input.has_candidate_child || lexical_signal_count > 0 {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
+
+        let mut confidence_families = BTreeSet::new();
+        for policy in &self.confidence_policies {
+            let family = policy
+                .family
+                .as_deref()
+                .expect("family confidence policies must name a family");
+            assert!(
+                confidence_families.insert(family),
+                "duplicate confidence policy in checked-in enrich rulepack: {family}"
+            );
         }
-        "template" => {
-            if input.has_user_owned_location
-                && (input.has_template_context || input.has_template_child || has_specific_family)
-            {
-                Confidence::High
-            } else if input.has_template_context
-                || input.has_template_child
-                || lexical_signal_count > 0
-                || has_specific_family
-            {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
+
+        for family in [
+            "syntax",
+            "type_overload",
+            "template",
+            "macro_include",
+            "linker",
+        ] {
+            assert!(
+                self.confidence_policies
+                    .iter()
+                    .any(|policy| policy.family.as_deref() == Some(family)),
+                "missing confidence policy in checked-in enrich rulepack: {family}"
+            );
         }
-        "macro_include" => {
-            if input.has_user_owned_location
-                && (input.has_macro_context
-                    || input.has_include_context
-                    || input.has_macro_child
-                    || input.has_include_child)
-            {
-                Confidence::High
-            } else if input.has_macro_context
-                || input.has_include_context
-                || input.has_macro_child
-                || input.has_include_child
-                || lexical_signal_count > 0
-            {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
-        }
-        family if family.starts_with("linker") => {
-            if input.has_user_owned_location && (input.has_symbol_context || has_specific_family) {
-                Confidence::High
-            } else if matches!(node.phase, Phase::Link)
-                || input.has_linker_context
-                || input.has_symbol_context
-                || has_specific_family
-                || lexical_signal_count > 0
-            {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
-        }
-        _ => {
-            if matches!(input.primary_ownership, Some(Ownership::User)) && has_structured_signal {
-                Confidence::High
-            } else if has_structured_signal || lexical_signal_count > 0 {
-                Confidence::Medium
-            } else {
-                Confidence::Low
-            }
-        }
+    }
+
+    fn rule(&self, family: &str) -> &FamilyRuleConfig {
+        self.rules
+            .iter()
+            .find(|rule| rule.family == family)
+            .unwrap_or_else(|| {
+                panic!("missing family rule in checked-in enrich rulepack: {family}")
+            })
+    }
+
+    fn confidence_policy_for(&self, family: &str) -> &ConfidencePolicyConfig {
+        self.confidence_policies
+            .iter()
+            .find(|policy| policy.family.as_deref() == Some(family))
+            .or_else(|| {
+                family
+                    .starts_with("linker.")
+                    .then(|| {
+                        self.confidence_policies
+                            .iter()
+                            .find(|policy| policy.family.as_deref() == Some("linker"))
+                    })
+                    .flatten()
+            })
+            .unwrap_or(&self.default_confidence_policy)
     }
 }
 
-fn match_linker(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    let mut matched_conditions = Vec::new();
-
-    if matches!(input.node.phase, Phase::Link) {
-        matched_conditions.push("phase=link".to_string());
+fn match_family_rule(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    match (rule.match_strategy, rule.family.as_str()) {
+        (MatchStrategyConfig::StructuredOrMessage, "linker") => match_linker(input, rule),
+        (MatchStrategyConfig::StructuredOrMessage, "template") => match_template(input, rule),
+        (MatchStrategyConfig::StructuredOrMessage, "macro_include") => {
+            match_macro_include(input, rule)
+        }
+        (MatchStrategyConfig::StructuredOrMessage, "type_overload") => {
+            match_type_overload(input, rule)
+        }
+        (MatchStrategyConfig::PhaseOrMessage, "syntax") => match_syntax(input, rule),
+        (MatchStrategyConfig::SemanticRole, "passthrough") => match_passthrough(input, rule),
+        _ => None,
     }
-    if input.has_linker_context {
-        matched_conditions.push("context=linker_resolution".to_string());
-    }
-    if input.has_symbol_context {
-        matched_conditions.push("symbol_context=present".to_string());
-    }
-    matched_conditions.extend(input.message_conditions("message_contains", LINKER_MESSAGE_TERMS));
-
-    (!matched_conditions.is_empty()).then_some(matched_conditions)
 }
 
-fn match_template(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    let mut matched_conditions = Vec::new();
-    let message_conditions = input.message_conditions("message_contains", TEMPLATE_MESSAGE_TERMS);
-    let child_conditions =
-        input.child_message_conditions("child_message_contains", TEMPLATE_MESSAGE_TERMS);
-
-    if input.has_template_context {
-        matched_conditions.push("context=template_instantiation".to_string());
-    }
-    if input.has_template_child {
-        matched_conditions.push("child_note_kind=template_context".to_string());
-    }
-    if matches!(input.node.phase, Phase::Instantiate)
-        && (input.has_template_context
-            || input.has_template_child
-            || !message_conditions.is_empty()
-            || !child_conditions.is_empty())
-    {
-        matched_conditions.push("phase=instantiate".to_string());
-    }
-    matched_conditions.extend(message_conditions);
-    matched_conditions.extend(child_conditions);
-
-    (!matched_conditions.is_empty()).then_some(matched_conditions)
-}
-
-fn match_macro_include(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    let mut matched_conditions = Vec::new();
-    let message_conditions = input.message_conditions("message_contains", MACRO_MESSAGE_TERMS);
-    let include_message_conditions =
-        input.message_conditions("message_contains", INCLUDE_MESSAGE_TERMS);
-    let child_macro_conditions =
-        input.child_message_conditions("child_message_contains", MACRO_MESSAGE_TERMS);
-    let child_include_conditions =
-        input.child_message_conditions("child_message_contains", INCLUDE_MESSAGE_TERMS);
-
-    if input.has_macro_context {
-        matched_conditions.push("context=macro_expansion".to_string());
-    }
-    if input.has_include_context {
-        matched_conditions.push("context=include".to_string());
-    }
-    if input.has_macro_child {
-        matched_conditions.push("child_note_kind=macro_expansion".to_string());
-    }
-    if input.has_include_child {
-        matched_conditions.push("child_note_kind=include".to_string());
-    }
-    matched_conditions.extend(message_conditions);
-    matched_conditions.extend(include_message_conditions);
-    matched_conditions.extend(child_macro_conditions);
-    matched_conditions.extend(child_include_conditions);
-
-    (!matched_conditions.is_empty()).then_some(matched_conditions)
-}
-
-fn match_type_overload(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    let mut matched_conditions = Vec::new();
-    let message_conditions =
-        input.message_conditions("message_contains", TYPE_OVERLOAD_MESSAGE_TERMS);
-
-    if input.has_candidate_child {
-        matched_conditions.push("child_role=candidate".to_string());
-    }
-    if matches!(input.node.phase, Phase::Semantic) && !message_conditions.is_empty() {
-        matched_conditions.push("phase=semantic".to_string());
-    }
-    if matches!(input.node.phase, Phase::Instantiate)
-        && (input.has_candidate_child || !message_conditions.is_empty())
-    {
-        matched_conditions.push("phase=instantiate".to_string());
-    }
-    matched_conditions.extend(message_conditions);
-
-    (!matched_conditions.is_empty()).then_some(matched_conditions)
-}
-
-fn match_syntax(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    let mut matched_conditions = input.message_conditions("message_contains", SYNTAX_MESSAGE_TERMS);
-    if matched_conditions.is_empty() {
+fn match_linker(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
+    let has_match = matches!(input.node.phase, Phase::Link)
+        || input.has_linker_context
+        || input.has_symbol_context
+        || !message_conditions.is_empty();
+    if !has_match {
         return None;
     }
-    if matches!(input.node.phase, Phase::Parse) {
-        matched_conditions.push("phase=parse".to_string());
+
+    let mut matched_conditions = Vec::new();
+    push_phase_annotations(
+        &mut matched_conditions,
+        rule,
+        &input.node.phase,
+        PhaseAnnotationWhen::RuleMatched,
+    );
+    push_context_conditions(&mut matched_conditions, input, rule);
+    if let Some(condition) = &rule.symbol_context_condition {
+        if input.has_symbol_context {
+            matched_conditions.push(condition.clone());
+        }
     }
+    matched_conditions.extend(message_conditions);
     Some(matched_conditions)
 }
 
-fn match_passthrough(input: &RuleInput<'_>) -> Option<Vec<String>> {
-    matches!(input.node.semantic_role, SemanticRole::Passthrough)
-        .then(|| vec!["semantic_role=passthrough".to_string()])
+fn match_template(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
+    let child_conditions = collect_group_conditions(input, &rule.child_message_groups, true);
+    let has_match = input.has_template_context
+        || input.has_template_child
+        || !message_conditions.is_empty()
+        || !child_conditions.is_empty();
+    if !has_match {
+        return None;
+    }
+
+    let mut matched_conditions = Vec::new();
+    push_context_conditions(&mut matched_conditions, input, rule);
+    push_child_note_conditions(&mut matched_conditions, input, rule);
+    push_phase_annotations(
+        &mut matched_conditions,
+        rule,
+        &input.node.phase,
+        PhaseAnnotationWhen::RuleMatched,
+    );
+    matched_conditions.extend(message_conditions);
+    matched_conditions.extend(child_conditions);
+    Some(matched_conditions)
+}
+
+fn match_macro_include(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    let mut matched_conditions = Vec::new();
+    push_context_conditions(&mut matched_conditions, input, rule);
+    push_child_note_conditions(&mut matched_conditions, input, rule);
+    matched_conditions.extend(collect_group_conditions(input, &rule.message_groups, false));
+    matched_conditions.extend(collect_group_conditions(
+        input,
+        &rule.child_message_groups,
+        true,
+    ));
+    (!matched_conditions.is_empty()).then_some(matched_conditions)
+}
+
+fn match_type_overload(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
+    let has_message_terms = !message_conditions.is_empty();
+    let has_match = input.has_candidate_child || has_message_terms;
+    if !has_match {
+        return None;
+    }
+
+    let mut matched_conditions = Vec::new();
+    if let Some(condition) = &rule.candidate_child_condition {
+        if input.has_candidate_child {
+            matched_conditions.push(condition.clone());
+        }
+    }
+    if has_message_terms {
+        push_phase_annotations(
+            &mut matched_conditions,
+            rule,
+            &input.node.phase,
+            PhaseAnnotationWhen::MessageTerms,
+        );
+    }
+    if input.has_candidate_child || has_message_terms {
+        push_phase_annotations(
+            &mut matched_conditions,
+            rule,
+            &input.node.phase,
+            PhaseAnnotationWhen::MessageOrCandidate,
+        );
+    }
+    matched_conditions.extend(message_conditions);
+    Some(matched_conditions)
+}
+
+fn match_syntax(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
+    if message_conditions.is_empty() {
+        return None;
+    }
+
+    let mut matched_conditions = message_conditions;
+    push_phase_annotations(
+        &mut matched_conditions,
+        rule,
+        &input.node.phase,
+        PhaseAnnotationWhen::RuleMatched,
+    );
+    Some(matched_conditions)
+}
+
+fn match_passthrough(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
+    if !matches!(input.node.semantic_role, SemanticRole::Passthrough) {
+        return None;
+    }
+    Some(
+        rule.semantic_role_condition
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>(),
+    )
 }
 
 fn finalize_family_decision(
     node: &DiagnosticNode,
-    rule: &FamilyRule,
+    rule: &FamilyRuleConfig,
     mut matched_conditions: Vec<String>,
 ) -> FamilyDecision {
     let existing_specific = node
@@ -391,14 +574,14 @@ fn finalize_family_decision(
         matched_conditions.push(format!("existing_specific_family={existing_family}"));
         FamilyDecision {
             family: existing_family,
-            rule_id: "rule.family.ingress_specific_override".to_string(),
+            rule_id: rulepack().ingress_specific_override_rule_id.clone(),
             matched_conditions,
             suppression_reason: Some("preserved_specific_family_from_ingress".to_string()),
         }
     } else {
         FamilyDecision {
-            family: rule.family.to_string(),
-            rule_id: rule.id.to_string(),
+            family: rule.family.clone(),
+            rule_id: rule.rule_id.clone(),
             matched_conditions,
             suppression_reason: None,
         }
@@ -415,26 +598,147 @@ fn finalize_unknown_family(node: &DiagnosticNode) -> FamilyDecision {
     if let Some(existing_family) = existing_specific {
         return FamilyDecision {
             family: existing_family,
-            rule_id: "rule.family.ingress_specific_override".to_string(),
+            rule_id: rulepack().ingress_specific_override_rule_id.clone(),
             matched_conditions: vec!["derived_family=unknown".to_string()],
             suppression_reason: Some("preserved_specific_family_from_ingress".to_string()),
         };
     }
 
+    let fallback = if matches!(node.semantic_role, SemanticRole::Passthrough) {
+        &rulepack().passthrough_fallback
+    } else {
+        &rulepack().unknown_fallback
+    };
+
     FamilyDecision {
-        family: if matches!(node.semantic_role, SemanticRole::Passthrough) {
-            "passthrough".to_string()
-        } else {
-            "unknown".to_string()
-        },
-        rule_id: if matches!(node.semantic_role, SemanticRole::Passthrough) {
-            "rule.family.passthrough.semantic_role".to_string()
-        } else {
-            "rule.family.unknown".to_string()
-        },
-        matched_conditions: vec!["no_family_rule_matched".to_string()],
-        suppression_reason: Some("generic_fallback".to_string()),
+        family: fallback.family.clone(),
+        rule_id: fallback.rule_id.clone(),
+        matched_conditions: fallback.matched_conditions.clone(),
+        suppression_reason: Some(fallback.suppression_reason.clone()),
     }
+}
+
+fn evaluate_confidence_policy(
+    input: &RuleInput<'_>,
+    decision: &FamilyDecision,
+    policy: &ConfidencePolicyConfig,
+) -> Confidence {
+    if let Some(fixed) = policy.fixed {
+        return fixed.into();
+    }
+
+    if policy
+        .high_when_any
+        .iter()
+        .any(|clause| confidence_clause_matches(input, decision, clause))
+    {
+        Confidence::High
+    } else if policy
+        .medium_when_any
+        .iter()
+        .any(|clause| confidence_clause_matches(input, decision, clause))
+    {
+        Confidence::Medium
+    } else {
+        policy.default_confidence.into()
+    }
+}
+
+fn confidence_clause_matches(
+    input: &RuleInput<'_>,
+    decision: &FamilyDecision,
+    clause: &ConfidenceClauseConfig,
+) -> bool {
+    clause
+        .all
+        .iter()
+        .all(|signal| confidence_signal_matches(input, decision, *signal))
+}
+
+fn confidence_signal_matches(
+    input: &RuleInput<'_>,
+    decision: &FamilyDecision,
+    signal: ConfidenceSignal,
+) -> bool {
+    match signal {
+        ConfidenceSignal::UserOwnedLocation => input.has_user_owned_location,
+        ConfidenceSignal::PrimaryOwnershipUser => {
+            matches!(input.primary_ownership, Some(Ownership::User))
+        }
+        ConfidenceSignal::PhaseParse => matches!(input.node.phase, Phase::Parse),
+        ConfidenceSignal::PhaseSemantic => matches!(input.node.phase, Phase::Semantic),
+        ConfidenceSignal::PhaseInstantiate => matches!(input.node.phase, Phase::Instantiate),
+        ConfidenceSignal::PhaseLink => matches!(input.node.phase, Phase::Link),
+        ConfidenceSignal::TemplateContext => input.has_template_context,
+        ConfidenceSignal::MacroContext => input.has_macro_context,
+        ConfidenceSignal::IncludeContext => input.has_include_context,
+        ConfidenceSignal::LinkerContext => input.has_linker_context,
+        ConfidenceSignal::SymbolContext => input.has_symbol_context,
+        ConfidenceSignal::CandidateChild => input.has_candidate_child,
+        ConfidenceSignal::TemplateChild => input.has_template_child,
+        ConfidenceSignal::MacroChild => input.has_macro_child,
+        ConfidenceSignal::IncludeChild => input.has_include_child,
+        ConfidenceSignal::LexicalSignal => lexical_signal_count(decision) > 0,
+        ConfidenceSignal::StructuredSignal => has_structured_signal(decision),
+        ConfidenceSignal::ExistingSpecificFamily => decision
+            .matched_conditions
+            .iter()
+            .any(|condition| condition.starts_with("existing_specific_family=")),
+    }
+}
+
+fn push_context_conditions(
+    matched_conditions: &mut Vec<String>,
+    input: &RuleInput<'_>,
+    rule: &FamilyRuleConfig,
+) {
+    for context in &rule.contexts {
+        if input.has_context(context.kind) {
+            matched_conditions.push(context.condition.clone());
+        }
+    }
+}
+
+fn push_child_note_conditions(
+    matched_conditions: &mut Vec<String>,
+    input: &RuleInput<'_>,
+    rule: &FamilyRuleConfig,
+) {
+    for child_note in &rule.child_notes {
+        if input.has_child_note_kind(child_note.kind) {
+            matched_conditions.push(child_note.condition.clone());
+        }
+    }
+}
+
+fn push_phase_annotations(
+    matched_conditions: &mut Vec<String>,
+    rule: &FamilyRuleConfig,
+    phase: &Phase,
+    when: PhaseAnnotationWhen,
+) {
+    for annotation in &rule.phase_annotations {
+        if annotation.when == when && &annotation.phase == phase {
+            matched_conditions.push(annotation.condition.clone());
+        }
+    }
+}
+
+fn collect_group_conditions(
+    input: &RuleInput<'_>,
+    groups: &[TermGroupConfig],
+    child: bool,
+) -> Vec<String> {
+    let mut matched_conditions = Vec::new();
+    for group in groups {
+        let conditions = if child {
+            input.child_message_conditions(group)
+        } else {
+            input.message_conditions(group)
+        };
+        matched_conditions.extend(conditions);
+    }
+    matched_conditions
 }
 
 fn has_structured_signal(decision: &FamilyDecision) -> bool {
@@ -460,14 +764,37 @@ fn lexical_signal_count(decision: &FamilyDecision) -> usize {
         .count()
 }
 
-fn has_any_pattern(haystack: &str, patterns: &[&str]) -> bool {
+fn flatten_terms(groups: &[TermGroupConfig]) -> Vec<String> {
+    groups
+        .iter()
+        .flat_map(|group| group.terms.iter().cloned())
+        .collect()
+}
+
+fn has_any_pattern(haystack: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| haystack.contains(pattern))
 }
 
-fn matching_conditions(prefix: &str, haystack: &str, patterns: &[&str]) -> Vec<String> {
+fn matching_conditions(prefix: &str, haystack: &str, patterns: &[String]) -> Vec<String> {
     patterns
         .iter()
-        .filter(|pattern| haystack.contains(**pattern))
+        .filter(|pattern| haystack.contains(pattern.as_str()))
         .map(|pattern| format!("{prefix}={pattern}"))
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn loads_checked_in_enrich_rulepack() {
+        let rulepack = rulepack();
+        assert_eq!(rulepack.rulepack_version, "phase1");
+        assert_eq!(rulepack.rules.len(), 6);
+        assert_eq!(
+            rulepack.rule("syntax").rule_id,
+            "rule.family.syntax.phase_or_message"
+        );
+    }
 }
