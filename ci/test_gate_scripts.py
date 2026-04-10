@@ -7,6 +7,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GATE_SUMMARY = REPO_ROOT / "ci" / "gate_summary.py"
+GATE_REPLAY_CONTRACT = REPO_ROOT / "ci" / "gate_replay_contract.py"
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -24,6 +25,7 @@ class GateSummaryTest(unittest.TestCase):
         failure_classification: str,
         status: str,
         exit_code: int | None,
+        artifact_paths: list[str] | None = None,
     ) -> dict:
         return {
             "schema_version": 2,
@@ -42,7 +44,7 @@ class GateSummaryTest(unittest.TestCase):
             "fixture": None,
             "gcc_version": "host",
             "support_tier": "repository_gate",
-            "artifact_paths": [],
+            "artifact_paths": artifact_paths or [],
             "log_paths": {"stdout": None, "stderr": None},
             "started_at": "2026-04-09T00:00:00Z",
             "finished_at": "2026-04-09T00:00:01Z",
@@ -190,6 +192,201 @@ class GateSummaryTest(unittest.TestCase):
             self.assertTrue(
                 any("build environment artifact missing" in anomaly for anomaly in summary["anomalies"])
             )
+
+    def test_gate_summary_surfaces_machine_readable_path_aware_blockers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report_root = root / "reports"
+            plan_path = root / "plan.json"
+            status_dir = report_root / "gate" / "status"
+            stop_ship_path = report_root / "gate" / "replay-stop-ship.json"
+            write_json(
+                plan_path,
+                {
+                    "schema_version": 1,
+                    "workflow": "test-gate",
+                    "job": "test-job",
+                    "steps": [
+                        {
+                            "id": "path-aware-replay-stop-ship",
+                            "order": 1,
+                            "name": "Replay stop-ship contract",
+                            "policy": "always",
+                            "failure_classification": "product",
+                        }
+                    ],
+                },
+            )
+            write_json(
+                status_dir / "01-path-aware-replay-stop-ship.json",
+                self.make_status_payload(
+                    step_id="path-aware-replay-stop-ship",
+                    order=1,
+                    name="Replay stop-ship contract",
+                    failure_classification="product",
+                    status="failure",
+                    exit_code=1,
+                    artifact_paths=[str(stop_ship_path)],
+                ),
+            )
+            write_json(
+                stop_ship_path,
+                {
+                    "schema_version": 1,
+                    "status": "fail",
+                    "replay_report_path": str(report_root / "replay" / "replay-report.json"),
+                    "blocker_counts": {
+                        "total": 2,
+                        "by_category": {"matrix_hole": 1, "quality_regression": 1},
+                        "by_concern": {
+                            "coverage.band_path_surface": 1,
+                            "semantic.family": 1,
+                        },
+                    },
+                    "blockers": [
+                        {
+                            "category": "matrix_hole",
+                            "concern": "coverage.band_path_surface",
+                            "layer": "coverage.band_path_surface",
+                            "summary": "missing required coverage cell `gcc13_14/native_text_capture/ci`",
+                            "fixture_id": None,
+                            "support_band": "gcc13_14",
+                            "processing_path": "native_text_capture",
+                            "surface": "ci",
+                            "matrix_cell": "gcc13_14/native_text_capture/ci",
+                        },
+                        {
+                            "category": "quality_regression",
+                            "concern": "semantic.family",
+                            "layer": "semantic.family",
+                            "summary": "expected `syntax`, got `linker`",
+                            "fixture_id": "c/syntax/case-09",
+                            "support_band": "gcc9_12",
+                            "processing_path": "native_text_capture",
+                            "surface": None,
+                        },
+                    ],
+                },
+            )
+
+            completed = self.run_gate_summary(plan_path, report_root)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+
+            summary = json.loads(
+                (report_root / "gate" / "gate-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary["machine_readable_blocker_counts"]["total"], 2)
+            self.assertEqual(
+                summary["machine_readable_blocker_counts"]["by_category"]["matrix_hole"], 1
+            )
+            self.assertEqual(
+                summary["machine_readable_blockers"][0]["processing_path"],
+                "native_text_capture",
+            )
+            self.assertEqual(summary["machine_readable_blockers"][0]["surface"], "ci")
+
+
+class ReplayContractTest(unittest.TestCase):
+    def run_replay_contract(
+        self, replay_report: Path, output_path: Path
+    ) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                "python3",
+                str(GATE_REPLAY_CONTRACT),
+                "--replay-report",
+                str(replay_report),
+                "--output",
+                str(output_path),
+            ],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+
+    def test_replay_contract_classifies_matrix_and_surface_blockers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            replay_report = root / "replay-report.json"
+            output_path = root / "replay-stop-ship.json"
+            write_json(
+                replay_report,
+                {
+                    "coverage": {
+                        "missing_required_band_path_surfaces": [
+                            "gcc13_14/native_text_capture/ci"
+                        ],
+                        "missing_required_band_paths": [],
+                    },
+                    "fixtures": [
+                        {
+                            "fixture_id": "c/syntax/case-09",
+                            "support_band": "gcc9_12",
+                            "processing_path": "native_text_capture",
+                        }
+                    ],
+                    "failures": [
+                        {
+                            "fixture_id": "c/syntax/case-09",
+                            "layer": "semantic.family",
+                            "summary": "expected `syntax`, got `linker`",
+                        },
+                        {
+                            "fixture_id": "c/syntax/case-09",
+                            "layer": "render.ci.line_budget",
+                            "summary": "rendered 20 lines, budget is 14",
+                        },
+                    ],
+                    "native_parity": {
+                        "failing_fixtures": [
+                            {
+                                "fixture_id": "c/syntax/case-09",
+                                "dimension": "line_budget",
+                                "layer": "render.ci.line_budget",
+                                "summary": "rendered 20 lines, budget is 14",
+                            }
+                        ]
+                    },
+                },
+            )
+
+            completed = self.run_replay_contract(replay_report, output_path)
+            self.assertEqual(completed.returncode, 1, completed.stderr)
+
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["status"], "fail")
+            self.assertEqual(payload["blocker_counts"]["by_category"]["matrix_hole"], 1)
+            self.assertEqual(payload["blocker_counts"]["by_category"]["native_parity"], 1)
+            self.assertEqual(
+                payload["blocker_counts"]["by_category"]["quality_regression"], 1
+            )
+            concerns = {blocker["concern"] for blocker in payload["blockers"]}
+            self.assertIn("coverage.band_path_surface", concerns)
+            self.assertIn("line_budget", concerns)
+            self.assertIn("semantic.family", concerns)
+
+
+class CheckedInPlanTest(unittest.TestCase):
+    def load_plan(self, relative_path: str) -> dict:
+        return json.loads((REPO_ROOT / relative_path).read_text(encoding="utf-8"))
+
+    def test_checked_in_plans_include_path_aware_replay_stop_ship_step(self) -> None:
+        cases = [
+            ("ci/plans/pr-gate.json", "representative-acceptance-replay"),
+            ("ci/plans/nightly-gate.json", "representative-acceptance-replay"),
+            ("ci/plans/rc-gate.json", "cargo-xtask-rc-gate"),
+        ]
+        for relative_path, prerequisite_id in cases:
+            with self.subTest(plan=relative_path):
+                plan = self.load_plan(relative_path)
+                steps_by_id = {step["id"]: step for step in plan["steps"]}
+                self.assertIn("path-aware-replay-stop-ship", steps_by_id)
+                stop_ship = steps_by_id["path-aware-replay-stop-ship"]
+                self.assertIn("$REPORT_ROOT/gate/replay-stop-ship.json", stop_ship["artifact_paths"])
+                self.assertGreater(stop_ship["order"], steps_by_id[prerequisite_id]["order"])
 
 
 if __name__ == "__main__":

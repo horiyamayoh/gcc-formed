@@ -71,12 +71,21 @@ jobs:
             --report-root "$REPORT_ROOT" \
             --command 'cargo xtask check'
       - name: Representative acceptance replay
+        id: representative_acceptance_replay
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
             --step-id representative-acceptance-replay \
             --report-root "$REPORT_ROOT" \
             --command 'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
+      - name: Replay stop-ship contract
+        if: always() && steps.representative_acceptance_replay.outcome != 'skipped'
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id path-aware-replay-stop-ship \
+            --report-root "$REPORT_ROOT" \
+            --command 'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" --output "$REPORT_ROOT/gate/replay-stop-ship.json"'
       - name: Build wrapper binary in GCC 15 image
         run: |
           command=$(cat <<'EOF'

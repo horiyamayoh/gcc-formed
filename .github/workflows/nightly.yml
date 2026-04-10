@@ -102,6 +102,7 @@ jobs:
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo test --workspace'
       - name: Representative acceptance replay
+        id: representative_acceptance_replay
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
@@ -111,6 +112,17 @@ jobs:
             --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
+      - name: Replay stop-ship contract
+        if: always() && steps.representative_acceptance_replay.outcome != 'skipped'
+        run: |
+          python3 ci/gate_step.py \
+            --plan "$GATE_PLAN" \
+            --step-id path-aware-replay-stop-ship \
+            --report-root "$REPORT_ROOT" \
+            --matrix-gcc-version "$MATRIX_GCC_VERSION" \
+            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --release-blocker "$RELEASE_BLOCKER" \
+            --command 'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" --output "$REPORT_ROOT/gate/replay-stop-ship.json"'
       - name: cargo xtask bench-smoke
         run: |
           python3 ci/gate_step.py \

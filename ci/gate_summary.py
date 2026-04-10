@@ -10,6 +10,7 @@ from string import Template
 
 SCHEMA_VERSION = 2
 BUILD_ENVIRONMENT_SCHEMA_VERSION = 1
+REPLAY_STOP_SHIP_SCHEMA_VERSION = 1
 BUILD_ENVIRONMENT_STEP_SECTIONS = {
     "capture-host-build-environment": "host",
     "capture-gcc15-ci-environment": "ci_image",
@@ -162,6 +163,44 @@ def build_environment_markdown_lines(summary: dict) -> list[str]:
     return lines
 
 
+def load_machine_readable_blockers(summary_steps: list[dict]) -> tuple[list[dict], list[str]]:
+    blockers: list[dict] = []
+    anomalies: list[str] = []
+    for step in summary_steps:
+        if step["status"] in {"skipped_prior_failure", "skipped_by_policy"}:
+            continue
+        for artifact in step.get("artifact_paths", []):
+            artifact_path = Path(artifact)
+            if artifact_path.name != "replay-stop-ship.json":
+                continue
+            if not artifact_path.exists():
+                anomalies.append(
+                    "machine-readable blocker artifact missing after executed "
+                    f"`{step['step']['id']}` step: {artifact_path}"
+                )
+                continue
+            try:
+                payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as error:
+                anomalies.append(
+                    f"machine-readable blocker artifact is not valid JSON: {artifact_path}: {error}"
+                )
+                continue
+            if payload.get("schema_version") != REPLAY_STOP_SHIP_SCHEMA_VERSION:
+                anomalies.append(
+                    "machine-readable blocker schema version mismatch: "
+                    f"expected {REPLAY_STOP_SHIP_SCHEMA_VERSION}, "
+                    f"found {payload.get('schema_version')}"
+                )
+            for blocker in payload.get("blockers", []):
+                enriched = dict(blocker)
+                enriched["step_id"] = step["step"]["id"]
+                enriched["step_name"] = step["step"]["name"]
+                enriched["artifact_path"] = str(artifact_path)
+                blockers.append(enriched)
+    return blockers, anomalies
+
+
 def overall_failure_classification_for(summary_steps: list[dict], anomalies: list[str]) -> str | None:
     classes = {
         step["step"].get("failure_classification", "product")
@@ -199,6 +238,8 @@ def build_markdown(summary: dict) -> str:
         )
     counts = summary["status_counts"]
     classification_counts = summary["failure_classification_counts"]
+    blocker_counts = summary.get("machine_readable_blocker_counts") or {}
+    blocker_by_category = blocker_counts.get("by_category") or {}
     lines.extend(
         [
             (
@@ -213,6 +254,13 @@ def build_markdown(summary: dict) -> str:
                 f"product={classification_counts.get('product', 0)}, "
                 f"infrastructure={classification_counts.get('infrastructure', 0)}, "
                 f"instrumentation={classification_counts.get('instrumentation', 0)}"
+            ),
+            (
+                "- Machine-readable blockers: "
+                f"total={blocker_counts.get('total', 0)}, "
+                f"matrix_hole={blocker_by_category.get('matrix_hole', 0)}, "
+                f"native_parity={blocker_by_category.get('native_parity', 0)}, "
+                f"quality_regression={blocker_by_category.get('quality_regression', 0)}"
             ),
             *build_environment_markdown_lines(summary),
             "",
@@ -238,6 +286,28 @@ def build_markdown(summary: dict) -> str:
             f"`{support_tier}` | "
             f"`{fixture}` |"
         )
+
+    if summary.get("machine_readable_blockers"):
+        lines.extend(
+            [
+                "",
+                "## Machine-Readable Blockers",
+                "",
+                "| Step | Band | Path | Surface | Concern | Fixture | Summary |",
+                "| --- | --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for blocker in summary["machine_readable_blockers"]:
+            lines.append(
+                "| "
+                f"{blocker.get('step_name') or blocker.get('step_id') or '-'} | "
+                f"`{blocker.get('support_band') or '-'}` | "
+                f"`{blocker.get('processing_path') or '-'}` | "
+                f"`{blocker.get('surface') or '-'}` | "
+                f"`{blocker.get('concern') or '-'}` | "
+                f"`{blocker.get('fixture_id') or '-'}` | "
+                f"{blocker.get('summary') or '-'} |"
+            )
 
     if summary.get("anomalies"):
         lines.extend(["", "## Anomalies", ""])
@@ -348,8 +418,19 @@ def main() -> int:
         for step in materialized_steps
         if step["status"] == "failure"
     )
+    machine_readable_blockers, blocker_anomalies = load_machine_readable_blockers(materialized_steps)
+    anomalies.extend(blocker_anomalies)
     if anomalies:
         failure_classification_counts["instrumentation"] += len(anomalies)
+    machine_readable_blocker_counts = {
+        "total": len(machine_readable_blockers),
+        "by_category": dict(
+            sorted(Counter(blocker["category"] for blocker in machine_readable_blockers).items())
+        ),
+        "by_concern": dict(
+            sorted(Counter(blocker["concern"] for blocker in machine_readable_blockers).items())
+        ),
+    }
     overall_status = "failure" if status_counts.get("failure", 0) > 0 or anomalies else "success"
     overall_failure_classification = overall_failure_classification_for(
         materialized_steps, anomalies
@@ -376,6 +457,8 @@ def main() -> int:
         },
         "steps": materialized_steps,
         "anomalies": anomalies,
+        "machine_readable_blockers": machine_readable_blockers,
+        "machine_readable_blocker_counts": machine_readable_blocker_counts,
         "build_environment_path": str(build_environment_path),
         "build_environment": build_environment,
         "matrix": {

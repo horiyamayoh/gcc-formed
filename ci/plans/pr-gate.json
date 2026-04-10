@@ -90,8 +90,22 @@
       ]
     },
     {
-      "id": "build-wrapper-binary-gcc15-image",
+      "id": "path-aware-replay-stop-ship",
       "order": 7,
+      "name": "Replay stop-ship contract",
+      "policy": "always",
+      "failure_classification": "product",
+      "command": "python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/replay/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
+      "fixture": "subset:representative",
+      "gcc_version": "gcc:15",
+      "support_tier": "gcc15_primary",
+      "artifact_paths": [
+        "$REPORT_ROOT/gate/replay-stop-ship.json"
+      ]
+    },
+    {
+      "id": "build-wrapper-binary-gcc15-image",
+      "order": 8,
       "name": "Build wrapper binary in GCC 15 image",
       "policy": "always",
       "failure_classification": "product",
@@ -103,7 +117,7 @@
     },
     {
       "id": "wrapper-self-check-gcc15-image",
-      "order": 8,
+      "order": 9,
       "name": "Wrapper self-check in GCC 15 image",
       "policy": "always",
       "failure_classification": "product",
@@ -118,7 +132,7 @@
     },
     {
       "id": "representative-gcc15-snapshot-check",
-      "order": 9,
+      "order": 10,
       "name": "Representative GCC 15 snapshot check",
       "policy": "always",
       "failure_classification": "product",
@@ -133,7 +147,7 @@
     },
     {
       "id": "vendor-dependency-tree",
-      "order": 10,
+      "order": 11,
       "name": "Vendor dependency tree",
       "policy": "always",
       "failure_classification": "product",
@@ -147,7 +161,7 @@
     },
     {
       "id": "hermetic-release-build-smoke",
-      "order": 11,
+      "order": 12,
       "name": "Hermetic release build smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -161,7 +175,7 @@
     },
     {
       "id": "release-packaging-smoke",
-      "order": 12,
+      "order": 13,
       "name": "Release packaging smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -176,7 +190,7 @@
     },
     {
       "id": "release-install-smoke",
-      "order": 13,
+      "order": 14,
       "name": "Release install smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -192,7 +206,7 @@
     },
     {
       "id": "rollback-symlink-smoke",
-      "order": 14,
+      "order": 15,
       "name": "Rollback symlink smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -206,7 +220,7 @@
     },
     {
       "id": "system-wide-layout-smoke",
-      "order": 15,
+      "order": 16,
       "name": "System-wide layout smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -222,7 +236,7 @@
     },
     {
       "id": "release-repository-promote-and-pin-smoke",
-      "order": 16,
+      "order": 17,
       "name": "Release repository promote and pin smoke",
       "policy": "always",
       "failure_classification": "product",
@@ -242,7 +256,7 @@
     },
     {
       "id": "release-provenance-manifest",
-      "order": 17,
+      "order": 18,
       "name": "Release provenance manifest",
       "policy": "always",
       "failure_classification": "instrumentation",
@@ -256,7 +270,7 @@
     },
     {
       "id": "dependency-and-license-gate",
-      "order": 18,
+      "order": 19,
       "name": "Dependency and license gate",
       "policy": "always",
       "failure_classification": "product",

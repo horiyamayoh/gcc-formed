@@ -1072,22 +1072,7 @@ fn build_rc_gate_checks(
     let unexpected_fallback_rate = replay.metrics.unexpected_fallback_count as f64
         / replay.metrics.promoted_fixture_count.max(1) as f64;
     vec![
-        RcGateCheck {
-            id: "curated_corpus".to_string(),
-            title: "Curated Corpus Pass 100%".to_string(),
-            status: if replay.failures.is_empty() && replay.promoted_failed == 0 {
-                GateStatus::Pass
-            } else {
-                GateStatus::Fail
-            },
-            summary: format!(
-                "verified {}/{} promoted fixtures",
-                replay.promoted_verified, replay.promoted_fixture_count
-            ),
-            blocker: replay.promoted_failed > 0,
-            manual: false,
-            evidence_path: Some(PathBuf::from("replay-report.json")),
-        },
+        curated_corpus_check(replay),
         RcGateCheck {
             id: "rollout_matrix".to_string(),
             title: "Rollout Mode Matrix Pass 100%".to_string(),
@@ -1168,6 +1153,132 @@ fn build_rc_gate_checks(
         fuzz_check(fuzz_smoke, fuzz, fuzz_path),
         manual_ux_check(ux, ux_path, allow_pending_manual_checks),
     ]
+}
+
+fn curated_corpus_check(replay: &ReplayReport) -> RcGateCheck {
+    let status = if replay.failures.is_empty() && replay.promoted_failed == 0 {
+        GateStatus::Pass
+    } else {
+        GateStatus::Fail
+    };
+    RcGateCheck {
+        id: "curated_corpus".to_string(),
+        title: "Curated Corpus Pass 100%".to_string(),
+        status: status.clone(),
+        summary: curated_corpus_summary(replay),
+        blocker: status == GateStatus::Fail,
+        manual: false,
+        evidence_path: Some(PathBuf::from("replay-report.json")),
+    }
+}
+
+fn curated_corpus_summary(replay: &ReplayReport) -> String {
+    let mut highlights = Vec::new();
+    for cell in replay
+        .coverage
+        .missing_required_band_path_surfaces
+        .iter()
+        .take(3)
+    {
+        highlights.push(format!("matrix_hole={cell}"));
+    }
+    for cell in replay.coverage.missing_required_band_paths.iter().take(3) {
+        highlights.push(format!("matrix_path_hole={cell}"));
+    }
+    let remaining_slots = 3usize.saturating_sub(highlights.len());
+    for failure in replay
+        .failures
+        .iter()
+        .filter(|failure| {
+            !matches!(
+                failure.layer.as_str(),
+                "coverage.band_path_surface" | "coverage.band_path"
+            )
+        })
+        .take(remaining_slots)
+    {
+        highlights.push(replay_failure_highlight(replay, failure));
+    }
+
+    if highlights.is_empty() {
+        format!(
+            "verified {}/{} promoted fixtures",
+            replay.promoted_verified, replay.promoted_fixture_count
+        )
+    } else {
+        format!(
+            "verified {}/{} promoted fixtures; blockers={}",
+            replay.promoted_verified,
+            replay.promoted_fixture_count,
+            highlights.join("; ")
+        )
+    }
+}
+
+fn replay_failure_highlight(
+    replay: &ReplayReport,
+    failure: &crate::commands::corpus::VerificationFailure,
+) -> String {
+    let fixture = replay
+        .fixtures
+        .iter()
+        .find(|fixture| fixture.fixture_id == failure.fixture_id);
+    let support_band = fixture
+        .map(|fixture| fixture.support_band.as_str())
+        .unwrap_or("unknown_band");
+    let processing_path = fixture
+        .map(|fixture| fixture.processing_path.as_str())
+        .unwrap_or("unknown_path");
+    let concern = replay_failure_concern(&failure.layer);
+    match replay_failure_surface(&failure.layer) {
+        Some(surface) => format!(
+            "{support_band}/{processing_path}/{surface} concern={concern} fixture={} {}",
+            failure.fixture_id, failure.summary
+        ),
+        None => format!(
+            "{support_band}/{processing_path} concern={concern} fixture={} {}",
+            failure.fixture_id, failure.summary
+        ),
+    }
+}
+
+fn replay_failure_surface(layer: &str) -> Option<&str> {
+    let mut parts = layer.split('.');
+    match (parts.next(), parts.next(), parts.next()) {
+        (Some("render"), Some(surface), Some(_)) => Some(surface),
+        _ => None,
+    }
+}
+
+fn replay_failure_concern(layer: &str) -> String {
+    if layer.ends_with(".ansi") {
+        return "color_meaning".to_string();
+    }
+    if layer.ends_with(".line_budget") {
+        return "line_budget".to_string();
+    }
+    if layer.ends_with(".first_action_visibility") {
+        return "first_action_visibility".to_string();
+    }
+    if layer.ends_with(".omission_notice")
+        || layer.ends_with(".partial_notice")
+        || layer.ends_with(".raw_disclosure")
+        || layer.ends_with(".raw_sub_block")
+        || layer.ends_with(".low_confidence_notice")
+    {
+        return "disclosure_honesty".to_string();
+    }
+    if layer.ends_with(".compaction") {
+        return "compaction".to_string();
+    }
+    if let Some(rest) = layer.strip_prefix("render.") {
+        let mut parts = rest.split('.');
+        let _surface = parts.next();
+        if let Some(concern) = parts.next() {
+            return concern.to_string();
+        }
+    }
+    layer.to_string()
 }
 
 fn human_eval_kit_check(report: &HumanEvalKitReport) -> RcGateCheck {
@@ -1522,7 +1633,7 @@ mod tests {
     use super::*;
     use crate::commands::corpus::{
         AcceptanceFixtureSummary, FixtureCoverageReport, NativeParityReport, ReplayReport,
-        acceptance_metrics_for,
+        VerificationFailure, acceptance_metrics_for,
     };
     use std::collections::BTreeMap;
 
@@ -1825,5 +1936,42 @@ mod tests {
 
         assert_eq!(check.status, GateStatus::Fail);
         assert!(check.blocker);
+    }
+
+    #[test]
+    fn curated_corpus_check_blocks_path_aware_matrix_holes() {
+        let mut replay = replay_report(vec![fixture_summary("c/syntax/case-01", "syntax", 20, 10)]);
+        replay.coverage.missing_required_band_path_surfaces =
+            vec!["gcc13_14/native_text_capture/ci".to_string()];
+        replay.failures.push(VerificationFailure {
+            layer: "coverage.band_path_surface".to_string(),
+            fixture_id: "corpus".to_string(),
+            summary: "representative coverage missing required band/path/surface combinations: gcc13_14/native_text_capture/ci".to_string(),
+        });
+
+        let check = curated_corpus_check(&replay);
+
+        assert_eq!(check.status, GateStatus::Fail);
+        assert!(check.blocker);
+        assert!(check.summary.contains("gcc13_14/native_text_capture/ci"));
+    }
+
+    #[test]
+    fn curated_corpus_check_surfaces_band_path_surface_and_concern() {
+        let mut replay = replay_report(vec![fixture_summary("c/syntax/case-09", "syntax", 20, 10)]);
+        replay.fixtures[0].support_band = "gcc9_12".to_string();
+        replay.fixtures[0].processing_path = "native_text_capture".to_string();
+        replay.failures.push(VerificationFailure {
+            layer: "render.ci.line_budget".to_string(),
+            fixture_id: "c/syntax/case-09".to_string(),
+            summary: "rendered 20 lines, budget is 14".to_string(),
+        });
+
+        let check = curated_corpus_check(&replay);
+
+        assert_eq!(check.status, GateStatus::Fail);
+        assert!(check.blocker);
+        assert!(check.summary.contains("gcc9_12/native_text_capture/ci"));
+        assert!(check.summary.contains("line_budget"));
     }
 }
