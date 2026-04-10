@@ -92,11 +92,11 @@ impl ProbeResult {
     }
 
     pub fn support_level(&self) -> SupportLevel {
-        support_level_for_tier(self.support_tier)
+        support_level_for_version_band(self.version_band(), self.support_tier)
     }
 
     pub fn default_processing_path(&self) -> ProcessingPath {
-        default_processing_path_for_tier(self.support_tier)
+        default_processing_path_for_version_band(self.version_band(), self.support_tier)
     }
 
     pub fn capability_profile(&self) -> CapabilityProfile {
@@ -222,11 +222,35 @@ pub fn support_level_for_tier(tier: SupportTier) -> SupportLevel {
     }
 }
 
+fn support_level_for_version_band(
+    version_band: VersionBand,
+    tier: SupportTier,
+) -> SupportLevel {
+    match version_band {
+        VersionBand::Gcc9_12 => SupportLevel::Experimental,
+        VersionBand::Gcc15Plus | VersionBand::Gcc13_14 => support_level_for_tier(tier),
+        VersionBand::Unknown => support_level_for_tier(tier),
+    }
+}
+
 pub fn default_processing_path_for_tier(tier: SupportTier) -> ProcessingPath {
     match tier {
         SupportTier::A => ProcessingPath::DualSinkStructured,
         SupportTier::B => ProcessingPath::NativeTextCapture,
         SupportTier::C => ProcessingPath::Passthrough,
+    }
+}
+
+fn default_processing_path_for_version_band(
+    version_band: VersionBand,
+    tier: SupportTier,
+) -> ProcessingPath {
+    match version_band {
+        VersionBand::Gcc9_12 => ProcessingPath::NativeTextCapture,
+        VersionBand::Gcc15Plus | VersionBand::Gcc13_14 => {
+            default_processing_path_for_tier(tier)
+        }
+        VersionBand::Unknown => default_processing_path_for_tier(tier),
     }
 }
 
@@ -294,7 +318,7 @@ fn capability_profile_for_compatibility(
         },
         VersionBand::Gcc9_12 => CapabilityProfile {
             version_band,
-            support_level: support_level_for_tier(support_tier),
+            support_level: SupportLevel::Experimental,
             native_text_capture: true,
             json_diagnostics: false,
             sarif_diagnostics,
@@ -303,8 +327,12 @@ fn capability_profile_for_compatibility(
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
-            default_processing_path: default_processing_path_for_tier(support_tier),
-            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
+            default_processing_path: ProcessingPath::NativeTextCapture,
+            allowed_processing_paths: BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ]),
         },
         VersionBand::Unknown => CapabilityProfile {
             version_band,
@@ -441,6 +469,26 @@ mod tests {
     }
 
     #[test]
+    fn maps_band_specific_support_levels_and_default_processing_paths() {
+        assert_eq!(
+            support_level_for_version_band(VersionBand::Gcc9_12, SupportTier::C),
+            SupportLevel::Experimental
+        );
+        assert_eq!(
+            support_level_for_version_band(VersionBand::Unknown, SupportTier::C),
+            SupportLevel::Unsupported
+        );
+        assert_eq!(
+            default_processing_path_for_version_band(VersionBand::Gcc9_12, SupportTier::C),
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            default_processing_path_for_version_band(VersionBand::Unknown, SupportTier::C),
+            ProcessingPath::Passthrough
+        );
+    }
+
+    #[test]
     fn builds_capability_profiles_without_mutating_legacy_surface() {
         let gcc15 = capability_profile_for_major(15);
         assert_eq!(gcc15.version_band, VersionBand::Gcc15Plus);
@@ -476,10 +524,33 @@ mod tests {
                 .contains(&ProcessingPath::NativeTextCapture)
         );
 
+        let gcc12 = capability_profile_for_major(12);
+        assert_eq!(gcc12.version_band, VersionBand::Gcc9_12);
+        assert_eq!(gcc12.support_level, SupportLevel::Experimental);
+        assert_eq!(
+            gcc12.default_processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert!(
+            gcc12
+                .allowed_processing_paths
+                .contains(&ProcessingPath::SingleSinkStructured)
+        );
+        assert!(
+            gcc12
+                .allowed_processing_paths
+                .contains(&ProcessingPath::NativeTextCapture)
+        );
+        assert!(gcc12.allowed_processing_paths.contains(&ProcessingPath::Passthrough));
+
         let gcc8 = capability_profile_for_major(8);
         assert_eq!(gcc8.version_band, VersionBand::Unknown);
         assert_eq!(gcc8.support_level, SupportLevel::Unsupported);
         assert_eq!(gcc8.default_processing_path, ProcessingPath::Passthrough);
+        assert_eq!(
+            gcc8.allowed_processing_paths,
+            BTreeSet::from([ProcessingPath::Passthrough])
+        );
     }
 
     #[test]
@@ -510,6 +581,41 @@ mod tests {
         assert!(probe.capability_profile().dual_sink);
         assert_eq!(probe.support_tier, SupportTier::A);
         assert!(probe.add_output_sarif_supported);
+    }
+
+    #[test]
+    fn probe_result_accessors_reflect_band_c_contract() {
+        let probe = ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: PathBuf::from("/usr/bin/gcc-12"),
+            version_string: "gcc (GCC) 12.3.0".to_string(),
+            major: 12,
+            minor: 3,
+            support_tier: SupportTier::C,
+            driver_kind: DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: ProbeKey {
+                realpath: PathBuf::from("/usr/bin/gcc-12"),
+                inode: 2,
+                mtime_seconds: 0,
+                size_bytes: 2,
+            },
+        };
+
+        assert_eq!(probe.version_band(), VersionBand::Gcc9_12);
+        assert_eq!(probe.support_level(), SupportLevel::Experimental);
+        assert_eq!(
+            probe.default_processing_path(),
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            probe.capability_profile().allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
     }
 
     #[test]
