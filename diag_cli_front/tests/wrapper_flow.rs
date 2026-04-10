@@ -215,7 +215,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
 }
 
 #[test]
-fn falls_back_to_passthrough_with_out_of_scope_backend_notice() {
+fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
     let temp = fixture("12.2.0");
     let backend = temp.path().join("fake-gcc");
     let source = temp.path().join("main.c");
@@ -231,25 +231,55 @@ fn falls_back_to_passthrough_with_out_of_scope_backend_notice() {
         .arg(&source)
         .assert()
         .failure()
+        .stderr(predicate::str::contains(expected_tier_c_native_text_notice()))
         .stderr(predicate::str::contains(
-            expected_tier_c_passthrough_notice(),
+            "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
             "main.c:4:1: error: expected ';' before '}' token",
         ))
-        .stderr(predicate::str::contains("help:").not());
+        .stderr(predicate::str::contains(
+            "help: verify the first compiler-reported location against the preserved raw diagnostics",
+        ))
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
-    assert_eq!(trace["selected_mode"], "passthrough");
+    assert_eq!(trace["selected_mode"], "render");
     assert_eq!(trace["support_tier"], "c");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
-        "passthrough"
+        "native_text_capture"
     );
-    assert_eq!(trace["environment_summary"]["support_level"], "unsupported");
-    assert_eq!(trace["fallback_reason"], "unsupported_tier");
+    assert_eq!(
+        trace["environment_summary"]["support_level"],
+        "experimental"
+    );
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["document_completeness"].as_str(),
+        Some("partial")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
+    );
 }
 
 #[cfg(unix)]
@@ -1017,8 +1047,8 @@ fn expected_tier_b_shadow_notice() -> &'static str {
     "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
 }
 
-fn expected_tier_c_passthrough_notice() -> &'static str {
-    "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
+fn expected_tier_c_native_text_notice() -> &'static str {
+    "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in."
 }
 
 #[cfg(unix)]

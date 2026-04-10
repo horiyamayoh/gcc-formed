@@ -222,10 +222,7 @@ pub fn support_level_for_tier(tier: SupportTier) -> SupportLevel {
     }
 }
 
-fn support_level_for_version_band(
-    version_band: VersionBand,
-    tier: SupportTier,
-) -> SupportLevel {
+fn support_level_for_version_band(version_band: VersionBand, tier: SupportTier) -> SupportLevel {
     match version_band {
         VersionBand::Gcc9_12 => SupportLevel::Experimental,
         VersionBand::Gcc15Plus | VersionBand::Gcc13_14 => support_level_for_tier(tier),
@@ -247,9 +244,7 @@ fn default_processing_path_for_version_band(
 ) -> ProcessingPath {
     match version_band {
         VersionBand::Gcc9_12 => ProcessingPath::NativeTextCapture,
-        VersionBand::Gcc15Plus | VersionBand::Gcc13_14 => {
-            default_processing_path_for_tier(tier)
-        }
+        VersionBand::Gcc15Plus | VersionBand::Gcc13_14 => default_processing_path_for_tier(tier),
         VersionBand::Unknown => default_processing_path_for_tier(tier),
     }
 }
@@ -320,7 +315,7 @@ fn capability_profile_for_compatibility(
             version_band,
             support_level: SupportLevel::Experimental,
             native_text_capture: true,
-            json_diagnostics: false,
+            json_diagnostics: true,
             sarif_diagnostics,
             dual_sink,
             tty_color_control: false,
@@ -527,6 +522,7 @@ mod tests {
         let gcc12 = capability_profile_for_major(12);
         assert_eq!(gcc12.version_band, VersionBand::Gcc9_12);
         assert_eq!(gcc12.support_level, SupportLevel::Experimental);
+        assert!(gcc12.json_diagnostics);
         assert_eq!(
             gcc12.default_processing_path,
             ProcessingPath::NativeTextCapture
@@ -541,7 +537,11 @@ mod tests {
                 .allowed_processing_paths
                 .contains(&ProcessingPath::NativeTextCapture)
         );
-        assert!(gcc12.allowed_processing_paths.contains(&ProcessingPath::Passthrough));
+        assert!(
+            gcc12
+                .allowed_processing_paths
+                .contains(&ProcessingPath::Passthrough)
+        );
 
         let gcc8 = capability_profile_for_major(8);
         assert_eq!(gcc8.version_band, VersionBand::Unknown);

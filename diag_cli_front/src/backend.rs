@@ -166,7 +166,7 @@ pub(crate) fn backend_binary_name(backend: &ProbeResult) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diag_backend_probe::SupportTier;
+    use diag_backend_probe::{SupportTier, VersionBand};
 
     fn tty_capabilities() -> RenderCapabilities {
         RenderCapabilities {
@@ -234,6 +234,28 @@ mod tests {
         );
         assert!(!plan.preserve_native_color);
         assert_eq!(plan.locale_handling, LocaleHandling::Preserve);
+    }
+
+    #[test]
+    fn band_c_render_plan_keeps_native_text_capture() {
+        let plan = build_capture_plan(
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12),
+            ExecutionMode::Render,
+            ProcessingPath::NativeTextCapture,
+            RetentionPolicy::OnWrapperFailure,
+            DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
+        );
+
+        assert_eq!(plan.processing_path, ProcessingPath::NativeTextCapture);
+        assert_eq!(plan.structured_capture, StructuredCapturePolicy::Disabled);
+        assert_eq!(
+            plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
+        );
+        assert!(!plan.preserve_native_color);
+        assert_eq!(plan.locale_handling, LocaleHandling::ForceMessagesC);
     }
 
     #[test]
