@@ -76,6 +76,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "shadow");
     assert_eq!(trace["support_tier"], "b");
+    assert_eq!(trace["wrapper_verdict"], "shadow_observed");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
@@ -86,6 +87,24 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
         "conservative"
     );
     assert_eq!(trace["fallback_reason"], "shadow_mode");
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
+    );
 }
 
 #[test]
@@ -295,6 +314,20 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             .unwrap()
             .iter()
             .any(|entry| entry.as_str() == Some("tier_a_mode=render"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=structured"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=none"))
     );
     assert!(
         trace["artifacts"]
@@ -764,6 +797,20 @@ fn missing_sarif_falls_back_with_reason_coded_trace() {
         Some("passthrough")
     );
     assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
+    );
+    assert!(
         trace["warning_messages"]
             .as_array()
             .unwrap()
@@ -810,6 +857,20 @@ fn invalid_sarif_falls_back_with_reason_coded_trace() {
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
         Some("failed")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
     );
     assert!(
         trace["warning_messages"]

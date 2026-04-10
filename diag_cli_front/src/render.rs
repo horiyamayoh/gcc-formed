@@ -4,8 +4,8 @@ use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
 use diag_capture_runtime::{CaptureOutcome, ExecutionMode, ExitStatusInfo};
 use diag_core::{
-    DiagnosticDocument, DocumentCompleteness, FallbackReason, SnapshotKind, WrapperSurface,
-    snapshot_json,
+    DiagnosticDocument, DocumentCompleteness, FallbackGrade, FallbackReason, SnapshotKind,
+    SourceAuthority, WrapperSurface, snapshot_json,
 };
 use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{
@@ -18,6 +18,33 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct IngestTraceMetadata {
+    pub(crate) source_authority: SourceAuthority,
+    pub(crate) fallback_grade: FallbackGrade,
+    pub(crate) fallback_reason: Option<FallbackReason>,
+}
+
+impl IngestTraceMetadata {
+    fn indicates_fallback(self) -> bool {
+        !matches!(self.fallback_grade, FallbackGrade::None)
+            || !matches!(self.source_authority, SourceAuthority::Structured)
+    }
+
+    fn decision_log_entries(self) -> [String; 2] {
+        [
+            format!(
+                "ingest_source_authority={}",
+                snake_case_label(&self.source_authority)
+            ),
+            format!(
+                "ingest_fallback_grade={}",
+                snake_case_label(&self.fallback_grade)
+            ),
+        ]
+    }
+}
+
 pub(crate) fn maybe_write_trace(
     paths: &WrapperPaths,
     document: &DiagnosticDocument,
@@ -27,6 +54,7 @@ pub(crate) fn maybe_write_trace(
     mode_decision: &ModeDecision,
     profile: RenderProfile,
     capabilities: &RenderCapabilities,
+    ingest_trace: IngestTraceMetadata,
     fallback_reason: Option<FallbackReason>,
     render_duration_ms: Option<u64>,
     total_duration_ms: u64,
@@ -43,12 +71,18 @@ pub(crate) fn maybe_write_trace(
     if let Some(dir) = retained_trace_dir {
         write_retained_normalized_ir(dir, document)?;
     }
+    let mut decision_log = mode_decision.decision_log.clone();
+    decision_log.extend(ingest_trace.decision_log_entries());
     let trace = TraceEnvelope {
         trace_id: document.run.invocation_id.clone(),
         selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
         selected_profile: format!("{profile:?}").to_lowercase(),
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
-        wrapper_verdict: Some(trace_wrapper_verdict(mode_decision.mode, fallback_reason)),
+        wrapper_verdict: Some(trace_wrapper_verdict(
+            mode_decision.mode,
+            ingest_trace,
+            fallback_reason,
+        )),
         version_summary: Some(trace_version_summary()),
         environment_summary: Some(trace_environment_summary(backend, capture)),
         capabilities: Some(trace_capabilities(capabilities)),
@@ -58,13 +92,13 @@ pub(crate) fn maybe_write_trace(
             total_ms: total_duration_ms,
         }),
         child_exit: Some(trace_child_exit(&capture.bundle.exit_status)),
-        parser_result_summary: Some(parsed_parser_result_summary(document, fallback_reason)),
+        parser_result_summary: Some(parsed_parser_result_summary(document, ingest_trace)),
         fingerprint_summary: trace_fingerprint_summary_from_document(document),
         redaction_status: Some(trace_redaction_status(
             mode_decision.mode,
             retained_trace_dir.is_some(),
         )),
-        decision_log: mode_decision.decision_log.clone(),
+        decision_log,
         fallback_reason,
         warning_messages: document
             .integrity_issues
@@ -110,6 +144,11 @@ pub(crate) fn maybe_write_passthrough_trace(
         support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(
             mode_decision.mode,
+            IngestTraceMetadata {
+                source_authority: SourceAuthority::None,
+                fallback_grade: FallbackGrade::None,
+                fallback_reason: None,
+            },
             mode_decision.fallback_reason,
         )),
         version_summary: Some(trace_version_summary()),
@@ -264,10 +303,14 @@ fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
     }
 }
 
-fn trace_wrapper_verdict(mode: ExecutionMode, fallback_reason: Option<FallbackReason>) -> String {
+fn trace_wrapper_verdict(
+    mode: ExecutionMode,
+    ingest_trace: IngestTraceMetadata,
+    fallback_reason: Option<FallbackReason>,
+) -> String {
     match mode {
         ExecutionMode::Render => {
-            if fallback_reason.is_some() {
+            if ingest_trace.indicates_fallback() || fallback_reason.is_some() {
                 "render_fallback".to_string()
             } else {
                 "rendered".to_string()
@@ -283,13 +326,10 @@ fn trace_wrapper_verdict(mode: ExecutionMode, fallback_reason: Option<FallbackRe
 
 fn parsed_parser_result_summary(
     document: &DiagnosticDocument,
-    fallback_reason: Option<FallbackReason>,
+    ingest_trace: IngestTraceMetadata,
 ) -> TraceParserResultSummary {
     TraceParserResultSummary {
-        status: if matches!(
-            fallback_reason,
-            Some(FallbackReason::SarifMissing | FallbackReason::SarifParseFailed)
-        ) {
+        status: if ingest_trace.indicates_fallback() {
             "fallback".to_string()
         } else {
             "parsed".to_string()

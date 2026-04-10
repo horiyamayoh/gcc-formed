@@ -3,11 +3,11 @@ use crate::backend::build_execution_plan;
 use crate::config::ConfigFile;
 use crate::mode::is_compiler_introspection;
 use crate::render::{
-    argv_for_trace, build_language_mode, build_primary_tool, maybe_write_passthrough_trace,
-    maybe_write_trace, wrapper_surface,
+    IngestTraceMetadata, argv_for_trace, build_language_mode, build_primary_tool,
+    maybe_write_passthrough_trace, maybe_write_trace, wrapper_surface,
 };
 use crate::self_check::handle_wrapper_introspection;
-use diag_adapter_gcc::{ingest_with_reason, producer_for_version};
+use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version};
 use diag_backend_probe::ProbeCache;
 use diag_capture_runtime::{ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture};
 use diag_core::RunInfo;
@@ -92,15 +92,19 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         target_triple: None,
         wrapper_mode: Some(wrapper_surface()),
     };
-    let authoritative_sarif_path = capture.authoritative_sarif_path();
-    let stderr_text = capture.stderr_text();
-    let ingest_outcome = ingest_with_reason(
-        authoritative_sarif_path.as_deref(),
-        stderr_text.as_ref(),
-        producer_for_version(env!("CARGO_PKG_VERSION")),
-        run_info,
+    let ingest_report = ingest_bundle(
+        &capture.bundle,
+        IngestPolicy {
+            producer: producer_for_version(env!("CARGO_PKG_VERSION")),
+            run: run_info,
+        },
     )?;
-    let mut document = ingest_outcome.document;
+    let ingest_trace = IngestTraceMetadata {
+        source_authority: ingest_report.source_authority,
+        fallback_grade: ingest_report.fallback_grade,
+        fallback_reason: ingest_report.fallback_reason,
+    };
+    let mut document = ingest_report.document;
     document.captures = capture.capture_artifacts();
     enrich_document(&mut document, &cwd);
 
@@ -114,9 +118,10 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
             &plan.mode_decision,
             plan.profile,
             &plan.capabilities,
+            ingest_trace,
             plan.mode_decision
                 .fallback_reason
-                .or(ingest_outcome.fallback_reason),
+                .or(ingest_trace.fallback_reason),
             None,
             wrapper_started.elapsed().as_millis() as u64,
         )?;
@@ -142,7 +147,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let effective_fallback_reason = plan
         .mode_decision
         .fallback_reason
-        .or(ingest_outcome.fallback_reason)
+        .or(ingest_trace.fallback_reason)
         .or(render_result.fallback_reason);
     let render_duration_ms = render_started.elapsed().as_millis() as u64;
     let mut stderr = std::io::stderr().lock();
@@ -158,6 +163,7 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
         &plan.mode_decision,
         plan.profile,
         &plan.capabilities,
+        ingest_trace,
         effective_fallback_reason,
         Some(render_duration_ms),
         wrapper_started.elapsed().as_millis() as u64,
