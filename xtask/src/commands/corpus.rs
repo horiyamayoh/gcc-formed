@@ -1,8 +1,13 @@
 use crate::SnapshotSubset;
-use diag_adapter_gcc::{ingest_with_reason, producer_for_version, tool_for_backend};
+use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version, tool_for_backend};
+use diag_backend_probe::ProcessingPath;
+use diag_capture_runtime::{
+    CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
+    NativeTextCapturePolicy, StructuredCapturePolicy,
+};
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackReason,
-    LanguageMode, Ownership, RunInfo, SnapshotKind, WrapperSurface, snapshot_json,
+    LanguageMode, Ownership, RunInfo, SnapshotKind, WrapperSurface, fingerprint_for, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -14,6 +19,7 @@ use diag_testkit::{
     compare_snapshot_contents, discover, family_counts, normalize_snapshot_contents,
     validate_fixture,
 };
+use diag_trace::RetentionPolicy;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fs;
@@ -914,15 +920,17 @@ pub(crate) fn replay_document_from_ingress(
     stderr_text: &str,
     sarif_path: &Path,
 ) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
-    let run_info = run_info_for_fixture(fixture);
-    let ingest = ingest_with_reason(
-        Some(sarif_path),
-        stderr_text,
-        producer_for_version("snapshot"),
-        run_info,
+    // Temporary migration shim while replay callers still hand explicit fixture assets.
+    let bundle = capture_bundle_for_fixture(fixture, stderr_text, sarif_path)?;
+    let ingest = ingest_bundle(
+        &bundle,
+        IngestPolicy {
+            producer: producer_for_version("snapshot"),
+            run: run_info_for_fixture(fixture),
+        },
     )?;
     let mut document = ingest.document;
-    document.captures = capture_artifacts_for_fixture(fixture, stderr_text, sarif_path)?;
+    document.captures = bundle.capture_artifacts();
     enrich_document(&mut document, &fixture.root);
     Ok(ReplayOutcomeAndDocument {
         document,
@@ -956,16 +964,18 @@ pub(crate) fn run_info_for_fixture(fixture: &Fixture) -> RunInfo {
     }
 }
 
-pub(crate) fn capture_artifacts_for_fixture(
+pub(crate) fn capture_bundle_for_fixture(
     fixture: &Fixture,
     stderr_text: &str,
     sarif_path: &Path,
-) -> Result<Vec<CaptureArtifact>, Box<dyn std::error::Error>> {
+) -> Result<CaptureBundle, Box<dyn std::error::Error>> {
     let compiler = tool_for_backend(
         compiler_binary_for_fixture(fixture),
         Some(format!("{}.x", fixture.invoke.major_version_selector)),
     );
-    let mut captures = vec![CaptureArtifact {
+    let run_info = run_info_for_fixture(fixture);
+    let argv = run_info.argv_redacted.clone();
+    let raw_text_artifacts = vec![CaptureArtifact {
         id: "stderr.raw".to_string(),
         kind: ArtifactKind::CompilerStderrText,
         media_type: "text/plain".to_string(),
@@ -977,7 +987,7 @@ pub(crate) fn capture_artifacts_for_fixture(
         external_ref: None,
         produced_by: Some(compiler.clone()),
     }];
-    captures.push(CaptureArtifact {
+    let structured_artifacts = vec![CaptureArtifact {
         id: "diagnostics.sarif".to_string(),
         kind: ArtifactKind::GccSarif,
         media_type: "application/sarif+json".to_string(),
@@ -988,8 +998,33 @@ pub(crate) fn capture_artifacts_for_fixture(
         inline_text: None,
         external_ref: Some(sarif_path.display().to_string()),
         produced_by: Some(compiler),
-    });
-    Ok(captures)
+    }];
+    Ok(CaptureBundle {
+        plan: CapturePlan {
+            execution_mode: ExecutionMode::Render,
+            processing_path: ProcessingPath::DualSinkStructured,
+            structured_capture: StructuredCapturePolicy::SarifFile,
+            native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+            locale_handling: LocaleHandling::ForceMessagesC,
+            retention_policy: RetentionPolicy::Never,
+        },
+        invocation: CaptureInvocation {
+            backend_path: compiler_binary_for_fixture(fixture).to_string(),
+            argv_hash: fingerprint_for(&argv),
+            argv,
+            cwd: fixture.root.display().to_string(),
+            selected_mode: ExecutionMode::Render,
+            processing_path: ProcessingPath::DualSinkStructured,
+        },
+        raw_text_artifacts,
+        structured_artifacts,
+        exit_status: ExitStatusInfo {
+            code: Some(run_info.exit_status),
+            signal: None,
+            success: false,
+        },
+        integrity_issues: Vec::new(),
+    })
 }
 
 pub(crate) fn render_request_for_fixture(

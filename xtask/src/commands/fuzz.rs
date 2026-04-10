@@ -1,12 +1,15 @@
-use diag_adapter_gcc::{ingest_with_reason, producer_for_version, tool_for_backend};
-use diag_backend_probe::probe_backend;
-use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_capture};
+use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version, tool_for_backend};
+use diag_backend_probe::{ProcessingPath, probe_backend};
+use diag_capture_runtime::{
+    CaptureBundle, CaptureInvocation, CapturePlan, CaptureRequest, ExecutionMode, ExitStatusInfo,
+    LocaleHandling, NativeTextCapturePolicy, StructuredCapturePolicy, cleanup_capture, run_capture,
+};
 use diag_core::{
     AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChain,
     ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
     FallbackReason, LanguageMode, Location, MessageText, NodeCompleteness, Origin, Ownership,
     Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
-    ValidationErrors,
+    ValidationErrors, fingerprint_for,
 };
 use diag_render::{
     DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest, SourceExcerptPolicy,
@@ -403,45 +406,50 @@ fn run_sarif_ingest_case(
         .map(|asset| read_text_asset(&case_dir.join(asset)))
         .transpose()?
         .unwrap_or_default();
+    let bundle = synthetic_sarif_capture_bundle(&sarif_path, &stderr_text)?;
 
-    let outcome = ingest_with_reason(
-        Some(&sarif_path),
-        &stderr_text,
-        producer_for_version("fuzz-smoke"),
-        synthetic_run("sarif_ingest"),
+    let report = ingest_bundle(
+        &bundle,
+        IngestPolicy {
+            producer: producer_for_version("fuzz-smoke"),
+            run: synthetic_run("sarif_ingest"),
+        },
     )
     .map_err(|error| format!("ingest failed: {error}"))?;
+    let fallback_reason = report.fallback_reason;
+    let mut document = report.document;
+    document.captures = bundle.capture_artifacts();
 
     if let Some(expected) = expect_fallback_reason {
-        if outcome.fallback_reason != Some(expected) {
+        if fallback_reason != Some(expected) {
             return Err(format!(
                 "expected fallback_reason={expected}, got {:?}",
-                outcome.fallback_reason
+                fallback_reason
             ));
         }
     }
     if let Some(expected) = expect_document_completeness {
-        if outcome.document.document_completeness != expected {
+        if document.document_completeness != expected {
             return Err(format!(
                 "expected completeness {:?}, got {:?}",
-                expected, outcome.document.document_completeness
+                expected, document.document_completeness
             ));
         }
     }
     if let Some(minimum) = expect_min_diagnostic_count {
-        if outcome.document.diagnostics.len() < minimum {
+        if document.diagnostics.len() < minimum {
             return Err(format!(
                 "expected at least {minimum} diagnostics, got {}",
-                outcome.document.diagnostics.len()
+                document.diagnostics.len()
             ));
         }
     }
-    outcome.document.validate().map_err(validation_summary)?;
+    document.validate().map_err(validation_summary)?;
 
     Ok(format!(
         "fallback_reason={:?} diagnostics={}",
-        outcome.fallback_reason,
-        outcome.document.diagnostics.len()
+        fallback_reason,
+        document.diagnostics.len()
     ))
 }
 
@@ -716,6 +724,68 @@ fn run_capture_with_env(
 
 fn read_text_asset(path: &Path) -> Result<String, String> {
     fs::read_to_string(path).map_err(|error| format!("failed to read {}: {error}", path.display()))
+}
+
+fn synthetic_sarif_capture_bundle(
+    sarif_path: &Path,
+    stderr_text: &str,
+) -> Result<CaptureBundle, String> {
+    let run = synthetic_run("sarif_ingest");
+    let argv = run.argv_redacted.clone();
+    let tool = run.primary_tool.clone();
+
+    Ok(CaptureBundle {
+        plan: CapturePlan {
+            execution_mode: ExecutionMode::Render,
+            processing_path: ProcessingPath::DualSinkStructured,
+            structured_capture: StructuredCapturePolicy::SarifFile,
+            native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+            locale_handling: LocaleHandling::ForceMessagesC,
+            retention_policy: RetentionPolicy::Never,
+        },
+        invocation: CaptureInvocation {
+            backend_path: tool.name.clone(),
+            argv_hash: fingerprint_for(&argv),
+            argv,
+            cwd: run.cwd_display.unwrap_or_else(|| ".".to_string()),
+            selected_mode: ExecutionMode::Render,
+            processing_path: ProcessingPath::DualSinkStructured,
+        },
+        raw_text_artifacts: vec![CaptureArtifact {
+            id: "stderr.raw".to_string(),
+            kind: ArtifactKind::CompilerStderrText,
+            media_type: "text/plain".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(stderr_text.len() as u64),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some(stderr_text.to_string()),
+            external_ref: None,
+            produced_by: Some(tool.clone()),
+        }],
+        structured_artifacts: vec![CaptureArtifact {
+            id: "diagnostics.sarif".to_string(),
+            kind: ArtifactKind::GccSarif,
+            media_type: "application/sarif+json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(
+                fs::metadata(sarif_path)
+                    .map_err(|error| format!("failed to stat {}: {error}", sarif_path.display()))?
+                    .len(),
+            ),
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: None,
+            external_ref: Some(sarif_path.display().to_string()),
+            produced_by: Some(tool),
+        }],
+        exit_status: ExitStatusInfo {
+            code: Some(run.exit_status),
+            signal: None,
+            success: false,
+        },
+        integrity_issues: Vec::new(),
+    })
 }
 
 fn synthetic_run(name: &str) -> RunInfo {
