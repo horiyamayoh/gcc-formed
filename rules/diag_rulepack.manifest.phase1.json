@@ -1,0 +1,22 @@
+{
+  "schema_version": "diag_rulepack_manifest/v1alpha1",
+  "rulepack_version": "phase1",
+  "description": "Checked-in phase1 rulepack contract for enrich and residual semantics. M6-01 installs the loader and version seam only; runtime behavior remains hard-coded in this slice.",
+  "sections": [
+    {
+      "kind": "enrich_family",
+      "path": "diag_rulepack.enrich_family.phase1.json",
+      "sha256": "aaa99cebe790bbd9175dbb3ac3286f9e1531a9f6376d0e5e31bff47bef08c7cd"
+    },
+    {
+      "kind": "enrich_wording",
+      "path": "diag_rulepack.enrich_wording.phase1.json",
+      "sha256": "7e08b9c585a45f64f4e69a14e05bfdc3c5da907855988dcb6e863a5d043296df"
+    },
+    {
+      "kind": "residual",
+      "path": "diag_rulepack.residual.phase1.json",
+      "sha256": "7a850d5bc5a51672c732163f408f8af3683fc45f2e1a263b8429e79f170079e5"
+    }
+  ]
+}

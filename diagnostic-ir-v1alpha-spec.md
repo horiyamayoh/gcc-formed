@@ -292,7 +292,7 @@ JSON / YAML / CBOR 等の直列化は後続節で定義する。
 | `version` | string | MUST | 製品バージョン |
 | `git_revision` | string | MAY | ビルド識別子 |
 | `build_profile` | string | MAY | `release`, `dev`, `ci` など |
-| `rulepack_version` | string | MAY | analysis rule / policy の版 |
+| `rulepack_version` | string | MAY | resolved checked-in `diag_rulepack` version identifier for analysis rule / policy（例: `phase1`） |
 
 ### 8.3 `RunInfo`
 

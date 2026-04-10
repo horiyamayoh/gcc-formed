@@ -329,6 +329,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "diag_rulepack"
+version = "0.2.0-beta.1"
+dependencies = [
+ "diag_core",
+ "diag_enrich",
+ "diag_residual_text",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "diag_testkit"
 version = "0.2.0-beta.1"
 dependencies = [
