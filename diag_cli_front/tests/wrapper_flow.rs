@@ -283,6 +283,153 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
 }
 
 #[test]
+fn renders_with_explicit_single_sink_structured_json_on_fake_gcc12_backend() {
+    let temp = fixture("12.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("--formed-processing-path=single_sink_structured")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_single_sink_notice(),
+        ))
+        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains(
+            "help: fix the first parser error at the user-owned location",
+        ))
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["support_tier"], "c");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "single_sink_structured"
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str() == Some("-fdiagnostics-format=json-file"))
+    );
+    assert!(
+        trace["environment_summary"]["temp_artifact_paths"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|path| path
+                .as_str()
+                .is_some_and(|path| path.ends_with("/diagnostics.json")))
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("parsed")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=structured"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=none"))
+    );
+    assert!(!temp.path().join("source.json").exists());
+}
+
+#[test]
+fn missing_single_sink_json_falls_back_honestly_on_fake_gcc12_backend() {
+    let temp = fixture_with_sarif_mode("12.2.0", "missing");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("--formed-processing-path=single_sink_structured")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_single_sink_notice(),
+        ))
+        .stderr(predicate::str::contains(
+            "note: some compiler details were not fully structured; original diagnostics are preserved",
+        ))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ));
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "single_sink_structured"
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str() == Some("-fdiagnostics-format=json-file"))
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("fallback")
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_source_authority=residual_text"))
+    );
+    assert!(
+        trace["decision_log"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
+    );
+    assert!(
+        trace["warning_messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|message| message.as_str().is_some_and(
+                |message| message.contains("expected structured GCC JSON was not produced")
+            ))
+    );
+}
+
+#[test]
 fn renders_with_fake_gcc12_type_overload_useful_subset() {
     let temp = fixture_with_stderr(
         "12.2.0",
@@ -1176,6 +1323,10 @@ fn expected_tier_c_native_text_notice() -> &'static str {
     "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in."
 }
 
+fn expected_tier_c_single_sink_notice() -> &'static str {
+    "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+}
+
 #[cfg(unix)]
 fn assert_private_dir(path: &std::path::Path) {
     assert_eq!(
@@ -1221,17 +1372,38 @@ if [[ "${{1:-}}" == "--version" ]]; then
   exit 0
 fi
 	sarif=""
+	structured_kind=""
 	for arg in "$@"; do
 	  if [[ "$arg" == -fdiagnostics-add-output=sarif:version=2.1,file=* ]]; then
 	    sarif="${{arg#-fdiagnostics-add-output=sarif:version=2.1,file=}}"
+	    structured_kind="sarif"
 	  elif [[ "$arg" == "-fdiagnostics-format=sarif-file" ]]; then
 	    sarif="source.sarif"
+	    structured_kind="sarif"
+	  elif [[ "$arg" == "-fdiagnostics-format=json-file" ]]; then
+	    sarif="source.json"
+	    structured_kind="json"
 	  fi
 	done
 if [[ -n "$sarif" ]]; then
   case "{sarif_mode}" in
     valid)
-      cat >"$sarif" <<'JSON'
+      if [[ "$structured_kind" == "json" ]]; then
+        cat >"$sarif" <<'JSON'
+[
+  {{
+    "kind":"error",
+    "message":"expected ';' before '}}' token",
+    "locations":[
+      {{
+        "caret":{{"file":"main.c","line":4,"column":1}}
+      }}
+    ]
+  }}
+]
+JSON
+      else
+        cat >"$sarif" <<'JSON'
 {{
   "version":"2.1.0",
   "runs":[
@@ -1254,9 +1426,14 @@ if [[ -n "$sarif" ]]; then
   ]
 }}
 JSON
+      fi
       ;;
     invalid)
-      printf '%s\n' '{{"version":' >"$sarif"
+      if [[ "$structured_kind" == "json" ]]; then
+        printf '%s\n' '[' >"$sarif"
+      else
+        printf '%s\n' '{{"version":' >"$sarif"
+      fi
       ;;
     missing)
       ;;
@@ -1272,7 +1449,7 @@ if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
     printf 'EXPERIMENTAL_SARIF_SOCKET=%s\n' "${{EXPERIMENTAL_SARIF_SOCKET-__unset__}}"
   }} >"${{FORMED_TEST_ENV_DUMP}}"
 	fi
-	if [[ "$sarif" != "source.sarif" ]]; then
+	if [[ "$sarif" != "source.sarif" && "$sarif" != "source.json" || "{sarif_mode}" != "valid" ]]; then
 	  cat "$(dirname "$0")/stderr.txt" >&2
 	fi
 	exit 1

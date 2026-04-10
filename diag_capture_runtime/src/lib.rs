@@ -31,6 +31,7 @@ pub enum StructuredCapturePolicy {
     Disabled,
     SarifFile,
     SingleSinkSarifFile,
+    SingleSinkJsonFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,7 +79,8 @@ impl CaptureRequest {
             execution_mode: self.mode,
             processing_path: match self.structured_capture {
                 StructuredCapturePolicy::SarifFile => ProcessingPath::DualSinkStructured,
-                StructuredCapturePolicy::SingleSinkSarifFile => {
+                StructuredCapturePolicy::SingleSinkSarifFile
+                | StructuredCapturePolicy::SingleSinkJsonFile => {
                     ProcessingPath::SingleSinkStructured
                 }
                 StructuredCapturePolicy::Disabled => match self.mode {
@@ -183,12 +185,11 @@ impl CaptureBundle {
     }
 
     pub fn authoritative_sarif_path(&self, temp_dir: &Path) -> Option<PathBuf> {
-        match self.plan.structured_capture {
-            StructuredCapturePolicy::Disabled => None,
-            StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
-                Some(temp_dir.join("diagnostics.sarif"))
-            }
-        }
+        matches!(
+            self.plan.structured_capture,
+            StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile
+        )
+        .then(|| temp_dir.join("diagnostics.sarif"))
     }
 
     pub fn injected_flags(&self, temp_dir: &Path) -> Vec<String> {
@@ -206,6 +207,9 @@ impl CaptureBundle {
             StructuredCapturePolicy::SingleSinkSarifFile => {
                 flags.push("-fdiagnostics-format=sarif-file".to_string());
             }
+            StructuredCapturePolicy::SingleSinkJsonFile => {
+                flags.push("-fdiagnostics-format=json-file".to_string());
+            }
         }
         if self.plan.preserve_native_color {
             flags.push("-fdiagnostics-color=always".to_string());
@@ -215,7 +219,7 @@ impl CaptureBundle {
 
     pub fn temp_artifact_paths(&self, temp_dir: &Path) -> Vec<PathBuf> {
         let mut paths = vec![temp_dir.to_path_buf(), temp_dir.join("invocation.json")];
-        if let Some(path) = self.authoritative_sarif_path(temp_dir) {
+        if let Some(path) = authoritative_structured_path(self.plan.structured_capture, temp_dir) {
             paths.push(path);
         }
         paths
@@ -328,26 +332,74 @@ struct DiscoveredStructuredArtifact {
     existed_before: bool,
 }
 
+fn authoritative_structured_path(
+    policy: StructuredCapturePolicy,
+    temp_dir: &Path,
+) -> Option<PathBuf> {
+    structured_artifact_file_name(policy).map(|file_name| temp_dir.join(file_name))
+}
+
+fn structured_artifact_file_name(policy: StructuredCapturePolicy) -> Option<&'static str> {
+    match policy {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
+            Some("diagnostics.sarif")
+        }
+        StructuredCapturePolicy::SingleSinkJsonFile => Some("diagnostics.json"),
+    }
+}
+
+fn structured_artifact_extension(policy: StructuredCapturePolicy) -> Option<&'static str> {
+    match policy {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
+            Some("sarif")
+        }
+        StructuredCapturePolicy::SingleSinkJsonFile => Some("json"),
+    }
+}
+
+fn single_sink_structured_capture(policy: StructuredCapturePolicy) -> bool {
+    matches!(
+        policy,
+        StructuredCapturePolicy::SingleSinkSarifFile | StructuredCapturePolicy::SingleSinkJsonFile
+    )
+}
+
+fn structured_artifact_metadata(path: &Path) -> Option<(&'static str, ArtifactKind, &'static str)> {
+    match path.file_name().and_then(|name| name.to_str()) {
+        Some("diagnostics.sarif") => Some((
+            "diagnostics.sarif",
+            ArtifactKind::GccSarif,
+            "application/sarif+json",
+        )),
+        Some("diagnostics.json") => Some((
+            "diagnostics.json",
+            ArtifactKind::GccJson,
+            "application/json",
+        )),
+        _ => None,
+    }
+}
+
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
     let capture_started = Instant::now();
     let plan = request.capture_plan();
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
-    let expected_sarif_path = match plan.structured_capture {
-        StructuredCapturePolicy::Disabled => None,
-        StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
-            Some(temp_dir_path.join("diagnostics.sarif"))
-        }
-    };
+    let expected_structured_path =
+        authoritative_structured_path(plan.structured_capture, &temp_dir_path);
     let injected_sarif_path = match plan.structured_capture {
-        StructuredCapturePolicy::SarifFile => expected_sarif_path.clone(),
-        StructuredCapturePolicy::Disabled | StructuredCapturePolicy::SingleSinkSarifFile => None,
+        StructuredCapturePolicy::SarifFile => expected_structured_path.clone(),
+        StructuredCapturePolicy::Disabled
+        | StructuredCapturePolicy::SingleSinkSarifFile
+        | StructuredCapturePolicy::SingleSinkJsonFile => None,
     };
-    let single_sink_snapshot = if matches!(
-        plan.structured_capture,
-        StructuredCapturePolicy::SingleSinkSarifFile
-    ) {
-        Some(snapshot_structured_artifacts(&request.cwd)?)
+    let single_sink_snapshot = if single_sink_structured_capture(plan.structured_capture) {
+        Some(snapshot_structured_artifacts(
+            &request.cwd,
+            plan.structured_capture,
+        )?)
     } else {
         None
     };
@@ -372,6 +424,9 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         }
         StructuredCapturePolicy::SingleSinkSarifFile => {
             final_args.push(OsString::from("-fdiagnostics-format=sarif-file"));
+        }
+        StructuredCapturePolicy::SingleSinkJsonFile => {
+            final_args.push(OsString::from("-fdiagnostics-format=json-file"));
         }
     }
     let invocation_path = temp_dir_path.join("invocation.json");
@@ -420,18 +475,21 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         None => Vec::new(),
     };
 
-    let single_sink_sarif_path = if let Some(snapshot) = single_sink_snapshot.as_ref() {
-        discover_structured_artifact(&request.cwd, snapshot)?
-            .map(|artifact| preserve_discovered_artifact(&artifact, &temp_dir_path))
+    let single_sink_structured_path = if let Some(snapshot) = single_sink_snapshot.as_ref() {
+        discover_structured_artifact(&request.cwd, snapshot, plan.structured_capture)?
+            .map(|artifact| {
+                preserve_discovered_artifact(&artifact, &temp_dir_path, plan.structured_capture)
+            })
             .transpose()?
     } else {
         None
     };
-    let sarif_path = match plan.structured_capture {
+    let structured_path = match plan.structured_capture {
         StructuredCapturePolicy::Disabled => None,
         StructuredCapturePolicy::SarifFile => injected_sarif_path,
-        StructuredCapturePolicy::SingleSinkSarifFile => {
-            single_sink_sarif_path.or(expected_sarif_path)
+        StructuredCapturePolicy::SingleSinkSarifFile
+        | StructuredCapturePolicy::SingleSinkJsonFile => {
+            single_sink_structured_path.or(expected_structured_path)
         }
     };
 
@@ -447,10 +505,15 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         let retained_stderr = trace_dir.join("stderr.raw");
         fs::write(&retained_stderr, &stderr_bytes)?;
         secure_private_file(&retained_stderr)?;
-        if let Some(sarif) = sarif_path.as_ref().filter(|path| path.exists()) {
-            let retained_sarif = trace_dir.join("diagnostics.sarif");
-            fs::copy(sarif, &retained_sarif)?;
-            secure_private_file(&retained_sarif)?;
+        if let Some(structured) = structured_path.as_ref().filter(|path| path.exists()) {
+            let retained_structured = trace_dir.join(
+                structured
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("diagnostics.bin"),
+            );
+            fs::copy(structured, &retained_structured)?;
+            secure_private_file(&retained_structured)?;
         }
         if invocation_path.exists() {
             let retained_invocation = trace_dir.join("invocation.json");
@@ -463,13 +526,18 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     };
 
     let exit_status = status_to_info(status);
-    let artifacts = build_artifacts(&stderr_bytes, sarif_path.as_ref(), &request.backend);
+    let artifacts = build_artifacts(&stderr_bytes, structured_path.as_ref(), &request.backend);
     let bundle = build_capture_bundle(request, &final_args, &plan, &exit_status, &artifacts);
 
     Ok(CaptureOutcome {
         exit_status,
         stderr_bytes,
-        sarif_path,
+        sarif_path: matches!(
+            plan.structured_capture,
+            StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile
+        )
+        .then_some(structured_path.clone())
+        .flatten(),
         temp_dir: temp_dir_path,
         capture_duration_ms: capture_started.elapsed().as_millis() as u64,
         retained,
@@ -512,7 +580,7 @@ fn spawn_tee_reader(
 
 fn build_artifacts(
     stderr_bytes: &[u8],
-    sarif_path: Option<&PathBuf>,
+    structured_path: Option<&PathBuf>,
     backend: &ProbeResult,
 ) -> Vec<CaptureArtifact> {
     let mut artifacts = Vec::new();
@@ -530,11 +598,14 @@ fn build_artifacts(
             produced_by: Some(tool_info(backend)),
         });
     }
-    if let Some(path) = sarif_path {
+    if let Some(path) = structured_path {
+        let Some((id, kind, media_type)) = structured_artifact_metadata(path) else {
+            return artifacts;
+        };
         artifacts.push(CaptureArtifact {
-            id: "diagnostics.sarif".to_string(),
-            kind: ArtifactKind::GccSarif,
-            media_type: "application/sarif+json".to_string(),
+            id: id.to_string(),
+            kind,
+            media_type: media_type.to_string(),
             encoding: Some("utf-8".to_string()),
             digest_sha256: None,
             size_bytes: fs::metadata(path).ok().map(|metadata| metadata.len()),
@@ -557,12 +628,16 @@ fn build_artifacts(
 
 fn snapshot_structured_artifacts(
     dir: &Path,
+    policy: StructuredCapturePolicy,
 ) -> Result<BTreeMap<PathBuf, ArtifactFingerprint>, std::io::Error> {
+    let Some(extension) = structured_artifact_extension(policy) else {
+        return Ok(BTreeMap::new());
+    };
     let mut entries = BTreeMap::new();
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().and_then(|ext| ext.to_str()) != Some("sarif") {
+        if path.extension().and_then(|ext| ext.to_str()) != Some(extension) {
             continue;
         }
         let metadata = entry.metadata()?;
@@ -590,8 +665,9 @@ fn artifact_fingerprint(metadata: &fs::Metadata) -> ArtifactFingerprint {
 fn discover_structured_artifact(
     dir: &Path,
     before: &BTreeMap<PathBuf, ArtifactFingerprint>,
+    policy: StructuredCapturePolicy,
 ) -> Result<Option<DiscoveredStructuredArtifact>, std::io::Error> {
-    let after = snapshot_structured_artifacts(dir)?;
+    let after = snapshot_structured_artifacts(dir, policy)?;
     let mut changed = after
         .into_iter()
         .filter_map(|(path, fingerprint)| {
@@ -613,8 +689,10 @@ fn discover_structured_artifact(
 fn preserve_discovered_artifact(
     artifact: &DiscoveredStructuredArtifact,
     temp_dir: &Path,
+    policy: StructuredCapturePolicy,
 ) -> Result<PathBuf, std::io::Error> {
-    let preserved_path = temp_dir.join("diagnostics.sarif");
+    let preserved_path = authoritative_structured_path(policy, temp_dir)
+        .unwrap_or_else(|| temp_dir.join("diagnostics.bin"));
     fs::copy(&artifact.path, &preserved_path)?;
     secure_private_file(&preserved_path)?;
     if !artifact.existed_before {
@@ -787,6 +865,7 @@ fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
                 diagnostics_flag_count += 1;
                 if arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
                     || arg == "-fdiagnostics-format=sarif-file"
+                    || arg == "-fdiagnostics-format=json-file"
                 {
                     injected_flag_count += 1;
                 }
@@ -1217,6 +1296,59 @@ mod tests {
     }
 
     #[test]
+    fn single_sink_json_capture_plan_uses_explicit_structured_path() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: Vec::new(),
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::OnWrapperFailure,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::SingleSinkJsonFile,
+            preserve_native_color: false,
+        };
+
+        let plan = request.capture_plan();
+        assert_eq!(plan.processing_path, ProcessingPath::SingleSinkStructured);
+        assert_eq!(
+            plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkJsonFile
+        );
+        let bundle = CaptureBundle {
+            plan,
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                argv: Vec::new(),
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::SingleSinkStructured,
+            },
+            raw_text_artifacts: Vec::new(),
+            structured_artifacts: Vec::new(),
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+        assert_eq!(
+            bundle.injected_flags(Path::new("/tmp/runtime")),
+            vec!["-fdiagnostics-format=json-file".to_string()]
+        );
+        assert_eq!(
+            bundle.temp_artifact_paths(Path::new("/tmp/runtime")),
+            vec![
+                PathBuf::from("/tmp/runtime"),
+                PathBuf::from("/tmp/runtime/invocation.json"),
+                PathBuf::from("/tmp/runtime/diagnostics.json"),
+            ]
+        );
+    }
+
+    #[test]
     fn capture_bundle_groups_raw_text_and_structured_artifacts() {
         let request = CaptureRequest {
             backend: fake_probe(),
@@ -1262,6 +1394,53 @@ mod tests {
         assert_eq!(bundle.raw_text_artifacts[0].id, "stderr.raw");
         assert_eq!(bundle.structured_artifacts.len(), 1);
         assert_eq!(bundle.structured_artifacts[0].id, "diagnostics.sarif");
+        assert_eq!(bundle.exit_status, exit_status);
+        assert!(bundle.integrity_issues.is_empty());
+    }
+
+    #[test]
+    fn capture_bundle_groups_raw_text_and_gcc_json_artifacts() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![OsString::from("-c"), OsString::from("main.c")],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::Always,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::SingleSinkJsonFile,
+            preserve_native_color: false,
+        };
+        let plan = request.capture_plan();
+        let json_path = PathBuf::from("/tmp/runtime/diagnostics.json");
+        let artifacts = build_artifacts(b"stderr", Some(&json_path), &request.backend);
+        let exit_status = ExitStatusInfo {
+            code: Some(1),
+            signal: None,
+            success: false,
+        };
+
+        let bundle = build_capture_bundle(
+            &request,
+            &[
+                OsString::from("-c"),
+                OsString::from("main.c"),
+                OsString::from("-fdiagnostics-format=json-file"),
+            ],
+            &plan,
+            &exit_status,
+            &artifacts,
+        );
+
+        assert_eq!(
+            bundle.invocation.processing_path,
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(bundle.raw_text_artifacts.len(), 1);
+        assert_eq!(bundle.raw_text_artifacts[0].id, "stderr.raw");
+        assert_eq!(bundle.structured_artifacts.len(), 1);
+        assert_eq!(bundle.structured_artifacts[0].id, "diagnostics.json");
+        assert_eq!(bundle.structured_artifacts[0].kind, ArtifactKind::GccJson);
         assert_eq!(bundle.exit_status, exit_status);
         assert!(bundle.integrity_issues.is_empty());
     }
@@ -1346,6 +1525,76 @@ mod tests {
     }
 
     #[test]
+    fn bundle_helpers_preserve_injected_flag_and_temp_paths_when_json_is_missing() {
+        let bundle = CaptureBundle {
+            plan: CapturePlan {
+                execution_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::SingleSinkStructured,
+                structured_capture: StructuredCapturePolicy::SingleSinkJsonFile,
+                native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+                preserve_native_color: false,
+                locale_handling: LocaleHandling::ForceMessagesC,
+                retention_policy: RetentionPolicy::Always,
+            },
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                argv: vec!["-c".to_string(), "main.c".to_string()],
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::SingleSinkStructured,
+            },
+            raw_text_artifacts: vec![CaptureArtifact {
+                id: "stderr.raw".to_string(),
+                kind: ArtifactKind::CompilerStderrText,
+                media_type: "text/plain".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: Some(6),
+                storage: ArtifactStorage::Inline,
+                inline_text: Some("stderr".to_string()),
+                external_ref: None,
+                produced_by: Some(tool_info(&fake_probe())),
+            }],
+            structured_artifacts: vec![CaptureArtifact {
+                id: "diagnostics.json".to_string(),
+                kind: ArtifactKind::GccJson,
+                media_type: "application/json".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: None,
+                storage: ArtifactStorage::Unavailable,
+                inline_text: None,
+                external_ref: None,
+                produced_by: Some(tool_info(&fake_probe())),
+            }],
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+
+        let temp_dir = PathBuf::from("/tmp/runtime/formed-123");
+        assert_eq!(bundle.authoritative_sarif_path(&temp_dir), None);
+        assert_eq!(
+            bundle.injected_flags(&temp_dir),
+            vec!["-fdiagnostics-format=json-file".to_string()]
+        );
+        assert_eq!(
+            bundle.temp_artifact_paths(&temp_dir),
+            vec![
+                temp_dir.clone(),
+                temp_dir.join("invocation.json"),
+                temp_dir.join("diagnostics.json"),
+            ]
+        );
+        assert_eq!(bundle.stderr_text(), Some("stderr"));
+        assert_eq!(bundle.capture_artifacts().len(), 2);
+    }
+
+    #[test]
     fn trace_sanitized_env_keys_follow_child_policy() {
         let render_keys = trace_sanitized_env_keys(ExecutionMode::Render);
         assert!(render_keys.iter().any(|key| key == "LC_MESSAGES"));
@@ -1391,6 +1640,18 @@ mod tests {
             "-c".to_string(),
             "main.c".to_string(),
             "-fdiagnostics-format=sarif-file".to_string(),
+        ]);
+
+        assert_eq!(normalized.diagnostics_flag_count, 1);
+        assert_eq!(normalized.injected_flag_count, 1);
+    }
+
+    #[test]
+    fn normalizes_json_single_sink_flag_as_injected_diagnostic_flag() {
+        let normalized = normalize_invocation(&[
+            "-c".to_string(),
+            "main.c".to_string(),
+            "-fdiagnostics-format=json-file".to_string(),
         ]);
 
         assert_eq!(normalized.diagnostics_flag_count, 1);

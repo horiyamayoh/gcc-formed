@@ -62,6 +62,9 @@ fn build_capture_plan(
         ProcessingPath::DualSinkStructured if compatibility_seam.should_inject_sarif(mode) => {
             StructuredCapturePolicy::SarifFile
         }
+        ProcessingPath::SingleSinkStructured if compatibility_seam.prefers_json_single_sink() => {
+            StructuredCapturePolicy::SingleSinkJsonFile
+        }
         ProcessingPath::SingleSinkStructured => StructuredCapturePolicy::SingleSinkSarifFile,
         ProcessingPath::DualSinkStructured
         | ProcessingPath::NativeTextCapture
@@ -321,6 +324,29 @@ mod tests {
         assert_eq!(
             plan.structured_capture,
             StructuredCapturePolicy::SingleSinkSarifFile
+        );
+        assert_eq!(
+            plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
+        );
+    }
+
+    #[test]
+    fn band_c_single_sink_structured_plan_uses_explicit_json_file_capture() {
+        let plan = build_capture_plan(
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12),
+            ExecutionMode::Render,
+            ProcessingPath::SingleSinkStructured,
+            RetentionPolicy::OnWrapperFailure,
+            DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
+        );
+
+        assert_eq!(plan.processing_path, ProcessingPath::SingleSinkStructured);
+        assert_eq!(
+            plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkJsonFile
         );
         assert_eq!(
             plan.native_text_capture,

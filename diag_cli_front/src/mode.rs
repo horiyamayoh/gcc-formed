@@ -126,6 +126,10 @@ impl CliCompatibilitySeam {
         mode != ExecutionMode::Passthrough && self.sarif_diagnostics && self.is_primary_structured()
     }
 
+    pub(crate) fn prefers_json_single_sink(&self) -> bool {
+        matches!(self.version_band, VersionBand::Gcc9_12)
+    }
+
     pub(crate) fn should_preserve_tty_color(
         &self,
         mode: ExecutionMode,
