@@ -1,8 +1,9 @@
 use crate::budget::budget_for;
 use crate::{RenderProfile, RenderRequest, SourceExcerptPolicy};
-use diag_core::DiagnosticNode;
+use diag_core::{DiagnosticNode, Ownership};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExcerptBlock {
@@ -18,10 +19,16 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
         RenderProfile::RawFallback => 0,
         _ => budget_for(request.profile).source_excerpts,
     };
-    node.locations
+    let mut locations = node.locations.iter().enumerate().collect::<Vec<_>>();
+    locations.sort_by(|left, right| {
+        excerpt_rank(request, right.1)
+            .cmp(&excerpt_rank(request, left.1))
+            .then_with(|| left.0.cmp(&right.0))
+    });
+    locations
         .iter()
         .take(limit)
-        .filter_map(|location| {
+        .filter_map(|(_, location)| {
             let resolved_path = if std::path::Path::new(&location.path).is_relative() {
                 request
                     .cwd
@@ -40,4 +47,24 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
             })
         })
         .collect()
+}
+
+fn excerpt_rank(request: &RenderRequest, location: &diag_core::Location) -> u8 {
+    match location.ownership.as_ref() {
+        Some(Ownership::User) => 4,
+        Some(Ownership::Vendor) => 3,
+        Some(Ownership::Generated) => 2,
+        Some(Ownership::System) => 1,
+        None if looks_workspace_owned(request, &location.path) => 3,
+        _ => 0,
+    }
+}
+
+fn looks_workspace_owned(request: &RenderRequest, path: &str) -> bool {
+    let path = Path::new(path);
+    path.is_relative()
+        || request
+            .cwd
+            .as_ref()
+            .is_some_and(|cwd| path.strip_prefix(cwd).is_ok())
 }

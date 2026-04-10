@@ -1,101 +1,25 @@
-use crate::budget::{WarningFailureMode, budget_for};
+use crate::budget::{WarningFailureMode, render_policy};
+use crate::layout::LayoutProfile;
+use crate::theme::ThemePolicy;
 use crate::view_model::RenderViewModel;
-use crate::{DebugRefs, RenderProfile, RenderRequest, RenderResult};
-use regex::Regex;
-use std::sync::OnceLock;
+use crate::{DebugRefs, RenderRequest, RenderResult};
 
 pub fn emit(
     request: &RenderRequest,
     view_model: RenderViewModel,
     suppressed_warning_count: usize,
 ) -> RenderResult {
-    let budget = budget_for(request.profile);
+    let policy = render_policy(request.profile);
+    let theme = ThemePolicy::for_request(request);
+    let layout = LayoutProfile::for_request(request);
     let mut lines = Vec::new();
     if view_model.summary.partial_notice {
-        lines.push("note: some compiler details were not fully structured; original diagnostics are preserved".to_string());
+        lines.push(policy.disclosure.partial_document_notice.to_string());
     }
 
     for card in &view_model.cards {
-        if matches!(request.profile, RenderProfile::Ci) {
-            let first_line = card
-                .canonical_location
-                .as_ref()
-                .map(|location| {
-                    format!(
-                        "{}: {}: {}",
-                        sanitize_display_line(location, true),
-                        card.severity,
-                        sanitize_display_line(&card.title, true)
-                    )
-                })
-                .unwrap_or_else(|| {
-                    if card
-                        .family
-                        .as_deref()
-                        .is_some_and(|family| family.starts_with("linker"))
-                    {
-                        format!(
-                            "linker: {}: {}",
-                            card.severity,
-                            sanitize_display_line(&card.title, true)
-                        )
-                    } else {
-                        format!(
-                            "{}: {}",
-                            card.severity,
-                            sanitize_display_line(&card.title, true)
-                        )
-                    }
-                });
-            lines.push(first_line);
-        } else {
-            lines.push(format!(
-                "{}: {}",
-                card.severity,
-                sanitize_display_line(&card.title, true)
-            ));
-            if let Some(location) = card.canonical_location.as_ref() {
-                lines.push(format!("--> {}", sanitize_display_line(location, true)));
-            }
-        }
-        if let Some(confidence_notice) = card.confidence_notice.as_ref() {
-            lines.push(confidence_notice.clone());
-        }
-        if let Some(first_action) = card.first_action.as_ref() {
-            lines.push(format!(
-                "help: {}",
-                sanitize_display_line(first_action, true)
-            ));
-        }
-        lines.push(format!(
-            "why: {}",
-            display_raw_line(&card.raw_message, request.profile)
-        ));
-        for excerpt in &card.excerpts {
-            lines.push(format!(
-                "| {}",
-                sanitize_display_line(&excerpt.location, true)
-            ));
-            for source in &excerpt.lines {
-                lines.push(format!("| {}", sanitize_display_line(source, true)));
-            }
-        }
-        for context in &card.context_lines {
-            lines.push(sanitize_display_line(context, true));
-        }
-        for note in &card.child_notes {
-            lines.push(format!("note: {}", sanitize_display_line(note, true)));
-        }
-        for notice in &card.collapsed_notices {
-            lines.push(format!("note: {}", sanitize_display_line(notice, true)));
-        }
-        if !card.raw_sub_block.is_empty() {
-            lines.push("raw:".to_string());
-            for raw_line in &card.raw_sub_block {
-                lines.push(format!("  {}", display_raw_line(raw_line, request.profile)));
-            }
-        }
-        if matches!(request.profile, RenderProfile::Verbose)
+        layout.render_card(&theme, card, &mut lines);
+        if matches!(request.profile, crate::RenderProfile::Verbose)
             || matches!(request.debug_refs, DebugRefs::CaptureRef)
         {
             if let Some(rule_id) = card.rule_id.as_ref() {
@@ -114,9 +38,17 @@ pub fn emit(
     }
 
     if suppressed_warning_count > 0
-        && matches!(budget.warning_failure_mode, WarningFailureMode::Summarize)
+        && matches!(
+            policy.budget.warning_failure_mode,
+            WarningFailureMode::Summarize
+        )
     {
-        lines.push(format!("note: suppressed {suppressed_warning_count} warning(s) while focusing on the failing group"));
+        lines.push(
+            policy
+                .disclosure
+                .suppressed_warning_notice
+                .replace("{count}", &suppressed_warning_count.to_string()),
+        );
     }
     if let Some(raw_hint) = view_model.summary.raw_diagnostics_hint.as_ref() {
         lines.push(raw_hint.clone());
@@ -137,12 +69,10 @@ pub fn emit(
         }
     }
 
-    let truncation_occurred = lines.len() > budget.hard_max_lines;
+    let truncation_occurred = lines.len() > policy.budget.first_screenful_max_lines;
     if truncation_occurred {
-        lines.truncate(budget.hard_max_lines.saturating_sub(1));
-        lines.push(
-            "note: omitted additional details; rerun with --formed-profile=verbose".to_string(),
-        );
+        lines.truncate(policy.budget.first_screenful_max_lines.saturating_sub(1));
+        lines.push(policy.disclosure.truncation_notice.to_string());
     }
 
     RenderResult {
@@ -160,52 +90,4 @@ pub fn emit(
         truncation_occurred,
         render_issues: Vec::new(),
     }
-}
-
-fn first_line(raw_message: &str) -> String {
-    raw_message
-        .lines()
-        .next()
-        .unwrap_or(raw_message)
-        .to_string()
-}
-
-fn display_raw_line(raw_message: &str, profile: RenderProfile) -> String {
-    let line = first_line(raw_message);
-    sanitize_display_line(&line, !matches!(profile, RenderProfile::RawFallback))
-}
-
-pub(crate) fn sanitize_display_line(text: &str, sanitize_temp_objects: bool) -> String {
-    let sanitized = if sanitize_temp_objects {
-        sanitize_transient_object_paths(text)
-    } else {
-        text.to_string()
-    };
-    escape_control_chars(&sanitized)
-}
-
-fn sanitize_transient_object_paths(text: &str) -> String {
-    transient_object_path_pattern()
-        .replace_all(text, "<temp-object>")
-        .into_owned()
-}
-
-fn escape_control_chars(text: &str) -> String {
-    let mut escaped = String::with_capacity(text.len());
-    for character in text.chars() {
-        if character.is_control() && character != '\n' && character != '\t' {
-            escaped.push_str(&format!("\\x{:02x}", character as u32));
-        } else {
-            escaped.push(character);
-        }
-    }
-    escaped
-}
-
-fn transient_object_path_pattern() -> &'static Regex {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN.get_or_init(|| {
-        Regex::new(r#"(?:(?:/private)?/tmp|/var/folders/[^:\s]+/T)/cc[^:\s'"`]+\.o"#)
-            .expect("valid transient object path regex")
-    })
 }

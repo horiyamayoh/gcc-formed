@@ -1,3 +1,4 @@
+use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::summarize_supporting_evidence;
 use crate::{RenderProfile, RenderRequest};
@@ -26,6 +27,11 @@ pub struct RenderGroupCard {
     pub context_lines: Vec<String>,
     pub child_notes: Vec<String>,
     pub collapsed_notices: Vec<String>,
+    #[serde(
+        skip_serializing_if = "is_default_raw_block_label",
+        default = "default_raw_block_label"
+    )]
+    pub raw_block_label: String,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub raw_sub_block: Vec<String>,
     pub rule_id: Option<String>,
@@ -40,6 +46,7 @@ pub struct RenderViewModel {
 }
 
 pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewModel {
+    let policy = render_policy(request.profile);
     let rendered_cards = cards
         .into_iter()
         .map(|node| build_card(request, &node))
@@ -63,16 +70,14 @@ pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewM
                 .captures
                 .iter()
                 .any(|capture| capture.id == "stderr.raw")
-                .then_some(
-                    "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-                        .to_string(),
-                ),
+                .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
         },
         cards: rendered_cards,
     }
 }
 
 fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard {
+    let policy = render_policy(request.profile);
     let confidence = node
         .analysis
         .as_ref()
@@ -98,7 +103,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         format!("{path}:{}:{}", location.line, location.column)
     });
     let excerpts = load_excerpt(request, node);
-    let supporting_evidence = summarize_supporting_evidence(node, request.profile);
+    let supporting_evidence = summarize_supporting_evidence(request, node);
     let context_lines = supporting_evidence.context_lines;
     let child_notes = supporting_evidence.child_notes;
     let collapsed_notices = supporting_evidence.collapsed_notices;
@@ -106,9 +111,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         confidence,
         Some(Confidence::Low) | Some(Confidence::Unknown) | None
     )
-    .then_some(
-        "note: wrapper confidence is low; verify against the preserved raw diagnostics".to_string(),
-    );
+    .then_some(policy.disclosure.low_confidence_notice.to_string());
     let raw_sub_block = raw_sub_block(request, node);
 
     RenderGroupCard {
@@ -125,6 +128,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         context_lines,
         child_notes,
         collapsed_notices,
+        raw_block_label: policy.disclosure.raw_block_label.to_string(),
         raw_sub_block,
         rule_id: node
             .analysis
@@ -195,6 +199,7 @@ fn raw_title(node: &DiagnosticNode) -> String {
 }
 
 fn raw_sub_block(request: &RenderRequest, node: &DiagnosticNode) -> Vec<String> {
+    let policy = render_policy(request.profile);
     if !matches!(
         request.document.document_completeness,
         DocumentCompleteness::Partial
@@ -208,17 +213,16 @@ fn raw_sub_block(request: &RenderRequest, node: &DiagnosticNode) -> Vec<String> 
     node.message
         .raw_text
         .lines()
-        .take(raw_sub_block_budget(request.profile))
+        .take(policy.disclosure.raw_sub_block_lines)
         .filter(|line| !line.trim().is_empty())
         .map(|line| line.to_string())
         .collect()
 }
 
-fn raw_sub_block_budget(profile: RenderProfile) -> usize {
-    match profile {
-        RenderProfile::Verbose => 4,
-        RenderProfile::Default => 2,
-        RenderProfile::Concise | RenderProfile::Ci => 1,
-        RenderProfile::RawFallback => 0,
-    }
+fn default_raw_block_label() -> String {
+    "raw:".to_string()
+}
+
+fn is_default_raw_block_label(label: &str) -> bool {
+    label == "raw:"
 }

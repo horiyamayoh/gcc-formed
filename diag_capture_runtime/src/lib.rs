@@ -53,6 +53,7 @@ pub struct CapturePlan {
     pub processing_path: ProcessingPath,
     pub structured_capture: StructuredCapturePolicy,
     pub native_text_capture: NativeTextCapturePolicy,
+    pub preserve_native_color: bool,
     pub locale_handling: LocaleHandling,
     pub retention_policy: RetentionPolicy,
 }
@@ -67,6 +68,7 @@ pub struct CaptureRequest {
     pub retention: RetentionPolicy,
     pub paths: WrapperPaths,
     pub inject_sarif: bool,
+    pub preserve_native_color: bool,
 }
 
 impl CaptureRequest {
@@ -91,6 +93,7 @@ impl CaptureRequest {
                 ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
                 ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
             },
+            preserve_native_color: self.preserve_native_color,
             locale_handling: if matches!(self.mode, ExecutionMode::Render) {
                 LocaleHandling::ForceMessagesC
             } else {
@@ -122,6 +125,7 @@ impl CaptureRequest {
             retention: plan.retention_policy,
             paths,
             inject_sarif: matches!(plan.structured_capture, StructuredCapturePolicy::SarifFile),
+            preserve_native_color: plan.preserve_native_color,
         }
     }
 }
@@ -184,14 +188,17 @@ impl CaptureBundle {
     }
 
     pub fn injected_flags(&self, temp_dir: &Path) -> Vec<String> {
-        self.authoritative_sarif_path(temp_dir)
-            .map(|path| {
-                vec![format!(
-                    "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                    sanitize_sarif_path(&path)
-                )]
-            })
-            .unwrap_or_default()
+        let mut flags = Vec::new();
+        if let Some(path) = self.authoritative_sarif_path(temp_dir) {
+            flags.push(format!(
+                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                sanitize_sarif_path(&path)
+            ));
+        }
+        if self.plan.preserve_native_color {
+            flags.push("-fdiagnostics-color=always".to_string());
+        }
+        flags
     }
 
     pub fn temp_artifact_paths(&self, temp_dir: &Path) -> Vec<PathBuf> {
@@ -711,6 +718,7 @@ fn child_env_policy_for_mode(mode: ExecutionMode) -> ChildEnvPolicy {
             ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
             ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
         },
+        preserve_native_color: false,
         locale_handling: if matches!(mode, ExecutionMode::Render) {
             LocaleHandling::ForceMessagesC
         } else {
@@ -855,6 +863,7 @@ mod tests {
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
             inject_sarif: true,
+            preserve_native_color: true,
         };
 
         let record = build_invocation_record(
@@ -870,6 +879,7 @@ mod tests {
             child_env_policy(&request.capture_plan()),
         );
 
+        assert!(request.capture_plan().preserve_native_color);
         assert_eq!(record.selected_mode, ExecutionMode::Render);
         assert_eq!(record.backend_path, "/usr/bin/gcc");
         assert_eq!(record.argv_hash, fingerprint_for(&record.argv));
@@ -944,6 +954,7 @@ mod tests {
             retention: RetentionPolicy::OnWrapperFailure,
             paths: fake_paths(),
             inject_sarif: true,
+            preserve_native_color: false,
         };
         let render_plan = render_request.capture_plan();
         assert_eq!(render_plan.execution_mode, ExecutionMode::Render);
@@ -974,6 +985,7 @@ mod tests {
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
             inject_sarif: false,
+            preserve_native_color: false,
         };
         let passthrough_plan = passthrough_request.capture_plan();
         assert_eq!(
@@ -993,6 +1005,42 @@ mod tests {
     }
 
     #[test]
+    fn injected_flags_preserve_native_color_when_requested() {
+        let bundle = CaptureBundle {
+            plan: CapturePlan {
+                execution_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::NativeTextCapture,
+                structured_capture: StructuredCapturePolicy::Disabled,
+                native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+                preserve_native_color: true,
+                locale_handling: LocaleHandling::ForceMessagesC,
+                retention_policy: RetentionPolicy::Always,
+            },
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                argv: Vec::new(),
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: ProcessingPath::NativeTextCapture,
+            },
+            raw_text_artifacts: Vec::new(),
+            structured_artifacts: Vec::new(),
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+
+        assert_eq!(
+            bundle.injected_flags(Path::new("/tmp/runtime")),
+            vec!["-fdiagnostics-color=always".to_string()]
+        );
+    }
+
+    #[test]
     fn capture_bundle_groups_raw_text_and_structured_artifacts() {
         let request = CaptureRequest {
             backend: fake_probe(),
@@ -1003,6 +1051,7 @@ mod tests {
             retention: RetentionPolicy::Always,
             paths: fake_paths(),
             inject_sarif: true,
+            preserve_native_color: false,
         };
         let plan = request.capture_plan();
         let sarif_path = PathBuf::from("/tmp/runtime/diagnostics.sarif");
@@ -1049,6 +1098,7 @@ mod tests {
                 processing_path: ProcessingPath::DualSinkStructured,
                 structured_capture: StructuredCapturePolicy::SarifFile,
                 native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+                preserve_native_color: true,
                 locale_handling: LocaleHandling::ForceMessagesC,
                 retention_policy: RetentionPolicy::Always,
             },
@@ -1099,10 +1149,13 @@ mod tests {
         );
         assert_eq!(
             bundle.injected_flags(&temp_dir),
-            vec![format!(
-                "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                temp_dir.join("diagnostics.sarif").display()
-            )]
+            vec![
+                format!(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file={}",
+                    temp_dir.join("diagnostics.sarif").display()
+                ),
+                "-fdiagnostics-color=always".to_string(),
+            ]
         );
         assert_eq!(
             bundle.temp_artifact_paths(&temp_dir),

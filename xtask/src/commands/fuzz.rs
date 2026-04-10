@@ -643,6 +643,7 @@ fn run_capture_runtime_case(
         },
         paths,
         inject_sarif,
+        preserve_native_color: false,
     };
 
     let output = run_capture_with_env(&request, &stderr_path, sarif_payload_path.as_deref())?;
@@ -740,6 +741,7 @@ fn synthetic_sarif_capture_bundle(
             processing_path: ProcessingPath::DualSinkStructured,
             structured_capture: StructuredCapturePolicy::SarifFile,
             native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+            preserve_native_color: false,
             locale_handling: LocaleHandling::ForceMessagesC,
             retention_policy: RetentionPolicy::Never,
         },

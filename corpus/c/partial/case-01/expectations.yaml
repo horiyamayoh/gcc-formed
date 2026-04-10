@@ -16,6 +16,10 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
+    first_action_max_line: 3
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
     required_substrings:
       - "linker: symbol `missing_symbol`"
       - "  main.c:(.text+0x5): undefined reference to `missing_symbol'"
@@ -23,11 +27,21 @@ render:
   concise:
     omission_notice_required: false
     first_screenful_max_lines: 14
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
   ci:
     first_screenful_max_lines: 16
+    first_action_max_line: 3
+    partial_notice_required: true
+    raw_diagnostics_hint_required: true
+    raw_sub_block_required: true
     color_meaning_forbidden: true
     required_substrings:
       - "linker: error: undefined reference to `missing_symbol`"

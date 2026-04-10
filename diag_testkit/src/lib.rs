@@ -71,9 +71,23 @@ pub struct RenderProfileExpectations {
     #[serde(default)]
     pub first_screenful_max_lines: Option<usize>,
     #[serde(default)]
+    pub first_action_max_line: Option<usize>,
+    #[serde(default)]
+    pub partial_notice_required: Option<bool>,
+    #[serde(default)]
+    pub raw_diagnostics_hint_required: Option<bool>,
+    #[serde(default)]
+    pub raw_sub_block_required: Option<bool>,
+    #[serde(default)]
+    pub low_confidence_notice_required: Option<bool>,
+    #[serde(default)]
     pub path_first_required: Option<bool>,
     #[serde(default)]
     pub color_meaning_forbidden: Option<bool>,
+    #[serde(default)]
+    pub compaction_required_substrings: Vec<String>,
+    #[serde(default)]
+    pub compaction_forbidden_substrings: Vec<String>,
     #[serde(default)]
     pub required_substrings: Vec<String>,
     #[serde(default)]

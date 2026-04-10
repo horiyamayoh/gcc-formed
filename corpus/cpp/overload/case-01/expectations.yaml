@@ -20,9 +20,10 @@ render:
   default:
     omission_notice_required: true
     first_screenful_max_lines: 24
-    required_substrings:
+    first_action_max_line: 3
+    raw_diagnostics_hint_required: true
+    compaction_required_substrings:
       - "because:"
-      - "raw: rerun with --formed-profile=raw_fallback"
   concise:
     omission_notice_required: true
     first_screenful_max_lines: 14
@@ -32,11 +33,12 @@ render:
   ci:
     omission_notice_required: true
     first_screenful_max_lines: 14
+    first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
-    required_substrings:
+    raw_diagnostics_hint_required: true
+    compaction_required_substrings:
       - "because:"
-      - "raw: rerun with --formed-profile=raw_fallback"
 integrity:
   allowed_issue_codes: []
 performance:

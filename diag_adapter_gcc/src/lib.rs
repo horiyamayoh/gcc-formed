@@ -269,6 +269,7 @@ fn compatibility_bundle_from_legacy_inputs(
             } else {
                 NativeTextCapturePolicy::Passthrough
             },
+            preserve_native_color: false,
             locale_handling: LocaleHandling::Preserve,
             retention_policy: RetentionPolicy::Never,
         },

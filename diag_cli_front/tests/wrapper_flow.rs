@@ -236,6 +236,13 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             ))
     );
     assert!(
+        !trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str() == Some("-fdiagnostics-color=always"))
+    );
+    assert!(
         trace["environment_summary"]["sanitized_env_keys"]
             .as_array()
             .unwrap()

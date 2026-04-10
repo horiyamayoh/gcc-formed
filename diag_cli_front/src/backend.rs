@@ -14,6 +14,7 @@ use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use std::env;
 use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -53,6 +54,8 @@ fn build_capture_plan(
     mode: ExecutionMode,
     retention_policy: RetentionPolicy,
     debug_refs: DebugRefs,
+    capabilities: &RenderCapabilities,
+    forwarded_args: &[OsString],
 ) -> CapturePlan {
     let structured_capture = if compatibility_seam.should_inject_sarif(mode) {
         StructuredCapturePolicy::SarifFile
@@ -81,6 +84,11 @@ fn build_capture_plan(
         },
         structured_capture,
         native_text_capture,
+        preserve_native_color: compatibility_seam.should_preserve_tty_color(
+            mode,
+            capabilities,
+            forwarded_args,
+        ),
         locale_handling: if matches!(mode, ExecutionMode::Render) {
             LocaleHandling::ForceMessagesC
         } else {
@@ -125,6 +133,8 @@ pub(crate) fn build_execution_plan(
             mode_decision.mode,
             retention_policy,
             debug_refs,
+            &capabilities,
+            &parsed.forwarded_args,
         ),
         backend,
         mode_decision,
@@ -147,6 +157,28 @@ mod tests {
     use super::*;
     use diag_backend_probe::SupportTier;
 
+    fn tty_capabilities() -> RenderCapabilities {
+        RenderCapabilities {
+            stream_kind: diag_render::StreamKind::Tty,
+            width_columns: Some(100),
+            ansi_color: true,
+            unicode: false,
+            hyperlinks: false,
+            interactive: true,
+        }
+    }
+
+    fn pipe_capabilities() -> RenderCapabilities {
+        RenderCapabilities {
+            stream_kind: diag_render::StreamKind::Pipe,
+            width_columns: Some(100),
+            ansi_color: false,
+            unicode: false,
+            hyperlinks: false,
+            interactive: false,
+        }
+    }
+
     #[test]
     fn tier_a_render_plan_keeps_dual_sink_capture() {
         let plan = build_capture_plan(
@@ -154,6 +186,8 @@ mod tests {
             ExecutionMode::Render,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
+            &tty_capabilities(),
+            &[],
         );
 
         assert_eq!(plan.execution_mode, ExecutionMode::Render);
@@ -163,6 +197,7 @@ mod tests {
             plan.native_text_capture,
             NativeTextCapturePolicy::CaptureOnly
         );
+        assert!(plan.preserve_native_color);
         assert_eq!(plan.locale_handling, LocaleHandling::ForceMessagesC);
         assert_eq!(plan.retention_policy, RetentionPolicy::OnWrapperFailure);
     }
@@ -174,6 +209,8 @@ mod tests {
             ExecutionMode::Shadow,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
         );
 
         assert_eq!(plan.processing_path, ProcessingPath::NativeTextCapture);
@@ -182,6 +219,7 @@ mod tests {
             plan.native_text_capture,
             NativeTextCapturePolicy::TeeToParent
         );
+        assert!(!plan.preserve_native_color);
         assert_eq!(plan.locale_handling, LocaleHandling::Preserve);
     }
 
@@ -192,18 +230,23 @@ mod tests {
             ExecutionMode::Passthrough,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
         );
         assert_eq!(passthrough.processing_path, ProcessingPath::Passthrough);
         assert_eq!(
             passthrough.native_text_capture,
             NativeTextCapturePolicy::Passthrough
         );
+        assert!(!passthrough.preserve_native_color);
 
         let retained = build_capture_plan(
             &CliCompatibilitySeam::from_support_tier(SupportTier::B),
             ExecutionMode::Passthrough,
             RetentionPolicy::Always,
             DebugRefs::None,
+            &pipe_capabilities(),
+            &[],
         );
         assert_eq!(
             retained.native_text_capture,
@@ -215,6 +258,8 @@ mod tests {
             ExecutionMode::Passthrough,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::CaptureRef,
+            &pipe_capabilities(),
+            &[],
         );
         assert_eq!(
             debug_capture_ref.native_text_capture,

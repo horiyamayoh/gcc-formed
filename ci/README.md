@@ -1,6 +1,6 @@
 # CI Gate Artifacts
 
-`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。
+`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`replay/` には `replay-report.json` に加えて `native-parity-report.json` を出し、line budget / disclosure honesty / color meaning / compaction の stop-ship分類を機械可読で残す。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。
 
 `cargo xtask check` は Rust workspace test だけでなく `python3 -B -m unittest discover -s ci -p test_*.py` も実行する。したがって `cargo-xtask-check` step が green であれば、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests も同じ入口で通っている。
 
@@ -19,7 +19,7 @@ $REPORT_ROOT/
       <nn>-<step>.stderr.log
 ```
 
-既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`rc-gate/` は release-candidate verdict、`metrics-report.json`、`fuzz-smoke-report.json`、manual evaluation packet、`human-eval/` review bundle を保持する。`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
+既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`replay/` の `native-parity-report.json` は representative replay の分類正本とする。`rc-gate/` は release-candidate verdict、`metrics-report.json`、`native-parity-report.json`、`fuzz-smoke-report.json`、manual evaluation packet、`human-eval/` review bundle を保持する。`gate/` は「どの step が、どの command で、どの support tier / GCC version で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
 
 ## Status Schema
 

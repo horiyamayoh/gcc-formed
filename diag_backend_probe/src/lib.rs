@@ -263,7 +263,7 @@ fn capability_profile_for_compatibility(
             json_diagnostics: false,
             sarif_diagnostics,
             dual_sink,
-            tty_color_control: false,
+            tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
@@ -442,6 +442,7 @@ mod tests {
         assert_eq!(gcc15.support_level, SupportLevel::Primary);
         assert!(gcc15.sarif_diagnostics);
         assert!(gcc15.dual_sink);
+        assert!(gcc15.tty_color_control);
         assert!(!gcc15.json_diagnostics);
         assert!(
             gcc15
@@ -454,6 +455,7 @@ mod tests {
         assert_eq!(gcc13.support_level, SupportLevel::Conservative);
         assert!(!gcc13.json_diagnostics);
         assert!(!gcc13.sarif_diagnostics);
+        assert!(!gcc13.tty_color_control);
         assert_eq!(gcc13.default_processing_path, ProcessingPath::Passthrough);
 
         let gcc8 = capability_profile_for_major(8);
