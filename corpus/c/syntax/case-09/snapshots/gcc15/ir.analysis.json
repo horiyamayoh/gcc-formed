@@ -12,19 +12,6 @@
       },
       "size_bytes": 225,
       "storage": "inline"
-    },
-    {
-      "encoding": "utf-8",
-      "external_ref": "<capture:diagnostics.sarif>",
-      "id": "diagnostics.sarif",
-      "kind": "gcc_sarif",
-      "media_type": "application/sarif+json",
-      "produced_by": {
-        "name": "gcc",
-        "vendor": "GNU"
-      },
-      "size_bytes": 7005,
-      "storage": "external_ref"
     }
   ],
   "diagnostics": [
@@ -42,31 +29,30 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "604e1afd79870d277dc62d1d4d7023e5ec89084b0c23d6d491f0f2b5c5e4820d",
-        "raw": "49a8ee1e796cd1f7e8a3620fbdd04b2f9388de9565a2c8dad79e8c79b65ae002",
-        "structural": "a303f0dcf65a25b13a7e50f0c7f993aaffc0ddec6c4bc0649bdb84e6b39ee997"
+        "family": "153a348ee4c483082fa7e639451295887e08e71038985aaeb0d572cccd68f702",
+        "raw": "ae89a61ebe068a845d514be79177a38f39ddd6dac94e8e7c1ab088f5b3930a4a",
+        "structural": "5bdc87dd3b25b67c836fa234b4564c09540ed3f990d4617434aa7e23cefcfab9"
       },
-      "id": "sarif-0-0",
+      "id": "residual-compiler-0",
       "locations": [
         {
           "column": 10,
-          "end_column": 11,
           "line": 2,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "expected ')' before '{{' token"
+        "raw_text": "src/main.c:2:10: error: expected ')' before '{' token"
       },
-      "node_completeness": "complete",
+      "node_completeness": "partial",
       "origin": "gcc",
       "phase": "parse",
       "provenance": {
         "capture_refs": [
-          "diagnostics.sarif"
+          "stderr.raw"
         ],
-        "source": "compiler"
+        "source": "residual_text"
       },
       "semantic_role": "root",
       "severity": "error"
@@ -85,42 +71,73 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "ccb547fe60567ab18367c0836b511b22ef8baa9def27cb7bae718671585f4dde",
-        "raw": "ea5b0b3619d62000a2b9affe1f7523339a31b7e9e07941fccd4a159bcf010397",
-        "structural": "3db6cc1f45d1fb689a64f24a25e54480920775fa6123117397252dc12aa7fdc8"
+        "family": "19581f86718c26db8721219ccb03257cc763c0b2e2b98ba84c9182733d5e40f7",
+        "raw": "63ef0da2b4d6433f53587506e4ba48708c2e7f35551370480130cd54f57d797e",
+        "structural": "c69699b657ab49aa89250b3fa06972f0af23d1ad9a2078c39c6d98825a47c677"
       },
-      "id": "sarif-0-1",
+      "id": "residual-compiler-1",
       "locations": [
         {
           "column": 1,
-          "end_column": 2,
           "line": 5,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "expected expression before '}}' token"
+        "raw_text": "src/main.c:5:1: error: expected expression before '}' token"
       },
-      "node_completeness": "complete",
+      "node_completeness": "partial",
       "origin": "gcc",
       "phase": "parse",
       "provenance": {
         "capture_refs": [
-          "diagnostics.sarif"
+          "stderr.raw"
         ],
-        "source": "compiler"
+        "source": "residual_text"
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "19701b2262ab6f7d70b4c73c2c438c8dd141f35cc2e9fe77041b729febc6db76",
+        "raw": "86b579e7e60b860ee67b272a68542f623b58e0bb6c151061bc6db1c561088116",
+        "structural": "b1b5aef58adade95a1675dc33521a86035274b93f571ee1847dc8b51ec8c5415"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "src/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    5 | }\n      | ^"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "0b22918e6619f1600b800301cbe11020d2581890eafffc3e62709487dd466020",
-    "structural": "21c979f427c05ba5ed7b1d75ee59512c4488c2362aa2c6c76bd0a76124c5e7ed"
+    "family": "1239feb9ea4ea7959b58f588afcf032748dd9bab56f5bfe719042f34354e31f3",
+    "raw": "51497b12ad62c5c7a0dae06e78b03e3303fd8d3f6e9969dc9ed53448135c1826",
+    "structural": "2c54c12649c498c5541dc936d959670403c3a9a6d80f04c39c5b11e2884ff2ee"
   },
   "producer": {
     "name": "gcc-formed",

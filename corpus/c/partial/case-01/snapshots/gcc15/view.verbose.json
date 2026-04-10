@@ -36,7 +36,7 @@
       "confidence_label": "likely",
       "confidence_notice": null,
       "context_lines": [
-        "linker: original linker diagnostics are preserved"
+        "linker: preserved"
       ],
       "excerpts": [],
       "family": "linker.file_format_or_relocation",

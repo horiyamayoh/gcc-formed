@@ -1,15 +1,19 @@
 corpus_id: cpp/overload/case-07
-title: string literal passed to short overload
+title: GCC12 JSON single-sink string literal passed to short overload
 tags:
 - overload
 - phase1
 - beta-bar
+- representative
+- 'band:gcc9_12'
+- 'processing_path:single_sink_structured'
+- 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex
 redaction_class: public
 owner_team: compiler-ux
-last_reviewed: '2026-04-09'
+last_reviewed: '2026-04-11'
 reviewers:
 - codex
 promotion_status: curated

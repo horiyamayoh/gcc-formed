@@ -11,7 +11,7 @@ debug: suppression_reason=preserved_specific_family_from_ingress
 error: linker file format or relocation failure
 help: check object compatibility, target triple, and archive contents
 why: collect2: error: ld returned 1 exit status
-linker: original linker diagnostics are preserved
+linker: preserved
 raw:
   collect2: error: ld returned 1 exit status
 debug: rule_id=rule.family.ingress_specific_override

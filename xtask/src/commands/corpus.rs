@@ -33,6 +33,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/syntax/case-01",
     "c/syntax/case-02",
     "c/syntax/case-05",
+    "c/syntax/case-09",
     "c/macro_include/case-01",
     "c/macro_include/case-03",
     "c/macro_include/case-10",
@@ -40,12 +41,16 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "cpp/template/case-02",
     "cpp/template/case-05",
     "cpp/template/case-13",
+    "cpp/template/case-14",
     "c/type/case-01",
+    "c/type/case-11",
     "cpp/overload/case-01",
     "cpp/overload/case-02",
+    "cpp/overload/case-07",
     "c/linker/case-01",
     "c/linker/case-02",
     "c/linker/case-03",
+    "c/linker/case-11",
 ];
 
 pub(crate) const MINIMUM_CURATED_CORPUS_SIZE: usize = 80;
@@ -230,7 +235,14 @@ pub(crate) struct FixtureCoverageReport {
 #[derive(Debug)]
 pub(crate) struct CapturedIngress {
     pub(crate) stderr_text: String,
-    pub(crate) sarif_text: Option<String>,
+    pub(crate) structured_text: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct StructuredFixtureArtifactSpec {
+    pub(crate) file_name: &'static str,
+    pub(crate) kind: ArtifactKind,
+    pub(crate) media_type: &'static str,
 }
 
 pub(crate) fn run_replay(
@@ -575,8 +587,10 @@ pub(crate) fn collect_acceptance_fixture_summary(
                 }
             })?,
         );
-        if let Ok(sarif_text) = fs::read_to_string(snapshot_root.join("diagnostics.sarif")) {
-            artifacts.insert("diagnostics.sarif".to_string(), sarif_text);
+        if let Some(spec) = structured_artifact_spec_for_fixture(fixture) {
+            if let Ok(structured_text) = fs::read_to_string(snapshot_root.join(spec.file_name)) {
+                artifacts.insert(spec.file_name.to_string(), structured_text);
+            }
         }
         artifacts.insert(
             "ir.facts.json".to_string(),
@@ -832,7 +846,8 @@ pub(crate) fn materialize_fixture_snapshots(
     })?;
     let temp_root = tempdir.path();
     let fixture_capture_plan = capture_plan_for_fixture(fixture);
-    let temp_sarif_path = temp_root.join("diagnostics.sarif");
+    let temp_structured_path =
+        structured_artifact_spec_for_fixture(fixture).map(|spec| temp_root.join(spec.file_name));
     fs::write(temp_root.join("stderr.raw"), &captured.stderr_text).map_err(|error| {
         VerificationFailure {
             layer: "snapshot".to_string(),
@@ -840,15 +855,15 @@ pub(crate) fn materialize_fixture_snapshots(
             summary: error.to_string(),
         }
     })?;
-    fs::write(
-        &temp_sarif_path,
-        captured.sarif_text.clone().unwrap_or_default(),
-    )
-    .map_err(|error| VerificationFailure {
-        layer: "snapshot".to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary: error.to_string(),
-    })?;
+    if let Some(path) = temp_structured_path.as_ref() {
+        fs::write(path, captured.structured_text.clone().unwrap_or_default()).map_err(|error| {
+            VerificationFailure {
+                layer: "snapshot".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error.to_string(),
+            }
+        })?;
+    }
 
     let replay = replay_document_from_ingress(
         fixture,
@@ -859,7 +874,7 @@ pub(crate) fn materialize_fixture_snapshots(
         ) {
             None
         } else {
-            Some(temp_sarif_path.as_path())
+            temp_structured_path.as_deref()
         },
     )
     .map_err(|error| VerificationFailure {
@@ -885,10 +900,12 @@ pub(crate) fn materialize_fixture_snapshots(
 
     let mut artifacts = BTreeMap::new();
     artifacts.insert("stderr.raw".to_string(), captured.stderr_text.clone());
-    artifacts.insert(
-        "diagnostics.sarif".to_string(),
-        captured.sarif_text.clone().unwrap_or_default(),
-    );
+    if let Some(spec) = structured_artifact_spec_for_fixture(fixture) {
+        artifacts.insert(
+            spec.file_name.to_string(),
+            captured.structured_text.clone().unwrap_or_default(),
+        );
+    }
     artifacts.insert(
         "ir.facts.json".to_string(),
         snapshot_json(&replay.document, SnapshotKind::FactsOnly).map_err(|error| {
@@ -990,35 +1007,31 @@ pub(crate) fn load_existing_ingress(
 ) -> Result<CapturedIngress, VerificationFailure> {
     let snapshot_root = fixture.snapshot_root();
     let stderr_path = snapshot_root.join("stderr.raw");
-    let sarif_path = snapshot_root.join("diagnostics.sarif");
-    let processing_path = fixture_processing_path(fixture);
     let stderr_text = fs::read_to_string(&stderr_path).map_err(|error| VerificationFailure {
         layer: "capture".to_string(),
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", stderr_path.display()),
     })?;
-    let sarif_text = match fs::read_to_string(&sarif_path) {
-        Ok(text) if text.trim().is_empty() => None,
-        Ok(text) => Some(text),
-        Err(_)
-            if matches!(
-                processing_path,
-                ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough
-            ) =>
-        {
-            None
-        }
-        Err(error) => {
-            return Err(VerificationFailure {
-                layer: "capture".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: format!("failed to read {}: {error}", sarif_path.display()),
-            });
+    let structured_text = match structured_artifact_spec_for_fixture(fixture) {
+        None => None,
+        Some(spec) => {
+            let structured_path = snapshot_root.join(spec.file_name);
+            match fs::read_to_string(&structured_path) {
+                Ok(text) if text.trim().is_empty() => None,
+                Ok(text) => Some(text),
+                Err(error) => {
+                    return Err(VerificationFailure {
+                        layer: "capture".to_string(),
+                        fixture_id: fixture.fixture_id().to_string(),
+                        summary: format!("failed to read {}: {error}", structured_path.display()),
+                    });
+                }
+            }
         }
     };
     Ok(CapturedIngress {
         stderr_text,
-        sarif_text,
+        structured_text,
     })
 }
 
@@ -1027,10 +1040,13 @@ pub(crate) fn replay_fixture_document(
 ) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
     let snapshot_root = fixture.snapshot_root();
     let stderr_text = fs::read_to_string(snapshot_root.join("stderr.raw"))?;
-    let sarif_path =
-        expected_sarif_path_for_fixture(fixture, Some(snapshot_root.join("diagnostics.sarif")));
+    let structured_path = expected_structured_artifact_path_for_fixture(
+        fixture,
+        structured_artifact_spec_for_fixture(fixture)
+            .map(|spec| snapshot_root.join(spec.file_name)),
+    );
     let parse_start = Instant::now();
-    let replay = replay_document_from_ingress(fixture, &stderr_text, sarif_path.as_deref())?;
+    let replay = replay_document_from_ingress(fixture, &stderr_text, structured_path.as_deref())?;
     Ok(ReplayOutcomeAndDocument {
         parse_time_ms: elapsed_ms(parse_start),
         ..replay
@@ -1047,10 +1063,10 @@ pub(crate) struct ReplayOutcomeAndDocument {
 pub(crate) fn replay_document_from_ingress(
     fixture: &Fixture,
     stderr_text: &str,
-    sarif_path: Option<&Path>,
+    structured_path: Option<&Path>,
 ) -> Result<ReplayOutcomeAndDocument, Box<dyn std::error::Error>> {
     // Temporary migration shim while replay callers still hand explicit fixture assets.
-    let bundle = capture_bundle_for_fixture(fixture, stderr_text, sarif_path)?;
+    let bundle = capture_bundle_for_fixture(fixture, stderr_text, structured_path)?;
     let ingest = ingest_bundle(
         &bundle,
         IngestPolicy {
@@ -1096,7 +1112,7 @@ pub(crate) fn run_info_for_fixture(fixture: &Fixture) -> RunInfo {
 pub(crate) fn capture_bundle_for_fixture(
     fixture: &Fixture,
     stderr_text: &str,
-    sarif_path: Option<&Path>,
+    structured_path: Option<&Path>,
 ) -> Result<CaptureBundle, Box<dyn std::error::Error>> {
     let compiler = tool_for_backend(
         compiler_binary_for_fixture(fixture),
@@ -1117,26 +1133,29 @@ pub(crate) fn capture_bundle_for_fixture(
         external_ref: None,
         produced_by: Some(compiler.clone()),
     }];
-    let structured_artifacts =
-        expected_sarif_path_for_fixture(fixture, sarif_path.map(Path::to_path_buf))
-            .map(|path| CaptureArtifact {
-                id: "diagnostics.sarif".to_string(),
-                kind: ArtifactKind::GccSarif,
-                media_type: "application/sarif+json".to_string(),
-                encoding: Some("utf-8".to_string()),
-                digest_sha256: None,
-                size_bytes: fs::metadata(&path).ok().map(|metadata| metadata.len()),
-                storage: if path.exists() {
-                    ArtifactStorage::ExternalRef
-                } else {
-                    ArtifactStorage::Unavailable
-                },
-                inline_text: None,
-                external_ref: path.exists().then(|| path.display().to_string()),
-                produced_by: Some(compiler),
-            })
-            .into_iter()
-            .collect::<Vec<_>>();
+    let structured_artifacts = expected_structured_artifact_path_for_fixture(
+        fixture,
+        structured_path.map(Path::to_path_buf),
+    )
+    .and_then(|path| structured_artifact_spec_for_fixture(fixture).map(|spec| (path, spec)))
+    .map(|(path, spec)| CaptureArtifact {
+        id: spec.file_name.to_string(),
+        kind: spec.kind,
+        media_type: spec.media_type.to_string(),
+        encoding: Some("utf-8".to_string()),
+        digest_sha256: None,
+        size_bytes: fs::metadata(&path).ok().map(|metadata| metadata.len()),
+        storage: if path.exists() {
+            ArtifactStorage::ExternalRef
+        } else {
+            ArtifactStorage::Unavailable
+        },
+        inline_text: None,
+        external_ref: path.exists().then(|| path.display().to_string()),
+        produced_by: Some(compiler),
+    })
+    .into_iter()
+    .collect::<Vec<_>>();
     Ok(CaptureBundle {
         plan: fixture_capture_plan.plan,
         invocation: CaptureInvocation {
@@ -1873,6 +1892,8 @@ pub(crate) fn required_representative_band_paths() -> Vec<String> {
     vec![
         "gcc13_14/native_text_capture".to_string(),
         "gcc13_14/single_sink_structured".to_string(),
+        "gcc9_12/native_text_capture".to_string(),
+        "gcc9_12/single_sink_structured".to_string(),
     ]
 }
 
@@ -1888,13 +1909,7 @@ pub(crate) fn capture_plan_for_fixture(fixture: &Fixture) -> FixtureCapturePlan 
         _ => ExecutionMode::Render,
     };
     let processing_path = fixture_processing_path(fixture);
-    let structured_capture = match processing_path {
-        ProcessingPath::DualSinkStructured => StructuredCapturePolicy::SarifFile,
-        ProcessingPath::SingleSinkStructured => StructuredCapturePolicy::SingleSinkSarifFile,
-        ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough => {
-            StructuredCapturePolicy::Disabled
-        }
-    };
+    let structured_capture = structured_capture_policy_for_fixture(fixture);
     let native_text_capture = match execution_mode {
         ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
         ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
@@ -1914,25 +1929,64 @@ pub(crate) fn capture_plan_for_fixture(fixture: &Fixture) -> FixtureCapturePlan 
     }
 }
 
-pub(crate) fn expected_sarif_path_for_fixture(
-    fixture: &Fixture,
-    sarif_path: Option<std::path::PathBuf>,
-) -> Option<std::path::PathBuf> {
+pub(crate) fn structured_capture_policy_for_fixture(fixture: &Fixture) -> StructuredCapturePolicy {
     match fixture_processing_path(fixture) {
-        ProcessingPath::DualSinkStructured | ProcessingPath::SingleSinkStructured => {
-            sarif_path.or_else(|| Some(fixture.snapshot_root().join("diagnostics.sarif")))
+        ProcessingPath::DualSinkStructured => StructuredCapturePolicy::SarifFile,
+        ProcessingPath::SingleSinkStructured
+            if matches!(fixture_support_band(fixture), VersionBand::Gcc9_12) =>
+        {
+            StructuredCapturePolicy::SingleSinkJsonFile
         }
-        ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough => None,
+        ProcessingPath::SingleSinkStructured => StructuredCapturePolicy::SingleSinkSarifFile,
+        ProcessingPath::NativeTextCapture | ProcessingPath::Passthrough => {
+            StructuredCapturePolicy::Disabled
+        }
     }
 }
 
-pub(crate) fn discover_single_sink_sarif(root: &Path) -> Result<Option<String>, String> {
+pub(crate) fn structured_artifact_spec_for_fixture(
+    fixture: &Fixture,
+) -> Option<StructuredFixtureArtifactSpec> {
+    match structured_capture_policy_for_fixture(fixture) {
+        StructuredCapturePolicy::Disabled => None,
+        StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile => {
+            Some(StructuredFixtureArtifactSpec {
+                file_name: "diagnostics.sarif",
+                kind: ArtifactKind::GccSarif,
+                media_type: "application/sarif+json",
+            })
+        }
+        StructuredCapturePolicy::SingleSinkJsonFile => Some(StructuredFixtureArtifactSpec {
+            file_name: "diagnostics.json",
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json",
+        }),
+    }
+}
+
+pub(crate) fn expected_structured_artifact_path_for_fixture(
+    fixture: &Fixture,
+    structured_path: Option<std::path::PathBuf>,
+) -> Option<std::path::PathBuf> {
+    structured_artifact_spec_for_fixture(fixture)
+        .map(|spec| structured_path.unwrap_or_else(|| fixture.snapshot_root().join(spec.file_name)))
+}
+
+pub(crate) fn discover_single_sink_structured(
+    root: &Path,
+    spec: StructuredFixtureArtifactSpec,
+) -> Result<Option<String>, String> {
+    let expected_extension = Path::new(spec.file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .ok_or_else(|| format!("structured artifact {} has no extension", spec.file_name))?;
     let mut candidates = fs::read_dir(root)
         .map_err(|error| format!("failed to read {}: {error}", root.display()))?
         .filter_map(Result::ok)
         .filter_map(|entry| {
             let path = entry.path();
-            (path.extension().and_then(|ext| ext.to_str()) == Some("sarif")).then_some(path)
+            (path.extension().and_then(|ext| ext.to_str()) == Some(expected_extension))
+                .then_some(path)
         })
         .collect::<Vec<_>>();
     candidates.sort();
@@ -2401,6 +2455,9 @@ pub(crate) fn capture_fixture_ingress(
         StructuredCapturePolicy::SingleSinkSarifFile => {
             shell_args.push("-fdiagnostics-format=sarif-file".to_string());
         }
+        StructuredCapturePolicy::SingleSinkJsonFile => {
+            shell_args.push("-fdiagnostics-format=json-file".to_string());
+        }
     }
     let command_line = format!(
         "set -euo pipefail; {} 1>stdout.raw 2>stderr.raw || true",
@@ -2451,28 +2508,39 @@ pub(crate) fn capture_fixture_ingress(
         fixture_id: fixture.fixture_id().to_string(),
         summary: format!("failed to read {}: {error}", stderr_path.display()),
     })?;
-    let sarif_text = match fixture_capture_plan.plan.structured_capture {
+    let structured_text = match fixture_capture_plan.plan.structured_capture {
         StructuredCapturePolicy::Disabled => None,
         StructuredCapturePolicy::SarifFile => {
-            let sarif_path = sandbox.path().join("diagnostics.sarif");
+            let structured_path = sandbox.path().join("diagnostics.sarif");
             Some(
-                fs::read_to_string(&sarif_path).map_err(|error| VerificationFailure {
+                fs::read_to_string(&structured_path).map_err(|error| VerificationFailure {
                     layer: "capture".to_string(),
                     fixture_id: fixture.fixture_id().to_string(),
-                    summary: format!("failed to read {}: {error}", sarif_path.display()),
+                    summary: format!("failed to read {}: {error}", structured_path.display()),
                 })?,
             )
         }
-        StructuredCapturePolicy::SingleSinkSarifFile => discover_single_sink_sarif(sandbox.path())
-            .map_err(|error| VerificationFailure {
-                layer: "capture".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: error,
-            })?,
+        StructuredCapturePolicy::SingleSinkSarifFile
+        | StructuredCapturePolicy::SingleSinkJsonFile => {
+            let spec = structured_artifact_spec_for_fixture(fixture).ok_or_else(|| {
+                VerificationFailure {
+                    layer: "capture".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: "structured artifact spec missing".to_string(),
+                }
+            })?;
+            discover_single_sink_structured(sandbox.path(), spec).map_err(|error| {
+                VerificationFailure {
+                    layer: "capture".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error,
+                }
+            })?
+        }
     };
     Ok(CapturedIngress {
         stderr_text,
-        sarif_text,
+        structured_text,
     })
 }
 
@@ -2603,10 +2671,10 @@ mod tests {
                 language: "c".to_string(),
                 standard: Some("c11".to_string()),
                 target_compiler_family: "gcc".to_string(),
-                required_support_tier: if major_version_selector == "15" {
-                    "A".to_string()
-                } else {
-                    "B".to_string()
+                required_support_tier: match major_version_selector {
+                    "15" => "A".to_string(),
+                    "13" | "14" => "B".to_string(),
+                    _ => "C".to_string(),
                 },
                 major_version_selector: major_version_selector.to_string(),
                 argv: vec!["-c".to_string(), "src/main.c".to_string()],
@@ -2620,10 +2688,10 @@ mod tests {
             expectations: FixtureExpectations {
                 schema_version: 1,
                 fixture_id: fixture_id.to_string(),
-                support_tier: if major_version_selector == "15" {
-                    "A".to_string()
-                } else {
-                    "B".to_string()
+                support_tier: match major_version_selector {
+                    "15" => "A".to_string(),
+                    "13" | "14" => "B".to_string(),
+                    _ => "C".to_string(),
                 },
                 expected_mode: expected_mode.to_string(),
                 family: Some("syntax".to_string()),
@@ -2703,7 +2771,11 @@ mod tests {
 
         assert_eq!(
             coverage.missing_required_band_paths,
-            vec!["gcc13_14/single_sink_structured".to_string()]
+            vec![
+                "gcc13_14/single_sink_structured".to_string(),
+                "gcc9_12/native_text_capture".to_string(),
+                "gcc9_12/single_sink_structured".to_string(),
+            ]
         );
     }
 
@@ -2731,6 +2803,57 @@ mod tests {
             StructuredCapturePolicy::SingleSinkSarifFile
         );
         assert_eq!(bundle.structured_artifacts.len(), 1);
+        assert_eq!(
+            bundle.structured_artifacts[0].storage,
+            ArtifactStorage::Unavailable
+        );
+    }
+
+    #[test]
+    fn band_c_single_sink_fixtures_use_json_capture_policy() {
+        let fixture = fixture_with_tags(
+            "cpp/template/case-band-c-single-sink",
+            "12",
+            "render",
+            &["band:gcc9_12", "processing_path:single_sink_structured"],
+            Some(ExpectedFallback::Forbidden),
+        );
+
+        assert_eq!(
+            structured_capture_policy_for_fixture(&fixture),
+            StructuredCapturePolicy::SingleSinkJsonFile
+        );
+        let spec = structured_artifact_spec_for_fixture(&fixture).expect("structured spec");
+        assert_eq!(spec.file_name, "diagnostics.json");
+        assert_eq!(spec.kind, ArtifactKind::GccJson);
+    }
+
+    #[test]
+    fn capture_bundle_tracks_missing_band_c_single_sink_json_as_unavailable() {
+        let fixture = fixture_with_tags(
+            "cpp/template/case-band-c-single-sink",
+            "12",
+            "render",
+            &[
+                "band:gcc9_12",
+                "processing_path:single_sink_structured",
+                "fallback_contract:bounded_render",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let missing = fixture.root.join("snapshots/gcc15/diagnostics.json");
+
+        let bundle =
+            capture_bundle_for_fixture(&fixture, "main.cpp:1:1: error: broken", Some(&missing))
+                .expect("bundle");
+
+        assert_eq!(
+            bundle.plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkJsonFile
+        );
+        assert_eq!(bundle.structured_artifacts.len(), 1);
+        assert_eq!(bundle.structured_artifacts[0].id, "diagnostics.json");
+        assert_eq!(bundle.structured_artifacts[0].kind, ArtifactKind::GccJson);
         assert_eq!(
             bundle.structured_artifacts[0].storage,
             ArtifactStorage::Unavailable

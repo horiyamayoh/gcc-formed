@@ -1,11 +1,11 @@
 src/main.cpp:7:22: error: template instantiation failed
 help: start from the first user-owned template frame and match template arguments
-why: class template argument deduction failed:
+why: no matching function for call to ‘Pair(int, const char [2])’
 | src/main.cpp:7:22
 |     Pair value(1, "x");
 while instantiating:
-  - src/main.cpp:3:5 candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'
+  - src/main.cpp:3:5 candidate: ‘template<class T> Pair(T, T)-> Pair<T>’
   - src/main.cpp:3:5 template argument deduction/substitution failed:
-  - src/main.cpp:7:22 deduced conflicting types for parameter 'T' ('int' and 'const char*')
-omitted 1 internal template frames
+  - src/main.cpp:7:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)
+omitted 2 internal template frames
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,6 +1,9 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 src/main.c:5:1: error: syntax error
 help: fix the first parser error at the user-owned location
-why: expected expression before '}}' token
+why: src/main.c:5:1: error: expected expression before '}' token
 | src/main.c:5:1
 | }
+raw:
+  src/main.c:5:1: error: expected expression before '}' token
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

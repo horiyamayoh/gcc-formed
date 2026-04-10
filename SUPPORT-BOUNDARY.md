@@ -71,6 +71,7 @@ How much native / raw compiler output is preserved in the same run.
 ### Interpretive notes
 
 - “first-class product band” means: present in specs, tests, issue taxonomy, quality gates, roadmap, and corpus tagging.
+- Representative corpus / replay gates must track `GCC9-12/NativeTextCapture` and `GCC9-12/SingleSinkStructured` (JSON) separately, not fold them into GCC15+/GCC13-14 assumptions.
 - It does **not** mean that all bands have identical fidelity or identical raw-preservation guarantees.
 - If a run resolves to `Passthrough`, that is still a valid shipped behavior when it is the most trustworthy choice.
 

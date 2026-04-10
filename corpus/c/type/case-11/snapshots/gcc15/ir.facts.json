@@ -12,93 +12,68 @@
       },
       "size_bytes": 444,
       "storage": "inline"
-    },
-    {
-      "encoding": "utf-8",
-      "external_ref": "<capture:diagnostics.sarif>",
-      "id": "diagnostics.sarif",
-      "kind": "gcc_sarif",
-      "media_type": "application/sarif+json",
-      "produced_by": {
-        "name": "gcc",
-        "vendor": "GNU"
-      },
-      "size_bytes": 4949,
-      "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
-      "children": [
-        {
-          "fingerprints": {
-            "family": "993d9fa67b90caa0aadf09099b167814afd8cf33b403e462231266c437e474aa",
-            "raw": "df6e71d3adadee8e5e7abf7f2a42f277f19dea97caaea8d38d14a0196b41fff2",
-            "structural": "f804cd0f179fcf94216b8d2b1fd8bb7242d791f59b75a1310851c389612b8cd9"
-          },
-          "id": "sarif-0-0-related-0",
-          "locations": [
-            {
-              "column": 20,
-              "end_column": 30,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.c"
-            }
-          ],
-          "message": {
-            "raw_text": "expected 'int *' but argument is of type 'struct Box *'"
-          },
-          "node_completeness": "partial",
-          "origin": "gcc",
-          "phase": "semantic",
-          "provenance": {
-            "capture_refs": [
-              "diagnostics.sarif"
-            ],
-            "source": "compiler"
-          },
-          "semantic_role": "supporting",
-          "severity": "note"
-        }
-      ],
       "fingerprints": {
-        "family": "3592aa39ab9b13b68c6eb0af8001ff6c27bed90a439cc28e531ecda524bcac7b",
-        "raw": "be79cfecd23523e17d91ae042e08c191798807ad1a04c21b25108296d4ff1778",
-        "structural": "d19ffc4c0173d96e54ce41ed8112f239f3fdb35098b137a436fba5596a5c5fc3"
+        "family": "8734da9bc8bb72c37477641d4de320e18d3cdd2ea221b6a0246416f4541e3f58",
+        "raw": "6f9d9cf209991e2d5f287b6b16d936e8ef72c4d2ff2437a7fc0621e6b77d537c",
+        "structural": "6ca8aab0d3f39b11f1015a3691bf21c94bc68796d9d70b9ce462d5fbad441883"
       },
-      "id": "sarif-0-0",
+      "id": "residual-compiler-0",
       "locations": [
         {
           "column": 19,
-          "end_column": 23,
           "line": 9,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "passing argument 1 of 'takes_int_ptr' from incompatible pointer type"
+        "raw_text": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]"
       },
-      "node_completeness": "complete",
+      "node_completeness": "partial",
       "origin": "gcc",
       "phase": "semantic",
       "provenance": {
         "capture_refs": [
-          "diagnostics.sarif"
+          "stderr.raw"
         ],
-        "source": "compiler"
+        "source": "residual_text"
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "60a950c46c680657951e03e3d5f4eb2496a0c1b5536458f170d95682c5573a01",
+        "raw": "05d0d194d07b64ae09b6764e51bdd1ab797e965c89a96eb7cdd5bf3e60d72cdd",
+        "structural": "f6b79d00bc277291e0f43a03071387ba2503e8c775d1041a3bd846bd7798118c"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "077304a081a2c860c5192e10efa060b450579e4779dcbe5d0056b792f37ec64d",
-    "structural": "a2b6e7b49e45e7b52e4e70802ca85ceecb059fec46471237a9ac52dc1897af34"
+    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
+    "raw": "d7273d7525cd5182be87bd255eda3c08b593bf3118c5fb3b775ab549fb8dc2c1",
+    "structural": "84619c19ab3b2e5289f29d7c9f5b87fde1c9b5e23706bb6ede02495495963282"
   },
   "producer": {
     "name": "gcc-formed",

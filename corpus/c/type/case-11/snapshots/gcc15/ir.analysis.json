@@ -12,19 +12,6 @@
       },
       "size_bytes": 444,
       "storage": "inline"
-    },
-    {
-      "encoding": "utf-8",
-      "external_ref": "<capture:diagnostics.sarif>",
-      "id": "diagnostics.sarif",
-      "kind": "gcc_sarif",
-      "media_type": "application/sarif+json",
-      "produced_by": {
-        "name": "gcc",
-        "vendor": "GNU"
-      },
-      "size_bytes": 4949,
-      "storage": "external_ref"
     }
   ],
   "diagnostics": [
@@ -40,86 +27,74 @@
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
-      "children": [
-        {
-          "analysis": {
-            "confidence": "medium",
-            "family": "syntax",
-            "first_action_hint": "fix the first parser error at the user-owned location",
-            "headline": "syntax error",
-            "matched_conditions": [
-              "message_contains=expected"
-            ],
-            "rule_id": "rule.family.syntax.phase_or_message"
-          },
-          "fingerprints": {
-            "family": "74ad94a73c83478249684caa8d6e0118f3a37fe9305a7709be673dc9623891ea",
-            "raw": "df6e71d3adadee8e5e7abf7f2a42f277f19dea97caaea8d38d14a0196b41fff2",
-            "structural": "e5435f25276d238ec2f049a6e1c425faa8c88234d48672415e7de25ba9000fe9"
-          },
-          "id": "sarif-0-0-related-0",
-          "locations": [
-            {
-              "column": 20,
-              "end_column": 30,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.c"
-            }
-          ],
-          "message": {
-            "raw_text": "expected 'int *' but argument is of type 'struct Box *'"
-          },
-          "node_completeness": "partial",
-          "origin": "gcc",
-          "phase": "semantic",
-          "provenance": {
-            "capture_refs": [
-              "diagnostics.sarif"
-            ],
-            "source": "compiler"
-          },
-          "semantic_role": "supporting",
-          "severity": "note"
-        }
-      ],
       "fingerprints": {
-        "family": "5ef6afd9406cf86c0a5b91b13ede296a737552437d0cc4fe574c0bfc18dedc9e",
-        "raw": "be79cfecd23523e17d91ae042e08c191798807ad1a04c21b25108296d4ff1778",
-        "structural": "3dd035f918a0cd58facfc30d65344175337b8aeae8c81622cd3537593df06bc3"
+        "family": "d4fa125e4ab162c54197a305efd471dae016b0c65b2b393f1b01b39aee5f6343",
+        "raw": "6f9d9cf209991e2d5f287b6b16d936e8ef72c4d2ff2437a7fc0621e6b77d537c",
+        "structural": "c22de8adeb0c1502d8eed65d42e0d923b21ad9b0b246e0850f9db7d799c47e0c"
       },
-      "id": "sarif-0-0",
+      "id": "residual-compiler-0",
       "locations": [
         {
           "column": 19,
-          "end_column": 23,
           "line": 9,
           "ownership": "user",
           "path": "src/main.c"
         }
       ],
       "message": {
-        "raw_text": "passing argument 1 of 'takes_int_ptr' from incompatible pointer type"
+        "raw_text": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]"
       },
-      "node_completeness": "complete",
+      "node_completeness": "partial",
       "origin": "gcc",
       "phase": "semantic",
       "provenance": {
         "capture_refs": [
-          "diagnostics.sarif"
+          "stderr.raw"
         ],
-        "source": "compiler"
+        "source": "residual_text"
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "b32b4821b941680ef9fe52ba412f45d186b380a618890a3819a9ae35cf663842",
+        "raw": "05d0d194d07b64ae09b6764e51bdd1ab797e965c89a96eb7cdd5bf3e60d72cdd",
+        "structural": "e3d3d437830a81f0d53c18bd74aeea6b848aabba30239f394b5531f19ffc9e51"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "8385b7a0fdbd529d35c29271ae9d3e7785901a897b0cb72bd001826a3dd44a70",
-    "structural": "bad7fd297758980507fa6190a31d9023d030b5fc85cec860f24ff40e7ecda894"
+    "family": "d3537ece516726c7ce200965236071d7858c1600ae0fa7a52037e07687f1cb23",
+    "raw": "df08d9d031b14e7e025025a84f6aeedc93a7f9f4c56328e61e1dc08dce949467",
+    "structural": "05d1499e669a43ea15f51ebe7efe65e250da069df7d482d4756a92d2581d0d53"
   },
   "producer": {
     "name": "gcc-formed",

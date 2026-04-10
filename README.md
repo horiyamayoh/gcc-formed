@@ -34,6 +34,8 @@
 SupportLevel / ProcessingPath / RawPreservationLevel の正本は [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md) に置く。  
 README では要点だけを再掲する。
 
+Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` と explicit `SingleSinkStructured` (JSON) を別 path として扱う。
+
 | VersionBand | 典型的な ProcessingPath | 現在の beta support level | 位置づけ |
 |---|---|---|---|
 | GCC 15+ | `DualSinkStructured` | `Preview` | 最高 fidelity の reference path |

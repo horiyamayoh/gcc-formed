@@ -1,7 +1,7 @@
 error: type or overload mismatch
 --> src/main.cpp:5:17
 help: compare the expected type and actual argument at the call site
-why: invalid conversion from 'const char*' to 'short int'
+why: invalid conversion from ‘const char*’ to ‘short int’
 | src/main.cpp:5:17
 |     takes_short("x");
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

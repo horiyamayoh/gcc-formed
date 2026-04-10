@@ -1,7 +1,7 @@
 language: c
 target_compiler_family: gcc
-required_support_tier: A
-major_version_selector: '15'
+required_support_tier: C
+major_version_selector: '12'
 argv:
 - -c
 - src/main.c

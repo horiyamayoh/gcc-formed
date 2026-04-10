@@ -17,13 +17,16 @@
       ],
       "family": "syntax",
       "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "sarif-0-1",
+      "group_id": "residual-compiler-1",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "expected expression before '}}' token",
+      "raw_message": "src/main.c:5:1: error: expected expression before '}' token",
+      "raw_sub_block": [
+        "src/main.c:5:1: error: expected expression before '}' token"
+      ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
@@ -32,7 +35,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false,
+    "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

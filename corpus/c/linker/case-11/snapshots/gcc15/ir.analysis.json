@@ -12,19 +12,6 @@
       },
       "size_bytes": 225,
       "storage": "inline"
-    },
-    {
-      "encoding": "utf-8",
-      "external_ref": "<capture:diagnostics.sarif>",
-      "id": "diagnostics.sarif",
-      "kind": "gcc_sarif",
-      "media_type": "application/sarif+json",
-      "produced_by": {
-        "name": "gcc",
-        "vendor": "GNU"
-      },
-      "size_bytes": 2193,
-      "storage": "external_ref"
     }
   ],
   "diagnostics": [
@@ -112,28 +99,47 @@
       "symbol_context": {
         "primary_symbol": "duplicate_symbol"
       }
+    },
+    {
+      "analysis": {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "39712c04aed4398054cc3c9702a55325fb5c8abb56e0a4090c074b698a2e506c",
+        "raw": "923288ce13bdd8b2aec964caf74008eb06530631034c5bae7451487edff3da39",
+        "structural": "8e4c1381da7adb8c076f0a2ca9915f14ad8ee69eefa32548d9e15c2aeed56293"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
     }
   ],
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "ea0761aa0e9cb4ee3f5ba84d8ab9db92cb5ec33e217cd69a86f88e93b498db83",
-    "raw": "f58d1714277121b44c07c1b1408e480f1308d5fcb5d3f9ff1d07fd689c34f20f",
-    "structural": "18debd2ccc6c255727dfd0b49d516c01178c0ed75f768bf30a7d2ad142b36ed6"
+    "family": "767c75037a10d46cf6a11d6fdb3f4d4b0f5ed77776bbe2d35246ffdc62d0cb80",
+    "raw": "b7fc39b7c251a9fd95d3033460daa821b83393fff887f4ce3bfebd50141bd9ee",
+    "structural": "dd31f502f01795c11554da824b38b47f24ea031211df510ec957e98c167f60da"
   },
-  "integrity_issues": [
-    {
-      "message": "SARIF contained no diagnostic results",
-      "provenance": {
-        "capture_refs": [
-          "diagnostics.sarif"
-        ],
-        "source": "compiler"
-      },
-      "severity": "warning",
-      "stage": "parse"
-    }
-  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",
