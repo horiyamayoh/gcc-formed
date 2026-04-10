@@ -1,10 +1,17 @@
+use diag_backend_probe::ProcessingPath;
+use diag_capture_runtime::{
+    CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
+    NativeTextCapturePolicy, StructuredCapturePolicy,
+};
 use diag_core::{
-    AnalysisOverlay, Confidence, ContextChain, ContextChainKind, DiagnosticDocument,
-    DiagnosticNode, DocumentCompleteness, FallbackReason, FingerprintSet, IntegrityIssue,
-    IssueSeverity, IssueStage, Location, MessageText, NodeCompleteness, Origin, Phase,
-    ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
+    AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChain,
+    ContextChainKind, DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FallbackGrade,
+    FallbackReason, FingerprintSet, IntegrityIssue, IssueSeverity, IssueStage, Location,
+    MessageText, NodeCompleteness, Origin, Phase, ProducerInfo, Provenance, ProvenanceSource,
+    RunInfo, SemanticRole, Severity, SourceAuthority, ToolInfo,
 };
 use diag_residual_text::classify;
+use diag_trace::RetentionPolicy;
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
@@ -27,6 +34,30 @@ pub struct IngestOutcome {
     pub fallback_reason: Option<FallbackReason>,
 }
 
+#[derive(Debug, Clone)]
+pub struct IngestPolicy {
+    pub producer: ProducerInfo,
+    pub run: RunInfo,
+}
+
+#[derive(Debug)]
+pub struct IngestReport {
+    pub document: DiagnosticDocument,
+    pub source_authority: SourceAuthority,
+    pub confidence_ceiling: Confidence,
+    pub fallback_grade: FallbackGrade,
+    pub warnings: Vec<IntegrityIssue>,
+    pub fallback_reason: Option<FallbackReason>,
+}
+
+#[derive(Debug)]
+enum StructuredInput<'a> {
+    AvailableSarif(&'a Path),
+    MissingSarif,
+    Unsupported(&'a CaptureArtifact),
+    None,
+}
+
 pub fn ingest(
     sarif_path: Option<&Path>,
     stderr_text: &str,
@@ -36,42 +67,80 @@ pub fn ingest(
     Ok(ingest_with_reason(sarif_path, stderr_text, producer, run)?.document)
 }
 
-pub fn ingest_with_reason(
-    sarif_path: Option<&Path>,
-    stderr_text: &str,
-    producer: ProducerInfo,
-    run: RunInfo,
-) -> Result<IngestOutcome, AdapterError> {
-    let has_authoritative_sarif = sarif_path.filter(|path| path.exists()).is_some();
-    let (mut document, fallback_reason) = match sarif_path {
-        Some(path) if path.exists() => match from_sarif(path, producer.clone(), run.clone()) {
-            Ok(document) => (document, None),
-            Err(error) => (
-                failed_document(
-                    producer,
-                    run,
-                    stderr_text,
-                    format!(
-                        "failed to parse authoritative SARIF; preserving raw diagnostics: {error}"
-                    ),
-                    Some("diagnostics.sarif"),
+pub fn ingest_bundle(
+    bundle: &CaptureBundle,
+    policy: IngestPolicy,
+) -> Result<IngestReport, AdapterError> {
+    let structured_input = structured_input(bundle);
+    let has_authoritative_sarif = matches!(structured_input, StructuredInput::AvailableSarif(_));
+    let stderr_text = bundle.stderr_text().unwrap_or_default();
+
+    let (mut document, source_authority, fallback_grade, fallback_reason) = match structured_input {
+        StructuredInput::AvailableSarif(path) => {
+            match from_sarif(path, policy.producer.clone(), policy.run.clone()) {
+                Ok(document) => (
+                    document,
+                    SourceAuthority::Structured,
+                    FallbackGrade::None,
+                    None,
                 ),
-                Some(FallbackReason::SarifParseFailed),
-            ),
-        },
-        Some(_) => (
+                Err(error) => (
+                    failed_document(
+                        policy.producer,
+                        policy.run,
+                        stderr_text,
+                        format!(
+                            "failed to parse authoritative SARIF; preserving raw diagnostics: {error}"
+                        ),
+                        Some("diagnostics.sarif"),
+                    ),
+                    source_authority_for_residual(stderr_text),
+                    FallbackGrade::FailOpen,
+                    Some(FallbackReason::SarifParseFailed),
+                ),
+            }
+        }
+        StructuredInput::MissingSarif => (
             fallback_document(
-                producer,
-                run,
+                policy.producer,
+                policy.run,
                 DocumentCompleteness::Passthrough,
                 stderr_text,
                 "expected authoritative SARIF was not produced; preserving raw diagnostics"
                     .to_string(),
-                None,
+                Some("diagnostics.sarif"),
             ),
+            source_authority_for_residual(stderr_text),
+            FallbackGrade::FailOpen,
             Some(FallbackReason::SarifMissing),
         ),
-        None => (passthrough_document(producer, run), None),
+        StructuredInput::Unsupported(artifact) => {
+            let mut document = passthrough_document(policy.producer, policy.run);
+            document.integrity_issues.push(IntegrityIssue {
+                severity: IssueSeverity::Warning,
+                stage: IssueStage::Parse,
+                message: format!(
+                    "structured artifact '{}' is not yet supported; preserving raw diagnostics",
+                    artifact.id
+                ),
+                provenance: Some(Provenance {
+                    source: ProvenanceSource::Policy,
+                    capture_refs: vec![artifact.id.clone()],
+                }),
+            });
+            (
+                document,
+                source_authority_for_residual(stderr_text),
+                FallbackGrade::Compatibility,
+                None,
+            )
+        }
+        StructuredInput::None => (
+            passthrough_document(policy.producer, policy.run),
+            source_authority_for_residual(stderr_text),
+            fallback_grade_for_residual(stderr_text),
+            None,
+        ),
     };
 
     let residual_nodes = classify(stderr_text, !has_authoritative_sarif);
@@ -93,10 +162,170 @@ pub fn ingest_with_reason(
         augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
-    Ok(IngestOutcome {
+
+    let warnings = document.integrity_issues.clone();
+    Ok(IngestReport {
+        confidence_ceiling: confidence_ceiling_for(source_authority, fallback_grade),
         document,
+        source_authority,
+        fallback_grade,
+        warnings,
         fallback_reason,
     })
+}
+
+pub fn ingest_with_reason(
+    sarif_path: Option<&Path>,
+    stderr_text: &str,
+    producer: ProducerInfo,
+    run: RunInfo,
+) -> Result<IngestOutcome, AdapterError> {
+    let report = ingest_bundle(
+        &compatibility_bundle_from_legacy_inputs(sarif_path, stderr_text, &run),
+        IngestPolicy { producer, run },
+    )?;
+    Ok(IngestOutcome {
+        document: report.document,
+        fallback_reason: report.fallback_reason,
+    })
+}
+
+fn structured_input(bundle: &CaptureBundle) -> StructuredInput<'_> {
+    if let Some(artifact) = bundle
+        .structured_artifacts
+        .iter()
+        .find(|artifact| matches!(artifact.kind, ArtifactKind::GccSarif))
+    {
+        if let Some(path) = artifact.external_ref.as_deref() {
+            return StructuredInput::AvailableSarif(Path::new(path));
+        }
+        return StructuredInput::MissingSarif;
+    }
+
+    bundle
+        .structured_artifacts
+        .first()
+        .map(StructuredInput::Unsupported)
+        .unwrap_or(StructuredInput::None)
+}
+
+fn source_authority_for_residual(stderr_text: &str) -> SourceAuthority {
+    if stderr_text.trim().is_empty() {
+        SourceAuthority::None
+    } else {
+        SourceAuthority::ResidualText
+    }
+}
+
+fn fallback_grade_for_residual(stderr_text: &str) -> FallbackGrade {
+    if stderr_text.trim().is_empty() {
+        FallbackGrade::None
+    } else {
+        FallbackGrade::Compatibility
+    }
+}
+
+fn confidence_ceiling_for(
+    source_authority: SourceAuthority,
+    fallback_grade: FallbackGrade,
+) -> Confidence {
+    match (source_authority, fallback_grade) {
+        (SourceAuthority::Structured, FallbackGrade::None) => Confidence::Medium,
+        (SourceAuthority::ResidualText, _) => Confidence::Low,
+        (SourceAuthority::Structured, _) => Confidence::Low,
+        (SourceAuthority::None, _) => Confidence::Unknown,
+    }
+}
+
+fn compatibility_bundle_from_legacy_inputs(
+    sarif_path: Option<&Path>,
+    stderr_text: &str,
+    run: &RunInfo,
+) -> CaptureBundle {
+    let has_sarif_path = sarif_path.is_some();
+    let processing_path = if has_sarif_path {
+        ProcessingPath::DualSinkStructured
+    } else {
+        ProcessingPath::Passthrough
+    };
+    let selected_mode = if has_sarif_path {
+        ExecutionMode::Render
+    } else {
+        ExecutionMode::Passthrough
+    };
+    let primary_tool = run.primary_tool.clone();
+
+    CaptureBundle {
+        plan: CapturePlan {
+            execution_mode: selected_mode,
+            processing_path,
+            structured_capture: if has_sarif_path {
+                StructuredCapturePolicy::SarifFile
+            } else {
+                StructuredCapturePolicy::Disabled
+            },
+            native_text_capture: if has_sarif_path {
+                NativeTextCapturePolicy::CaptureOnly
+            } else {
+                NativeTextCapturePolicy::Passthrough
+            },
+            locale_handling: LocaleHandling::Preserve,
+            retention_policy: RetentionPolicy::Never,
+        },
+        invocation: CaptureInvocation {
+            backend_path: run.primary_tool.name.clone(),
+            argv: run.argv_redacted.clone(),
+            argv_hash: diag_core::fingerprint_for(&run.argv_redacted),
+            cwd: run.cwd_display.clone().unwrap_or_default(),
+            selected_mode,
+            processing_path,
+        },
+        raw_text_artifacts: if stderr_text.is_empty() {
+            Vec::new()
+        } else {
+            vec![CaptureArtifact {
+                id: "stderr.raw".to_string(),
+                kind: ArtifactKind::CompilerStderrText,
+                media_type: "text/plain".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: Some(stderr_text.len() as u64),
+                storage: ArtifactStorage::Inline,
+                inline_text: Some(stderr_text.to_string()),
+                external_ref: None,
+                produced_by: Some(primary_tool.clone()),
+            }]
+        },
+        structured_artifacts: sarif_path
+            .map(|path| CaptureArtifact {
+                id: "diagnostics.sarif".to_string(),
+                kind: ArtifactKind::GccSarif,
+                media_type: "application/sarif+json".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: fs::metadata(path).ok().map(|metadata| metadata.len()),
+                storage: if path.exists() {
+                    ArtifactStorage::ExternalRef
+                } else {
+                    ArtifactStorage::Unavailable
+                },
+                inline_text: None,
+                external_ref: if path.exists() {
+                    Some(path.display().to_string())
+                } else {
+                    None
+                },
+                produced_by: Some(primary_tool),
+            })
+            .into_iter()
+            .collect(),
+        exit_status: ExitStatusInfo {
+            code: Some(run.exit_status),
+            signal: None,
+            success: run.exit_status == 0,
+        },
+        integrity_issues: Vec::new(),
+    }
 }
 
 pub fn from_sarif(
@@ -809,6 +1038,21 @@ mod tests {
     use super::*;
     use diag_core::{LanguageMode, RunInfo, WrapperSurface};
 
+    fn base_run_info() -> RunInfo {
+        RunInfo {
+            invocation_id: "inv".to_string(),
+            invoked_as: Some("gcc-formed".to_string()),
+            argv_redacted: vec!["gcc".to_string()],
+            cwd_display: None,
+            exit_status: 1,
+            primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+            secondary_tools: Vec::new(),
+            language_mode: Some(LanguageMode::C),
+            target_triple: None,
+            wrapper_mode: Some(WrapperSurface::Terminal),
+        }
+    }
+
     #[test]
     fn parses_minimal_sarif() {
         let tempdir = tempfile::tempdir().unwrap();
@@ -838,23 +1082,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let document = from_sarif(
-            &path,
-            producer_for_version("0.1.0"),
-            RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: Some("gcc-formed".to_string()),
-                argv_redacted: vec!["gcc".to_string()],
-                cwd_display: None,
-                exit_status: 1,
-                primary_tool: tool_for_backend("gcc", Some("15.1.0".to_string())),
-                secondary_tools: Vec::new(),
-                language_mode: Some(LanguageMode::C),
-                target_triple: None,
-                wrapper_mode: Some(WrapperSurface::Terminal),
-            },
-        )
-        .unwrap();
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
         assert_eq!(document.diagnostics.len(), 1);
         assert_eq!(document.diagnostics[0].locations[0].path, "src/main.c");
     }
@@ -909,23 +1137,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let document = from_sarif(
-            &path,
-            producer_for_version("0.1.0"),
-            RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: Some("gcc-formed".to_string()),
-                argv_redacted: vec!["gcc".to_string()],
-                cwd_display: None,
-                exit_status: 1,
-                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
-                secondary_tools: Vec::new(),
-                language_mode: Some(LanguageMode::C),
-                target_triple: None,
-                wrapper_mode: Some(WrapperSurface::Terminal),
-            },
-        )
-        .unwrap();
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
 
         assert_eq!(document.diagnostics.len(), 1);
         assert_eq!(document.diagnostics[0].children.len(), 1);
@@ -984,16 +1196,10 @@ mod tests {
             &path,
             producer_for_version("0.1.0"),
             RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: Some("gcc-formed".to_string()),
                 argv_redacted: vec!["g++".to_string()],
-                cwd_display: None,
-                exit_status: 1,
                 primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
-                secondary_tools: Vec::new(),
                 language_mode: Some(LanguageMode::Cpp),
-                target_triple: None,
-                wrapper_mode: Some(WrapperSurface::Terminal),
+                ..base_run_info()
             },
         )
         .unwrap();
@@ -1013,18 +1219,7 @@ mod tests {
             Some(&path),
             "src/main.c:4:1: error: expected ';' before '}' token\n",
             producer_for_version("0.1.0"),
-            RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: Some("gcc-formed".to_string()),
-                argv_redacted: vec!["gcc".to_string()],
-                cwd_display: None,
-                exit_status: 1,
-                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
-                secondary_tools: Vec::new(),
-                language_mode: Some(LanguageMode::C),
-                target_triple: None,
-                wrapper_mode: Some(WrapperSurface::Terminal),
-            },
+            base_run_info(),
         )
         .unwrap();
 
@@ -1056,18 +1251,7 @@ mod tests {
             Some(&path),
             "src/main.c:4:1: error: expected ';' before '}' token\n",
             producer_for_version("0.1.0"),
-            RunInfo {
-                invocation_id: "inv".to_string(),
-                invoked_as: Some("gcc-formed".to_string()),
-                argv_redacted: vec!["gcc".to_string()],
-                cwd_display: None,
-                exit_status: 1,
-                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
-                secondary_tools: Vec::new(),
-                language_mode: Some(LanguageMode::C),
-                target_triple: None,
-                wrapper_mode: Some(WrapperSurface::Terminal),
-            },
+            base_run_info(),
         )
         .unwrap();
 
@@ -1084,6 +1268,151 @@ mod tests {
             outcome.document.integrity_issues[0]
                 .message
                 .contains("failed to parse authoritative SARIF")
+        );
+    }
+
+    #[test]
+    fn ingest_bundle_reports_structured_authority_for_valid_sarif() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"expected ';' before '}' token"}
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(
+                Some(&path),
+                "src/main.c:4:1: error: expected ';' before '}' token\n",
+                &run,
+            ),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(report.fallback_grade, FallbackGrade::None);
+        assert_eq!(report.confidence_ceiling, Confidence::Medium);
+        assert!(report.fallback_reason.is_none());
+        assert!(report.warnings.is_empty());
+        assert_eq!(report.document.diagnostics.len(), 1);
+    }
+
+    #[test]
+    fn ingest_bundle_accepts_residual_only_path() {
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(
+                None,
+                "src/main.c:4:1: error: expected ';' before '}' token\n",
+                &run,
+            ),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert!(report.fallback_reason.is_none());
+        assert!(report.document.diagnostics.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Passthrough)
+                && node
+                    .message
+                    .raw_text
+                    .contains("expected ';' before '}' token")
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_accepts_future_structured_artifact_with_warning() {
+        let run = base_run_info();
+        let mut bundle = compatibility_bundle_from_legacy_inputs(
+            None,
+            "src/main.c:4:1: error: expected ';' before '}' token\n",
+            &run,
+        );
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: None,
+            external_ref: Some("/tmp/diagnostics.json".to_string()),
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
+        assert_eq!(report.confidence_ceiling, Confidence::Low);
+        assert!(report.fallback_reason.is_none());
+        assert!(report.warnings.iter().any(|issue| {
+            issue
+                .message
+                .contains("structured artifact 'diagnostics.json' is not yet supported")
+        }));
+    }
+
+    #[test]
+    fn ingest_with_reason_matches_bundle_report_for_missing_sarif() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("missing.sarif");
+        let stderr = "src/main.c:4:1: error: expected ';' before '}' token\n";
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&path), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run: run.clone(),
+            },
+        )
+        .unwrap();
+        let outcome =
+            ingest_with_reason(Some(&path), stderr, producer_for_version("0.1.0"), run).unwrap();
+
+        assert_eq!(outcome.fallback_reason, report.fallback_reason);
+        assert_eq!(
+            outcome.document.document_completeness,
+            report.document.document_completeness
+        );
+        assert_eq!(
+            outcome.document.diagnostics.len(),
+            report.document.diagnostics.len()
+        );
+        assert_eq!(
+            outcome.document.integrity_issues,
+            report.document.integrity_issues
         );
     }
 }

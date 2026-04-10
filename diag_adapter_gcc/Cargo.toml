@@ -6,8 +6,11 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+diag_backend_probe.workspace = true
+diag_capture_runtime.workspace = true
 diag_core.workspace = true
 diag_residual_text.workspace = true
+diag_trace.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

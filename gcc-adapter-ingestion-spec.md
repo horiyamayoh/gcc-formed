@@ -200,11 +200,14 @@ user/build system
     ├─ capture stderr + sidecar artifacts
     │
     ▼
+[CaptureBundle]
+    │
+    ▼
 [gcc adapter ingestion]
     │
-    ├─ parse structured SARIF (if authoritative path available)
+    ├─ parse supported structured artifacts (SARIF first)
     ├─ classify raw stderr residuals
-    ├─ create CaptureArtifact / IntegrityIssue
+    ├─ emit IngestReport
     ├─ map to DiagnosticDocument facts
     │
     ▼
@@ -216,6 +219,36 @@ user/build system
 
 adapter / ingestion 層の責務は **facts の収集と正規化まで** である。  
 root-cause ranking や headline 生成は後段であり、adapter が勝手に意味づけしてはならない。
+
+### 7.1 normative ingress boundary
+
+adapter / ingestion 層の **normative** な入口は次とする。
+
+```rust
+ingest_bundle(bundle: &CaptureBundle, policy: IngestPolicy) -> IngestReport
+```
+
+ここで:
+
+- `CaptureBundle` は invocation metadata、resolved processing path、raw text artifacts、structured artifacts、exit status、integrity metadata を運ぶ
+- `IngestPolicy` は少なくとも `producer` と `run` を持つ
+- `IngestReport` は少なくとも `document`, `source_authority`, `confidence_ceiling`, `fallback_grade`, `warnings` を返す
+
+`ingest(sarif_path, stderr_text, ...)` / `ingest_with_reason(...)` は **compatibility wrapper only** とし、normative boundary と見なしてはならない。
+
+### 7.2 source authority / fallback grade semantics
+
+`IngestReport` の意味は以下で固定する。
+
+- `source_authority=structured`: supported structured artifact が authoritative source として受理された
+- `source_authority=residual_text`: residual text が事実上の一次入力になった
+- `source_authority=none`: authoritative structured source も residual text も実質的に得られなかった
+
+- `fallback_grade=none`: intended source path のまま ingest できた
+- `fallback_grade=compatibility`: residual-only / unsupported-structured compatibility path で conservative ingest した
+- `fallback_grade=fail_open`: authoritative structured source の欠落または parse failure から raw preservation に fail-open した
+
+`confidence_ceiling` は downstream が「どこまで断定してよいか」を判断する上限であり、source authority / fallback grade に矛盾してはならない。
 
 ---
 
@@ -654,10 +687,8 @@ spawn child
   stderr -> pipe -> spool file
 wait child exit
 close stderr capture
-read diagnostics.sarif
-parse SARIF
-classify raw stderr residuals
-merge -> DiagnosticDocument
+assemble CaptureBundle
+ingest_bundle(bundle, policy)
 validate
 if fatal failure:
     raw fallback

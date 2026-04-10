@@ -238,8 +238,11 @@ dependencies = [
 name = "diag_adapter_gcc"
 version = "0.2.0-beta.1"
 dependencies = [
+ "diag_backend_probe",
+ "diag_capture_runtime",
  "diag_core",
  "diag_residual_text",
+ "diag_trace",
  "serde",
  "serde_json",
  "tempfile",
