@@ -730,12 +730,12 @@ fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json
 
 fn normalized_location_value(location: &diag_core::Location) -> serde_json::Value {
     let mut normalized = serde_json::Map::new();
-    if let Some(ownership) = location.ownership.as_ref() {
+    if let Some(ownership) = location.ownership() {
         normalized.insert("ownership".to_string(), serde_json::json!(ownership));
     }
     normalized.insert(
         "path".to_string(),
-        serde_json::Value::String(location.path.clone()),
+        serde_json::Value::String(location.path_raw().to_string()),
     );
     serde_json::Value::Object(normalized)
 }
@@ -878,8 +878,8 @@ fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageT
 }
 
 fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
-    location.path = normalize_transient_object_paths(&location.path);
-    if let Some(display_path) = location.display_path.as_mut() {
+    location.file.path_raw = normalize_transient_object_paths(location.path_raw());
+    if let Some(display_path) = location.file.display_path.as_mut() {
         *display_path = normalize_transient_object_paths(display_path);
     }
 }

@@ -188,6 +188,52 @@ mod tests {
     };
     use std::path::PathBuf;
 
+    fn sample_location(path: &str, line: u32, column: u32, ownership: Ownership) -> Location {
+        Location::caret(path, line, column, diag_core::LocationRole::Primary)
+            .with_ownership(ownership, ownership_reason(ownership))
+    }
+
+    fn ownership_reason(ownership: Ownership) -> &'static str {
+        match ownership {
+            Ownership::User => "user_workspace",
+            Ownership::Vendor => "vendor_path",
+            Ownership::System => "system_path",
+            Ownership::Generated => "generated_path",
+            Ownership::Tool => "tool_generated",
+            Ownership::Unknown => "unknown",
+        }
+    }
+
+    fn sample_analysis(
+        family: &str,
+        headline: &str,
+        first_action_hint: Option<&str>,
+        confidence: diag_core::Confidence,
+        rule_id: &str,
+    ) -> AnalysisOverlay {
+        AnalysisOverlay {
+            family: Some(family.to_string()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
+            headline: Some(headline.to_string()),
+            first_action_hint: first_action_hint.map(ToString::to_string),
+            confidence: Some(confidence.score()),
+            preferred_primary_location_id: None,
+            rule_id: Some(rule_id.to_string()),
+            matched_conditions: Vec::new(),
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
+        }
+    }
+
     fn sample_request() -> RenderRequest {
         RenderRequest {
             document: DiagnosticDocument {
@@ -246,15 +292,7 @@ mod tests {
                         normalized_text: None,
                         locale: None,
                     },
-                    locations: vec![Location {
-                        path: "src/main.c".to_string(),
-                        line: 2,
-                        column: 13,
-                        end_line: None,
-                        end_column: None,
-                        display_path: None,
-                        ownership: Some(Ownership::User),
-                    }],
+                    locations: vec![sample_location("src/main.c", 2, 13, Ownership::User)],
                     children: Vec::new(),
                     suggestions: Vec::new(),
                     context_chains: Vec::new(),
@@ -264,18 +302,16 @@ mod tests {
                         source: ProvenanceSource::Compiler,
                         capture_refs: vec!["stderr.raw".to_string()],
                     },
-                    analysis: Some(AnalysisOverlay {
-                        family: Some("syntax".to_string()),
-                        headline: Some("syntax error".to_string()),
-                        first_action_hint: Some(
-                            "fix the first parser error at the user-owned location".to_string(),
-                        ),
-                        confidence: Some(diag_core::Confidence::High),
-                        rule_id: Some("rule.syntax.expected_or_before".to_string()),
-                        matched_conditions: vec!["message_contains=expected".to_string()],
-                        suppression_reason: None,
-                        collapsed_child_ids: Vec::new(),
-                        collapsed_chain_ids: Vec::new(),
+                    analysis: Some({
+                        let mut analysis = sample_analysis(
+                            "syntax",
+                            "syntax error",
+                            Some("fix the first parser error at the user-owned location"),
+                            diag_core::Confidence::High,
+                            "rule.syntax.expected_or_before",
+                        );
+                        analysis.matched_conditions = vec!["message_contains=expected".to_string()];
+                        analysis
                     }),
                     fingerprints: None,
                 }],
@@ -389,15 +425,12 @@ mod tests {
                     normalized_text: None,
                     locale: None,
                 },
-                locations: vec![Location {
-                    path: "/usr/include/stdio.h".to_string(),
-                    line: 4,
-                    column: 2,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::System),
-                }],
+                locations: vec![sample_location(
+                    "/usr/include/stdio.h",
+                    4,
+                    2,
+                    Ownership::System,
+                )],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -407,19 +440,17 @@ mod tests {
                     source: ProvenanceSource::Compiler,
                     capture_refs: vec!["stderr.raw".to_string()],
                 },
-                analysis: Some(AnalysisOverlay {
-                    family: Some("type_overload".to_string()),
-                    headline: Some("type or overload mismatch".to_string()),
-                    first_action_hint: Some(
-                        "compare the expected type and actual argument at the call site"
-                            .to_string(),
-                    ),
-                    confidence: Some(diag_core::Confidence::Medium),
-                    rule_id: Some("rule.family.type_overload.message".to_string()),
-                    matched_conditions: vec!["message_contains=invalid conversion".to_string()],
-                    suppression_reason: None,
-                    collapsed_child_ids: Vec::new(),
-                    collapsed_chain_ids: Vec::new(),
+                analysis: Some({
+                    let mut analysis = sample_analysis(
+                        "type_overload",
+                        "type or overload mismatch",
+                        Some("compare the expected type and actual argument at the call site"),
+                        diag_core::Confidence::Medium,
+                        "rule.family.type_overload.message",
+                    );
+                    analysis.matched_conditions =
+                        vec!["message_contains=invalid conversion".to_string()];
+                    analysis
                 }),
                 fingerprints: None,
             });
@@ -471,15 +502,7 @@ mod tests {
                     normalized_text: None,
                     locale: None,
                 },
-                locations: vec![Location {
-                    path: "src/main.c".to_string(),
-                    line: 7,
-                    column: 5,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::User),
-                }],
+                locations: vec![sample_location("src/main.c", 7, 5, Ownership::User)],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -517,15 +540,7 @@ mod tests {
                     normalized_text: None,
                     locale: None,
                 },
-                locations: vec![Location {
-                    path: "src/main.c".to_string(),
-                    line: 7,
-                    column: 5,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::User),
-                }],
+                locations: vec![sample_location("src/main.c", 7, 5, Ownership::User)],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -559,15 +574,7 @@ mod tests {
                     normalized_text: None,
                     locale: None,
                 },
-                locations: vec![Location {
-                    path: "src/main.c".to_string(),
-                    line: index,
-                    column: 1,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::User),
-                }],
+                locations: vec![sample_location("src/main.c", index, 1, Ownership::User)],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -594,7 +601,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .confidence = Some(diag_core::Confidence::Low);
+            .set_confidence_bucket(diag_core::Confidence::Low);
         request
             .document
             .diagnostics
@@ -609,15 +616,7 @@ mod tests {
                     normalized_text: None,
                     locale: None,
                 },
-                locations: vec![Location {
-                    path: "src/main.c".to_string(),
-                    line: 1,
-                    column: 5,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::User),
-                }],
+                locations: vec![sample_location("src/main.c", 1, 5, Ownership::User)],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -627,16 +626,16 @@ mod tests {
                     source: ProvenanceSource::Compiler,
                     capture_refs: vec!["stderr.raw".to_string()],
                 },
-                analysis: Some(AnalysisOverlay {
-                    family: Some("type_overload".to_string()),
-                    headline: Some("candidate expects an int parameter".to_string()),
-                    first_action_hint: None,
-                    confidence: Some(diag_core::Confidence::High),
-                    rule_id: Some("rule.family.type_overload.note".to_string()),
-                    matched_conditions: vec!["semantic_role=root".to_string()],
-                    suppression_reason: None,
-                    collapsed_child_ids: Vec::new(),
-                    collapsed_chain_ids: Vec::new(),
+                analysis: Some({
+                    let mut analysis = sample_analysis(
+                        "type_overload",
+                        "candidate expects an int parameter",
+                        None,
+                        diag_core::Confidence::High,
+                        "rule.family.type_overload.note",
+                    );
+                    analysis.matched_conditions = vec!["semantic_role=root".to_string()];
+                    analysis
                 }),
                 fingerprints: None,
             });
@@ -659,7 +658,7 @@ mod tests {
             "start from the first user-owned template frame and match template arguments"
                 .to_string(),
         );
-        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.set_confidence_bucket(diag_core::Confidence::Low);
 
         let output = render(request).unwrap();
 
@@ -688,15 +687,14 @@ mod tests {
         request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
         request.document.diagnostics[0].message.raw_text =
             "src/main.cpp:5:7: error: no matching function for call to 'takes(int)'".to_string();
-        request.document.diagnostics[0].locations[0].path = "src/main.cpp".to_string();
-        request.document.diagnostics[0].locations[0].line = 5;
-        request.document.diagnostics[0].locations[0].column = 7;
+        request.document.diagnostics[0].locations[0].set_path_raw("src/main.cpp");
+        request.document.diagnostics[0].locations[0].set_anchor(5, 7);
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
         analysis.family = Some("type_overload".to_string());
         analysis.headline = Some("type or overload mismatch".to_string());
         analysis.first_action_hint =
             Some("compare the expected type and actual argument at the call site".to_string());
-        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.set_confidence_bucket(diag_core::Confidence::Low);
         analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
         analysis.matched_conditions = vec!["family=type_overload".to_string()];
 
@@ -711,15 +709,7 @@ mod tests {
                 normalized_text: None,
                 locale: None,
             },
-            locations: vec![Location {
-                path: "src/main.cpp".to_string(),
-                line: 2,
-                column: 6,
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: Some(Ownership::User),
-            }],
+            locations: vec![sample_location("src/main.cpp", 2, 6, Ownership::User)],
             children: Vec::new(),
             suggestions: Vec::new(),
             context_chains: Vec::new(),
@@ -783,19 +773,18 @@ mod tests {
         request.document.diagnostics[0].locations.clear();
         request.document.diagnostics[0].message.raw_text =
             "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here".to_string();
-        request.document.diagnostics[0].analysis = Some(AnalysisOverlay {
-            family: Some("linker.multiple_definition".to_string()),
-            headline: Some("multiple definition of `duplicate`".to_string()),
-            first_action_hint: Some(
-                "remove the duplicate definition or make the symbol internal to one translation unit"
-                    .to_string(),
-            ),
-            confidence: Some(diag_core::Confidence::High),
-            rule_id: Some("rule.family.linker.multiple_definition".to_string()),
-            matched_conditions: vec!["symbol_context=present".to_string()],
-            suppression_reason: None,
-            collapsed_child_ids: Vec::new(),
-            collapsed_chain_ids: Vec::new(),
+        request.document.diagnostics[0].analysis = Some({
+            let mut analysis = sample_analysis(
+                "linker.multiple_definition",
+                "multiple definition of `duplicate`",
+                Some(
+                    "remove the duplicate definition or make the symbol internal to one translation unit",
+                ),
+                diag_core::Confidence::High,
+                "rule.family.linker.multiple_definition",
+            );
+            analysis.matched_conditions = vec!["symbol_context=present".to_string()];
+            analysis
         });
 
         let output = render(request).unwrap();
@@ -890,7 +879,7 @@ mod tests {
         request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
         analysis.family = Some("template".to_string());
-        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.set_confidence_bucket(diag_core::Confidence::Low);
         analysis.rule_id = Some("rule.residual.compiler_template".to_string());
         analysis.matched_conditions = vec!["family=template".to_string()];
         request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
@@ -987,15 +976,12 @@ mod tests {
         let mut system_note = request.document.diagnostics[0].clone();
         system_note.id = "system-note".to_string();
         system_note.message.raw_text = "candidate conversion remains internal".to_string();
-        system_note.locations = vec![Location {
-            path: "/usr/include/vector".to_string(),
-            line: 18,
-            column: 7,
-            end_line: None,
-            end_column: None,
-            display_path: None,
-            ownership: Some(Ownership::System),
-        }];
+        system_note.locations = vec![sample_location(
+            "/usr/include/vector",
+            18,
+            7,
+            Ownership::System,
+        )];
         system_note.children = Vec::new();
         system_note.suggestions = Vec::new();
         system_note.context_chains = Vec::new();
@@ -1007,24 +993,8 @@ mod tests {
         user_note.id = "user-note".to_string();
         user_note.message.raw_text = "candidate conversion matches the call site".to_string();
         user_note.locations = vec![
-            Location {
-                path: "/usr/include/vector".to_string(),
-                line: 19,
-                column: 3,
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: Some(Ownership::System),
-            },
-            Location {
-                path: "src/main.cpp".to_string(),
-                line: 21,
-                column: 9,
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: Some(Ownership::User),
-            },
+            sample_location("/usr/include/vector", 19, 3, Ownership::System),
+            sample_location("src/main.cpp", 21, 9, Ownership::User),
         ];
         user_note.children = Vec::new();
         user_note.suggestions = Vec::new();
@@ -1055,7 +1025,7 @@ mod tests {
         request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
         analysis.family = Some("type_overload".to_string());
-        analysis.confidence = Some(diag_core::Confidence::Low);
+        analysis.set_confidence_bucket(diag_core::Confidence::Low);
         analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
         analysis.matched_conditions = vec!["family=type_overload".to_string()];
 
@@ -1070,15 +1040,7 @@ mod tests {
                 normalized_text: None,
                 locale: None,
             },
-            locations: vec![Location {
-                path: "src/main.cpp".to_string(),
-                line: 2,
-                column: 6,
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: Some(Ownership::User),
-            }],
+            locations: vec![sample_location("src/main.cpp", 2, 6, Ownership::User)],
             children: Vec::new(),
             suggestions: Vec::new(),
             context_chains: Vec::new(),

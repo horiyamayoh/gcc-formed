@@ -541,7 +541,7 @@ pub(crate) fn collect_acceptance_fixture_summary(
         .filter(|value| !value.trim().is_empty());
     let primary_location = lead_node.primary_location();
     let primary_location_user_owned = primary_location
-        .and_then(|location| location.ownership.as_ref())
+        .and_then(|location| location.ownership())
         .is_some_and(|ownership| *ownership == Ownership::User);
     let fallback_forbidden = semantic.fallback == Some(ExpectedFallback::Forbidden);
     let unexpected_fallback = fallback_forbidden && default_render_result.used_fallback;
@@ -553,8 +553,7 @@ pub(crate) fn collect_acceptance_fixture_summary(
     let lead_confidence = lead_node
         .analysis
         .as_ref()
-        .and_then(|analysis| analysis.confidence.as_ref())
-        .cloned()
+        .and_then(|analysis| analysis.confidence_bucket())
         .unwrap_or(diag_core::Confidence::Unknown);
     let rendered_first_action_line =
         first_rendered_action_line(&default_render_result.text, first_action_hint);
@@ -678,7 +677,7 @@ pub(crate) fn collect_acceptance_fixture_summary(
         fallback_reason: effective_fallback_reason,
         fallback_forbidden,
         unexpected_fallback,
-        primary_location_path: primary_location.map(|location| location.path.clone()),
+        primary_location_path: primary_location.map(|location| location.path_raw().to_string()),
         primary_location_user_owned_required,
         primary_location_user_owned,
         missing_required_primary_location,
@@ -686,7 +685,7 @@ pub(crate) fn collect_acceptance_fixture_summary(
         first_action_present,
         missing_required_first_action,
         headline_rewritten: !analyzed_headline.is_empty() && analyzed_headline != raw_headline,
-        lead_confidence: confidence_label(&lead_confidence).to_string(),
+        lead_confidence: confidence_label(lead_confidence).to_string(),
         high_confidence: matches!(lead_confidence, diag_core::Confidence::High),
         rendered_first_action_line,
         omission_notice_present,
@@ -820,7 +819,7 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
             &render_result.text,
             lead_node
                 .primary_location()
-                .map(|location| location.path.as_str()),
+                .map(|location| location.path_raw()),
         )?;
     }
 
@@ -1286,11 +1285,11 @@ pub(crate) fn verify_semantic_expectations(
 
     for expected in &semantic.primary_locations {
         let found = lead_node.locations.iter().any(|location| {
-            location.path == expected.path
-                && location.line == expected.line
+            location.path_raw() == expected.path
+                && location.line() == expected.line
                 && expected
                     .column
-                    .map(|column| column == location.column)
+                    .map(|column| column == location.column())
                     .unwrap_or(true)
         });
         if !found {
@@ -1308,7 +1307,7 @@ pub(crate) fn verify_semantic_expectations(
     if semantic.primary_location_user_owned_required
         && !lead_node
             .primary_location()
-            .and_then(|location| location.ownership.as_ref())
+            .and_then(|location| location.ownership())
             .is_some_and(|ownership| *ownership == Ownership::User)
     {
         return Err(VerificationFailure {
@@ -1372,10 +1371,9 @@ pub(crate) fn verify_semantic_expectations(
         let actual = lead_node
             .analysis
             .as_ref()
-            .and_then(|analysis| analysis.confidence.as_ref())
-            .cloned()
+            .and_then(|analysis| analysis.confidence_bucket())
             .unwrap_or(diag_core::Confidence::Unknown);
-        if confidence_rank(&actual) < confidence_rank(confidence_min) {
+        if confidence_rank(actual) < confidence_rank(*confidence_min) {
             return Err(VerificationFailure {
                 layer: "semantic.confidence".to_string(),
                 fixture_id: fixture.fixture_id().to_string(),
@@ -1676,7 +1674,7 @@ pub(crate) fn lead_node_for_document<'a>(
     document.diagnostics.iter().find(|node| &node.id == lead_id)
 }
 
-pub(crate) fn confidence_rank(confidence: &diag_core::Confidence) -> u8 {
+pub(crate) fn confidence_rank(confidence: diag_core::Confidence) -> u8 {
     match confidence {
         diag_core::Confidence::High => 4,
         diag_core::Confidence::Medium => 3,
@@ -1727,7 +1725,7 @@ pub(crate) fn subset_name(subset: SnapshotSubset) -> &'static str {
     }
 }
 
-pub(crate) fn confidence_label(confidence: &diag_core::Confidence) -> &'static str {
+pub(crate) fn confidence_label(confidence: diag_core::Confidence) -> &'static str {
     match confidence {
         diag_core::Confidence::High => "high",
         diag_core::Confidence::Medium => "medium",

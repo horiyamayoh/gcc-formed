@@ -1,5 +1,6 @@
+use ordered_float::OrderedFloat;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
@@ -8,6 +9,7 @@ use std::fmt::{Display, Formatter};
 pub const IR_SPEC_VERSION: &str = "1.0.0-alpha.1";
 pub const ADAPTER_SPEC_VERSION: &str = "v1alpha";
 pub const RENDERER_SPEC_VERSION: &str = "v1alpha";
+pub type Score = OrderedFloat<f32>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SnapshotKind {
@@ -318,28 +320,139 @@ pub struct MessageText {
     pub locale: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Location {
-    pub path: String,
-    pub line: u32,
-    pub column: u32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end_line: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end_column: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub display_path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ownership: Option<Ownership>,
+    pub id: String,
+    pub file: FileRef,
+    pub anchor: Option<SourcePoint>,
+    pub range: Option<SourceRange>,
+    pub role: LocationRole,
+    pub source_kind: LocationSourceKind,
+    pub label: Option<String>,
+    pub ownership_override: Option<OwnershipInfo>,
+    pub provenance_override: Option<Provenance>,
+    pub source_excerpt_ref: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FileRef {
+    pub path_raw: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path_style: Option<PathStyle>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path_kind: Option<PathKind>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ownership: Option<OwnershipInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exists_at_capture: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OwnershipInfo {
+    pub owner: Ownership,
+    pub reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<Score>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SourcePoint {
+    pub line: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_origin: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_byte: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_display: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_native: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column_native_unit: Option<ColumnUnit>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SourceRange {
+    pub start: SourcePoint,
+    pub end: SourcePoint,
+    pub boundary_semantics: BoundarySemantics,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum LocationRole {
+    Primary,
+    Secondary,
+    Related,
+    Context,
+    EditTarget,
+    SymbolReference,
+    SymbolDefinition,
+    Other,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum LocationSourceKind {
+    Caret,
+    Range,
+    Token,
+    Insertion,
+    Expansion,
+    Generated,
+    Other,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum PathStyle {
+    Posix,
+    Windows,
+    Uri,
+    Virtual,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum PathKind {
+    Absolute,
+    Relative,
+    Virtual,
+    Generated,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ColumnUnit {
+    Byte,
+    Display,
+    Utf16CodeUnit,
+    UnicodeScalar,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum BoundarySemantics {
+    HalfOpen,
+    InclusiveEnd,
+    Point,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Ownership {
     User,
     Vendor,
     System,
     Generated,
+    Tool,
     Unknown,
 }
 
@@ -440,11 +553,24 @@ pub struct AnalysisOverlay {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub family: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub family_version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub family_confidence: Option<Score>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub root_cause_score: Option<Score>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actionability_score: Option<Score>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_code_priority: Option<Score>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub headline: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_action_hint: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub confidence: Option<Confidence>,
+    #[serde(default, deserialize_with = "deserialize_confidence_score_opt")]
+    pub confidence: Option<Score>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preferred_primary_location_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rule_id: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -455,9 +581,17 @@ pub struct AnalysisOverlay {
     pub collapsed_child_ids: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub collapsed_chain_ids: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_ref: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub reasons: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy_profile: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub producer_version: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum Confidence {
     High,
@@ -477,6 +611,399 @@ pub struct FingerprintSet {
 #[error("document validation failed")]
 pub struct ValidationErrors {
     pub errors: Vec<String>,
+}
+
+impl Confidence {
+    pub fn score(self) -> Score {
+        OrderedFloat(match self {
+            Self::High => 0.9,
+            Self::Medium => 0.65,
+            Self::Low => 0.35,
+            Self::Unknown => 0.0,
+        })
+    }
+
+    pub fn from_score(score: Option<Score>) -> Self {
+        let Some(score) = score else {
+            return Self::Unknown;
+        };
+        let score = score.into_inner();
+        if score >= 0.75 {
+            Self::High
+        } else if score >= 0.5 {
+            Self::Medium
+        } else if score > 0.0 {
+            Self::Low
+        } else {
+            Self::Unknown
+        }
+    }
+}
+
+impl OwnershipInfo {
+    pub fn new(owner: Ownership, reason: impl Into<String>) -> Self {
+        Self {
+            owner,
+            reason: reason.into(),
+            confidence: None,
+        }
+    }
+}
+
+impl FileRef {
+    pub fn new(path_raw: impl Into<String>) -> Self {
+        let path_raw = path_raw.into();
+        let (path_style, path_kind) = infer_path_metadata(&path_raw);
+        Self {
+            path_raw,
+            display_path: None,
+            uri: None,
+            path_style: Some(path_style),
+            path_kind: Some(path_kind),
+            ownership: None,
+            exists_at_capture: None,
+        }
+    }
+}
+
+impl SourcePoint {
+    pub fn new(line: u32, column: u32) -> Self {
+        Self {
+            line,
+            column_origin: Some(1),
+            column_byte: None,
+            column_display: Some(column),
+            column_native: Some(column),
+            column_native_unit: Some(ColumnUnit::Display),
+        }
+    }
+}
+
+impl Location {
+    pub fn caret(path: impl Into<String>, line: u32, column: u32, role: LocationRole) -> Self {
+        let path = path.into();
+        let anchor = SourcePoint::new(line, column);
+        Self {
+            id: synthetic_location_id(&path, &anchor, None),
+            file: FileRef::new(path),
+            anchor: Some(anchor),
+            range: None,
+            role,
+            source_kind: LocationSourceKind::Caret,
+            label: None,
+            ownership_override: None,
+            provenance_override: None,
+            source_excerpt_ref: None,
+        }
+    }
+
+    pub fn with_range_end(
+        mut self,
+        end_line: u32,
+        end_column: u32,
+        boundary_semantics: BoundarySemantics,
+    ) -> Self {
+        let start = self
+            .anchor
+            .clone()
+            .unwrap_or_else(|| SourcePoint::new(end_line, end_column));
+        let end = SourcePoint::new(end_line, end_column);
+        self.id = synthetic_location_id(&self.file.path_raw, &start, Some(&end));
+        self.range = Some(SourceRange {
+            start,
+            end,
+            boundary_semantics,
+        });
+        self.source_kind = LocationSourceKind::Range;
+        self
+    }
+
+    pub fn with_display_path(mut self, display_path: impl Into<String>) -> Self {
+        self.file.display_path = Some(display_path.into());
+        self
+    }
+
+    pub fn with_ownership(mut self, owner: Ownership, reason: impl Into<String>) -> Self {
+        self.file.ownership = Some(OwnershipInfo::new(owner, reason));
+        self
+    }
+
+    pub fn set_path_raw(&mut self, path: impl Into<String>) {
+        self.file.path_raw = path.into();
+        let start = self
+            .anchor
+            .as_ref()
+            .or_else(|| self.range.as_ref().map(|range| &range.start));
+        let end = self.range.as_ref().map(|range| &range.end);
+        if let Some(start) = start {
+            self.id = synthetic_location_id(&self.file.path_raw, start, end);
+        }
+    }
+
+    pub fn set_anchor(&mut self, line: u32, column: u32) {
+        let anchor = SourcePoint::new(line, column);
+        self.anchor = Some(anchor.clone());
+        if let Some(range) = self.range.as_mut() {
+            range.start = anchor.clone();
+        }
+        self.id = synthetic_location_id(
+            &self.file.path_raw,
+            &anchor,
+            self.range.as_ref().map(|range| &range.end),
+        );
+    }
+
+    pub fn set_ownership(&mut self, owner: Ownership, reason: impl Into<String>) {
+        self.file.ownership = Some(OwnershipInfo::new(owner, reason));
+    }
+
+    pub fn path_raw(&self) -> &str {
+        &self.file.path_raw
+    }
+
+    pub fn display_path(&self) -> &str {
+        self.file
+            .display_path
+            .as_deref()
+            .unwrap_or(&self.file.path_raw)
+    }
+
+    pub fn line(&self) -> u32 {
+        self.anchor
+            .as_ref()
+            .map(|point| point.line)
+            .or_else(|| self.range.as_ref().map(|range| range.start.line))
+            .unwrap_or(1)
+    }
+
+    pub fn column(&self) -> u32 {
+        self.anchor
+            .as_ref()
+            .and_then(source_point_column)
+            .or_else(|| {
+                self.range
+                    .as_ref()
+                    .and_then(|range| source_point_column(&range.start))
+            })
+            .unwrap_or(1)
+    }
+
+    pub fn end_line(&self) -> Option<u32> {
+        self.range.as_ref().map(|range| range.end.line)
+    }
+
+    pub fn end_column(&self) -> Option<u32> {
+        self.range
+            .as_ref()
+            .and_then(|range| source_point_column(&range.end))
+    }
+
+    pub fn ownership(&self) -> Option<&Ownership> {
+        self.ownership_override
+            .as_ref()
+            .map(|info| &info.owner)
+            .or_else(|| self.file.ownership.as_ref().map(|info| &info.owner))
+    }
+}
+
+impl AnalysisOverlay {
+    pub fn set_confidence_bucket(&mut self, confidence: Confidence) {
+        self.confidence = Some(confidence.score());
+    }
+
+    pub fn confidence_bucket(&self) -> Option<Confidence> {
+        self.confidence
+            .map(|score| Confidence::from_score(Some(score)))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+struct LocationCurrent {
+    pub id: String,
+    pub file: FileRef,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<SourcePoint>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub range: Option<SourceRange>,
+    pub role: LocationRole,
+    pub source_kind: LocationSourceKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ownership_override: Option<OwnershipInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provenance_override: Option<Provenance>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source_excerpt_ref: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct LocationLegacy {
+    pub path: String,
+    pub line: u32,
+    pub column: u32,
+    #[serde(default)]
+    pub end_line: Option<u32>,
+    #[serde(default)]
+    pub end_column: Option<u32>,
+    #[serde(default)]
+    pub display_path: Option<String>,
+    #[serde(default)]
+    pub ownership: Option<Ownership>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum LocationWire {
+    Current(Box<LocationCurrent>),
+    Legacy(LocationLegacy),
+}
+
+impl From<Location> for LocationCurrent {
+    fn from(location: Location) -> Self {
+        Self {
+            id: location.id,
+            file: location.file,
+            anchor: location.anchor,
+            range: location.range,
+            role: location.role,
+            source_kind: location.source_kind,
+            label: location.label,
+            ownership_override: location.ownership_override,
+            provenance_override: location.provenance_override,
+            source_excerpt_ref: location.source_excerpt_ref,
+        }
+    }
+}
+
+impl From<LocationCurrent> for Location {
+    fn from(location: LocationCurrent) -> Self {
+        Self {
+            id: location.id,
+            file: location.file,
+            anchor: location.anchor,
+            range: location.range,
+            role: location.role,
+            source_kind: location.source_kind,
+            label: location.label,
+            ownership_override: location.ownership_override,
+            provenance_override: location.provenance_override,
+            source_excerpt_ref: location.source_excerpt_ref,
+        }
+    }
+}
+
+impl From<LocationLegacy> for Location {
+    fn from(location: LocationLegacy) -> Self {
+        let mut converted = Location::caret(
+            location.path,
+            location.line,
+            location.column,
+            LocationRole::Primary,
+        );
+        if let Some(display_path) = location.display_path {
+            converted = converted.with_display_path(display_path);
+        }
+        if let Some(owner) = location.ownership {
+            converted = converted.with_ownership(owner, ownership_reason_key(owner));
+        }
+        if let (Some(end_line), Some(end_column)) = (location.end_line, location.end_column) {
+            converted = converted.with_range_end(end_line, end_column, BoundarySemantics::Unknown);
+        }
+        converted
+    }
+}
+
+impl From<LocationWire> for Location {
+    fn from(location: LocationWire) -> Self {
+        match location {
+            LocationWire::Current(location) => (*location).into(),
+            LocationWire::Legacy(location) => location.into(),
+        }
+    }
+}
+
+impl Serialize for Location {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        LocationCurrent::from(self.clone()).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Location {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wire = LocationWire::deserialize(deserializer)?;
+        Ok(wire.into())
+    }
+}
+
+fn deserialize_confidence_score_opt<'de, D>(deserializer: D) -> Result<Option<Score>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum ConfidenceWire {
+        Score(f32),
+        Bucket(Confidence),
+    }
+
+    let confidence = Option::<ConfidenceWire>::deserialize(deserializer)?;
+    Ok(confidence.map(|confidence| match confidence {
+        ConfidenceWire::Score(score) => OrderedFloat(score),
+        ConfidenceWire::Bucket(bucket) => bucket.score(),
+    }))
+}
+
+fn ownership_reason_key(owner: Ownership) -> &'static str {
+    match owner {
+        Ownership::User => "user_workspace",
+        Ownership::Vendor => "vendor_path",
+        Ownership::System => "system_path",
+        Ownership::Generated => "generated_path",
+        Ownership::Tool => "tool_generated",
+        Ownership::Unknown => "unknown",
+    }
+}
+
+fn source_point_column(point: &SourcePoint) -> Option<u32> {
+    point
+        .column_display
+        .or(point.column_native)
+        .or(point.column_byte)
+}
+
+fn infer_path_metadata(path: &str) -> (PathStyle, PathKind) {
+    if path.starts_with("file://") {
+        return (PathStyle::Uri, PathKind::Absolute);
+    }
+    if path.starts_with('/') {
+        return (PathStyle::Posix, PathKind::Absolute);
+    }
+    if path.contains(":\\") {
+        return (PathStyle::Windows, PathKind::Absolute);
+    }
+    if path.starts_with('<') && path.ends_with('>') {
+        return (PathStyle::Virtual, PathKind::Virtual);
+    }
+    (PathStyle::Posix, PathKind::Relative)
+}
+
+fn synthetic_location_id(path: &str, start: &SourcePoint, end: Option<&SourcePoint>) -> String {
+    let end = end.unwrap_or(start);
+    format!(
+        "loc:{}:{}:{}:{}:{}",
+        path,
+        start.line,
+        source_point_column(start).unwrap_or(1),
+        end.line,
+        source_point_column(end).unwrap_or(source_point_column(start).unwrap_or(1))
+    )
 }
 
 impl DiagnosticDocument {
@@ -557,7 +1084,21 @@ impl DiagnosticDocument {
 
 impl DiagnosticNode {
     pub fn primary_location(&self) -> Option<&Location> {
-        self.locations.first()
+        if let Some(preferred_id) = self
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.preferred_primary_location_id.as_deref())
+            && let Some(location) = self
+                .locations
+                .iter()
+                .find(|location| location.id == preferred_id)
+        {
+            return Some(location);
+        }
+        self.locations
+            .iter()
+            .find(|location| matches!(location.role, LocationRole::Primary))
+            .or_else(|| self.locations.first())
     }
 }
 
@@ -601,6 +1142,113 @@ fn validate_node(
         }
         validate_node(child, node_ids, errors, false);
     }
+    if matches!(node.node_completeness, NodeCompleteness::Synthesized)
+        && !matches!(
+            node.provenance.source,
+            ProvenanceSource::WrapperGenerated | ProvenanceSource::Policy
+        )
+    {
+        errors.push(format!(
+            "node {} is synthesized but provenance.source is not wrapper_generated or policy",
+            node.id
+        ));
+    }
+    if matches!(
+        node.phase,
+        Phase::Parse | Phase::Semantic | Phase::Instantiate
+    ) && node.locations.is_empty()
+        && matches!(node.node_completeness, NodeCompleteness::Complete)
+    {
+        errors.push(format!(
+            "node {} is complete in parse/semantic/instantiate phase but has no locations",
+            node.id
+        ));
+    }
+    let child_ids = descendant_node_ids(node);
+    if let Some(analysis) = node.analysis.as_ref() {
+        for (label, score) in [
+            ("family_confidence", analysis.family_confidence),
+            ("root_cause_score", analysis.root_cause_score),
+            ("actionability_score", analysis.actionability_score),
+            ("user_code_priority", analysis.user_code_priority),
+            ("confidence", analysis.confidence),
+        ] {
+            if let Some(score) = score
+                && !(0.0..=1.0).contains(&score.into_inner())
+            {
+                errors.push(format!(
+                    "node {} analysis {} must be within 0.0..=1.0",
+                    node.id, label
+                ));
+            }
+        }
+        if let Some(preferred_id) = analysis.preferred_primary_location_id.as_deref()
+            && !node
+                .locations
+                .iter()
+                .any(|location| location.id == preferred_id)
+        {
+            errors.push(format!(
+                "node {} preferred_primary_location_id {} does not exist",
+                node.id, preferred_id
+            ));
+        }
+        for child_id in &analysis.collapsed_child_ids {
+            if !child_ids.contains(child_id) {
+                errors.push(format!(
+                    "node {} collapsed_child_id {} does not reference a descendant",
+                    node.id, child_id
+                ));
+            }
+        }
+    }
+    for location in &node.locations {
+        validate_location(node, location, errors);
+    }
+}
+
+fn validate_location(node: &DiagnosticNode, location: &Location, errors: &mut Vec<String>) {
+    if location.anchor.is_none() && location.range.is_none() {
+        errors.push(format!(
+            "node {} location {} must have anchor or range",
+            node.id, location.id
+        ));
+    }
+    if let Some(anchor) = location.anchor.as_ref()
+        && anchor.line < 1
+    {
+        errors.push(format!(
+            "node {} location {} anchor line must be >= 1",
+            node.id, location.id
+        ));
+    }
+    if let Some(range) = location.range.as_ref() {
+        if range.start.line < 1 {
+            errors.push(format!(
+                "node {} location {} range.start line must be >= 1",
+                node.id, location.id
+            ));
+        }
+        if range.end.line < 1 {
+            errors.push(format!(
+                "node {} location {} range.end line must be >= 1",
+                node.id, location.id
+            ));
+        }
+    }
+}
+
+fn descendant_node_ids(node: &DiagnosticNode) -> HashSet<String> {
+    let mut ids = HashSet::new();
+    collect_descendant_node_ids(node, &mut ids);
+    ids
+}
+
+fn collect_descendant_node_ids(node: &DiagnosticNode, ids: &mut HashSet<String>) {
+    for child in &node.children {
+        ids.insert(child.id.clone());
+        collect_descendant_node_ids(child, ids);
+    }
 }
 
 fn refresh_node_fingerprints(node: &mut DiagnosticNode) {
@@ -622,7 +1270,7 @@ fn refresh_node_fingerprints(node: &mut DiagnosticNode) {
             normalize_message(&node.message.raw_text),
             node.phase,
             node.primary_location()
-                .and_then(|location| location.ownership.as_ref())
+                .and_then(Location::ownership)
                 .map(Ownership::to_string)
                 .unwrap_or_else(|| "unknown".to_string())
         )),
@@ -749,6 +1397,7 @@ impl Display for Ownership {
             Ownership::Vendor => "vendor",
             Ownership::System => "system",
             Ownership::Generated => "generated",
+            Ownership::Tool => "tool",
             Ownership::Unknown => "unknown",
         };
         formatter.write_str(value)
@@ -833,15 +1482,10 @@ mod tests {
                     normalized_text: None,
                     locale: Some("C".to_string()),
                 },
-                locations: vec![Location {
-                    path: "src/main.c".to_string(),
-                    line: 4,
-                    column: 1,
-                    end_line: None,
-                    end_column: None,
-                    display_path: None,
-                    ownership: Some(Ownership::User),
-                }],
+                locations: vec![
+                    Location::caret("src/main.c", 4, 1, LocationRole::Primary)
+                        .with_ownership(Ownership::User, ownership_reason_key(Ownership::User)),
+                ],
                 children: Vec::new(),
                 suggestions: Vec::new(),
                 context_chains: Vec::new(),
@@ -853,14 +1497,24 @@ mod tests {
                 },
                 analysis: Some(AnalysisOverlay {
                     family: Some("syntax".to_string()),
+                    family_version: None,
+                    family_confidence: None,
+                    root_cause_score: None,
+                    actionability_score: None,
+                    user_code_priority: None,
                     headline: Some("syntax error".to_string()),
                     first_action_hint: Some("insert the missing semicolon".to_string()),
-                    confidence: Some(Confidence::High),
+                    confidence: Some(Confidence::High.score()),
+                    preferred_primary_location_id: Some("loc:src/main.c:4:1:4:1".to_string()),
                     rule_id: Some("rule.syntax.expected_or_before".to_string()),
                     matched_conditions: vec!["message_contains=expected".to_string()],
                     suppression_reason: None,
                     collapsed_child_ids: Vec::new(),
                     collapsed_chain_ids: Vec::new(),
+                    group_ref: None,
+                    reasons: Vec::new(),
+                    policy_profile: None,
+                    producer_version: None,
                 }),
                 fingerprints: None,
             }],
@@ -911,6 +1565,45 @@ mod tests {
                 .errors
                 .iter()
                 .any(|error| error.contains("duplicate node id"))
+        );
+    }
+
+    #[test]
+    fn prefers_analysis_primary_location_id() {
+        let mut document = sample_document();
+        document.diagnostics[0].locations.push(Location::caret(
+            "src/secondary.c",
+            8,
+            3,
+            LocationRole::Primary,
+        ));
+        document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .preferred_primary_location_id = Some("loc:src/secondary.c:8:3:8:3".to_string());
+
+        let location = document.diagnostics[0].primary_location().unwrap();
+
+        assert_eq!(location.path_raw(), "src/secondary.c");
+    }
+
+    #[test]
+    fn rejects_missing_preferred_primary_location() {
+        let mut document = sample_document();
+        document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .preferred_primary_location_id = Some("missing".to_string());
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("preferred_primary_location_id"))
         );
     }
 }

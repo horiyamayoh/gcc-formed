@@ -57,7 +57,7 @@ pub(crate) fn is_conservative_useful_subset_card(
         && matches!(
             node.analysis
                 .as_ref()
-                .and_then(|analysis| analysis.confidence.as_ref()),
+                .and_then(|analysis| analysis.confidence_bucket()),
             Some(Confidence::Low) | Some(Confidence::Unknown) | None
         )
 }
@@ -224,7 +224,9 @@ fn summarize_overload(
                 .map(|location| {
                     format!(
                         " at {}:{}:{}",
-                        location.path, location.line, location.column
+                        location.path_raw(),
+                        location.line(),
+                        location.column()
                     )
                 })
                 .unwrap_or_default();
@@ -483,7 +485,7 @@ fn format_frame(frame: &ContextFrame) -> String {
 fn child_rank(request: &RenderRequest, node: &DiagnosticNode) -> u8 {
     node.locations
         .iter()
-        .map(|location| ownership_rank(request, &location.path, location.ownership.as_ref()))
+        .map(|location| ownership_rank(request, location.path_raw(), location.ownership()))
         .max()
         .unwrap_or(0)
 }
@@ -497,7 +499,7 @@ fn best_location<'a>(
         .enumerate()
         .max_by_key(|(index, location)| {
             (
-                ownership_rank(request, &location.path, location.ownership.as_ref()),
+                ownership_rank(request, location.path_raw(), location.ownership()),
                 u8::from(*index == 0),
             )
         })
@@ -514,7 +516,12 @@ fn normalized_child_note(request: &RenderRequest, node: &DiagnosticNode) -> Stri
         .trim()
         .to_string();
     if let Some(location) = best_location(request, node) {
-        let prefix = format!("{}:{}:{}:", location.path, location.line, location.column);
+        let prefix = format!(
+            "{}:{}:{}:",
+            location.path_raw(),
+            location.line(),
+            location.column()
+        );
         if let Some(stripped) = note.strip_prefix(&prefix) {
             note = stripped.trim().to_string();
         }
@@ -538,7 +545,7 @@ fn ownership_rank(request: &RenderRequest, path: &str, ownership: Option<&Owners
 
 fn is_user_owned_path(request: &RenderRequest, node: &DiagnosticNode, path: &str) -> bool {
     node.locations.iter().any(|location| {
-        location.path == path && matches!(location.ownership, Some(Ownership::User))
+        location.path_raw() == path && matches!(location.ownership(), Some(Ownership::User))
     }) || looks_workspace_owned(request, path)
 }
 
@@ -763,15 +770,10 @@ mod tests {
                 normalized_text: None,
                 locale: None,
             },
-            locations: vec![Location {
-                path: "src/main.cpp".to_string(),
-                line: 5,
-                column: 7,
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: Some(Ownership::User),
-            }],
+            locations: vec![
+                Location::caret("src/main.cpp", 5, 7, diag_core::LocationRole::Primary)
+                    .with_ownership(Ownership::User, "user_workspace"),
+            ],
             children: Vec::new(),
             suggestions: Vec::new(),
             context_chains: Vec::new(),
@@ -783,14 +785,24 @@ mod tests {
             },
             analysis: Some(AnalysisOverlay {
                 family: Some(family.to_string()),
+                family_version: None,
+                family_confidence: None,
+                root_cause_score: None,
+                actionability_score: None,
+                user_code_priority: None,
                 headline: Some("headline".to_string()),
                 first_action_hint: Some("hint".to_string()),
-                confidence: Some(Confidence::High),
+                confidence: Some(Confidence::High.score()),
+                preferred_primary_location_id: None,
                 rule_id: Some("rule".to_string()),
                 matched_conditions: vec!["matched=true".to_string()],
                 suppression_reason: None,
                 collapsed_child_ids: Vec::new(),
                 collapsed_chain_ids: Vec::new(),
+                group_ref: None,
+                reasons: Vec::new(),
+                policy_profile: None,
+                producer_version: None,
             }),
             fingerprints: None,
         }
@@ -847,13 +859,21 @@ mod tests {
         let mut template = sample_node("template");
         template.node_completeness = NodeCompleteness::Partial;
         template.provenance.source = ProvenanceSource::ResidualText;
-        template.analysis.as_mut().unwrap().confidence = Some(Confidence::Low);
+        template
+            .analysis
+            .as_mut()
+            .unwrap()
+            .set_confidence_bucket(Confidence::Low);
         assert!(is_conservative_useful_subset_card(&request, &template));
 
         let mut macro_include = sample_node("macro_include");
         macro_include.node_completeness = NodeCompleteness::Partial;
         macro_include.provenance.source = ProvenanceSource::ResidualText;
-        macro_include.analysis.as_mut().unwrap().confidence = Some(Confidence::Low);
+        macro_include
+            .analysis
+            .as_mut()
+            .unwrap()
+            .set_confidence_bucket(Confidence::Low);
         assert!(!is_conservative_useful_subset_card(
             &request,
             &macro_include

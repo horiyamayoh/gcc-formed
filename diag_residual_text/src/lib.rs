@@ -266,9 +266,15 @@ fn compiler_diagnostic_node(
         },
         analysis: Some(AnalysisOverlay {
             family: Some(seed.family.clone()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some(compiler_headline(seed, &message)),
             first_action_hint: Some(seed.first_action_hint.clone()),
-            confidence: Some(Confidence::Low),
+            confidence: Some(Confidence::Low.score()),
+            preferred_primary_location_id: None,
             rule_id: Some(seed.rule_id.clone()),
             matched_conditions: vec![
                 "residual_group=compiler_diagnostic".to_string(),
@@ -277,6 +283,10 @@ fn compiler_diagnostic_node(
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: None,
     }
@@ -434,15 +444,12 @@ fn is_numbered_candidate_message(message: &str, prefix: &str) -> bool {
 }
 
 fn compiler_location(capture: &regex::Captures<'_>) -> Location {
-    Location {
-        path: capture["path"].to_string(),
-        line: capture["line"].parse().unwrap_or(1),
-        column: capture["column"].parse().unwrap_or(1),
-        end_line: None,
-        end_column: None,
-        display_path: None,
-        ownership: None,
-    }
+    Location::caret(
+        capture["path"].to_string(),
+        capture["line"].parse().unwrap_or(1),
+        capture["column"].parse().unwrap_or(1),
+        diag_core::LocationRole::Primary,
+    )
 }
 
 fn group_to_node(
@@ -517,14 +524,24 @@ fn group_to_node(
         },
         analysis: Some(AnalysisOverlay {
             family: Some(rule.family.clone()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some(render_template(&rule.headline_template, template_values)),
             first_action_hint: Some(rule.first_action_hint.clone()),
-            confidence: Some(Confidence::Medium),
+            confidence: Some(Confidence::Medium.score()),
+            preferred_primary_location_id: None,
             rule_id: Some(rule.rule_id.clone()),
             matched_conditions: vec![format!("residual_group={key}")],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: None,
     }
@@ -555,14 +572,24 @@ fn passthrough_node(lines: &[String]) -> DiagnosticNode {
         },
         analysis: Some(AnalysisOverlay {
             family: Some(passthrough.family.clone()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some(passthrough.headline.clone()),
             first_action_hint: Some(passthrough.first_action_hint.clone()),
-            confidence: Some(Confidence::Low),
+            confidence: Some(Confidence::Low.score()),
+            preferred_primary_location_id: None,
             rule_id: Some(passthrough.rule_id.clone()),
             matched_conditions: vec!["residual_group=passthrough".to_string()],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: None,
     }
@@ -583,18 +610,15 @@ fn parse_locations(lines: &[String]) -> Vec<Location> {
         .iter()
         .filter_map(|line| {
             let capture = location_re.captures(line)?;
-            Some(Location {
-                path: capture["path"].to_string(),
-                line: capture["line"].parse().ok()?,
-                column: capture
+            Some(Location::caret(
+                capture["path"].to_string(),
+                capture["line"].parse().ok()?,
+                capture
                     .name("column")
                     .and_then(|match_| match_.as_str().parse().ok())
                     .unwrap_or(1),
-                end_line: None,
-                end_column: None,
-                display_path: None,
-                ownership: None,
-            })
+                diag_core::LocationRole::Primary,
+            ))
         })
         .collect()
 }
@@ -632,7 +656,7 @@ mod tests {
         assert_eq!(nodes[0].severity, Severity::Error);
         assert_eq!(nodes[0].phase, Phase::Parse);
         assert_eq!(nodes[0].node_completeness, NodeCompleteness::Partial);
-        assert_eq!(nodes[0].locations[0].path, "main.c");
+        assert_eq!(nodes[0].locations[0].path_raw(), "main.c");
         assert_eq!(
             nodes[0]
                 .analysis

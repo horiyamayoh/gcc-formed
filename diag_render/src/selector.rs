@@ -77,7 +77,7 @@ fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, usize) {
         confidence_rank(
             node.analysis
                 .as_ref()
-                .and_then(|analysis| analysis.confidence.as_ref()),
+                .and_then(|analysis| analysis.confidence_bucket()),
         ),
         phase_rank(&node.phase),
         semantic_role_rank(&node.semantic_role),
@@ -111,16 +111,16 @@ fn ownership_rank(ownership: Option<&Ownership>) -> u8 {
 
 fn best_ownership(node: &DiagnosticNode) -> Option<&Ownership> {
     node.primary_location()
-        .and_then(|location| location.ownership.as_ref())
+        .and_then(|location| location.ownership())
         .or_else(|| {
             node.locations
                 .iter()
-                .filter_map(|location| location.ownership.as_ref())
+                .filter_map(|location| location.ownership())
                 .max_by_key(|ownership| ownership_rank(Some(*ownership)))
         })
 }
 
-fn confidence_rank(confidence: Option<&Confidence>) -> u8 {
+fn confidence_rank(confidence: Option<Confidence>) -> u8 {
     match confidence {
         Some(Confidence::High) => 4,
         Some(Confidence::Medium) => 3,
@@ -171,7 +171,7 @@ fn is_low_confidence(node: &DiagnosticNode) -> bool {
     matches!(
         node.analysis
             .as_ref()
-            .and_then(|analysis| analysis.confidence.as_ref()),
+            .and_then(|analysis| analysis.confidence_bucket()),
         Some(Confidence::Low) | Some(Confidence::Unknown) | None
     )
 }
@@ -226,14 +226,24 @@ mod tests {
             },
             analysis: Some(AnalysisOverlay {
                 family: Some(family.to_string()),
+                family_version: None,
+                family_confidence: None,
+                root_cause_score: None,
+                actionability_score: None,
+                user_code_priority: None,
                 headline: Some("headline".to_string()),
                 first_action_hint: Some("hint".to_string()),
                 confidence: None,
+                preferred_primary_location_id: None,
                 rule_id: Some("rule".to_string()),
                 matched_conditions: Vec::new(),
                 suppression_reason: None,
                 collapsed_child_ids: Vec::new(),
                 collapsed_chain_ids: Vec::new(),
+                group_ref: None,
+                reasons: Vec::new(),
+                policy_profile: None,
+                producer_version: None,
             }),
             fingerprints: None,
         }

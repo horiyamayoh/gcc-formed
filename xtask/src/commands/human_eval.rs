@@ -675,7 +675,7 @@ mod tests {
             expert_review: true,
             task_study: REQUIRED_TASK_STUDY_FAMILIES.contains(&family_key),
             used_fallback: false,
-            lead_confidence: confidence_label(&diag_core::Confidence::High).to_string(),
+            lead_confidence: confidence_label(diag_core::Confidence::High).to_string(),
             rendered_first_action_line: Some(2),
             diagnostic_compression_ratio: Some(2.0),
             source_dir: format!("fixtures/{fixture_id}/input/src"),

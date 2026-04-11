@@ -19,7 +19,7 @@ pub fn enrich_document(document: &mut DiagnosticDocument, cwd: &Path) {
 
 fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
     for location in &mut node.locations {
-        location.ownership = Some(classify_ownership(&location.path, cwd));
+        location.file.ownership = Some(classify_ownership(location.path_raw(), cwd));
     }
 
     let family_decision = classify_family(node);
@@ -29,19 +29,29 @@ fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
 
     let analysis = node.analysis.get_or_insert(AnalysisOverlay {
         family: None,
+        family_version: None,
+        family_confidence: None,
+        root_cause_score: None,
+        actionability_score: None,
+        user_code_priority: None,
         headline: None,
         first_action_hint: None,
         confidence: None,
+        preferred_primary_location_id: None,
         rule_id: None,
         matched_conditions: Vec::new(),
         suppression_reason: None,
         collapsed_child_ids: Vec::new(),
         collapsed_chain_ids: Vec::new(),
+        group_ref: None,
+        reasons: Vec::new(),
+        policy_profile: None,
+        producer_version: None,
     });
     analysis.family = Some(family_decision.family.clone());
     analysis.headline = Some(headline);
     analysis.first_action_hint = Some(first_action_hint);
-    analysis.confidence = Some(confidence);
+    analysis.set_confidence_bucket(confidence);
     analysis.rule_id = Some(family_decision.rule_id);
     analysis.matched_conditions = family_decision.matched_conditions;
     analysis.suppression_reason = family_decision.suppression_reason;
@@ -98,15 +108,7 @@ mod tests {
     }
 
     fn sample_location(path: &str) -> Location {
-        Location {
-            path: path.to_string(),
-            line: 3,
-            column: 1,
-            end_line: None,
-            end_column: None,
-            display_path: None,
-            ownership: None,
-        }
+        Location::caret(path, 3, 1, diag_core::LocationRole::Primary)
     }
 
     fn sample_context_chain(kind: ContextChainKind, label: &str) -> ContextChain {
@@ -158,10 +160,10 @@ mod tests {
 
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("syntax"));
-        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::High));
         assert_eq!(
-            document.diagnostics[0].locations[0].ownership,
-            Some(Ownership::User)
+            document.diagnostics[0].locations[0].ownership(),
+            Some(&Ownership::User)
         );
     }
 
@@ -178,7 +180,7 @@ mod tests {
             analysis.rule_id.as_deref(),
             Some("rule.family.type_overload.structured_or_message")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::Medium));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::Medium));
         assert_eq!(
             analysis.headline.as_deref(),
             Some("type or overload mismatch")
@@ -222,7 +224,7 @@ mod tests {
 
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("type_overload"));
-        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::High));
         assert!(
             analysis
                 .matched_conditions
@@ -280,7 +282,7 @@ mod tests {
                 .iter()
                 .any(|condition| condition == "context=template_instantiation")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::High));
         assert_eq!(
             analysis.headline.as_deref(),
             Some("template instantiation failed")
@@ -310,7 +312,7 @@ mod tests {
                 .iter()
                 .any(|condition| condition == "context=macro_expansion")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::High));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::High));
     }
 
     #[test]
@@ -325,14 +327,24 @@ mod tests {
         });
         node.analysis = Some(AnalysisOverlay {
             family: Some("linker.undefined_reference".to_string()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: None,
             first_action_hint: None,
             confidence: None,
+            preferred_primary_location_id: None,
             rule_id: None,
             matched_conditions: Vec::new(),
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         });
         let mut document = sample_document(node);
 
@@ -347,7 +359,7 @@ mod tests {
             analysis.rule_id.as_deref(),
             Some("rule.family.ingress_specific_override")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::Medium));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::Medium));
         assert_eq!(
             analysis.headline.as_deref(),
             Some("undefined reference to `missing_symbol`")
@@ -365,16 +377,26 @@ mod tests {
         node.locations.clear();
         node.analysis = Some(AnalysisOverlay {
             family: Some("linker.cannot_find_library".to_string()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some("cannot find library `-lmissing`".to_string()),
             first_action_hint: Some(
                 "check the library search path and whether the archive is installed".to_string(),
             ),
             confidence: None,
+            preferred_primary_location_id: None,
             rule_id: None,
             matched_conditions: Vec::new(),
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         });
         let mut document = sample_document(node);
 
@@ -393,7 +415,7 @@ mod tests {
             analysis.first_action_hint.as_deref(),
             Some("check the library search path and whether the archive is installed")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::Medium));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::Medium));
     }
 
     #[test]
@@ -410,7 +432,7 @@ mod tests {
             analysis.rule_id.as_deref(),
             Some("rule.family.passthrough.semantic_role")
         );
-        assert_eq!(analysis.confidence, Some(Confidence::Low));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::Low));
         assert_eq!(
             analysis.headline.as_deref(),
             Some("showing conservative wrapper view")
@@ -431,7 +453,7 @@ mod tests {
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("unknown"));
         assert_eq!(analysis.rule_id.as_deref(), Some("rule.family.unknown"));
-        assert_eq!(analysis.confidence, Some(Confidence::Low));
+        assert_eq!(analysis.confidence_bucket(), Some(Confidence::Low));
         assert_eq!(
             analysis.suppression_reason.as_deref(),
             Some("generic_fallback")
@@ -445,25 +467,25 @@ mod tests {
     #[test]
     fn classifies_relative_and_absolute_paths_with_shared_rules() {
         let cwd = Path::new("/tmp/project");
-        assert_eq!(classify_ownership("src/main.c", cwd), Ownership::User);
+        assert_eq!(classify_ownership("src/main.c", cwd).owner, Ownership::User);
         assert_eq!(
-            classify_ownership("third_party/lib/foo.h", cwd),
+            classify_ownership("third_party/lib/foo.h", cwd).owner,
             Ownership::Vendor
         );
         assert_eq!(
-            classify_ownership("generated/parser.generated.h", cwd),
+            classify_ownership("generated/parser.generated.h", cwd).owner,
             Ownership::Generated
         );
         assert_eq!(
-            classify_ownership("/usr/include/stdio.h", cwd),
+            classify_ownership("/usr/include/stdio.h", cwd).owner,
             Ownership::System
         );
         assert_eq!(
-            classify_ownership("/tmp/project/build/generated.c", cwd),
+            classify_ownership("/tmp/project/build/generated.c", cwd).owner,
             Ownership::Generated
         );
         assert_eq!(
-            classify_ownership("/opt/custom-sdk/include/foo.h", cwd),
+            classify_ownership("/opt/custom-sdk/include/foo.h", cwd).owner,
             Ownership::Unknown
         );
     }

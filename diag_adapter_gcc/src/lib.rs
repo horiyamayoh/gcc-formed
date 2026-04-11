@@ -587,14 +587,24 @@ fn result_to_node(
         },
         analysis: Some(AnalysisOverlay {
             family: Some(family_decision.family.clone()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
             first_action_hint: Some(first_action_hint(family_decision.family.as_str())),
-            confidence: Some(Confidence::Medium),
+            confidence: Some(Confidence::Medium.score()),
+            preferred_primary_location_id: None,
             rule_id: Some(family_decision.rule_id),
             matched_conditions: family_decision.matched_conditions,
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: Some(FingerprintSet {
             raw: diag_core::fingerprint_for(&raw_text),
@@ -628,24 +638,31 @@ fn parse_locations(result: &Value) -> Vec<Location> {
         if path.is_empty() {
             continue;
         }
-        locations.push(Location {
+        let start_line = region.get("startLine").and_then(Value::as_u64).unwrap_or(1) as u32;
+        let start_column = region
+            .get("startColumn")
+            .and_then(Value::as_u64)
+            .unwrap_or(1) as u32;
+        let mut parsed = Location::caret(
             path,
-            line: region.get("startLine").and_then(Value::as_u64).unwrap_or(1) as u32,
-            column: region
-                .get("startColumn")
-                .and_then(Value::as_u64)
-                .unwrap_or(1) as u32,
-            end_line: region
+            start_line,
+            start_column,
+            diag_core::LocationRole::Primary,
+        );
+        if let (Some(end_line), Some(end_column)) = (
+            region
                 .get("endLine")
                 .and_then(Value::as_u64)
                 .map(|value| value as u32),
-            end_column: region
+            region
                 .get("endColumn")
                 .and_then(Value::as_u64)
                 .map(|value| value as u32),
-            display_path: None,
-            ownership: None,
-        });
+        ) {
+            parsed =
+                parsed.with_range_end(end_line, end_column, diag_core::BoundarySemantics::Unknown);
+        }
+        locations.push(parsed);
     }
     locations
 }
@@ -888,14 +905,24 @@ fn gcc_json_diagnostic_to_node(
         },
         analysis: is_root.then_some(AnalysisOverlay {
             family: Some(family_decision.family.clone()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
             first_action_hint: Some(first_action_hint(family_decision.family.as_str())),
-            confidence: Some(Confidence::Medium),
+            confidence: Some(Confidence::Medium.score()),
+            preferred_primary_location_id: None,
             rule_id: Some(family_decision.rule_id),
             matched_conditions: family_decision.matched_conditions,
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: is_root.then_some(FingerprintSet {
             raw: diag_core::fingerprint_for(&raw_text),
@@ -933,15 +960,14 @@ fn gcc_json_location(location: &Value) -> Option<Location> {
         .or_else(|| finish.and_then(gcc_json_point_column))
         .unwrap_or(1);
 
-    Some(Location {
-        path,
-        line,
-        column,
-        end_line: finish.and_then(gcc_json_point_line),
-        end_column: finish.and_then(gcc_json_point_column),
-        display_path: None,
-        ownership: None,
-    })
+    let mut parsed = Location::caret(path, line, column, diag_core::LocationRole::Primary);
+    if let (Some(end_line), Some(end_column)) = (
+        finish.and_then(gcc_json_point_line),
+        finish.and_then(gcc_json_point_column),
+    ) {
+        parsed = parsed.with_range_end(end_line, end_column, diag_core::BoundarySemantics::Unknown);
+    }
+    Some(parsed)
 }
 
 fn gcc_json_point_file(point: &Value) -> Option<String> {
@@ -1069,9 +1095,9 @@ fn context_frame_from_node(node: &DiagnosticNode) -> diag_core::ContextFrame {
     let location = node.primary_location();
     diag_core::ContextFrame {
         label: node.message.raw_text.trim().to_string(),
-        path: location.map(|location| location.path.clone()),
-        line: location.map(|location| location.line),
-        column: location.map(|location| location.column),
+        path: location.map(|location| location.path_raw().to_string()),
+        line: location.map(|location| location.line()),
+        column: location.map(|location| location.column()),
     }
 }
 
@@ -1473,17 +1499,27 @@ fn passthrough_node(stderr_text: &str) -> DiagnosticNode {
         },
         analysis: Some(AnalysisOverlay {
             family: Some("passthrough".to_string()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
             headline: Some("showing conservative wrapper view".to_string()),
             first_action_hint: Some(
                 "inspect the preserved raw diagnostics and rerun with --formed-debug-refs=capture_ref if needed"
                     .to_string(),
             ),
-            confidence: Some(Confidence::Low),
+            confidence: Some(Confidence::Low.score()),
+            preferred_primary_location_id: None,
             rule_id: Some("rule.family_seed.passthrough".to_string()),
             matched_conditions: vec!["semantic_role=passthrough".to_string()],
             suppression_reason: Some("generic_fallback".to_string()),
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
         }),
         fingerprints: None,
     }
@@ -1568,7 +1604,10 @@ mod tests {
         .unwrap();
         let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
         assert_eq!(document.diagnostics.len(), 1);
-        assert_eq!(document.diagnostics[0].locations[0].path, "src/main.c");
+        assert_eq!(
+            document.diagnostics[0].locations[0].path_raw(),
+            "src/main.c"
+        );
     }
 
     #[test]
@@ -1593,8 +1632,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(document.diagnostics.len(), 1);
-        assert_eq!(document.diagnostics[0].locations[0].path, "src/main.c");
-        assert_eq!(document.diagnostics[0].locations[0].end_column, Some(4));
+        assert_eq!(
+            document.diagnostics[0].locations[0].path_raw(),
+            "src/main.c"
+        );
+        assert_eq!(document.diagnostics[0].locations[0].end_column(), Some(4));
         assert_eq!(
             document.diagnostics[0].provenance.capture_refs,
             vec!["diagnostics.json".to_string()]

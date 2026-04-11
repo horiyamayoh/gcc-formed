@@ -63,11 +63,11 @@ impl<'a> RuleInput<'a> {
             child_messages,
             primary_ownership: node
                 .primary_location()
-                .and_then(|location| location.ownership.as_ref()),
+                .and_then(|location| location.ownership()),
             has_user_owned_location: node
                 .locations
                 .iter()
-                .any(|location| location.ownership == Some(Ownership::User)),
+                .any(|location| location.ownership() == Some(&Ownership::User)),
             has_template_context: node
                 .context_chains
                 .iter()

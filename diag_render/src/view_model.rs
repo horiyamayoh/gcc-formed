@@ -82,7 +82,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let confidence = node
         .analysis
         .as_ref()
-        .and_then(|analysis| analysis.confidence.as_ref());
+        .and_then(|analysis| analysis.confidence_bucket());
     let confidence_label = confidence_label(confidence).to_string();
     let title = select_title(node, confidence);
     let first_action = select_first_action(node, confidence);
@@ -92,16 +92,16 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         .and_then(|analysis| analysis.family.clone());
     let canonical_location = node.primary_location().map(|location| {
         let path = if matches!(request.profile, RenderProfile::Ci) {
-            location.path.clone()
+            location.path_raw().to_string()
         } else if let Some(cwd) = request.cwd.as_ref() {
-            std::path::Path::new(&location.path)
+            std::path::Path::new(location.path_raw())
                 .strip_prefix(cwd)
                 .map(|path| path.display().to_string())
-                .unwrap_or_else(|_| location.path.clone())
+                .unwrap_or_else(|_| location.path_raw().to_string())
         } else {
-            location.path.clone()
+            location.path_raw().to_string()
         };
-        format!("{path}:{}:{}", location.line, location.column)
+        format!("{path}:{}:{}", location.line(), location.column())
     });
     let excerpts = load_excerpt(request, node);
     let supporting_evidence = summarize_supporting_evidence(request, node);
@@ -168,7 +168,7 @@ fn severity_label(severity: &Severity) -> &'static str {
     }
 }
 
-fn select_title(node: &DiagnosticNode, confidence: Option<&Confidence>) -> String {
+fn select_title(node: &DiagnosticNode, confidence: Option<Confidence>) -> String {
     match confidence {
         Some(Confidence::High) | Some(Confidence::Medium) => node
             .analysis
@@ -179,7 +179,7 @@ fn select_title(node: &DiagnosticNode, confidence: Option<&Confidence>) -> Strin
     }
 }
 
-fn select_first_action(node: &DiagnosticNode, confidence: Option<&Confidence>) -> Option<String> {
+fn select_first_action(node: &DiagnosticNode, confidence: Option<Confidence>) -> Option<String> {
     match confidence {
         Some(Confidence::High) | Some(Confidence::Medium) => node
             .analysis
@@ -189,7 +189,7 @@ fn select_first_action(node: &DiagnosticNode, confidence: Option<&Confidence>) -
     }
 }
 
-fn confidence_label(confidence: Option<&Confidence>) -> &'static str {
+fn confidence_label(confidence: Option<Confidence>) -> &'static str {
     match confidence {
         Some(Confidence::High) => "certain",
         Some(Confidence::Medium) => "likely",

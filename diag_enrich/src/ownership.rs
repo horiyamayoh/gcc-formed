@@ -1,4 +1,4 @@
-use diag_core::Ownership;
+use diag_core::{Ownership, OwnershipInfo};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -26,20 +26,20 @@ const OWNERSHIP_RULES: &[OwnershipRule] = &[
     },
 ];
 
-pub(crate) fn classify_ownership(path: &str, cwd: &Path) -> Ownership {
+pub(crate) fn classify_ownership(path: &str, cwd: &Path) -> OwnershipInfo {
     let path = PathBuf::from(path);
     let rendered = path.display().to_string();
 
     if rendered.is_empty() {
-        return Ownership::Unknown;
+        return OwnershipInfo::new(Ownership::Unknown, ownership_reason(Ownership::Unknown));
     }
     if let Some(ownership) = matching_rule(&rendered) {
-        return ownership;
+        return OwnershipInfo::new(ownership, ownership_reason(ownership));
     }
     if path.is_relative() || path.starts_with(cwd) {
-        return Ownership::User;
+        return OwnershipInfo::new(Ownership::User, ownership_reason(Ownership::User));
     }
-    Ownership::Unknown
+    OwnershipInfo::new(Ownership::Unknown, ownership_reason(Ownership::Unknown))
 }
 
 fn matching_rule(rendered: &str) -> Option<Ownership> {
@@ -52,11 +52,22 @@ fn matching_rule(rendered: &str) -> Option<Ownership> {
         if contains_any(&normalized, rule.path_contains_any)
             || ends_with_any(&normalized, rule.path_suffixes)
         {
-            Some(rule.ownership.clone())
+            Some(rule.ownership)
         } else {
             None
         }
     })
+}
+
+fn ownership_reason(ownership: Ownership) -> &'static str {
+    match ownership {
+        Ownership::User => "user_workspace",
+        Ownership::Vendor => "vendor_path",
+        Ownership::System => "system_path",
+        Ownership::Generated => "generated_path",
+        Ownership::Tool => "tool_generated",
+        Ownership::Unknown => "unknown",
+    }
 }
 
 fn contains_any(haystack: &str, needles: &[&str]) -> bool {
