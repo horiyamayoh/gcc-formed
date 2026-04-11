@@ -1,5 +1,6 @@
 error: showing a conservative wrapper view; original compiler diagnostics are preserved
 note: fallback reason = user_opt_out
 raw:
-  collect2: error: ld returned 1 exit status
+  /usr/bin/ld: /tmp/ccHogsJa.o: in function `main':
   main.c:(.text+0x5): undefined reference to `missing_symbol'
+  collect2: error: ld returned 1 exit status

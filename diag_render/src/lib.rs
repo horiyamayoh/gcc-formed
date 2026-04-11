@@ -375,6 +375,92 @@ mod tests {
     }
 
     #[test]
+    fn raw_fallback_prefers_preserved_stderr_capture() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::RawFallback;
+        request.document.captures[0].inline_text = Some(
+            "In file included from src/wrapper.h:1:\nsrc/main.c:2:13: error: original compiler order\nsrc/main.c:2:13: note: prefixed context".to_string(),
+        );
+        request.document.captures[0].size_bytes = Some(122);
+        request.document.diagnostics[0].message.raw_text =
+            "reconstructed diagnostic text should stay hidden".to_string();
+
+        let output = render(request).unwrap();
+        let header_index = output
+            .text
+            .find("  In file included from src/wrapper.h:1:")
+            .unwrap();
+        let error_index = output
+            .text
+            .find("  src/main.c:2:13: error: original compiler order")
+            .unwrap();
+        let note_index = output
+            .text
+            .find("  src/main.c:2:13: note: prefixed context")
+            .unwrap();
+
+        assert!(output.used_fallback);
+        assert!(header_index < error_index);
+        assert!(error_index < note_index);
+        assert!(
+            !output
+                .text
+                .contains("reconstructed diagnostic text should stay hidden")
+        );
+        assert!(!output.text.contains(
+            "raw stderr capture is unavailable; showing reconstructed diagnostic messages"
+        ));
+    }
+
+    #[test]
+    fn raw_fallback_marks_reconstructed_output_when_stderr_capture_missing() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::RawFallback;
+        request.document.captures.clear();
+        request.document.diagnostics[0].message.raw_text =
+            "first reconstructed line\nsecond reconstructed line".to_string();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "third reconstructed line".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: Vec::new(),
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let output = render(request).unwrap();
+        let first_index = output.text.find("  first reconstructed line").unwrap();
+        let second_index = output.text.find("  second reconstructed line").unwrap();
+        let third_index = output.text.find("  third reconstructed line").unwrap();
+
+        assert!(output.used_fallback);
+        assert!(output.text.contains(
+            "note: raw stderr capture is unavailable; showing reconstructed diagnostic messages"
+        ));
+        assert!(first_index < second_index);
+        assert!(second_index < third_index);
+    }
+
+    #[test]
     fn passthrough_document_sets_residual_only_reason() {
         let mut request = sample_request();
         request.document.document_completeness = DocumentCompleteness::Passthrough;
@@ -1304,8 +1390,8 @@ mod tests {
     fn fallback_render_escapes_terminal_control_sequences() {
         let mut request = sample_request();
         request.profile = RenderProfile::RawFallback;
-        request.document.diagnostics[0].message.raw_text =
-            "\u{001b}[31mraw compiler stderr".to_string();
+        request.document.captures[0].inline_text =
+            Some("\u{001b}[31mraw compiler stderr".to_string());
 
         let output = render(request).unwrap();
 
