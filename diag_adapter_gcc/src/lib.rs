@@ -15,12 +15,24 @@ mod ingest;
 mod sarif;
 mod stderr;
 
+use serde_json::Value;
+
 pub use fallback::{producer_for_version, tool_for_backend};
 pub use ingest::{
     AdapterError, IngestOutcome, IngestPolicy, IngestReport, ingest, ingest_bundle,
     ingest_with_reason,
 };
 pub use sarif::from_sarif;
+
+/// Returns the string value at `key`, or `""` if absent or not a string.
+pub(crate) fn json_str<'a>(v: &'a Value, key: &str) -> &'a str {
+    v.get(key).and_then(Value::as_str).unwrap_or("")
+}
+
+/// Returns the `u64` value at `key`, if present and numeric.
+pub(crate) fn json_u64(v: &Value, key: &str) -> Option<u64> {
+    v.get(key).and_then(Value::as_u64)
+}
 
 #[cfg(test)]
 mod tests {

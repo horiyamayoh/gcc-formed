@@ -1,6 +1,7 @@
 use crate::args::{
     parse_debug_refs, parse_mode, parse_processing_path, parse_profile, parse_retention_policy,
 };
+use crate::error::CliError;
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_render::{DebugRefs, PathPolicy, RenderProfile};
@@ -55,17 +56,22 @@ pub(crate) struct TraceSection {
 }
 
 impl ConfigFile {
-    pub(crate) fn load(paths: &WrapperPaths) -> Result<Self, Box<dyn std::error::Error>> {
+    pub(crate) fn load(paths: &WrapperPaths) -> Result<Self, CliError> {
         let mut merged = ConfigFile::default();
         if let Some(admin) = admin_config_path()
             && admin.exists()
         {
-            merged = merge_config(merged, toml::from_str(&fs::read_to_string(admin)?)?);
+            merged = merge_config(
+                merged,
+                toml::from_str(&fs::read_to_string(admin)?)
+                    .map_err(|e| CliError::Config(e.to_string()))?,
+            );
         }
         if paths.config_path.exists() {
             merged = merge_config(
                 merged,
-                toml::from_str(&fs::read_to_string(&paths.config_path)?)?,
+                toml::from_str(&fs::read_to_string(&paths.config_path)?)
+                    .map_err(|e| CliError::Config(e.to_string()))?,
             );
         }
         Ok(merged)

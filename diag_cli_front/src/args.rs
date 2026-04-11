@@ -1,3 +1,4 @@
+use crate::error::CliError;
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_render::{DebugRefs, RenderProfile};
@@ -18,7 +19,7 @@ pub(crate) struct ParsedArgs {
 }
 
 impl ParsedArgs {
-    pub(crate) fn parse(args: Vec<OsString>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub(crate) fn parse(args: Vec<OsString>) -> Result<Self, CliError> {
         let mut parsed = ParsedArgs::default();
         for arg in args.into_iter().skip(1) {
             let value = arg.to_string_lossy();
@@ -61,28 +62,28 @@ pub(crate) enum WrapperIntrospection {
     DumpBuildManifest,
 }
 
-pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, Box<dyn std::error::Error>> {
+pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, CliError> {
     match value {
         "render" => Ok(ExecutionMode::Render),
         "shadow" => Ok(ExecutionMode::Shadow),
         "passthrough" => Ok(ExecutionMode::Passthrough),
-        _ => Err(format!("unsupported mode: {value}").into()),
+        _ => Err(CliError::Config(format!("unsupported mode: {value}"))),
     }
 }
 
 pub(crate) fn parse_processing_path(
     value: &str,
-) -> Result<ProcessingPath, Box<dyn std::error::Error>> {
+) -> Result<ProcessingPath, CliError> {
     match value {
         "dual_sink_structured" => Ok(ProcessingPath::DualSinkStructured),
         "single_sink_structured" => Ok(ProcessingPath::SingleSinkStructured),
         "native_text_capture" => Ok(ProcessingPath::NativeTextCapture),
         "passthrough" => Ok(ProcessingPath::Passthrough),
-        _ => Err(format!("unsupported processing path: {value}").into()),
+        _ => Err(CliError::Config(format!("unsupported processing path: {value}"))),
     }
 }
 
-pub(crate) fn parse_profile(value: &str) -> Result<RenderProfile, Box<dyn std::error::Error>> {
+pub(crate) fn parse_profile(value: &str) -> Result<RenderProfile, CliError> {
     match value {
         "default" => Ok(RenderProfile::Default),
         "concise" => Ok(RenderProfile::Concise),
@@ -90,28 +91,28 @@ pub(crate) fn parse_profile(value: &str) -> Result<RenderProfile, Box<dyn std::e
         "debug" => Ok(RenderProfile::Debug),
         "ci" => Ok(RenderProfile::Ci),
         "raw_fallback" => Ok(RenderProfile::RawFallback),
-        _ => Err(format!("unsupported profile: {value}").into()),
+        _ => Err(CliError::Config(format!("unsupported profile: {value}"))),
     }
 }
 
 pub(crate) fn parse_retention_policy(
     value: &str,
-) -> Result<RetentionPolicy, Box<dyn std::error::Error>> {
+) -> Result<RetentionPolicy, CliError> {
     match value {
         "never" => Ok(RetentionPolicy::Never),
         "on-wrapper-failure" => Ok(RetentionPolicy::OnWrapperFailure),
         "on-child-error" => Ok(RetentionPolicy::OnChildError),
         "always" => Ok(RetentionPolicy::Always),
-        _ => Err(format!("unsupported trace policy: {value}").into()),
+        _ => Err(CliError::Config(format!("unsupported trace policy: {value}"))),
     }
 }
 
-pub(crate) fn parse_debug_refs(value: &str) -> Result<DebugRefs, Box<dyn std::error::Error>> {
+pub(crate) fn parse_debug_refs(value: &str) -> Result<DebugRefs, CliError> {
     match value {
         "none" => Ok(DebugRefs::None),
         "trace_id" => Ok(DebugRefs::TraceId),
         "capture_ref" => Ok(DebugRefs::CaptureRef),
-        _ => Err(format!("unsupported debug ref mode: {value}").into()),
+        _ => Err(CliError::Config(format!("unsupported debug ref mode: {value}"))),
     }
 }
 

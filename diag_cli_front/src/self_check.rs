@@ -1,4 +1,5 @@
 use crate::args::WrapperIntrospection;
+use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
     fallback_reason_label, select_mode_for_seam, select_processing_path_for_seam,
@@ -19,7 +20,7 @@ use std::path::{Path, PathBuf};
 pub(crate) fn handle_wrapper_introspection(
     command: WrapperIntrospection,
     paths: &WrapperPaths,
-) -> Result<i32, Box<dyn std::error::Error>> {
+) -> Result<i32, CliError> {
     match command {
         WrapperIntrospection::Version => {
             println!("{}", env!("CARGO_PKG_VERSION"));
@@ -63,21 +64,23 @@ pub(crate) fn handle_wrapper_introspection(
     Ok(0)
 }
 
-fn build_manifest() -> Result<BuildManifest, Box<dyn std::error::Error>> {
+fn build_manifest() -> Result<BuildManifest, CliError> {
     let workspace_root = workspace_root();
     let lockfile_hash = hash_file(&workspace_root.join("Cargo.lock"))?;
     let vendor_hash = hash_vendor(&workspace_root.join("vendor"))?;
     Ok(default_build_manifest(lockfile_hash, vendor_hash))
 }
 
-fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
     let manifest = build_manifest()?;
     let mut cache = ProbeCache::default();
-    let backend = cache.get_or_probe(ResolveRequest {
-        explicit_backend: None,
-        env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
-        invoked_as: "gcc-formed".to_string(),
-    })?;
+    let backend = cache
+        .get_or_probe(ResolveRequest {
+            explicit_backend: None,
+            env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
+            invoked_as: "gcc-formed".to_string(),
+        })
+        .map_err(|e| CliError::Backend(e.to_string()))?;
 
     paths.ensure_dirs()?;
     let state_access = probe_write_access(&paths.state_root);
@@ -222,12 +225,12 @@ fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-fn hash_file(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
+fn hash_file(path: &Path) -> Result<String, CliError> {
     let contents = fs::read_to_string(path).unwrap_or_default();
     Ok(diag_core::fingerprint_for(&contents))
 }
 
-fn hash_vendor(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
+fn hash_vendor(path: &Path) -> Result<String, CliError> {
     if !path.exists() {
         return Ok("vendor-missing".to_string());
     }
@@ -236,7 +239,7 @@ fn hash_vendor(path: &Path) -> Result<String, Box<dyn std::error::Error>> {
     Ok(diag_core::fingerprint_for(&entries))
 }
 
-fn collect_paths(path: &Path, entries: &mut Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+fn collect_paths(path: &Path, entries: &mut Vec<String>) -> Result<(), CliError> {
     for entry in fs::read_dir(path)? {
         let entry = entry?;
         let child = entry.path();

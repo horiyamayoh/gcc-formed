@@ -3,6 +3,7 @@
 mod args;
 mod backend;
 mod config;
+mod error;
 mod execute;
 mod mode;
 mod render;

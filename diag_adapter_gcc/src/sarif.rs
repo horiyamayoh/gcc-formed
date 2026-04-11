@@ -5,6 +5,7 @@ use crate::classify::{
     infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
 };
 use crate::ingest::AdapterError;
+use crate::{json_str, json_u64};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
@@ -44,11 +45,12 @@ fn from_sarif_payload(
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
     let root: Value = serde_json::from_str(json)?;
-    let version = root
-        .get("version")
-        .and_then(Value::as_str)
-        .unwrap_or("unknown")
-        .to_string();
+    let version_str = json_str(&root, "version");
+    let version = if version_str.is_empty() {
+        "unknown".to_string()
+    } else {
+        version_str.to_string()
+    };
     if !version.starts_with("2.1") {
         return Err(AdapterError::UnsupportedVersion(version));
     }
@@ -131,11 +133,11 @@ fn result_to_node(
     let related = related_messages(result);
     let family_seed = combined_message_seed(&raw_text, &related);
     let family_decision = classify_family_seed(&family_seed);
-    let severity = match result.get("level").and_then(Value::as_str) {
-        Some("error") => Severity::Error,
-        Some("warning") => Severity::Warning,
-        Some("note") => Severity::Note,
-        Some("none") => Severity::Info,
+    let severity = match json_str(result, "level") {
+        "error" => Severity::Error,
+        "warning" => Severity::Warning,
+        "note" => Severity::Note,
+        "none" => Severity::Info,
         _ => Severity::Error,
     };
     let locations = parse_locations(result);
@@ -221,11 +223,8 @@ fn parse_locations(result: &Value) -> Vec<Location> {
         if path.is_empty() {
             continue;
         }
-        let start_line = region.get("startLine").and_then(Value::as_u64).unwrap_or(1) as u32;
-        let start_column = region
-            .get("startColumn")
-            .and_then(Value::as_u64)
-            .unwrap_or(1) as u32;
+        let start_line = json_u64(&region, "startLine").unwrap_or(1) as u32;
+        let start_column = json_u64(&region, "startColumn").unwrap_or(1) as u32;
         let mut parsed = Location::caret(
             path,
             start_line,
@@ -233,14 +232,8 @@ fn parse_locations(result: &Value) -> Vec<Location> {
             diag_core::LocationRole::Primary,
         );
         if let (Some(end_line), Some(end_column)) = (
-            region
-                .get("endLine")
-                .and_then(Value::as_u64)
-                .map(|value| value as u32),
-            region
-                .get("endColumn")
-                .and_then(Value::as_u64)
-                .map(|value| value as u32),
+            json_u64(&region, "endLine").map(|value| value as u32),
+            json_u64(&region, "endColumn").map(|value| value as u32),
         ) {
             parsed =
                 parsed.with_range_end(end_line, end_column, diag_core::BoundarySemantics::Unknown);
@@ -381,14 +374,8 @@ fn context_frame_from_related_location(message: &str, location: &Value) -> diag_
             .and_then(|artifact| artifact.get("uri"))
             .and_then(Value::as_str)
             .map(ToString::to_string),
-        line: region
-            .get("startLine")
-            .and_then(Value::as_u64)
-            .map(|value| value as u32),
-        column: region
-            .get("startColumn")
-            .and_then(Value::as_u64)
-            .map(|value| value as u32),
+        line: json_u64(&region, "startLine").map(|value| value as u32),
+        column: json_u64(&region, "startColumn").map(|value| value as u32),
     }
 }
 

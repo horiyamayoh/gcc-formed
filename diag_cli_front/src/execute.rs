@@ -1,6 +1,7 @@
 use crate::args::ParsedArgs;
 use crate::backend::build_execution_plan;
 use crate::config::ConfigFile;
+use crate::error::CliError;
 use crate::mode::is_compiler_introspection;
 use crate::render::{
     CommonTraceContext, IngestTraceMetadata, PassthroughTraceWriteRequest, TraceWriteRequest,
@@ -34,7 +35,7 @@ pub(crate) fn entrypoint() -> ExitCode {
     }
 }
 
-fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
+fn real_main() -> Result<i32, CliError> {
     let wrapper_started = Instant::now();
     let argv0 = env::args()
         .next()
@@ -169,7 +170,7 @@ fn passthrough_inherit(
     backend: &Path,
     forwarded_args: &[OsString],
     cwd: &Path,
-) -> Result<i32, Box<dyn std::error::Error>> {
+) -> Result<i32, CliError> {
     let status = Command::new(backend)
         .current_dir(cwd)
         .args(forwarded_args)

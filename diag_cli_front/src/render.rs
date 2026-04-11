@@ -1,5 +1,6 @@
 use crate::args::{ParsedArgs, os_to_string};
 use crate::backend::backend_binary_name;
+use crate::error::CliError;
 use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
 use diag_capture_runtime::{CaptureOutcome, ExecutionMode, ExitStatusInfo};
@@ -77,7 +78,7 @@ pub(crate) struct PassthroughTraceWriteRequest<'a> {
 
 pub(crate) fn maybe_write_trace(
     request: TraceWriteRequest<'_>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), CliError> {
     let retained_trace_dir = request.common.capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
@@ -144,7 +145,7 @@ pub(crate) fn maybe_write_trace(
 
 pub(crate) fn maybe_write_passthrough_trace(
     request: PassthroughTraceWriteRequest<'_>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), CliError> {
     let retained_trace_dir = request.common.capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
@@ -418,7 +419,7 @@ fn document_completeness_label(completeness: &DocumentCompleteness) -> String {
 fn write_retained_normalized_ir(
     retained_trace_dir: &Path,
     document: &DiagnosticDocument,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), CliError> {
     let path = retained_trace_dir.join("ir.analysis.json");
     let payload = snapshot_json(document, SnapshotKind::AnalysisIncluded)?;
     fs::write(&path, payload)?;

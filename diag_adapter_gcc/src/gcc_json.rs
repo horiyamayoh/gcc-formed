@@ -6,6 +6,7 @@ use crate::classify::{
 };
 use crate::ingest::AdapterError;
 use crate::sarif::{push_chain_frame, read_structured_artifact_text};
+use crate::{json_str, json_u64};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
@@ -101,7 +102,7 @@ fn gcc_json_diagnostic_to_node(
     } else {
         NodeCompleteness::Complete
     };
-    let severity = gcc_json_severity(diagnostic.get("kind").and_then(Value::as_str));
+    let severity = gcc_json_severity(json_str(diagnostic, "kind"));
     let semantic_role = if is_root {
         SemanticRole::Root
     } else {
@@ -202,25 +203,18 @@ fn gcc_json_location(location: &Value) -> Option<Location> {
 }
 
 fn gcc_json_point_file(point: &Value) -> Option<String> {
-    point
-        .get("file")
-        .and_then(Value::as_str)
-        .map(ToString::to_string)
+    let file = json_str(point, "file");
+    if file.is_empty() { None } else { Some(file.to_string()) }
 }
 
 fn gcc_json_point_line(point: &Value) -> Option<u32> {
-    point
-        .get("line")
-        .and_then(Value::as_u64)
-        .map(|value| value as u32)
+    json_u64(point, "line").map(|value| value as u32)
 }
 
 fn gcc_json_point_column(point: &Value) -> Option<u32> {
-    point
-        .get("column")
-        .and_then(Value::as_u64)
-        .or_else(|| point.get("display-column").and_then(Value::as_u64))
-        .or_else(|| point.get("byte-column").and_then(Value::as_u64))
+    json_u64(point, "column")
+        .or_else(|| json_u64(point, "display-column"))
+        .or_else(|| json_u64(point, "byte-column"))
         .map(|value| value as u32)
 }
 
@@ -332,14 +326,13 @@ fn context_frame_from_node(node: &DiagnosticNode) -> diag_core::ContextFrame {
     }
 }
 
-fn gcc_json_severity(kind: Option<&str>) -> Severity {
-    match kind.unwrap_or("error") {
+fn gcc_json_severity(kind: &str) -> Severity {
+    match kind {
         "fatal error" | "fatal" => Severity::Fatal,
         "warning" => Severity::Warning,
         "note" => Severity::Note,
         "remark" => Severity::Remark,
         "info" => Severity::Info,
-        "error" => Severity::Error,
         _ => Severity::Error,
     }
 }

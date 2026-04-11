@@ -1,5 +1,6 @@
 use crate::args::ParsedArgs;
 use crate::config::ConfigFile;
+use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, ModeDecision, compatibility_scope_notice_for_path, detect_capabilities,
     detect_profile_from_capabilities, has_hard_conflict, select_mode_for_seam,
@@ -105,12 +106,14 @@ pub(crate) fn build_execution_plan(
     parsed: &ParsedArgs,
     config: &ConfigFile,
     cache: &mut ProbeCache,
-) -> Result<ExecutionPlan, Box<dyn std::error::Error>> {
-    let backend = cache.get_or_probe(ResolveRequest {
-        explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
-        env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
-        invoked_as: argv0.to_string(),
-    })?;
+) -> Result<ExecutionPlan, CliError> {
+    let backend = cache
+        .get_or_probe(ResolveRequest {
+            explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
+            env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
+            invoked_as: argv0.to_string(),
+        })
+        .map_err(|e| CliError::Backend(e.to_string()))?;
     let capabilities = detect_capabilities();
     let explicit_mode = parsed.mode.or(config.runtime.mode);
     let requested_processing_path = parsed.processing_path.or(config.runtime.processing_path);
