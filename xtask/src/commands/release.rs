@@ -546,14 +546,14 @@ pub(crate) fn run_install_release_at(
     let selector = release_selector(options.channel.as_deref(), options.version.as_deref())?;
     let (requested_channel, release) =
         resolve_published_release(&repository_root, &options.target_triple, selector)?;
-    if let Some(expected_sha) = options.expected_primary_sha256.as_deref() {
-        if release.primary_archive_sha256 != expected_sha {
-            return Err(format!(
-                "release checksum mismatch: expected {expected_sha}, got {}",
-                release.primary_archive_sha256
-            )
-            .into());
-        }
+    if let Some(expected_sha) = options.expected_primary_sha256.as_deref()
+        && release.primary_archive_sha256 != expected_sha
+    {
+        return Err(format!(
+            "release checksum mismatch: expected {expected_sha}, got {}",
+            release.primary_archive_sha256
+        )
+        .into());
     }
     let install = run_install_at(
         base_dir,
@@ -1466,14 +1466,14 @@ pub(crate) fn verify_detached_signature(
         )
         .into());
     }
-    if let Some(expected_key_id) = expected_key_id {
-        if envelope.key_id != expected_key_id {
-            return Err(format!(
-                "detached signature key mismatch: expected {expected_key_id}, got {}",
-                envelope.key_id
-            )
-            .into());
-        }
+    if let Some(expected_key_id) = expected_key_id
+        && envelope.key_id != expected_key_id
+    {
+        return Err(format!(
+            "detached signature key mismatch: expected {expected_key_id}, got {}",
+            envelope.key_id
+        )
+        .into());
     }
     let public_key_bytes = decode_hex(&envelope.public_key_hex, "public key")?;
     let public_key_bytes: [u8; 32] = public_key_bytes
@@ -1489,13 +1489,13 @@ pub(crate) fn verify_detached_signature(
         .into());
     }
     let public_key_sha256 = signing_public_key_sha256(&verifying_key);
-    if let Some(expected_public_key_sha256) = expected_public_key_sha256 {
-        if public_key_sha256 != expected_public_key_sha256 {
-            return Err(format!(
-                "detached signature public key mismatch: expected {expected_public_key_sha256}, got {public_key_sha256}"
-            )
-            .into());
-        }
+    if let Some(expected_public_key_sha256) = expected_public_key_sha256
+        && public_key_sha256 != expected_public_key_sha256
+    {
+        return Err(format!(
+            "detached signature public key mismatch: expected {expected_public_key_sha256}, got {public_key_sha256}"
+        )
+        .into());
     }
     let signed_bytes = fs::read(signed_path)?;
     let signed_sha256 = sha256_bytes(&signed_bytes);
@@ -1534,7 +1534,7 @@ pub(crate) fn signing_public_key_sha256(verifying_key: &VerifyingKey) -> String 
 
 pub(crate) fn decode_hex(value: &str, label: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let normalized = value.trim();
-    if normalized.len() % 2 != 0 {
+    if !normalized.len().is_multiple_of(2) {
         return Err(format!("{label} hex must contain an even number of characters").into());
     }
     let mut bytes = Vec::with_capacity(normalized.len() / 2);

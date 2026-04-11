@@ -1053,6 +1053,7 @@ fn compatibility_metrics_from_rollout(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_rc_gate_checks(
     replay: &ReplayReport,
     bench: &BenchSmokeReport,
@@ -1463,14 +1464,11 @@ fn build_rc_gate_summary(report: &RcGateReport) -> String {
             lines.push(format!("  - `{}` {}", blocker.id, blocker.summary));
         }
     }
-    lines.extend(
-        [
-            String::new(),
-            "| Check | Status | Summary |".to_string(),
-            "| --- | --- | --- |".to_string(),
-        ]
-        .into_iter(),
-    );
+    lines.extend([
+        String::new(),
+        "| Check | Status | Summary |".to_string(),
+        "| --- | --- | --- |".to_string(),
+    ]);
     for check in &report.checks {
         lines.push(format!(
             "| {} | `{:?}` | {} |",

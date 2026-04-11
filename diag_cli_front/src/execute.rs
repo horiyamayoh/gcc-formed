@@ -3,8 +3,9 @@ use crate::backend::build_execution_plan;
 use crate::config::ConfigFile;
 use crate::mode::is_compiler_introspection;
 use crate::render::{
-    IngestTraceMetadata, argv_for_trace, build_language_mode, build_primary_tool,
-    maybe_write_passthrough_trace, maybe_write_trace, wrapper_surface,
+    CommonTraceContext, IngestTraceMetadata, PassthroughTraceWriteRequest, TraceWriteRequest,
+    argv_for_trace, build_language_mode, build_primary_tool, maybe_write_passthrough_trace,
+    maybe_write_trace, wrapper_surface,
 };
 use crate::self_check::handle_wrapper_introspection;
 use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version};
@@ -64,18 +65,21 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let cwd = env::current_dir()?;
     let capture = run_capture(&plan.capture_request(&paths, &parsed, &cwd))?;
     let exit_code = exit_code_from_status(&capture.exit_status);
+    let trace_context = |total_duration_ms| CommonTraceContext {
+        paths: &paths,
+        capture: &capture,
+        parsed: &parsed,
+        backend: &plan.backend,
+        mode_decision: &plan.mode_decision,
+        profile: plan.profile,
+        capabilities: &plan.capabilities,
+        total_duration_ms,
+    };
 
     if matches!(plan.mode(), ExecutionMode::Passthrough) {
-        maybe_write_passthrough_trace(
-            &paths,
-            &capture,
-            &parsed,
-            &plan.backend,
-            &plan.mode_decision,
-            plan.profile,
-            &plan.capabilities,
-            wrapper_started.elapsed().as_millis() as u64,
-        )?;
+        maybe_write_passthrough_trace(PassthroughTraceWriteRequest {
+            common: trace_context(wrapper_started.elapsed().as_millis() as u64),
+        })?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -109,22 +113,16 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     enrich_document(&mut document, &cwd);
 
     if matches!(plan.mode(), ExecutionMode::Shadow) {
-        maybe_write_trace(
-            &paths,
-            &document,
-            &capture,
-            &parsed,
-            &plan.backend,
-            &plan.mode_decision,
-            plan.profile,
-            &plan.capabilities,
+        maybe_write_trace(TraceWriteRequest {
+            common: trace_context(wrapper_started.elapsed().as_millis() as u64),
+            document: &document,
             ingest_trace,
-            plan.mode_decision
+            fallback_reason: plan
+                .mode_decision
                 .fallback_reason
                 .or(ingest_trace.fallback_reason),
-            None,
-            wrapper_started.elapsed().as_millis() as u64,
-        )?;
+            render_duration_ms: None,
+        })?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -154,20 +152,13 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     stderr.write_all(render_result.text.as_bytes())?;
     stderr.write_all(b"\n")?;
 
-    maybe_write_trace(
-        &paths,
-        &document,
-        &capture,
-        &parsed,
-        &plan.backend,
-        &plan.mode_decision,
-        plan.profile,
-        &plan.capabilities,
+    maybe_write_trace(TraceWriteRequest {
+        common: trace_context(wrapper_started.elapsed().as_millis() as u64),
+        document: &document,
         ingest_trace,
-        effective_fallback_reason,
-        Some(render_duration_ms),
-        wrapper_started.elapsed().as_millis() as u64,
-    )?;
+        fallback_reason: effective_fallback_reason,
+        render_duration_ms: Some(render_duration_ms),
+    })?;
     cleanup_capture(&capture)?;
     Ok(exit_code)
 }

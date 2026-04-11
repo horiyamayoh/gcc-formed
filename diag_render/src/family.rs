@@ -454,10 +454,10 @@ fn format_frame(frame: &ContextFrame) -> String {
             (Some(line), None) => Some(format!("{path}:{line}")),
             (None, _) => Some(path.to_string()),
         };
-        if let Some(prefix) = prefix.as_deref() {
-            if let Some(stripped) = label.strip_prefix(prefix) {
-                label = stripped.trim_start_matches(':').trim().to_string();
-            }
+        if let Some(prefix) = prefix.as_deref()
+            && let Some(stripped) = label.strip_prefix(prefix)
+        {
+            label = stripped.trim_start_matches(':').trim().to_string();
         }
         if let Some(stripped) = label.strip_prefix("note: ") {
             label = stripped.trim().to_string();
@@ -649,7 +649,7 @@ fn conservative_limit(policy: &RendererFamilyPolicy, profile: RenderProfile) -> 
 }
 
 fn push_index(indices: &mut Vec<usize>, index: usize) {
-    if !indices.iter().any(|existing| *existing == index) {
+    if !indices.contains(&index) {
         indices.push(index);
     }
 }

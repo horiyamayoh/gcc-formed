@@ -420,29 +420,29 @@ fn run_sarif_ingest_case(
     let mut document = report.document;
     document.captures = bundle.capture_artifacts();
 
-    if let Some(expected) = expect_fallback_reason {
-        if fallback_reason != Some(expected) {
-            return Err(format!(
-                "expected fallback_reason={expected}, got {:?}",
-                fallback_reason
-            ));
-        }
+    if let Some(expected) = expect_fallback_reason
+        && fallback_reason != Some(expected)
+    {
+        return Err(format!(
+            "expected fallback_reason={expected}, got {:?}",
+            fallback_reason
+        ));
     }
-    if let Some(expected) = expect_document_completeness {
-        if document.document_completeness != expected {
-            return Err(format!(
-                "expected completeness {:?}, got {:?}",
-                expected, document.document_completeness
-            ));
-        }
+    if let Some(expected) = expect_document_completeness
+        && document.document_completeness != expected
+    {
+        return Err(format!(
+            "expected completeness {:?}, got {:?}",
+            expected, document.document_completeness
+        ));
     }
-    if let Some(minimum) = expect_min_diagnostic_count {
-        if document.diagnostics.len() < minimum {
-            return Err(format!(
-                "expected at least {minimum} diagnostics, got {}",
-                document.diagnostics.len()
-            ));
-        }
+    if let Some(minimum) = expect_min_diagnostic_count
+        && document.diagnostics.len() < minimum
+    {
+        return Err(format!(
+            "expected at least {minimum} diagnostics, got {}",
+            document.diagnostics.len()
+        ));
     }
     document.validate().map_err(validation_summary)?;
 
@@ -594,6 +594,7 @@ fn run_trace_synthetic_case(
     Ok(format!("trace_bytes={}", payload.len()))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_capture_runtime_case(
     case: &FuzzCaseFile,
     stderr_asset: &str,

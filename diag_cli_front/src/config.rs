@@ -57,10 +57,10 @@ pub(crate) struct TraceSection {
 impl ConfigFile {
     pub(crate) fn load(paths: &WrapperPaths) -> Result<Self, Box<dyn std::error::Error>> {
         let mut merged = ConfigFile::default();
-        if let Some(admin) = admin_config_path() {
-            if admin.exists() {
-                merged = merge_config(merged, toml::from_str(&fs::read_to_string(admin)?)?);
-            }
+        if let Some(admin) = admin_config_path()
+            && admin.exists()
+        {
+            merged = merge_config(merged, toml::from_str(&fs::read_to_string(admin)?)?);
         }
         if paths.config_path.exists() {
             merged = merge_config(

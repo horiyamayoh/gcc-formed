@@ -45,92 +45,104 @@ impl IngestTraceMetadata {
     }
 }
 
+pub(crate) struct CommonTraceContext<'a> {
+    pub(crate) paths: &'a WrapperPaths,
+    pub(crate) capture: &'a CaptureOutcome,
+    pub(crate) parsed: &'a ParsedArgs,
+    pub(crate) backend: &'a diag_backend_probe::ProbeResult,
+    pub(crate) mode_decision: &'a ModeDecision,
+    pub(crate) profile: RenderProfile,
+    pub(crate) capabilities: &'a RenderCapabilities,
+    pub(crate) total_duration_ms: u64,
+}
+
+pub(crate) struct TraceWriteRequest<'a> {
+    pub(crate) common: CommonTraceContext<'a>,
+    pub(crate) document: &'a DiagnosticDocument,
+    pub(crate) ingest_trace: IngestTraceMetadata,
+    pub(crate) fallback_reason: Option<FallbackReason>,
+    pub(crate) render_duration_ms: Option<u64>,
+}
+
+pub(crate) struct PassthroughTraceWriteRequest<'a> {
+    pub(crate) common: CommonTraceContext<'a>,
+}
+
 pub(crate) fn maybe_write_trace(
-    paths: &WrapperPaths,
-    document: &DiagnosticDocument,
-    capture: &CaptureOutcome,
-    parsed: &ParsedArgs,
-    backend: &diag_backend_probe::ProbeResult,
-    mode_decision: &ModeDecision,
-    profile: RenderProfile,
-    capabilities: &RenderCapabilities,
-    ingest_trace: IngestTraceMetadata,
-    fallback_reason: Option<FallbackReason>,
-    render_duration_ms: Option<u64>,
-    total_duration_ms: u64,
+    request: TraceWriteRequest<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let retained_trace_dir = capture.retained_trace_dir.as_ref();
+    let retained_trace_dir = request.common.capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
-            parsed.debug_refs,
+            request.common.parsed.debug_refs,
             Some(DebugRefs::TraceId | DebugRefs::CaptureRef)
         )
     {
         return Ok(());
     }
     if let Some(dir) = retained_trace_dir {
-        write_retained_normalized_ir(dir, document)?;
+        write_retained_normalized_ir(dir, request.document)?;
     }
-    let mut decision_log = mode_decision.decision_log.clone();
-    decision_log.extend(ingest_trace.decision_log_entries());
+    let mut decision_log = request.common.mode_decision.decision_log.clone();
+    decision_log.extend(request.ingest_trace.decision_log_entries());
     let trace = TraceEnvelope {
-        trace_id: document.run.invocation_id.clone(),
-        selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
-        selected_profile: format!("{profile:?}").to_lowercase(),
-        support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        trace_id: request.document.run.invocation_id.clone(),
+        selected_mode: format!("{:?}", request.common.mode_decision.mode).to_lowercase(),
+        selected_profile: format!("{:?}", request.common.profile).to_lowercase(),
+        support_tier: format!("{:?}", request.common.backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(
-            mode_decision.mode,
-            ingest_trace,
-            fallback_reason,
+            request.common.mode_decision.mode,
+            request.ingest_trace,
+            request.fallback_reason,
         )),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(backend, capture)),
-        capabilities: Some(trace_capabilities(capabilities)),
+        environment_summary: Some(trace_environment_summary(
+            request.common.backend,
+            request.common.capture,
+        )),
+        capabilities: Some(trace_capabilities(request.common.capabilities)),
         timing: Some(TraceTiming {
-            capture_ms: capture.capture_duration_ms,
-            render_ms: render_duration_ms,
-            total_ms: total_duration_ms,
+            capture_ms: request.common.capture.capture_duration_ms,
+            render_ms: request.render_duration_ms,
+            total_ms: request.common.total_duration_ms,
         }),
-        child_exit: Some(trace_child_exit(&capture.bundle.exit_status)),
-        parser_result_summary: Some(parsed_parser_result_summary(document, ingest_trace)),
-        fingerprint_summary: trace_fingerprint_summary_from_document(document),
+        child_exit: Some(trace_child_exit(&request.common.capture.bundle.exit_status)),
+        parser_result_summary: Some(parsed_parser_result_summary(
+            request.document,
+            request.ingest_trace,
+        )),
+        fingerprint_summary: trace_fingerprint_summary_from_document(request.document),
         redaction_status: Some(trace_redaction_status(
-            mode_decision.mode,
+            request.common.mode_decision.mode,
             retained_trace_dir.is_some(),
         )),
         decision_log,
-        fallback_reason,
-        warning_messages: document
+        fallback_reason: request.fallback_reason,
+        warning_messages: request
+            .document
             .integrity_issues
             .iter()
             .map(|issue| issue.message.clone())
             .collect(),
         artifacts: build_trace_artifact_refs(
-            document,
+            request.document,
             retained_trace_dir.map(|path| path.as_path()),
         ),
     };
     if let Some(dir) = retained_trace_dir {
         write_trace_at(&dir.join("trace.json"), &trace)?;
     }
-    write_trace(paths, &trace, "trace.json")?;
+    write_trace(request.common.paths, &trace, "trace.json")?;
     Ok(())
 }
 
 pub(crate) fn maybe_write_passthrough_trace(
-    paths: &WrapperPaths,
-    capture: &CaptureOutcome,
-    parsed: &ParsedArgs,
-    backend: &diag_backend_probe::ProbeResult,
-    mode_decision: &ModeDecision,
-    profile: RenderProfile,
-    capabilities: &RenderCapabilities,
-    total_duration_ms: u64,
+    request: PassthroughTraceWriteRequest<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let retained_trace_dir = capture.retained_trace_dir.as_ref();
+    let retained_trace_dir = request.common.capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(
-            parsed.debug_refs,
+            request.common.parsed.debug_refs,
             Some(DebugRefs::TraceId | DebugRefs::CaptureRef)
         )
     {
@@ -139,38 +151,45 @@ pub(crate) fn maybe_write_passthrough_trace(
 
     let trace = TraceEnvelope {
         trace_id: trace_id(),
-        selected_mode: format!("{:?}", mode_decision.mode).to_lowercase(),
-        selected_profile: format!("{profile:?}").to_lowercase(),
-        support_tier: format!("{:?}", backend.support_tier).to_lowercase(),
+        selected_mode: format!("{:?}", request.common.mode_decision.mode).to_lowercase(),
+        selected_profile: format!("{:?}", request.common.profile).to_lowercase(),
+        support_tier: format!("{:?}", request.common.backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(
-            mode_decision.mode,
+            request.common.mode_decision.mode,
             IngestTraceMetadata {
                 source_authority: SourceAuthority::None,
                 fallback_grade: FallbackGrade::None,
                 fallback_reason: None,
             },
-            mode_decision.fallback_reason,
+            request.common.mode_decision.fallback_reason,
         )),
         version_summary: Some(trace_version_summary()),
-        environment_summary: Some(trace_environment_summary(backend, capture)),
-        capabilities: Some(trace_capabilities(capabilities)),
+        environment_summary: Some(trace_environment_summary(
+            request.common.backend,
+            request.common.capture,
+        )),
+        capabilities: Some(trace_capabilities(request.common.capabilities)),
         timing: Some(TraceTiming {
-            capture_ms: capture.capture_duration_ms,
+            capture_ms: request.common.capture.capture_duration_ms,
             render_ms: None,
-            total_ms: total_duration_ms,
+            total_ms: request.common.total_duration_ms,
         }),
-        child_exit: Some(trace_child_exit(&capture.bundle.exit_status)),
-        parser_result_summary: Some(skipped_parser_result_summary(&capture.capture_artifacts())),
-        fingerprint_summary: Some(trace_fingerprint_summary_from_capture(capture)),
+        child_exit: Some(trace_child_exit(&request.common.capture.bundle.exit_status)),
+        parser_result_summary: Some(skipped_parser_result_summary(
+            &request.common.capture.capture_artifacts(),
+        )),
+        fingerprint_summary: Some(trace_fingerprint_summary_from_capture(
+            request.common.capture,
+        )),
         redaction_status: Some(trace_redaction_status(
-            mode_decision.mode,
+            request.common.mode_decision.mode,
             retained_trace_dir.is_some(),
         )),
-        decision_log: mode_decision.decision_log.clone(),
-        fallback_reason: mode_decision.fallback_reason,
+        decision_log: request.common.mode_decision.decision_log.clone(),
+        fallback_reason: request.common.mode_decision.fallback_reason,
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(
-            &capture.capture_artifacts(),
+            &request.common.capture.capture_artifacts(),
             retained_trace_dir.map(|path| path.as_path()),
         ),
     };
@@ -178,7 +197,7 @@ pub(crate) fn maybe_write_passthrough_trace(
     if let Some(dir) = retained_trace_dir {
         write_trace_at(&dir.join("trace.json"), &trace)?;
     }
-    write_trace(paths, &trace, "trace.json")?;
+    write_trace(request.common.paths, &trace, "trace.json")?;
     Ok(())
 }
 

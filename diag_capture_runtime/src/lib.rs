@@ -772,11 +772,7 @@ fn tool_info(backend: &ProbeResult) -> ToolInfo {
 }
 
 fn sanitize_sarif_path(path: &Path) -> String {
-    path.display()
-        .to_string()
-        .replace(',', "_")
-        .replace('=', "_")
-        .replace(' ', "_")
+    path.display().to_string().replace([',', '=', ' '], "_")
 }
 
 fn temp_dir_name(path: &Path) -> String {

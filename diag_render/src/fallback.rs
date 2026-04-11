@@ -19,16 +19,15 @@ pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason)
             raw_lines.push(line.to_string());
         }
     }
-    if raw_lines.is_empty() {
-        if let Some(stderr) = request
+    if raw_lines.is_empty()
+        && let Some(stderr) = request
             .document
             .captures
             .iter()
             .find(|capture| capture.id == "stderr.raw")
             .and_then(|capture| capture.inline_text.as_ref())
-        {
-            raw_lines.extend(stderr.lines().map(ToOwned::to_owned));
-        }
+    {
+        raw_lines.extend(stderr.lines().map(ToOwned::to_owned));
     }
     for line in raw_lines {
         lines.push(format!("  {}", sanitize_display_line(&line, false)));

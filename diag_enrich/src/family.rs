@@ -193,10 +193,10 @@ fn match_linker(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<St
         PhaseAnnotationWhen::RuleMatched,
     );
     push_context_conditions(&mut matched_conditions, input, rule);
-    if let Some(condition) = &rule.symbol_context_condition {
-        if input.has_symbol_context {
-            matched_conditions.push(condition.clone());
-        }
+    if let Some(condition) = &rule.symbol_context_condition
+        && input.has_symbol_context
+    {
+        matched_conditions.push(condition.clone());
     }
     matched_conditions.extend(message_conditions);
     Some(matched_conditions)
@@ -249,10 +249,10 @@ fn match_type_overload(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option
     }
 
     let mut matched_conditions = Vec::new();
-    if let Some(condition) = &rule.candidate_child_condition {
-        if input.has_candidate_child {
-            matched_conditions.push(condition.clone());
-        }
+    if let Some(condition) = &rule.candidate_child_condition
+        && input.has_candidate_child
+    {
+        matched_conditions.push(condition.clone());
     }
     if has_message_terms {
         push_phase_annotations(

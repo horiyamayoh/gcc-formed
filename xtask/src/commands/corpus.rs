@@ -608,10 +608,10 @@ pub(crate) fn collect_acceptance_fixture_summary(
                 }
             })?,
         );
-        if let Some(spec) = structured_artifact_spec_for_fixture(fixture) {
-            if let Ok(structured_text) = fs::read_to_string(snapshot_root.join(spec.file_name)) {
-                artifacts.insert(spec.file_name.to_string(), structured_text);
-            }
+        if let Some(spec) = structured_artifact_spec_for_fixture(fixture)
+            && let Ok(structured_text) = fs::read_to_string(snapshot_root.join(spec.file_name))
+        {
+            artifacts.insert(spec.file_name.to_string(), structured_text);
         }
         artifacts.insert(
             "ir.facts.json".to_string(),
@@ -824,26 +824,26 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
         )?;
     }
 
-    if let Some(perf) = fixture.expectations.performance.parse_time_ms_max {
-        if replay.parse_time_ms > perf {
-            return Err(VerificationFailure {
-                layer: "performance.parse".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: format!("parse time {}ms exceeded {}ms", replay.parse_time_ms, perf),
-            });
-        }
+    if let Some(perf) = fixture.expectations.performance.parse_time_ms_max
+        && replay.parse_time_ms > perf
+    {
+        return Err(VerificationFailure {
+            layer: "performance.parse".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("parse time {}ms exceeded {}ms", replay.parse_time_ms, perf),
+        });
     }
-    if let Some(perf) = fixture.expectations.performance.render_time_ms_max {
-        if default_render_time_ms > perf {
-            return Err(VerificationFailure {
-                layer: "performance.render".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: format!(
-                    "default render time {}ms exceeded {}ms",
-                    default_render_time_ms, perf
-                ),
-            });
-        }
+    if let Some(perf) = fixture.expectations.performance.render_time_ms_max
+        && default_render_time_ms > perf
+    {
+        return Err(VerificationFailure {
+            layer: "performance.render".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "default render time {}ms exceeded {}ms",
+                default_render_time_ms, perf
+            ),
+        });
     }
 
     Ok(())
@@ -2128,7 +2128,7 @@ pub(crate) fn native_parity_dimensions_for_fixture(
     let mut dimensions = Vec::new();
     for (_, expectations) in fixture.expectations.render.named_profiles() {
         for dimension in native_parity_dimensions_for_expectations(expectations) {
-            if !dimensions.iter().any(|existing| *existing == dimension) {
+            if !dimensions.contains(&dimension) {
                 dimensions.push(dimension);
             }
         }

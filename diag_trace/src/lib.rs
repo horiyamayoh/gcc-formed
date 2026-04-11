@@ -352,17 +352,17 @@ pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), Trace
 pub fn describe_target(target_triple: &str) -> TargetDescriptor {
     let segments = target_triple.split('-').collect::<Vec<_>>();
     let arch = segments.first().copied().unwrap_or("unknown").to_string();
-    let os = if segments.iter().any(|segment| *segment == "linux") {
+    let os = if segments.contains(&"linux") {
         "linux"
-    } else if segments.iter().any(|segment| *segment == "darwin") {
+    } else if segments.contains(&"darwin") {
         "macos"
-    } else if segments.iter().any(|segment| *segment == "windows") {
+    } else if segments.contains(&"windows") {
         "windows"
     } else {
         "unknown"
     }
     .to_string();
-    let libc_family = if segments.iter().any(|segment| *segment == "musl") {
+    let libc_family = if segments.contains(&"musl") {
         "musl"
     } else if segments
         .iter()

@@ -462,7 +462,7 @@ fn from_sarif_payload(
     producer: ProducerInfo,
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
-    let root: Value = serde_json::from_str(&json)?;
+    let root: Value = serde_json::from_str(json)?;
     let version = root
         .get("version")
         .and_then(Value::as_str)
@@ -1322,8 +1322,6 @@ fn infer_related_role(message: &str) -> SemanticRole {
     let lowered = message.to_lowercase();
     if lowered.contains("candidate:") || is_numbered_candidate_message(&lowered) {
         SemanticRole::Candidate
-    } else if lowered.contains("template") || lowered.contains("required from") {
-        SemanticRole::Supporting
     } else {
         SemanticRole::Supporting
     }

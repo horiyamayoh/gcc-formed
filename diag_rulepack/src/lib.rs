@@ -722,7 +722,7 @@ fn validate_enrich_rulepack(
         if !families.insert(rule.family.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate family rule in checked-in enrich rulepack: {}",
                     rule.family
                 ),
@@ -731,7 +731,7 @@ fn validate_enrich_rulepack(
         if !rule_ids.insert(rule.rule_id.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate rule id in checked-in enrich rulepack: {}",
                     rule.rule_id
                 ),
@@ -778,7 +778,7 @@ fn validate_enrich_rulepack(
         if !confidence_families.insert(family) {
             return Err(invalid_rulepack(
                 path,
-                &format!("duplicate confidence policy in checked-in enrich rulepack: {family}"),
+                format!("duplicate confidence policy in checked-in enrich rulepack: {family}"),
             ));
         }
         validate_confidence_policy(policy, path)?;
@@ -799,7 +799,7 @@ fn validate_enrich_rulepack(
         {
             return Err(invalid_rulepack(
                 path,
-                &format!("missing confidence policy in checked-in enrich rulepack: {family}"),
+                format!("missing confidence policy in checked-in enrich rulepack: {family}"),
             ));
         }
     }
@@ -838,7 +838,7 @@ fn validate_residual_rulepack(
         if !headline_families.insert(entry.family.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate generic headline family in residual rulepack: {}",
                     entry.family
                 ),
@@ -851,7 +851,7 @@ fn validate_residual_rulepack(
         if !action_families.insert(entry.family.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate generic action family in residual rulepack: {}",
                     entry.family
                 ),
@@ -884,7 +884,7 @@ fn validate_residual_rulepack(
         if !specific_families.insert(entry.family.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate specific wording family in residual rulepack: {}",
                     entry.family
                 ),
@@ -987,7 +987,7 @@ fn validate_residual_rulepack(
             Regex::new(pattern).map_err(|error| {
                 invalid_rulepack(
                     path,
-                    &format!("invalid linker residual regex `{pattern}`: {error}"),
+                    format!("invalid linker residual regex `{pattern}`: {error}"),
                 )
             })?;
         }
@@ -1052,7 +1052,7 @@ fn validate_render_rulepack(
         if !seen_kinds.insert(policy.kind) {
             return Err(invalid_rulepack(
                 path,
-                &format!(
+                format!(
                     "duplicate renderer family policy in checked-in render rulepack: {:?}",
                     policy.kind
                 ),
@@ -1089,7 +1089,7 @@ fn validate_section_header(
     if rulepack_version != expected_version {
         return Err(invalid_rulepack(
             path,
-            &format!(
+            format!(
                 "section rulepack_version {} does not match manifest {}",
                 rulepack_version, expected_version
             ),
@@ -1202,7 +1202,7 @@ fn ensure_schema_version(actual: &str, expected: &str, path: &Path) -> Result<()
     } else {
         Err(invalid_rulepack(
             path,
-            &format!("expected schema_version {expected}, got {actual}"),
+            format!("expected schema_version {expected}, got {actual}"),
         ))
     }
 }
@@ -1220,7 +1220,7 @@ fn ensure_version_id(value: &str, path: &Path, field: &str) -> Result<(), Rulepa
     {
         return Err(invalid_rulepack(
             path,
-            &format!(
+            format!(
                 "{field} must start with a lowercase ASCII letter and contain only lowercase ASCII letters, digits, '.', '_' or '-'"
             ),
         ));
@@ -1230,10 +1230,7 @@ fn ensure_version_id(value: &str, path: &Path, field: &str) -> Result<(), Rulepa
 
 fn ensure_non_empty(value: &str, path: &Path, field: &str) -> Result<(), RulepackError> {
     if value.trim().is_empty() {
-        Err(invalid_rulepack(
-            path,
-            &format!("{field} must be non-empty"),
-        ))
+        Err(invalid_rulepack(path, format!("{field} must be non-empty")))
     } else {
         Ok(())
     }
@@ -1270,7 +1267,7 @@ fn ensure_sha256_hex(value: &str, path: &Path, label: &str) -> Result<(), Rulepa
     } else {
         Err(invalid_rulepack(
             path,
-            &format!("{label} must be a 64-character SHA-256 hex digest"),
+            format!("{label} must be a 64-character SHA-256 hex digest"),
         ))
     }
 }

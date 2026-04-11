@@ -173,7 +173,7 @@ pub(crate) fn human_eval_kit_is_complete(report: &HumanEvalKitReport) -> bool {
         && report.missing_required_families.is_empty()
 }
 
-fn select_human_eval_fixtures<'a>(fixtures: &'a [Fixture]) -> Vec<&'a Fixture> {
+fn select_human_eval_fixtures(fixtures: &[Fixture]) -> Vec<&Fixture> {
     let promoted_by_id = fixtures
         .iter()
         .filter(|fixture| fixture.is_promoted())

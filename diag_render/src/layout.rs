@@ -32,10 +32,10 @@ impl LayoutProfile {
         lines: &mut Vec<String>,
     ) {
         lines.push(self.primary_line(theme, card));
-        if self.show_location_line {
-            if let Some(location) = card.canonical_location.as_ref() {
-                lines.push(format!("--> {}", theme.inline(location)));
-            }
+        if self.show_location_line
+            && let Some(location) = card.canonical_location.as_ref()
+        {
+            lines.push(format!("--> {}", theme.inline(location)));
         }
         if let Some(confidence_notice) = card.confidence_notice.as_ref() {
             lines.push(confidence_notice.clone());

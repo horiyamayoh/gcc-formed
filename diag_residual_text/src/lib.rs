@@ -124,24 +124,24 @@ fn match_linker_group(line: &str, matchers: &[CompiledLinkerSeed]) -> Option<Lin
         if matcher.rule.requires_colon && !line.contains(':') {
             continue;
         }
-        if let Some(regex) = &matcher.regex {
-            if let Some(capture) = regex.captures(line) {
-                let template_values = capture_template_values(regex, &capture);
-                return Some(LinkerMatch {
-                    rule: matcher.rule,
-                    group_key: linker_group_key(matcher.rule, &template_values),
-                    template_values,
-                });
-            }
+        if let Some(regex) = &matcher.regex
+            && let Some(capture) = regex.captures(line)
+        {
+            let template_values = capture_template_values(regex, &capture);
+            return Some(LinkerMatch {
+                rule: matcher.rule,
+                group_key: linker_group_key(matcher.rule, &template_values),
+                template_values,
+            });
         }
-        if let Some(prefix) = &matcher.rule.match_prefix {
-            if line.starts_with(prefix) {
-                return Some(LinkerMatch {
-                    rule: matcher.rule,
-                    group_key: linker_group_key(matcher.rule, &BTreeMap::new()),
-                    template_values: BTreeMap::new(),
-                });
-            }
+        if let Some(prefix) = &matcher.rule.match_prefix
+            && line.starts_with(prefix)
+        {
+            return Some(LinkerMatch {
+                rule: matcher.rule,
+                group_key: linker_group_key(matcher.rule, &BTreeMap::new()),
+                template_values: BTreeMap::new(),
+            });
         }
     }
     None
