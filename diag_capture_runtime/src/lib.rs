@@ -1,6 +1,7 @@
 use diag_backend_probe::{ProbeResult, ProcessingPath};
 use diag_core::{
-    ArtifactKind, ArtifactStorage, CaptureArtifact, IntegrityIssue, ToolInfo, fingerprint_for,
+    ArtifactKind, ArtifactStorage, CaptureArtifact, IntegrityIssue, IssueSeverity, IssueStage,
+    Provenance, ProvenanceSource, ToolInfo, fingerprint_for,
 };
 use diag_trace::{
     RetentionPolicy, WrapperPaths, secure_private_dir, secure_private_file, should_retain,
@@ -16,6 +17,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::thread;
 use std::time::Instant;
+
+const STDERR_CAPTURE_BUFFER_BYTES: usize = 4096;
+const STDERR_CAPTURE_PREVIEW_LIMIT_BYTES: usize = 1024 * 1024;
+const STDERR_CAPTURE_ID: &str = "stderr.raw";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -335,6 +340,48 @@ struct DiscoveredStructuredArtifact {
     existed_before: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CapturedStderr {
+    preview_bytes: Vec<u8>,
+    total_bytes: u64,
+    truncated_bytes: u64,
+    spool_path: PathBuf,
+}
+
+impl CapturedStderr {
+    fn empty(spool_path: PathBuf) -> Self {
+        Self {
+            preview_bytes: Vec::new(),
+            total_bytes: 0,
+            truncated_bytes: 0,
+            spool_path,
+        }
+    }
+
+    fn truncated(&self) -> bool {
+        self.truncated_bytes > 0
+    }
+
+    fn integrity_issues(&self) -> Vec<IntegrityIssue> {
+        if !self.truncated() {
+            return Vec::new();
+        }
+
+        vec![IntegrityIssue {
+            severity: IssueSeverity::Warning,
+            stage: IssueStage::Capture,
+            message: format!(
+                "stderr capture exceeded the in-memory cap of {} bytes; preserved {} bytes in spool storage and truncated {} bytes from inline processing",
+                STDERR_CAPTURE_PREVIEW_LIMIT_BYTES, self.total_bytes, self.truncated_bytes
+            ),
+            provenance: Some(Provenance {
+                source: ProvenanceSource::Policy,
+                capture_refs: vec![STDERR_CAPTURE_ID.to_string()],
+            }),
+        }]
+    }
+}
+
 fn authoritative_structured_path(
     policy: StructuredCapturePolicy,
     temp_dir: &Path,
@@ -418,6 +465,55 @@ fn has_color_control_override(args: &[OsString]) -> bool {
     })
 }
 
+fn capture_stderr_stream(
+    reader: &mut impl Read,
+    spool_path: &Path,
+    mut tee: Option<&mut dyn Write>,
+) -> Result<CapturedStderr, std::io::Error> {
+    let mut spool = fs::File::create(spool_path)?;
+    let mut preview_bytes = Vec::new();
+    let mut total_bytes = 0_u64;
+    let mut buffer = [0_u8; STDERR_CAPTURE_BUFFER_BYTES];
+
+    loop {
+        let read = reader.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        let chunk = &buffer[..read];
+        spool.write_all(chunk)?;
+        if let Some(tee) = tee.as_mut() {
+            tee.write_all(chunk)?;
+            tee.flush()?;
+        }
+        total_bytes += read as u64;
+        let remaining_preview =
+            STDERR_CAPTURE_PREVIEW_LIMIT_BYTES.saturating_sub(preview_bytes.len());
+        if remaining_preview > 0 {
+            let preview_len = remaining_preview.min(read);
+            preview_bytes.extend_from_slice(&chunk[..preview_len]);
+        }
+    }
+    spool.flush()?;
+
+    Ok(CapturedStderr {
+        truncated_bytes: total_bytes.saturating_sub(preview_bytes.len() as u64),
+        preview_bytes,
+        total_bytes,
+        spool_path: spool_path.to_path_buf(),
+    })
+}
+
+fn spawn_capture_reader(
+    stderr: std::process::ChildStderr,
+    spool_path: PathBuf,
+) -> thread::JoinHandle<Result<CapturedStderr, std::io::Error>> {
+    thread::spawn(move || -> Result<CapturedStderr, std::io::Error> {
+        let mut reader = stderr;
+        capture_stderr_stream(&mut reader, &spool_path, None)
+    })
+}
+
 fn structured_artifact_metadata(path: &Path) -> Option<(&'static str, ArtifactKind, &'static str)> {
     match path.file_name().and_then(|name| name.to_str()) {
         Some("diagnostics.sarif") => Some((
@@ -439,6 +535,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     let plan = request.capture_plan();
     request.paths.ensure_dirs()?;
     let temp_dir_path = unique_temp_dir(&request.paths.runtime_root)?;
+    let stderr_spool_path = temp_dir_path.join(STDERR_CAPTURE_ID);
     let expected_structured_path =
         authoritative_structured_path(plan.structured_capture, &temp_dir_path);
     let injected_sarif_path = match plan.structured_capture {
@@ -505,28 +602,31 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
 
     let stderr_handle = match plan.native_text_capture {
         NativeTextCapturePolicy::Passthrough => None,
-        NativeTextCapturePolicy::CaptureOnly => child.stderr.take().map(|stderr| {
-            thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
-                let mut reader = stderr;
-                let mut buffer = Vec::new();
-                reader.read_to_end(&mut buffer)?;
-                Ok(buffer)
-            })
-        }),
-        NativeTextCapturePolicy::TeeToParent => child.stderr.take().map(spawn_tee_reader),
+        NativeTextCapturePolicy::CaptureOnly => child
+            .stderr
+            .take()
+            .map(|stderr| spawn_capture_reader(stderr, stderr_spool_path.clone())),
+        NativeTextCapturePolicy::TeeToParent => child
+            .stderr
+            .take()
+            .map(|stderr| spawn_tee_reader(stderr, stderr_spool_path.clone())),
     };
 
     let status = child.wait()?;
     if let Some(path) = injected_sarif_path.as_ref().filter(|path| path.exists()) {
         secure_private_file(path)?;
     }
-    let stderr_bytes = match stderr_handle {
+    let stderr_capture = match stderr_handle {
         Some(handle) => handle
             .join()
-            .unwrap_or_else(|_| Ok(Vec::new()))
-            .unwrap_or_default(),
-        None => Vec::new(),
+            .unwrap_or_else(|_| Ok(CapturedStderr::empty(stderr_spool_path.clone())))
+            .unwrap_or_else(|_| CapturedStderr::empty(stderr_spool_path.clone())),
+        None => CapturedStderr::empty(stderr_spool_path.clone()),
     };
+    if stderr_capture.spool_path.exists() {
+        secure_private_file(&stderr_capture.spool_path)?;
+    }
+    let stderr_bytes = stderr_capture.preview_bytes.clone();
 
     let single_sink_structured_path = if let Some(snapshot) = single_sink_snapshot.as_ref() {
         discover_structured_artifact(&request.cwd, snapshot, plan.structured_capture)?
@@ -555,9 +655,15 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         }
         fs::create_dir_all(&trace_dir)?;
         secure_private_dir(&trace_dir)?;
-        let retained_stderr = trace_dir.join("stderr.raw");
-        fs::write(&retained_stderr, &stderr_bytes)?;
-        secure_private_file(&retained_stderr)?;
+        if stderr_capture.total_bytes > 0 {
+            let retained_stderr = trace_dir.join(STDERR_CAPTURE_ID);
+            if stderr_capture.spool_path.exists() {
+                fs::copy(&stderr_capture.spool_path, &retained_stderr)?;
+            } else {
+                fs::write(&retained_stderr, &stderr_bytes)?;
+            }
+            secure_private_file(&retained_stderr)?;
+        }
         if let Some(structured) = structured_path.as_ref().filter(|path| path.exists()) {
             let retained_structured = trace_dir.join(
                 structured
@@ -579,8 +685,16 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     };
 
     let exit_status = status_to_info(status);
-    let artifacts = build_artifacts(&stderr_bytes, structured_path.as_ref(), &request.backend);
-    let bundle = build_capture_bundle(request, &final_args, &plan, &exit_status, &artifacts);
+    let artifacts = build_artifacts(&stderr_capture, structured_path.as_ref(), &request.backend);
+    let integrity_issues = stderr_capture.integrity_issues();
+    let bundle = build_capture_bundle(
+        request,
+        &final_args,
+        &plan,
+        &exit_status,
+        &artifacts,
+        &integrity_issues,
+    );
 
     Ok(CaptureOutcome {
         exit_status,
@@ -612,41 +726,31 @@ pub fn cleanup_capture(outcome: &CaptureOutcome) -> Result<(), std::io::Error> {
 
 fn spawn_tee_reader(
     stderr: std::process::ChildStderr,
-) -> thread::JoinHandle<Result<Vec<u8>, std::io::Error>> {
-    thread::spawn(move || -> Result<Vec<u8>, std::io::Error> {
+    spool_path: PathBuf,
+) -> thread::JoinHandle<Result<CapturedStderr, std::io::Error>> {
+    thread::spawn(move || -> Result<CapturedStderr, std::io::Error> {
         let mut reader = stderr;
-        let mut buffer = [0_u8; 4096];
-        let mut captured = Vec::new();
         let mut tee = std::io::stderr().lock();
-        loop {
-            let read = reader.read(&mut buffer)?;
-            if read == 0 {
-                break;
-            }
-            tee.write_all(&buffer[..read])?;
-            tee.flush()?;
-            captured.extend_from_slice(&buffer[..read]);
-        }
-        Ok(captured)
+        capture_stderr_stream(&mut reader, &spool_path, Some(&mut tee))
     })
 }
 
 fn build_artifacts(
-    stderr_bytes: &[u8],
+    stderr_capture: &CapturedStderr,
     structured_path: Option<&PathBuf>,
     backend: &ProbeResult,
 ) -> Vec<CaptureArtifact> {
     let mut artifacts = Vec::new();
-    if !stderr_bytes.is_empty() {
+    if stderr_capture.total_bytes > 0 {
         artifacts.push(CaptureArtifact {
-            id: "stderr.raw".to_string(),
+            id: STDERR_CAPTURE_ID.to_string(),
             kind: ArtifactKind::CompilerStderrText,
             media_type: "text/plain".to_string(),
             encoding: Some("utf-8".to_string()),
             digest_sha256: None,
-            size_bytes: Some(stderr_bytes.len() as u64),
+            size_bytes: Some(stderr_capture.total_bytes),
             storage: ArtifactStorage::Inline,
-            inline_text: Some(String::from_utf8_lossy(stderr_bytes).to_string()),
+            inline_text: Some(String::from_utf8_lossy(&stderr_capture.preview_bytes).to_string()),
             external_ref: None,
             produced_by: Some(tool_info(backend)),
         });
@@ -760,6 +864,7 @@ fn build_capture_bundle(
     plan: &CapturePlan,
     exit_status: &ExitStatusInfo,
     artifacts: &[CaptureArtifact],
+    integrity_issues: &[IntegrityIssue],
 ) -> CaptureBundle {
     CaptureBundle {
         plan: *plan,
@@ -787,7 +892,7 @@ fn build_capture_bundle(
             .cloned()
             .collect(),
         exit_status: exit_status.clone(),
-        integrity_issues: Vec::new(),
+        integrity_issues: integrity_issues.to_vec(),
     }
 }
 
@@ -1061,6 +1166,7 @@ fn status_to_info(status: ExitStatus) -> ExitStatusInfo {
 mod tests {
     use super::*;
     use diag_backend_probe::{DriverKind, ProbeKey, SupportTier};
+    use std::io::Cursor;
     use std::path::PathBuf;
 
     fn fake_probe() -> ProbeResult {
@@ -1093,6 +1199,15 @@ mod tests {
         }
     }
 
+    fn captured_stderr(bytes: &[u8]) -> CapturedStderr {
+        CapturedStderr {
+            preview_bytes: bytes.to_vec(),
+            total_bytes: bytes.len() as u64,
+            truncated_bytes: 0,
+            spool_path: PathBuf::from("/tmp/runtime/stderr.raw"),
+        }
+    }
+
     #[test]
     fn sanitizes_sarif_path() {
         let sanitized = sanitize_sarif_path(Path::new("/tmp/a,b=c d.sarif"));
@@ -1103,7 +1218,7 @@ mod tests {
 
     #[test]
     fn creates_inline_stderr_artifact() {
-        let artifacts = build_artifacts(b"stderr", None, &fake_probe());
+        let artifacts = build_artifacts(&captured_stderr(b"stderr"), None, &fake_probe());
         assert_eq!(artifacts[0].id, "stderr.raw");
         assert!(
             artifacts[0]
@@ -1470,7 +1585,11 @@ mod tests {
         };
         let plan = request.capture_plan();
         let sarif_path = PathBuf::from("/tmp/runtime/diagnostics.sarif");
-        let artifacts = build_artifacts(b"stderr", Some(&sarif_path), &request.backend);
+        let artifacts = build_artifacts(
+            &captured_stderr(b"stderr"),
+            Some(&sarif_path),
+            &request.backend,
+        );
         let exit_status = ExitStatusInfo {
             code: Some(1),
             signal: None,
@@ -1489,6 +1608,7 @@ mod tests {
             &plan,
             &exit_status,
             &artifacts,
+            &[],
         );
 
         assert_eq!(bundle.invocation.backend_path, "/usr/bin/gcc");
@@ -1520,7 +1640,11 @@ mod tests {
         };
         let plan = request.capture_plan();
         let json_path = PathBuf::from("/tmp/runtime/diagnostics.json");
-        let artifacts = build_artifacts(b"stderr", Some(&json_path), &request.backend);
+        let artifacts = build_artifacts(
+            &captured_stderr(b"stderr"),
+            Some(&json_path),
+            &request.backend,
+        );
         let exit_status = ExitStatusInfo {
             code: Some(1),
             signal: None,
@@ -1537,6 +1661,7 @@ mod tests {
             &plan,
             &exit_status,
             &artifacts,
+            &[],
         );
 
         assert_eq!(
@@ -1550,6 +1675,100 @@ mod tests {
         assert_eq!(bundle.structured_artifacts[0].kind, ArtifactKind::GccJson);
         assert_eq!(bundle.exit_status, exit_status);
         assert!(bundle.integrity_issues.is_empty());
+    }
+
+    #[test]
+    fn capture_bundle_surfaces_stderr_truncation_issue() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![OsString::from("-c"), OsString::from("main.c")],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::Always,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::Disabled,
+            preserve_native_color: false,
+        };
+        let plan = request.capture_plan();
+        let captured = CapturedStderr {
+            preview_bytes: b"stderr-preview".to_vec(),
+            total_bytes: (STDERR_CAPTURE_PREVIEW_LIMIT_BYTES + 128) as u64,
+            truncated_bytes: 128,
+            spool_path: PathBuf::from("/tmp/runtime/stderr.raw"),
+        };
+        let artifacts = build_artifacts(&captured, None, &request.backend);
+        let exit_status = ExitStatusInfo {
+            code: Some(1),
+            signal: None,
+            success: false,
+        };
+
+        let bundle = build_capture_bundle(
+            &request,
+            &[OsString::from("-c"), OsString::from("main.c")],
+            &plan,
+            &exit_status,
+            &artifacts,
+            &captured.integrity_issues(),
+        );
+
+        assert_eq!(bundle.integrity_issues.len(), 1);
+        assert_eq!(bundle.integrity_issues[0].stage, IssueStage::Capture);
+        assert!(bundle.integrity_issues[0].message.contains("truncated"));
+    }
+
+    #[test]
+    fn capture_stderr_stream_truncates_large_template_flood_and_reports_integrity_issue() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool_path = temp.path().join("stderr.raw");
+        let line = "template instantiation depth exceeded while substituting std::vector<std::tuple<int, long, double>>\n";
+        let repeats = (STDERR_CAPTURE_PREVIEW_LIMIT_BYTES / line.len()) + 64;
+        let payload = line.repeat(repeats);
+
+        let mut cursor = Cursor::new(payload.as_bytes());
+        let captured = capture_stderr_stream(&mut cursor, &spool_path, None).unwrap();
+
+        assert_eq!(
+            captured.preview_bytes.len(),
+            STDERR_CAPTURE_PREVIEW_LIMIT_BYTES
+        );
+        assert_eq!(captured.total_bytes, payload.len() as u64);
+        assert!(captured.truncated());
+        assert_eq!(
+            fs::metadata(&spool_path).unwrap().len(),
+            payload.len() as u64
+        );
+        let issues = captured.integrity_issues();
+        assert_eq!(issues.len(), 1);
+        assert!(
+            issues[0]
+                .message
+                .contains("stderr capture exceeded the in-memory cap")
+        );
+        assert_eq!(issues[0].stage, IssueStage::Capture);
+    }
+
+    #[test]
+    fn capture_stderr_stream_truncates_large_linker_flood_and_tees_full_output() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool_path = temp.path().join("stderr.raw");
+        let line = "/usr/bin/ld: libhuge.a(object.o): undefined reference to `long_missing_symbol_name_for_linker_flood`\n";
+        let repeats = (STDERR_CAPTURE_PREVIEW_LIMIT_BYTES / line.len()) + 32;
+        let payload = line.repeat(repeats);
+        let mut tee_bytes = Vec::new();
+
+        let mut cursor = Cursor::new(payload.as_bytes());
+        let captured =
+            capture_stderr_stream(&mut cursor, &spool_path, Some(&mut tee_bytes)).unwrap();
+
+        assert_eq!(tee_bytes, payload.as_bytes());
+        assert_eq!(
+            captured.preview_bytes.len(),
+            STDERR_CAPTURE_PREVIEW_LIMIT_BYTES
+        );
+        assert_eq!(captured.total_bytes, payload.len() as u64);
+        assert!(captured.truncated());
     }
 
     #[test]

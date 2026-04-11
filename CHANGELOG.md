@@ -31,6 +31,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Expanded the residual rulepack with `driver_fatal`, `collect2_summary`, `assembler_error`, and `internal_compiler_error_banner`, and corrected grouped residual origin attribution so `collect2` is driver-origin and non-linker grouped children no longer inherit linker metadata.
 - Corrected Path B capability probing so `GCC13-14` advertises explicit single-sink SARIF support without falsely claiming GCC15-style dual-sink support, with regression coverage for Band B and Band C structured-path semantics.
 - Hardened `diag_capture_runtime` so user-supplied diagnostics sink flags force an honest runtime passthrough instead of silent flag injection, while explicit diagnostics color overrides suppress wrapper color injection metadata rather than overriding user intent.
+- Replaced unbounded in-memory stderr buffering in `diag_capture_runtime` with spool-backed capped capture, added truncation `IntegrityIssue` surfacing, and covered large template/linker flood stress paths without turning capture into an unbounded memory sink.
 
 ## [0.2.0-beta.1] - 2026-04-09
 
