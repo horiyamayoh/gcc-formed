@@ -1,0 +1,3262 @@
+{
+  "catalog_id": "gcc-formed-execution-slice-catalog-v1",
+  "generated_at": "2026-04-11",
+  "parent_documents": [
+    "gcc_formed_final_brushup_v5_ja.md",
+    "gcc_formed_issue_map_v1_ja.md"
+  ],
+  "metrics": {
+    "tracker_issue_count": 14,
+    "sliced_parent_count": 6,
+    "direct_issue_count": 29,
+    "slice_issue_count": 12,
+    "implementation_issue_count": 41,
+    "implementation_average_rloc": 1030.5
+  },
+  "command_vocabulary": {
+    "adol_generate_check": "cargo xtask adol generate --check",
+    "probe_reference_lanes": "cargo xtask probe toolchain --reference-lanes --out <path>",
+    "capture_proof_sample": "cargo xtask capture sample --mode proof --out <path>",
+    "completeness_emit": "cargo xtask completeness emit --lane <lane> --scope <scope> --out <path>",
+    "anti_collision_check": "cargo xtask corpus anti-collision --check",
+    "harvest_candidates": "cargo xtask trace harvest-candidates --out <path>"
+  },
+  "project_fields_reference": [
+    "Status",
+    "Stream",
+    "Lane",
+    "LockWave",
+    "Owner Mode",
+    "Lock Target"
+  ],
+  "records": [
+    {
+      "id": "PRG-000",
+      "type": "root_epic",
+      "title": "[epic] Program root: Zero Unknown across GCC 9–15",
+      "parent": null,
+      "stream": "Program",
+      "lock_wave": null,
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "program 全体の親。doctrine 参照点。進捗の最上位可視化。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "done_when": [
+        "LW00〜LW50 が完了する。",
+        "各 release lane に completeness report が出る。",
+        "README / AGENTS / CONTRIBUTING が新運用を参照する。"
+      ],
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nprogram 全体の親。doctrine 参照点。進捗の最上位可視化。\n\n## Why this matters\nprogram 全体の親。doctrine 参照点。進捗の最上位可視化。\n\n## Parent\nなし\n\n## Stream / LockWave\n- Stream: `Program`\n- LockWave: `program`\n\n## Done when\n- LW00〜LW50 が完了する。\n- 各 release lane に completeness report が出る。\n- README / AGENTS / CONTRIBUTING が新運用を参照する。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Program",
+        "Lane": "",
+        "LockWave": "",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-010",
+      "type": "epic",
+      "title": "[epic] Foundation: GitHub execution OS and issue discipline",
+      "parent": "PRG-000",
+      "stream": "Governance",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "issue discipline / templates / project operating model を固める。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nissue discipline / templates / project operating model を固める。\n\n## Why this matters\nissue discipline / templates / project operating model を固める。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Governance`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Governance",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-020",
+      "type": "epic",
+      "title": "[epic] Foundation: IR / ADOL / policy substrate",
+      "parent": "PRG-000",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "IR・ADOL・policy substrate を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nIR・ADOL・policy substrate を整備する。\n\n## Why this matters\nIR・ADOL・policy substrate を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `ADOL`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-030",
+      "type": "epic",
+      "title": "[epic] Foundation: toolchain fingerprint and capability inventory",
+      "parent": "PRG-000",
+      "stream": "Probe",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "toolchain fingerprint / capability inventory を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\ntoolchain fingerprint / capability inventory を整備する。\n\n## Why this matters\ntoolchain fingerprint / capability inventory を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Probe`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Probe",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-040",
+      "type": "epic",
+      "title": "[epic] Foundation: typed skeleton normalization",
+      "parent": "PRG-000",
+      "stream": "Normalize",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "typed skeleton normalization を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\ntyped skeleton normalization を整備する。\n\n## Why this matters\ntyped skeleton normalization を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Normalize`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Normalize",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-050",
+      "type": "epic",
+      "title": "[epic] Foundation: episode-first classifier",
+      "parent": "PRG-000",
+      "stream": "Classify",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "episode-first classifier を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nepisode-first classifier を整備する。\n\n## Why this matters\nepisode-first classifier を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-060",
+      "type": "epic",
+      "title": "[epic] Foundation: render profiles and degradation policy",
+      "parent": "PRG-000",
+      "stream": "Render",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "render profiles と degradation policy を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nrender profiles と degradation policy を整備する。\n\n## Why this matters\nrender profiles と degradation policy を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Render`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Render",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "FEP-070",
+      "type": "epic",
+      "title": "[epic] Foundation: corpus, anti-collision, proof gates",
+      "parent": "PRG-000",
+      "stream": "Corpus/Gate",
+      "lock_wave": "LW00",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "corpus / anti-collision / proof gate を整備する。",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\ncorpus / anti-collision / proof gate を整備する。\n\n## Why this matters\ncorpus / anti-collision / proof gate を整備する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Corpus/Gate`\n- LockWave: `LW00`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Corpus/Gate",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-110",
+      "type": "epic",
+      "title": "[epic] Lane lock: C core across GCC 9–15 reference lanes",
+      "parent": "PRG-000",
+      "stream": "Classify/Gate",
+      "lock_wave": "LW10",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "C core reference lanes を lock する。",
+      "dependencies": [
+        "FEP-020",
+        "FEP-040",
+        "FEP-050",
+        "FEP-060",
+        "FEP-070"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nC core reference lanes を lock する。\n\n## Why this matters\nC core reference lanes を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify/Gate`\n- LockWave: `LW10`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- FEP-020\n- FEP-040\n- FEP-050\n- FEP-060\n- FEP-070\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify/Gate",
+        "Lane": "",
+        "LockWave": "LW10",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-120",
+      "type": "epic",
+      "title": "[epic] Lane lock: C++03/11 core on GCC 9–12 reference lanes",
+      "parent": "PRG-000",
+      "stream": "Classify/Gate",
+      "lock_wave": "LW20",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "C++03/11 GCC9-12 reference lanes を lock する。",
+      "dependencies": [
+        "LEP-110"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nC++03/11 GCC9-12 reference lanes を lock する。\n\n## Why this matters\nC++03/11 GCC9-12 reference lanes を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify/Gate`\n- LockWave: `LW20`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- LEP-110\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify/Gate",
+        "Lane": "",
+        "LockWave": "LW20",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-130",
+      "type": "epic",
+      "title": "[epic] Lane lock: C++14/17 core on GCC 13–15 reference lanes",
+      "parent": "PRG-000",
+      "stream": "Classify/Gate",
+      "lock_wave": "LW30",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "C++14/17 GCC13-15 reference lanes を lock する。",
+      "dependencies": [
+        "LEP-110",
+        "LEP-120"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nC++14/17 GCC13-15 reference lanes を lock する。\n\n## Why this matters\nC++14/17 GCC13-15 reference lanes を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify/Gate`\n- LockWave: `LW30`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- LEP-110\n- LEP-120\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify/Gate",
+        "Lane": "",
+        "LockWave": "LW30",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-140",
+      "type": "epic",
+      "title": "[epic] Lane lock: C++20/23 advanced on GCC 13–15 reference lanes",
+      "parent": "PRG-000",
+      "stream": "Classify/Gate",
+      "lock_wave": "LW40",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "C++20/23 GCC13-15 reference lanes を lock する。",
+      "dependencies": [
+        "LEP-130"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nC++20/23 GCC13-15 reference lanes を lock する。\n\n## Why this matters\nC++20/23 GCC13-15 reference lanes を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify/Gate`\n- LockWave: `LW40`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- LEP-130\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify/Gate",
+        "Lane": "",
+        "LockWave": "LW40",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-150",
+      "type": "epic",
+      "title": "[epic] Lane lock: toolchain / driver / linker / system families across all GCC",
+      "parent": "PRG-000",
+      "stream": "Classify",
+      "lock_wave": "LW50",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "toolchain / driver / linker / system families を lock する。",
+      "dependencies": [
+        "FEP-020",
+        "FEP-050",
+        "FEP-060"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\ntoolchain / driver / linker / system families を lock する。\n\n## Why this matters\ntoolchain / driver / linker / system families を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Classify`\n- LockWave: `LW50`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- FEP-020\n- FEP-050\n- FEP-060\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW50",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "LEP-160",
+      "type": "epic",
+      "title": "[epic] Lane lock: warnings and analyzer families across all GCC",
+      "parent": "PRG-000",
+      "stream": "Probe/Classify",
+      "lock_wave": "LW50",
+      "execution_mode": "tracker",
+      "count_in_rloc_kpi": false,
+      "goal": "warnings / analyzer families を lock する。",
+      "dependencies": [
+        "FEP-030",
+        "FEP-050",
+        "FEP-060"
+      ],
+      "initial_status": "Blocked",
+      "execution_bundle": "T00",
+      "body_md": "## Goal\nwarnings / analyzer families を lock する。\n\n## Why this matters\nwarnings / analyzer families を lock する。\n\n## Parent\nPRG-000\n\n## Stream / LockWave\n- Stream: `Probe/Classify`\n- LockWave: `LW50`\n\n## Done when\n- 子 issue が完了し、proof artifact が揃う。\n\n## Dependencies\n- FEP-030\n- FEP-050\n- FEP-060\n\n## Notes for Codex\n- この issue は tracking / governance 用であり、直接大規模実装を抱え込まない。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Probe/Classify",
+        "Lane": "",
+        "LockWave": "LW50",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "WP-001",
+      "type": "work_package",
+      "title": "[wp] Extend RunInfo and ToolInfo with lane and fingerprint keys",
+      "parent": "FEP-020",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_core",
+        "diag_adapter_gcc"
+      ],
+      "likely_files": [
+        "diag_core/src/lib.rs",
+        "diag_core/src/types.rs",
+        "diag_core/src/analysis.rs",
+        "diag_core/src/capture.rs",
+        "diag_core/src/fingerprint.rs",
+        "diag_adapter_gcc/src/",
+        "docs/specs/diagnostic-ir-v1alpha-spec.md"
+      ],
+      "authority_inputs": [
+        "repo IR schema",
+        "current adapter/runtime model"
+      ],
+      "in_scope": [
+        "RunInfo に standard_mode / dialect_mode / strictness_profile / permissive_profile / locale_profile / fingerprint_class を追加する。",
+        "ToolInfo に capability/vendor 起点の拡張点を追加し、既存 path が空値で安全に保持できるようにする。",
+        "diag_adapter_gcc が既知情報を新フィールドへ配線する。"
+      ],
+      "out_of_scope": [
+        "DiagnosticEpisode の導入。",
+        "Capability probe の実装。",
+        "render/classifier の意味変更。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_core` と `cargo test -p diag_adapter_gcc` が通る。",
+        "`docs/specs/diagnostic-ir-v1alpha-spec.md` 相当の schema 例が新フィールドを反映し、旧 fixture の後方互換パスが明示される。",
+        "round-trip serde test で legacy fixture と extended fixture の両方が green になる。"
+      ],
+      "proof_path": "artifacts/adol/wp-001/ir-lane-runinfo-examples/",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "notes_for_codex": "enum/field 名は v5/v6 の語彙を優先し、短縮語を増やしすぎない。",
+      "execution_bundle": "X00",
+      "body_md": "## Goal\n- RunInfo に standard_mode / dialect_mode / strictness_profile / permissive_profile / locale_profile / fingerprint_class を追加する。\n- ToolInfo に capability/vendor 起点の拡張点を追加し、既存 path が空値で安全に保持できるようにする。\n- diag_adapter_gcc が既知情報を新フィールドへ配線する。\n\n## Why this matters\nlane/fingerprint 情報を runtime IR に昇格しないと、all-GCC completeness を lane 単位で証明できない。\n\n## Parent\nFEP-020\n\n## Stream / Lane / LockWave\n- Stream: `ADOL`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_core`\n- `diag_adapter_gcc`\n- `diag_core/src/lib.rs`\n- `diag_core/src/types.rs`\n- `diag_core/src/analysis.rs`\n- `diag_core/src/capture.rs`\n- `diag_core/src/fingerprint.rs`\n- `diag_adapter_gcc/src/`\n- `docs/specs/diagnostic-ir-v1alpha-spec.md`\n\n## Authority inputs\n- repo IR schema\n- current adapter/runtime model\n\n## Out of scope\n- DiagnosticEpisode の導入。\n- Capability probe の実装。\n- render/classifier の意味変更。\n\n## Acceptance criteria\n- `cargo test -p diag_core` と `cargo test -p diag_adapter_gcc` が通る。\n- `docs/specs/diagnostic-ir-v1alpha-spec.md` 相当の schema 例が新フィールドを反映し、旧 fixture の後方互換パスが明示される。\n- round-trip serde test で legacy fixture と extended fixture の両方が green になる。\n\n## Proof required\n- Artifact path: `artifacts/adol/wp-001/ir-lane-runinfo-examples/`\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- enum/field 名は v5/v6 の語彙を優先し、短縮語を増やしすぎない。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-004",
+      "type": "work_package",
+      "title": "[wp] Implement toolchain fingerprint and capability probe pipeline",
+      "parent": "FEP-030",
+      "stream": "Probe",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_backend_probe",
+        "xtask"
+      ],
+      "likely_files": [
+        "diag_backend_probe/src/lib.rs",
+        "xtask/src/main.rs",
+        "xtask/src/commands/",
+        "xtask/src/tests.rs",
+        "docs/"
+      ],
+      "authority_inputs": [
+        "GCC/runtime capability observation",
+        "toolchain fingerprint policy"
+      ],
+      "in_scope": [
+        "compiler / target / sysroot / diagnostic formatter capability を probe して CapabilityProfile を JSON 化する。",
+        "reference lane pinning に使う fingerprint class を生成する。",
+        "fixture 化 가능한 probe snapshot を導入する。"
+      ],
+      "out_of_scope": [
+        "product/proof capture mode の切替。",
+        "warning inventory pipeline。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_backend_probe` と `cargo test -p xtask` が通る。",
+        "`cargo xtask probe toolchain --reference-lanes --out artifacts/probe/reference/` が成功し、少なくとも 1 個の snapshot fixture が更新される。",
+        "reference lane capability JSON が docs か fixtures から辿れる。"
+      ],
+      "proof_path": "artifacts/probe/reference/",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "notes_for_codex": "host 固有値をそのまま fixture に焼かず、正規化可能な fingerprint key を優先する。",
+      "execution_bundle": "X00",
+      "body_md": "## Goal\n- compiler / target / sysroot / diagnostic formatter capability を probe して CapabilityProfile を JSON 化する。\n- reference lane pinning に使う fingerprint class を生成する。\n- fixture 化 가능한 probe snapshot を導入する。\n\n## Why this matters\ntoolchain fingerprint がないと lane の閉じ方が compiler version 依存のままになる。\n\n## Parent\nFEP-030\n\n## Stream / Lane / LockWave\n- Stream: `Probe`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_backend_probe`\n- `xtask`\n- `diag_backend_probe/src/lib.rs`\n- `xtask/src/main.rs`\n- `xtask/src/commands/`\n- `xtask/src/tests.rs`\n- `docs/`\n\n## Authority inputs\n- GCC/runtime capability observation\n- toolchain fingerprint policy\n\n## Out of scope\n- product/proof capture mode の切替。\n- warning inventory pipeline。\n\n## Acceptance criteria\n- `cargo test -p diag_backend_probe` と `cargo test -p xtask` が通る。\n- `cargo xtask probe toolchain --reference-lanes --out artifacts/probe/reference/` が成功し、少なくとも 1 個の snapshot fixture が更新される。\n- reference lane capability JSON が docs か fixtures から辿れる。\n\n## Proof required\n- Artifact path: `artifacts/probe/reference/`\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- host 固有値をそのまま fixture に焼かず、正規化可能な fingerprint key を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Probe",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-014",
+      "type": "work_package",
+      "title": "[wp] Bootstrap GitHub execution OS: project fields, issue forms, saved views, milestone migration",
+      "parent": "FEP-010",
+      "stream": "Governance",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜1100)",
+      "target_rloc_mid": 900,
+      "crates": [
+        ".github",
+        "docs"
+      ],
+      "likely_files": [
+        ".github/",
+        "docs/"
+      ],
+      "authority_inputs": [
+        "GitHub Projects/Issues operating model"
+      ],
+      "in_scope": [
+        "issue forms / templates / saved view instructions / milestone migration doc を入れる。",
+        "Project field definition を checked-in doc として固定する。",
+        "legacy milestone から lock wave への移行手順を書く。"
+      ],
+      "out_of_scope": [
+        "実際の GitHub Project 操作の代行。",
+        "ADOL/classifier 実装。"
+      ],
+      "acceptance": [
+        ".github 配下に template / forms / ops doc が揃う。",
+        "docs に saved views / field definitions / migration 手順が記載される。",
+        "repo contributor が template 経由で issue を起票できる状態になる。"
+      ],
+      "proof_path": "artifacts/governance/wp-014/template-checklist.md",
+      "dependencies": [],
+      "initial_status": "Ready",
+      "notes_for_codex": "public repo で確実に使える機能だけを前提にする。",
+      "execution_bundle": "X00",
+      "body_md": "## Goal\n- issue forms / templates / saved view instructions / milestone migration doc を入れる。\n- Project field definition を checked-in doc として固定する。\n- legacy milestone から lock wave への移行手順を書く。\n\n## Why this matters\nGitHub 側の OS を先に固めないと盤面が drift する。\n\n## Parent\nFEP-010\n\n## Stream / Lane / LockWave\n- Stream: `Governance`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (700〜1100)`\n\n## Crates / likely files\n- `.github`\n- `docs`\n- `.github/`\n- `docs/`\n\n## Authority inputs\n- GitHub Projects/Issues operating model\n\n## Out of scope\n- 実際の GitHub Project 操作の代行。\n- ADOL/classifier 実装。\n\n## Acceptance criteria\n- .github 配下に template / forms / ops doc が揃う。\n- docs に saved views / field definitions / migration 手順が記載される。\n- repo contributor が template 経由で issue を起票できる状態になる。\n\n## Proof required\n- Artifact path: `artifacts/governance/wp-014/template-checklist.md`\n\n## Dependencies\n- なし\n\n## Notes for Codex\n- public repo で確実に使える機能だけを前提にする。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Ready",
+        "Stream": "Governance",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-002",
+      "type": "work_package",
+      "title": "[wp] Add DiagnosticEpisode, EpisodeSatellite, ClassificationProvenance, and SeverityOrigin",
+      "parent": "FEP-020",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_core"
+      ],
+      "likely_files": [
+        "diag_core/src/lib.rs",
+        "diag_core/src/types.rs",
+        "diag_core/src/analysis.rs",
+        "diag_core/src/capture.rs",
+        "diag_core/src/fingerprint.rs",
+        "docs/specs/diagnostic-ir-v1alpha-spec.md"
+      ],
+      "authority_inputs": [
+        "repo IR schema",
+        "episode-first model from v5"
+      ],
+      "in_scope": [
+        "DiagnosticEpisode, EpisodeSatellite, ClassificationProvenance, SeverityOrigin の型と serde を追加する。",
+        "facts/analysis/severity provenance の責務分離を型で表現する。",
+        "既存 call site に migration shim を入れ、段階移行可能にする。"
+      ],
+      "out_of_scope": [
+        "classifier engine の実装。",
+        "render policy の導入。",
+        "capture mode の追加。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_core` が通る。",
+        "新型を含む constructor/serde test が追加され、 legacy path からの変換が検証される。",
+        "IR schema diff が doc か fixture で確認できる。"
+      ],
+      "proof_path": "artifacts/adol/wp-002/ir-episode-schema-diff/",
+      "dependencies": [
+        "WP-001"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "既存 type 名と衝突する別名を避け、final naming をここで固定する。",
+      "execution_bundle": "X01",
+      "body_md": "## Goal\n- DiagnosticEpisode, EpisodeSatellite, ClassificationProvenance, SeverityOrigin の型と serde を追加する。\n- facts/analysis/severity provenance の責務分離を型で表現する。\n- 既存 call site に migration shim を入れ、段階移行可能にする。\n\n## Why this matters\nepisode/provenance/severity origin を型で分離しないと、family/legality/severity/render の分離が崩れる。\n\n## Parent\nFEP-020\n\n## Stream / Lane / LockWave\n- Stream: `ADOL`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_core`\n- `diag_core/src/lib.rs`\n- `diag_core/src/types.rs`\n- `diag_core/src/analysis.rs`\n- `diag_core/src/capture.rs`\n- `diag_core/src/fingerprint.rs`\n- `docs/specs/diagnostic-ir-v1alpha-spec.md`\n\n## Authority inputs\n- repo IR schema\n- episode-first model from v5\n\n## Out of scope\n- classifier engine の実装。\n- render policy の導入。\n- capture mode の追加。\n\n## Acceptance criteria\n- `cargo test -p diag_core` が通る。\n- 新型を含む constructor/serde test が追加され、 legacy path からの変換が検証される。\n- IR schema diff が doc か fixture で確認できる。\n\n## Proof required\n- Artifact path: `artifacts/adol/wp-002/ir-episode-schema-diff/`\n\n## Dependencies\n- WP-001\n\n## Notes for Codex\n- 既存 type 名と衝突する別名を避け、final naming をここで固定する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-005",
+      "type": "work_package",
+      "title": "[wp] Add Product Capture vs Proof Capture profile selection",
+      "parent": "FEP-030",
+      "stream": "Probe",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_capture_runtime",
+        "diag_cli_front",
+        "diag_backend_probe"
+      ],
+      "likely_files": [
+        "diag_capture_runtime/src/lib.rs",
+        "diag_capture_runtime/src/policy.rs",
+        "diag_capture_runtime/src/capture.rs",
+        "diag_capture_runtime/src/artifact.rs",
+        "diag_capture_runtime/src/artifact_builder.rs",
+        "diag_cli_front/",
+        "diag_backend_probe/src/lib.rs"
+      ],
+      "authority_inputs": [
+        "CapabilityProfile",
+        "capture runtime policy"
+      ],
+      "in_scope": [
+        "product capture と proof capture の profile selection を分離する。",
+        "diag_cli_front から capability-aware に capture profile を選べるようにする。",
+        "proof capture sample bundle を出せるようにする。"
+      ],
+      "out_of_scope": [
+        "probe logic の大幅拡張。",
+        "classifier/render の意味変更。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_capture_runtime` と `cargo test -p diag_cli_front` が通る。",
+        "`cargo xtask capture sample --mode proof --out artifacts/capture/proof-sample/` 相当の経路が機能する。",
+        "同一入力で product/proof capture の差が fixture で説明できる。"
+      ],
+      "proof_path": "artifacts/capture/proof-sample/",
+      "dependencies": [
+        "WP-004"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "TTY UX 用の product capture を proof 向けに厳格化しすぎない。",
+      "execution_bundle": "X01",
+      "body_md": "## Goal\n- product capture と proof capture の profile selection を分離する。\n- diag_cli_front から capability-aware に capture profile を選べるようにする。\n- proof capture sample bundle を出せるようにする。\n\n## Why this matters\nproduct capture と proof capture を混ぜると、UX と証明の両方が壊れる。\n\n## Parent\nFEP-030\n\n## Stream / Lane / LockWave\n- Stream: `Probe`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_capture_runtime`\n- `diag_cli_front`\n- `diag_backend_probe`\n- `diag_capture_runtime/src/lib.rs`\n- `diag_capture_runtime/src/policy.rs`\n- `diag_capture_runtime/src/capture.rs`\n- `diag_capture_runtime/src/artifact.rs`\n- `diag_capture_runtime/src/artifact_builder.rs`\n- `diag_cli_front/`\n- `diag_backend_probe/src/lib.rs`\n\n## Authority inputs\n- CapabilityProfile\n- capture runtime policy\n\n## Out of scope\n- probe logic の大幅拡張。\n- classifier/render の意味変更。\n\n## Acceptance criteria\n- `cargo test -p diag_capture_runtime` と `cargo test -p diag_cli_front` が通る。\n- `cargo xtask capture sample --mode proof --out artifacts/capture/proof-sample/` 相当の経路が機能する。\n- 同一入力で product/proof capture の差が fixture で説明できる。\n\n## Proof required\n- Artifact path: `artifacts/capture/proof-sample/`\n\n## Dependencies\n- WP-004\n\n## Notes for Codex\n- TTY UX 用の product capture を proof 向けに厳格化しすぎない。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Probe",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-006",
+      "type": "work_package",
+      "title": "[wp] Implement DiagnosticTextNormalizer phase 1: noise removal and tokenization",
+      "parent": "FEP-040",
+      "stream": "Normalize",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_enrich",
+        "diag_residual_text"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_residual_text/src/lib.rs"
+      ],
+      "authority_inputs": [
+        "raw GCC text reality",
+        "locale-stable normalization rules"
+      ],
+      "in_scope": [
+        "ANSI color, wrap, quote noise, path noise の除去。",
+        "tokenization, span segmentation, line-role segmentation の導入。",
+        "locale 差で壊れにくい normalization substrate を用意する。"
+      ],
+      "out_of_scope": [
+        "semantic placeholderization。",
+        "typed skeleton emission。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。",
+        "normalizer fixture で before/after snapshot が更新される。",
+        "現行 six-family regression を壊さない。"
+      ],
+      "proof_path": "artifacts/normalize/wp-006/basic-normalizer-snapshots/",
+      "dependencies": [
+        "WP-001"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "この issue では semantics を推測しすぎず、あくまで stable token substrate までに留める。",
+      "execution_bundle": "X01",
+      "body_md": "## Goal\n- ANSI color, wrap, quote noise, path noise の除去。\n- tokenization, span segmentation, line-role segmentation の導入。\n- locale 差で壊れにくい normalization substrate を用意する。\n\n## Why this matters\nold GCC perfection の鍵は raw text normalization なので、ここが classifier の土台になる。\n\n## Parent\nFEP-040\n\n## Stream / Lane / LockWave\n- Stream: `Normalize`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_residual_text`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_residual_text/src/lib.rs`\n\n## Authority inputs\n- raw GCC text reality\n- locale-stable normalization rules\n\n## Out of scope\n- semantic placeholderization。\n- typed skeleton emission。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。\n- normalizer fixture で before/after snapshot が更新される。\n- 現行 six-family regression を壊さない。\n\n## Proof required\n- Artifact path: `artifacts/normalize/wp-006/basic-normalizer-snapshots/`\n\n## Dependencies\n- WP-001\n\n## Notes for Codex\n- この issue では semantics を推測しすぎず、あくまで stable token substrate までに留める。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Normalize",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-015",
+      "type": "work_package",
+      "title": "[wp] Update AGENTS, CONTRIBUTING, and README to the v5/v6 execution model",
+      "parent": "FEP-010",
+      "stream": "Docs",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "S/M (500〜900)",
+      "target_rloc_mid": 700,
+      "crates": [
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        "README.md",
+        "docs"
+      ],
+      "likely_files": [
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        "README.md",
+        "docs/"
+      ],
+      "authority_inputs": [
+        "repo entrypoint docs"
+      ],
+      "in_scope": [
+        "AGENTS.md, CONTRIBUTING.md, README.md を v5/v6 実行モデルへ同期する。",
+        "issue discipline と proof-first 方針を入口 docs に反映する。"
+      ],
+      "out_of_scope": [
+        "marketing copy の大改稿。",
+        "value examples の全面刷新。"
+      ],
+      "acceptance": [
+        "README / AGENTS / CONTRIBUTING の参照が相互に矛盾しない。",
+        "新しい issue discipline と proof artifact policy が entry docs から辿れる。",
+        "docs diff review で obsolete guidance が除去されている。"
+      ],
+      "proof_path": "artifacts/docs/wp-015/entrypoint-diff-review.md",
+      "dependencies": [
+        "WP-014"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "README の価値説明は削りすぎず、agent-facing guidance と user-facing overview を両立する。",
+      "execution_bundle": "X01",
+      "body_md": "## Goal\n- AGENTS.md, CONTRIBUTING.md, README.md を v5/v6 実行モデルへ同期する。\n- issue discipline と proof-first 方針を入口 docs に反映する。\n\n## Why this matters\nentry docs が古いままだと人も agent も旧モデルに引き戻される。\n\n## Parent\nFEP-010\n\n## Stream / Lane / LockWave\n- Stream: `Docs`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `S/M (500〜900)`\n\n## Crates / likely files\n- `AGENTS.md`\n- `CONTRIBUTING.md`\n- `README.md`\n- `docs`\n- `AGENTS.md`\n- `CONTRIBUTING.md`\n- `README.md`\n- `docs/`\n\n## Authority inputs\n- repo entrypoint docs\n\n## Out of scope\n- marketing copy の大改稿。\n- value examples の全面刷新。\n\n## Acceptance criteria\n- README / AGENTS / CONTRIBUTING の参照が相互に矛盾しない。\n- 新しい issue discipline と proof artifact policy が entry docs から辿れる。\n- docs diff review で obsolete guidance が除去されている。\n\n## Proof required\n- Artifact path: `artifacts/docs/wp-015/entrypoint-diff-review.md`\n\n## Dependencies\n- WP-014\n\n## Notes for Codex\n- README の価値説明は削りすぎず、agent-facing guidance と user-facing overview を両立する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Docs",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-003",
+      "type": "work_package",
+      "title": "[wp] Scaffold ADOL source tree, schema, and generated artifact boundaries",
+      "parent": "FEP-020",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1300〜1800)",
+      "target_rloc_mid": 1550,
+      "crates": [
+        "diag_rulepack",
+        "xtask",
+        "docs"
+      ],
+      "goal": [
+        "hand-edited `rules/*.json` を source-of-truth から降格",
+        "ADOL source tree と generator 境界を導入",
+        "checked-in generated artifacts の責務を定義"
+      ],
+      "proof_artifact": [
+        "`xtask` generator dry-run",
+        "source tree contract doc"
+      ],
+      "dependencies": [
+        "WP-001",
+        "WP-002"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-003A",
+        "ES-003B"
+      ],
+      "slice_reason": "ADOL source tree 導入と generator/境界 enforcement を 1 issue に詰めると、schema・xtask・checked-in artifact・docs が同時に膨らみやすい。",
+      "execution_bundle": "X02",
+      "body_md": "## Goal\n- hand-edited `rules/*.json` を source-of-truth から降格\n- ADOL source tree と generator 境界を導入\n- checked-in generated artifacts の責務を定義\n\n## Why this matters\nADOL source tree 導入と generator/境界 enforcement を 1 issue に詰めると、schema・xtask・checked-in artifact・docs が同時に膨らみやすい。\n\n## Parent Epic\nFEP-020\n\n## Stream / Lane / LockWave\n- Stream: `ADOL`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-003A`, `ES-003B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1300〜1800)`\n\n## Crates / likely files\n- diag_rulepack\n- xtask\n- docs\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- `xtask` generator dry-run\n- source tree contract doc\n\n## Dependencies\n- WP-001\n- WP-002\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "WP-007",
+      "type": "work_package",
+      "title": "[wp] Implement DiagnosticTextNormalizer phase 2: placeholderization and episode shape extraction",
+      "parent": "FEP-040",
+      "stream": "Normalize",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1300〜1800)",
+      "target_rloc_mid": 1550,
+      "crates": [
+        "diag_enrich",
+        "diag_residual_text"
+      ],
+      "goal": [
+        "semantic placeholderization",
+        "episode shape extraction",
+        "typed skeleton emission"
+      ],
+      "proof_artifact": [
+        "skeleton fixture corpus",
+        "anti-regression tests against current six families"
+      ],
+      "dependencies": [
+        "WP-006"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-007A",
+        "ES-007B"
+      ],
+      "slice_reason": "placeholderization と episode shape extraction は同じ normalizer 基盤を共有するが、実装責務と回帰面がはっきり分かれる。",
+      "execution_bundle": "X02",
+      "body_md": "## Goal\n- semantic placeholderization\n- episode shape extraction\n- typed skeleton emission\n\n## Why this matters\nplaceholderization と episode shape extraction は同じ normalizer 基盤を共有するが、実装責務と回帰面がはっきり分かれる。\n\n## Parent Epic\nFEP-040\n\n## Stream / Lane / LockWave\n- Stream: `Normalize`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-007A`, `ES-007B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1300〜1800)`\n\n## Crates / likely files\n- diag_enrich\n- diag_residual_text\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- skeleton fixture corpus\n- anti-regression tests against current six families\n\n## Dependencies\n- WP-006\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Normalize",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "ES-003A",
+      "type": "execution_slice",
+      "title": "[slice] ADOL source tree layout and schema skeleton",
+      "parent": "WP-003",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "diag_rulepack",
+        "docs"
+      ],
+      "likely_files": [
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs",
+        "diag_rulepack/src/rules.rs",
+        "diag_rulepack/src/rules_enrich.rs",
+        "diag_rulepack/src/validate.rs",
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json"
+      ],
+      "authority_inputs": [
+        "repo rules/ manifest reality",
+        "ADOL authority stack"
+      ],
+      "in_scope": [
+        "ADOL source tree の checked-in layout を導入する。",
+        "canonical family catalog / lane catalog / render profile catalog / authority stamp の schema skeleton を定義する。",
+        "source-of-truth と generated artifact の境界を docs と validate path で明示する。"
+      ],
+      "out_of_scope": [
+        "generator 実装本体。",
+        "xtask からの dry-run。"
+      ],
+      "acceptance": [
+        "`rules/adol/` 相当の source tree skeleton が導入される。",
+        "`cargo test -p diag_rulepack` が通り、schema/manifest validation の最小 smoke test が追加される。",
+        "source tree contract doc が追加される。"
+      ],
+      "proof_path": "artifacts/adol/es-003A/source-tree-contract/",
+      "dependencies": [
+        "WP-001",
+        "WP-002"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "手書き rules JSON を即時削除しない。まず authoritative source tree を立てる。",
+      "execution_bundle": "X02",
+      "body_md": "## Goal\n- ADOL source tree の checked-in layout を導入する。\n- canonical family catalog / lane catalog / render profile catalog / authority stamp の schema skeleton を定義する。\n- source-of-truth と generated artifact の境界を docs と validate path で明示する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-003\n\n## Stream / Lane / LockWave\n- Stream: `ADOL`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `diag_rulepack`\n- `docs`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n- `diag_rulepack/src/rules.rs`\n- `diag_rulepack/src/rules_enrich.rs`\n- `diag_rulepack/src/validate.rs`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n\n## Authority inputs\n- repo rules/ manifest reality\n- ADOL authority stack\n\n## Out of scope\n- generator 実装本体。\n- xtask からの dry-run。\n\n## Acceptance criteria\n- `rules/adol/` 相当の source tree skeleton が導入される。\n- `cargo test -p diag_rulepack` が通り、schema/manifest validation の最小 smoke test が追加される。\n- source tree contract doc が追加される。\n\n## Proof required\n- Artifact path: `artifacts/adol/es-003A/source-tree-contract/`\n\n## Dependencies\n- WP-001\n- WP-002\n\n## Notes for Codex\n- 手書き rules JSON を即時削除しない。まず authoritative source tree を立てる。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-007A",
+      "type": "execution_slice",
+      "title": "[slice] Normalizer: semantic placeholderization",
+      "parent": "WP-007",
+      "stream": "Normalize",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (600〜800)",
+      "target_rloc_mid": 700,
+      "crates": [
+        "diag_enrich",
+        "diag_residual_text"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_residual_text/src/lib.rs"
+      ],
+      "authority_inputs": [
+        "normalized token stream",
+        "old GCC raw text stability"
+      ],
+      "in_scope": [
+        "identifier/type/path/literal などの semantic placeholderization を導入する。",
+        "locale-stable skeleton token を出せるようにする。"
+      ],
+      "out_of_scope": [
+        "episode root/satellite grouping。",
+        "classifier predicate evaluation。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。",
+        "placeholder snapshot fixture が追加される。",
+        "現行 six-family regression が壊れない。"
+      ],
+      "proof_path": "artifacts/normalize/es-007A/placeholder-snapshots/",
+      "dependencies": [
+        "WP-006"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "placeholder 名は human-readable だが semantic に安定した粒度に固定する。",
+      "execution_bundle": "X02",
+      "body_md": "## Goal\n- identifier/type/path/literal などの semantic placeholderization を導入する。\n- locale-stable skeleton token を出せるようにする。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-007\n\n## Stream / Lane / LockWave\n- Stream: `Normalize`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (600〜800)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_residual_text`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_residual_text/src/lib.rs`\n\n## Authority inputs\n- normalized token stream\n- old GCC raw text stability\n\n## Out of scope\n- episode root/satellite grouping。\n- classifier predicate evaluation。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。\n- placeholder snapshot fixture が追加される。\n- 現行 six-family regression が壊れない。\n\n## Proof required\n- Artifact path: `artifacts/normalize/es-007A/placeholder-snapshots/`\n\n## Dependencies\n- WP-006\n\n## Notes for Codex\n- placeholder 名は human-readable だが semantic に安定した粒度に固定する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Normalize",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-003B",
+      "type": "execution_slice",
+      "title": "[slice] ADOL generator dry-run and artifact boundary enforcement",
+      "parent": "WP-003",
+      "stream": "ADOL",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (600〜800)",
+      "target_rloc_mid": 700,
+      "crates": [
+        "diag_rulepack",
+        "xtask"
+      ],
+      "likely_files": [
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs",
+        "diag_rulepack/src/rules.rs",
+        "diag_rulepack/src/rules_enrich.rs",
+        "diag_rulepack/src/validate.rs",
+        "xtask/src/main.rs",
+        "xtask/src/commands/"
+      ],
+      "authority_inputs": [
+        "ADOL source tree",
+        "generator boundary policy"
+      ],
+      "in_scope": [
+        "ADOL source tree から generated artifacts を出す dry-run/check path を実装する。",
+        "checked-in artifact boundary enforcement を validate/check に組み込む。"
+      ],
+      "out_of_scope": [
+        "family migration。",
+        "render migration。"
+      ],
+      "acceptance": [
+        "`cargo xtask adol generate --check` が動作する。",
+        "`cargo test -p diag_rulepack` と `cargo test -p xtask` が通る。",
+        "generated artifact boundary を破った場合に失敗する smoke test がある。"
+      ],
+      "proof_path": "artifacts/adol/es-003B/generator-dry-run/",
+      "dependencies": [
+        "ES-003A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "generator は deterministic output を優先し、formatting-only churn を増やさない。",
+      "execution_bundle": "X03",
+      "body_md": "## Goal\n- ADOL source tree から generated artifacts を出す dry-run/check path を実装する。\n- checked-in artifact boundary enforcement を validate/check に組み込む。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-003\n\n## Stream / Lane / LockWave\n- Stream: `ADOL`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (600〜800)`\n\n## Crates / likely files\n- `diag_rulepack`\n- `xtask`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n- `diag_rulepack/src/rules.rs`\n- `diag_rulepack/src/rules_enrich.rs`\n- `diag_rulepack/src/validate.rs`\n- `xtask/src/main.rs`\n- `xtask/src/commands/`\n\n## Authority inputs\n- ADOL source tree\n- generator boundary policy\n\n## Out of scope\n- family migration。\n- render migration。\n\n## Acceptance criteria\n- `cargo xtask adol generate --check` が動作する。\n- `cargo test -p diag_rulepack` と `cargo test -p xtask` が通る。\n- generated artifact boundary を破った場合に失敗する smoke test がある。\n\n## Proof required\n- Artifact path: `artifacts/adol/es-003B/generator-dry-run/`\n\n## Dependencies\n- ES-003A\n\n## Notes for Codex\n- generator は deterministic output を優先し、formatting-only churn を増やさない。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "ADOL",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-007B",
+      "type": "execution_slice",
+      "title": "[slice] Normalizer: episode shape extraction and typed skeleton emission",
+      "parent": "WP-007",
+      "stream": "Normalize",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "diag_enrich",
+        "diag_residual_text"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_residual_text/src/lib.rs",
+        "diag_core/src/analysis.rs"
+      ],
+      "authority_inputs": [
+        "placeholderized skeleton",
+        "episode-first model"
+      ],
+      "in_scope": [
+        "episode root/satellite grouping を抽出する。",
+        "typed skeleton emission を classifier 入力として出せるようにする。"
+      ],
+      "out_of_scope": [
+        "generic classifier engine。",
+        "render migration。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。",
+        "typed skeleton fixture corpus が追加される。",
+        "current six families に対する anti-regression snapshot が更新される。"
+      ],
+      "proof_path": "artifacts/normalize/es-007B/typed-skeleton-corpus/",
+      "dependencies": [
+        "ES-007A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "episode の境界は raw line count ではなく semantic note/root structure で切る。",
+      "execution_bundle": "X03",
+      "body_md": "## Goal\n- episode root/satellite grouping を抽出する。\n- typed skeleton emission を classifier 入力として出せるようにする。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-007\n\n## Stream / Lane / LockWave\n- Stream: `Normalize`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_residual_text`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_residual_text/src/lib.rs`\n- `diag_core/src/analysis.rs`\n\n## Authority inputs\n- placeholderized skeleton\n- episode-first model\n\n## Out of scope\n- generic classifier engine。\n- render migration。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_residual_text` が通る。\n- typed skeleton fixture corpus が追加される。\n- current six families に対する anti-regression snapshot が更新される。\n\n## Proof required\n- Artifact path: `artifacts/normalize/es-007B/typed-skeleton-corpus/`\n\n## Dependencies\n- ES-007A\n\n## Notes for Codex\n- episode の境界は raw line count ではなく semantic note/root structure で切る。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Normalize",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-008",
+      "type": "work_package",
+      "title": "[wp] Introduce generic classifier engine and predicate/capture model",
+      "parent": "FEP-050",
+      "stream": "Classify",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1300〜1800)",
+      "target_rloc_mid": 1550,
+      "crates": [
+        "diag_enrich",
+        "diag_rulepack"
+      ],
+      "goal": [
+        "current `match_family_rule` 型の hard-coded branching を generic classifier engine へ置換する土台を作る",
+        "predicate / capture / evidence model を導入"
+      ],
+      "proof_artifact": [
+        "classifier engine unit tests",
+        "rule compilation smoke tests"
+      ],
+      "dependencies": [
+        "ES-003B",
+        "ES-007B"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-008A",
+        "ES-008B"
+      ],
+      "slice_reason": "predicate/evidence model と compiled rule loading/capture binding は別々にレビューした方が事故が少ない。",
+      "execution_bundle": "X04",
+      "body_md": "## Goal\n- current `match_family_rule` 型の hard-coded branching を generic classifier engine へ置換する土台を作る\n- predicate / capture / evidence model を導入\n\n## Why this matters\npredicate/evidence model と compiled rule loading/capture binding は別々にレビューした方が事故が少ない。\n\n## Parent Epic\nFEP-050\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-008A`, `ES-008B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1300〜1800)`\n\n## Crates / likely files\n- diag_enrich\n- diag_rulepack\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- classifier engine unit tests\n- rule compilation smoke tests\n\n## Dependencies\n- ES-003B\n- ES-007B\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "WP-011",
+      "type": "work_package",
+      "title": "[wp] Add completeness_report.json emitter and PR/nightly/release gates",
+      "parent": "FEP-070",
+      "stream": "Gate",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_testkit",
+        "xtask",
+        "ci"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "xtask/src/main.rs",
+        "xtask/src/commands/",
+        "xtask/src/tests.rs",
+        "ci/"
+      ],
+      "authority_inputs": [
+        "proof policy from v5",
+        "CI contract"
+      ],
+      "in_scope": [
+        "completeness_report.json emitter を実装する。",
+        "PR / nightly / release の gate mode を分離する。",
+        "report schema と CI wiring を導入する。"
+      ],
+      "out_of_scope": [
+        "anti-collision corpus の本体追加。",
+        "lane family seed の拡大。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_testkit` と `cargo test -p xtask` が通る。",
+        "`cargo xtask completeness emit --lane sample --out artifacts/completeness/sample.json` が動作する。",
+        "CI demo 経路で PR/nightly/release の gate difference が確認できる。"
+      ],
+      "proof_path": "artifacts/completeness/sample.json",
+      "dependencies": [
+        "ES-003B",
+        "WP-004"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "report schema は release artifact として安定させる。",
+      "execution_bundle": "X04",
+      "body_md": "## Goal\n- completeness_report.json emitter を実装する。\n- PR / nightly / release の gate mode を分離する。\n- report schema と CI wiring を導入する。\n\n## Why this matters\nproof artifact を機械化しないと zero-unknown は宣言で終わる。\n\n## Parent\nFEP-070\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_testkit`\n- `xtask`\n- `ci`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `xtask/src/main.rs`\n- `xtask/src/commands/`\n- `xtask/src/tests.rs`\n- `ci/`\n\n## Authority inputs\n- proof policy from v5\n- CI contract\n\n## Out of scope\n- anti-collision corpus の本体追加。\n- lane family seed の拡大。\n\n## Acceptance criteria\n- `cargo test -p diag_testkit` と `cargo test -p xtask` が通る。\n- `cargo xtask completeness emit --lane sample --out artifacts/completeness/sample.json` が動作する。\n- CI demo 経路で PR/nightly/release の gate difference が確認できる。\n\n## Proof required\n- Artifact path: `artifacts/completeness/sample.json`\n\n## Dependencies\n- ES-003B\n- WP-004\n\n## Notes for Codex\n- report schema は release artifact として安定させる。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-013",
+      "type": "work_package",
+      "title": "[wp] Add harvest-to-candidate pipeline for ADOL row discovery",
+      "parent": "FEP-070",
+      "stream": "Corpus",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_trace",
+        "diag_testkit",
+        "xtask"
+      ],
+      "likely_files": [
+        "diag_trace/src/lib.rs",
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "xtask/src/main.rs",
+        "xtask/src/commands/",
+        "xtask/src/tests.rs"
+      ],
+      "authority_inputs": [
+        "harvest traces",
+        "ADOL row discovery"
+      ],
+      "in_scope": [
+        "harvested trace をクラスタ化し、candidate family / skeleton / lane drift report を生成する。",
+        "triage-ready な seed report を作る。",
+        "trace clustering smoke test を追加する。"
+      ],
+      "out_of_scope": [
+        "family seed の実装。",
+        "warning inventory pipeline。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_trace` と `cargo test -p xtask` が通る。",
+        "`cargo xtask trace harvest-candidates --out artifacts/harvest/candidates.json` が fixture で動作する。",
+        "candidate ledger seed report が人手 triage 可能な粒度で出力される。"
+      ],
+      "proof_path": "artifacts/harvest/candidates.json",
+      "dependencies": [
+        "WP-004",
+        "ES-007B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "cluster key は raw text literal ではなく typed skeleton を優先する。",
+      "execution_bundle": "X04",
+      "body_md": "## Goal\n- harvested trace をクラスタ化し、candidate family / skeleton / lane drift report を生成する。\n- triage-ready な seed report を作る。\n- trace clustering smoke test を追加する。\n\n## Why this matters\nharvest から candidate seed を定常的に起こせないと ADOL が新規 family を取りこぼす。\n\n## Parent\nFEP-070\n\n## Stream / Lane / LockWave\n- Stream: `Corpus`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_trace`\n- `diag_testkit`\n- `xtask`\n- `diag_trace/src/lib.rs`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `xtask/src/main.rs`\n- `xtask/src/commands/`\n- `xtask/src/tests.rs`\n\n## Authority inputs\n- harvest traces\n- ADOL row discovery\n\n## Out of scope\n- family seed の実装。\n- warning inventory pipeline。\n\n## Acceptance criteria\n- `cargo test -p diag_trace` と `cargo test -p xtask` が通る。\n- `cargo xtask trace harvest-candidates --out artifacts/harvest/candidates.json` が fixture で動作する。\n- candidate ledger seed report が人手 triage 可能な粒度で出力される。\n\n## Proof required\n- Artifact path: `artifacts/harvest/candidates.json`\n\n## Dependencies\n- WP-004\n- ES-007B\n\n## Notes for Codex\n- cluster key は raw text literal ではなく typed skeleton を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Corpus",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-008A",
+      "type": "execution_slice",
+      "title": "[slice] Classifier engine: evidence model and predicate evaluator",
+      "parent": "WP-008",
+      "stream": "Classify",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "diag_enrich",
+        "diag_rulepack"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs"
+      ],
+      "authority_inputs": [
+        "typed skeleton",
+        "ADOL predicate model"
+      ],
+      "in_scope": [
+        "EvidenceSet / predicate model を導入する。",
+        "generic predicate evaluator を実装する。"
+      ],
+      "out_of_scope": [
+        "compiled rule loading。",
+        "six family migration。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。",
+        "predicate evaluator の unit test が追加される。",
+        "rule compilation smoke test の最小 path が通る。"
+      ],
+      "proof_path": "artifacts/classify/es-008A/predicate-evaluator-tests/",
+      "dependencies": [
+        "ES-003B",
+        "ES-007B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "predicate evaluator は family 固有ロジックを持たず、generic primitive のみを追加する。",
+      "execution_bundle": "X04",
+      "body_md": "## Goal\n- EvidenceSet / predicate model を導入する。\n- generic predicate evaluator を実装する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-008\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_rulepack`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n\n## Authority inputs\n- typed skeleton\n- ADOL predicate model\n\n## Out of scope\n- compiled rule loading。\n- six family migration。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。\n- predicate evaluator の unit test が追加される。\n- rule compilation smoke test の最小 path が通る。\n\n## Proof required\n- Artifact path: `artifacts/classify/es-008A/predicate-evaluator-tests/`\n\n## Dependencies\n- ES-003B\n- ES-007B\n\n## Notes for Codex\n- predicate evaluator は family 固有ロジックを持たず、generic primitive のみを追加する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-012",
+      "type": "work_package",
+      "title": "[wp] Add anti-collision corpus schema and adversarial runner",
+      "parent": "FEP-070",
+      "stream": "Corpus",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_testkit",
+        "corpus",
+        "fuzz"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/",
+        "fuzz/"
+      ],
+      "authority_inputs": [
+        "corpus contract",
+        "negative match proof"
+      ],
+      "in_scope": [
+        "anti-collision corpus schema を first-class にする。",
+        "adversarial mutation runner を追加する。",
+        "negative match report を生成する。"
+      ],
+      "out_of_scope": [
+        "harvest candidate clustering。",
+        "lane completeness gate。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_testkit` が通る。",
+        "`cargo xtask corpus anti-collision --check` 相当の runner が失敗例と成功例を区別して出力する。",
+        "anti-collision fixture pack が checked in される。"
+      ],
+      "proof_path": "artifacts/completeness/negative-match-report.json",
+      "dependencies": [
+        "WP-011"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "random fuzz だけに依存せず、deterministic adversarial fixture を必ず持つ。",
+      "execution_bundle": "X05",
+      "body_md": "## Goal\n- anti-collision corpus schema を first-class にする。\n- adversarial mutation runner を追加する。\n- negative match report を生成する。\n\n## Why this matters\ncollision proof がないと family 追加速度より誤分類コストが勝つ。\n\n## Parent\nFEP-070\n\n## Stream / Lane / LockWave\n- Stream: `Corpus`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_testkit`\n- `corpus`\n- `fuzz`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n- `fuzz/`\n\n## Authority inputs\n- corpus contract\n- negative match proof\n\n## Out of scope\n- harvest candidate clustering。\n- lane completeness gate。\n\n## Acceptance criteria\n- `cargo test -p diag_testkit` が通る。\n- `cargo xtask corpus anti-collision --check` 相当の runner が失敗例と成功例を区別して出力する。\n- anti-collision fixture pack が checked in される。\n\n## Proof required\n- Artifact path: `artifacts/completeness/negative-match-report.json`\n\n## Dependencies\n- WP-011\n\n## Notes for Codex\n- random fuzz だけに依存せず、deterministic adversarial fixture を必ず持つ。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Corpus",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-403",
+      "type": "work_package",
+      "title": "[wp] Add C++20/23 compatibility and policy overlays",
+      "parent": "LEP-140",
+      "stream": "Classify",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "rules",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "corpus/"
+      ],
+      "authority_inputs": [
+        "standard version transitions",
+        "policy overlays"
+      ],
+      "in_scope": [
+        "C++20/23 legality transition overlay を追加する。",
+        "default/pedantic/error promotion overlays を family と切り離して定義する。"
+      ],
+      "out_of_scope": [
+        "new semantic family seed。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-overlay --out artifacts/adol/cpp20-23-overlay-diff-report.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/adol/cpp20-23-overlay-diff-report.json",
+      "dependencies": [
+        "WP-001",
+        "WP-011"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X05",
+      "body_md": "## Goal\n- C++20/23 legality transition overlay を追加する。\n- default/pedantic/error promotion overlays を family と切り離して定義する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-140\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `rules`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `corpus/`\n\n## Authority inputs\n- standard version transitions\n- policy overlays\n\n## Out of scope\n- new semantic family seed。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-overlay --out artifacts/adol/cpp20-23-overlay-diff-report.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/adol/cpp20-23-overlay-diff-report.json`\n\n## Dependencies\n- WP-001\n- WP-011\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-502",
+      "type": "work_package",
+      "title": "[wp] Build warning-option inventory to family seed pipeline",
+      "parent": "LEP-160",
+      "stream": "Probe",
+      "lock_wave": "LW50",
+      "lane": "warnings@all-gcc",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_backend_probe",
+        "xtask",
+        "rules",
+        "corpus"
+      ],
+      "likely_files": [
+        "diag_backend_probe/src/lib.rs",
+        "xtask/src/main.rs",
+        "xtask/src/commands/",
+        "xtask/src/tests.rs",
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json"
+      ],
+      "authority_inputs": [
+        "warning option inventory",
+        "GCC self-reported warnings"
+      ],
+      "in_scope": [
+        "warning inventory snapshot を取得する。",
+        "inventory から family seed candidate / overlay 候補 report を生成する。"
+      ],
+      "out_of_scope": [
+        "warning family 全実装。",
+        "analyzer path integration。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane warnings@all-gcc --scope warnings-inventory-v1 --out artifacts/warnings/inventory-seed-candidates.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/warnings/inventory-seed-candidates.json",
+      "dependencies": [
+        "WP-004",
+        "WP-013"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X05",
+      "body_md": "## Goal\n- warning inventory snapshot を取得する。\n- inventory から family seed candidate / overlay 候補 report を生成する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-160\n\n## Stream / Lane / LockWave\n- Stream: `Probe`\n- Lane: `warnings@all-gcc`\n- LockWave: `LW50`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_backend_probe`\n- `xtask`\n- `rules`\n- `corpus`\n- `diag_backend_probe/src/lib.rs`\n- `xtask/src/main.rs`\n- `xtask/src/commands/`\n- `xtask/src/tests.rs`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n\n## Authority inputs\n- warning option inventory\n- GCC self-reported warnings\n\n## Out of scope\n- warning family 全実装。\n- analyzer path integration。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane warnings@all-gcc --scope warnings-inventory-v1 --out artifacts/warnings/inventory-seed-candidates.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/warnings/inventory-seed-candidates.json`\n\n## Dependencies\n- WP-004\n- WP-013\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Probe",
+        "Lane": "warnings@all-gcc",
+        "LockWave": "LW50",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-008B",
+      "type": "execution_slice",
+      "title": "[slice] Classifier engine: capture binding and compiled rule loading",
+      "parent": "WP-008",
+      "stream": "Classify",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "diag_enrich",
+        "diag_rulepack"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs"
+      ],
+      "authority_inputs": [
+        "predicate model",
+        "compiled ADOL rules"
+      ],
+      "in_scope": [
+        "capture binding と compiled rule loading を実装する。",
+        "現行 enrich pipeline から generic engine への接続点を導入する。"
+      ],
+      "out_of_scope": [
+        "render profile migration。",
+        "新 family seed。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。",
+        "`cargo xtask adol generate --check` 相当の compiled rule loading smoke test が通る。",
+        "family hard-branch へ新規依存を増やさない。"
+      ],
+      "proof_path": "artifacts/classify/es-008B/compiled-rule-loading/",
+      "dependencies": [
+        "ES-008A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "旧 path を全面削除しなくてよいが、新 path を primary seam にする。",
+      "execution_bundle": "X05",
+      "body_md": "## Goal\n- capture binding と compiled rule loading を実装する。\n- 現行 enrich pipeline から generic engine への接続点を導入する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-008\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_rulepack`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n\n## Authority inputs\n- predicate model\n- compiled ADOL rules\n\n## Out of scope\n- render profile migration。\n- 新 family seed。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。\n- `cargo xtask adol generate --check` 相当の compiled rule loading smoke test が通る。\n- family hard-branch へ新規依存を増やさない。\n\n## Proof required\n- Artifact path: `artifacts/classify/es-008B/compiled-rule-loading/`\n\n## Dependencies\n- ES-008A\n\n## Notes for Codex\n- 旧 path を全面削除しなくてよいが、新 path を primary seam にする。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-009",
+      "type": "work_package",
+      "title": "[wp] Migrate current six families into ADOL-generated classifier rules",
+      "parent": "FEP-050",
+      "stream": "Classify",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "diag_enrich",
+        "diag_rulepack",
+        "rules"
+      ],
+      "likely_files": [
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs",
+        "diag_enrich/src/action_hint.rs",
+        "diag_enrich/src/ownership.rs",
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs"
+      ],
+      "authority_inputs": [
+        "existing six shipped families",
+        "generated ADOL compiler path"
+      ],
+      "in_scope": [
+        "現行 six families を generated classifier rule へ移植する。",
+        "parity report を作り、現状挙動との差分を可視化する。",
+        "unknown/passthrough 周りを semantic family ではなく degradation path として整理する。"
+      ],
+      "out_of_scope": [
+        "新 family の大量追加。",
+        "render profile migration の完了。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。",
+        "`cargo xtask adol generate --check` 相当の rule compilation smoke test が通る。",
+        "parity report が生成され、既存 regression suite が green になる。"
+      ],
+      "proof_path": "artifacts/classify/wp-009/parity-report.json",
+      "dependencies": [
+        "ES-008B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "既存挙動からの差分は intentional / regression を明確に分ける。",
+      "execution_bundle": "X06",
+      "body_md": "## Goal\n- 現行 six families を generated classifier rule へ移植する。\n- parity report を作り、現状挙動との差分を可視化する。\n- unknown/passthrough 周りを semantic family ではなく degradation path として整理する。\n\n## Why this matters\n既存 six families を新基盤へ移せないと、移行が永久に二重実装になる。\n\n## Parent\nFEP-050\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `diag_enrich`\n- `diag_rulepack`\n- `rules`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n- `diag_enrich/src/action_hint.rs`\n- `diag_enrich/src/ownership.rs`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n\n## Authority inputs\n- existing six shipped families\n- generated ADOL compiler path\n\n## Out of scope\n- 新 family の大量追加。\n- render profile migration の完了。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_rulepack` が通る。\n- `cargo xtask adol generate --check` 相当の rule compilation smoke test が通る。\n- parity report が生成され、既存 regression suite が green になる。\n\n## Proof required\n- Artifact path: `artifacts/classify/wp-009/parity-report.json`\n\n## Dependencies\n- ES-008B\n\n## Notes for Codex\n- 既存挙動からの差分は intentional / regression を明確に分ける。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-010",
+      "type": "work_package",
+      "title": "[wp] Replace RendererFamilyKind with RenderProfileId and generated render policies",
+      "parent": "FEP-060",
+      "stream": "Render",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1200〜1700)",
+      "target_rloc_mid": 1450,
+      "crates": [
+        "diag_rulepack",
+        "diag_render"
+      ],
+      "goal": [
+        "`RendererFamilyKind` 依存を外し、render profile ベースへ移行",
+        "family / render / severity / legality の分離を renderer に反映"
+      ],
+      "proof_artifact": [
+        "render policy compile tests",
+        "golden output diff review"
+      ],
+      "dependencies": [
+        "ES-003B",
+        "WP-009"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-010A",
+        "ES-010B"
+      ],
+      "slice_reason": "RenderProfileId 導入と renderer switch-over を分けると、golden diff を安全に観察できる。",
+      "execution_bundle": "X07",
+      "body_md": "## Goal\n- `RendererFamilyKind` 依存を外し、render profile ベースへ移行\n- family / render / severity / legality の分離を renderer に反映\n\n## Why this matters\nRenderProfileId 導入と renderer switch-over を分けると、golden diff を安全に観察できる。\n\n## Parent Epic\nFEP-060\n\n## Stream / Lane / LockWave\n- Stream: `Render`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-010A`, `ES-010B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1200〜1700)`\n\n## Crates / likely files\n- diag_rulepack\n- diag_render\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- render policy compile tests\n- golden output diff review\n\n## Dependencies\n- ES-003B\n- WP-009\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Render",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "ES-010A",
+      "type": "execution_slice",
+      "title": "[slice] Render migration: RenderProfileId introduction",
+      "parent": "WP-010",
+      "stream": "Render",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (600〜800)",
+      "target_rloc_mid": 700,
+      "crates": [
+        "diag_rulepack",
+        "diag_render"
+      ],
+      "likely_files": [
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs",
+        "diag_rulepack/src/rules.rs",
+        "diag_rulepack/src/rules_enrich.rs",
+        "diag_rulepack/src/validate.rs",
+        "diag_render/src/lib.rs",
+        "diag_render/src/family.rs"
+      ],
+      "authority_inputs": [
+        "render profile catalog",
+        "current renderer seams"
+      ],
+      "in_scope": [
+        "RenderProfileId と generated render policy schema を導入する。",
+        "renderer が RenderProfileId を受け取れる seam を用意する。"
+      ],
+      "out_of_scope": [
+        "全面 switch-over。",
+        "golden output の大規模変更。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_rulepack` と `cargo test -p diag_render` が通る。",
+        "render policy compile test が追加される。",
+        "RenderProfileId を通る最小サンプルが fixture で確認できる。"
+      ],
+      "proof_path": "artifacts/render/es-010A/render-profile-schema/",
+      "dependencies": [
+        "ES-003B",
+        "WP-009"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "この slice ではまだ RendererFamilyKind を main path から外しきらなくてよい。",
+      "execution_bundle": "X07",
+      "body_md": "## Goal\n- RenderProfileId と generated render policy schema を導入する。\n- renderer が RenderProfileId を受け取れる seam を用意する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-010\n\n## Stream / Lane / LockWave\n- Stream: `Render`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (600〜800)`\n\n## Crates / likely files\n- `diag_rulepack`\n- `diag_render`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n- `diag_rulepack/src/rules.rs`\n- `diag_rulepack/src/rules_enrich.rs`\n- `diag_rulepack/src/validate.rs`\n- `diag_render/src/lib.rs`\n- `diag_render/src/family.rs`\n\n## Authority inputs\n- render profile catalog\n- current renderer seams\n\n## Out of scope\n- 全面 switch-over。\n- golden output の大規模変更。\n\n## Acceptance criteria\n- `cargo test -p diag_rulepack` と `cargo test -p diag_render` が通る。\n- render policy compile test が追加される。\n- RenderProfileId を通る最小サンプルが fixture で確認できる。\n\n## Proof required\n- Artifact path: `artifacts/render/es-010A/render-profile-schema/`\n\n## Dependencies\n- ES-003B\n- WP-009\n\n## Notes for Codex\n- この slice ではまだ RendererFamilyKind を main path から外しきらなくてよい。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Render",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-010B",
+      "type": "execution_slice",
+      "title": "[slice] Render migration: policy generation and renderer switch-over",
+      "parent": "WP-010",
+      "stream": "Render",
+      "lock_wave": "LW00",
+      "lane": null,
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "diag_rulepack",
+        "diag_render"
+      ],
+      "likely_files": [
+        "diag_rulepack/src/lib.rs",
+        "diag_rulepack/src/manifest.rs",
+        "diag_rulepack/src/rules.rs",
+        "diag_rulepack/src/rules_enrich.rs",
+        "diag_rulepack/src/validate.rs",
+        "diag_render/src/lib.rs",
+        "diag_render/src/family.rs"
+      ],
+      "authority_inputs": [
+        "generated render policies",
+        "golden output diff"
+      ],
+      "in_scope": [
+        "generated render policies を renderer main path に接続する。",
+        "RendererFamilyKind 依存を primary path から外す。"
+      ],
+      "out_of_scope": [
+        "family seed の追加。",
+        "toolchain/analyzer special cases の追加。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_rulepack` と `cargo test -p diag_render` が通る。",
+        "golden output diff review が生成される。",
+        "既存 six-family path が RenderProfileId 経由で描画される。"
+      ],
+      "proof_path": "artifacts/render/es-010B/golden-diff-review/",
+      "dependencies": [
+        "ES-010A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "degradation/fallback path を accidental regress させない。",
+      "execution_bundle": "X08",
+      "body_md": "## Goal\n- generated render policies を renderer main path に接続する。\n- RendererFamilyKind 依存を primary path から外す。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-010\n\n## Stream / Lane / LockWave\n- Stream: `Render`\n- Lane: `foundation`\n- LockWave: `LW00`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `diag_rulepack`\n- `diag_render`\n- `diag_rulepack/src/lib.rs`\n- `diag_rulepack/src/manifest.rs`\n- `diag_rulepack/src/rules.rs`\n- `diag_rulepack/src/rules_enrich.rs`\n- `diag_rulepack/src/validate.rs`\n- `diag_render/src/lib.rs`\n- `diag_render/src/family.rs`\n\n## Authority inputs\n- generated render policies\n- golden output diff\n\n## Out of scope\n- family seed の追加。\n- toolchain/analyzer special cases の追加。\n\n## Acceptance criteria\n- `cargo test -p diag_rulepack` と `cargo test -p diag_render` が通る。\n- golden output diff review が生成される。\n- 既存 six-family path が RenderProfileId 経由で描画される。\n\n## Proof required\n- Artifact path: `artifacts/render/es-010B/golden-diff-review/`\n\n## Dependencies\n- ES-010A\n\n## Notes for Codex\n- degradation/fallback path を accidental regress させない。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Render",
+        "Lane": "",
+        "LockWave": "LW00",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-101",
+      "type": "work_package",
+      "title": "[wp] Seed C preprocessing families batch 1 across GCC 9–15",
+      "parent": "LEP-110",
+      "stream": "Classify",
+      "lock_wave": "LW10",
+      "lane": "c@reference@gcc9-15",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_residual_text",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C language diagnostics surface",
+        "GCC structured/raw diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C 前処理系の batch 1 family を ADOL に seed する。",
+        "GCC 9–15 reference lanes で representative corpus を追加する。",
+        "必要に応じ residual_text 側で補助 recognizer を入れる。",
+        "主な render profile: `include_chain_error`, `simple_pp_directive_error`。"
+      ],
+      "out_of_scope": [
+        "name/type family へ踏み込まない。",
+        "legacy raw copy のみで終わらせない。",
+        "toolchain/system header package 問題は WP-501 に送る。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `c.pp.include_not_found`, `c.pp.directive.expected_filename`, `c.pp.directive.unterminated_conditional`, `c.pp.directive.else_without_if`, `c.pp.directive.endif_without_if`, `c.pp.macro.paste_invalid_token`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-preprocess-batch1 --out artifacts/completeness/c-reference-gcc9-15.preprocess-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/c-reference-gcc9-15.preprocess-batch1.json",
+      "dependencies": [
+        "ES-008B",
+        "ES-010B",
+        "WP-012"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "c.pp.include_not_found",
+        "c.pp.directive.expected_filename",
+        "c.pp.directive.unterminated_conditional",
+        "c.pp.directive.else_without_if",
+        "c.pp.directive.endif_without_if",
+        "c.pp.macro.paste_invalid_token"
+      ],
+      "render_profiles": [
+        "include_chain_error",
+        "simple_pp_directive_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- C 前処理系の batch 1 family を ADOL に seed する。\n- GCC 9–15 reference lanes で representative corpus を追加する。\n- 必要に応じ residual_text 側で補助 recognizer を入れる。\n- 主な render profile: `include_chain_error`, `simple_pp_directive_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-110\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `c@reference@gcc9-15`\n- LockWave: `LW10`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_residual_text`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C language diagnostics surface\n- GCC structured/raw diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `c.pp.include_not_found`\n- `c.pp.directive.expected_filename`\n- `c.pp.directive.unterminated_conditional`\n- `c.pp.directive.else_without_if`\n- `c.pp.directive.endif_without_if`\n- `c.pp.macro.paste_invalid_token`\n\n## Render profiles\n- `include_chain_error`\n- `simple_pp_directive_error`\n\n## Out of scope\n- name/type family へ踏み込まない。\n- legacy raw copy のみで終わらせない。\n- toolchain/system header package 問題は WP-501 に送る。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `c.pp.include_not_found`, `c.pp.directive.expected_filename`, `c.pp.directive.unterminated_conditional`, `c.pp.directive.else_without_if`, `c.pp.directive.endif_without_if`, `c.pp.macro.paste_invalid_token`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-preprocess-batch1 --out artifacts/completeness/c-reference-gcc9-15.preprocess-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/c-reference-gcc9-15.preprocess-batch1.json`\n\n## Dependencies\n- ES-008B\n- ES-010B\n- WP-012\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "c@reference@gcc9-15",
+        "LockWave": "LW10",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-102",
+      "type": "work_package",
+      "title": "[wp] Seed C name and type families batch 1 across GCC 9–15",
+      "parent": "LEP-110",
+      "stream": "Classify",
+      "lock_wave": "LW10",
+      "lane": "c@reference@gcc9-15",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C language diagnostics surface",
+        "GCC structured/raw diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C name/type 系 batch 1 family を ADOL に seed する。",
+        "`did you mean` や header hint を action hint として持ち上げる下地を整える。",
+        "member lookup の shared render shape を固定する。",
+        "主な render profile: `simple_symbol_error`, `member_lookup_error`。"
+      ],
+      "out_of_scope": [
+        "call arity や redeclaration をここで扱わない。",
+        "C++ lookup family を混ぜない。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `c.name.undeclared_identifier`, `c.type.unknown_type_name`, `c.type.incomplete_type_storage_size_unknown`, `c.member.no_such_field`, `c.member.request_for_member_in_non_aggregate`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-name-type-batch1 --out artifacts/completeness/c-reference-gcc9-15.name-type-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/c-reference-gcc9-15.name-type-batch1.json",
+      "dependencies": [
+        "ES-008B",
+        "ES-010B",
+        "WP-012"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "c.name.undeclared_identifier",
+        "c.type.unknown_type_name",
+        "c.type.incomplete_type_storage_size_unknown",
+        "c.member.no_such_field",
+        "c.member.request_for_member_in_non_aggregate"
+      ],
+      "render_profiles": [
+        "simple_symbol_error",
+        "member_lookup_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- C name/type 系 batch 1 family を ADOL に seed する。\n- `did you mean` や header hint を action hint として持ち上げる下地を整える。\n- member lookup の shared render shape を固定する。\n- 主な render profile: `simple_symbol_error`, `member_lookup_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-110\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `c@reference@gcc9-15`\n- LockWave: `LW10`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C language diagnostics surface\n- GCC structured/raw diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `c.name.undeclared_identifier`\n- `c.type.unknown_type_name`\n- `c.type.incomplete_type_storage_size_unknown`\n- `c.member.no_such_field`\n- `c.member.request_for_member_in_non_aggregate`\n\n## Render profiles\n- `simple_symbol_error`\n- `member_lookup_error`\n\n## Out of scope\n- call arity や redeclaration をここで扱わない。\n- C++ lookup family を混ぜない。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `c.name.undeclared_identifier`, `c.type.unknown_type_name`, `c.type.incomplete_type_storage_size_unknown`, `c.member.no_such_field`, `c.member.request_for_member_in_non_aggregate`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-name-type-batch1 --out artifacts/completeness/c-reference-gcc9-15.name-type-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/c-reference-gcc9-15.name-type-batch1.json`\n\n## Dependencies\n- ES-008B\n- ES-010B\n- WP-012\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "c@reference@gcc9-15",
+        "LockWave": "LW10",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-103",
+      "type": "work_package",
+      "title": "[wp] Seed C declaration and call families batch 1 across GCC 9–15",
+      "parent": "LEP-110",
+      "stream": "Classify",
+      "lock_wave": "LW10",
+      "lane": "c@reference@gcc9-15",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C language diagnostics surface",
+        "GCC structured/raw diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C declaration/call 系 batch 1 family を ADOL に seed する。",
+        "argument arity と declaration conflict を shared render profile に整理する。",
+        "主な render profile: `call_signature_error`, `declaration_conflict_error`。"
+      ],
+      "out_of_scope": [
+        "pointer/integer conversion family。",
+        "C++ overload resolution。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `c.decl.implicit_function_declaration`, `c.call.too_few_arguments`, `c.call.too_many_arguments`, `c.decl.conflicting_types`, `c.decl.redeclaration_incompatible`, `c.call.argument_type_incompatible`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-decl-call-batch1 --out artifacts/completeness/c-reference-gcc9-15.decl-call-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/c-reference-gcc9-15.decl-call-batch1.json",
+      "dependencies": [
+        "ES-008B",
+        "ES-010B",
+        "WP-012"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "c.decl.implicit_function_declaration",
+        "c.call.too_few_arguments",
+        "c.call.too_many_arguments",
+        "c.decl.conflicting_types",
+        "c.decl.redeclaration_incompatible",
+        "c.call.argument_type_incompatible"
+      ],
+      "render_profiles": [
+        "call_signature_error",
+        "declaration_conflict_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- C declaration/call 系 batch 1 family を ADOL に seed する。\n- argument arity と declaration conflict を shared render profile に整理する。\n- 主な render profile: `call_signature_error`, `declaration_conflict_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-110\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `c@reference@gcc9-15`\n- LockWave: `LW10`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C language diagnostics surface\n- GCC structured/raw diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `c.decl.implicit_function_declaration`\n- `c.call.too_few_arguments`\n- `c.call.too_many_arguments`\n- `c.decl.conflicting_types`\n- `c.decl.redeclaration_incompatible`\n- `c.call.argument_type_incompatible`\n\n## Render profiles\n- `call_signature_error`\n- `declaration_conflict_error`\n\n## Out of scope\n- pointer/integer conversion family。\n- C++ overload resolution。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `c.decl.implicit_function_declaration`, `c.call.too_few_arguments`, `c.call.too_many_arguments`, `c.decl.conflicting_types`, `c.decl.redeclaration_incompatible`, `c.call.argument_type_incompatible`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-decl-call-batch1 --out artifacts/completeness/c-reference-gcc9-15.decl-call-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/c-reference-gcc9-15.decl-call-batch1.json`\n\n## Dependencies\n- ES-008B\n- ES-010B\n- WP-012\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "c@reference@gcc9-15",
+        "LockWave": "LW10",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-104",
+      "type": "work_package",
+      "title": "[wp] Seed C expression, conversion, and control families batch 1 across GCC 9–15",
+      "parent": "LEP-110",
+      "stream": "Classify",
+      "lock_wave": "LW10",
+      "lane": "c@reference@gcc9-15",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C language diagnostics surface",
+        "GCC structured/raw diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C expression/conversion/control 系 batch 1 family を ADOL に seed する。",
+        "syntax-ish render と semantic mismatch render の境界を固める。",
+        "主な render profile: `syntaxish_expression_error`, `control_flow_misuse_error`。"
+      ],
+      "out_of_scope": [
+        "warning-only signedness families。",
+        "linker/system errors。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `c.expr.invalid_operands_binary`, `c.expr.assignment_incompatible_types`, `c.expr.return_type_incompatible`, `c.expr.pointer_integer_conversion`, `c.control.break_not_in_loop_or_switch`, `c.control.continue_not_in_loop`, `c.control.case_not_in_switch`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-expr-control-batch1 --out artifacts/completeness/c-reference-gcc9-15.expr-control-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/c-reference-gcc9-15.expr-control-batch1.json",
+      "dependencies": [
+        "ES-008B",
+        "ES-010B",
+        "WP-012"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "c.expr.invalid_operands_binary",
+        "c.expr.assignment_incompatible_types",
+        "c.expr.return_type_incompatible",
+        "c.expr.pointer_integer_conversion",
+        "c.control.break_not_in_loop_or_switch",
+        "c.control.continue_not_in_loop",
+        "c.control.case_not_in_switch"
+      ],
+      "render_profiles": [
+        "syntaxish_expression_error",
+        "control_flow_misuse_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- C expression/conversion/control 系 batch 1 family を ADOL に seed する。\n- syntax-ish render と semantic mismatch render の境界を固める。\n- 主な render profile: `syntaxish_expression_error`, `control_flow_misuse_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-110\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `c@reference@gcc9-15`\n- LockWave: `LW10`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C language diagnostics surface\n- GCC structured/raw diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `c.expr.invalid_operands_binary`\n- `c.expr.assignment_incompatible_types`\n- `c.expr.return_type_incompatible`\n- `c.expr.pointer_integer_conversion`\n- `c.control.break_not_in_loop_or_switch`\n- `c.control.continue_not_in_loop`\n- `c.control.case_not_in_switch`\n\n## Render profiles\n- `syntaxish_expression_error`\n- `control_flow_misuse_error`\n\n## Out of scope\n- warning-only signedness families。\n- linker/system errors。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `c.expr.invalid_operands_binary`, `c.expr.assignment_incompatible_types`, `c.expr.return_type_incompatible`, `c.expr.pointer_integer_conversion`, `c.control.break_not_in_loop_or_switch`, `c.control.continue_not_in_loop`, `c.control.case_not_in_switch`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-expr-control-batch1 --out artifacts/completeness/c-reference-gcc9-15.expr-control-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/c-reference-gcc9-15.expr-control-batch1.json`\n\n## Dependencies\n- ES-008B\n- ES-010B\n- WP-012\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "c@reference@gcc9-15",
+        "LockWave": "LW10",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-501",
+      "type": "work_package",
+      "title": "[wp] Expand toolchain, driver, linker, and system taxonomy v2 across all GCC",
+      "parent": "LEP-150",
+      "stream": "Classify",
+      "lock_wave": "LW50",
+      "lane": "toolchain@all-gcc",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_residual_text",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "toolchain/system diagnostics",
+        "GCC raw/structured text",
+        "corpus"
+      ],
+      "in_scope": [
+        "toolchain/driver/linker/system taxonomy v2 を seed する。",
+        "language-core と toolchain/system を family レベルで分離する。",
+        "主な render profile: `toolchain_system_error`, `linker_resolution_error`。"
+      ],
+      "out_of_scope": [
+        "warning option inventory。",
+        "analyzer CWE integration。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `toolchain.driver.command_not_found`, `toolchain.driver.cannot_execute_subprogram`, `toolchain.linker.undefined_reference`, `toolchain.linker.multiple_definition`, `toolchain.linker.library_not_found`, `toolchain.sysroot.header_not_found`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane toolchain@all-gcc --scope toolchain-v2 --out artifacts/classify/toolchain-v2-regression-pack/` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/classify/toolchain-v2-regression-pack/",
+      "dependencies": [
+        "WP-009",
+        "ES-010B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "toolchain.driver.command_not_found",
+        "toolchain.driver.cannot_execute_subprogram",
+        "toolchain.linker.undefined_reference",
+        "toolchain.linker.multiple_definition",
+        "toolchain.linker.library_not_found",
+        "toolchain.sysroot.header_not_found"
+      ],
+      "render_profiles": [
+        "toolchain_system_error",
+        "linker_resolution_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- toolchain/driver/linker/system taxonomy v2 を seed する。\n- language-core と toolchain/system を family レベルで分離する。\n- 主な render profile: `toolchain_system_error`, `linker_resolution_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-150\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `toolchain@all-gcc`\n- LockWave: `LW50`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_residual_text`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- toolchain/system diagnostics\n- GCC raw/structured text\n- corpus\n\n## Canonical family IDs\n- `toolchain.driver.command_not_found`\n- `toolchain.driver.cannot_execute_subprogram`\n- `toolchain.linker.undefined_reference`\n- `toolchain.linker.multiple_definition`\n- `toolchain.linker.library_not_found`\n- `toolchain.sysroot.header_not_found`\n\n## Render profiles\n- `toolchain_system_error`\n- `linker_resolution_error`\n\n## Out of scope\n- warning option inventory。\n- analyzer CWE integration。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `toolchain.driver.command_not_found`, `toolchain.driver.cannot_execute_subprogram`, `toolchain.linker.undefined_reference`, `toolchain.linker.multiple_definition`, `toolchain.linker.library_not_found`, `toolchain.sysroot.header_not_found`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane toolchain@all-gcc --scope toolchain-v2 --out artifacts/classify/toolchain-v2-regression-pack/` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/classify/toolchain-v2-regression-pack/`\n\n## Dependencies\n- WP-009\n- ES-010B\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "toolchain@all-gcc",
+        "LockWave": "LW50",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-503",
+      "type": "work_package",
+      "title": "[wp] Add analyzer path and CWE-aware family integration",
+      "parent": "LEP-160",
+      "stream": "Classify",
+      "lock_wave": "LW50",
+      "lane": "analyzer@all-gcc",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "analyzer structured metadata",
+        "CWE/path diagnostics"
+      ],
+      "in_scope": [
+        "analyzer-specific metadata/CWE/path diagnostics を taxonomy と render profile に統合する。",
+        "主な render profile: `analyzer_path_error`。"
+      ],
+      "out_of_scope": [
+        "一般 warning inventory。",
+        "toolchain/system taxonomy。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `analyzer.null_dereference`, `analyzer.use_after_free`, `analyzer.double_free`, `analyzer.shift_count_overflow`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane analyzer@all-gcc --scope analyzer-v1 --out artifacts/analyzer/regression-pack/` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/analyzer/regression-pack/",
+      "dependencies": [
+        "WP-004",
+        "ES-010B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "analyzer.null_dereference",
+        "analyzer.use_after_free",
+        "analyzer.double_free",
+        "analyzer.shift_count_overflow"
+      ],
+      "render_profiles": [
+        "analyzer_path_error"
+      ],
+      "execution_bundle": "X09",
+      "body_md": "## Goal\n- analyzer-specific metadata/CWE/path diagnostics を taxonomy と render profile に統合する。\n- 主な render profile: `analyzer_path_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-160\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `analyzer@all-gcc`\n- LockWave: `LW50`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_render`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- analyzer structured metadata\n- CWE/path diagnostics\n\n## Canonical family IDs\n- `analyzer.null_dereference`\n- `analyzer.use_after_free`\n- `analyzer.double_free`\n- `analyzer.shift_count_overflow`\n\n## Render profiles\n- `analyzer_path_error`\n\n## Out of scope\n- 一般 warning inventory。\n- toolchain/system taxonomy。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `analyzer.null_dereference`, `analyzer.use_after_free`, `analyzer.double_free`, `analyzer.shift_count_overflow`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane analyzer@all-gcc --scope analyzer-v1 --out artifacts/analyzer/regression-pack/` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/analyzer/regression-pack/`\n\n## Dependencies\n- WP-004\n- ES-010B\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "analyzer@all-gcc",
+        "LockWave": "LW50",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-105",
+      "type": "work_package",
+      "title": "[wp] Lock proof for C core reference lanes across GCC 9–15",
+      "parent": "LEP-110",
+      "stream": "Gate",
+      "lock_wave": "LW10",
+      "lane": "c@reference@gcc9-15",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_testkit",
+        "corpus",
+        "ci"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/",
+        "ci/"
+      ],
+      "authority_inputs": [
+        "completeness gate",
+        "Track A seeded families"
+      ],
+      "in_scope": [
+        "Track A seeded families を locked lane 条件に乗せる。",
+        "unknown/collision/fallback 条件を gate 化する。"
+      ],
+      "out_of_scope": [
+        "新 family の追加。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-reference-locked --out artifacts/completeness/c-reference-gcc9-15.locked.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/c-reference-gcc9-15.locked.json",
+      "dependencies": [
+        "WP-101",
+        "WP-102",
+        "WP-103",
+        "WP-104"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X10",
+      "body_md": "## Goal\n- Track A seeded families を locked lane 条件に乗せる。\n- unknown/collision/fallback 条件を gate 化する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-110\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `c@reference@gcc9-15`\n- LockWave: `LW10`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_testkit`\n- `corpus`\n- `ci`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n- `ci/`\n\n## Authority inputs\n- completeness gate\n- Track A seeded families\n\n## Out of scope\n- 新 family の追加。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane c@reference@gcc9-15 --scope c-reference-locked --out artifacts/completeness/c-reference-gcc9-15.locked.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/c-reference-gcc9-15.locked.json`\n\n## Dependencies\n- WP-101\n- WP-102\n- WP-103\n- WP-104\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "c@reference@gcc9-15",
+        "LockWave": "LW10",
+        "Owner Mode": "agent",
+        "Lock Target": "locked"
+      }
+    },
+    {
+      "id": "WP-504",
+      "type": "work_package",
+      "title": "[wp] Lock proof for toolchain, warnings, and analyzer tracks",
+      "parent": "LEP-160",
+      "stream": "Gate",
+      "lock_wave": "LW50",
+      "lane": "toolchain_warnings_analyzer@all-gcc",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_testkit",
+        "corpus",
+        "ci"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/",
+        "ci/"
+      ],
+      "authority_inputs": [
+        "completeness gate",
+        "toolchain/warnings/analyzer tracks"
+      ],
+      "in_scope": [
+        "toolchain/warnings/analyzer 系 lane を release gate に乗せる。"
+      ],
+      "out_of_scope": [
+        "新 family の追加。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane toolchain_warnings_analyzer@all-gcc --scope toolchain-warnings-analyzer-locked --out artifacts/completeness/toolchain-warnings-analyzer.locked.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/toolchain-warnings-analyzer.locked.json",
+      "dependencies": [
+        "WP-501",
+        "WP-502",
+        "WP-503"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X10",
+      "body_md": "## Goal\n- toolchain/warnings/analyzer 系 lane を release gate に乗せる。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-160\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `toolchain_warnings_analyzer@all-gcc`\n- LockWave: `LW50`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_testkit`\n- `corpus`\n- `ci`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n- `ci/`\n\n## Authority inputs\n- completeness gate\n- toolchain/warnings/analyzer tracks\n\n## Out of scope\n- 新 family の追加。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane toolchain_warnings_analyzer@all-gcc --scope toolchain-warnings-analyzer-locked --out artifacts/completeness/toolchain-warnings-analyzer.locked.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/toolchain-warnings-analyzer.locked.json`\n\n## Dependencies\n- WP-501\n- WP-502\n- WP-503\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "toolchain_warnings_analyzer@all-gcc",
+        "LockWave": "LW50",
+        "Owner Mode": "agent",
+        "Lock Target": "locked"
+      }
+    },
+    {
+      "id": "WP-201",
+      "type": "work_package",
+      "title": "[wp] Seed C++03/11 lookup and include families on GCC 9–12",
+      "parent": "LEP-120",
+      "stream": "Classify",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++03/11 diagnostics",
+        "GCC structured/raw diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C++03/11 lookup/include 系 batch 1 family を seed する。",
+        "std symbol missing header を family/action-hint 境界で正しく整理する。",
+        "主な render profile: `simple_symbol_error`, `member_lookup_error`, `include_action_hint`。"
+      ],
+      "out_of_scope": [
+        "overload/candidate-note 圏。",
+        "template deduction 圏。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.lookup.undeclared_identifier`, `cpp.lookup.name_not_a_member_of_namespace`, `cpp.lookup.no_member_named`, `cpp.lookup.type_name_not_declared`, `cpp.lookup.std_symbol_missing_header`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-lookup-batch1 --out artifacts/completeness/cpp03-11-gcc9-12.lookup-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp03-11-gcc9-12.lookup-batch1.json",
+      "dependencies": [
+        "WP-102",
+        "WP-105"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "cpp.lookup.undeclared_identifier",
+        "cpp.lookup.name_not_a_member_of_namespace",
+        "cpp.lookup.no_member_named",
+        "cpp.lookup.type_name_not_declared",
+        "cpp.lookup.std_symbol_missing_header"
+      ],
+      "render_profiles": [
+        "simple_symbol_error",
+        "member_lookup_error",
+        "include_action_hint"
+      ],
+      "execution_bundle": "X11",
+      "body_md": "## Goal\n- C++03/11 lookup/include 系 batch 1 family を seed する。\n- std symbol missing header を family/action-hint 境界で正しく整理する。\n- 主な render profile: `simple_symbol_error`, `member_lookup_error`, `include_action_hint`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-120\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++03/11 diagnostics\n- GCC structured/raw diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `cpp.lookup.undeclared_identifier`\n- `cpp.lookup.name_not_a_member_of_namespace`\n- `cpp.lookup.no_member_named`\n- `cpp.lookup.type_name_not_declared`\n- `cpp.lookup.std_symbol_missing_header`\n\n## Render profiles\n- `simple_symbol_error`\n- `member_lookup_error`\n- `include_action_hint`\n\n## Out of scope\n- overload/candidate-note 圏。\n- template deduction 圏。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.lookup.undeclared_identifier`, `cpp.lookup.name_not_a_member_of_namespace`, `cpp.lookup.no_member_named`, `cpp.lookup.type_name_not_declared`, `cpp.lookup.std_symbol_missing_header`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-lookup-batch1 --out artifacts/completeness/cpp03-11-gcc9-12.lookup-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp03-11-gcc9-12.lookup-batch1.json`\n\n## Dependencies\n- WP-102\n- WP-105\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-202",
+      "type": "work_package",
+      "title": "[wp] Seed C++03/11 overload and candidate-note families on GCC 9–12",
+      "parent": "LEP-120",
+      "stream": "Classify",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++03/11 overload diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C++03/11 overload/candidate-note batch 1 family を seed する。",
+        "candidate note compression の最小形を導入する。",
+        "主な render profile: `candidate_list_error`。"
+      ],
+      "out_of_scope": [
+        "template deduction root-cause 圏。",
+        "concept/constraint 圏。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.overload.no_matching_function`, `cpp.overload.candidate_not_viable_conversion`, `cpp.overload.ambiguous_call`, `cpp.overload.no_viable_constructor`, `cpp.overload.no_matching_operator`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-overload-batch1 --out artifacts/render/cpp03-11-overload-regression-pack/` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/render/cpp03-11-overload-regression-pack/",
+      "dependencies": [
+        "ES-010B",
+        "WP-105"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "cpp.overload.no_matching_function",
+        "cpp.overload.candidate_not_viable_conversion",
+        "cpp.overload.ambiguous_call",
+        "cpp.overload.no_viable_constructor",
+        "cpp.overload.no_matching_operator"
+      ],
+      "render_profiles": [
+        "candidate_list_error"
+      ],
+      "execution_bundle": "X11",
+      "body_md": "## Goal\n- C++03/11 overload/candidate-note batch 1 family を seed する。\n- candidate note compression の最小形を導入する。\n- 主な render profile: `candidate_list_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-120\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_render`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++03/11 overload diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `cpp.overload.no_matching_function`\n- `cpp.overload.candidate_not_viable_conversion`\n- `cpp.overload.ambiguous_call`\n- `cpp.overload.no_viable_constructor`\n- `cpp.overload.no_matching_operator`\n\n## Render profiles\n- `candidate_list_error`\n\n## Out of scope\n- template deduction root-cause 圏。\n- concept/constraint 圏。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.overload.no_matching_function`, `cpp.overload.candidate_not_viable_conversion`, `cpp.overload.ambiguous_call`, `cpp.overload.no_viable_constructor`, `cpp.overload.no_matching_operator`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-overload-batch1 --out artifacts/render/cpp03-11-overload-regression-pack/` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/render/cpp03-11-overload-regression-pack/`\n\n## Dependencies\n- ES-010B\n- WP-105\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-203",
+      "type": "work_package",
+      "title": "[wp] Seed C++03/11 template deduction and core template-note families on GCC 9–12",
+      "parent": "LEP-120",
+      "stream": "Classify",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1200〜1700)",
+      "target_rloc_mid": 1450,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "goal": [
+        "template argument deduction failures",
+        "substitution-related note chains",
+        "root cause extraction from candidate/template note stacks"
+      ],
+      "proof_artifact": [
+        "template trace compression pack"
+      ],
+      "dependencies": [
+        "ES-007B",
+        "ES-010B",
+        "WP-105"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-203A",
+        "ES-203B"
+      ],
+      "slice_reason": "template root-cause 抽出と note compression/render 変更を分けると、分類と表示の故障点を切り分けやすい。",
+      "execution_bundle": "X11",
+      "body_md": "## Goal\n- template argument deduction failures\n- substitution-related note chains\n- root cause extraction from candidate/template note stacks\n\n## Why this matters\ntemplate root-cause 抽出と note compression/render 変更を分けると、分類と表示の故障点を切り分けやすい。\n\n## Parent Epic\nLEP-120\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-203A`, `ES-203B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1200〜1700)`\n\n## Crates / likely files\n- rules\n- diag_enrich\n- diag_render\n- corpus\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- template trace compression pack\n\n## Dependencies\n- ES-007B\n- ES-010B\n- WP-105\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "WP-301",
+      "type": "work_package",
+      "title": "[wp] Seed C++14/17 auto, decltype, initializer, and CTAD-adjacent families",
+      "parent": "LEP-130",
+      "stream": "Classify",
+      "lock_wave": "LW30",
+      "lane": "cpp14_17@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++14/17 diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C++14/17 auto/decltype/initializer/CTAD-adjacent family を seed する。",
+        "modern deduction surface の render 差分を整える。",
+        "主な render profile: `deduction_failure_error`, `candidate_list_error`。"
+      ],
+      "out_of_scope": [
+        "constexpr/lambda family。",
+        "concepts/constraints family。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.deduction.auto_failed`, `cpp.deduction.braced_init_auto_failed`, `cpp.deduction.decltype_invalid_use`, `cpp.init.initializer_list_no_matching_overload`, `cpp.ctad.adjacent_deduction_failed`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-deduction-batch1 --out artifacts/completeness/cpp14-17-gcc13-15.deduction-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp14-17-gcc13-15.deduction-batch1.json",
+      "dependencies": [
+        "ES-008B",
+        "ES-010B",
+        "WP-105"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "cpp.deduction.auto_failed",
+        "cpp.deduction.braced_init_auto_failed",
+        "cpp.deduction.decltype_invalid_use",
+        "cpp.init.initializer_list_no_matching_overload",
+        "cpp.ctad.adjacent_deduction_failed"
+      ],
+      "render_profiles": [
+        "deduction_failure_error",
+        "candidate_list_error"
+      ],
+      "execution_bundle": "X11",
+      "body_md": "## Goal\n- C++14/17 auto/decltype/initializer/CTAD-adjacent family を seed する。\n- modern deduction surface の render 差分を整える。\n- 主な render profile: `deduction_failure_error`, `candidate_list_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-130\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp14_17@gcc13-15@reference`\n- LockWave: `LW30`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++14/17 diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `cpp.deduction.auto_failed`\n- `cpp.deduction.braced_init_auto_failed`\n- `cpp.deduction.decltype_invalid_use`\n- `cpp.init.initializer_list_no_matching_overload`\n- `cpp.ctad.adjacent_deduction_failed`\n\n## Render profiles\n- `deduction_failure_error`\n- `candidate_list_error`\n\n## Out of scope\n- constexpr/lambda family。\n- concepts/constraints family。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.deduction.auto_failed`, `cpp.deduction.braced_init_auto_failed`, `cpp.deduction.decltype_invalid_use`, `cpp.init.initializer_list_no_matching_overload`, `cpp.ctad.adjacent_deduction_failed`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-deduction-batch1 --out artifacts/completeness/cpp14-17-gcc13-15.deduction-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp14-17-gcc13-15.deduction-batch1.json`\n\n## Dependencies\n- ES-008B\n- ES-010B\n- WP-105\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp14_17@gcc13-15@reference",
+        "LockWave": "LW30",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-203A",
+      "type": "execution_slice",
+      "title": "[slice] Template families: deduction root-cause extraction and family seeding",
+      "parent": "WP-203",
+      "stream": "Classify",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++03/11 template diagnostics",
+        "typed skeleton + old GCC raw text"
+      ],
+      "in_scope": [
+        "template argument deduction / substitution root cause 系 family を seed する。",
+        "root cause extraction を note compression とは分離して導入する。"
+      ],
+      "out_of_scope": [
+        "render-side note condensation。",
+        "concepts/constraints。"
+      ],
+      "acceptance": [
+        "少なくとも `cpp.template.argument_deduction_failed`, `cpp.template.substitution_failed`, `cpp.template.no_matching_specialization` が ADOL/rules に追加される。",
+        "C++03/11 GCC9-12 fixture pack が追加される。",
+        "`cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-template-root --out artifacts/completeness/cpp03-11-gcc9-12.template-root.json` 相当の経路が動く。"
+      ],
+      "proof_path": "artifacts/completeness/cpp03-11-gcc9-12.template-root.json",
+      "dependencies": [
+        "WP-105",
+        "ES-007B",
+        "ES-010B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "old GCC の note text 差分を literal regex で固めすぎない。",
+      "execution_bundle": "X11",
+      "body_md": "## Goal\n- template argument deduction / substitution root cause 系 family を seed する。\n- root cause extraction を note compression とは分離して導入する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-203\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++03/11 template diagnostics\n- typed skeleton + old GCC raw text\n\n## Out of scope\n- render-side note condensation。\n- concepts/constraints。\n\n## Acceptance criteria\n- 少なくとも `cpp.template.argument_deduction_failed`, `cpp.template.substitution_failed`, `cpp.template.no_matching_specialization` が ADOL/rules に追加される。\n- C++03/11 GCC9-12 fixture pack が追加される。\n- `cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-template-root --out artifacts/completeness/cpp03-11-gcc9-12.template-root.json` 相当の経路が動く。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp03-11-gcc9-12.template-root.json`\n\n## Dependencies\n- WP-105\n- ES-007B\n- ES-010B\n\n## Notes for Codex\n- old GCC の note text 差分を literal regex で固めすぎない。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-203B",
+      "type": "execution_slice",
+      "title": "[slice] Template families: note compression and render integration",
+      "parent": "WP-203",
+      "stream": "Classify",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "template root-cause families",
+        "template trace render policy"
+      ],
+      "in_scope": [
+        "template note chain の condensation を導入する。",
+        "template trace render profile を安定化する。"
+      ],
+      "out_of_scope": [
+        "新しい non-template family の追加。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_render` が通る。",
+        "template trace compression regression pack が追加される。",
+        "root cause が headline/help/why に分離され、 raw note flood が抑制される。"
+      ],
+      "proof_path": "artifacts/render/cpp03-11-template-trace-pack/",
+      "dependencies": [
+        "ES-203A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "情報量を削りすぎず、「なぜ失敗したか」が 1 画面で追えることを優先する。",
+      "execution_bundle": "X12",
+      "body_md": "## Goal\n- template note chain の condensation を導入する。\n- template trace render profile を安定化する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-203\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_render`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- template root-cause families\n- template trace render policy\n\n## Out of scope\n- 新しい non-template family の追加。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_render` が通る。\n- template trace compression regression pack が追加される。\n- root cause が headline/help/why に分離され、 raw note flood が抑制される。\n\n## Proof required\n- Artifact path: `artifacts/render/cpp03-11-template-trace-pack/`\n\n## Dependencies\n- ES-203A\n\n## Notes for Codex\n- 情報量を削りすぎず、「なぜ失敗したか」が 1 画面で追えることを優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-204",
+      "type": "work_package",
+      "title": "[wp] Add C++03/11 policy overlays and lock proof on GCC 9–12",
+      "parent": "LEP-120",
+      "stream": "Gate",
+      "lock_wave": "LW20",
+      "lane": "cpp03_11@gcc9-12@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (900〜1300)",
+      "target_rloc_mid": 1100,
+      "crates": [
+        "rules",
+        "diag_testkit",
+        "corpus",
+        "ci"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/"
+      ],
+      "authority_inputs": [
+        "policy overlays",
+        "Track B seeded families"
+      ],
+      "in_scope": [
+        "C++03/11 reference lanes に permissive/pedantic overlay を掛ける。",
+        "Track B を locked lane に昇格する。"
+      ],
+      "out_of_scope": [
+        "新 template/concepts family の追加。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-locked --out artifacts/completeness/cpp03-11-gcc9-12.locked.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp03-11-gcc9-12.locked.json",
+      "dependencies": [
+        "WP-201",
+        "WP-202",
+        "ES-203B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X13",
+      "body_md": "## Goal\n- C++03/11 reference lanes に permissive/pedantic overlay を掛ける。\n- Track B を locked lane に昇格する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-120\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `cpp03_11@gcc9-12@reference`\n- LockWave: `LW20`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (900〜1300)`\n\n## Crates / likely files\n- `rules`\n- `diag_testkit`\n- `corpus`\n- `ci`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n\n## Authority inputs\n- policy overlays\n- Track B seeded families\n\n## Out of scope\n- 新 template/concepts family の追加。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp03_11@gcc9-12@reference --scope cpp03-11-locked --out artifacts/completeness/cpp03-11-gcc9-12.locked.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp03-11-gcc9-12.locked.json`\n\n## Dependencies\n- WP-201\n- WP-202\n- ES-203B\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "cpp03_11@gcc9-12@reference",
+        "LockWave": "LW20",
+        "Owner Mode": "agent",
+        "Lock Target": "locked"
+      }
+    },
+    {
+      "id": "WP-302",
+      "type": "work_package",
+      "title": "[wp] Seed C++14/17 constexpr, lambda, and modern template families",
+      "parent": "LEP-130",
+      "stream": "Classify",
+      "lock_wave": "LW30",
+      "lane": "cpp14_17@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++14/17 diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C++14/17 constexpr/lambda/modern template family を seed する。",
+        "modern template note chain を older template track と共通 shape に寄せる。",
+        "主な render profile: `constexpr_eval_error`, `lambda_surface_error`, `template_trace_error`。"
+      ],
+      "out_of_scope": [
+        "C++20 concepts/constraints。",
+        "consteval/constinit family。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.constexpr.not_constant_expression`, `cpp.constexpr.call_not_usable_in_constant_expression`, `cpp.lambda.capture_invalid`, `cpp.lambda.signature_mismatch`, `cpp.template.modern_note_chain_root_cause`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-constexpr-lambda-batch1 --out artifacts/render/cpp14-17-constexpr-lambda-pack/` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/render/cpp14-17-constexpr-lambda-pack/",
+      "dependencies": [
+        "ES-203B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "cpp.constexpr.not_constant_expression",
+        "cpp.constexpr.call_not_usable_in_constant_expression",
+        "cpp.lambda.capture_invalid",
+        "cpp.lambda.signature_mismatch",
+        "cpp.template.modern_note_chain_root_cause"
+      ],
+      "render_profiles": [
+        "constexpr_eval_error",
+        "lambda_surface_error",
+        "template_trace_error"
+      ],
+      "execution_bundle": "X13",
+      "body_md": "## Goal\n- C++14/17 constexpr/lambda/modern template family を seed する。\n- modern template note chain を older template track と共通 shape に寄せる。\n- 主な render profile: `constexpr_eval_error`, `lambda_surface_error`, `template_trace_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-130\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp14_17@gcc13-15@reference`\n- LockWave: `LW30`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_render`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++14/17 diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `cpp.constexpr.not_constant_expression`\n- `cpp.constexpr.call_not_usable_in_constant_expression`\n- `cpp.lambda.capture_invalid`\n- `cpp.lambda.signature_mismatch`\n- `cpp.template.modern_note_chain_root_cause`\n\n## Render profiles\n- `constexpr_eval_error`\n- `lambda_surface_error`\n- `template_trace_error`\n\n## Out of scope\n- C++20 concepts/constraints。\n- consteval/constinit family。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.constexpr.not_constant_expression`, `cpp.constexpr.call_not_usable_in_constant_expression`, `cpp.lambda.capture_invalid`, `cpp.lambda.signature_mismatch`, `cpp.template.modern_note_chain_root_cause`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-constexpr-lambda-batch1 --out artifacts/render/cpp14-17-constexpr-lambda-pack/` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/render/cpp14-17-constexpr-lambda-pack/`\n\n## Dependencies\n- ES-203B\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp14_17@gcc13-15@reference",
+        "LockWave": "LW30",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-303",
+      "type": "work_package",
+      "title": "[wp] Lock proof for C++14/17 reference lanes on GCC 13–15",
+      "parent": "LEP-130",
+      "stream": "Gate",
+      "lock_wave": "LW30",
+      "lane": "cpp14_17@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_testkit",
+        "corpus",
+        "ci"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/",
+        "ci/"
+      ],
+      "authority_inputs": [
+        "completeness gate",
+        "Track C seeded families"
+      ],
+      "in_scope": [
+        "Track C を locked lane に昇格する。"
+      ],
+      "out_of_scope": [
+        "新 family の追加。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-locked --out artifacts/completeness/cpp14-17-gcc13-15.locked.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp14-17-gcc13-15.locked.json",
+      "dependencies": [
+        "WP-301",
+        "WP-302"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X14",
+      "body_md": "## Goal\n- Track C を locked lane に昇格する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-130\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `cpp14_17@gcc13-15@reference`\n- LockWave: `LW30`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_testkit`\n- `corpus`\n- `ci`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n- `ci/`\n\n## Authority inputs\n- completeness gate\n- Track C seeded families\n\n## Out of scope\n- 新 family の追加。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp14_17@gcc13-15@reference --scope cpp14-17-locked --out artifacts/completeness/cpp14-17-gcc13-15.locked.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp14-17-gcc13-15.locked.json`\n\n## Dependencies\n- WP-301\n- WP-302\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "cpp14_17@gcc13-15@reference",
+        "LockWave": "LW30",
+        "Owner Mode": "agent",
+        "Lock Target": "locked"
+      }
+    },
+    {
+      "id": "WP-402",
+      "type": "work_package",
+      "title": "[wp] Seed C++20/23 constexpr, consteval, and constinit families",
+      "parent": "LEP-140",
+      "stream": "Classify",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M/L (1000〜1500)",
+      "target_rloc_mid": 1250,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++20/23 diagnostics",
+        "GCC testsuite/corpus"
+      ],
+      "in_scope": [
+        "C++20/23 consteval/constinit 系 family を seed する。",
+        "compile-time evaluation family の shared render shape を固める。",
+        "主な render profile: `constexpr_eval_error`。"
+      ],
+      "out_of_scope": [
+        "concepts/constraints family。",
+        "std version overlay。"
+      ],
+      "acceptance": [
+        "少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.consteval.immediate_function_context_invalid`, `cpp.consteval.call_not_immediate`, `cpp.constinit.not_constant_initializer`, `cpp.eval.constant_initialization_failed`。",
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-consteval-batch1 --out artifacts/completeness/cpp20-23-gcc13-15.consteval-batch1.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp20-23-gcc13-15.consteval-batch1.json",
+      "dependencies": [
+        "WP-302"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [
+        "cpp.consteval.immediate_function_context_invalid",
+        "cpp.consteval.call_not_immediate",
+        "cpp.constinit.not_constant_initializer",
+        "cpp.eval.constant_initialization_failed"
+      ],
+      "render_profiles": [
+        "constexpr_eval_error"
+      ],
+      "execution_bundle": "X14",
+      "body_md": "## Goal\n- C++20/23 consteval/constinit 系 family を seed する。\n- compile-time evaluation family の shared render shape を固める。\n- 主な render profile: `constexpr_eval_error`。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-140\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M/L (1000〜1500)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++20/23 diagnostics\n- GCC testsuite/corpus\n\n## Canonical family IDs\n- `cpp.consteval.immediate_function_context_invalid`\n- `cpp.consteval.call_not_immediate`\n- `cpp.constinit.not_constant_initializer`\n- `cpp.eval.constant_initialization_failed`\n\n## Render profiles\n- `constexpr_eval_error`\n\n## Out of scope\n- concepts/constraints family。\n- std version overlay。\n\n## Acceptance criteria\n- 少なくとも次の canonical family 群が ADOL/rules に追加される: `cpp.consteval.immediate_function_context_invalid`, `cpp.consteval.call_not_immediate`, `cpp.constinit.not_constant_initializer`, `cpp.eval.constant_initialization_failed`。\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-consteval-batch1 --out artifacts/completeness/cpp20-23-gcc13-15.consteval-batch1.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp20-23-gcc13-15.consteval-batch1.json`\n\n## Dependencies\n- WP-302\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-401",
+      "type": "work_package",
+      "title": "[wp] Seed C++20/23 concepts and constraints families",
+      "parent": "LEP-140",
+      "stream": "Classify",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "sliced_parent",
+      "count_in_rloc_kpi": false,
+      "target_rloc": "L (1300〜1800)",
+      "target_rloc_mid": 1550,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "goal": [
+        "concept unsatisfied",
+        "requires-expression invalid",
+        "constraint trace root cause extraction",
+        "context-chain condensation"
+      ],
+      "proof_artifact": [
+        "concepts/constraints regression pack"
+      ],
+      "dependencies": [
+        "ES-007B",
+        "ES-010B",
+        "WP-303"
+      ],
+      "initial_status": "Blocked",
+      "slice_ids": [
+        "ES-401A",
+        "ES-401B"
+      ],
+      "slice_reason": "concept family seed と constraint trace condensation は両方重いが、2段に分けると Codex の throughput に乗せやすい。",
+      "execution_bundle": "X15",
+      "body_md": "## Goal\n- concept unsatisfied\n- requires-expression invalid\n- constraint trace root cause extraction\n- context-chain condensation\n\n## Why this matters\nconcept family seed と constraint trace condensation は両方重いが、2段に分けると Codex の throughput に乗せやすい。\n\n## Parent Epic\nLEP-140\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode\n- Mode: `sliced_parent`\n- Child slices: `ES-401A`, `ES-401B`\n- KPI counted: `false`\n\n## Target rLoC\n- Parent tracking only\n- Original BWP estimate: `L (1300〜1800)`\n\n## Crates / likely files\n- rules\n- diag_enrich\n- diag_render\n- corpus\n\n## Acceptance criteria\n- すべての child slice が close される。\n- 親 BWP の proof artifact が child slice の成果から再現できる。\n- scope 外の設計変更を抱え込まない。\n\n## Proof required\n- concepts/constraints regression pack\n\n## Dependencies\n- ES-007B\n- ES-010B\n- WP-303\n\n## Notes for Codex\n- これは tracking issue。実装は child slices で行う。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "human",
+        "Lock Target": ""
+      }
+    },
+    {
+      "id": "ES-401A",
+      "type": "execution_slice",
+      "title": "[slice] Concepts families: root/satellite extraction and family seeding",
+      "parent": "WP-401",
+      "stream": "Classify",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "C++20/23 concepts diagnostics",
+        "typed skeleton"
+      ],
+      "in_scope": [
+        "concept unsatisfied / requires-expression invalid / atomic/nested requirement unsatisfied family を seed する。",
+        "constraint trace の root/satellite extraction を導入する。"
+      ],
+      "out_of_scope": [
+        "trace condensation/render overhaul。"
+      ],
+      "acceptance": [
+        "少なくとも `cpp.constraint.unsatisfied`, `cpp.constraint.requires_expression_invalid`, `cpp.constraint.atomic_requirement_unsatisfied`, `cpp.constraint.nested_requirement_unsatisfied` が ADOL/rules に追加される。",
+        "C++20/23 GCC13-15 fixture pack が追加される。",
+        "`cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-constraint-root --out artifacts/completeness/cpp20-23-gcc13-15.constraint-root.json` 相当の経路が動く。"
+      ],
+      "proof_path": "artifacts/completeness/cpp20-23-gcc13-15.constraint-root.json",
+      "dependencies": [
+        "WP-303",
+        "ES-007B",
+        "ES-010B"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "constraint trace 全文を semantic family に埋め込まず、episode satellite として保持する。",
+      "execution_bundle": "X15",
+      "body_md": "## Goal\n- concept unsatisfied / requires-expression invalid / atomic/nested requirement unsatisfied family を seed する。\n- constraint trace の root/satellite extraction を導入する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-401\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- C++20/23 concepts diagnostics\n- typed skeleton\n\n## Out of scope\n- trace condensation/render overhaul。\n\n## Acceptance criteria\n- 少なくとも `cpp.constraint.unsatisfied`, `cpp.constraint.requires_expression_invalid`, `cpp.constraint.atomic_requirement_unsatisfied`, `cpp.constraint.nested_requirement_unsatisfied` が ADOL/rules に追加される。\n- C++20/23 GCC13-15 fixture pack が追加される。\n- `cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-constraint-root --out artifacts/completeness/cpp20-23-gcc13-15.constraint-root.json` 相当の経路が動く。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp20-23-gcc13-15.constraint-root.json`\n\n## Dependencies\n- WP-303\n- ES-007B\n- ES-010B\n\n## Notes for Codex\n- constraint trace 全文を semantic family に埋め込まず、episode satellite として保持する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "ES-401B",
+      "type": "execution_slice",
+      "title": "[slice] Concepts families: constraint trace condensation and render profile",
+      "parent": "WP-401",
+      "stream": "Classify",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "slice",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (700〜900)",
+      "target_rloc_mid": 800,
+      "crates": [
+        "rules",
+        "diag_enrich",
+        "diag_render",
+        "corpus"
+      ],
+      "likely_files": [
+        "rules/diag_rulepack.manifest.phase1.json",
+        "rules/enrich.rulepack.json",
+        "rules/render.rulepack.json",
+        "rules/residual.rulepack.json",
+        "diag_enrich/src/lib.rs",
+        "diag_enrich/src/family.rs",
+        "diag_enrich/src/headline.rs"
+      ],
+      "authority_inputs": [
+        "concept family seed",
+        "constraint trace render policy"
+      ],
+      "in_scope": [
+        "constraint trace condensation を導入する。",
+        "constraint_trace_error render profile を安定化する。"
+      ],
+      "out_of_scope": [
+        "consteval/constinit family。",
+        "overlay work。"
+      ],
+      "acceptance": [
+        "`cargo test -p diag_enrich` と `cargo test -p diag_render` が通る。",
+        "concepts/constraints regression pack が更新される。",
+        "headline/help/why/context-chain の役割分担が fixture で検証される。"
+      ],
+      "proof_path": "artifacts/render/cpp20-23-constraint-pack/",
+      "dependencies": [
+        "ES-401A"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "condensation は detail suppression ではなく hierarchy reconstruction として実装する。",
+      "execution_bundle": "X16",
+      "body_md": "## Goal\n- constraint trace condensation を導入する。\n- constraint_trace_error render profile を安定化する。\n\n## Why this matters\n親 BWP を 2 段に割って、Codex が高密度に前進できる review surface に整える。\n\n## Parent\nWP-401\n\n## Stream / Lane / LockWave\n- Stream: `Classify`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode / Target rLoC\n- Mode: `slice`\n- KPI counted: `true`\n- Target rLoC: `M (700〜900)`\n\n## Crates / likely files\n- `rules`\n- `diag_enrich`\n- `diag_render`\n- `corpus`\n- `rules/diag_rulepack.manifest.phase1.json`\n- `rules/enrich.rulepack.json`\n- `rules/render.rulepack.json`\n- `rules/residual.rulepack.json`\n- `diag_enrich/src/lib.rs`\n- `diag_enrich/src/family.rs`\n- `diag_enrich/src/headline.rs`\n\n## Authority inputs\n- concept family seed\n- constraint trace render policy\n\n## Out of scope\n- consteval/constinit family。\n- overlay work。\n\n## Acceptance criteria\n- `cargo test -p diag_enrich` と `cargo test -p diag_render` が通る。\n- concepts/constraints regression pack が更新される。\n- headline/help/why/context-chain の役割分担が fixture で検証される。\n\n## Proof required\n- Artifact path: `artifacts/render/cpp20-23-constraint-pack/`\n\n## Dependencies\n- ES-401A\n\n## Notes for Codex\n- condensation は detail suppression ではなく hierarchy reconstruction として実装する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Classify",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "agent",
+        "Lock Target": "supported"
+      }
+    },
+    {
+      "id": "WP-404",
+      "type": "work_package",
+      "title": "[wp] Lock proof for C++20/23 reference lanes on GCC 13–15",
+      "parent": "LEP-140",
+      "stream": "Gate",
+      "lock_wave": "LW40",
+      "lane": "cpp20_23@gcc13-15@reference",
+      "execution_mode": "direct",
+      "count_in_rloc_kpi": true,
+      "target_rloc": "M (800〜1200)",
+      "target_rloc_mid": 1000,
+      "crates": [
+        "diag_testkit",
+        "corpus",
+        "ci"
+      ],
+      "likely_files": [
+        "diag_testkit/src/lib.rs",
+        "diag_testkit/src/snapshot.rs",
+        "corpus/",
+        "ci/"
+      ],
+      "authority_inputs": [
+        "completeness gate",
+        "Track D seeded families"
+      ],
+      "in_scope": [
+        "Track D を locked lane に昇格する。"
+      ],
+      "out_of_scope": [
+        "新 family の追加。"
+      ],
+      "acceptance": [
+        "issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。",
+        "`cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-locked --out artifacts/completeness/cpp20-23-gcc13-15.locked.json` 相当の経路が動作する。"
+      ],
+      "proof_path": "artifacts/completeness/cpp20-23-gcc13-15.locked.json",
+      "dependencies": [
+        "ES-401B",
+        "WP-402",
+        "WP-403"
+      ],
+      "initial_status": "Blocked",
+      "notes_for_codex": "render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。",
+      "family_ids": [],
+      "render_profiles": [],
+      "execution_bundle": "X17",
+      "body_md": "## Goal\n- Track D を locked lane に昇格する。\n\n## Why this matters\nこの batch を seed して proof artifact を出すことが、lane を locked へ進める最短経路になる。\n\n## Parent\nLEP-140\n\n## Stream / Lane / LockWave\n- Stream: `Gate`\n- Lane: `cpp20_23@gcc13-15@reference`\n- LockWave: `LW40`\n\n## Execution mode / Target rLoC\n- Mode: `direct`\n- KPI counted: `true`\n- Target rLoC: `M (800〜1200)`\n\n## Crates / likely files\n- `diag_testkit`\n- `corpus`\n- `ci`\n- `diag_testkit/src/lib.rs`\n- `diag_testkit/src/snapshot.rs`\n- `corpus/`\n- `ci/`\n\n## Authority inputs\n- completeness gate\n- Track D seeded families\n\n## Out of scope\n- 新 family の追加。\n\n## Acceptance criteria\n- issue scope に対応する curated corpus/fixture pack が追加され、 touched crates のテストが green になる。\n- `cargo xtask completeness emit --lane cpp20_23@gcc13-15@reference --scope cpp20-23-locked --out artifacts/completeness/cpp20-23-gcc13-15.locked.json` 相当の経路が動作する。\n\n## Proof required\n- Artifact path: `artifacts/completeness/cpp20-23-gcc13-15.locked.json`\n\n## Dependencies\n- ES-401B\n- WP-402\n- WP-403\n\n## Notes for Codex\n- render profile と semantic family を混ぜず、family 追加より collision 回避を優先する。\n- drive-by refactor をしない。\n- 生成物を source-of-truth にしない。\n- acceptance と proof artifact を満たす最短経路を優先する。",
+      "project_fields": {
+        "Status": "Blocked",
+        "Stream": "Gate",
+        "Lane": "cpp20_23@gcc13-15@reference",
+        "LockWave": "LW40",
+        "Owner Mode": "agent",
+        "Lock Target": "locked"
+      }
+    }
+  ]
+}

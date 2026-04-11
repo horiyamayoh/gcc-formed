@@ -38,7 +38,10 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 
 現在、`docs/planning/` に active な planning authority は置かない。
 
-- [planning/README.md](planning/README.md): reference-only planning workspace。現在は空
+- [planning/README.md](planning/README.md): reference-only planning workspace
+- [planning/gcc_formed_issue_map_v1_ja.md](planning/gcc_formed_issue_map_v1_ja.md): issue 分解と実装順序の active draft
+- [planning/gcc_formed_execution_slice_catalog_v1_ja.md](planning/gcc_formed_execution_slice_catalog_v1_ja.md): issue emission / execution slice catalog の active draft
+- [planning/gcc_formed_execution_slice_bundle_v1.json](planning/gcc_formed_execution_slice_bundle_v1.json): execution planning 用の machine-readable bundle
 - 作業前提や設計判断は current authority docs と accepted ADR を優先する
 - 新しい planning material が必要な場合でも `reference-only` として扱う
 
