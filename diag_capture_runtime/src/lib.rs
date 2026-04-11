@@ -75,36 +75,39 @@ pub struct CaptureRequest {
 
 impl CaptureRequest {
     pub fn capture_plan(&self) -> CapturePlan {
-        CapturePlan {
-            execution_mode: self.mode,
-            processing_path: match self.structured_capture {
-                StructuredCapturePolicy::SarifFile => ProcessingPath::DualSinkStructured,
-                StructuredCapturePolicy::SingleSinkSarifFile
-                | StructuredCapturePolicy::SingleSinkJsonFile => {
-                    ProcessingPath::SingleSinkStructured
-                }
-                StructuredCapturePolicy::Disabled => match self.mode {
-                    ExecutionMode::Passthrough => ProcessingPath::Passthrough,
-                    _ => ProcessingPath::NativeTextCapture,
+        effective_capture_plan(
+            self,
+            CapturePlan {
+                execution_mode: self.mode,
+                processing_path: match self.structured_capture {
+                    StructuredCapturePolicy::SarifFile => ProcessingPath::DualSinkStructured,
+                    StructuredCapturePolicy::SingleSinkSarifFile
+                    | StructuredCapturePolicy::SingleSinkJsonFile => {
+                        ProcessingPath::SingleSinkStructured
+                    }
+                    StructuredCapturePolicy::Disabled => match self.mode {
+                        ExecutionMode::Passthrough => ProcessingPath::Passthrough,
+                        _ => ProcessingPath::NativeTextCapture,
+                    },
                 },
+                structured_capture: self.structured_capture,
+                native_text_capture: match self.mode {
+                    ExecutionMode::Passthrough if self.capture_passthrough_stderr => {
+                        NativeTextCapturePolicy::TeeToParent
+                    }
+                    ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
+                    ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
+                    ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
+                },
+                preserve_native_color: self.preserve_native_color,
+                locale_handling: if matches!(self.mode, ExecutionMode::Render) {
+                    LocaleHandling::ForceMessagesC
+                } else {
+                    LocaleHandling::Preserve
+                },
+                retention_policy: self.retention,
             },
-            structured_capture: self.structured_capture,
-            native_text_capture: match self.mode {
-                ExecutionMode::Passthrough if self.capture_passthrough_stderr => {
-                    NativeTextCapturePolicy::TeeToParent
-                }
-                ExecutionMode::Passthrough => NativeTextCapturePolicy::Passthrough,
-                ExecutionMode::Render => NativeTextCapturePolicy::CaptureOnly,
-                ExecutionMode::Shadow => NativeTextCapturePolicy::TeeToParent,
-            },
-            preserve_native_color: self.preserve_native_color,
-            locale_handling: if matches!(self.mode, ExecutionMode::Render) {
-                LocaleHandling::ForceMessagesC
-            } else {
-                LocaleHandling::Preserve
-            },
-            retention_policy: self.retention,
-        }
+        )
     }
 
     pub fn from_plan(
@@ -366,6 +369,55 @@ fn single_sink_structured_capture(policy: StructuredCapturePolicy) -> bool {
     )
 }
 
+fn effective_capture_plan(request: &CaptureRequest, mut plan: CapturePlan) -> CapturePlan {
+    if has_hard_diagnostics_conflict(&request.args) {
+        plan.execution_mode = ExecutionMode::Passthrough;
+        plan.processing_path = ProcessingPath::Passthrough;
+        plan.structured_capture = StructuredCapturePolicy::Disabled;
+        plan.native_text_capture = runtime_passthrough_capture_policy(request);
+        plan.preserve_native_color = false;
+        plan.locale_handling = LocaleHandling::Preserve;
+        return plan;
+    }
+    if has_color_control_override(&request.args) {
+        plan.preserve_native_color = false;
+    }
+    plan
+}
+
+fn runtime_passthrough_capture_policy(request: &CaptureRequest) -> NativeTextCapturePolicy {
+    if request.capture_passthrough_stderr
+        || matches!(
+            request.retention,
+            RetentionPolicy::OnChildError | RetentionPolicy::Always
+        )
+    {
+        NativeTextCapturePolicy::TeeToParent
+    } else {
+        NativeTextCapturePolicy::Passthrough
+    }
+}
+
+fn has_hard_diagnostics_conflict(args: &[OsString]) -> bool {
+    args.iter().any(|arg| {
+        let value = arg.to_string_lossy();
+        value.starts_with("-fdiagnostics-format=")
+            || value.starts_with("-fdiagnostics-add-output=")
+            || value.starts_with("-fdiagnostics-set-output=")
+            || value == "-fdiagnostics-parseable-fixits"
+            || value == "-fdiagnostics-generate-patch"
+    })
+}
+
+fn has_color_control_override(args: &[OsString]) -> bool {
+    args.iter().any(|arg| {
+        let value = arg.to_string_lossy();
+        value == "-fno-diagnostics-color"
+            || value == "-fdiagnostics-color"
+            || value.starts_with("-fdiagnostics-color=")
+    })
+}
+
 fn structured_artifact_metadata(path: &Path) -> Option<(&'static str, ArtifactKind, &'static str)> {
     match path.file_name().and_then(|name| name.to_str()) {
         Some("diagnostics.sarif") => Some((
@@ -434,6 +486,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         &invocation_path,
         &build_invocation_record(
             request,
+            &plan,
             &final_args,
             injected_sarif_path.as_deref(),
             child_env_policy,
@@ -799,6 +852,7 @@ fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
 
 fn build_invocation_record(
     request: &CaptureRequest,
+    plan: &CapturePlan,
     final_args: &[OsString],
     sarif_path: Option<&Path>,
     child_env_policy: ChildEnvPolicy,
@@ -810,10 +864,10 @@ fn build_invocation_record(
     InvocationRecord {
         backend_path: request.backend.resolved_path.display().to_string(),
         argv_hash: fingerprint_for(&argv),
-        normalized_invocation: normalize_invocation(&argv),
+        normalized_invocation: normalize_invocation(&argv, request.args.len()),
         redaction_class: "restricted".to_string(),
         argv,
-        selected_mode: request.mode,
+        selected_mode: plan.execution_mode,
         cwd: request.cwd.display().to_string(),
         sarif_path: sarif_path.map(|path| path.display().to_string()),
         child_env_policy,
@@ -821,7 +875,7 @@ fn build_invocation_record(
     }
 }
 
-fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
+fn normalize_invocation(argv: &[String], user_arg_count: usize) -> NormalizedInvocation {
     let mut input_count = 0;
     let mut compile_only = false;
     let mut preprocess_only = false;
@@ -835,7 +889,8 @@ fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
     let mut expect_output_path = false;
     let mut expect_language = false;
 
-    for arg in argv {
+    for (index, arg) in argv.iter().enumerate() {
+        let wrapper_owned = index >= user_arg_count;
         if expect_output_path {
             expect_output_path = false;
             continue;
@@ -859,9 +914,10 @@ fn normalize_invocation(argv: &[String]) -> NormalizedInvocation {
             _ if arg.starts_with("-D") => define_count += 1,
             _ if arg.starts_with("-fdiagnostics-") => {
                 diagnostics_flag_count += 1;
-                if arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
-                    || arg == "-fdiagnostics-format=sarif-file"
-                    || arg == "-fdiagnostics-format=json-file"
+                if wrapper_owned
+                    && (arg.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
+                        || arg == "-fdiagnostics-format=sarif-file"
+                        || arg == "-fdiagnostics-format=json-file")
                 {
                     injected_flag_count += 1;
                 }
@@ -1074,6 +1130,7 @@ mod tests {
 
         let record = build_invocation_record(
             &request,
+            &request.capture_plan(),
             &[
                 OsString::from("-c"),
                 OsString::from("src/main.c"),
@@ -1208,6 +1265,60 @@ mod tests {
         );
         assert_eq!(passthrough_plan.locale_handling, LocaleHandling::Preserve);
         assert_eq!(passthrough_plan.retention_policy, RetentionPolicy::Always);
+    }
+
+    #[test]
+    fn capture_plan_passthroughs_on_user_diagnostics_sink_conflict() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![
+                OsString::from("-c"),
+                OsString::from("main.c"),
+                OsString::from("-fdiagnostics-format=sarif-file"),
+            ],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::OnWrapperFailure,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::SarifFile,
+            preserve_native_color: true,
+        };
+
+        let plan = request.capture_plan();
+        assert_eq!(plan.execution_mode, ExecutionMode::Passthrough);
+        assert_eq!(plan.processing_path, ProcessingPath::Passthrough);
+        assert_eq!(plan.structured_capture, StructuredCapturePolicy::Disabled);
+        assert_eq!(
+            plan.native_text_capture,
+            NativeTextCapturePolicy::Passthrough
+        );
+        assert!(!plan.preserve_native_color);
+        assert_eq!(plan.locale_handling, LocaleHandling::Preserve);
+    }
+
+    #[test]
+    fn capture_plan_disables_color_injection_when_user_overrides_color() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![
+                OsString::from("-c"),
+                OsString::from("main.c"),
+                OsString::from("-fdiagnostics-color=never"),
+            ],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::Always,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::Disabled,
+            preserve_native_color: true,
+        };
+
+        let plan = request.capture_plan();
+        assert_eq!(plan.execution_mode, ExecutionMode::Render);
+        assert_eq!(plan.processing_path, ProcessingPath::NativeTextCapture);
+        assert!(!plan.preserve_native_color);
     }
 
     #[test]
@@ -1591,6 +1702,35 @@ mod tests {
     }
 
     #[test]
+    fn invocation_record_honestly_reports_runtime_passthrough_conflict() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![
+                OsString::from("-c"),
+                OsString::from("main.c"),
+                OsString::from("-fdiagnostics-format=sarif-file"),
+            ],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::OnWrapperFailure,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::SarifFile,
+            preserve_native_color: true,
+        };
+        let plan = request.capture_plan();
+        let final_args = request.args.clone();
+
+        let record =
+            build_invocation_record(&request, &plan, &final_args, None, child_env_policy(&plan));
+
+        assert_eq!(record.selected_mode, ExecutionMode::Passthrough);
+        assert_eq!(record.sarif_path, None);
+        assert_eq!(record.normalized_invocation.diagnostics_flag_count, 1);
+        assert_eq!(record.normalized_invocation.injected_flag_count, 0);
+    }
+
+    #[test]
     fn trace_sanitized_env_keys_follow_child_policy() {
         let render_keys = trace_sanitized_env_keys(ExecutionMode::Render);
         assert!(render_keys.iter().any(|key| key == "LC_MESSAGES"));
@@ -1606,16 +1746,19 @@ mod tests {
 
     #[test]
     fn normalizes_invocation_shape_for_trace_harvesting() {
-        let normalized = normalize_invocation(&[
-            "-c".to_string(),
-            "-Iinclude".to_string(),
-            "-DDEBUG=1".to_string(),
-            "-o".to_string(),
-            "main.o".to_string(),
-            "-x".to_string(),
-            "c++".to_string(),
-            "main.cc".to_string(),
-        ]);
+        let normalized = normalize_invocation(
+            &[
+                "-c".to_string(),
+                "-Iinclude".to_string(),
+                "-DDEBUG=1".to_string(),
+                "-o".to_string(),
+                "main.o".to_string(),
+                "-x".to_string(),
+                "c++".to_string(),
+                "main.cc".to_string(),
+            ],
+            8,
+        );
 
         assert_eq!(normalized.arg_count, 8);
         assert_eq!(normalized.input_count, 1);
@@ -1632,11 +1775,14 @@ mod tests {
 
     #[test]
     fn normalizes_single_sink_flag_as_injected_diagnostic_flag() {
-        let normalized = normalize_invocation(&[
-            "-c".to_string(),
-            "main.c".to_string(),
-            "-fdiagnostics-format=sarif-file".to_string(),
-        ]);
+        let normalized = normalize_invocation(
+            &[
+                "-c".to_string(),
+                "main.c".to_string(),
+                "-fdiagnostics-format=sarif-file".to_string(),
+            ],
+            2,
+        );
 
         assert_eq!(normalized.diagnostics_flag_count, 1);
         assert_eq!(normalized.injected_flag_count, 1);
@@ -1644,13 +1790,31 @@ mod tests {
 
     #[test]
     fn normalizes_json_single_sink_flag_as_injected_diagnostic_flag() {
-        let normalized = normalize_invocation(&[
-            "-c".to_string(),
-            "main.c".to_string(),
-            "-fdiagnostics-format=json-file".to_string(),
-        ]);
+        let normalized = normalize_invocation(
+            &[
+                "-c".to_string(),
+                "main.c".to_string(),
+                "-fdiagnostics-format=json-file".to_string(),
+            ],
+            2,
+        );
 
         assert_eq!(normalized.diagnostics_flag_count, 1);
         assert_eq!(normalized.injected_flag_count, 1);
+    }
+
+    #[test]
+    fn user_supplied_single_sink_flag_is_not_counted_as_injected() {
+        let normalized = normalize_invocation(
+            &[
+                "-c".to_string(),
+                "main.c".to_string(),
+                "-fdiagnostics-format=sarif-file".to_string(),
+            ],
+            3,
+        );
+
+        assert_eq!(normalized.diagnostics_flag_count, 1);
+        assert_eq!(normalized.injected_flag_count, 0);
     }
 }
