@@ -1,4 +1,5 @@
 use crate::budget::budget_for;
+use crate::path::{format_location, resolved_path};
 use crate::{RenderProfile, RenderRequest, SourceExcerptPolicy};
 use diag_core::{BoundarySemantics, DiagnosticNode, Location, Ownership};
 use serde::{Deserialize, Serialize};
@@ -35,27 +36,14 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
 }
 
 fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<ExcerptBlock> {
-    let resolved_path = if std::path::Path::new(location.path_raw()).is_relative() {
-        request
-            .cwd
-            .as_ref()
-            .map(|cwd| cwd.join(location.path_raw()))
-            .unwrap_or_else(|| std::path::PathBuf::from(location.path_raw()))
-    } else {
-        std::path::PathBuf::from(location.path_raw())
-    };
+    let resolved_path = resolved_path(request, location.path_raw());
     let content = fs::read_to_string(&resolved_path).ok()?;
     let line_index = usize::try_from(location.line().saturating_sub(1)).ok()?;
     let source_line = content.lines().nth(line_index)?;
     let (display_line, precise_annotation_possible) = renderable_source_line(source_line);
 
     Some(ExcerptBlock {
-        location: format!(
-            "{}:{}:{}",
-            location.path_raw(),
-            location.line(),
-            location.column()
-        ),
+        location: format_location(request, location),
         lines: vec![display_line],
         annotations: excerpt_annotations(location, precise_annotation_possible),
     })

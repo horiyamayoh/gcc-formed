@@ -1,7 +1,8 @@
+use crate::RenderRequest;
 use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
-use crate::{RenderProfile, RenderRequest};
+use crate::path::format_location;
 use diag_core::{
     DiagnosticNode, DisclosureConfidence, DocumentCompleteness, NodeCompleteness, Severity,
 };
@@ -185,19 +186,8 @@ fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> S
 }
 
 fn canonical_location(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
-    node.primary_location().map(|location| {
-        let path = if matches!(request.profile, RenderProfile::Ci) {
-            location.path_raw().to_string()
-        } else if let Some(cwd) = request.cwd.as_ref() {
-            std::path::Path::new(location.path_raw())
-                .strip_prefix(cwd)
-                .map(|path| path.display().to_string())
-                .unwrap_or_else(|_| location.path_raw().to_string())
-        } else {
-            location.path_raw().to_string()
-        };
-        format!("{path}:{}:{}", location.line(), location.column())
-    })
+    node.primary_location()
+        .map(|location| format_location(request, location))
 }
 
 fn severity_label(severity: &Severity) -> &'static str {

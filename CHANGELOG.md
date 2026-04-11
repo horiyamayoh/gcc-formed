@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Honored `RenderRequest.path_policy` consistently in `diag_render` so canonical locations and excerpt headers now follow `shortest_unambiguous`, `relative_to_cwd`, or `absolute` instead of silently ignoring the request outside a hard-coded CI special case.
 - Implemented the documented `diag_render` `debug` profile end-to-end, including explicit CLI parsing, wider internal-triage budgets, verbose-style rule/debug disclosure, and checked-in render rulepack limits so `--formed-profile=debug` now behaves as a real contract instead of an undocumented parse failure.
 - Added caret/range excerpt annotations to `diag_render`, with honest multi-line and unsafe-alignment summaries plus representative native-parity coverage so rendered source snippets preserve native-GCC actionability instead of showing bare source lines only.
 - Refactored `diag_cli_front` into `args`, `config`, `mode`, `backend`, `execute`, `render`, and `self_check` modules so `src/main.rs` is dispatch-only while preserving the existing CLI contract, trace output, and self-check behavior.

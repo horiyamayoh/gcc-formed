@@ -4,6 +4,7 @@ mod fallback;
 mod family;
 mod formatter;
 mod layout;
+mod path;
 mod selector;
 mod theme;
 mod view_model;
@@ -523,6 +524,152 @@ mod tests {
         let output = render(request).unwrap();
         assert!(output.text.contains("|     return }"));
         assert!(output.text.contains(&format!("| {}^", " ".repeat(11))));
+    }
+
+    #[test]
+    fn relative_to_cwd_path_policy_keeps_full_relative_location_and_excerpt_headers() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        let absolute = tempdir.path().join("src/main.c");
+        let absolute = absolute.display().to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::RelativeToCwd;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location(&absolute, 2, 12, Ownership::User)];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some("src/main.c:2:12")
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
+
+        let output = render(request).unwrap();
+        assert!(output.text.contains("--> src/main.c:2:12"));
+        assert!(output.text.contains("| src/main.c:2:12"));
+    }
+
+    #[test]
+    fn shortest_unambiguous_path_policy_shortens_unique_location_and_excerpt_headers() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        let absolute = tempdir.path().join("src/main.c");
+        let absolute = absolute.display().to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::ShortestUnambiguous;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location(&absolute, 2, 12, Ownership::User)];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some("main.c:2:12")
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, "main.c:2:12");
+    }
+
+    #[test]
+    fn shortest_unambiguous_path_policy_adds_prefix_when_basename_is_ambiguous() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        write_source_file(
+            &tempdir,
+            "tests/main.c",
+            "int helper(void) {\n    return 0;\n}\n",
+        );
+        let primary = tempdir.path().join("src/main.c").display().to_string();
+        let competing = tempdir.path().join("tests/main.c").display().to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::ShortestUnambiguous;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location(&primary, 2, 12, Ownership::User)];
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Warning,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "other main.c warning".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location(&competing, 2, 5, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some("src/main.c:2:12")
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
+    }
+
+    #[test]
+    fn absolute_path_policy_is_honored_in_ci_render_while_ci_layout_stays_path_first() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        let absolute = tempdir.path().join("src/main.c").display().to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.profile = RenderProfile::Ci;
+        request.path_policy = PathPolicy::Absolute;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 2, 12, Ownership::User)];
+
+        let expected_location = format!("{absolute}:2:12");
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some(expected_location.as_str())
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, expected_location);
+
+        let output = render(request).unwrap();
+        assert!(output.text.starts_with(&format!("{absolute}:2:12: error:")));
+        assert!(output.text.contains(&format!("| {absolute}:2:12")));
+        assert!(!output.text.contains(&format!("--> {absolute}:2:12")));
     }
 
     #[test]
