@@ -87,6 +87,7 @@ pub(crate) fn parse_profile(value: &str) -> Result<RenderProfile, Box<dyn std::e
         "default" => Ok(RenderProfile::Default),
         "concise" => Ok(RenderProfile::Concise),
         "verbose" => Ok(RenderProfile::Verbose),
+        "debug" => Ok(RenderProfile::Debug),
         "ci" => Ok(RenderProfile::Ci),
         "raw_fallback" => Ok(RenderProfile::RawFallback),
         _ => Err(format!("unsupported profile: {value}").into()),
@@ -164,5 +165,18 @@ mod tests {
             Some(WrapperIntrospection::SelfCheck)
         ));
         assert!(parsed.forwarded_args.is_empty());
+    }
+
+    #[test]
+    fn parses_debug_profile_flag() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-profile=debug"),
+            OsString::from("main.c"),
+        ])
+        .expect("parsed args");
+
+        assert_eq!(parsed.profile, Some(RenderProfile::Debug));
+        assert_eq!(parsed.forwarded_args, vec![OsString::from("main.c")]);
     }
 }

@@ -379,6 +379,7 @@ pub struct RendererFamilyPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ProfileLimitPolicy {
     pub verbose: usize,
+    pub debug: usize,
     pub default: usize,
     pub concise: usize,
     pub ci: usize,

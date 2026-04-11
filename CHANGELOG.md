@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Implemented the documented `diag_render` `debug` profile end-to-end, including explicit CLI parsing, wider internal-triage budgets, verbose-style rule/debug disclosure, and checked-in render rulepack limits so `--formed-profile=debug` now behaves as a real contract instead of an undocumented parse failure.
 - Added caret/range excerpt annotations to `diag_render`, with honest multi-line and unsafe-alignment summaries plus representative native-parity coverage so rendered source snippets preserve native-GCC actionability instead of showing bare source lines only.
 - Refactored `diag_cli_front` into `args`, `config`, `mode`, `backend`, `execute`, `render`, and `self_check` modules so `src/main.rs` is dispatch-only while preserving the existing CLI contract, trace output, and self-check behavior.
 - Added `cargo xtask rc-gate` plus a manual `rc-gate` GitHub Actions workflow so curated replay, rollout matrix, benchmark smoke, deterministic replay, and RC sign-off evidence are aggregated into machine-readable `rc-gate-report.json` / `rc-gate-summary.md` artifacts instead of a checklist-only release-candidate process.

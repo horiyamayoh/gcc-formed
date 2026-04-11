@@ -71,6 +71,15 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
             candidate_notes: 10,
             warning_failure_mode: WarningFailureMode::Show,
         },
+        RenderProfile::Debug => DisplayBudget {
+            expanded_groups: usize::MAX,
+            first_screenful_max_lines: 120,
+            source_excerpts: 8,
+            template_frames: 30,
+            macro_include_frames: 20,
+            candidate_notes: 20,
+            warning_failure_mode: WarningFailureMode::Show,
+        },
         RenderProfile::Ci => DisplayBudget {
             expanded_groups: 1,
             first_screenful_max_lines: 16,
@@ -97,11 +106,17 @@ pub fn disclosure_policy_for(profile: RenderProfile) -> DisclosurePolicy {
         partial_document_notice: "note: some compiler details were not fully structured; original diagnostics are preserved",
         low_confidence_notice: "note: wrapper confidence is low; verify against the preserved raw diagnostics",
         raw_diagnostics_hint: "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
-        truncation_notice: "note: omitted additional details; rerun with --formed-profile=verbose",
+        truncation_notice: match profile {
+            RenderProfile::Debug => {
+                "note: omitted additional details even under --formed-profile=debug; inspect the preserved raw diagnostics"
+            }
+            _ => "note: omitted additional details; rerun with --formed-profile=verbose",
+        },
         raw_block_label: "raw:",
         suppressed_warning_notice: "note: suppressed {count} warning(s) while focusing on the failing group",
         raw_sub_block_lines: match profile {
             RenderProfile::Verbose => 4,
+            RenderProfile::Debug => 6,
             RenderProfile::Default => 2,
             RenderProfile::Concise | RenderProfile::Ci => 1,
             RenderProfile::RawFallback => 0,

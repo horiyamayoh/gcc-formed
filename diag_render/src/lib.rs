@@ -21,6 +21,7 @@ pub enum RenderProfile {
     Default,
     Concise,
     Verbose,
+    Debug,
     Ci,
     RawFallback,
 }
@@ -359,20 +360,45 @@ mod tests {
 
     #[test]
     fn verbose_render_includes_rule_explainability() {
-        let mut request = sample_request();
-        request.profile = RenderProfile::Verbose;
-        let output = render(request).unwrap();
-        assert!(!output.used_fallback);
-        assert_eq!(output.fallback_reason, None);
+        for profile in [RenderProfile::Verbose, RenderProfile::Debug] {
+            let mut request = sample_request();
+            request.profile = profile;
+            let output = render(request).unwrap();
+            assert!(!output.used_fallback);
+            assert_eq!(output.fallback_reason, None);
+            assert!(
+                output
+                    .text
+                    .contains("debug: rule_id=rule.syntax.expected_or_before")
+            );
+            assert!(
+                output
+                    .text
+                    .contains("debug: matched_conditions=message_contains=expected")
+            );
+        }
+    }
+
+    #[test]
+    fn debug_profile_uses_documented_budget() {
+        let budget = crate::budget::budget_for(RenderProfile::Debug);
+        let disclosure = crate::budget::disclosure_policy_for(RenderProfile::Debug);
+
+        assert_eq!(budget.expanded_groups, usize::MAX);
+        assert_eq!(budget.first_screenful_max_lines, 120);
+        assert_eq!(budget.source_excerpts, 8);
+        assert_eq!(budget.template_frames, 30);
+        assert_eq!(budget.macro_include_frames, 20);
+        assert_eq!(budget.candidate_notes, 20);
+        assert!(matches!(
+            budget.warning_failure_mode,
+            crate::budget::WarningFailureMode::Show
+        ));
+        assert_eq!(disclosure.raw_sub_block_lines, 6);
         assert!(
-            output
-                .text
-                .contains("debug: rule_id=rule.syntax.expected_or_before")
-        );
-        assert!(
-            output
-                .text
-                .contains("debug: matched_conditions=message_contains=expected")
+            disclosure
+                .truncation_notice
+                .contains("--formed-profile=debug")
         );
     }
 
@@ -766,40 +792,42 @@ mod tests {
 
     #[test]
     fn verbose_profile_keeps_warnings_after_failure() {
-        let mut request = sample_request();
-        request.profile = RenderProfile::Verbose;
-        request
-            .document
-            .diagnostics
-            .push(diag_core::DiagnosticNode {
-                id: "warning".to_string(),
-                origin: Origin::Gcc,
-                phase: Phase::Semantic,
-                severity: Severity::Warning,
-                semantic_role: SemanticRole::Supporting,
-                message: MessageText {
-                    raw_text: "unused variable 'tmp'".to_string(),
-                    normalized_text: None,
-                    locale: None,
-                },
-                locations: vec![sample_location("src/main.c", 7, 5, Ownership::User)],
-                children: Vec::new(),
-                suggestions: Vec::new(),
-                context_chains: Vec::new(),
-                symbol_context: None,
-                node_completeness: NodeCompleteness::Complete,
-                provenance: Provenance {
-                    source: ProvenanceSource::Compiler,
-                    capture_refs: vec!["stderr.raw".to_string()],
-                },
-                analysis: None,
-                fingerprints: None,
-            });
+        for profile in [RenderProfile::Verbose, RenderProfile::Debug] {
+            let mut request = sample_request();
+            request.profile = profile;
+            request
+                .document
+                .diagnostics
+                .push(diag_core::DiagnosticNode {
+                    id: "warning".to_string(),
+                    origin: Origin::Gcc,
+                    phase: Phase::Semantic,
+                    severity: Severity::Warning,
+                    semantic_role: SemanticRole::Supporting,
+                    message: MessageText {
+                        raw_text: "unused variable 'tmp'".to_string(),
+                        normalized_text: None,
+                        locale: None,
+                    },
+                    locations: vec![sample_location("src/main.c", 7, 5, Ownership::User)],
+                    children: Vec::new(),
+                    suggestions: Vec::new(),
+                    context_chains: Vec::new(),
+                    symbol_context: None,
+                    node_completeness: NodeCompleteness::Complete,
+                    provenance: Provenance {
+                        source: ProvenanceSource::Compiler,
+                        capture_refs: vec!["stderr.raw".to_string()],
+                    },
+                    analysis: None,
+                    fingerprints: None,
+                });
 
-        let selection = select_groups(&request);
-        assert_eq!(selection.cards.len(), 2);
-        assert_eq!(selection.suppressed_warning_count, 0);
-        assert!(selection.summary_only_cards.is_empty());
+            let selection = select_groups(&request);
+            assert_eq!(selection.cards.len(), 2);
+            assert_eq!(selection.suppressed_warning_count, 0);
+            assert!(selection.summary_only_cards.is_empty());
+        }
     }
 
     #[test]

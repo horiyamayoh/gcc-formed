@@ -325,6 +325,7 @@ fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> Supporti
     let budget = budget_for(request.profile);
     let limit = match request.profile {
         crate::RenderProfile::Verbose => usize::MAX,
+        crate::RenderProfile::Debug => usize::MAX,
         crate::RenderProfile::RawFallback => 0,
         _ => 3,
     };
@@ -650,6 +651,7 @@ fn conservative_limit(policy: &RendererFamilyPolicy, profile: RenderProfile) -> 
         .as_ref()
         .map(|limits| match profile {
             RenderProfile::Verbose => limits.verbose,
+            RenderProfile::Debug => limits.debug,
             RenderProfile::Default => limits.default,
             RenderProfile::Concise => limits.concise,
             RenderProfile::Ci => limits.ci,
@@ -890,6 +892,11 @@ mod tests {
         assert_eq!(constrained_template_frames(&request, 20, true), 2);
         assert_eq!(constrained_candidate_notes(&request, 8, true), 1);
         assert_eq!(linker_object_limit(&request, true), 1);
+
+        request.profile = RenderProfile::Debug;
+        assert_eq!(constrained_template_frames(&request, 30, true), 6);
+        assert_eq!(constrained_candidate_notes(&request, 20, true), 3);
+        assert_eq!(linker_object_limit(&request, true), 2);
     }
 
     #[test]

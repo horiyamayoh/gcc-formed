@@ -19,8 +19,10 @@ pub fn emit(
 
     for card in &view_model.cards {
         layout.render_card(&theme, card, &mut lines);
-        if matches!(request.profile, crate::RenderProfile::Verbose)
-            || matches!(request.debug_refs, DebugRefs::CaptureRef)
+        if matches!(
+            request.profile,
+            crate::RenderProfile::Verbose | crate::RenderProfile::Debug
+        ) || matches!(request.debug_refs, DebugRefs::CaptureRef)
         {
             if let Some(rule_id) = card.rule_id.as_ref() {
                 lines.push(format!("debug: rule_id={rule_id}"));

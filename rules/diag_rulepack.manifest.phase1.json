@@ -11,7 +11,7 @@
     {
       "kind": "render",
       "path": "render.rulepack.json",
-      "sha256": "697d671b99b98bff1d9e3ba2e90aaba970ce57895519bd54a3ae94ba378a7446"
+      "sha256": "cafca0e4aeff0cd63395c319291c7b246557f8fcbb200563ab22f37a902008b0"
     },
     {
       "kind": "residual",

@@ -1660,6 +1660,7 @@ pub(crate) fn render_profile_from_name(name: &str) -> Option<RenderProfile> {
         "default" => Some(RenderProfile::Default),
         "concise" => Some(RenderProfile::Concise),
         "verbose" => Some(RenderProfile::Verbose),
+        "debug" => Some(RenderProfile::Debug),
         "ci" => Some(RenderProfile::Ci),
         "raw_fallback" => Some(RenderProfile::RawFallback),
         _ => None,
