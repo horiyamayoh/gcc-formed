@@ -633,14 +633,15 @@ corpus/
           expectations.yaml
           meta.yaml
           snapshots/
-            gcc15/
-              ingress.stderr.txt
-              ingress.sarif.json
-              ir.facts.json
-              ir.analysis.json
-              view.default.json
-              render.default.txt
-              render.ci.txt
+            gcc13_14/
+              native_text_capture/
+                ingress.stderr.txt
+                ingress.sarif.json
+                ir.facts.json
+                ir.analysis.json
+                view.default.json
+                render.default.txt
+                render.ci.txt
     cpp/
       templates/
         no-matching-constructor/
@@ -657,8 +658,10 @@ corpus/
 | `invoke.yaml` | MUST | compiler, args, env, cwd policy |
 | `expectations.yaml` | MUST | semantic assertions と gate 対象 |
 | `meta.yaml` | MUST | tags, ownership, provenance, reviewer info |
-| `snapshots/...` | MUST | ingress / IR / render goldens |
+| `snapshots/<version_band>/<processing_path>/...` | MUST | ingress / IR / render goldens |
 | `README.md` | SHOULD | fixture の背景、意図、注意点 |
+
+`snapshots/gcc15/` は legacy compatibility alias として残してよいが、新規 fixture は band/path-aware な snapshot root を正として作成すること。
 
 ### 12.3 `invoke.yaml` で持つべき項目
 

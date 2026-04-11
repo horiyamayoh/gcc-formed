@@ -273,8 +273,41 @@ impl Fixture {
             .to_string()
     }
 
-    pub fn snapshot_root(&self) -> PathBuf {
+    pub fn declared_snapshot_root(&self) -> PathBuf {
+        self.root
+            .join("snapshots")
+            .join(&self.expectations.version_band)
+            .join(&self.expectations.processing_path)
+    }
+
+    pub fn legacy_snapshot_root(&self) -> PathBuf {
         self.root.join("snapshots").join("gcc15")
+    }
+
+    pub fn snapshot_root(&self) -> PathBuf {
+        let declared = self.declared_snapshot_root();
+        if declared.exists() {
+            return declared;
+        }
+
+        let legacy = self.legacy_snapshot_root();
+        if legacy.exists() {
+            return legacy;
+        }
+
+        declared
+    }
+
+    pub fn authoritative_structured_artifact_name(&self) -> Option<&'static str> {
+        match self.expectations.processing_path.as_str() {
+            "dual_sink_structured" => Some("diagnostics.sarif"),
+            "single_sink_structured" if self.expectations.version_band == "gcc9_12" => {
+                Some("diagnostics.json")
+            }
+            "single_sink_structured" => Some("diagnostics.sarif"),
+            "native_text_capture" | "passthrough" => None,
+            _ => None,
+        }
     }
 
     pub fn is_promoted(&self) -> bool {
@@ -338,15 +371,18 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
             )));
         }
         let snapshot_root = fixture.snapshot_root();
-        for relative in [
+        let mut required_artifacts = vec![
             "stderr.raw",
-            "diagnostics.sarif",
             "ir.facts.json",
             "ir.analysis.json",
             "view.default.json",
             "render.default.txt",
             "render.ci.txt",
-        ] {
+        ];
+        if let Some(artifact_name) = fixture.authoritative_structured_artifact_name() {
+            required_artifacts.push(artifact_name);
+        }
+        for relative in required_artifacts {
             if !snapshot_root.join(relative).exists() {
                 return Err(FixtureError::Invalid(format!(
                     "promoted fixture {} missing {}",
@@ -588,6 +624,105 @@ fn normalize_processing_path(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::TempDir;
+
+    struct PromotedFixtureSpec<'a> {
+        fixture_id: &'a str,
+        language: &'a str,
+        source_name: &'a str,
+        version_band: &'a str,
+        support_level: &'a str,
+        major_version_selector: &'a str,
+        processing_path: &'a str,
+        snapshot_layout: &'a str,
+    }
+
+    fn write_promoted_fixture(tempdir: &TempDir, spec: PromotedFixtureSpec<'_>) -> PathBuf {
+        let root = tempdir.path().join(spec.fixture_id);
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::create_dir_all(root.join(spec.snapshot_layout)).unwrap();
+        fs::write(
+            root.join("src").join(spec.source_name),
+            "int main(void) { return 0; }\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("invoke.yaml"),
+            format!(
+                r#"
+language: {language}
+standard: c11
+target_compiler_family: gcc
+version_band: {version_band}
+support_level: {support_level}
+major_version_selector: "{major_version_selector}"
+argv: ["-c", "src/{source_name}"]
+cwd_policy: fixture_root
+env_overrides: {{ LC_MESSAGES: C }}
+source_readability_expectation: readable
+linker_involvement: false
+expected_mode: render
+canonical_path_policy: relative_to_cwd
+"#,
+                language = spec.language,
+                version_band = spec.version_band,
+                support_level = spec.support_level,
+                major_version_selector = spec.major_version_selector,
+                source_name = spec.source_name,
+            ),
+        )
+        .unwrap();
+        fs::write(
+            root.join("expectations.yaml"),
+            format!(
+                r#"
+schema_version: 1
+fixture_id: {fixture_id}
+version_band: {version_band}
+processing_path: {processing_path}
+support_level: {support_level}
+expected_mode: render
+semantic:
+  family: syntax
+  severity: error
+render:
+  default:
+    first_screenful_max_lines: 24
+"#,
+                fixture_id = spec.fixture_id,
+                version_band = spec.version_band,
+                processing_path = spec.processing_path,
+                support_level = spec.support_level,
+            ),
+        )
+        .unwrap();
+        fs::write(
+            root.join("meta.yaml"),
+            format!(
+                r#"
+corpus_id: {fixture_id}
+title: promoted fixture
+tags: [syntax]
+"#,
+                fixture_id = spec.fixture_id,
+            ),
+        )
+        .unwrap();
+        root
+    }
+
+    fn write_required_promoted_artifacts(snapshot_root: &Path) {
+        for relative in [
+            "stderr.raw",
+            "ir.facts.json",
+            "ir.analysis.json",
+            "view.default.json",
+            "render.default.txt",
+            "render.ci.txt",
+        ] {
+            fs::write(snapshot_root.join(relative), "{}\n").unwrap();
+        }
+    }
 
     #[test]
     fn counts_fixture_families_from_path() {
@@ -690,58 +825,25 @@ mod tests {
     #[test]
     fn promoted_fixture_requires_semantic_snapshots() {
         let tempdir = tempfile::tempdir().unwrap();
-        let root = tempdir.path().join("corpus/c/syntax/case-01");
-        fs::create_dir_all(root.join("src")).unwrap();
-        fs::create_dir_all(root.join("snapshots/gcc15")).unwrap();
-        fs::write(root.join("src/main.c"), "int main(void) { return 0; }\n").unwrap();
-        fs::write(
-            root.join("invoke.yaml"),
-            r#"
-language: c
-standard: c11
-target_compiler_family: gcc
-version_band: gcc15_plus
-support_level: preview
-major_version_selector: "15"
-argv: ["-c", "src/main.c"]
-cwd_policy: fixture_root
-env_overrides: { LC_MESSAGES: C }
-source_readability_expectation: readable
-linker_involvement: false
-expected_mode: render
-canonical_path_policy: relative_to_cwd
-"#,
-        )
-        .unwrap();
-        fs::write(
-            root.join("expectations.yaml"),
-            r#"
-schema_version: 1
-fixture_id: c/syntax/case-01
-version_band: gcc15_plus
-processing_path: dual_sink_structured
-support_level: preview
-expected_mode: render
-semantic:
-  family: syntax
-  severity: error
-render:
-  default:
-    first_screenful_max_lines: 24
-"#,
-        )
-        .unwrap();
-        fs::write(
-            root.join("meta.yaml"),
-            r#"
-corpus_id: c/syntax/case-01
-title: syntax representative
-tags: [syntax]
-"#,
-        )
-        .unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/c/syntax/case-01",
+                language: "c",
+                source_name: "main.c",
+                version_band: "gcc15_plus",
+                support_level: "preview",
+                major_version_selector: "15",
+                processing_path: "dual_sink_structured",
+                snapshot_layout: "snapshots/gcc15_plus/dual_sink_structured",
+            },
+        );
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(
+            fixture.snapshot_root(),
+            root.join("snapshots/gcc15_plus/dual_sink_structured")
+        );
         let error = validate_fixture(&fixture).unwrap_err().to_string();
         assert!(error.contains("promoted fixture"));
         assert!(error.contains("missing"));
@@ -793,10 +895,68 @@ tags: [syntax]
         .unwrap();
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(fixture.snapshot_root(), root.join("snapshots/gcc15"));
         assert_eq!(fixture.invoke.version_band, "gcc9_12");
         assert_eq!(fixture.invoke.support_level, "experimental");
         assert_eq!(fixture.expectations.version_band, "gcc9_12");
         assert_eq!(fixture.expectations.support_level, "experimental");
         assert_eq!(fixture.expectations.processing_path, "native_text_capture");
+    }
+
+    #[test]
+    fn promoted_native_text_fixture_allows_structured_artifact_to_be_absent() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/c/partial/case-07",
+                language: "c",
+                source_name: "main.c",
+                version_band: "gcc13_14",
+                support_level: "experimental",
+                major_version_selector: "14",
+                processing_path: "native_text_capture",
+                snapshot_layout: "snapshots/gcc13_14/native_text_capture",
+            },
+        );
+        let snapshot_root = root.join("snapshots/gcc13_14/native_text_capture");
+        write_required_promoted_artifacts(&snapshot_root);
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(fixture.snapshot_root(), snapshot_root);
+        assert_eq!(fixture.authoritative_structured_artifact_name(), None);
+        validate_fixture(&fixture).unwrap();
+    }
+
+    #[test]
+    fn promoted_band_c_single_sink_fixture_requires_json_artifact() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/cpp/overload/case-07",
+                language: "cpp",
+                source_name: "main.cpp",
+                version_band: "gcc9_12",
+                support_level: "experimental",
+                major_version_selector: "12",
+                processing_path: "single_sink_structured",
+                snapshot_layout: "snapshots/gcc9_12/single_sink_structured",
+            },
+        );
+        let snapshot_root = root.join("snapshots/gcc9_12/single_sink_structured");
+        write_required_promoted_artifacts(&snapshot_root);
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(fixture.snapshot_root(), snapshot_root);
+        assert_eq!(
+            fixture.authoritative_structured_artifact_name(),
+            Some("diagnostics.json")
+        );
+        let error = validate_fixture(&fixture).unwrap_err().to_string();
+        assert!(error.contains("diagnostics.json"));
+
+        fs::write(snapshot_root.join("diagnostics.json"), "{}\n").unwrap();
+        validate_fixture(&fixture).unwrap();
     }
 }

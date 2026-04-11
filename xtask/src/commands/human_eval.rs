@@ -3,7 +3,8 @@ use crate::commands::corpus::confidence_label;
 use crate::commands::corpus::{
     REPRESENTATIVE_FIXTURES, VerificationFailure, canonical_json_for_view_model,
     classify_snapshot_artifact_diff, collect_acceptance_fixture_summary, render_profile_from_name,
-    render_request_for_fixture, replay_fixture_document, write_fixture_report_bundle,
+    render_request_for_fixture, replay_fixture_document, structured_artifact_spec_for_fixture,
+    write_fixture_report_bundle,
 };
 use crate::util::fs::copy_dir_recursive;
 use diag_core::{SnapshotKind, snapshot_json};
@@ -16,7 +17,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const HUMAN_EVAL_SCHEMA_VERSION: u32 = 2;
+const HUMAN_EVAL_SCHEMA_VERSION: u32 = 3;
 const MINIMUM_TASK_STUDY_FIXTURE_COUNT: usize = 10;
 const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "syntax",
@@ -300,14 +301,12 @@ fn collect_human_eval_artifacts(
 
     let snapshot_root = fixture.snapshot_root();
     let mut artifacts = BTreeMap::new();
-    artifacts.insert(
-        "stderr.raw".to_string(),
-        fs::read_to_string(snapshot_root.join("stderr.raw"))?,
-    );
-    artifacts.insert(
-        "diagnostics.sarif".to_string(),
-        fs::read_to_string(snapshot_root.join("diagnostics.sarif"))?,
-    );
+    for relative in copied_snapshot_artifact_names(fixture) {
+        artifacts.insert(
+            relative.clone(),
+            fs::read_to_string(snapshot_root.join(&relative))?,
+        );
+    }
     artifacts.insert(
         "ir.facts.json".to_string(),
         snapshot_json(&replay.document, SnapshotKind::FactsOnly)?,
@@ -331,6 +330,14 @@ fn collect_human_eval_artifacts(
     }
 
     Ok(artifacts)
+}
+
+fn copied_snapshot_artifact_names(fixture: &Fixture) -> Vec<String> {
+    let mut names = vec!["stderr.raw".to_string()];
+    if let Some(spec) = structured_artifact_spec_for_fixture(fixture) {
+        names.push(spec.file_name.to_string());
+    }
+    names
 }
 
 fn selected_profile_names(fixture: &Fixture) -> Vec<&'static str> {
@@ -474,7 +481,7 @@ fn build_bundle_readme(report: &HumanEvalKitReport) -> String {
     let _ = writeln!(&mut text);
     let _ = writeln!(
         &mut text,
-        "1. Use `expert-review-sheet.csv` for fixture-by-fixture expert review. Inspect `fixtures/<fixture>/actual/render.default.txt`, `render.ci.txt`, `stderr.raw`, `ir.analysis.json`, and the copied source tree under `input/src/`."
+        "1. Use `expert-review-sheet.csv` for fixture-by-fixture expert review. Inspect `fixtures/<fixture>/actual/render.default.txt`, `render.ci.txt`, `stderr.raw`, the authoritative structured artifact when present, `ir.analysis.json`, and the copied source tree under `input/src/`."
     );
     let _ = writeln!(
         &mut text,
@@ -809,6 +816,39 @@ mod tests {
         assert_eq!(value["support_level"], "preview");
         assert_eq!(value["processing_path"], "dual_sink_structured");
         assert!(value.get("support_tier").is_none());
+    }
+
+    #[test]
+    fn copied_snapshot_artifact_names_omit_structured_capture_for_native_text() {
+        let fixture = sample_input_fixture(
+            "gcc13_14",
+            "experimental",
+            "native_text_capture",
+            vec!["representative".to_string()],
+        );
+
+        assert_eq!(
+            copied_snapshot_artifact_names(&fixture),
+            vec!["stderr.raw".to_string()]
+        );
+    }
+
+    #[test]
+    fn copied_snapshot_artifact_names_use_json_for_band_c_single_sink() {
+        let fixture = sample_input_fixture(
+            "gcc9_12",
+            "experimental",
+            "single_sink_structured",
+            vec![
+                "representative".to_string(),
+                "processing_path:single_sink_structured".to_string(),
+            ],
+        );
+
+        assert_eq!(
+            copied_snapshot_artifact_names(&fixture),
+            vec!["stderr.raw".to_string(), "diagnostics.json".to_string()]
+        );
     }
 
     #[test]

@@ -2974,7 +2974,7 @@ mod tests {
             &["band:gcc13_14", "processing_path:single_sink_structured"],
             Some(ExpectedFallback::Forbidden),
         );
-        let missing = fixture.root.join("snapshots/gcc15/diagnostics.sarif");
+        let missing = fixture.snapshot_root().join("diagnostics.sarif");
 
         let bundle =
             capture_bundle_for_fixture(&fixture, "main.c:1:1: error: broken", Some(&missing))
@@ -3027,7 +3027,7 @@ mod tests {
             ],
             Some(ExpectedFallback::Forbidden),
         );
-        let missing = fixture.root.join("snapshots/gcc15/diagnostics.json");
+        let missing = fixture.snapshot_root().join("diagnostics.json");
 
         let bundle =
             capture_bundle_for_fixture(&fixture, "main.cpp:1:1: error: broken", Some(&missing))

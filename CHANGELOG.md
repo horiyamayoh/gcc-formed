@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Made corpus snapshot discovery and human-eval artifact collection band/path-aware in `diag_testkit` and `xtask`, switched the primary fixture layout to `snapshots/<version_band>/<processing_path>/`, kept `snapshots/gcc15` as a compatibility alias, and migrated representative Band B/Band C fixtures that exercise native-text and single-sink JSON/SARIF paths.
 - Rekeyed lane-7 corpus/testkit/human-eval metadata around `version_band`, `processing_path`, and `support_level`, added legacy tier-letter read compatibility in `diag_testkit`, and fixed `xtask` so untagged `GCC9-12` fixtures now default to `NativeTextCapture` instead of being misclassified as `Passthrough`.
 - Stopped classifying Band B/Band C `NativeTextCapture` product paths as render fallback in `diag_cli_front`, so default native-text render now reports first-class product-path notices and `compatibility` parser status while true fail-open cases still surface `render_fallback`.
 - Honored `RenderRequest.path_policy` consistently in `diag_render` so canonical locations and excerpt headers now follow `shortest_unambiguous`, `relative_to_cwd`, or `absolute` instead of silently ignoring the request outside a hard-coded CI special case.
