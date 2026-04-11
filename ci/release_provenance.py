@@ -55,6 +55,14 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_first_json(*paths: Path):
+    for path in paths:
+        payload = load_json(path)
+        if payload is not None:
+            return payload
+    return None
+
+
 def release_root(report_root: Path) -> Path:
     return report_root / "release"
 
@@ -107,6 +115,7 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
     release = release_root(report_root)
     if args.workflow == "stable-release":
         stable = stable_root(report_root)
+        rc_gate = report_root / "rc-gate"
         return {
             "package": load_json(release / "package.json"),
             "stable_release_command": load_json(release / "stable-release-command.json"),
@@ -115,10 +124,12 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
             "rollback_drill": load_json(stable / "rollback-drill.json"),
             "hermetic_release": load_json(release / "hermetic-release.json"),
             "vendor": load_json(release / "vendor.json"),
-            "rc_gate": load_json(report_root / "rc-gate" / "rc-gate-report.json"),
-            "metrics_report": load_json(report_root / "rc-gate" / "metrics-report.json"),
-            "fuzz_report": load_json(report_root / "rc-gate" / "fuzz-smoke-report.json"),
-            "human_eval": load_json(report_root / "rc-gate" / "human-eval" / "human-eval-report.json"),
+            "rc_gate": load_json(rc_gate / "rc-gate-report.json"),
+            "rollout_matrix_report": load_json(rc_gate / "rollout-matrix-report.json"),
+            "replay_stop_ship": load_json(rc_gate / "replay-stop-ship.json"),
+            "metrics_report": load_json(rc_gate / "metrics-report.json"),
+            "fuzz_report": load_json(rc_gate / "fuzz-smoke-report.json"),
+            "human_eval": load_json(rc_gate / "human-eval" / "human-eval-report.json"),
         }
 
     evidence = {
@@ -132,6 +143,11 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
         "system_install": load_json(release / "system-install.json"),
         "hermetic_release": load_json(release / "hermetic-release.json"),
         "vendor": load_json(release / "vendor.json"),
+        "snapshot_report": load_json(report_root / "snapshot" / "snapshot-report.json"),
+        "replay_stop_ship": load_first_json(
+            release / "replay-stop-ship.json",
+            report_root / "gate" / "replay-stop-ship.json",
+        ),
     }
     if args.workflow == "nightly-gate":
         evidence["bench_smoke"] = load_json(release / "bench-smoke.json")

@@ -131,6 +131,11 @@ class ReleaseProvenanceTest(unittest.TestCase):
             output_path = report_root / "release" / "release-provenance.json"
             write_json(report_root / "release" / "package.json", {"kind": "package"})
             write_json(report_root / "release" / "install-release.json", {"kind": "install-release"})
+            write_json(report_root / "snapshot" / "snapshot-report.json", {"kind": "snapshot"})
+            write_json(
+                report_root / "release" / "replay-stop-ship.json",
+                {"kind": "replay-stop-ship", "status": "fail"},
+            )
 
             completed = self.run_release_provenance(
                 "--workflow",
@@ -161,6 +166,9 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release_scope"]["maturity_label"], "v1beta")
             self.assertEqual(payload["release_scope"]["signing_key_id"], "sig-1")
             self.assertEqual(payload["release"]["install_release"]["kind"], "install-release")
+            self.assertEqual(payload["release"]["snapshot_report"]["kind"], "snapshot")
+            self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
+            self.assertEqual(payload["release"]["replay_stop_ship"]["status"], "fail")
             self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))
 
     def test_stable_release_records_rollback_scope_and_evidence(self) -> None:
@@ -171,6 +179,14 @@ class ReleaseProvenanceTest(unittest.TestCase):
             write_json(
                 report_root / "stable-release" / "promotion-evidence.json",
                 {"kind": "promotion"},
+            )
+            write_json(
+                report_root / "rc-gate" / "rollout-matrix-report.json",
+                {"kind": "rollout-matrix-report", "overall_status": "failure"},
+            )
+            write_json(
+                report_root / "rc-gate" / "replay-stop-ship.json",
+                {"kind": "replay-stop-ship", "status": "fail"},
             )
             write_json(report_root / "rc-gate" / "rc-gate-report.json", {"kind": "rc-gate"})
 
@@ -206,4 +222,6 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release"]["stable_release_command"]["kind"], "command")
             self.assertEqual(payload["release"]["promotion_evidence"]["kind"], "promotion")
             self.assertEqual(payload["release"]["rc_gate"]["kind"], "rc-gate")
+            self.assertEqual(payload["release"]["rollout_matrix_report"]["kind"], "rollout-matrix-report")
+            self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
             self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))

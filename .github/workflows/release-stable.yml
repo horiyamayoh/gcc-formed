@@ -108,6 +108,11 @@ jobs:
             --metrics-manual-report eval/rc/metrics-manual-eval.json \
             --issue-budget-report eval/rc/issue-budget.json \
             --ux-signoff-report eval/rc/ux-signoff.json
+      - name: Path-aware replay stop-ship contract
+        run: |
+          python3 ci/gate_replay_contract.py \
+            --replay-report "$REPORT_ROOT/rc-gate/replay-report.json" \
+            --output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"
       - name: Vendor dependency tree
         run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
       - name: Hermetic release build
@@ -177,6 +182,9 @@ jobs:
           - promotion evidence: \`promotion-evidence.json\`
           - rollback drill: \`rollback-drill.json\`
           - provenance bundle: \`release-provenance.json\`
+          - rollout matrix report: \`rollout-matrix-report.json\`
+          - path-aware replay stop-ship report: \`replay-stop-ship.json\`
+          - rc gate report: \`rc-gate-report.json\`
 
           ## Support Boundary
 
@@ -187,6 +195,13 @@ jobs:
           - \`GCC15+\` is the primary fidelity reference path.
           - \`GCC13-14\` and \`GCC9-12\` are product paths with narrower guarantees and different capture constraints.
           - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
+
+          ## Release Gate Scope
+
+          - \`GCC15+\` remains the primary fidelity reference path for shipped release quality.
+          - Stable promotion is blocked by strict \`rc-gate\`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off.
+          - \`rollout-matrix-report.json\` records the expected current \`VersionBand\` / \`ProcessingPath\` cases.
+          - \`replay-stop-ship.json\` records missing required \`VersionBand × ProcessingPath × Surface\` cells and path-aware quality regressions from representative replay.
 
           ## Install and Rollback Paths
 
@@ -210,6 +225,9 @@ jobs:
           - \`stable-release-summary.md\`
           - \`promotion-evidence.json\`
           - \`rollback-drill.json\`
+          - \`rc-gate-report.json\`
+          - \`rollout-matrix-report.json\`
+          - \`replay-stop-ship.json\`
           - \`release-provenance.json\`
           EOF
       - name: Publish GitHub release
@@ -226,6 +244,9 @@ jobs:
             "$CONTROL_DIR/SHA256SUMS.sig"
             "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
             "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+            "$REPORT_ROOT/rc-gate/rc-gate-report.json"
+            "$REPORT_ROOT/rc-gate/rollout-matrix-report.json"
+            "$REPORT_ROOT/rc-gate/replay-stop-ship.json"
             "$REPORT_ROOT/stable-release/stable-release-report.json"
             "$REPORT_ROOT/stable-release/stable-release-summary.md"
             "$REPORT_ROOT/stable-release/promotion-evidence.json"

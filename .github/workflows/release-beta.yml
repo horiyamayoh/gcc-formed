@@ -76,7 +76,12 @@ jobs:
         run: cargo xtask check
       - name: Representative acceptance replay
         run: cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"
-      - name: Representative GCC 15 snapshot check
+      - name: Path-aware replay stop-ship contract
+        run: |
+          python3 ci/gate_replay_contract.py \
+            --replay-report "$REPORT_ROOT/replay/replay-report.json" \
+            --output "$REPORT_ROOT/release/replay-stop-ship.json"
+      - name: Representative reference-path snapshot check
         run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"
       - name: Vendor dependency tree
         run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
@@ -199,6 +204,12 @@ jobs:
           - \`GCC13-14\` and \`GCC9-12\` are product paths with narrower guarantees and different capture constraints.
           - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
+          ## Release Gate Scope
+
+          - \`GCC15+ / DualSinkStructured\` remains the blocking reference-path snapshot smoke in this workflow.
+          - \`gcc13_14\` and \`gcc9_12\` product-path blockers are classified by \`replay-stop-ship.json\`.
+          - \`replay-stop-ship.json\` preserves missing required \`VersionBand × ProcessingPath × Surface\` cells and path-aware quality regressions from representative replay.
+
           ## Install Paths
 
           - Direct install / rollback path: see \`docs/releases/PUBLIC-BETA-RELEASE.md\` and use the \`.control.tar.gz\` bundle.
@@ -224,6 +235,7 @@ jobs:
           - \`build-info.txt\`
           - \`SHA256SUMS\`
           - \`SHA256SUMS.sig\`
+          - \`replay-stop-ship.json\`
           - \`release-provenance.json\`
 
           ## Known Limits
@@ -244,6 +256,7 @@ jobs:
             "$CONTROL_DIR/build-info.txt"
             "$CONTROL_DIR/SHA256SUMS"
             "$CONTROL_DIR/SHA256SUMS.sig"
+            "$REPORT_ROOT/release/replay-stop-ship.json"
             "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
             "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
             "$REPORT_ROOT/release/release-provenance.json"

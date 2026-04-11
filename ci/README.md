@@ -42,6 +42,8 @@ $REPORT_ROOT/
 
 `step.failure_classification` は、少なくとも `product` / `infrastructure` / `instrumentation` を取り、workflow/platform 側の不調を product regression と混同しないために使う。
 
+`release-beta.yml` と `release-stable.yml` は checked-in static plans の外側にある release workflows で、release provenance が path-aware release evidence の正本になる。release-provenance には `replay-stop-ship` と `rollout-matrix-report` のような release gate artifacts を含め、release notes と GitHub Release assets と整合させる。
+
 ## Build Environment Schema
 
 `build-environment.json` は schema version `1` を使い、少なくとも次を持つ。

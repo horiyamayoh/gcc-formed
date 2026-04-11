@@ -641,6 +641,30 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIsNotNone(snapshot_block)
         self.assertNotIn("if: matrix.release_blocker", snapshot_block.group(0))
 
+    def test_release_beta_workflow_uses_reference_path_snapshot_and_replay_stop_ship(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "release-beta.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Representative reference-path snapshot check", workflow)
+        self.assertIn("Path-aware replay stop-ship contract", workflow)
+        self.assertIn("ci/gate_replay_contract.py", workflow)
+        self.assertIn('--replay-report "$REPORT_ROOT/replay/replay-report.json"', workflow)
+        self.assertIn('--output "$REPORT_ROOT/release/replay-stop-ship.json"', workflow)
+        self.assertIn("replay-stop-ship.json", workflow)
+        self.assertNotIn("Representative GCC 15 snapshot check", workflow)
+
+    def test_release_stable_workflow_surfaces_release_gate_evidence_in_provenance(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "release-stable.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Path-aware replay stop-ship contract", workflow)
+        self.assertIn('--replay-report "$REPORT_ROOT/rc-gate/replay-report.json"', workflow)
+        self.assertIn('--output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"', workflow)
+        self.assertIn("rollout-matrix-report.json", workflow)
+        self.assertIn("replay-stop-ship.json", workflow)
+        self.assertIn("release-provenance.json", workflow)
+        self.assertIn("stable-release", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
