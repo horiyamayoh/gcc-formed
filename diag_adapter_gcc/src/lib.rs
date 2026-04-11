@@ -34,6 +34,7 @@ mod tests {
     };
     use diag_rulepack::checked_in_rulepack_version;
     use std::fs;
+    use std::path::PathBuf;
 
     fn base_run_info() -> RunInfo {
         RunInfo {
@@ -48,6 +49,12 @@ mod tests {
             target_triple: None,
             wrapper_mode: Some(WrapperSurface::Terminal),
         }
+    }
+
+    fn corpus_fixture(relative: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join(relative)
     }
 
     #[test]
@@ -377,6 +384,184 @@ mod tests {
             outcome.document.integrity_issues[0]
                 .message
                 .contains("failed to parse authoritative SARIF")
+        );
+    }
+
+    #[test]
+    fn parses_corpus_sarif_fixture_from_gcc15_overload_case() {
+        let document = from_sarif(
+            &corpus_fixture("corpus/cpp/overload/case-02/snapshots/gcc15/diagnostics.sarif"),
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert!(document.diagnostics.len() >= 2);
+        let conversion = document
+            .diagnostics
+            .iter()
+            .find(|node| node.message.raw_text.contains("invalid conversion"))
+            .unwrap();
+        assert_eq!(conversion.locations[0].path_raw(), "src/main.cpp");
+        assert_eq!(conversion.locations[0].column(), 49);
+        assert_eq!(conversion.locations[0].end_column(), None);
+        assert_eq!(
+            conversion
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("type_overload")
+        );
+    }
+
+    #[test]
+    fn parses_corpus_gcc_json_fixture_from_gcc9_12_overload_case() {
+        let json = fs::read_to_string(corpus_fixture(
+            "corpus/cpp/overload/case-07/snapshots/gcc9_12/single_sink_structured/diagnostics.json",
+        ))
+        .unwrap();
+        let document = from_gcc_json_payload(
+            &json,
+            "diagnostics.json",
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics.len(), 2);
+        let conversion = document
+            .diagnostics
+            .iter()
+            .find(|node| node.message.raw_text.contains("invalid conversion"))
+            .unwrap();
+        assert_eq!(conversion.locations[0].path_raw(), "src/main.cpp");
+        assert_eq!(conversion.locations[0].end_column(), Some(19));
+        assert!(
+            document
+                .diagnostics
+                .iter()
+                .any(|node| node.message.raw_text.contains("initializing argument 1"))
+        );
+    }
+
+    #[test]
+    fn rejects_sarif_payload_without_runs_array() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(&path, r#"{"version":"2.1.0"}"#).unwrap();
+
+        let error = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap_err();
+
+        assert!(matches!(error, AdapterError::MissingRuns));
+    }
+
+    #[test]
+    fn rejects_unsupported_sarif_version() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(&path, r#"{"version":"1.0.0","runs":[]}"#).unwrap();
+
+        let error = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap_err();
+
+        assert!(matches!(
+            error,
+            AdapterError::UnsupportedVersion(version) if version == "1.0.0"
+        ));
+    }
+
+    #[test]
+    fn parses_gcc_json_context_chains_from_nested_children() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'expect_ptr(int&)'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":8,"column":15}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"template argument deduction/substitution failed:",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":3,"column":7}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"  required from here",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":8,"column":15}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"In file included from src/header.hpp:1",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/header.hpp","line":1,"column":1}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        let template_chain = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+            .unwrap();
+        let include_chain = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::Include))
+            .unwrap();
+
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert_eq!(template_chain.frames.len(), 2);
+        assert!(
+            template_chain
+                .frames
+                .iter()
+                .any(|frame| frame.label.contains("required from here"))
+        );
+        assert_eq!(include_chain.frames.len(), 1);
+        assert_eq!(
+            include_chain.frames[0].path.as_deref(),
+            Some("src/header.hpp")
         );
     }
 

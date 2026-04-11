@@ -569,6 +569,7 @@ mod tests {
     use super::*;
     use std::collections::BTreeMap;
     use std::ffi::OsString;
+    use std::path::PathBuf;
 
     #[test]
     fn retention_policy_matches_wrapper_expectations() {
@@ -580,6 +581,106 @@ mod tests {
         ));
         assert!(should_retain(RetentionPolicy::OnChildError, false, true));
         assert!(should_retain(RetentionPolicy::Always, false, false));
+    }
+
+    #[test]
+    fn retention_policy_truth_table_is_exhaustive() {
+        let cases = [
+            (RetentionPolicy::Never, false, false, false),
+            (RetentionPolicy::Never, true, false, false),
+            (RetentionPolicy::Never, false, true, false),
+            (RetentionPolicy::OnWrapperFailure, false, false, false),
+            (RetentionPolicy::OnWrapperFailure, true, false, true),
+            (RetentionPolicy::OnWrapperFailure, false, true, false),
+            (RetentionPolicy::OnChildError, false, false, false),
+            (RetentionPolicy::OnChildError, true, false, true),
+            (RetentionPolicy::OnChildError, false, true, true),
+            (RetentionPolicy::Always, false, false, true),
+            (RetentionPolicy::Always, true, false, true),
+            (RetentionPolicy::Always, false, true, true),
+        ];
+
+        for (policy, wrapper_failed, child_failed, expected) in cases {
+            assert_eq!(
+                should_retain(policy, wrapper_failed, child_failed),
+                expected,
+                "policy={policy:?} wrapper_failed={wrapper_failed} child_failed={child_failed}"
+            );
+        }
+    }
+
+    #[test]
+    fn trace_envelope_round_trips_through_json() {
+        let trace = TraceEnvelope {
+            trace_id: "trace-1".to_string(),
+            selected_mode: "render".to_string(),
+            selected_profile: "default".to_string(),
+            wrapper_verdict: Some("fallback".to_string()),
+            version_summary: Some(TraceVersionSummary {
+                wrapper_version: "0.2.0-beta.1".to_string(),
+                build_target_triple: "x86_64-unknown-linux-musl".to_string(),
+                ir_spec_version: "v1alpha".to_string(),
+                adapter_spec_version: "v1alpha".to_string(),
+                renderer_spec_version: "v1alpha".to_string(),
+            }),
+            environment_summary: Some(TraceEnvironmentSummary {
+                backend_path: PathBuf::from("/usr/bin/gcc"),
+                backend_version: "gcc (GCC) 15.2.0".to_string(),
+                version_band: "GCC15+".to_string(),
+                processing_path: "DualSinkStructured".to_string(),
+                support_level: "Preview".to_string(),
+                injected_flags: vec!["-fdiagnostics-add-output=sarif".to_string()],
+                sanitized_env_keys: vec!["HOME".to_string()],
+                temp_artifact_paths: vec![PathBuf::from("/tmp/diag.sarif")],
+            }),
+            capabilities: Some(TraceCapabilities {
+                stream_kind: "tty".to_string(),
+                width_columns: Some(120),
+                ansi_color: true,
+                unicode: true,
+                hyperlinks: false,
+                interactive: true,
+            }),
+            timing: Some(TraceTiming {
+                capture_ms: 4,
+                render_ms: Some(2),
+                total_ms: 6,
+            }),
+            child_exit: Some(TraceChildExit {
+                code: Some(1),
+                signal: None,
+                success: false,
+            }),
+            parser_result_summary: Some(TraceParserResultSummary {
+                status: "ok".to_string(),
+                document_completeness: Some("partial".to_string()),
+                diagnostic_count: 2,
+                integrity_issue_count: 1,
+                capture_count: 3,
+            }),
+            fingerprint_summary: Some(TraceFingerprintSummary {
+                raw: "raw-fp".to_string(),
+                normalized: Some("normalized-fp".to_string()),
+                family: Some("family-fp".to_string()),
+            }),
+            redaction_status: Some(TraceRedactionStatus {
+                class: "sanitized".to_string(),
+                local_only: true,
+                normalized_artifacts: vec!["stderr.raw".to_string()],
+            }),
+            decision_log: vec!["selected_dual_sink".to_string()],
+            fallback_reason: Some(FallbackReason::ResidualOnly),
+            warning_messages: vec!["kept raw stderr".to_string()],
+            artifacts: vec![TraceArtifactRef {
+                id: "stderr.raw".to_string(),
+                path: Some(PathBuf::from("/tmp/stderr.raw")),
+            }],
+        };
+
+        let encoded = serde_json::to_value(&trace).unwrap();
+        let decoded: TraceEnvelope = serde_json::from_value(encoded.clone()).unwrap();
+
+        assert_eq!(serde_json::to_value(&decoded).unwrap(), encoded);
     }
 
     #[test]
@@ -721,6 +822,21 @@ mod tests {
     }
 
     #[test]
+    fn target_descriptor_handles_non_linux_and_unknown_targets() {
+        let macos = describe_target("aarch64-apple-darwin");
+        assert_eq!(macos.os, "macos");
+        assert_eq!(macos.libc_family, "none");
+
+        let windows = describe_target("x86_64-pc-windows-msvc");
+        assert_eq!(windows.os, "windows");
+        assert_eq!(windows.libc_family, "none");
+
+        let unknown = describe_target("wasm32-unknown-unknown");
+        assert_eq!(unknown.os, "unknown");
+        assert_eq!(unknown.libc_family, "unknown");
+    }
+
+    #[test]
     fn build_manifest_for_target_infers_artifact_metadata() {
         let manifest = build_manifest_for_target(
             "lock".to_string(),
@@ -737,5 +853,22 @@ mod tests {
         assert_eq!(manifest.maturity_label, DEFAULT_MATURITY_LABEL);
         assert_eq!(manifest.release_channel, "stable");
         assert!(manifest.checksums.is_empty());
+    }
+
+    #[test]
+    fn build_manifest_accepts_legacy_support_tier_alias() {
+        let mut manifest_json = serde_json::to_value(default_build_manifest(
+            "lock".to_string(),
+            "vendor".to_string(),
+        ))
+        .unwrap();
+        let object = manifest_json.as_object_mut().unwrap();
+        let maturity_label = object.remove("maturity_label").unwrap();
+        object.insert("support_tier_declaration".to_string(), maturity_label);
+
+        let manifest: BuildManifest = serde_json::from_value(manifest_json).unwrap();
+
+        assert_eq!(manifest.maturity_label, DEFAULT_MATURITY_LABEL);
+        assert_eq!(manifest.release_channel, "dev");
     }
 }

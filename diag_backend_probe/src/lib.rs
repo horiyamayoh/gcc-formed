@@ -727,4 +727,96 @@ mod tests {
         let parsed = parse_version("gcc (Ubuntu 15.1.0-1) 15.1.0").unwrap();
         assert_eq!(parsed, (15, 1));
     }
+
+    #[test]
+    fn parses_version_from_unexpected_but_supported_formats() {
+        let arm = parse_version("arm-none-eabi-gcc (Arm GNU Toolchain) 13.2.1 20231009").unwrap();
+        let cplusplus = parse_version("g++ (GCC) 14.2.0 20250215 (Red Hat 14.2.0-3)").unwrap();
+
+        assert_eq!(arm, (13, 2));
+        assert_eq!(cplusplus, (14, 2));
+    }
+
+    #[test]
+    fn rejects_empty_partial_and_malformed_version_lines() {
+        for line in ["", "gcc", "gcc version 15", "gcc version fifteen.point.two"] {
+            assert!(
+                matches!(parse_version(line), Err(ProbeError::UnparseableVersion(value)) if value == line),
+                "expected unparseable version for {line:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn maps_version_band_boundaries_for_all_supported_cutoffs() {
+        let cases = [
+            (8, SupportTier::C, VersionBand::Unknown),
+            (9, SupportTier::C, VersionBand::Gcc9_12),
+            (12, SupportTier::C, VersionBand::Gcc9_12),
+            (13, SupportTier::B, VersionBand::Gcc13_14),
+            (14, SupportTier::B, VersionBand::Gcc13_14),
+            (15, SupportTier::A, VersionBand::Gcc15Plus),
+            (16, SupportTier::A, VersionBand::Gcc15Plus),
+        ];
+
+        for (major, expected_tier, expected_band) in cases {
+            assert_eq!(support_tier_for_major(major), expected_tier);
+            assert_eq!(version_band_for_major(major), expected_band);
+        }
+    }
+
+    #[test]
+    fn capability_profiles_follow_band_specific_contracts() {
+        let gcc9 = capability_profile_for_major(9);
+        assert_eq!(gcc9.version_band, VersionBand::Gcc9_12);
+        assert_eq!(gcc9.support_level, SupportLevel::Experimental);
+        assert!(gcc9.native_text_capture);
+        assert!(gcc9.json_diagnostics);
+        assert!(!gcc9.sarif_diagnostics);
+        assert_eq!(
+            gcc9.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
+
+        let gcc14 = capability_profile_for_major(14);
+        assert_eq!(gcc14.version_band, VersionBand::Gcc13_14);
+        assert_eq!(gcc14.support_level, SupportLevel::Experimental);
+        assert!(gcc14.native_text_capture);
+        assert!(!gcc14.json_diagnostics);
+        assert!(gcc14.sarif_diagnostics);
+        assert!(!gcc14.dual_sink);
+        assert_eq!(
+            gcc14.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
+
+        let gcc16 = capability_profile_for_major(16);
+        assert_eq!(gcc16.version_band, VersionBand::Gcc15Plus);
+        assert_eq!(gcc16.support_level, SupportLevel::Preview);
+        assert!(gcc16.sarif_diagnostics);
+        assert!(gcc16.dual_sink);
+        assert_eq!(
+            gcc16.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough
+            ])
+        );
+
+        let unknown = capability_profile_for_major(7);
+        assert_eq!(unknown.version_band, VersionBand::Unknown);
+        assert_eq!(unknown.support_level, SupportLevel::PassthroughOnly);
+        assert_eq!(
+            unknown.allowed_processing_paths,
+            BTreeSet::from([ProcessingPath::Passthrough])
+        );
+    }
 }

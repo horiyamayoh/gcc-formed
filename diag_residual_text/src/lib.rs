@@ -960,4 +960,67 @@ as: fatal error: Killed signal terminated program as\n";
                 .any(|condition| condition == "residual_group=file-format")
         );
     }
+
+    #[test]
+    fn empty_input_produces_no_nodes() {
+        assert!(classify("", true).is_empty());
+        assert!(classify("\n\n", false).is_empty());
+    }
+
+    #[test]
+    fn interleaved_compiler_and_linker_output_preserves_each_family() {
+        let stderr = "\
+main.c:4:1: error: expected ';' before '}' token\n\
+/usr/bin/ld: main.o: in function `main':\n\
+main.c:(.text+0x15): undefined reference to `foo'\n\
+collect2: error: ld returned 1 exit status\n";
+        let nodes = classify(stderr, true);
+
+        assert!(nodes.iter().any(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                == Some("syntax")
+        }));
+        assert!(nodes.iter().any(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                == Some("linker.undefined_reference")
+        }));
+        assert!(nodes.iter().any(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                == Some("collect2_summary")
+        }));
+    }
+
+    #[test]
+    fn malformed_compiler_lines_without_column_become_passthrough() {
+        let stderr = "main.c:4: error: expected ';' before '}' token\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
+        assert!(
+            nodes[0]
+                .message
+                .raw_text
+                .contains("expected ';' before '}' token")
+        );
+    }
+
+    #[test]
+    fn preserves_unicode_passthrough_text() {
+        let stderr = "外部ツール: エラー: 未定義シンボル μ_result\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
+        assert_eq!(
+            nodes[0].message.raw_text,
+            "外部ツール: エラー: 未定義シンボル μ_result"
+        );
+    }
 }
