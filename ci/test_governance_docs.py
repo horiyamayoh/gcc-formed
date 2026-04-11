@@ -59,6 +59,16 @@ class GovernanceDocsTest(unittest.TestCase):
                 text = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn(expected, text)
 
+    def test_governance_and_adr_index_mark_legacy_supporttier_wording_as_historical(self) -> None:
+        governance = (REPO_ROOT / "docs/policies/GOVERNANCE.md").read_text(encoding="utf-8")
+        self.assertNotIn("support-tier wording", governance)
+        self.assertIn("VersionBand / ProcessingPath / SupportLevel wording", governance)
+
+        adr_index = (REPO_ROOT / "adr-initial-set/README.md").read_text(encoding="utf-8")
+        self.assertNotIn("legacy single-tier baseline", adr_index)
+        self.assertIn("Historical vocabulary names such as `Support Tier` or `compatibility tier`", adr_index)
+        self.assertIn("`VersionBand`, `CapabilityProfile`, `ProcessingPath`, and `SupportLevel`", adr_index)
+
 
 if __name__ == "__main__":
     unittest.main()

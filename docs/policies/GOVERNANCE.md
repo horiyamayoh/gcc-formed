@@ -44,7 +44,7 @@ A change is `breaking` when it alters the meaning of an existing contract surfac
 Examples:
 
 - removing or renaming an existing CLI flag, subcommand, env var, config key, IR field, or manifest field
-- changing default mode selection, precedence, fallback semantics, support-tier wording, or release/install behavior for existing users
+- changing default mode selection, precedence, fallback semantics, VersionBand / ProcessingPath / SupportLevel wording, or release/install behavior for existing users
 - changing renderer headings, confidence wording, rollout notices, or trace/report semantics in a way that invalidates the current contract
 
 Required actions:

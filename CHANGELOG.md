@@ -23,6 +23,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Hardened `cargo xtask check` so the standard local and PR gate now fails on `cargo clippy --workspace --all-targets -- -D warnings` regressions instead of treating clippy-cleanliness as an out-of-band manual check.
 - Rekeyed release provenance generation around explicit `release_scope` metadata so CI and release workflows now record `maturity_label` and nightly `version_band` instead of emitting legacy `support_tier` fields in `release-provenance.json`.
 - Renamed CI gate status, summary, and static-plan metadata from legacy `support_tier` selectors to explicit `gate_scope` plus `version_band`, and switched nightly workflow plumbing from `MATRIX_SUPPORT_TIER` to `MATRIX_VERSION_BAND`.
+- Removed remaining current-authority `SupportTier` phrasing from governance and ADR index docs, leaving any surviving `Support Tier` / `compatibility tier` wording explicitly marked as historical ADR-title context only.
 
 ## [0.2.0-beta.1] - 2026-04-09
 
