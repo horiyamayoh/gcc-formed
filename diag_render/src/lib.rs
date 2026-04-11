@@ -453,6 +453,55 @@ mod tests {
     }
 
     #[test]
+    fn passthrough_default_profile_emits_preserved_stderr_without_wrapper_header() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Passthrough;
+        request.document.captures[0].inline_text = Some(
+            "src/main.c:2:13: error: original compiler order\nsrc/main.c:2:13: note: prefixed context\n"
+                .to_string(),
+        );
+
+        let output = render(request).unwrap();
+
+        assert!(output.used_fallback);
+        assert_eq!(output.fallback_reason, Some(FallbackReason::ResidualOnly));
+        assert_eq!(
+            output.text,
+            "src/main.c:2:13: error: original compiler order\nsrc/main.c:2:13: note: prefixed context\n"
+        );
+        assert!(!output.text.contains("showing a conservative wrapper view"));
+        assert!(!output.text.contains("fallback reason ="));
+        assert!(!output.text.contains("\nraw:\n"));
+    }
+
+    #[test]
+    fn passthrough_verbose_profiles_keep_fallback_reason_visible() {
+        for profile in [RenderProfile::Verbose, RenderProfile::Debug] {
+            let mut request = sample_request();
+            request.profile = profile;
+            request.document.document_completeness = DocumentCompleteness::Passthrough;
+            request.document.captures[0].inline_text =
+                Some("src/main.c:2:13: error: original compiler order\n".to_string());
+
+            let output = render(request).unwrap();
+
+            assert!(output.used_fallback);
+            assert_eq!(output.fallback_reason, Some(FallbackReason::ResidualOnly));
+            assert!(output.text.contains("showing a conservative wrapper view"));
+            assert!(
+                output
+                    .text
+                    .contains("note: fallback reason = residual_only")
+            );
+            assert!(
+                output
+                    .text
+                    .contains("raw:\n  src/main.c:2:13: error: original compiler order")
+            );
+        }
+    }
+
+    #[test]
     fn raw_fallback_marks_reconstructed_output_when_stderr_capture_missing() {
         let mut request = sample_request();
         request.profile = RenderProfile::RawFallback;

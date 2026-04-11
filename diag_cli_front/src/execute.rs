@@ -150,7 +150,9 @@ fn real_main() -> Result<i32, Box<dyn std::error::Error>> {
     let render_duration_ms = render_started.elapsed().as_millis() as u64;
     let mut stderr = std::io::stderr().lock();
     stderr.write_all(render_result.text.as_bytes())?;
-    stderr.write_all(b"\n")?;
+    if !render_result.text.ends_with('\n') {
+        stderr.write_all(b"\n")?;
+    }
 
     maybe_write_trace(TraceWriteRequest {
         common: trace_context(wrapper_started.elapsed().as_millis() as u64),

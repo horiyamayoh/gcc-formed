@@ -519,9 +519,8 @@ main.c:4:1: note: extra opaque detail\n",
         .stderr(predicate::str::contains(
             expected_tier_c_native_text_notice(),
         ))
-        .stderr(predicate::str::contains(
-            "error: showing a conservative wrapper view",
-        ))
+        .stderr(predicate::str::contains("error: showing a conservative wrapper view").not())
+        .stderr(predicate::str::contains("note: fallback reason =").not())
         .stderr(predicate::str::contains("opaque compiler wording here"));
 
     let trace: Value =
@@ -552,6 +551,37 @@ main.c:4:1: note: extra opaque detail\n",
             .iter()
             .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
     );
+}
+
+#[test]
+fn verbose_profile_keeps_residual_fallback_reason_visible() {
+    let temp = fixture_with_stderr(
+        "12.2.0",
+        "\
+main.c:4:1: error: opaque compiler wording here\n\
+main.c:4:1: note: extra opaque detail\n",
+    );
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-profile=verbose")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "error: showing a conservative wrapper view",
+        ))
+        .stderr(predicate::str::contains(
+            "note: fallback reason = residual_only",
+        ))
+        .stderr(predicate::str::contains(
+            "raw:\n  main.c:4:1: error: opaque compiler wording here",
+        ));
 }
 
 #[cfg(unix)]
