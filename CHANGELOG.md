@@ -66,6 +66,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Tightened representative acceptance verification so promoted fixtures can require a user-owned lead location, and replay quality rates now use expectation-derived denominators instead of the full promoted set.
 - Changed GCC SARIF ingest to fail open when authoritative SARIF is missing or malformed, preserving raw diagnostics while emitting `sarif_missing` / `sarif_parse_failed` trace reasons.
 - Moved snapshot normalization and comparison logic into `diag_testkit` so harness-side volatile-field handling is centralized, and snapshot reports now distinguish `exact`, `normalization_only`, `semantic`, and `missing_expected` drift kinds.
+- Changed `diag_capture_runtime` to preselect safe diagnostics temp paths for SARIF sidecars instead of rewriting chosen paths after selection, so unsafe runtime roots no longer make the wrapper and GCC disagree about `diagnostics.sarif`.
 
 ## [0.1.0] - 2026-04-07
 

@@ -208,7 +208,7 @@ impl CaptureBundle {
                 if let Some(path) = self.authoritative_sarif_path(temp_dir) {
                     flags.push(format!(
                         "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                        sanitize_sarif_path(&path)
+                        path.display()
                     ));
                 }
             }
@@ -567,7 +567,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
             if let Some(sarif_path) = injected_sarif_path.as_ref() {
                 final_args.push(OsString::from(format!(
                     "-fdiagnostics-add-output=sarif:version=2.1,file={}",
-                    sanitize_sarif_path(sarif_path)
+                    sarif_path.display()
                 )));
             }
         }
@@ -929,8 +929,45 @@ fn tool_info(backend: &ProbeResult) -> ToolInfo {
     }
 }
 
-fn sanitize_sarif_path(path: &Path) -> String {
-    path.display().to_string().replace([',', '=', ' '], "_")
+fn path_is_safe_for_gcc_output(path: &Path) -> bool {
+    path.to_string_lossy()
+        .chars()
+        .all(|ch| !matches!(ch, ',' | '=' | ' ') && !ch.is_control())
+}
+
+fn safe_runtime_fallback_bases() -> Vec<PathBuf> {
+    let mut bases = vec![std::env::temp_dir().join("cc-formed-runtime")];
+    #[cfg(unix)]
+    {
+        let unix_tmp = PathBuf::from("/tmp/cc-formed-runtime");
+        if !bases.iter().any(|base| base == &unix_tmp) {
+            bases.push(unix_tmp);
+        }
+    }
+    bases
+}
+
+fn safe_runtime_root(root: &Path) -> Result<PathBuf, std::io::Error> {
+    if path_is_safe_for_gcc_output(root) {
+        return Ok(root.to_path_buf());
+    }
+
+    let root_fingerprint = fingerprint_for(&[root.display().to_string()]);
+    let suffix = &root_fingerprint[..12];
+    for base in safe_runtime_fallback_bases() {
+        let candidate = base.join(format!("cc-formed-safe-{suffix}"));
+        if path_is_safe_for_gcc_output(&candidate) {
+            return Ok(candidate);
+        }
+    }
+
+    Err(std::io::Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!(
+            "could not derive a safe diagnostics runtime root from {}",
+            root.display()
+        ),
+    ))
 }
 
 fn temp_dir_name(path: &Path) -> String {
@@ -941,6 +978,9 @@ fn temp_dir_name(path: &Path) -> String {
 }
 
 fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
+    let safe_root = safe_runtime_root(root)?;
+    fs::create_dir_all(&safe_root)?;
+    secure_private_dir(&safe_root)?;
     let unique = format!(
         "formed-{}-{}",
         std::process::id(),
@@ -949,7 +989,7 @@ fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
             .map(|duration| duration.as_nanos())
             .unwrap_or_default()
     );
-    let path = root.join(unique);
+    let path = safe_root.join(unique);
     fs::create_dir_all(&path)?;
     secure_private_dir(&path)?;
     Ok(path)
@@ -1209,11 +1249,109 @@ mod tests {
     }
 
     #[test]
-    fn sanitizes_sarif_path() {
-        let sanitized = sanitize_sarif_path(Path::new("/tmp/a,b=c d.sarif"));
-        assert!(!sanitized.contains(','));
-        assert!(!sanitized.contains('='));
-        assert!(!sanitized.contains(' '));
+    fn path_safety_helper_rejects_unsafe_runtime_roots() {
+        assert!(path_is_safe_for_gcc_output(Path::new(
+            "/tmp/cc-formed-runtime/formed-123/diagnostics.sarif"
+        )));
+        assert!(!path_is_safe_for_gcc_output(Path::new(
+            "/tmp/runtime,root=unsafe path/formed-123/diagnostics.sarif"
+        )));
+        assert!(!path_is_safe_for_gcc_output(Path::new(
+            "/tmp/runtime=root/formed-123/diagnostics.sarif"
+        )));
+    }
+
+    #[cfg(unix)]
+    fn make_executable(path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn run_capture_uses_preselected_safe_sarif_path_for_unsafe_runtime_root() {
+        let temp = tempfile::tempdir().unwrap();
+        let backend = temp.path().join("fake-gcc");
+        let observed_sarif_path = temp.path().join("observed-sarif-path.txt");
+        let runtime_root = temp.path().join("runtime,root=unsafe path");
+        let cwd = temp.path().join("cwd");
+        fs::create_dir_all(&cwd).unwrap();
+
+        let script = format!(
+            r#"#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${{1:-}}" == "--version" ]]; then
+  echo "gcc (Fake) 15.2.0"
+  exit 0
+fi
+sarif=""
+for arg in "$@"; do
+  if [[ "$arg" == -fdiagnostics-add-output=sarif:version=2.1,file=* ]]; then
+    sarif="${{arg#-fdiagnostics-add-output=sarif:version=2.1,file=}}"
+  fi
+done
+printf '%s' "$sarif" > "{}"
+if [[ -n "$sarif" ]]; then
+  cat > "$sarif" <<'SARIF'
+{{"version":"2.1.0","runs":[]}}
+SARIF
+fi
+printf '%s\n' 'main.c:1:1: error: synthetic failure' >&2
+exit 1
+"#,
+            observed_sarif_path.display()
+        );
+        fs::write(&backend, script).unwrap();
+        make_executable(&backend);
+
+        let request = CaptureRequest {
+            backend: ProbeResult {
+                resolved_path: backend.clone(),
+                version_string: "gcc (Fake) 15.2.0".to_string(),
+                ..fake_probe()
+            },
+            args: vec![OsString::from("-c"), OsString::from("main.c")],
+            cwd,
+            mode: ExecutionMode::Render,
+            capture_passthrough_stderr: false,
+            retention: RetentionPolicy::Never,
+            paths: WrapperPaths {
+                config_path: temp.path().join("config.toml"),
+                cache_root: temp.path().join("cache-root"),
+                state_root: temp.path().join("state-root"),
+                runtime_root: runtime_root.clone(),
+                trace_root: temp.path().join("trace-root"),
+                install_root: temp.path().join("install-root"),
+            },
+            structured_capture: StructuredCapturePolicy::SarifFile,
+            preserve_native_color: false,
+        };
+
+        let output = run_capture(&request).unwrap();
+        let sarif_path = output.sarif_path.clone().unwrap();
+        let injected_sarif_arg = output
+            .bundle
+            .invocation
+            .argv
+            .iter()
+            .find_map(|arg| arg.strip_prefix("-fdiagnostics-add-output=sarif:version=2.1,file="))
+            .unwrap();
+
+        assert_eq!(sarif_path, output.temp_dir.join("diagnostics.sarif"));
+        assert!(sarif_path.exists());
+        assert!(!output.temp_dir.starts_with(&runtime_root));
+        assert!(path_is_safe_for_gcc_output(&output.temp_dir));
+        assert_eq!(injected_sarif_arg, sarif_path.display().to_string());
+        assert_eq!(
+            fs::read_to_string(&observed_sarif_path).unwrap(),
+            sarif_path.display().to_string()
+        );
+
+        cleanup_capture(&output).unwrap();
+        assert!(!output.temp_dir.exists());
     }
 
     #[test]
