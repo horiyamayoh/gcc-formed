@@ -8,13 +8,12 @@ raw:
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=multiple definition, existing_specific_family=linker.multiple_definition
 debug: suppression_reason=preserved_specific_family_from_ingress
-error: linker file format or relocation failure
-help: check object compatibility, target triple, and archive contents
+error: linker reported a failure
+help: check the missing/duplicate symbol and the object or library inputs
 why: collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status
-debug: rule_id=rule.family.ingress_specific_override
-debug: matched_conditions=phase=link, context=linker_resolution, existing_specific_family=linker.file_format_or_relocation
-debug: suppression_reason=preserved_specific_family_from_ingress
+debug: rule_id=rule.family.linker.structured_or_message
+debug: matched_conditions=phase=link, context=linker_resolution
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

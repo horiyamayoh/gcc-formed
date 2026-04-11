@@ -457,11 +457,12 @@ fn group_to_node(
     template_values: &BTreeMap<String, String>,
     lines: &[String],
 ) -> DiagnosticNode {
+    let context_chains = grouped_context_chains(rule);
     DiagnosticNode {
         id: format!("residual-{index}"),
         origin: rule.origin.clone(),
         phase: rule.phase.clone(),
-        severity: Severity::Error,
+        severity: grouped_severity(lines),
         semantic_role: SemanticRole::Root,
         message: MessageText {
             raw_text: lines.join("\n"),
@@ -475,8 +476,8 @@ fn group_to_node(
             .skip(1)
             .map(|(child_index, line)| DiagnosticNode {
                 id: format!("residual-{index}-child-{child_index}"),
-                origin: Origin::Linker,
-                phase: Phase::Link,
+                origin: rule.origin.clone(),
+                phase: rule.phase.clone(),
                 severity: Severity::Note,
                 semantic_role: SemanticRole::Supporting,
                 message: MessageText {
@@ -487,10 +488,7 @@ fn group_to_node(
                 locations: Vec::new(),
                 children: Vec::new(),
                 suggestions: Vec::new(),
-                context_chains: vec![ContextChain {
-                    kind: ContextChainKind::LinkerResolution,
-                    frames: Vec::new(),
-                }],
+                context_chains: context_chains.clone(),
                 symbol_context: None,
                 node_completeness: NodeCompleteness::Partial,
                 provenance: Provenance {
@@ -502,10 +500,7 @@ fn group_to_node(
             })
             .collect(),
         suggestions: Vec::new(),
-        context_chains: vec![ContextChain {
-            kind: ContextChainKind::LinkerResolution,
-            frames: Vec::new(),
-        }],
+        context_chains,
         symbol_context: rule
             .symbol_capture
             .as_ref()
@@ -542,6 +537,28 @@ fn group_to_node(
             producer_version: None,
         }),
         fingerprints: None,
+    }
+}
+
+fn grouped_context_chains(rule: &LinkerResidualSeed) -> Vec<ContextChain> {
+    if matches!(rule.phase, Phase::Link) {
+        vec![ContextChain {
+            kind: ContextChainKind::LinkerResolution,
+            frames: Vec::new(),
+        }]
+    } else {
+        Vec::new()
+    }
+}
+
+fn grouped_severity(lines: &[String]) -> Severity {
+    if lines
+        .iter()
+        .any(|line| line.to_ascii_lowercase().contains("fatal error"))
+    {
+        Severity::Fatal
+    } else {
+        Severity::Error
     }
 }
 
@@ -643,7 +660,14 @@ mod tests {
                 .residual
                 .linker_groups
                 .iter()
-                .any(|entry| entry.kind == LinkerResidualKind::Collect2Error)
+                .any(|entry| entry.kind == LinkerResidualKind::Collect2Summary)
+        );
+        assert!(
+            rulepack
+                .residual
+                .linker_groups
+                .iter()
+                .any(|entry| entry.kind == LinkerResidualKind::DriverFatal)
         );
     }
 
@@ -806,18 +830,17 @@ main.cpp:8:15: note:   required from here\n";
     }
 
     #[test]
-    fn groups_collect2_residuals_under_file_format_family() {
+    fn groups_collect2_residuals_as_driver_summary() {
         let stderr = "collect2: error: ld returned 1 exit status";
         let nodes = classify(stderr, true);
         assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].origin, Origin::Driver);
+        assert_eq!(nodes[0].phase, Phase::Link);
         let analysis = nodes[0].analysis.as_ref().unwrap();
-        assert_eq!(
-            analysis.family.as_deref(),
-            Some("linker.file_format_or_relocation")
-        );
+        assert_eq!(analysis.family.as_deref(), Some("collect2_summary"));
         assert_eq!(
             analysis.headline.as_deref(),
-            Some("linker file format or relocation failure")
+            Some("driver reported a linker failure summary")
         );
         assert!(
             analysis
@@ -825,6 +848,55 @@ main.cpp:8:15: note:   required from here\n";
                 .iter()
                 .any(|condition| condition == "residual_group=collect2")
         );
+    }
+
+    #[test]
+    fn groups_driver_fatal_residuals() {
+        let stderr = "gcc: fatal error: cannot execute 'cc1': execvp: No such file or directory";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].origin, Origin::Driver);
+        assert_eq!(nodes[0].phase, Phase::Driver);
+        assert_eq!(nodes[0].severity, Severity::Fatal);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("driver_fatal")
+        );
+    }
+
+    #[test]
+    fn groups_internal_compiler_error_banners() {
+        let stderr = "cc1plus: internal compiler error: Segmentation fault";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].origin, Origin::Gcc);
+        assert_eq!(nodes[0].phase, Phase::Unknown);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("internal_compiler_error_banner")
+        );
+    }
+
+    #[test]
+    fn grouped_non_linker_children_preserve_rule_origin_and_phase() {
+        let stderr = "\
+as: unrecognized option '--gdwarf-99'\n\
+as: fatal error: Killed signal terminated program as\n";
+        let nodes = classify(stderr, true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].origin, Origin::ExternalTool);
+        assert_eq!(nodes[0].phase, Phase::Assemble);
+        assert_eq!(nodes[0].children.len(), 1);
+        assert_eq!(nodes[0].children[0].origin, Origin::ExternalTool);
+        assert_eq!(nodes[0].children[0].phase, Phase::Assemble);
+        assert!(nodes[0].context_chains.is_empty());
+        assert!(nodes[0].children[0].context_chains.is_empty());
     }
 
     #[test]

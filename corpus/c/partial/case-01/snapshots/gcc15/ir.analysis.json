@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/cc49vTvC.o: in function `main':\nmain.c:(.text+0x5): undefined reference to `missing_symbol'\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -30,17 +30,15 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "medium",
-        "family": "linker.file_format_or_relocation",
-        "first_action_hint": "check object compatibility, target triple, and archive contents",
-        "headline": "linker file format or relocation failure",
+        "confidence": 0.6499999761581421,
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
         "matched_conditions": [
           "phase=link",
-          "context=linker_resolution",
-          "existing_specific_family=linker.file_format_or_relocation"
+          "context=linker_resolution"
         ],
-        "rule_id": "rule.family.ingress_specific_override",
-        "suppression_reason": "preserved_specific_family_from_ingress"
+        "rule_id": "rule.family.linker.structured_or_message"
       },
       "context_chains": [
         {
@@ -48,16 +46,16 @@
         }
       ],
       "fingerprints": {
-        "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
+        "family": "0fcb4ae5580c6e64a93785658dac914609a2e2d758cbdf97b21f1a251581804a",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "17ab5141fdf8b1d81668747b2fcf9aa0cc65dfcc0cba9b0839224304b27877a0"
+        "structural": "e6b937c63d2df4d384c5bcd31c5f7bdf7237d0aa992dd38e1e9f4d3e925cb6d3"
       },
       "id": "residual-0",
       "message": {
         "raw_text": "collect2: error: ld returned 1 exit status"
       },
       "node_completeness": "partial",
-      "origin": "linker",
+      "origin": "driver",
       "phase": "link",
       "provenance": {
         "capture_refs": [
@@ -70,7 +68,7 @@
     },
     {
       "analysis": {
-        "confidence": "medium",
+        "confidence": 0.6499999761581421,
         "family": "linker.undefined_reference",
         "first_action_hint": "define the missing symbol or link the object/library that provides it",
         "headline": "undefined reference to `missing_symbol`",
@@ -92,7 +90,7 @@
       "fingerprints": {
         "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
         "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
-        "structural": "632155146468ebaa230fadbad7bdb81f8a8426780f29112c424c97f6c8a99dbe"
+        "structural": "fd41bd36bf1c3c830cc8f19b463cd2ac689fe699ef6fe6070648e8774fe30d70"
       },
       "id": "residual-1",
       "message": {
@@ -117,9 +115,9 @@
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "21f4f3692469c9d75e0cda967ec5f6dce4efc11f7e5431aa7ab5db4604873680",
-    "raw": "a6b58a593ace669382908d2c37c0434368ba690a8653a29f0f4219196554775d",
-    "structural": "b0a474504d9431e11476912755e4c09b522ee5bbb8178ae5b68cea4c2547bcaf"
+    "family": "feb616571f5601ea4a0ab96d216bec5f35c3099576facd6359961e6668891b7c",
+    "raw": "db98cbed7e2c4206ae3f9d9e5a8d9e4f6acbd51c65e7eb279bfcf34c726bad69",
+    "structural": "caa46e605d23c3047dd5de66417312e769684eea3defa59ef2a99fd1ef36f5e4"
   },
   "integrity_issues": [
     {

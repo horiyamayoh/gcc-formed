@@ -141,6 +141,28 @@
     },
     "linker_groups": [
       {
+        "kind": "driver_fatal",
+        "family": "driver_fatal",
+        "origin": "driver",
+        "phase": "driver",
+        "rule_id": "rule.residual.linker_group",
+        "group_key": "driver-fatal",
+        "match_regex": "^(gcc|g\\+\\+): fatal error:",
+        "headline_template": "driver reported a fatal compiler failure",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first failing compiler/tool invocation"
+      },
+      {
+        "kind": "internal_compiler_error_banner",
+        "family": "internal_compiler_error_banner",
+        "origin": "gcc",
+        "phase": "unknown",
+        "rule_id": "rule.residual.linker_group",
+        "group_key": "ice-banner",
+        "match_regex": "^(cc1|cc1plus): internal compiler error:",
+        "headline_template": "compiler frontend reported an internal compiler error",
+        "first_action_hint": "preserve the raw diagnostics and reduce the input before filing a compiler bug"
+      },
+      {
         "kind": "undefined_reference",
         "family": "linker.undefined_reference",
         "origin": "linker",
@@ -187,19 +209,19 @@
         "first_action_hint": "check object compatibility, target triple, and archive contents"
       },
       {
-        "kind": "collect2_error",
-        "family": "linker.file_format_or_relocation",
-        "origin": "linker",
+        "kind": "collect2_summary",
+        "family": "collect2_summary",
+        "origin": "driver",
         "phase": "link",
         "rule_id": "rule.residual.linker_group",
         "group_key": "collect2",
         "match_prefix": "collect2: error:",
-        "headline_template": "linker file format or relocation failure",
-        "first_action_hint": "check object compatibility, target triple, and archive contents"
+        "headline_template": "driver reported a linker failure summary",
+        "first_action_hint": "inspect the linker diagnostics immediately above this summary"
       },
       {
         "kind": "assembler_error",
-        "family": "assembler.error",
+        "family": "assembler_error",
         "origin": "external_tool",
         "phase": "assemble",
         "rule_id": "rule.residual.linker_group",

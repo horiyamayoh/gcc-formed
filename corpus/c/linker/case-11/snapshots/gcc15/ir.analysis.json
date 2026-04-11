@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -17,17 +17,15 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "medium",
-        "family": "linker.file_format_or_relocation",
-        "first_action_hint": "check object compatibility, target triple, and archive contents",
-        "headline": "linker file format or relocation failure",
+        "confidence": 0.6499999761581421,
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
         "matched_conditions": [
           "phase=link",
-          "context=linker_resolution",
-          "existing_specific_family=linker.file_format_or_relocation"
+          "context=linker_resolution"
         ],
-        "rule_id": "rule.family.ingress_specific_override",
-        "suppression_reason": "preserved_specific_family_from_ingress"
+        "rule_id": "rule.family.linker.structured_or_message"
       },
       "context_chains": [
         {
@@ -35,16 +33,16 @@
         }
       ],
       "fingerprints": {
-        "family": "a2f0819594bbcf1568f5483fe727d070d86387adeeb52afe76d0f324355cbbd6",
+        "family": "0fcb4ae5580c6e64a93785658dac914609a2e2d758cbdf97b21f1a251581804a",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "17ab5141fdf8b1d81668747b2fcf9aa0cc65dfcc0cba9b0839224304b27877a0"
+        "structural": "e6b937c63d2df4d384c5bcd31c5f7bdf7237d0aa992dd38e1e9f4d3e925cb6d3"
       },
       "id": "residual-0",
       "message": {
         "raw_text": "collect2: error: ld returned 1 exit status"
       },
       "node_completeness": "partial",
-      "origin": "linker",
+      "origin": "driver",
       "phase": "link",
       "provenance": {
         "capture_refs": [
@@ -57,7 +55,7 @@
     },
     {
       "analysis": {
-        "confidence": "medium",
+        "confidence": 0.6499999761581421,
         "family": "linker.multiple_definition",
         "first_action_hint": "remove the duplicate definition or make the symbol internal to one translation unit",
         "headline": "multiple definition of `duplicate_symbol`",
@@ -77,13 +75,13 @@
         }
       ],
       "fingerprints": {
-        "family": "2376963b3ff029ef3c86414eceed41651392d5e9ff62dbe91a02902c4b76b2db",
-        "raw": "169c504be950ce147f1c646197fb2780e474503dd83488481bb068cc808a49b7",
-        "structural": "b150ecc4107df92f10e180efd8bac2559942429aa61f2d3916defc89f950f820"
+        "family": "b8fb150a6354c81cf9f0e7036569cad074626185f74871003e30e1c6fe144465",
+        "raw": "fc0c3773d1be24150c5671a2fe54e61811cacc13d6635eb7b08d1b9642ae12fe",
+        "structural": "043d2822823de945790eec89f138d5a19bf14fd5953653e7e563a6c538b226c6"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -102,7 +100,7 @@
     },
     {
       "analysis": {
-        "confidence": "medium",
+        "confidence": 0.6499999761581421,
         "family": "linker",
         "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
         "headline": "linker reported a failure",
@@ -112,13 +110,13 @@
         "rule_id": "rule.family.linker.structured_or_message"
       },
       "fingerprints": {
-        "family": "39712c04aed4398054cc3c9702a55325fb5c8abb56e0a4090c074b698a2e506c",
-        "raw": "923288ce13bdd8b2aec964caf74008eb06530631034c5bae7451487edff3da39",
-        "structural": "8e4c1381da7adb8c076f0a2ca9915f14ad8ee69eefa32548d9e15c2aeed56293"
+        "family": "345add72536aa882d73c2513cadd8a2b2fbc92e8301ffe2470cf13d76b4539e0",
+        "raw": "8049301a1a3d05dde097dd9634d7d76668c18c8bd3e25cb556331413901140fb",
+        "structural": "a4644ee01dc9f36b14bfcd0e96f36f4e3ed94eef88fdf4cda5574fb0de632acd"
       },
       "id": "residual-passthrough",
       "message": {
-        "raw_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':"
+        "raw_text": "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -136,9 +134,9 @@
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "767c75037a10d46cf6a11d6fdb3f4d4b0f5ed77776bbe2d35246ffdc62d0cb80",
-    "raw": "b7fc39b7c251a9fd95d3033460daa821b83393fff887f4ce3bfebd50141bd9ee",
-    "structural": "dd31f502f01795c11554da824b38b47f24ea031211df510ec957e98c167f60da"
+    "family": "255db26573dd084b0b034328c8cbead6a34cd884387137527001587cfdb4475f",
+    "raw": "90b0bf9f75ce455563d3c23270ed02e9d3569a2b7dd5743b26b38cc6b7cbc216",
+    "structural": "7d0046df146b763f9aad8c85eff30fb3a9d203b089c5f7508340a56b9964a8c3"
   },
   "producer": {
     "name": "gcc-formed",

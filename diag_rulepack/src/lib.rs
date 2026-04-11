@@ -2,7 +2,7 @@ use diag_core::Phase;
 use regex::Regex;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::sync::OnceLock;
@@ -305,8 +305,10 @@ pub enum LinkerResidualKind {
     MultipleDefinition,
     CannotFindLibrary,
     FileFormatOrRelocation,
-    Collect2Error,
+    Collect2Summary,
     AssemblerError,
+    DriverFatal,
+    InternalCompilerErrorBanner,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -944,9 +946,9 @@ fn validate_residual_rulepack(
         "compiler_note_rules.candidate_contains",
     )?;
 
-    let mut linker_kinds = BTreeSet::new();
+    let mut linker_rules = BTreeMap::new();
     for entry in &rulepack.residual.linker_groups {
-        if !linker_kinds.insert(entry.kind) {
+        if linker_rules.insert(entry.kind, entry).is_some() {
             return Err(invalid_rulepack(
                 path,
                 "duplicate linker residual kind in checked-in residual rulepack",
@@ -998,6 +1000,79 @@ fn validate_residual_rulepack(
             ensure_non_empty(symbol_capture, path, "linker_group.symbol_capture")?;
         }
     }
+    for kind in [
+        LinkerResidualKind::UndefinedReference,
+        LinkerResidualKind::MultipleDefinition,
+        LinkerResidualKind::CannotFindLibrary,
+        LinkerResidualKind::FileFormatOrRelocation,
+        LinkerResidualKind::Collect2Summary,
+        LinkerResidualKind::AssemblerError,
+        LinkerResidualKind::DriverFatal,
+        LinkerResidualKind::InternalCompilerErrorBanner,
+    ] {
+        if !linker_rules.contains_key(&kind) {
+            return Err(invalid_rulepack(
+                path,
+                format!("missing grouped residual kind in checked-in residual rulepack: {kind:?}"),
+            ));
+        }
+    }
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::UndefinedReference],
+        "linker.undefined_reference",
+        diag_core::Origin::Linker,
+        Phase::Link,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::MultipleDefinition],
+        "linker.multiple_definition",
+        diag_core::Origin::Linker,
+        Phase::Link,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::CannotFindLibrary],
+        "linker.cannot_find_library",
+        diag_core::Origin::Linker,
+        Phase::Link,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::FileFormatOrRelocation],
+        "linker.file_format_or_relocation",
+        diag_core::Origin::Linker,
+        Phase::Link,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::Collect2Summary],
+        "collect2_summary",
+        diag_core::Origin::Driver,
+        Phase::Link,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::AssemblerError],
+        "assembler_error",
+        diag_core::Origin::ExternalTool,
+        Phase::Assemble,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::DriverFatal],
+        "driver_fatal",
+        diag_core::Origin::Driver,
+        Phase::Driver,
+        path,
+    )?;
+    ensure_grouped_residual_contract(
+        linker_rules[&LinkerResidualKind::InternalCompilerErrorBanner],
+        "internal_compiler_error_banner",
+        diag_core::Origin::Gcc,
+        Phase::Unknown,
+        path,
+    )?;
 
     ensure_non_empty(
         &rulepack.residual.passthrough.family,
@@ -1019,6 +1094,34 @@ fn validate_residual_rulepack(
         path,
         "passthrough.first_action_hint",
     )?;
+    Ok(())
+}
+
+fn ensure_grouped_residual_contract(
+    entry: &LinkerResidualSeed,
+    expected_family: &str,
+    expected_origin: diag_core::Origin,
+    expected_phase: Phase,
+    path: &Path,
+) -> Result<(), RulepackError> {
+    if entry.family != expected_family {
+        return Err(invalid_rulepack(
+            path,
+            format!(
+                "grouped residual kind {:?} must use family `{expected_family}`, got `{}`",
+                entry.kind, entry.family
+            ),
+        ));
+    }
+    if entry.origin != expected_origin || entry.phase != expected_phase {
+        return Err(invalid_rulepack(
+            path,
+            format!(
+                "grouped residual kind {:?} must use origin `{:?}` and phase `{:?}`",
+                entry.kind, expected_origin, expected_phase
+            ),
+        ));
+    }
     Ok(())
 }
 
@@ -1327,6 +1430,22 @@ mod tests {
                 .policy_for_kind(RendererFamilyKind::Linker)
                 .is_some()
         );
+        assert!(
+            rulepack
+                .residual()
+                .residual
+                .linker_groups
+                .iter()
+                .any(|entry| entry.kind == LinkerResidualKind::DriverFatal)
+        );
+        assert!(
+            rulepack
+                .residual()
+                .residual
+                .linker_groups
+                .iter()
+                .any(|entry| entry.kind == LinkerResidualKind::Collect2Summary)
+        );
     }
 
     #[test]
@@ -1429,6 +1548,85 @@ mod tests {
         match error {
             RulepackError::InvalidRulepack { message, .. } => {
                 assert!(message.contains("normalized relative JSON paths"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_missing_required_grouped_residual_kind() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let residual_path = temp_dir.path().join("residual.rulepack.json");
+        let mut residual: ResidualRulepack =
+            serde_json::from_slice(&fs::read(&residual_path).unwrap()).unwrap();
+        residual
+            .residual
+            .linker_groups
+            .retain(|entry| entry.kind != LinkerResidualKind::DriverFatal);
+        let residual_raw = serde_json::to_vec_pretty(&residual).unwrap();
+        fs::write(&residual_path, &residual_raw).unwrap();
+
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest
+            .sections
+            .iter_mut()
+            .find(|section| section.path == "residual.rulepack.json")
+            .unwrap()
+            .sha256 = hex_sha256(&residual_raw);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("missing grouped residual kind"));
+                assert!(message.contains("DriverFatal"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_collect2_summary_with_linker_origin() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let residual_path = temp_dir.path().join("residual.rulepack.json");
+        let mut residual: ResidualRulepack =
+            serde_json::from_slice(&fs::read(&residual_path).unwrap()).unwrap();
+        residual
+            .residual
+            .linker_groups
+            .iter_mut()
+            .find(|entry| entry.kind == LinkerResidualKind::Collect2Summary)
+            .unwrap()
+            .origin = diag_core::Origin::Linker;
+        let residual_raw = serde_json::to_vec_pretty(&residual).unwrap();
+        fs::write(&residual_path, &residual_raw).unwrap();
+
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest
+            .sections
+            .iter_mut()
+            .find(|section| section.path == "residual.rulepack.json")
+            .unwrap()
+            .sha256 = hex_sha256(&residual_raw);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("Collect2Summary"));
+                assert!(message.contains("origin `Driver` and phase `Link`"));
             }
             other => panic!("unexpected error: {other:?}"),
         }

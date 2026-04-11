@@ -39,22 +39,21 @@
         "linker: preserved"
       ],
       "excerpts": [],
-      "family": "linker.file_format_or_relocation",
-      "first_action": "check object compatibility, target triple, and archive contents",
+      "family": "linker",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
       "group_id": "residual-0",
       "matched_conditions": [
         "phase=link",
-        "context=linker_resolution",
-        "existing_specific_family=linker.file_format_or_relocation"
+        "context=linker_resolution"
       ],
       "raw_message": "collect2: error: ld returned 1 exit status",
       "raw_sub_block": [
         "collect2: error: ld returned 1 exit status"
       ],
-      "rule_id": "rule.family.ingress_specific_override",
+      "rule_id": "rule.family.linker.structured_or_message",
       "severity": "error",
-      "suppression_reason": "preserved_specific_family_from_ingress",
-      "title": "linker file format or relocation failure"
+      "suppression_reason": null,
+      "title": "linker reported a failure"
     }
   ],
   "summary": {

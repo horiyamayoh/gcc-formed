@@ -24,14 +24,14 @@
       "fingerprints": {
         "family": "7f98dc59f25f716a8e068cd103ea22168224efea722345698957117e13c8364b",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "2a0e0bad230ea5b3bf158e5f6aadd2141da11da037d2756b3866d24070cf5840"
+        "structural": "d3af0091fa544038dd5c16c213903d879a3f9d0fa58d9db4dd797b52a5fbc6ff"
       },
       "id": "residual-0",
       "message": {
         "raw_text": "collect2: error: ld returned 1 exit status"
       },
       "node_completeness": "partial",
-      "origin": "linker",
+      "origin": "driver",
       "phase": "link",
       "provenance": {
         "capture_refs": [
@@ -99,8 +99,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "067fea2323098d11c1a0293b337b06a456f7146d0d1d9d1269ecfbb9926a6ae0",
-    "structural": "02b7e8f9558eceea4748e4d26fd2238716bbdb774a90079ef9bf7b2cf0170cb0"
+    "raw": "f34eff1dd4ccf3c2dcc1ce33c14e9f43561c67cda86b4a49f6f10c39b72cbeb0",
+    "structural": "e13733fc0b8bd8d063fa4988fd28dfe4040fea87578672c0f18d0eb23acc2d26"
   },
   "producer": {
     "name": "gcc-formed",

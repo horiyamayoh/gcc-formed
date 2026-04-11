@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
+      "inline_text": "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':\nhelper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -24,14 +24,14 @@
       "fingerprints": {
         "family": "7f98dc59f25f716a8e068cd103ea22168224efea722345698957117e13c8364b",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "2a0e0bad230ea5b3bf158e5f6aadd2141da11da037d2756b3866d24070cf5840"
+        "structural": "d3af0091fa544038dd5c16c213903d879a3f9d0fa58d9db4dd797b52a5fbc6ff"
       },
       "id": "residual-0",
       "message": {
         "raw_text": "collect2: error: ld returned 1 exit status"
       },
       "node_completeness": "partial",
-      "origin": "linker",
+      "origin": "driver",
       "phase": "link",
       "provenance": {
         "capture_refs": [
@@ -49,13 +49,13 @@
         }
       ],
       "fingerprints": {
-        "family": "039460d00ecf21a49c04ab6a445f6f5bd8bc5171bce47d45485374626994af5c",
-        "raw": "169c504be950ce147f1c646197fb2780e474503dd83488481bb068cc808a49b7",
-        "structural": "4601f983a1d1ea584ed6598a5d701318b419ace50dcfd81b81f9d7519cc8093e"
+        "family": "cbd1522034aaf0afa21894fa668ad0830b1095ef70c9b9d3be5f824847d28431",
+        "raw": "fc0c3773d1be24150c5671a2fe54e61811cacc13d6635eb7b08d1b9642ae12fe",
+        "structural": "6162f8c8c78df04d4eb17c5c84a1548e56e983aecbe0d8c82a7240f0cc513f63"
       },
       "id": "residual-1",
       "message": {
-        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccXZBUpW.o:main.c:(.text+0x0): first defined here"
+        "raw_text": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here"
       },
       "node_completeness": "partial",
       "origin": "linker",
@@ -74,13 +74,13 @@
     },
     {
       "fingerprints": {
-        "family": "3d556649559ba40b85f178e0c4e08769c719b50f13d1f6b076a0ab0eb7665cd4",
-        "raw": "923288ce13bdd8b2aec964caf74008eb06530631034c5bae7451487edff3da39",
-        "structural": "5d51ef85ab3ab85b1c65ea02331d1248e186c3b25d46b054749512bbc78eb2bc"
+        "family": "5a3822c64101328357ae01f8a332726eda923d844d3bc6d51661cd125307f68c",
+        "raw": "8049301a1a3d05dde097dd9634d7d76668c18c8bd3e25cb556331413901140fb",
+        "structural": "8be1fe498ac12738dddf3085e925aa2e4c51452b635dde3059401f8bff10be05"
       },
       "id": "residual-passthrough",
       "message": {
-        "raw_text": "/usr/bin/ld: /tmp/ccXGJ54N.o: in function `duplicate_symbol':"
+        "raw_text": "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -99,8 +99,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "5d1c122059f49b3e74d7ff783fd5666627813378401afa881d5965cbbce758f8",
-    "structural": "553bc06ea4c951dfde03c363dff73c0f9b73a38a8c4a8b6fb24416802d8727b0"
+    "raw": "331510b7804964ea035095bb1d152c726a81b20c3eecd2ef413f01e49858de6a",
+    "structural": "c4b1bb57d40cb0aaa2e1c2e21bc0be2bf1cd8981a9f97ce30e5f74676921fd44"
   },
   "producer": {
     "name": "gcc-formed",

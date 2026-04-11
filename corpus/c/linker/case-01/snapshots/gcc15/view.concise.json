@@ -20,9 +20,9 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccC2D2rR.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
       "raw_sub_block": [
-        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccC2D2rR.o:main.c:(.text+0x0): first defined here"
+        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here"
       ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
