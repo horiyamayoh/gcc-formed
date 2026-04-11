@@ -83,14 +83,14 @@
       "failure_classification": "product",
       "command": "cargo xtask replay --root corpus --subset representative --report-dir \"$REPORT_ROOT/replay\"",
       "fixture": "subset:representative",
-      "gcc_version": "gcc:15",
+      "gcc_version": "${MATRIX_GCC_VERSION}",
       "artifact_paths": [
         "$REPORT_ROOT/replay",
         "$REPORT_ROOT/replay/replay-report.json",
         "$REPORT_ROOT/replay/native-parity-report.json"
       ],
-      "gate_scope": "reference_path",
-      "version_band": "gcc15_plus"
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "path-aware-replay-stop-ship",
@@ -100,12 +100,12 @@
       "failure_classification": "product",
       "command": "python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/replay/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
       "fixture": "subset:representative",
-      "gcc_version": "gcc:15",
+      "gcc_version": "${MATRIX_GCC_VERSION}",
       "artifact_paths": [
         "$REPORT_ROOT/gate/replay-stop-ship.json"
       ],
-      "gate_scope": "reference_path",
-      "version_band": "gcc15_plus"
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "cargo-xtask-bench-smoke",
@@ -125,7 +125,7 @@
       "id": "cargo-xtask-fuzz-smoke",
       "order": 9,
       "name": "cargo xtask fuzz-smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "cargo xtask fuzz-smoke --root fuzz --report-dir \"$REPORT_ROOT/release\"",
       "fixture": "seed-suite:fuzz",
@@ -165,26 +165,26 @@
       "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
-      "id": "representative-gcc15-snapshot-check",
+      "id": "representative-matrix-snapshot-check",
       "order": 12,
-      "name": "Representative GCC 15 snapshot check",
-      "policy": "release_blocker_only",
+      "name": "Representative matrix snapshot check",
+      "policy": "always",
       "failure_classification": "product",
-      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir \"$REPORT_ROOT/snapshot\"",
+      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image \"$MATRIX_GCC_VERSION\" --report-dir \"$REPORT_ROOT/snapshot\"",
       "fixture": "subset:representative",
-      "gcc_version": "gcc:15",
+      "gcc_version": "${MATRIX_GCC_VERSION}",
       "artifact_paths": [
         "$REPORT_ROOT/snapshot",
         "$REPORT_ROOT/snapshot/snapshot-report.json"
       ],
-      "gate_scope": "reference_path",
-      "version_band": "gcc15_plus"
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "vendor-dependency-tree",
       "order": 13,
       "name": "Vendor dependency tree",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "cargo xtask vendor --output-dir vendor > \"$REPORT_ROOT/release/vendor.json\"",
       "fixture": null,
@@ -198,7 +198,7 @@
       "id": "hermetic-release-build-smoke",
       "order": 14,
       "name": "Hermetic release build smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl > \"$REPORT_ROOT/release/hermetic-release.json\"",
       "fixture": null,
@@ -212,7 +212,7 @@
       "id": "release-packaging-smoke",
       "order": 15,
       "name": "Release packaging smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "package signed musl artifact and write $REPORT_ROOT/release/package.json",
       "fixture": null,
@@ -227,7 +227,7 @@
       "id": "release-install-smoke",
       "order": 16,
       "name": "Release install smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "install packaged release, run --formed-version, and uninstall",
       "fixture": null,
@@ -243,7 +243,7 @@
       "id": "rollback-symlink-smoke",
       "order": 17,
       "name": "Rollback symlink smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "cargo test -p xtask rollback_switches_current_symlink_to_requested_version > \"$REPORT_ROOT/release/rollback-smoke.txt\"",
       "fixture": null,
@@ -257,7 +257,7 @@
       "id": "system-wide-layout-smoke",
       "order": 18,
       "name": "System-wide layout smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "install packaged release into pseudo-root system layout and uninstall",
       "fixture": null,
@@ -273,7 +273,7 @@
       "id": "release-repository-promote-and-pin-smoke",
       "order": 19,
       "name": "Release repository promote and pin smoke",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "publish release repository, promote canary/beta, resolve beta, install exact version, and uninstall",
       "fixture": null,
@@ -307,7 +307,7 @@
       "id": "dependency-and-license-gate",
       "order": 21,
       "name": "Dependency and license gate",
-      "policy": "release_blocker_only",
+      "policy": "reference_path_only",
       "failure_classification": "product",
       "command": "cargo install cargo-deny --locked && cargo deny check > \"$REPORT_ROOT/release/cargo-deny.txt\"",
       "fixture": null,

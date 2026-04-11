@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -63,9 +64,31 @@ class GateSummaryTest(unittest.TestCase):
             payload["support_tier"] = legacy_support_tier
         return payload
 
-    def run_gate_summary(self, plan_path: Path, report_root: Path) -> subprocess.CompletedProcess:
+    def run_gate_summary(
+        self,
+        plan_path: Path,
+        report_root: Path,
+        *,
+        matrix_gcc_version: str | None = None,
+        matrix_version_band: str | None = None,
+        release_blocker: str = "true",
+    ) -> subprocess.CompletedProcess:
+        command = [
+            "python3",
+            str(GATE_SUMMARY),
+            "--plan",
+            str(plan_path),
+            "--report-root",
+            str(report_root),
+            "--release-blocker",
+            release_blocker,
+        ]
+        if matrix_gcc_version is not None:
+            command.extend(["--matrix-gcc-version", matrix_gcc_version])
+        if matrix_version_band is not None:
+            command.extend(["--matrix-version-band", matrix_version_band])
         return subprocess.run(
-            ["python3", str(GATE_SUMMARY), "--plan", str(plan_path), "--report-root", str(report_root)],
+            command,
             cwd=REPO_ROOT,
             check=False,
             capture_output=True,
@@ -342,6 +365,47 @@ class GateSummaryTest(unittest.TestCase):
             )
             self.assertEqual(summary["machine_readable_blockers"][0]["surface"], "ci")
 
+    def test_gate_summary_skips_reference_path_only_steps_outside_reference_band(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report_root = root / "reports"
+            plan_path = root / "plan.json"
+            write_json(
+                plan_path,
+                {
+                    "schema_version": 1,
+                    "workflow": "test-gate",
+                    "job": "test-job",
+                    "steps": [
+                        {
+                            "id": "release-packaging-smoke",
+                            "order": 1,
+                            "name": "Release packaging smoke",
+                            "policy": "reference_path_only",
+                            "failure_classification": "product",
+                            "gate_scope": "repository",
+                            "command": "echo package",
+                        }
+                    ],
+                },
+            )
+
+            completed = self.run_gate_summary(
+                plan_path,
+                report_root,
+                matrix_gcc_version="gcc:13",
+                matrix_version_band="gcc13_14",
+                release_blocker="false",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+
+            summary = json.loads(
+                (report_root / "gate" / "gate-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary["steps"][0]["status"], "skipped_by_policy")
+            self.assertEqual(summary["steps"][0]["step"]["policy"], "reference_path_only")
+            self.assertEqual(summary["steps"][0]["matrix"]["version_band"], "gcc13_14")
+
 
 class ReplayContractTest(unittest.TestCase):
     def run_replay_contract(
@@ -458,6 +522,36 @@ class CheckedInPlanTest(unittest.TestCase):
                     self.assertIn("gate_scope", step)
                     self.assertNotIn("support_tier", step)
 
+    def test_nightly_plan_marks_matrix_blocker_steps_with_matrix_metadata(self) -> None:
+        plan = self.load_plan("ci/plans/nightly-gate.json")
+        steps_by_id = {step["id"]: step for step in plan["steps"]}
+        for step_id in [
+            "representative-acceptance-replay",
+            "path-aware-replay-stop-ship",
+            "wrapper-self-check-matrix-image",
+            "representative-matrix-snapshot-check",
+        ]:
+            with self.subTest(step_id=step_id):
+                step = steps_by_id[step_id]
+                self.assertEqual(step["policy"], "always")
+                self.assertEqual(step["gcc_version"], "${MATRIX_GCC_VERSION}")
+                self.assertEqual(step["gate_scope"], "matrix")
+                self.assertEqual(step["version_band"], "${MATRIX_VERSION_BAND}")
+
+        for step_id in [
+            "cargo-xtask-fuzz-smoke",
+            "vendor-dependency-tree",
+            "hermetic-release-build-smoke",
+            "release-packaging-smoke",
+            "release-install-smoke",
+            "rollback-symlink-smoke",
+            "system-wide-layout-smoke",
+            "release-repository-promote-and-pin-smoke",
+            "dependency-and-license-gate",
+        ]:
+            with self.subTest(step_id=step_id):
+                self.assertEqual(steps_by_id[step_id]["policy"], "reference_path_only")
+
 
 class CheckedInWorkflowTest(unittest.TestCase):
     def test_nightly_workflow_uses_matrix_version_band_metadata(self) -> None:
@@ -468,6 +562,23 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIn("--matrix-version-band", workflow)
         self.assertNotIn("MATRIX_SUPPORT_TIER", workflow)
         self.assertNotIn("--matrix-support-tier", workflow)
+
+    def test_nightly_workflow_uses_matrix_snapshot_step_without_gcc15_only_markers(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "nightly.yml"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("continue-on-error: ${{ matrix.release_blocker == false }}", workflow)
+        self.assertIn("Representative matrix snapshot check", workflow)
+        self.assertIn("--step-id representative-matrix-snapshot-check", workflow)
+        self.assertIn('--docker-image "$MATRIX_GCC_VERSION"', workflow)
+        self.assertNotIn("Representative GCC 15 snapshot check", workflow)
+        self.assertNotIn("--step-id representative-gcc15-snapshot-check", workflow)
+        snapshot_block = re.search(
+            r"- name: Representative matrix snapshot check\n(?P<body>(?:\s{8}.+\n)+)",
+            workflow,
+        )
+        self.assertIsNotNone(snapshot_block)
+        self.assertNotIn("if: matrix.release_blocker", snapshot_block.group(0))
 
 
 if __name__ == "__main__":

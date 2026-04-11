@@ -11,7 +11,6 @@ permissions:
 jobs:
   matrix-gate:
     runs-on: ubuntu-24.04
-    continue-on-error: ${{ matrix.release_blocker == false }}
     strategy:
       fail-fast: false
       matrix:
@@ -183,17 +182,16 @@ jobs:
             --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
-      - name: Representative GCC 15 snapshot check
-        if: matrix.release_blocker
+      - name: Representative matrix snapshot check
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id representative-gcc15-snapshot-check \
+            --step-id representative-matrix-snapshot-check \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
             --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
-            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"'
+            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image "$MATRIX_GCC_VERSION" --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree
         if: matrix.release_blocker
         run: |

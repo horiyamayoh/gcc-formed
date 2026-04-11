@@ -100,6 +100,15 @@ def resolve_matrix_version_band(args: argparse.Namespace) -> str | None:
     return version_band
 
 
+def policy_skips_step(step: dict, args: argparse.Namespace) -> bool:
+    policy = step.get("policy", "always")
+    if policy == "release_blocker_only":
+        return args.release_blocker == "false"
+    if policy == "reference_path_only":
+        return resolve_matrix_version_band(args) not in {None, "gcc15_plus"}
+    return False
+
+
 def resolve_step_metadata(step: dict, mapping: dict) -> tuple[str | None, str | None]:
     gate_scope = substitute(step.get("gate_scope"), mapping)
     version_band = substitute(step.get("version_band"), mapping)
@@ -410,7 +419,6 @@ def main() -> int:
         anomalies.append(f"status file missing step.id metadata: {unknown}")
 
     for step in plan_steps:
-        policy = step.get("policy", "always")
         status = statuses_by_id.get(step["id"])
         if status is not None:
             materialized_steps.append(status)
@@ -427,7 +435,7 @@ def main() -> int:
                     }
             continue
 
-        if policy == "release_blocker_only" and args.release_blocker == "false":
+        if policy_skips_step(step, args):
             materialized_steps.append(planned_status(step, mapping, "skipped_by_policy"))
             continue
 
