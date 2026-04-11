@@ -192,6 +192,7 @@ pub fn ingest_bundle(
             None,
         ),
     };
+    materialize_capture_artifacts(&mut document, bundle);
 
     let residual_nodes = classify(stderr_text, !has_authoritative_structured);
     let has_renderable_residual = residual_nodes.iter().any(|node| {
@@ -239,6 +240,10 @@ pub fn ingest_bundle(
         warnings,
         fallback_reason,
     })
+}
+
+fn materialize_capture_artifacts(document: &mut DiagnosticDocument, bundle: &CaptureBundle) {
+    document.captures = bundle.capture_artifacts();
 }
 
 pub fn ingest_with_reason(
@@ -1931,6 +1936,9 @@ mod tests {
         assert!(report.fallback_reason.is_none());
         assert!(report.warnings.is_empty());
         assert_eq!(report.document.diagnostics.len(), 1);
+        assert_eq!(report.document.captures.len(), 1);
+        assert_eq!(report.document.captures[0].id, "diagnostics.sarif");
+        assert!(report.document.validate().is_ok());
     }
 
     #[test]
@@ -2064,6 +2072,9 @@ src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
             report.document.diagnostics[0].provenance.capture_refs,
             vec!["diagnostics.json".to_string()]
         );
+        assert_eq!(report.document.captures.len(), 1);
+        assert_eq!(report.document.captures[0].id, "diagnostics.json");
+        assert!(report.document.validate().is_ok());
     }
 
     #[test]
@@ -2405,5 +2416,25 @@ src/main.c:4:1: note: extra opaque detail\n";
             outcome.document.integrity_issues,
             report.document.integrity_issues
         );
+        assert_eq!(
+            report
+                .document
+                .captures
+                .iter()
+                .map(|artifact| artifact.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["stderr.raw", "diagnostics.sarif"]
+        );
+        assert_eq!(
+            outcome
+                .document
+                .captures
+                .iter()
+                .map(|artifact| artifact.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["stderr.raw", "diagnostics.sarif"]
+        );
+        assert!(report.document.validate().is_ok());
+        assert!(outcome.document.validate().is_ok());
     }
 }

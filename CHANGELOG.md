@@ -67,6 +67,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Changed GCC SARIF ingest to fail open when authoritative SARIF is missing or malformed, preserving raw diagnostics while emitting `sarif_missing` / `sarif_parse_failed` trace reasons.
 - Moved snapshot normalization and comparison logic into `diag_testkit` so harness-side volatile-field handling is centralized, and snapshot reports now distinguish `exact`, `normalization_only`, `semantic`, and `missing_expected` drift kinds.
 - Changed `diag_capture_runtime` to preselect safe diagnostics temp paths for SARIF sidecars instead of rewriting chosen paths after selection, so unsafe runtime roots no longer make the wrapper and GCC disagree about `diagnostics.sarif`.
+- Changed `diag_adapter_gcc::ingest_bundle` to materialize `DiagnosticDocument.captures` from the incoming `CaptureBundle`, so node and integrity provenance `capture_refs` resolve against real propagated artifacts instead of an empty document capture list.
 
 ## [0.1.0] - 2026-04-07
 
