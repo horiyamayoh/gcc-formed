@@ -14,11 +14,16 @@ superseded_by: []
 
 # gcc-formed
 
+> **30秒サマリ**
+> Before: `error: no matching function for call to 'combine(int, const char [2])'`
+> After: `error: template instantiation failed` と `help:` / `why:` から読める
+> Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
+
 - **状態**: Public Beta
 - **成熟度ラベル**: `v1beta`
 - **artifact semver 系列**: `0.2.0-beta.N`
 - **一般利用向け安定版**: 未提供
-- **日付**: 2026-04-09
+- **日付**: 2026-04-11
 - **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 
 `gcc-formed` は、GCC をラップし、C/C++ のコンパイルエラーやリンクエラーを**より短く、より根因に近く、より誠実に**提示するためのリポジトリである。
@@ -29,6 +34,83 @@ superseded_by: []
 AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md) である。
 
 ---
+
+## 30秒でわかる Before / After
+
+既存の corpus snapshot と fail-open fixture から短く抜粋する。  
+README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
+
+### 1. テンプレートエラー（C++）
+
+出典: [GCC raw](corpus/cpp/template/case-05/snapshots/gcc15/stderr.raw) / [gcc-formed render](corpus/cpp/template/case-05/snapshots/gcc15/render.default.txt)
+
+**Before (GCC raw)**
+
+```text
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'
+    5 |     combine(1, "x");
+      |     ~~~~~~~^~~~~~~~
+src/main.cpp:2:6: note: candidate 1: 'template<class T> void combine(T, T)'
+src/main.cpp:2:6: note: template argument deduction/substitution failed:
+src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')
+```
+
+**After (gcc-formed)**
+
+```text
+error: template instantiation failed
+--> src/main.cpp:5:5
+help: start from the first user-owned template frame and match template arguments
+why: no matching function for call to 'combine(int, const char [2])'
+| src/main.cpp:5:5
+|     combine(1, "x");
+|     ^
+while instantiating:
+  - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
+  - src/main.cpp:2:6 template argument deduction/substitution failed:
+  - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+```
+
+### 2. リンカーエラー（C）
+
+出典: [GCC raw](corpus/c/linker/case-02/snapshots/gcc15/stderr.raw) / [gcc-formed render](corpus/c/linker/case-02/snapshots/gcc15/render.default.txt)
+
+**Before (GCC raw)**
+
+```text
+main.c:(.text+0x5): undefined reference to `missing_symbol'
+collect2: error: ld returned 1 exit status
+```
+
+**After (gcc-formed)**
+
+```text
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: undefined reference to `missing_symbol`
+help: define the missing symbol or link the object/library that provides it
+why: main.c:(.text+0x5): undefined reference to `missing_symbol'
+linker: symbol `missing_symbol`
+raw:
+  main.c:(.text+0x5): undefined reference to `missing_symbol'
+other errors:
+  - error: linker reported a failure
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+```
+
+### 3. 改善しない方が誠実なケース（passthrough / fail-open）
+
+出典: [passthrough fixture](fuzz/cases/residual-ansi-passthrough/stderr.txt)
+
+改善が trustworthy でない run では、`gcc-formed` は無理に要約しない。  
+その場合の default 出力は raw diagnostics をそのまま保ち、事実を隠さない。
+
+```text
+C:\bad\path\helper.obj: undefined reference to `missing_symbol'
+note: [31mnot an ANSI escape, but still noisy residual text
+collect2: error: ld returned 1 exit status
+```
 
 ## プロダクト原則
 
