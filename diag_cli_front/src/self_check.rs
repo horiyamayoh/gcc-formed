@@ -367,7 +367,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -408,7 +408,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"

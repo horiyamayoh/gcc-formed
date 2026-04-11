@@ -26,9 +26,16 @@ pub(crate) struct IngestTraceMetadata {
 }
 
 impl IngestTraceMetadata {
-    fn indicates_fallback(self) -> bool {
-        !matches!(self.fallback_grade, FallbackGrade::None)
-            || !matches!(self.source_authority, SourceAuthority::Structured)
+    fn is_true_fallback(self) -> bool {
+        matches!(self.fallback_grade, FallbackGrade::FailOpen)
+    }
+
+    fn parser_result_status(self) -> &'static str {
+        match self.fallback_grade {
+            FallbackGrade::None => "parsed",
+            FallbackGrade::Compatibility => "compatibility",
+            FallbackGrade::FailOpen => "fallback",
+        }
     }
 
     fn decision_log_entries(self) -> [String; 2] {
@@ -327,7 +334,7 @@ fn trace_wrapper_verdict(
 ) -> String {
     match mode {
         ExecutionMode::Render => {
-            if ingest_trace.indicates_fallback() || fallback_reason.is_some() {
+            if ingest_trace.is_true_fallback() || fallback_reason.is_some() {
                 "render_fallback".to_string()
             } else {
                 "rendered".to_string()
@@ -346,11 +353,7 @@ fn parsed_parser_result_summary(
     ingest_trace: IngestTraceMetadata,
 ) -> TraceParserResultSummary {
     TraceParserResultSummary {
-        status: if ingest_trace.indicates_fallback() {
-            "fallback".to_string()
-        } else {
-            "parsed".to_string()
-        },
+        status: ingest_trace.parser_result_status().to_string(),
         document_completeness: Some(document_completeness_label(&document.document_completeness)),
         diagnostic_count: document.diagnostics.len(),
         integrity_issue_count: document.integrity_issues.len(),
@@ -421,4 +424,92 @@ fn write_retained_normalized_ir(
     fs::write(&path, payload)?;
     secure_private_file(&path)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{IngestTraceMetadata, parsed_parser_result_summary, trace_wrapper_verdict};
+    use diag_capture_runtime::ExecutionMode;
+    use diag_core::{
+        DiagnosticDocument, DocumentCompleteness, FallbackGrade, FallbackReason, ProducerInfo,
+        RunInfo, SourceAuthority, ToolInfo, WrapperSurface,
+    };
+
+    #[test]
+    fn compatibility_native_text_render_is_reported_as_rendered() {
+        let ingest_trace = IngestTraceMetadata {
+            source_authority: SourceAuthority::ResidualText,
+            fallback_grade: FallbackGrade::Compatibility,
+            fallback_reason: None,
+        };
+        let document = test_document(DocumentCompleteness::Partial);
+
+        assert_eq!(
+            trace_wrapper_verdict(ExecutionMode::Render, ingest_trace, None),
+            "rendered"
+        );
+        assert_eq!(
+            parsed_parser_result_summary(&document, ingest_trace).status,
+            "compatibility"
+        );
+    }
+
+    #[test]
+    fn fail_open_render_is_reported_as_fallback() {
+        let ingest_trace = IngestTraceMetadata {
+            source_authority: SourceAuthority::ResidualText,
+            fallback_grade: FallbackGrade::FailOpen,
+            fallback_reason: Some(FallbackReason::SarifMissing),
+        };
+        let document = test_document(DocumentCompleteness::Partial);
+
+        assert_eq!(
+            trace_wrapper_verdict(
+                ExecutionMode::Render,
+                ingest_trace,
+                Some(FallbackReason::SarifMissing)
+            ),
+            "render_fallback"
+        );
+        assert_eq!(
+            parsed_parser_result_summary(&document, ingest_trace).status,
+            "fallback"
+        );
+    }
+
+    fn test_document(document_completeness: DocumentCompleteness) -> DiagnosticDocument {
+        DiagnosticDocument {
+            document_id: "doc-1".to_string(),
+            schema_version: diag_core::IR_SPEC_VERSION.to_string(),
+            document_completeness,
+            producer: ProducerInfo {
+                name: "gcc-formed".to_string(),
+                version: "0.0.0-test".to_string(),
+                git_revision: None,
+                build_profile: None,
+                rulepack_version: None,
+            },
+            run: RunInfo {
+                invocation_id: "trace-1".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: Vec::new(),
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: ToolInfo {
+                    name: "gcc".to_string(),
+                    version: Some("15.2.0".to_string()),
+                    component: None,
+                    vendor: None,
+                },
+                secondary_tools: Vec::new(),
+                language_mode: None,
+                target_triple: None,
+                wrapper_mode: Some(WrapperSurface::Terminal),
+            },
+            captures: Vec::new(),
+            integrity_issues: Vec::new(),
+            diagnostics: Vec::new(),
+            fingerprints: None,
+        }
+    }
 }

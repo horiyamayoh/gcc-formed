@@ -305,7 +305,7 @@ pub(crate) fn compatibility_scope_notice_for_path(
                 "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
             ),
         },
         VersionBand::Gcc9_12 => match (decision.mode, processing_path, decision.fallback_reason) {
@@ -322,7 +322,7 @@ pub(crate) fn compatibility_scope_notice_for_path(
                 "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in.",
             ),
         },
         VersionBand::Unknown => Some(
@@ -494,7 +494,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
             )
         );
     }
@@ -565,7 +565,7 @@ mod tests {
                 ProcessingPath::NativeTextCapture
             ),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
             )
         );
     }

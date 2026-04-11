@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Stopped classifying Band B/Band C `NativeTextCapture` product paths as render fallback in `diag_cli_front`, so default native-text render now reports first-class product-path notices and `compatibility` parser status while true fail-open cases still surface `render_fallback`.
 - Honored `RenderRequest.path_policy` consistently in `diag_render` so canonical locations and excerpt headers now follow `shortest_unambiguous`, `relative_to_cwd`, or `absolute` instead of silently ignoring the request outside a hard-coded CI special case.
 - Implemented the documented `diag_render` `debug` profile end-to-end, including explicit CLI parsing, wider internal-triage budgets, verbose-style rule/debug disclosure, and checked-in render rulepack limits so `--formed-profile=debug` now behaves as a real contract instead of an undocumented parse failure.
 - Added caret/range excerpt annotations to `diag_render`, with honest multi-line and unsafe-alignment summaries plus representative native-parity coverage so rendered source snippets preserve native-GCC actionability instead of showing bare source lines only.

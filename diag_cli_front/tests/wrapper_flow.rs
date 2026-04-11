@@ -60,7 +60,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
-    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
     assert_eq!(
@@ -69,7 +69,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
     );
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("fallback")
+        Some("compatibility")
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
@@ -196,7 +196,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
     assert_eq!(trace["fallback_reason"], "shadow_mode");
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("fallback")
+        Some("compatibility")
     );
     assert!(
         trace["decision_log"]
@@ -247,7 +247,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
     assert!(trace["support_tier"].is_null());
-    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
@@ -260,7 +260,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("fallback")
+        Some("compatibility")
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
@@ -463,7 +463,7 @@ main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n",
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
-    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
@@ -472,7 +472,7 @@ main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n",
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("fallback")
+        Some("compatibility")
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
@@ -1310,7 +1310,7 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
 }
 
 fn expected_tier_b_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
 }
 
 fn expected_tier_b_single_sink_notice() -> &'static str {
@@ -1322,7 +1322,7 @@ fn expected_tier_b_shadow_notice() -> &'static str {
 }
 
 fn expected_tier_c_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
+    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
 }
 
 fn expected_tier_c_single_sink_notice() -> &'static str {
