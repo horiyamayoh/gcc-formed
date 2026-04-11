@@ -8,4 +8,6 @@ while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
   - src/main.cpp:2:6 template argument deduction/substitution failed:
   - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
+other errors:
+  - src/main.cpp:5:12: error: type or overload mismatch
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

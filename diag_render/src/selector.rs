@@ -9,6 +9,7 @@ use diag_core::{
 #[derive(Debug)]
 pub struct Selection {
     pub cards: Vec<DiagnosticNode>,
+    pub summary_only_cards: Vec<DiagnosticNode>,
     pub suppressed_warning_count: usize,
 }
 
@@ -53,9 +54,12 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
     {
         expanded_groups = expanded_groups.max(2);
     }
-    let expanded = diagnostics.into_iter().take(expanded_groups).collect();
+    let mut diagnostics = diagnostics.into_iter();
+    let expanded = diagnostics.by_ref().take(expanded_groups).collect();
+    let summary_only_cards = diagnostics.collect();
     Selection {
         cards: expanded,
+        summary_only_cards,
         suppressed_warning_count,
     }
 }

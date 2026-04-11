@@ -6,4 +6,6 @@ why: src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompat
 |     takes_int_ptr(&box);
 raw:
   src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]
+other errors:
+  - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

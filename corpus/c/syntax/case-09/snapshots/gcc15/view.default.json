@@ -37,5 +37,18 @@
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.c:2:10",
+      "group_id": "residual-compiler-0",
+      "severity": "error",
+      "title": "syntax error"
+    },
+    {
+      "group_id": "residual-passthrough",
+      "severity": "error",
+      "title": "linker reported a failure"
+    }
+  ]
 }

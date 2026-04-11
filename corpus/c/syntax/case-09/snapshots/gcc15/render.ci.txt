@@ -6,4 +6,7 @@ why: src/main.c:5:1: error: expected expression before '}' token
 | }
 raw:
   src/main.c:5:1: error: expected expression before '}' token
+other errors:
+  - src/main.c:2:10: error: syntax error
+  - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

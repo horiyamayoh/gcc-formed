@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 pub use excerpt::ExcerptBlock;
 pub use selector::select_groups;
-pub use view_model::{RenderGroupCard, RenderSessionSummary, RenderViewModel};
+pub use view_model::{RenderGroupCard, RenderSessionSummary, RenderViewModel, SummaryOnlyGroup};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -150,7 +150,7 @@ pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
             FallbackReason::RendererLowConfidence,
         ));
     }
-    let view_model = view_model::build(&request, selected.cards);
+    let view_model = view_model::build(&request, selected.cards, selected.summary_only_cards);
     Ok(formatter::emit(
         &request,
         view_model,
@@ -171,7 +171,11 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
     if selected.cards.is_empty() {
         None
     } else {
-        Some(view_model::build(request, selected.cards))
+        Some(view_model::build(
+            request,
+            selected.cards,
+            selected.summary_only_cards,
+        ))
     }
 }
 
@@ -659,6 +663,7 @@ mod tests {
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
         assert_eq!(selection.suppressed_warning_count, 1);
+        assert!(selection.summary_only_cards.is_empty());
     }
 
     #[test]
@@ -696,6 +701,7 @@ mod tests {
         let selection = select_groups(&request);
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.suppressed_warning_count, 0);
+        assert!(selection.summary_only_cards.is_empty());
     }
 
     #[test]
@@ -731,6 +737,8 @@ mod tests {
         let selection = select_groups(&request);
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.suppressed_warning_count, 0);
+        assert_eq!(selection.summary_only_cards.len(), 1);
+        assert_eq!(selection.summary_only_cards[0].id, "warning-3");
     }
 
     #[test]
@@ -783,6 +791,150 @@ mod tests {
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.cards[0].id, "root");
         assert_eq!(selection.cards[1].id, "supporting-note");
+        assert!(selection.summary_only_cards.is_empty());
+    }
+
+    #[test]
+    fn selector_keeps_non_lead_groups_as_summary_only_when_group_budget_is_exceeded() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "secondary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "tertiary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "tertiary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/third.c", 12, 7, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root");
+        assert_eq!(selection.summary_only_cards.len(), 2);
+        assert_eq!(selection.summary_only_cards[0].id, "secondary");
+        assert_eq!(selection.summary_only_cards[1].id, "tertiary");
+    }
+
+    #[test]
+    fn render_emits_summary_only_groups_and_reports_suppressed_count() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "secondary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "tertiary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "tertiary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/third.c", 12, 7, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let output = render(request).unwrap();
+
+        assert!(!output.used_fallback);
+        assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
+        assert_eq!(output.suppressed_group_count, 2);
+        assert!(output.text.contains("other errors:"));
+        assert!(
+            output
+                .text
+                .contains("  - src/other.c:9:4: error: secondary failure")
+        );
+        assert!(
+            output
+                .text
+                .contains("  - src/third.c:12:7: error: tertiary failure")
+        );
     }
 
     #[test]

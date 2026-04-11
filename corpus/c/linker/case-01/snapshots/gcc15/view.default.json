@@ -20,9 +20,9 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cc4wFZCd.o:main.c:(.text+0x0): first defined here",
       "raw_sub_block": [
-        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here"
+        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cc4wFZCd.o:main.c:(.text+0x0): first defined here"
       ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
@@ -34,5 +34,12 @@
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+  },
+  "summary_only_groups": [
+    {
+      "group_id": "residual-0",
+      "severity": "error",
+      "title": "linker reported a failure"
+    }
+  ]
 }

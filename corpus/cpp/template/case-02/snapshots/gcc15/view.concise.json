@@ -40,5 +40,13 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.cpp:6:15",
+      "group_id": "residual-compiler-0",
+      "severity": "error",
+      "title": "type or overload mismatch"
+    }
+  ]
 }

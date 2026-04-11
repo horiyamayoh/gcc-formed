@@ -15,6 +15,15 @@ pub struct RenderSessionSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SummaryOnlyGroup {
+    pub group_id: String,
+    pub severity: String,
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub canonical_location: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderGroupCard {
     pub group_id: String,
     pub severity: String,
@@ -45,9 +54,15 @@ pub struct RenderGroupCard {
 pub struct RenderViewModel {
     pub summary: RenderSessionSummary,
     pub cards: Vec<RenderGroupCard>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub summary_only_groups: Vec<SummaryOnlyGroup>,
 }
 
-pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewModel {
+pub fn build(
+    request: &RenderRequest,
+    cards: Vec<DiagnosticNode>,
+    summary_only_cards: Vec<DiagnosticNode>,
+) -> RenderViewModel {
     let policy = render_policy(request.profile);
     let selected_cards_include_incomplete = cards.iter().any(|node| {
         !matches!(
@@ -81,6 +96,10 @@ pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewM
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
         },
         cards: rendered_cards,
+        summary_only_groups: summary_only_cards
+            .into_iter()
+            .map(|node| build_summary_only_group(request, &node))
+            .collect(),
     }
 }
 
@@ -99,19 +118,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         .analysis
         .as_ref()
         .and_then(|analysis| analysis.family.clone());
-    let canonical_location = node.primary_location().map(|location| {
-        let path = if matches!(request.profile, RenderProfile::Ci) {
-            location.path_raw().to_string()
-        } else if let Some(cwd) = request.cwd.as_ref() {
-            std::path::Path::new(location.path_raw())
-                .strip_prefix(cwd)
-                .map(|path| path.display().to_string())
-                .unwrap_or_else(|_| location.path_raw().to_string())
-        } else {
-            location.path_raw().to_string()
-        };
-        format!("{path}:{}:{}", location.line(), location.column())
-    });
+    let canonical_location = canonical_location(request, node);
     let excerpts = load_excerpt(request, node);
     let supporting_evidence = summarize_supporting_evidence(request, node);
     let context_lines = supporting_evidence.context_lines;
@@ -160,6 +167,37 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
             .as_ref()
             .and_then(|analysis| analysis.suppression_reason.clone()),
     }
+}
+
+fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> SummaryOnlyGroup {
+    SummaryOnlyGroup {
+        group_id: node.id.clone(),
+        severity: severity_label(&node.severity).to_string(),
+        title: select_title(
+            node,
+            node.analysis
+                .as_ref()
+                .map(|analysis| analysis.disclosure_confidence())
+                .unwrap_or(DisclosureConfidence::Hidden),
+        ),
+        canonical_location: canonical_location(request, node),
+    }
+}
+
+fn canonical_location(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
+    node.primary_location().map(|location| {
+        let path = if matches!(request.profile, RenderProfile::Ci) {
+            location.path_raw().to_string()
+        } else if let Some(cwd) = request.cwd.as_ref() {
+            std::path::Path::new(location.path_raw())
+                .strip_prefix(cwd)
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| location.path_raw().to_string())
+        } else {
+            location.path_raw().to_string()
+        };
+        format!("{path}:{}:{}", location.line(), location.column())
+    })
 }
 
 fn severity_label(severity: &Severity) -> &'static str {

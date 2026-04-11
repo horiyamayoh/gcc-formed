@@ -1,7 +1,7 @@
 use crate::budget::{WarningFailureMode, render_policy};
 use crate::layout::LayoutProfile;
 use crate::theme::ThemePolicy;
-use crate::view_model::RenderViewModel;
+use crate::view_model::{RenderViewModel, SummaryOnlyGroup};
 use crate::{DebugRefs, RenderRequest, RenderResult};
 
 pub fn emit(
@@ -34,6 +34,12 @@ pub fn emit(
             if let Some(suppression_reason) = card.suppression_reason.as_ref() {
                 lines.push(format!("debug: suppression_reason={suppression_reason}"));
             }
+        }
+    }
+    if !view_model.summary_only_groups.is_empty() {
+        lines.push(summary_only_heading(&view_model.summary_only_groups));
+        for group in &view_model.summary_only_groups {
+            lines.push(format!("  - {}", render_summary_only_group(&theme, group)));
         }
     }
 
@@ -85,9 +91,34 @@ pub fn emit(
             .iter()
             .map(|card| card.group_id.clone())
             .collect(),
-        suppressed_group_count: 0,
+        suppressed_group_count: view_model.summary_only_groups.len(),
         suppressed_warning_count,
         truncation_occurred,
         render_issues: Vec::new(),
+    }
+}
+
+fn summary_only_heading(groups: &[SummaryOnlyGroup]) -> String {
+    if groups.iter().all(|group| group.severity == "warning") {
+        "other warnings:".to_string()
+    } else if groups
+        .iter()
+        .any(|group| group.severity == "fatal" || group.severity == "error")
+    {
+        "other errors:".to_string()
+    } else {
+        "other diagnostics:".to_string()
+    }
+}
+
+fn render_summary_only_group(theme: &ThemePolicy, group: &SummaryOnlyGroup) -> String {
+    match group.canonical_location.as_ref() {
+        Some(location) => format!(
+            "{}: {}: {}",
+            theme.inline(location),
+            group.severity,
+            theme.inline(&group.title)
+        ),
+        None => format!("{}: {}", group.severity, theme.inline(&group.title)),
     }
 }

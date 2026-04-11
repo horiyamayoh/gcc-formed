@@ -33,6 +33,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Hardened `diag_capture_runtime` so user-supplied diagnostics sink flags force an honest runtime passthrough instead of silent flag injection, while explicit diagnostics color overrides suppress wrapper color injection metadata rather than overriding user intent.
 - Replaced unbounded in-memory stderr buffering in `diag_capture_runtime` with spool-backed capped capture, added truncation `IntegrityIssue` surfacing, and covered large template/linker flood stress paths without turning capture into an unbounded memory sink.
 - Changed `diag_render` raw fallback to emit preserved `stderr.raw` verbatim-first when available, preserving original line order and prefixes, and to label reconstructed compiler text explicitly only when the raw stderr capture is unavailable.
+- Changed `diag_render` so non-lead diagnostic groups that overflow the expanded-group budget are kept as summary-only output with honest `suppressed_group_count` metadata instead of being silently dropped from multi-error runs.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

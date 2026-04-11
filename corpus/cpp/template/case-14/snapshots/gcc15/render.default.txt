@@ -10,4 +10,6 @@ while instantiating:
   - src/main.cpp:7:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)
   - src/main.cpp:2:8 candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’
   - src/main.cpp:2:8 template argument deduction/substitution failed:
+other errors:
+  - src/main.cpp:7:22: error: template instantiation failed
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -8,4 +8,6 @@ while instantiating:
   - src/main.cpp:3:5 template argument deduction/substitution failed:
   - src/main.cpp:7:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)
 omitted 2 internal template frames
+other errors:
+  - src/main.cpp:7:22: error: template instantiation failed
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

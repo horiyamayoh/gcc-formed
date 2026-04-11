@@ -36,5 +36,12 @@
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+  },
+  "summary_only_groups": [
+    {
+      "group_id": "residual-passthrough",
+      "severity": "error",
+      "title": "linker reported a failure"
+    }
+  ]
 }
