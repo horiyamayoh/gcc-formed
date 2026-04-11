@@ -2,9 +2,7 @@ use crate::args::WrapperIntrospection;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
     fallback_reason_label, select_mode_for_seam, select_processing_path_for_seam,
-    support_tier_label,
 };
-use diag_backend_probe::SupportTier;
 use diag_backend_probe::{
     ProbeCache, ProcessingPath, ResolveRequest, VersionBand, capability_profile_for_major,
 };
@@ -134,7 +132,6 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, Box<dyn std::er
         "backend": {
             "path": backend.resolved_path,
             "version": backend.version_string,
-            "support_tier": format!("{:?}", backend.support_tier).to_lowercase(),
             "version_band": snake_case_label(&backend.version_band()),
             "processing_path": snake_case_label(&backend.default_processing_path()),
             "allowed_processing_paths": backend
@@ -189,11 +186,9 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             &decision,
             requested_processing_path,
         );
-        let support_tier = support_tier_for_band(version_band);
         let profile = capability_profile_for_major(representative_major_for_band(version_band));
         json!({
             "version_band": snake_case_label(&version_band),
-            "support_tier": support_tier_label(support_tier),
             "requested_mode": requested_mode.map(execution_mode_label),
             "requested_processing_path": requested_processing_path.map(|path| snake_case_label(&path)),
             "hard_conflict": hard_conflict,
@@ -217,14 +212,6 @@ fn representative_major_for_band(version_band: VersionBand) -> u32 {
         VersionBand::Gcc13_14 => 13,
         VersionBand::Gcc9_12 => 9,
         VersionBand::Unknown => 0,
-    }
-}
-
-fn support_tier_for_band(version_band: VersionBand) -> SupportTier {
-    match version_band {
-        VersionBand::Gcc15Plus => SupportTier::A,
-        VersionBand::Gcc13_14 => SupportTier::B,
-        VersionBand::Gcc9_12 | VersionBand::Unknown => SupportTier::C,
     }
 }
 
@@ -367,80 +354,43 @@ mod tests {
         let cases = rollout_matrix_cases();
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc15_plus"
-                && case["support_tier"] == "a"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "render"
+                && case["processing_path"] == "dual_sink_structured"
+                && case["support_level"] == "preview"
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
-                && case["support_tier"] == "b"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "conservative"
+                && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
-                && case["support_tier"] == "b"
                 && case["requested_mode"] == "shadow"
                 && case["selected_mode"] == "shadow"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "conservative"
+                && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
-                && case["support_tier"] == "b"
                 && case["requested_mode"] == "passthrough"
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
-                && case["support_level"] == "conservative"
+                && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
-                && case["support_tier"] == "b"
-                && case["requested_mode"] == "render"
-                && case["requested_processing_path"] == "single_sink_structured"
-                && case["selected_mode"] == "render"
-                && case["processing_path"] == "single_sink_structured"
-                && case["support_level"] == "conservative"
-                && case["fallback_reason"].is_null()
-                && case["scope_notice"]
-                    == "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
-        }));
-        assert!(cases.iter().any(|case| {
-            case["version_band"] == "gcc9_12"
-                && case["support_tier"] == "c"
-                && case["requested_mode"].is_null()
-                && case["selected_mode"] == "render"
-                && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
-                && case["fallback_reason"].is_null()
-                && case["scope_notice"]
-                    == "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in."
-        }));
-        assert!(cases.iter().any(|case| {
-            case["version_band"] == "gcc9_12"
-                && case["support_tier"] == "c"
-                && case["requested_mode"] == "shadow"
-                && case["selected_mode"] == "shadow"
-                && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
-                && case["fallback_reason"] == "shadow_mode"
-                && case["scope_notice"]
-                    == "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured JSON selection remains opt-in."
-        }));
-        assert!(cases.iter().any(|case| {
-            case["version_band"] == "gcc9_12"
-                && case["support_tier"] == "c"
                 && case["requested_mode"] == "render"
                 && case["requested_processing_path"] == "single_sink_structured"
                 && case["selected_mode"] == "render"
@@ -448,29 +398,58 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
-                && case["support_tier"] == "c"
+                && case["requested_mode"].is_null()
+                && case["selected_mode"] == "render"
+                && case["processing_path"] == "native_text_capture"
+                && case["support_level"] == "experimental"
+                && case["fallback_reason"].is_null()
+                && case["scope_notice"]
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
+        }));
+        assert!(cases.iter().any(|case| {
+            case["version_band"] == "gcc9_12"
+                && case["requested_mode"] == "shadow"
+                && case["selected_mode"] == "shadow"
+                && case["processing_path"] == "native_text_capture"
+                && case["support_level"] == "experimental"
+                && case["fallback_reason"] == "shadow_mode"
+                && case["scope_notice"]
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in."
+        }));
+        assert!(cases.iter().any(|case| {
+            case["version_band"] == "gcc9_12"
+                && case["requested_mode"] == "render"
+                && case["requested_processing_path"] == "single_sink_structured"
+                && case["selected_mode"] == "render"
+                && case["processing_path"] == "single_sink_structured"
+                && case["support_level"] == "experimental"
+                && case["fallback_reason"].is_null()
+                && case["scope_notice"]
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+        }));
+        assert!(cases.iter().any(|case| {
+            case["version_band"] == "gcc9_12"
                 && case["requested_mode"] == "passthrough"
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "unknown"
-                && case["support_tier"] == "c"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
-                && case["support_level"] == "unsupported"
+                && case["support_level"] == "passthrough_only"
                 && case["fallback_reason"] == "unsupported_tier"
                 && case["scope_notice"]
-                    == "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved."
         }));
     }
 }

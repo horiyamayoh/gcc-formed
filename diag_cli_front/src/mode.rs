@@ -1,6 +1,8 @@
 use crate::args::os_to_string;
+#[cfg(test)]
+use diag_backend_probe::SupportTier;
 use diag_backend_probe::{
-    CapabilityProfile, ProbeResult, ProcessingPath, SupportLevel, SupportTier, VersionBand,
+    CapabilityProfile, ProbeResult, ProcessingPath, SupportLevel, VersionBand,
     capability_profile_for_major,
 };
 use diag_capture_runtime::ExecutionMode;
@@ -22,7 +24,6 @@ pub(crate) struct ModeDecision {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CliCompatibilitySeam {
     version_band: VersionBand,
-    support_tier: SupportTier,
     support_level: SupportLevel,
     default_processing_path: ProcessingPath,
     allowed_processing_paths: BTreeSet<ProcessingPath>,
@@ -32,7 +33,7 @@ pub(crate) struct CliCompatibilitySeam {
 
 impl CliCompatibilitySeam {
     pub(crate) fn from_probe(backend: &ProbeResult) -> Self {
-        Self::from_profile(backend.support_tier, backend.capability_profile())
+        Self::from_profile(backend.capability_profile())
     }
 
     #[cfg(test)]
@@ -47,21 +48,12 @@ impl CliCompatibilitySeam {
 
     pub(crate) fn from_version_band(version_band: VersionBand) -> Self {
         let representative_major = representative_major_for_band(version_band);
-        let support_tier = match version_band {
-            VersionBand::Gcc15Plus => SupportTier::A,
-            VersionBand::Gcc13_14 => SupportTier::B,
-            VersionBand::Gcc9_12 | VersionBand::Unknown => SupportTier::C,
-        };
-        Self::from_profile(
-            support_tier,
-            capability_profile_for_major(representative_major),
-        )
+        Self::from_profile(capability_profile_for_major(representative_major))
     }
 
-    fn from_profile(support_tier: SupportTier, profile: CapabilityProfile) -> Self {
+    fn from_profile(profile: CapabilityProfile) -> Self {
         Self {
             version_band: profile.version_band,
-            support_tier,
             support_level: profile.support_level,
             default_processing_path: profile.default_processing_path,
             allowed_processing_paths: profile.allowed_processing_paths,
@@ -71,7 +63,7 @@ impl CliCompatibilitySeam {
     }
 
     fn is_primary_structured(&self) -> bool {
-        matches!(self.support_level, SupportLevel::Primary)
+        matches!(self.support_level, SupportLevel::Preview)
             && matches!(
                 self.default_processing_path,
                 ProcessingPath::DualSinkStructured
@@ -80,8 +72,8 @@ impl CliCompatibilitySeam {
 
     fn is_native_text_default(&self) -> bool {
         matches!(
-            self.support_level,
-            SupportLevel::Conservative | SupportLevel::Experimental
+            self.version_band,
+            VersionBand::Gcc13_14 | VersionBand::Gcc9_12
         ) && matches!(
             self.default_processing_path,
             ProcessingPath::NativeTextCapture
@@ -192,7 +184,14 @@ pub(crate) fn select_mode_for_seam(
     requested: Option<ExecutionMode>,
     hard_conflict: bool,
 ) -> ModeDecision {
-    let mut decision_log = vec![format!("support_tier={:?}", seam.support_tier).to_lowercase()];
+    let mut decision_log = vec![
+        format!("version_band={}", version_band_label(seam.version_band)),
+        format!("support_level={}", support_level_label(seam.support_level)),
+        format!(
+            "default_processing_path={}",
+            processing_path_label(seam.default_processing_path)
+        ),
+    ];
     if hard_conflict {
         decision_log.push("hard_conflict=diagnostic_sink_override".to_string());
         return ModeDecision {
@@ -209,52 +208,36 @@ pub(crate) fn select_mode_for_seam(
             decision_log,
         };
     }
-    let mode = match seam.support_tier {
-        _ if seam.is_primary_structured() => {
-            decision_log.push(format!(
-                "tier_a_mode={}",
-                format!("{:?}", requested.unwrap_or(ExecutionMode::Render)).to_lowercase()
-            ));
-            requested.unwrap_or(ExecutionMode::Render)
-        }
-        _ if seam.is_native_text_default() => match requested {
+    let mode = if seam.is_primary_structured() {
+        decision_log.push(format!(
+            "selected_mode={}",
+            format!("{:?}", requested.unwrap_or(ExecutionMode::Render)).to_lowercase()
+        ));
+        requested.unwrap_or(ExecutionMode::Render)
+    } else if seam.is_native_text_default() {
+        match requested {
             Some(ExecutionMode::Shadow) => {
-                decision_log.push(format!(
-                    "{}_mode=shadow_native_text",
-                    native_text_log_prefix(seam.version_band)
-                ));
+                decision_log.push("selected_mode=shadow_native_text".to_string());
                 ExecutionMode::Shadow
             }
             Some(ExecutionMode::Render) => {
-                decision_log.push(format!(
-                    "{}_requested_render=native_text",
-                    native_text_log_prefix(seam.version_band)
-                ));
+                decision_log.push("requested_mode=render_native_text".to_string());
                 ExecutionMode::Render
             }
             None => {
-                decision_log.push(format!(
-                    "{}_default=native_text",
-                    native_text_log_prefix(seam.version_band)
-                ));
+                decision_log.push("default_mode=render_native_text".to_string());
                 ExecutionMode::Render
             }
             Some(ExecutionMode::Passthrough) => ExecutionMode::Passthrough,
-        },
-        _ => {
-            decision_log.push(format!(
-                "tier_{}_mode=passthrough_only",
-                support_tier_label(seam.support_tier)
-            ));
-            ExecutionMode::Passthrough
         }
+    } else {
+        decision_log.push("default_mode=passthrough_only".to_string());
+        ExecutionMode::Passthrough
     };
 
     let fallback_reason = match mode {
-        ExecutionMode::Passthrough => match seam.support_tier {
-            SupportTier::A => None,
-            SupportTier::B | SupportTier::C => Some(FallbackReason::UnsupportedTier),
-        },
+        ExecutionMode::Passthrough => matches!(seam.version_band, VersionBand::Unknown)
+            .then_some(FallbackReason::UnsupportedTier),
         ExecutionMode::Shadow => Some(FallbackReason::ShadowMode),
         ExecutionMode::Render => None,
     };
@@ -310,40 +293,40 @@ pub(crate) fn compatibility_scope_notice_for_path(
         VersionBand::Gcc15Plus => None,
         VersionBand::Gcc13_14 => match (decision.mode, processing_path, decision.fallback_reason) {
             (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in.",
             ),
             (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
             ),
             (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
             ),
             (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in.",
             ),
         },
         VersionBand::Gcc9_12 => match (decision.mode, processing_path, decision.fallback_reason) {
             (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in.",
             ),
             (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
             ),
             (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
             ),
             (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in.",
             ),
         },
         VersionBand::Unknown => Some(
-            "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.",
+            "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved.",
         ),
     }
 }
@@ -357,14 +340,6 @@ fn representative_major_for_band(version_band: VersionBand) -> u32 {
     }
 }
 
-fn native_text_log_prefix(version_band: VersionBand) -> &'static str {
-    match version_band {
-        VersionBand::Gcc13_14 => "tier_b",
-        VersionBand::Gcc9_12 => "tier_c",
-        VersionBand::Gcc15Plus | VersionBand::Unknown => "compat",
-    }
-}
-
 fn processing_path_label(path: ProcessingPath) -> &'static str {
     match path {
         ProcessingPath::DualSinkStructured => "dual_sink_structured",
@@ -374,11 +349,20 @@ fn processing_path_label(path: ProcessingPath) -> &'static str {
     }
 }
 
-pub(crate) fn support_tier_label(tier: SupportTier) -> &'static str {
-    match tier {
-        SupportTier::A => "a",
-        SupportTier::B => "b",
-        SupportTier::C => "c",
+fn version_band_label(version_band: VersionBand) -> &'static str {
+    match version_band {
+        VersionBand::Gcc15Plus => "gcc15_plus",
+        VersionBand::Gcc13_14 => "gcc13_14",
+        VersionBand::Gcc9_12 => "gcc9_12",
+        VersionBand::Unknown => "unknown",
+    }
+}
+
+fn support_level_label(level: SupportLevel) -> &'static str {
+    match level {
+        SupportLevel::Preview => "preview",
+        SupportLevel::Experimental => "experimental",
+        SupportLevel::PassthroughOnly => "passthrough_only",
     }
 }
 
@@ -487,7 +471,7 @@ mod tests {
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "tier_b_mode=shadow_native_text")
+                .any(|entry| entry == "selected_mode=shadow_native_text")
         );
     }
 
@@ -500,7 +484,7 @@ mod tests {
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "tier_b_default=native_text")
+                .any(|entry| entry == "default_mode=render_native_text")
         );
     }
 
@@ -510,7 +494,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
             )
         );
     }
@@ -521,7 +505,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
             )
         );
     }
@@ -551,7 +535,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
             )
         );
     }
@@ -566,7 +550,7 @@ mod tests {
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "tier_c_default=native_text")
+                .any(|entry| entry == "default_mode=render_native_text")
         );
     }
 
@@ -581,7 +565,7 @@ mod tests {
                 ProcessingPath::NativeTextCapture
             ),
             Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in."
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
             )
         );
     }
@@ -597,7 +581,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
             )
         );
     }
@@ -608,7 +592,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::C, &decision),
             Some(
-                "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved."
+                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved."
             )
         );
     }

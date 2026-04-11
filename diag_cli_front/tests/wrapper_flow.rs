@@ -191,7 +191,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
     );
     assert_eq!(
         trace["environment_summary"]["support_level"],
-        "conservative"
+        "experimental"
     );
     assert_eq!(trace["fallback_reason"], "shadow_mode");
     assert_eq!(
@@ -634,7 +634,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         trace["environment_summary"]["processing_path"],
         "dual_sink_structured"
     );
-    assert_eq!(trace["environment_summary"]["support_level"], "primary");
+    assert_eq!(trace["environment_summary"]["support_level"], "preview");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
@@ -729,7 +729,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
             .as_array()
             .unwrap()
             .iter()
-            .any(|entry| entry.as_str() == Some("tier_a_mode=render"))
+            .any(|entry| entry.as_str() == Some("selected_mode=render"))
     );
     assert!(
         trace["decision_log"]
@@ -929,24 +929,24 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
         report["backend"]["path"].as_str(),
         Some(expected_backend_path.as_str())
     );
-    assert_eq!(report["backend"]["support_tier"], "a");
+    assert!(report["backend"]["support_tier"].is_null());
     assert_eq!(report["backend"]["version_band"], "gcc15_plus");
     assert_eq!(report["backend"]["processing_path"], "dual_sink_structured");
-    assert_eq!(report["backend"]["support_level"], "primary");
+    assert_eq!(report["backend"]["support_level"], "preview");
     let rollout_cases = report["rollout_matrix"]["cases"].as_array().unwrap();
     assert!(rollout_cases.iter().any(|case| {
-        case["support_tier"] == "a"
+        case["version_band"] == "gcc15_plus"
             && case["requested_mode"].is_null()
             && case["selected_mode"] == "render"
             && case["processing_path"] == "dual_sink_structured"
-            && case["support_level"] == "primary"
+            && case["support_level"] == "preview"
     }));
     assert!(rollout_cases.iter().any(|case| {
-        case["support_tier"] == "b"
+        case["version_band"] == "gcc13_14"
             && case["requested_mode"] == "shadow"
             && case["selected_mode"] == "shadow"
             && case["processing_path"] == "native_text_capture"
-            && case["support_level"] == "conservative"
+            && case["support_level"] == "experimental"
             && case["fallback_reason"] == "shadow_mode"
     }));
     assert!(report["warnings"].as_array().unwrap().is_empty());
@@ -1076,7 +1076,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         trace["environment_summary"]["processing_path"],
         "passthrough"
     );
-    assert_eq!(trace["environment_summary"]["support_level"], "primary");
+    assert_eq!(trace["environment_summary"]["support_level"], "preview");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
@@ -1308,23 +1308,23 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
 }
 
 fn expected_tier_b_native_text_notice() -> &'static str {
-    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured selection remains opt-in."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured selection remains opt-in."
 }
 
 fn expected_tier_b_single_sink_notice() -> &'static str {
-    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
 }
 
 fn expected_tier_b_shadow_notice() -> &'static str {
-    "gcc-formed: support tier=b native-text default path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single-sink structured selection remains opt-in."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
 }
 
 fn expected_tier_c_native_text_notice() -> &'static str {
-    "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; fallback reason=none; native-text capture is the default and explicit single-sink structured JSON selection remains opt-in."
+    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; fallback reason=none; native-text capture is the default and explicit single_sink_structured JSON selection remains opt-in."
 }
 
 fn expected_tier_c_single_sink_notice() -> &'static str {
-    "gcc-formed: support tier=c experimental native-text default path (GCC 9-12); selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
 }
 
 #[cfg(unix)]
