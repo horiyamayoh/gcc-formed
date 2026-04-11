@@ -1,3 +1,4 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 error: template instantiation failed
 --> src/main.cpp:6:5
 help: start from the first user-owned template frame and match template arguments
@@ -9,4 +10,14 @@ while instantiating:
   - src/main.cpp:2:6 template argument deduction/substitution failed:
 debug: rule_id=rule.family.template.structured_or_message
 debug: matched_conditions=context=template_instantiation, child_note_kind=template_context, phase=instantiate, child_message_contains=template, child_message_contains=deduction/substitution
+error: type or overload mismatch
+--> src/main.cpp:6:15
+help: compare the expected type and actual argument at the call site
+why: src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'
+| src/main.cpp:6:15
+|     expect_ptr(value);
+raw:
+  src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'
+debug: rule_id=rule.family.type_overload.structured_or_message
+debug: matched_conditions=phase=semantic, message_contains=no matching
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

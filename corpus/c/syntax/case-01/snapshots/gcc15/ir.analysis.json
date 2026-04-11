@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -44,16 +44,30 @@
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "9de4e4acfda5f5dadc782790a6916b30e64a912bf5f829794fe62765c5c74cd9"
+        "structural": "b534b1c2a83f5a555633256d3ac885a15352d7ff74a8abecb1d82832567b9c2b"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 13,
-          "end_column": 14,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:13:2:13",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -70,14 +84,71 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
+        "raw": "fb04e0a0f06dbe16aa11fa7eb446ba806fefd92aadabe901fa4488d7bbc4c328",
+        "structural": "1146d397fa9c2a78e6a02c96fa739cae3a7d96619f8252922732f1e912818193"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:13:2:13",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:13: error: expected ';' before '}' token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
-    "raw": "3b1bfad461410af37e38d2c30e330d634fb66923b5c1396d9cf7f061219e177d",
-    "structural": "4ccd7129ce90dc05db091db279a0b28401f8ba01de58113ec8e70614773f0ab7"
+    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
+    "raw": "b162217b7d5c0a8cf0e64f06c4959c2450d761513d9b0a569ada25c9dda7c901",
+    "structural": "d360ac9808da24298f1e0b7741fb09827120584e7bf370a62b967ed595ec687e"
   },
   "producer": {
     "name": "gcc-formed",

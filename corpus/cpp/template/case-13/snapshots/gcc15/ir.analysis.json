@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.cpp: In instantiation of 'void call_expect(T) [with T = int]':\nsrc/main.cpp:11:16:   required from here\n   11 |     call_expect(value);\n      |     ~~~~~~~~~~~^~~~~~~\nsrc/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'\n    6 |     expect_ptr(value);\n      |     ~~~~~~~~~~^~~~~~~\nsrc/main.cpp:6:15: note: there is 1 candidate\nsrc/main.cpp:2:6: note: candidate 1: 'template<class T> void expect_ptr(T*)'\n    2 | void expect_ptr(T*) {}\n      |      ^~~~~~~~~~\nsrc/main.cpp:2:6: note: template argument deduction/substitution failed:\nsrc/main.cpp:6:15: note:   mismatched types 'T*' and 'int'\n    6 |     expect_ptr(value);\n      |     ~~~~~~~~~~^~~~~~~\n",
+      "inline_text": "",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 686,
+      "size_bytes": 0,
       "storage": "inline"
     },
     {
@@ -23,14 +23,14 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 7388,
+      "size_bytes": 7354,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
         "headline": "template instantiation failed",
@@ -46,7 +46,7 @@
       "children": [
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
@@ -59,16 +59,30 @@
           "fingerprints": {
             "family": "3e4045960d8f44ed16b033687c29697ca4a4ab65530821b54542ad3fffd199d1",
             "raw": "28eee383a74287b5aaf69ec20781abf4bd903642dea8f63a8a30645ffe169675",
-            "structural": "d443bcd0e5db4d4d07adcd72ca959990a1b4097fde1e421efcd4536a88408b42"
+            "structural": "bcf8a0c5fa2b5ba40fba93ca93b3a75dda3a9fe09a26efb2bd5dbe00d579e7fe"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
             {
-              "column": 6,
-              "end_column": 16,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -88,7 +102,7 @@
         },
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
@@ -102,16 +116,30 @@
           "fingerprints": {
             "family": "515ea3abe8a7c2170ea9cd2fb4f1b84e05cefe4c6004fd02177e5597407dbf27",
             "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
-            "structural": "bd448a9d6d242630a435d59235a9f5030dba1e5a08aa0e44e83a137fd33a2fe7"
+            "structural": "fb91c0d4a73ee300f0ed2debf04bbf494bf54f9fa47c3d1c1f560232dac2db65"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
             {
-              "column": 6,
-              "end_column": 16,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -131,7 +159,7 @@
         },
         {
           "analysis": {
-            "confidence": "low",
+            "confidence": 0.3499999940395355,
             "family": "unknown",
             "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
             "headline": "  mismatched types 'T*' and 'int'",
@@ -144,16 +172,30 @@
           "fingerprints": {
             "family": "5bc82285334d9992ee8b0456d5e74edd4b8611cca6568466ac9b30c012649de6",
             "raw": "755d18783359742e85cc127f1372d882640e206fe37cde59095ac542bf6998c2",
-            "structural": "1d427fcea548722711acd8aa17ff6139300286acb7c6c93126c9a92a01d3373f"
+            "structural": "27179d5713204d7ab8ba9c30da590b8453691d0db95c66b692117b9e22005eeb"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
             {
-              "column": 5,
-              "end_column": 22,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:5:6:5",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -194,16 +236,30 @@
       "fingerprints": {
         "family": "b4422b02581814564cc559bc5b339dc44cbde4c664e4e63985d6efe71d2a7971",
         "raw": "86a96b4fd554b267c32c609ad0818d8bef50e361299fdb19c7318d5a05cdab34",
-        "structural": "1768f0c35602bb1f59a2a924a48778f968626105ace29a905d609ab4a00da1a6"
+        "structural": "19f9cf7e14fe6d0cb8580695816f0c367ae9e6ba4c78613542400acab78d423a"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 5,
-          "end_column": 22,
-          "line": 6,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -226,8 +282,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
-    "raw": "505e313ef97b8de7c4da2de5dffd1a432fd5b1d23914919958867184f20124ad",
-    "structural": "f5c6cc5023b25d89232eff25d33277518e91242bd3932773db98405cbc878a68"
+    "raw": "f2a73ce631e5131d68b56462e96f73c77887629e05c9759a7c550bc017e04ac3",
+    "structural": "c8c505b7d58ebc5142ea189c545e7f239595bfbc4fb865864b3c8f7bd8f9a2bc"
   },
   "producer": {
     "name": "gcc-formed",

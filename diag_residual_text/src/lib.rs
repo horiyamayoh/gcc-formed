@@ -49,15 +49,13 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
         if let Some(capture) = compiler_diagnostic.captures(line) {
-            if include_passthrough {
-                ingest_compiler_diagnostic_line(
-                    &mut compiler_nodes,
-                    &mut passthrough,
-                    &mut compiler_block,
-                    line,
-                    &capture,
-                );
-            }
+            ingest_compiler_diagnostic_line(
+                &mut compiler_nodes,
+                &mut passthrough,
+                &mut compiler_block,
+                line,
+                &capture,
+            );
             continue;
         }
 
@@ -659,6 +657,67 @@ mod tests {
         assert_eq!(nodes[0].locations[0].path_raw(), "main.c");
         assert_eq!(
             nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("syntax")
+        );
+    }
+
+    #[test]
+    fn keeps_structured_compiler_residuals_when_passthrough_is_disabled() {
+        let stderr = "\
+main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\
+main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
+        let nodes = classify(stderr, false);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Root);
+        assert_eq!(nodes[0].node_completeness, NodeCompleteness::Partial);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("type_overload")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+        assert_eq!(nodes[0].children[0].semantic_role, SemanticRole::Candidate);
+    }
+
+    #[test]
+    fn suppresses_only_passthrough_emission_when_disabled() {
+        let stderr = "\
+main.c:4:1: error: expected ';' before '}' token\n\
+totally unstructured compiler output\n";
+
+        let with_passthrough = classify(stderr, true);
+        let without_passthrough = classify(stderr, false);
+
+        assert_eq!(with_passthrough.len(), 2);
+        assert!(with_passthrough.iter().any(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                == Some("syntax")
+        }));
+        assert!(with_passthrough.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Passthrough)
+                && node
+                    .message
+                    .raw_text
+                    .contains("totally unstructured compiler output")
+        }));
+
+        assert_eq!(without_passthrough.len(), 1);
+        assert_eq!(without_passthrough[0].semantic_role, SemanticRole::Root);
+        assert!(
+            !without_passthrough
+                .iter()
+                .any(|node| matches!(node.semantic_role, SemanticRole::Passthrough))
+        );
+        assert_eq!(
+            without_passthrough[0]
                 .analysis
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),

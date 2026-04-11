@@ -71,7 +71,7 @@ fn should_filter_warnings(
     }
 }
 
-fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, usize) {
+fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, u8, usize) {
     (
         severity_rank(&node.severity),
         ownership_rank(best_ownership(node)),
@@ -79,6 +79,7 @@ fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, usize) {
         phase_rank(&node.phase),
         semantic_role_rank(&node.semantic_role),
         specificity_rank(node),
+        completeness_rank(&node.node_completeness),
         std::cmp::Reverse(node.message.raw_text.len()).0,
     )
 }
@@ -144,6 +145,15 @@ fn specificity_rank(node: &DiagnosticNode) -> u8 {
     let symbol_rank = u8::from(node.symbol_context.is_some());
     let first_action_rank = has_first_action(node);
     renderer_specificity_rank(node) + symbol_rank + u8::from(first_action_rank)
+}
+
+fn completeness_rank(completeness: &NodeCompleteness) -> u8 {
+    match completeness {
+        NodeCompleteness::Complete => 3,
+        NodeCompleteness::Partial => 2,
+        NodeCompleteness::Synthesized => 1,
+        NodeCompleteness::Passthrough => 0,
+    }
 }
 
 fn semantic_role_rank(role: &SemanticRole) -> u8 {

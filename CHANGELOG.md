@@ -27,6 +27,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Expanded `diag_core` IR location and analysis overlay shape so v1alpha semantics can carry structured file/range/role/source-kind data, numeric confidence scores, and preferred primary-location IDs without breaking legacy snapshot normalization or older JSON inputs.
 - Tightened `diag_core::DiagnosticDocument::validate()` so unparsable IR schema versions and dangling provenance capture refs are rejected before enrich/render stages, with regression coverage for schema, location, synthesized-node, and collapsed-child invariants.
 - Switched renderer confidence decisions from coarse bucket cutoffs to explicit `0.85 / 0.60 / 0.35` score thresholds so sub-threshold analysis headlines and first-action hints no longer leak into the user-visible path.
+- Decoupled residual compiler-diagnostic grouping from passthrough emission so suppressing the raw passthrough bucket no longer drops structured syntax/type/template residual roots.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

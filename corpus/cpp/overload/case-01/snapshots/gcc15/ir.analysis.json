@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
@@ -44,7 +44,7 @@
       "children": [
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
@@ -57,16 +57,30 @@
           "fingerprints": {
             "family": "93c072daa7c304ba8cb29dc21a5ea06685866608ffd2793a39f89e2993f59f64",
             "raw": "2e897f47f7e9fc57915ad4836f71e1a81b1d1bb5f82aaf4d7f63da468835cd00",
-            "structural": "4cabf1c42c4df4065f17864980fbc23098b6e57ff47936a4a254c1fb13a472dc"
+            "structural": "20e5c4474c2395690571ff13daba2b811cffbe9d7ae359f795f65e33c9264996"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
             {
-              "column": 6,
-              "end_column": 11,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -86,7 +100,7 @@
         },
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
@@ -99,16 +113,30 @@
           "fingerprints": {
             "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
             "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
-            "structural": "cc44afe1ee2cbf6b82a1611562e777e7cba561ba63df47ecf3a5e25a8f214ffd"
+            "structural": "f3f79d3f5d6a72ec7e1ae7bf96daf96888fb5addd7656dbb4555e1a6ee14cd0a"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
             {
-              "column": 6,
-              "end_column": 11,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -128,7 +156,7 @@
         },
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
@@ -141,16 +169,30 @@
           "fingerprints": {
             "family": "607a93a0534a3a9b6c265b09d35d0790b56ae4da1ec70222df1270144d9cd7fe",
             "raw": "92cc3ca1275ada82036ac14b8a89e196e2d725e9d85cd79e1df732938919db34",
-            "structural": "87d558df47922c283ce2260b7152a81876269b2cc11d0846f6eab2985e69d47a"
+            "structural": "ed038785e096f9d5912d6345a61bdc7f7ea002ff5a7f4ccf76a06274bba008d2"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
             {
-              "column": 6,
-              "end_column": 11,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -170,7 +212,7 @@
         },
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "type_overload",
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
@@ -183,16 +225,30 @@
           "fingerprints": {
             "family": "4911617df794a983c6641ed0a62b475c6c86c1492128d2081f30eb5f11a24b3a",
             "raw": "0b80b1ab3151a8e03a28f31db771cf2b84c27dafb8136c6b4dd4a942eaebd88a",
-            "structural": "6f5a90175b41eca565c05cd07c838bc33695d98636e4561f1c90fc72cafb17ff"
+            "structural": "67da21c3e2c10d6f95d48ef34a971688451a206ab3047957cf57ab43e1ffe0e0"
           },
           "id": "sarif-0-0-related-4",
           "locations": [
             {
-              "column": 6,
-              "end_column": 11,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -214,16 +270,30 @@
       "fingerprints": {
         "family": "7ceebab4d46866807b15600aad5b717cfc02866708c7252fba1099669804f4ae",
         "raw": "473e8fef50f407fe921a63bd544d45ce34019d91f88bde2b0f2dd3020a940208",
-        "structural": "60bb81d403a76543e30f3ed2e1b0bd30f328bc72275724503d66d3a354810f16"
+        "structural": "d630bfb271e8711a0ef30ec350af8c23620b68226fe9219da1cc74afb107e149"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 5,
-          "end_column": 13,
-          "line": 5,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:5:5:5",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -240,14 +310,70 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "phase=semantic",
+          "message_contains=no matching"
+        ],
+        "rule_id": "rule.family.type_overload.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "1c2ad53c60bb613d15a79878fc08dd949f048ed5b94389e880631bcc4ed8462f",
+        "raw": "3cf910be8fa050ef7f009e597c279d8b3671d07d59f4a86b27e239966cf6ce89",
+        "structural": "ec6904c514214f62fb304f0e6c42e8c27e8ffbf02746162e7e59d4d507c13f29"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 10,
+            "column_native": 10,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:10:5:10",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:5:10: error: no matching function for call to 'takes(int)'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "d129d0d717c4a59543b9536766b596921caaef1432795f2bc0213138f7b82d6d",
-    "structural": "82ba8f6e222ca9ed69e543af71e5aa8ff0c01f744fe60d8e1fb34f047190a03d"
+    "family": "e1e8c1da326ac07097e192dc25198dd785c5c1f57e87b030591d17027448963d",
+    "raw": "38193d77d32838d4df71f0821d7d0be19dc1b94321f2a80dd4af7387ffef840e",
+    "structural": "4523a56cad8a3e610fe9837947c329ce3aee9b8283daf5f715268fbe84f4db09"
   },
   "producer": {
     "name": "gcc-formed",

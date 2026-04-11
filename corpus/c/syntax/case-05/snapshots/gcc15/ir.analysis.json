@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -44,16 +44,30 @@
       "fingerprints": {
         "family": "b9475557f45c8644921bda2f79d6409641ebf674132398f2b6496f72f6fa6642",
         "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
-        "structural": "5220d41cecba2932889e3527833a9c0642d6badc8e06fd65df41316e27195e31"
+        "structural": "007de072965c6866ef71b1791a6c18e0cc3acace4d7aaef57db964bef3aa5156"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 18,
-          "end_column": 19,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 18,
+            "column_native": 18,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:18:2:18",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -73,7 +87,7 @@
     },
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -87,16 +101,30 @@
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "8943e9ba6f585e264226bcdb050ea5bab2fd80008d0630135b928f748842fe00"
+        "structural": "d79615914dee423b121833e7a0e37356542a5a7db4cb5ac2f479f7e8e2ea5a5d"
       },
       "id": "sarif-0-1",
       "locations": [
         {
-          "column": 19,
-          "end_column": 20,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 19,
+            "column_native": 19,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:19:2:19",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -113,14 +141,128 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "e29d5a4523d62305dc2c952f2f5a86f0199b092389502db6d8d49df12f6e5f3c",
+        "raw": "ce171dfa3f67969a7f5211af9754320920840afd408612ae439ab2d591129c4b",
+        "structural": "d35f7088dd625e7c84baa0d2befc0be08e2bf6b5c2f60dd684535c0e869f691c"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 18,
+            "column_native": 18,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:18:2:18",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:18: error: expected ')' before ';' token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
+        "raw": "681dc866b644030d3d2e6e3d73f1eb5da1bc08be598cdef8a1008296cffffa9e",
+        "structural": "83c5df4a757465661ff50b5f3dbdba8acdc539a1a327ba3b7da5d3cc3ab36525"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 19,
+            "column_native": 19,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:19:2:19",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:19: error: expected ';' before '}' token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "3d639ff278eb47caaccf5e68fe837f2432496ca8b06b4a47aef104432a3a14da",
-    "structural": "0a6d354f7598f60362c8c417d5a83129551951b52fc931d681bd80379e1534b2"
+    "family": "f506af7f50b1b9bd7b2fe9fe3da608b38b14be867c29ead5af81aee0f2882f26",
+    "raw": "93ef8d85cb7f75102f0971b6e64699713d10d1c5f28c817bff70eb9dd017a153",
+    "structural": "cc95e73787c7c3ee4050ba10f447abf7da8cc6c75cee09e6387ebae99243a469"
   },
   "producer": {
     "name": "gcc-formed",

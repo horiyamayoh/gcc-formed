@@ -461,6 +461,59 @@ mod tests {
     }
 
     #[test]
+    fn selector_prefers_complete_structured_root_over_partial_residual_echo() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "residual-compiler-0".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Parse,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "src/main.c:1:1: error: expected ';' before '}' token".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![
+                    Location::caret("src/main.c", 1, 1, diag_core::LocationRole::Primary)
+                        .with_ownership(Ownership::User, ownership_reason(Ownership::User)),
+                ],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Partial,
+                provenance: Provenance {
+                    source: ProvenanceSource::ResidualText,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: Some({
+                    let mut analysis = sample_analysis(
+                        "syntax",
+                        "syntax error",
+                        Some("fix the first parser error at the user-owned location"),
+                        diag_core::Confidence::High,
+                        "rule.family.syntax.phase_or_message",
+                    );
+                    analysis.matched_conditions = vec![
+                        "message_contains=expected".to_string(),
+                        "message_contains=before".to_string(),
+                    ];
+                    analysis
+                }),
+                fingerprints: None,
+            });
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root");
+    }
+
+    #[test]
     fn selector_does_not_boost_unknown_family_over_useful_subset() {
         let mut request = sample_request();
         request.document.diagnostics[0].id = "z-syntax".to_string();
@@ -806,6 +859,58 @@ mod tests {
                 .text
                 .contains("raw:\n  src/main.c:2:13: error: expected ';' before '}' token")
         );
+    }
+
+    #[test]
+    fn complete_lead_with_sidecar_residual_omits_partial_notice() {
+        let mut request = sample_request();
+        request.document.document_completeness = DocumentCompleteness::Partial;
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "residual-compiler-0".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Parse,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "src/main.c:1:1: error: expected ';' before '}' token".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![
+                    Location::caret("src/main.c", 1, 1, diag_core::LocationRole::Primary)
+                        .with_ownership(Ownership::User, ownership_reason(Ownership::User)),
+                ],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Partial,
+                provenance: Provenance {
+                    source: ProvenanceSource::ResidualText,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: Some(sample_analysis(
+                    "syntax",
+                    "syntax error",
+                    Some("fix the first parser error at the user-owned location"),
+                    diag_core::Confidence::High,
+                    "rule.family.syntax.phase_or_message",
+                )),
+                fingerprints: None,
+            });
+
+        let output = render(request).unwrap();
+
+        assert!(!output.used_fallback);
+        assert!(!output.text.contains(
+            "note: some compiler details were not fully structured; original diagnostics are preserved"
+        ));
+        assert!(output.text.contains(
+            "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+        ));
     }
 
     #[test]

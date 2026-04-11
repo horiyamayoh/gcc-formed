@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
         "headline": "template instantiation failed",
@@ -46,7 +46,7 @@
       "children": [
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
@@ -59,16 +59,30 @@
           "fingerprints": {
             "family": "3e4045960d8f44ed16b033687c29697ca4a4ab65530821b54542ad3fffd199d1",
             "raw": "28eee383a74287b5aaf69ec20781abf4bd903642dea8f63a8a30645ffe169675",
-            "structural": "d443bcd0e5db4d4d07adcd72ca959990a1b4097fde1e421efcd4536a88408b42"
+            "structural": "bcf8a0c5fa2b5ba40fba93ca93b3a75dda3a9fe09a26efb2bd5dbe00d579e7fe"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
             {
-              "column": 6,
-              "end_column": 16,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -88,7 +102,7 @@
         },
         {
           "analysis": {
-            "confidence": "medium",
+            "confidence": 0.6499999761581421,
             "family": "template",
             "first_action_hint": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
@@ -102,16 +116,30 @@
           "fingerprints": {
             "family": "515ea3abe8a7c2170ea9cd2fb4f1b84e05cefe4c6004fd02177e5597407dbf27",
             "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
-            "structural": "bd448a9d6d242630a435d59235a9f5030dba1e5a08aa0e44e83a137fd33a2fe7"
+            "structural": "fb91c0d4a73ee300f0ed2debf04bbf494bf54f9fa47c3d1c1f560232dac2db65"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
             {
-              "column": 6,
-              "end_column": 16,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -131,7 +159,7 @@
         },
         {
           "analysis": {
-            "confidence": "low",
+            "confidence": 0.3499999940395355,
             "family": "unknown",
             "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
             "headline": "  mismatched types 'T*' and 'int'",
@@ -144,16 +172,30 @@
           "fingerprints": {
             "family": "5bc82285334d9992ee8b0456d5e74edd4b8611cca6568466ac9b30c012649de6",
             "raw": "755d18783359742e85cc127f1372d882640e206fe37cde59095ac542bf6998c2",
-            "structural": "1d427fcea548722711acd8aa17ff6139300286acb7c6c93126c9a92a01d3373f"
+            "structural": "27179d5713204d7ab8ba9c30da590b8453691d0db95c66b692117b9e22005eeb"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
             {
-              "column": 5,
-              "end_column": 22,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:5:6:5",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -194,16 +236,30 @@
       "fingerprints": {
         "family": "b4422b02581814564cc559bc5b339dc44cbde4c664e4e63985d6efe71d2a7971",
         "raw": "86a96b4fd554b267c32c609ad0818d8bef50e361299fdb19c7318d5a05cdab34",
-        "structural": "1768f0c35602bb1f59a2a924a48778f968626105ace29a905d609ab4a00da1a6"
+        "structural": "19f9cf7e14fe6d0cb8580695816f0c367ae9e6ba4c78613542400acab78d423a"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 5,
-          "end_column": 22,
-          "line": 6,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -220,14 +276,70 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "phase=semantic",
+          "message_contains=no matching"
+        ],
+        "rule_id": "rule.family.type_overload.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "e36bbb56d4f128d44b30043fdf57766c2d8b3e8464074d345c96467f9a1b2cb1",
+        "raw": "7bc5387ceec530a23ffe57a77a8d2192e2a967315914fa5f4dc1e69d9f6e581c",
+        "structural": "cd2210edec3a759c0bd5a0cdc3f9b6c916f2e4d43cffd27d6d32ba8297c781e4"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
-    "raw": "505e313ef97b8de7c4da2de5dffd1a432fd5b1d23914919958867184f20124ad",
-    "structural": "12d18c654161b944fb3d66f651b1fb01d8a07d223a7382c59f621c9b50e2bffa"
+    "family": "71cb8abb5400b71df0636344b1100412d32b8c0d5fed0f70c398fd10e6b3e773",
+    "raw": "2a1fa0234e71aea97836e5edc29b19a8168d50ac82f56321da207e59fbc054e4",
+    "structural": "b2b7c6f985489b7002512c9eee8c083d9899d7ed4489a34f4d4593272243c81b"
   },
   "producer": {
     "name": "gcc-formed",

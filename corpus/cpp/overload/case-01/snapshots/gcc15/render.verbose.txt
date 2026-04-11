@@ -1,3 +1,4 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 error: type or overload mismatch
 --> src/main.cpp:5:5
 help: compare the expected type and actual argument at the call site
@@ -10,4 +11,14 @@ because: candidate 2: 'void takes(double, double)' at src/main.cpp:2:6
 because: candidate expects 2 arguments, 1 provided at src/main.cpp:2:6
 debug: rule_id=rule.family.type_overload.structured_or_message
 debug: matched_conditions=child_role=candidate, phase=semantic, message_contains=no matching
+error: type or overload mismatch
+--> src/main.cpp:5:10
+help: compare the expected type and actual argument at the call site
+why: src/main.cpp:5:10: error: no matching function for call to 'takes(int)'
+| src/main.cpp:5:10
+|     takes(1);
+raw:
+  src/main.cpp:5:10: error: no matching function for call to 'takes(int)'
+debug: rule_id=rule.family.type_overload.structured_or_message
+debug: matched_conditions=phase=semantic, message_contains=no matching
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

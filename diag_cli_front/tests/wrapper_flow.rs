@@ -712,7 +712,7 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
-        Some("complete")
+        Some("partial")
     );
     assert!(
         trace["parser_result_summary"]["diagnostic_count"]

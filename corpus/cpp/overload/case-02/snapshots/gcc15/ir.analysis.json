@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "medium",
+        "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
@@ -43,16 +43,30 @@
       "fingerprints": {
         "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
         "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-        "structural": "a85682dc838e846bb093038e1cc4390ed4d1c4820b314003f3ecf3aafec01432"
+        "structural": "ec6ec6afeb3dc56178a67dab163022e6a445950dca0f0bce565003598a12479c"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 49,
-          "end_column": 54,
-          "line": 3,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 49,
+            "column_native": 49,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:49:3:49",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -72,7 +86,7 @@
     },
     {
       "analysis": {
-        "confidence": "low",
+        "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
         "headline": "initializing argument 1 of 'void takes_int(int)'",
@@ -85,16 +99,30 @@
       "fingerprints": {
         "family": "87519ac914183fe5c132b075999144e83d66ae5d19e03f5b8b7fedddbbd8a503",
         "raw": "e3511ac889de3303507d5b5493a7dfd89cc1aaae9f42dbe8dbee2886079fbdb6",
-        "structural": "c29dd5d47e491ac3166aa05e6b18a7f60e86ac014d21544e9179de8281b928fe"
+        "structural": "bb7db16ab6ff34194a7f4974353cb0055e5c256cd6789cda0e24c39040371441"
       },
       "id": "sarif-0-1",
       "locations": [
         {
-          "column": 16,
-          "end_column": 19,
-          "line": 1,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 16,
+            "column_native": 16,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:1:16:1:16",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -111,14 +139,70 @@
       },
       "semantic_role": "root",
       "severity": "note"
+    },
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "type_overload",
+        "first_action_hint": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "matched_conditions": [
+          "phase=semantic",
+          "message_contains=invalid conversion"
+        ],
+        "rule_id": "rule.family.type_overload.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "0d8d9e840cc87770efd6493aa5cdd063c46102397053b101611e8de49ea00c82",
+        "raw": "783ccc6bd7ca068cadddb02a181d4618d829f80486a5458699020a8f348e5ff4",
+        "structural": "3212bd67b2c525c3d61d1977571f49e41f44e46214acd3c80c14d44f2a634d36"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 49,
+            "column_native": 49,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:49:3:49",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:3:49: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "fe86d50da80074880cd5ec42fab893c0e948939420b0fb6df7cbb38ac65fb978",
-    "structural": "b50d9660d3c06f458fbdaa72db70444e8f88d00670e96d9e74762638ab24bdad"
+    "family": "54984fedec065264a5f8ebcd54240158caa971e223dc2df3860ef81764e9ea1c",
+    "raw": "1c0a8915bd6f147612e06adf686bec0c8daea9a1ccf509b39e83a0b3ef703d47",
+    "structural": "45fba68d857fd6fe05d7547662bf882d8b1f88f7d2c5beb9f68467aac9598804"
   },
   "producer": {
     "name": "gcc-formed",

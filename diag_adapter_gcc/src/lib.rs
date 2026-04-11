@@ -1870,7 +1870,23 @@ mod tests {
             outcome.document.document_completeness,
             DocumentCompleteness::Failed
         );
-        assert_eq!(outcome.document.diagnostics.len(), 1);
+        assert_eq!(outcome.document.diagnostics.len(), 2);
+        assert!(outcome.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::ResidualText
+                && node.primary_location().is_some()
+                && node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("syntax")
+        }));
+        assert!(outcome.document.diagnostics.iter().any(|node| {
+            matches!(node.semantic_role, SemanticRole::Passthrough)
+                && node
+                    .message
+                    .raw_text
+                    .contains("expected ';' before '}' token")
+        }));
         assert!(
             outcome.document.integrity_issues[0]
                 .message
@@ -1901,11 +1917,7 @@ mod tests {
         .unwrap();
         let run = base_run_info();
         let report = ingest_bundle(
-            &compatibility_bundle_from_legacy_inputs(
-                Some(&path),
-                "src/main.c:4:1: error: expected ';' before '}' token\n",
-                &run,
-            ),
+            &compatibility_bundle_from_legacy_inputs(Some(&path), "", &run),
             IngestPolicy {
                 producer: producer_for_version("0.1.0"),
                 run,
@@ -1919,6 +1931,80 @@ mod tests {
         assert!(report.fallback_reason.is_none());
         assert!(report.warnings.is_empty());
         assert_eq!(report.document.diagnostics.len(), 1);
+    }
+
+    #[test]
+    fn ingest_bundle_keeps_structured_compiler_residuals_when_passthrough_is_suppressed() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"'missing_symbol' undeclared"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":3,"startColumn":25}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let stderr = "\
+src/main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\
+src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&path), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(report.fallback_grade, FallbackGrade::None);
+        assert_eq!(report.confidence_ceiling, Confidence::Medium);
+        assert!(report.fallback_reason.is_none());
+        assert!(
+            report.document.diagnostics.len() >= 2,
+            "expected SARIF and residual diagnostics to both be present"
+        );
+        assert!(report.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::Compiler
+                && node
+                    .message
+                    .raw_text
+                    .contains("'missing_symbol' undeclared")
+        }));
+        assert!(report.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::ResidualText
+                && node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("type_overload")
+        }));
+        assert!(
+            !report
+                .document
+                .diagnostics
+                .iter()
+                .any(|node| { matches!(node.semantic_role, SemanticRole::Passthrough) })
+        );
     }
 
     #[test]

@@ -49,6 +49,12 @@ pub struct RenderViewModel {
 
 pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewModel {
     let policy = render_policy(request.profile);
+    let selected_cards_include_incomplete = cards.iter().any(|node| {
+        !matches!(
+            node.node_completeness,
+            NodeCompleteness::Complete | NodeCompleteness::Synthesized
+        )
+    });
     let rendered_cards = cards
         .into_iter()
         .map(|node| build_card(request, &node))
@@ -66,7 +72,7 @@ pub fn build(request: &RenderRequest, cards: Vec<DiagnosticNode>) -> RenderViewM
             partial_notice: !matches!(
                 request.document.document_completeness,
                 diag_core::DocumentCompleteness::Complete
-            ),
+            ) && selected_cards_include_incomplete,
             raw_diagnostics_hint: request
                 .document
                 .captures

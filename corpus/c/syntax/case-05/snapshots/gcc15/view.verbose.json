@@ -57,11 +57,75 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:2:18",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    return (1 + 2;"
+          ],
+          "location": "src/main.c:2:18"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "residual-compiler-0",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:2:18: error: expected ')' before ';' token",
+      "raw_sub_block": [
+        "src/main.c:2:18: error: expected ')' before ';' token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:2:19",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "lines": [
+            "    return (1 + 2;"
+          ],
+          "location": "src/main.c:2:19"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "residual-compiler-1",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:2:19: error: expected ';' before '}' token",
+      "raw_sub_block": [
+        "src/main.c:2:19: error: expected ';' before '}' token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false,
+    "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }
