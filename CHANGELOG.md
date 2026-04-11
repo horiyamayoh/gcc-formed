@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Aligned `docs/releases/RELEASE-CHECKLIST.md` with the current multi-band gate semantics, removing stale GCC15-only blocker wording and adding CI regression coverage so current-authority docs now pin `nightly-gate` and representative snapshot blockers in path-aware terms.
 - Added regression coverage and release-doc wording for the beta/stable release evidence slice so release provenance now carries path-aware replay-stop-ship and rollout-matrix artifacts alongside the current `VersionBand`-aware release metadata.
 - Aligned the PR-gate docs/tests with the `gcc15_plus` reference-path slice, added regression coverage for the checked-in plan/workflow metadata and the new reference-path step labels, and documented that `pr-gate` is intentionally the primary fidelity slice while nightly expands across broader matrix bands.
 - Reworked the nightly gate’s blocker semantics so GCC 13/14/15 matrix runs now all block on replay, self-check, and representative snapshot drift, while release packaging, install, rollback, repository-publish, fuzz, and dependency checks are explicitly `reference_path_only` and surface as policy skips outside the `gcc15_plus` reference path.

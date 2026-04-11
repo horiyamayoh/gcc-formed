@@ -41,12 +41,14 @@ PRIMARY_SECTIONS = [
 BANNED_CURRENT_AUTHORITY_PHRASES = [
     "compatibility-only",
     "GCC 15-first support policy",
+    "GCC 15 blocker portion of `nightly-gate`",
     "production render",
     "production quality path",
     "support tier",
     "Tier A",
     "Tier B",
     "Tier C",
+    "Representative GCC 15 snapshot check",
 ]
 
 ALLOWED_BANNED_PHRASE_DOCS = {

@@ -29,9 +29,9 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 ## Release Blockers
 
 - `pr-gate` is green on `main`.
-- The GCC 15 blocker portion of `nightly-gate` is green.
+- The `nightly-gate` blocker portion is green across the current multi-band matrix.
 - Representative acceptance replay is green and the report artifacts are attached.
-- Representative GCC 15 snapshot check is green and the report artifacts are attached.
+- Representative matrix snapshot check is green and the report artifacts are attached.
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.
 - The public GitHub Release exists and includes the minimum beta asset set.
 - Release artifacts include `release-provenance.json`.

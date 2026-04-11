@@ -28,6 +28,14 @@ DOCS_WITH_CANONICAL_COPY = [
     "CONTRIBUTING.md",
 ]
 
+RELEASE_CHECKLIST_REQUIRED_SNIPPETS = [
+    "- `pr-gate` is green on `main`.",
+    "- The `nightly-gate` blocker portion is green across the current multi-band matrix.",
+    "- Representative acceptance replay is green and the report artifacts are attached.",
+    "- Representative matrix snapshot check is green and the report artifacts are attached.",
+    "- Release artifacts include `release-provenance.json`.",
+]
+
 README_REQUIRED_SNIPPETS = [
     "[AGENTS.md](AGENTS.md)",
     "[docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)",
@@ -92,6 +100,14 @@ class SupportBoundaryDocsTest(unittest.TestCase):
         self.assertIn("Acceptance evidence:", text)
         self.assertIn("Stop condition not hit:", text)
         self.assertIn("Next recommended action if paused:", text)
+
+    def test_release_checklist_uses_current_multi_band_blocker_wording(self) -> None:
+        text = (REPO_ROOT / "docs" / "releases" / "RELEASE-CHECKLIST.md").read_text(
+            encoding="utf-8"
+        )
+        for snippet in RELEASE_CHECKLIST_REQUIRED_SNIPPETS:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, text)
 
     def test_bug_template_uses_vnext_vocabulary(self) -> None:
         text = (REPO_ROOT / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml").read_text(
