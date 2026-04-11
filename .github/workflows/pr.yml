@@ -49,18 +49,18 @@ jobs:
             --step-id capture-host-build-environment \
             --report-root "$REPORT_ROOT" \
             --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
-      - name: Build GCC 15 CI image
+      - name: Build GCC 15 reference-path CI image
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id build-gcc15-ci-image \
+            --step-id build-reference-ci-image \
             --report-root "$REPORT_ROOT" \
             --command 'docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .'
-      - name: Capture GCC 15 CI environment
+      - name: Capture GCC 15 reference-path CI environment
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id capture-gcc15-ci-environment \
+            --step-id capture-reference-ci-environment \
             --report-root "$REPORT_ROOT" \
             --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image gcc:15 --docker-image-tag gcc-formed-ci:pr'
       - name: cargo xtask check
@@ -86,7 +86,7 @@ jobs:
             --step-id path-aware-replay-stop-ship \
             --report-root "$REPORT_ROOT" \
             --command 'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" --output "$REPORT_ROOT/gate/replay-stop-ship.json"'
-      - name: Build wrapper binary in GCC 15 image
+      - name: Build wrapper binary in reference-path image
         run: |
           command=$(cat <<'EOF'
           docker run --rm \
@@ -99,10 +99,10 @@ jobs:
           )
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id build-wrapper-binary-gcc15-image \
+            --step-id build-wrapper-binary-reference-image \
             --report-root "$REPORT_ROOT" \
             --command "$command"
-      - name: Wrapper self-check in GCC 15 image
+      - name: Wrapper self-check in reference-path image
         run: |
           command=$(cat <<'EOF'
           docker run --rm \
@@ -116,14 +116,14 @@ jobs:
           )
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id wrapper-self-check-gcc15-image \
+            --step-id wrapper-self-check-reference-image \
             --report-root "$REPORT_ROOT" \
             --command "$command"
-      - name: Representative GCC 15 snapshot check
+      - name: Representative reference-path snapshot check
         run: |
           python3 ci/gate_step.py \
             --plan "$GATE_PLAN" \
-            --step-id representative-gcc15-snapshot-check \
+            --step-id representative-reference-snapshot-check \
             --report-root "$REPORT_ROOT" \
             --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree

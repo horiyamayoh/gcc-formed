@@ -509,6 +509,38 @@ class CheckedInPlanTest(unittest.TestCase):
                 self.assertIn("$REPORT_ROOT/gate/replay-stop-ship.json", stop_ship["artifact_paths"])
                 self.assertGreater(stop_ship["order"], steps_by_id[prerequisite_id]["order"])
 
+    def test_pr_gate_plan_uses_reference_path_metadata_for_gcc15_plus_slice(self) -> None:
+        plan = self.load_plan("ci/plans/pr-gate.json")
+        steps_by_id = {step["id"]: step for step in plan["steps"]}
+        for step_id in [
+            "build-reference-ci-image",
+            "capture-reference-ci-environment",
+            "representative-acceptance-replay",
+            "path-aware-replay-stop-ship",
+            "build-wrapper-binary-reference-image",
+            "wrapper-self-check-reference-image",
+            "representative-reference-snapshot-check",
+        ]:
+            with self.subTest(step_id=step_id):
+                step = steps_by_id[step_id]
+                self.assertEqual(step["gate_scope"], "reference_path")
+                self.assertEqual(step["version_band"], "gcc15_plus")
+                self.assertNotIn("support_tier", step)
+        for step_id in [
+            "build-reference-ci-image",
+            "capture-reference-ci-environment",
+            "build-wrapper-binary-reference-image",
+            "wrapper-self-check-reference-image",
+            "representative-reference-snapshot-check",
+        ]:
+            with self.subTest(step_id=step_id):
+                self.assertIn("reference-path", steps_by_id[step_id]["name"])
+        self.assertNotIn("build-gcc15-ci-image", steps_by_id)
+        self.assertNotIn("capture-gcc15-ci-environment", steps_by_id)
+        self.assertNotIn("build-wrapper-binary-gcc15-image", steps_by_id)
+        self.assertNotIn("wrapper-self-check-gcc15-image", steps_by_id)
+        self.assertNotIn("representative-gcc15-snapshot-check", steps_by_id)
+
     def test_checked_in_plans_use_gate_scope_and_drop_legacy_support_tier(self) -> None:
         for relative_path in [
             "ci/plans/pr-gate.json",
@@ -554,6 +586,35 @@ class CheckedInPlanTest(unittest.TestCase):
 
 
 class CheckedInWorkflowTest(unittest.TestCase):
+    def extract_gate_step_ids(self, workflow_relative_path: str) -> list[str]:
+        workflow = (REPO_ROOT / workflow_relative_path).read_text(encoding="utf-8")
+        return re.findall(r"--step-id ([a-z0-9-]+)", workflow)
+
+    def test_pr_workflow_step_ids_match_checked_in_plan_order(self) -> None:
+        workflow_step_ids = self.extract_gate_step_ids(".github/workflows/pr.yml")
+        plan = json.loads((REPO_ROOT / "ci/plans/pr-gate.json").read_text(encoding="utf-8"))
+        plan_step_ids = [step["id"] for step in plan["steps"]]
+        self.assertEqual(workflow_step_ids, plan_step_ids)
+
+    def test_pr_workflow_uses_reference_path_naming_instead_of_gcc15_labels(self) -> None:
+        workflow = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text(encoding="utf-8")
+        self.assertIn("Build GCC 15 reference-path CI image", workflow)
+        self.assertIn("Capture GCC 15 reference-path CI environment", workflow)
+        self.assertIn("Build wrapper binary in reference-path image", workflow)
+        self.assertIn("Wrapper self-check in reference-path image", workflow)
+        self.assertIn("Representative reference-path snapshot check", workflow)
+        self.assertIn("--step-id build-reference-ci-image", workflow)
+        self.assertIn("--step-id capture-reference-ci-environment", workflow)
+        self.assertIn("--step-id build-wrapper-binary-reference-image", workflow)
+        self.assertIn("--step-id wrapper-self-check-reference-image", workflow)
+        self.assertIn("--step-id representative-reference-snapshot-check", workflow)
+        self.assertNotIn("Build GCC 15 CI image", workflow)
+        self.assertNotIn("Capture GCC 15 CI environment", workflow)
+        self.assertNotIn("Representative GCC 15 snapshot check", workflow)
+        self.assertNotIn("--step-id build-gcc15-ci-image", workflow)
+        self.assertNotIn("--step-id capture-gcc15-ci-environment", workflow)
+        self.assertNotIn("--step-id representative-gcc15-snapshot-check", workflow)
+
     def test_nightly_workflow_uses_matrix_version_band_metadata(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "nightly.yml"

@@ -36,9 +36,9 @@
       "gate_scope": "repository"
     },
     {
-      "id": "build-gcc15-ci-image",
+      "id": "build-reference-ci-image",
       "order": 3,
-      "name": "Build GCC 15 CI image",
+      "name": "Build GCC 15 reference-path CI image",
       "policy": "always",
       "failure_classification": "infrastructure",
       "command": "docker build --build-arg GCC_IMAGE=gcc:15 -t gcc-formed-ci:pr -f ci/images/gcc-matrix/Dockerfile .",
@@ -49,9 +49,9 @@
       "version_band": "gcc15_plus"
     },
     {
-      "id": "capture-gcc15-ci-environment",
+      "id": "capture-reference-ci-environment",
       "order": 4,
-      "name": "Capture GCC 15 CI environment",
+      "name": "Capture GCC 15 reference-path CI environment",
       "policy": "always",
       "failure_classification": "infrastructure",
       "command": "python3 ci/gate_capture_environment.py --output \"$REPORT_ROOT/gate/build-environment.json\" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image gcc:15 --docker-image-tag gcc-formed-ci:pr",
@@ -108,9 +108,9 @@
       "version_band": "gcc15_plus"
     },
     {
-      "id": "build-wrapper-binary-gcc15-image",
+      "id": "build-wrapper-binary-reference-image",
       "order": 8,
-      "name": "Build wrapper binary in GCC 15 image",
+      "name": "Build wrapper binary in reference-path image",
       "policy": "always",
       "failure_classification": "product",
       "command": "docker run --rm -v \"$PWD:/workspace\" -v \"$TARGET_DIR:/tmp/gcc-formed-target\" -w /workspace gcc-formed-ci:pr bash -lc \"export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo build --bin gcc-formed\"",
@@ -121,9 +121,9 @@
       "version_band": "gcc15_plus"
     },
     {
-      "id": "wrapper-self-check-gcc15-image",
+      "id": "wrapper-self-check-reference-image",
       "order": 9,
-      "name": "Wrapper self-check in GCC 15 image",
+      "name": "Wrapper self-check in reference-path image",
       "policy": "always",
       "failure_classification": "product",
       "command": "docker run --rm -v \"$PWD:/workspace\" -v \"$TARGET_DIR:/tmp/gcc-formed-target\" -v \"$REPORT_ROOT:/reports\" -w /workspace gcc-formed-ci:pr bash -lc \"export CARGO_TARGET_DIR=/tmp/gcc-formed-target && /tmp/gcc-formed-target/debug/gcc-formed --formed-self-check > /reports/self-check/report.json\"",
@@ -137,9 +137,9 @@
       "version_band": "gcc15_plus"
     },
     {
-      "id": "representative-gcc15-snapshot-check",
+      "id": "representative-reference-snapshot-check",
       "order": 10,
-      "name": "Representative GCC 15 snapshot check",
+      "name": "Representative reference-path snapshot check",
       "policy": "always",
       "failure_classification": "product",
       "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir \"$REPORT_ROOT/snapshot\"",

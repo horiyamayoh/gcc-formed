@@ -14,6 +14,7 @@ REPLAY_STOP_SHIP_SCHEMA_VERSION = 1
 BUILD_ENVIRONMENT_STEP_SECTIONS = {
     "capture-host-build-environment": "host",
     "capture-gcc15-ci-environment": "ci_image",
+    "capture-reference-ci-environment": "ci_image",
     "capture-matrix-ci-environment": "ci_image",
 }
 LEGACY_SUPPORT_TIER_MAP = {
