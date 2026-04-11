@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Deserializer, Serialize};
+use std::borrow::Cow;
 
 use crate::{Confidence, DisclosureConfidence, Score};
 
@@ -8,7 +9,7 @@ use crate::{Confidence, DisclosureConfidence, Score};
 pub struct AnalysisOverlay {
     /// Diagnostic family identifier (e.g. `"syntax"`, `"linker"`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub family: Option<String>,
+    pub family: Option<Cow<'static, str>>,
     /// Version of the family classification rule.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub family_version: Option<String>,
@@ -26,10 +27,10 @@ pub struct AnalysisOverlay {
     pub user_code_priority: Option<Score>,
     /// Short headline suitable for a title bar or summary.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub headline: Option<String>,
+    pub headline: Option<Cow<'static, str>>,
     /// Suggested first action the user should take.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub first_action_hint: Option<String>,
+    pub first_action_hint: Option<Cow<'static, str>>,
     /// Overall analysis confidence score (0.0..=1.0).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default, deserialize_with = "deserialize_confidence_score_opt")]
@@ -39,10 +40,10 @@ pub struct AnalysisOverlay {
     pub preferred_primary_location_id: Option<String>,
     /// Rule identifier that matched this diagnostic.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub rule_id: Option<String>,
+    pub rule_id: Option<Cow<'static, str>>,
     /// Conditions from the rule that matched.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub matched_conditions: Vec<String>,
+    pub matched_conditions: Vec<Cow<'static, str>>,
     /// Reason this diagnostic was suppressed, if applicable.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suppression_reason: Option<String>,

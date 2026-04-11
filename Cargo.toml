@@ -32,6 +32,7 @@ missing_panics_doc = "allow"
 
 [workspace.dependencies]
 assert_cmd = "2.1.1"
+criterion = { version = "0.5", features = ["html_reports"] }
 clap = { version = "4.5.53", features = ["derive", "env"] }
 ordered-float = { version = "5.1.0", features = ["serde"] }
 predicates = "3.1.3"

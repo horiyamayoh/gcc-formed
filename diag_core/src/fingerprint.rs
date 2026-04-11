@@ -27,7 +27,7 @@ impl DiagnosticDocument {
                         node.analysis
                             .as_ref()
                             .and_then(|analysis| analysis.family.clone())
-                            .unwrap_or_else(|| "unknown".to_string())
+                            .unwrap_or_else(|| "unknown".into())
                     })
                     .collect::<Vec<_>>(),
             ),

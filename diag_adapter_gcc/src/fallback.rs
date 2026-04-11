@@ -28,13 +28,13 @@ pub fn tool_for_backend(name: &str, version: Option<String>) -> ToolInfo {
     }
 }
 
-pub(crate) fn passthrough_document(producer: ProducerInfo, run: RunInfo) -> DiagnosticDocument {
+pub(crate) fn passthrough_document(producer: &ProducerInfo, run: &RunInfo) -> DiagnosticDocument {
     DiagnosticDocument {
         document_id: format!("passthrough-{}", run.invocation_id),
         schema_version: diag_core::IR_SPEC_VERSION.to_string(),
         document_completeness: DocumentCompleteness::Passthrough,
-        producer,
-        run,
+        producer: producer.clone(),
+        run: run.clone(),
         captures: Vec::new(),
         integrity_issues: Vec::new(),
         diagnostics: Vec::new(),
@@ -43,8 +43,8 @@ pub(crate) fn passthrough_document(producer: ProducerInfo, run: RunInfo) -> Diag
 }
 
 pub(crate) fn fallback_document(
-    producer: ProducerInfo,
-    run: RunInfo,
+    producer: &ProducerInfo,
+    run: &RunInfo,
     completeness: DocumentCompleteness,
     stderr_text: &str,
     integrity_message: String,
@@ -68,8 +68,8 @@ pub(crate) fn fallback_document(
 }
 
 pub(crate) fn failed_document(
-    producer: ProducerInfo,
-    run: RunInfo,
+    producer: &ProducerInfo,
+    run: &RunInfo,
     stderr_text: &str,
     integrity_message: String,
     capture_ref: Option<&str>,
@@ -107,21 +107,21 @@ pub(crate) fn passthrough_node(stderr_text: &str) -> DiagnosticNode {
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some("passthrough".to_string()),
+            family: Some("passthrough".into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some("showing conservative wrapper view".to_string()),
+            headline: Some("showing conservative wrapper view".into()),
             first_action_hint: Some(
                 "inspect the preserved raw diagnostics and rerun with --formed-debug-refs=capture_ref if needed"
-                    .to_string(),
+                    .into(),
             ),
             confidence: Some(Confidence::Low.score()),
             preferred_primary_location_id: None,
-            rule_id: Some("rule.family_seed.passthrough".to_string()),
-            matched_conditions: vec!["semantic_role=passthrough".to_string()],
+            rule_id: Some("rule.family_seed.passthrough".into()),
+            matched_conditions: vec!["semantic_role=passthrough".into()],
             suppression_reason: Some("generic_fallback".to_string()),
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),

@@ -302,17 +302,17 @@ mod tests {
         rule_id: &str,
     ) -> AnalysisOverlay {
         AnalysisOverlay {
-            family: Some(family.to_string()),
+            family: Some(family.to_string().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(headline.to_string()),
-            first_action_hint: first_action_hint.map(ToString::to_string),
+            headline: Some(headline.to_string().into()),
+            first_action_hint: first_action_hint.map(|s| s.to_string().into()),
             confidence: Some(confidence.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(rule_id.to_string()),
+            rule_id: Some(rule_id.to_string().into()),
             matched_conditions: Vec::new(),
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
@@ -400,7 +400,7 @@ mod tests {
                             diag_core::Confidence::High,
                             "rule.syntax.expected_or_before",
                         );
-                        analysis.matched_conditions = vec!["message_contains=expected".to_string()];
+                        analysis.matched_conditions = vec!["message_contains=expected".into()];
                         analysis
                     }),
                     fingerprints: None,
@@ -942,7 +942,7 @@ mod tests {
                         "rule.family.type_overload.message",
                     );
                     analysis.matched_conditions =
-                        vec!["message_contains=invalid conversion".to_string()];
+                        vec!["message_contains=invalid conversion".into()];
                     analysis
                 }),
                 fingerprints: None,
@@ -993,8 +993,8 @@ mod tests {
                         "rule.family.syntax.phase_or_message",
                     );
                     analysis.matched_conditions = vec![
-                        "message_contains=expected".to_string(),
-                        "message_contains=before".to_string(),
+                        "message_contains=expected".into(),
+                        "message_contains=before".into(),
                     ];
                     analysis
                 }),
@@ -1014,15 +1014,15 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .family = Some("syntax".to_string());
+            .family = Some("syntax".into());
 
         let mut opaque = request.document.diagnostics[0].clone();
         opaque.id = "a-opaque".to_string();
         opaque.message.raw_text = "opaque compatibility residual".to_string();
         let analysis = opaque.analysis.as_mut().unwrap();
-        analysis.family = Some("compiler.residual".to_string());
-        analysis.headline = Some("opaque compatibility residual".to_string());
-        analysis.rule_id = Some("rule.residual.compiler_unknown".to_string());
+        analysis.family = Some("compiler.residual".into());
+        analysis.headline = Some("opaque compatibility residual".into());
+        analysis.rule_id = Some("rule.residual.compiler_unknown".into());
 
         request.document.diagnostics.push(opaque);
 
@@ -1186,7 +1186,7 @@ mod tests {
                         diag_core::Confidence::High,
                         "rule.family.type_overload.note",
                     );
-                    analysis.matched_conditions = vec!["semantic_role=root".to_string()];
+                    analysis.matched_conditions = vec!["semantic_role=root".into()];
                     analysis
                 }),
                 fingerprints: None,
@@ -1348,11 +1348,11 @@ mod tests {
         request.document.diagnostics[0].message.raw_text =
             "static assertion failed: size must be 4 bytes".to_string();
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("unknown".to_string());
-        analysis.headline = Some("template instantiation failed".to_string());
+        analysis.family = Some("unknown".into());
+        analysis.headline = Some("template instantiation failed".into());
         analysis.first_action_hint = Some(
             "start from the first user-owned template frame and match template arguments"
-                .to_string(),
+                .into(),
         );
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
 
@@ -1379,10 +1379,10 @@ mod tests {
         request.document.diagnostics[0].message.raw_text =
             "static assertion failed: size must be 4 bytes".to_string();
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("unknown".to_string());
-        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.family = Some("unknown".into());
+        analysis.headline = Some("type or overload mismatch".into());
         analysis.first_action_hint =
-            Some("compare the expected type and actual argument at the call site".to_string());
+            Some("compare the expected type and actual argument at the call site".into());
         analysis.set_confidence_score(0.59);
 
         let view_model = build_view_model(&request).unwrap();
@@ -1400,10 +1400,10 @@ mod tests {
         request.document.diagnostics[0].message.raw_text =
             "static assertion failed: size must be 4 bytes".to_string();
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("unknown".to_string());
-        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.family = Some("unknown".into());
+        analysis.headline = Some("type or overload mismatch".into());
         analysis.first_action_hint =
-            Some("compare the expected type and actual argument at the call site".to_string());
+            Some("compare the expected type and actual argument at the call site".into());
         analysis.set_confidence_score(0.60);
 
         let view_model = build_view_model(&request).unwrap();
@@ -1431,13 +1431,13 @@ mod tests {
         request.document.diagnostics[0].locations[0].set_path_raw("src/main.cpp");
         request.document.diagnostics[0].locations[0].set_anchor(5, 7);
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("type_overload".to_string());
-        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.family = Some("type_overload".into());
+        analysis.headline = Some("type or overload mismatch".into());
         analysis.first_action_hint =
-            Some("compare the expected type and actual argument at the call site".to_string());
+            Some("compare the expected type and actual argument at the call site".into());
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
-        analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
-        analysis.matched_conditions = vec!["family=type_overload".to_string()];
+        analysis.rule_id = Some("rule.residual.compiler_type_overload".into());
+        analysis.matched_conditions = vec!["family=type_overload".into()];
 
         request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
             id: "candidate-1".to_string(),
@@ -1576,7 +1576,7 @@ mod tests {
                 diag_core::Confidence::High,
                 "rule.family.linker.multiple_definition",
             );
-            analysis.matched_conditions = vec!["symbol_context=present".to_string()];
+            analysis.matched_conditions = vec!["symbol_context=present".into()];
             analysis
         });
 
@@ -1598,7 +1598,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .family = Some("macro_include".to_string());
+            .family = Some("macro_include".into());
         request.document.diagnostics[0].context_chains = vec![ContextChain {
             kind: ContextChainKind::MacroExpansion,
             frames: vec![
@@ -1642,7 +1642,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .family = Some("template".to_string());
+            .family = Some("template".into());
         request.document.diagnostics[0].context_chains = vec![ContextChain {
             kind: ContextChainKind::TemplateInstantiation,
             frames: (1..=7)
@@ -1671,10 +1671,10 @@ mod tests {
         request.document.document_completeness = DocumentCompleteness::Partial;
         request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("template".to_string());
+        analysis.family = Some("template".into());
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
-        analysis.rule_id = Some("rule.residual.compiler_template".to_string());
-        analysis.matched_conditions = vec!["family=template".to_string()];
+        analysis.rule_id = Some("rule.residual.compiler_template".into());
+        analysis.matched_conditions = vec!["family=template".into()];
         request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
         request.document.diagnostics[0].context_chains = vec![ContextChain {
             kind: ContextChainKind::TemplateInstantiation,
@@ -1704,7 +1704,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .family = Some("template".to_string());
+            .family = Some("template".into());
         request.document.diagnostics[0].context_chains = vec![ContextChain {
             kind: ContextChainKind::TemplateInstantiation,
             frames: vec![
@@ -1764,7 +1764,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .family = Some("type_overload".to_string());
+            .family = Some("type_overload".into());
 
         let mut system_note = request.document.diagnostics[0].clone();
         system_note.id = "system-note".to_string();
@@ -1817,10 +1817,10 @@ mod tests {
         request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
         request.document.diagnostics[0].provenance.source = ProvenanceSource::ResidualText;
         let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
-        analysis.family = Some("type_overload".to_string());
+        analysis.family = Some("type_overload".into());
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
-        analysis.rule_id = Some("rule.residual.compiler_type_overload".to_string());
-        analysis.matched_conditions = vec!["family=type_overload".to_string()];
+        analysis.rule_id = Some("rule.residual.compiler_type_overload".into());
+        analysis.matched_conditions = vec!["family=type_overload".into()];
 
         request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
             id: "candidate".to_string(),
@@ -1901,7 +1901,7 @@ mod tests {
             .analysis
             .as_mut()
             .unwrap()
-            .headline = Some("\u{001b}[31msyntax error".to_string());
+            .headline = Some("\u{001b}[31msyntax error".to_string().into());
         request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
             id: "note-esc".to_string(),
             origin: Origin::Gcc,

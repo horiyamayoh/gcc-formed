@@ -97,7 +97,7 @@ fn preserved_specific_headline(node: &DiagnosticNode, family: &str) -> Option<St
     let analysis = node.analysis.as_ref()?;
     let existing_family = analysis.family.as_deref()?;
     if existing_family == family && specific_wording_override(family).is_none() {
-        return analysis.headline.clone();
+        return analysis.headline.as_ref().map(|c| c.clone().into_owned());
     }
     None
 }

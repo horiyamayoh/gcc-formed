@@ -151,7 +151,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let family = node
         .analysis
         .as_ref()
-        .and_then(|analysis| analysis.family.clone());
+        .and_then(|analysis| analysis.family.as_ref().map(|c| c.to_string()));
     let canonical_location = canonical_location(request, node);
     let excerpts = load_excerpt(request, node);
     let supporting_evidence = summarize_supporting_evidence(request, node);
@@ -190,11 +190,11 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         rule_id: node
             .analysis
             .as_ref()
-            .and_then(|analysis| analysis.rule_id.clone()),
+            .and_then(|analysis| analysis.rule_id.as_ref().map(|c| c.to_string())),
         matched_conditions: node
             .analysis
             .as_ref()
-            .map(|analysis| analysis.matched_conditions.clone())
+            .map(|analysis| analysis.matched_conditions.iter().map(|c| c.to_string()).collect())
             .unwrap_or_default(),
         suppression_reason: node
             .analysis
@@ -240,7 +240,7 @@ fn select_title(node: &DiagnosticNode, confidence: DisclosureConfidence) -> Stri
     if confidence.allows_analysis_title() {
         node.analysis
             .as_ref()
-            .and_then(|analysis| analysis.headline.clone())
+            .and_then(|analysis| analysis.headline.as_ref().map(|c| c.to_string()))
             .unwrap_or_else(|| raw_title(node))
     } else {
         raw_title(node)
@@ -251,7 +251,7 @@ fn select_first_action(node: &DiagnosticNode, confidence: DisclosureConfidence) 
     if confidence.allows_first_action() {
         node.analysis
             .as_ref()
-            .and_then(|analysis| analysis.first_action_hint.clone())
+            .and_then(|analysis| analysis.first_action_hint.as_ref().map(|c| c.to_string()))
     } else {
         None
     }

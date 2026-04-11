@@ -131,8 +131,8 @@ mod tests {
               }
             ]"#,
             "diagnostics.json",
-            producer_for_version("0.1.0"),
-            base_run_info(),
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
         )
         .unwrap();
 
@@ -298,8 +298,8 @@ mod tests {
               }
             ]"#,
             "diagnostics.json",
-            producer_for_version("0.1.0"),
-            RunInfo {
+            &producer_for_version("0.1.0"),
+            &RunInfo {
                 argv_redacted: vec!["g++".to_string()],
                 primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
                 language_mode: Some(LanguageMode::Cpp),
@@ -440,8 +440,8 @@ mod tests {
         let document = from_gcc_json_payload(
             &json,
             "diagnostics.json",
-            producer_for_version("0.1.0"),
-            RunInfo {
+            &producer_for_version("0.1.0"),
+            &RunInfo {
                 argv_redacted: vec!["g++".to_string()],
                 primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
                 language_mode: Some(LanguageMode::Cpp),
@@ -535,8 +535,8 @@ mod tests {
               }
             ]"#,
             "diagnostics.json",
-            producer_for_version("0.1.0"),
-            RunInfo {
+            &producer_for_version("0.1.0"),
+            &RunInfo {
                 argv_redacted: vec!["g++".to_string()],
                 primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
                 language_mode: Some(LanguageMode::Cpp),

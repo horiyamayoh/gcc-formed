@@ -669,7 +669,7 @@ fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_jso
     if let Some(family) = analysis.family.as_ref() {
         normalized.insert(
             "family".to_string(),
-            serde_json::Value::String(family.clone()),
+            serde_json::Value::String(family.to_string()),
         );
     }
     if let Some(first_action_hint) = analysis.first_action_hint.as_ref() {
@@ -687,7 +687,7 @@ fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_jso
     if let Some(rule_id) = analysis.rule_id.as_ref() {
         normalized.insert(
             "rule_id".to_string(),
-            serde_json::Value::String(rule_id.clone()),
+            serde_json::Value::String(rule_id.to_string()),
         );
     }
     if !analysis.matched_conditions.is_empty() {
@@ -697,7 +697,7 @@ fn normalized_analysis_value(analysis: &diag_core::AnalysisOverlay) -> serde_jso
                 analysis
                     .matched_conditions
                     .iter()
-                    .map(|condition| serde_json::Value::String(condition.clone()))
+                    .map(|condition| serde_json::Value::String(condition.to_string()))
                     .collect(),
             ),
         );

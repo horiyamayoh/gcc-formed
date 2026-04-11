@@ -53,12 +53,12 @@ fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
         policy_profile: None,
         producer_version: None,
     });
-    analysis.family = Some(family_decision.family.clone());
-    analysis.headline = Some(headline);
-    analysis.first_action_hint = Some(first_action_hint);
+    analysis.family = Some(family_decision.family.clone().into());
+    analysis.headline = Some(headline.into());
+    analysis.first_action_hint = Some(first_action_hint.into());
     analysis.set_confidence_bucket(confidence);
-    analysis.rule_id = Some(family_decision.rule_id);
-    analysis.matched_conditions = family_decision.matched_conditions;
+    analysis.rule_id = Some(family_decision.rule_id.into());
+    analysis.matched_conditions = family_decision.matched_conditions.into_iter().map(Into::into).collect();
     analysis.suppression_reason = family_decision.suppression_reason;
 
     for child in &mut node.children {
@@ -331,7 +331,7 @@ mod tests {
             archive: None,
         });
         node.analysis = Some(AnalysisOverlay {
-            family: Some("linker.undefined_reference".to_string()),
+            family: Some("linker.undefined_reference".into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
@@ -381,15 +381,15 @@ mod tests {
         node.phase = Phase::Link;
         node.locations.clear();
         node.analysis = Some(AnalysisOverlay {
-            family: Some("linker.cannot_find_library".to_string()),
+            family: Some("linker.cannot_find_library".into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some("cannot find library `-lmissing`".to_string()),
+            headline: Some("cannot find library `-lmissing`".into()),
             first_action_hint: Some(
-                "check the library search path and whether the archive is installed".to_string(),
+                "check the library search path and whether the archive is installed".into(),
             ),
             confidence: None,
             preferred_primary_location_id: None,

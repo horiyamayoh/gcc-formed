@@ -270,20 +270,20 @@ fn compiler_diagnostic_node(
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(seed.family.clone()),
+            family: Some(seed.family.clone().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(compiler_headline(seed, &message)),
-            first_action_hint: Some(seed.first_action_hint.clone()),
+            headline: Some(compiler_headline(seed, &message).into()),
+            first_action_hint: Some(seed.first_action_hint.clone().into()),
             confidence: Some(Confidence::Low.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(seed.rule_id.clone()),
+            rule_id: Some(seed.rule_id.clone().into()),
             matched_conditions: vec![
-                "residual_group=compiler_diagnostic".to_string(),
-                format!("family={}", seed.family),
+                "residual_group=compiler_diagnostic".into(),
+                format!("family={}", seed.family).into(),
             ],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
@@ -343,10 +343,10 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
         node.phase = template_seed.phase.clone();
         push_context_chain(node, line, capture);
         if let Some(analysis) = node.analysis.as_mut() {
-            analysis.family = Some(template_seed.family.clone());
-            analysis.headline = Some(compiler_headline(template_seed, &message));
-            analysis.first_action_hint = Some(template_seed.first_action_hint.clone());
-            analysis.rule_id = Some(template_seed.rule_id.clone());
+            analysis.family = Some(template_seed.family.clone().into());
+            analysis.headline = Some(compiler_headline(template_seed, &message).into());
+            analysis.first_action_hint = Some(template_seed.first_action_hint.clone().into());
+            analysis.rule_id = Some(template_seed.rule_id.clone().into());
             if !analysis
                 .matched_conditions
                 .iter()
@@ -354,7 +354,7 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
             {
                 analysis
                     .matched_conditions
-                    .push("family=template".to_string());
+                    .push("family=template".into());
             }
         }
     }
@@ -523,18 +523,18 @@ fn group_to_node(
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(rule.family.clone()),
+            family: Some(rule.family.clone().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(render_template(&rule.headline_template, template_values)),
-            first_action_hint: Some(rule.first_action_hint.clone()),
+            headline: Some(render_template(&rule.headline_template, template_values).into()),
+            first_action_hint: Some(rule.first_action_hint.clone().into()),
             confidence: Some(Confidence::Medium.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(rule.rule_id.clone()),
-            matched_conditions: vec![format!("residual_group={key}")],
+            rule_id: Some(rule.rule_id.clone().into()),
+            matched_conditions: vec![format!("residual_group={key}").into()],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
@@ -593,18 +593,18 @@ fn passthrough_node(lines: &[String]) -> DiagnosticNode {
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(passthrough.family.clone()),
+            family: Some(passthrough.family.clone().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(passthrough.headline.clone()),
-            first_action_hint: Some(passthrough.first_action_hint.clone()),
+            headline: Some(passthrough.headline.clone().into()),
+            first_action_hint: Some(passthrough.first_action_hint.clone().into()),
             confidence: Some(Confidence::Low.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(passthrough.rule_id.clone()),
-            matched_conditions: vec!["residual_group=passthrough".to_string()],
+            rule_id: Some(passthrough.rule_id.clone().into()),
+            matched_conditions: vec!["residual_group=passthrough".into()],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),

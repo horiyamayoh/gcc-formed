@@ -312,7 +312,8 @@ fn finalize_family_decision(
         .as_ref()
         .and_then(|analysis| analysis.family.as_ref())
         .filter(|family| family.contains('.') && rule.family != "unknown")
-        .cloned();
+        .cloned()
+        .map(|c| c.into_owned());
     if let Some(existing_family) = existing_specific {
         matched_conditions.push(format!("existing_specific_family={existing_family}"));
         FamilyDecision {
@@ -337,7 +338,8 @@ fn finalize_unknown_family(node: &DiagnosticNode) -> FamilyDecision {
         .as_ref()
         .and_then(|analysis| analysis.family.as_ref())
         .filter(|family| family.contains('.'))
-        .cloned();
+        .cloned()
+        .map(|c| c.into_owned());
     if let Some(existing_family) = existing_specific {
         return FamilyDecision {
             family: existing_family,

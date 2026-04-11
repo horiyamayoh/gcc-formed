@@ -120,7 +120,7 @@ pub fn ingest_bundle(
 
     let (mut document, source_authority, fallback_grade, fallback_reason) = match structured_input {
         StructuredInput::AvailableSarif(artifact) => {
-            match from_sarif_artifact(artifact, policy.producer.clone(), policy.run.clone()) {
+            match from_sarif_artifact(artifact, &policy.producer, &policy.run) {
                 Ok(document) => (
                     document,
                     SourceAuthority::Structured,
@@ -129,8 +129,8 @@ pub fn ingest_bundle(
                 ),
                 Err(error) => (
                     failed_document(
-                        policy.producer,
-                        policy.run,
+                        &policy.producer,
+                        &policy.run,
                         stderr_text,
                         format!(
                             "failed to parse authoritative SARIF; preserving raw diagnostics: {error}"
@@ -145,8 +145,8 @@ pub fn ingest_bundle(
         }
         StructuredInput::MissingSarif(artifact) => (
             fallback_document(
-                policy.producer,
-                policy.run,
+                &policy.producer,
+                &policy.run,
                 DocumentCompleteness::Passthrough,
                 stderr_text,
                 "expected authoritative SARIF was not produced; preserving raw diagnostics"
@@ -158,7 +158,7 @@ pub fn ingest_bundle(
             Some(FallbackReason::SarifMissing),
         ),
         StructuredInput::AvailableGccJson(artifact) => {
-            match from_gcc_json_artifact(artifact, policy.producer.clone(), policy.run.clone()) {
+            match from_gcc_json_artifact(artifact, &policy.producer, &policy.run) {
                 Ok(document) => (
                     document,
                     SourceAuthority::Structured,
@@ -167,8 +167,8 @@ pub fn ingest_bundle(
                 ),
                 Err(error) => (
                     failed_document(
-                        policy.producer,
-                        policy.run,
+                        &policy.producer,
+                        &policy.run,
                         stderr_text,
                         format!(
                             "failed to parse structured GCC JSON; preserving raw diagnostics: {error}"
@@ -183,8 +183,8 @@ pub fn ingest_bundle(
         }
         StructuredInput::MissingGccJson(artifact) => (
             fallback_document(
-                policy.producer,
-                policy.run,
+                &policy.producer,
+                &policy.run,
                 DocumentCompleteness::Passthrough,
                 stderr_text,
                 "expected structured GCC JSON was not produced; preserving raw diagnostics"
@@ -196,7 +196,7 @@ pub fn ingest_bundle(
             None,
         ),
         StructuredInput::Unsupported(artifact) => {
-            let mut document = passthrough_document(policy.producer, policy.run);
+            let mut document = passthrough_document(&policy.producer, &policy.run);
             document.integrity_issues.push(IntegrityIssue {
                 severity: IssueSeverity::Warning,
                 stage: IssueStage::Parse,
@@ -217,7 +217,7 @@ pub fn ingest_bundle(
             )
         }
         StructuredInput::None => (
-            passthrough_document(policy.producer, policy.run),
+            passthrough_document(&policy.producer, &policy.run),
             source_authority_for_residual(stderr_text),
             fallback_grade_for_residual(stderr_text),
             None,

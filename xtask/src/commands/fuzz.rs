@@ -889,28 +889,28 @@ fn root_node(
             capture_refs: vec!["stderr.raw".to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(family.to_string()),
+            family: Some(family.to_string().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(title.to_string()),
+            headline: Some(title.to_string().into()),
             first_action_hint: Some(match family {
                 "template" => {
                     "start from the first user-owned template frame and match template arguments"
-                        .to_string()
+                        .into()
                 }
                 "linker" => {
                     "inspect the preserved compiler stderr and the first failing link input"
-                        .to_string()
+                        .into()
                 }
-                _ => "fix the first parser error before reading follow-up notes".to_string(),
+                _ => "fix the first parser error before reading follow-up notes".into(),
             }),
             confidence: Some(Confidence::High.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(format!("rule.family.{family}.synthetic")),
-            matched_conditions: vec!["synthetic_fuzz_case=true".to_string()],
+            rule_id: Some(format!("rule.family.{family}.synthetic").into()),
+            matched_conditions: vec!["synthetic_fuzz_case=true".into()],
             suppression_reason: None,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
@@ -1012,18 +1012,18 @@ fn template_explosion_document(depth: usize, repeat_count: usize) -> DiagnosticD
                 capture_refs: vec!["stderr.raw".to_string()],
             },
             analysis: Some(AnalysisOverlay {
-                family: Some("template".to_string()),
+                family: Some("template".into()),
                 family_version: None,
                 family_confidence: None,
                 root_cause_score: None,
                 actionability_score: None,
                 user_code_priority: None,
-                headline: Some("template instantiation failed".to_string()),
+                headline: Some("template instantiation failed".into()),
                 first_action_hint: None,
                 confidence: Some(Confidence::Medium.score()),
                 preferred_primary_location_id: None,
-                rule_id: Some("rule.family.template.synthetic_child".to_string()),
-                matched_conditions: vec!["synthetic_fuzz_case=true".to_string()],
+                rule_id: Some("rule.family.template.synthetic_child".into()),
+                matched_conditions: vec!["synthetic_fuzz_case=true".into()],
                 suppression_reason: None,
                 collapsed_child_ids: Vec::new(),
                 collapsed_chain_ids: Vec::new(),

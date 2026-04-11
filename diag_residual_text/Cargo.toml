@@ -12,5 +12,12 @@ regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "classify"
+harness = false
+
 [lints]
 workspace = true

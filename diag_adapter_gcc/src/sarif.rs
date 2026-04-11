@@ -26,13 +26,13 @@ pub fn from_sarif(
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
     let json = fs::read_to_string(sarif_path)?;
-    from_sarif_payload(&json, "diagnostics.sarif", producer, run)
+    from_sarif_payload(&json, "diagnostics.sarif", &producer, &run)
 }
 
 pub(crate) fn from_sarif_artifact(
     artifact: &CaptureArtifact,
-    producer: ProducerInfo,
-    run: RunInfo,
+    producer: &ProducerInfo,
+    run: &RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
     let json = read_structured_artifact_text(artifact)?;
     from_sarif_payload(&json, &artifact.id, producer, run)
@@ -41,8 +41,8 @@ pub(crate) fn from_sarif_artifact(
 fn from_sarif_payload(
     json: &str,
     capture_ref: &str,
-    producer: ProducerInfo,
-    run: RunInfo,
+    producer: &ProducerInfo,
+    run: &RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
     let root: Value = serde_json::from_str(json)?;
     let version_str = json_str(&root, "version");
@@ -63,8 +63,8 @@ fn from_sarif_payload(
         document_id: format!("sarif-{}", run.invocation_id),
         schema_version: diag_core::IR_SPEC_VERSION.to_string(),
         document_completeness: DocumentCompleteness::Complete,
-        producer,
-        run,
+        producer: producer.clone(),
+        run: run.clone(),
         captures: Vec::new(),
         integrity_issues: Vec::new(),
         diagnostics: Vec::new(),
@@ -171,18 +171,18 @@ fn result_to_node(
             capture_refs: vec![capture_ref.to_string()],
         },
         analysis: Some(AnalysisOverlay {
-            family: Some(family_decision.family.clone()),
+            family: Some(family_decision.family.clone().into()),
             family_version: None,
             family_confidence: None,
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string()),
-            first_action_hint: Some(first_action_hint(family_decision.family.as_str())),
+            headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string().into()),
+            first_action_hint: Some(first_action_hint(family_decision.family.as_str()).into()),
             confidence: Some(Confidence::Medium.score()),
             preferred_primary_location_id: None,
-            rule_id: Some(family_decision.rule_id),
-            matched_conditions: family_decision.matched_conditions,
+            rule_id: Some(family_decision.rule_id.into()),
+            matched_conditions: family_decision.matched_conditions.into_iter().map(Into::into).collect(),
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),
