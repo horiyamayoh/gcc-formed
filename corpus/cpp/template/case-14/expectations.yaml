@@ -1,6 +1,8 @@
 schema_version: 1
 fixture_id: cpp/template/case-14
-support_tier: C
+version_band: gcc9_12
+processing_path: single_sink_structured
+support_level: experimental
 expected_mode: render
 semantic:
   family: template

@@ -664,7 +664,7 @@ corpus/
 
 - language / standard
 - target compiler family (`gcc`)
-- required support level / version band
+- required version band / support level
 - major version selector
 - argv
 - cwd policy
@@ -1505,7 +1505,9 @@ CI は単に「snapshot mismatch」とだけ出してはならない。
 ```yaml
 schema_version: 1
 fixture_id: cpp/templates/no-matching-constructor
-support_tier: A
+version_band: gcc15_plus
+processing_path: dual_sink_structured
+support_level: preview
 expected_mode: render
 
 semantic:

@@ -15,7 +15,7 @@ When a harvested trace deserves to become a committed fixture, use this order:
 1. Sanitize paths, usernames, and any source snippets that should not leave the trace bundle.
 2. Deduplicate against the existing corpus by scenario and failure shape.
 3. Minimize the repro until only the causal files and flags remain.
-4. Classify the fixture by semantic family, support tier, processing path, and fallback contract.
+4. Classify the fixture by semantic family, version band, processing path, support level, and fallback contract.
 5. Add `invoke.yaml`, `expectations.yaml`, `meta.yaml`, and snapshot artifacts under `snapshots/gcc15/`.
 6. Record provenance in `meta.yaml` as hand-authored or minimized-from-shadow.
 7. Run `cargo xtask replay --root corpus` and `cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15`.

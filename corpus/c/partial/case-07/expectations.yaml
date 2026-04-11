@@ -1,6 +1,8 @@
 schema_version: 1
 fixture_id: c/partial/case-07
-support_tier: B
+version_band: gcc13_14
+processing_path: native_text_capture
+support_level: experimental
 expected_mode: render
 semantic:
   family: linker.undefined_reference

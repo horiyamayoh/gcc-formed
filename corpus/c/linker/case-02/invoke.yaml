@@ -1,7 +1,8 @@
 language: c
 standard: c11
 target_compiler_family: gcc
-required_support_tier: A
+version_band: gcc15_plus
+support_level: preview
 major_version_selector: '15'
 argv:
 - src/main.c

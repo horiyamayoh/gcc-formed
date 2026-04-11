@@ -1,6 +1,8 @@
 schema_version: 1
 fixture_id: c/type/case-11
-support_tier: C
+version_band: gcc9_12
+processing_path: native_text_capture
+support_level: experimental
 expected_mode: render
 semantic:
   family: type_overload

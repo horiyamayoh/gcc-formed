@@ -1,7 +1,8 @@
 language: cpp
 standard: c++17
 target_compiler_family: gcc
-required_support_tier: C
+version_band: gcc9_12
+support_level: experimental
 major_version_selector: '12'
 argv:
 - -c

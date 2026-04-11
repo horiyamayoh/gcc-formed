@@ -1,5 +1,7 @@
 schema_version: 1
 fixture_id: c/linker/case-09
-support_tier: A
+version_band: gcc15_plus
+processing_path: dual_sink_structured
+support_level: preview
 expected_mode: render
 family: linker
