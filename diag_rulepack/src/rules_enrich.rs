@@ -3,7 +3,7 @@
 //! This module contains the configuration types for enrichment rules,
 //! including family match rules and confidence policies.
 
-use diag_core::Phase;
+use diag_core::{Phase, SemanticRole};
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -51,8 +51,18 @@ pub struct FamilyRuleConfig {
     pub rule_id: String,
     /// Target family name this rule assigns on match.
     pub family: String,
-    /// Strategy controlling how message text is matched.
-    pub match_strategy: MatchStrategyConfig,
+    /// Direct phase match gates; if any listed phase matches, the rule matches.
+    #[serde(default)]
+    pub phase_match: Option<Vec<Phase>>,
+    /// Declarative OR conditions evaluated for this rule.
+    #[serde(default)]
+    pub require_any_of: Vec<MatchConditionConfig>,
+    /// Legacy strategy controlling how message text is matched.
+    ///
+    /// Deprecated in favor of `phase_match` and `require_any_of`. This remains
+    /// readable so older rulepacks can still be loaded during migration.
+    #[serde(default)]
+    pub match_strategy: Option<MatchStrategyConfig>,
     /// Term groups matched against the primary diagnostic message.
     #[serde(default)]
     pub message_groups: Vec<TermGroupConfig>,
@@ -92,6 +102,30 @@ pub enum MatchStrategyConfig {
     PhaseOrMessage,
     /// Match using semantic role classification.
     SemanticRole,
+}
+
+/// Declarative condition checked during family rule evaluation.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum MatchConditionConfig {
+    /// Match when the diagnostic phase is the specified value.
+    PhaseIs { phase: Phase },
+    /// Match when a context chain of the specified kind exists.
+    HasContext { context: ContextConditionKind },
+    /// Match when symbol context is present.
+    HasSymbolContext,
+    /// Match when a candidate child note exists.
+    HasCandidateChild,
+    /// Match when a template-style child note exists.
+    HasTemplateChild,
+    /// Match when a child note of the specified kind exists.
+    HasChildNoteKind { child_note: ChildNoteConditionKind },
+    /// Match when any primary-message term group hits.
+    MessageTerms,
+    /// Match when any child-message term group hits.
+    ChildMessageTerms,
+    /// Match when the diagnostic semantic role is the specified value.
+    SemanticRoleIs { semantic_role: SemanticRole },
 }
 
 /// A named group of search terms sharing a common prefix.

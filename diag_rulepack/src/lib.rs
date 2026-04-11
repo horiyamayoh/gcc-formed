@@ -141,6 +141,40 @@ mod tests {
     }
 
     #[test]
+    fn rejects_message_terms_condition_without_message_groups() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let enrich_path = temp_dir.path().join("enrich.rulepack.json");
+        let mut enrich: EnrichRulepack =
+            serde_json::from_slice(&fs::read(&enrich_path).unwrap()).unwrap();
+        enrich.rules[0].message_groups.clear();
+        let enrich_raw = serde_json::to_vec_pretty(&enrich).unwrap();
+        fs::write(&enrich_path, &enrich_raw).unwrap();
+
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest
+            .sections
+            .iter_mut()
+            .find(|section| section.path == "enrich.rulepack.json")
+            .unwrap()
+            .sha256 = hex_sha256(&enrich_raw);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("message_terms"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
     fn rejects_invalid_manifest_version_id() {
         let temp_dir = TempDir::new().unwrap();
         let manifest_path = copy_checked_in_rulepack(&temp_dir);

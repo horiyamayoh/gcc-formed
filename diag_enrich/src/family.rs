@@ -1,8 +1,8 @@
 use diag_core::{Confidence, ContextChainKind, DiagnosticNode, Ownership, Phase, SemanticRole};
 use diag_rulepack::{
     ChildNoteConditionKind, ConfidenceClauseConfig, ConfidencePolicyConfig, ConfidenceSignal,
-    ContextConditionKind, EnrichRulepack, FamilyRuleConfig, MatchStrategyConfig,
-    PhaseAnnotationWhen, TermGroupConfig, checked_in_rulepack,
+    ContextConditionKind, EnrichRulepack, FamilyRuleConfig, MatchConditionConfig,
+    MatchStrategyConfig, PhaseAnnotationWhen, TermGroupConfig, checked_in_rulepack,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,8 +32,7 @@ struct RuleInput<'a> {
 }
 
 impl<'a> RuleInput<'a> {
-    fn from(node: &'a DiagnosticNode) -> Self {
-        let rulepack = rulepack();
+    fn from(node: &'a DiagnosticNode, rulepack: &EnrichRulepack) -> Self {
         let template_rule = rulepack.rule("template");
         let macro_include_rule = rulepack.rule("macro_include");
         let type_overload_rule = rulepack.rule("type_overload");
@@ -135,175 +134,284 @@ impl<'a> RuleInput<'a> {
 }
 
 pub(crate) fn classify_family(node: &DiagnosticNode) -> FamilyDecision {
-    let input = RuleInput::from(node);
-
-    for rule in &rulepack().rules {
-        if let Some(matched_conditions) = match_family_rule(&input, rule) {
-            return finalize_family_decision(node, rule, matched_conditions);
-        }
-    }
-
-    finalize_unknown_family(node)
+    classify_family_with_rulepack(node, rulepack())
 }
 
 pub(crate) fn classify_confidence(node: &DiagnosticNode, decision: &FamilyDecision) -> Confidence {
-    let input = RuleInput::from(node);
-    evaluate_confidence_policy(
-        &input,
-        decision,
-        rulepack().confidence_policy_for(decision.family.as_str()),
-    )
+    classify_confidence_with_rulepack(node, decision, rulepack())
 }
 
 fn rulepack() -> &'static EnrichRulepack {
     checked_in_rulepack().enrich()
 }
 
+fn classify_family_with_rulepack(
+    node: &DiagnosticNode,
+    rulepack: &EnrichRulepack,
+) -> FamilyDecision {
+    let input = RuleInput::from(node, rulepack);
+
+    for rule in &rulepack.rules {
+        if let Some(matched_conditions) = match_family_rule(&input, rule) {
+            return finalize_family_decision(node, rulepack, rule, matched_conditions);
+        }
+    }
+
+    finalize_unknown_family(node, rulepack)
+}
+
+fn classify_confidence_with_rulepack(
+    node: &DiagnosticNode,
+    decision: &FamilyDecision,
+    rulepack: &EnrichRulepack,
+) -> Confidence {
+    let input = RuleInput::from(node, rulepack);
+    evaluate_confidence_policy(
+        &input,
+        decision,
+        rulepack.confidence_policy_for(decision.family.as_str()),
+    )
+}
+
+#[derive(Debug, Default)]
+struct MatchState {
+    matched_conditions: Vec<String>,
+    matched_message_terms: bool,
+    matched_candidate_child: bool,
+    matched_any: bool,
+}
+
 fn match_family_rule(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    match (rule.match_strategy, rule.family.as_str()) {
-        (MatchStrategyConfig::StructuredOrMessage, "linker") => match_linker(input, rule),
-        (MatchStrategyConfig::StructuredOrMessage, "template") => match_template(input, rule),
-        (MatchStrategyConfig::StructuredOrMessage, "macro_include") => {
-            match_macro_include(input, rule)
-        }
-        (MatchStrategyConfig::StructuredOrMessage, "type_overload") => {
-            match_type_overload(input, rule)
-        }
-        (MatchStrategyConfig::PhaseOrMessage, "syntax") => match_syntax(input, rule),
-        (MatchStrategyConfig::SemanticRole, "passthrough") => match_passthrough(input, rule),
-        _ => None,
-    }
-}
-
-fn match_linker(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
-    let has_match = matches!(input.node.phase, Phase::Link)
-        || input.has_linker_context
-        || input.has_symbol_context
-        || !message_conditions.is_empty();
-    if !has_match {
-        return None;
-    }
-
-    let mut matched_conditions = Vec::new();
-    push_phase_annotations(
-        &mut matched_conditions,
-        rule,
-        &input.node.phase,
-        PhaseAnnotationWhen::RuleMatched,
-    );
-    push_context_conditions(&mut matched_conditions, input, rule);
-    if let Some(condition) = &rule.symbol_context_condition
-        && input.has_symbol_context
-    {
-        matched_conditions.push(condition.clone());
-    }
-    matched_conditions.extend(message_conditions);
-    Some(matched_conditions)
-}
-
-fn match_template(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
     let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
     let child_conditions = collect_group_conditions(input, &rule.child_message_groups, true);
-    let has_match = input.has_template_context
-        || input.has_template_child
-        || !message_conditions.is_empty()
-        || !child_conditions.is_empty();
-    if !has_match {
+    let mut state = MatchState::default();
+
+    for phase in effective_phase_match(rule) {
+        if input.node.phase == phase {
+            state.matched_any = true;
+            state.matched_conditions.push(format!("phase={phase}"));
+        }
+    }
+
+    for condition in effective_require_any_of(rule) {
+        evaluate_match_condition(
+            input,
+            &condition,
+            &message_conditions,
+            &child_conditions,
+            &mut state,
+        );
+    }
+
+    if !state.matched_any {
         return None;
     }
 
-    let mut matched_conditions = Vec::new();
-    push_context_conditions(&mut matched_conditions, input, rule);
-    push_child_note_conditions(&mut matched_conditions, input, rule);
-    push_phase_annotations(
-        &mut matched_conditions,
-        rule,
-        &input.node.phase,
-        PhaseAnnotationWhen::RuleMatched,
-    );
-    matched_conditions.extend(message_conditions);
-    matched_conditions.extend(child_conditions);
-    Some(matched_conditions)
-}
-
-fn match_macro_include(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    let mut matched_conditions = Vec::new();
-    push_context_conditions(&mut matched_conditions, input, rule);
-    push_child_note_conditions(&mut matched_conditions, input, rule);
-    matched_conditions.extend(collect_group_conditions(input, &rule.message_groups, false));
-    matched_conditions.extend(collect_group_conditions(
-        input,
-        &rule.child_message_groups,
-        true,
-    ));
-    (!matched_conditions.is_empty()).then_some(matched_conditions)
-}
-
-fn match_type_overload(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
-    let has_message_terms = !message_conditions.is_empty();
-    let has_match = input.has_candidate_child || has_message_terms;
-    if !has_match {
-        return None;
-    }
-
-    let mut matched_conditions = Vec::new();
-    if let Some(condition) = &rule.candidate_child_condition
-        && input.has_candidate_child
-    {
-        matched_conditions.push(condition.clone());
-    }
-    if has_message_terms {
+    if state.matched_message_terms {
         push_phase_annotations(
-            &mut matched_conditions,
+            &mut state.matched_conditions,
             rule,
             &input.node.phase,
             PhaseAnnotationWhen::MessageTerms,
         );
     }
-    if input.has_candidate_child || has_message_terms {
+    if state.matched_message_terms || state.matched_candidate_child {
         push_phase_annotations(
-            &mut matched_conditions,
+            &mut state.matched_conditions,
             rule,
             &input.node.phase,
             PhaseAnnotationWhen::MessageOrCandidate,
         );
     }
-    matched_conditions.extend(message_conditions);
-    Some(matched_conditions)
-}
-
-fn match_syntax(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    let message_conditions = collect_group_conditions(input, &rule.message_groups, false);
-    if message_conditions.is_empty() {
-        return None;
-    }
-
-    let mut matched_conditions = message_conditions;
     push_phase_annotations(
-        &mut matched_conditions,
+        &mut state.matched_conditions,
         rule,
         &input.node.phase,
         PhaseAnnotationWhen::RuleMatched,
     );
-    Some(matched_conditions)
+
+    Some(state.matched_conditions)
 }
 
-fn match_passthrough(input: &RuleInput<'_>, rule: &FamilyRuleConfig) -> Option<Vec<String>> {
-    if !matches!(input.node.semantic_role, SemanticRole::Passthrough) {
+fn effective_phase_match(rule: &FamilyRuleConfig) -> Vec<Phase> {
+    if let Some(phases) = &rule.phase_match {
+        return phases.clone();
+    }
+
+    let is_linker_like = rule
+        .contexts
+        .iter()
+        .any(|context| matches!(context.kind, ContextConditionKind::LinkerResolution))
+        || rule.symbol_context_condition.is_some();
+    if is_linker_like {
+        vec![Phase::Link]
+    } else {
+        Vec::new()
+    }
+}
+
+fn effective_require_any_of(rule: &FamilyRuleConfig) -> Vec<MatchConditionConfig> {
+    if !rule.require_any_of.is_empty() {
+        return rule.require_any_of.clone();
+    }
+
+    let mut conditions = Vec::new();
+    for context in &rule.contexts {
+        conditions.push(MatchConditionConfig::HasContext {
+            context: context.kind,
+        });
+    }
+    if rule.symbol_context_condition.is_some() {
+        conditions.push(MatchConditionConfig::HasSymbolContext);
+    }
+    if rule.candidate_child_condition.is_some() || !rule.candidate_child_terms.is_empty() {
+        conditions.push(MatchConditionConfig::HasCandidateChild);
+    }
+    for child_note in &rule.child_notes {
+        conditions.push(MatchConditionConfig::HasChildNoteKind {
+            child_note: child_note.kind,
+        });
+    }
+    if !rule.message_groups.is_empty() {
+        conditions.push(MatchConditionConfig::MessageTerms);
+    }
+    if !rule.child_message_groups.is_empty() {
+        conditions.push(MatchConditionConfig::ChildMessageTerms);
+    }
+    if let Some(semantic_role) =
+        legacy_semantic_role(rule.match_strategy, rule.semantic_role_condition.as_deref())
+    {
+        conditions.push(MatchConditionConfig::SemanticRoleIs { semantic_role });
+    }
+    conditions
+}
+
+fn legacy_semantic_role(
+    strategy: Option<MatchStrategyConfig>,
+    condition: Option<&str>,
+) -> Option<SemanticRole> {
+    if !matches!(strategy, Some(MatchStrategyConfig::SemanticRole)) {
         return None;
     }
-    Some(
-        rule.semantic_role_condition
-            .iter()
-            .cloned()
-            .collect::<Vec<_>>(),
-    )
+
+    match condition.unwrap_or_default().trim() {
+        "semantic_role=passthrough" => Some(SemanticRole::Passthrough),
+        "semantic_role=root" => Some(SemanticRole::Root),
+        "semantic_role=supporting" => Some(SemanticRole::Supporting),
+        "semantic_role=help" => Some(SemanticRole::Help),
+        "semantic_role=candidate" => Some(SemanticRole::Candidate),
+        "semantic_role=path_event" => Some(SemanticRole::PathEvent),
+        "semantic_role=summary" => Some(SemanticRole::Summary),
+        "semantic_role=unknown" => Some(SemanticRole::Unknown),
+        _ => None,
+    }
+}
+
+fn evaluate_match_condition(
+    input: &RuleInput<'_>,
+    condition: &MatchConditionConfig,
+    message_conditions: &[String],
+    child_conditions: &[String],
+    state: &mut MatchState,
+) {
+    match condition {
+        MatchConditionConfig::PhaseIs { phase } if &input.node.phase == phase => {
+            state.matched_any = true;
+            state.matched_conditions.push(format!("phase={phase}"));
+        }
+        MatchConditionConfig::HasContext { context } if input.has_context(*context) => {
+            state.matched_any = true;
+            state
+                .matched_conditions
+                .push(format!("context={}", context_condition_name(*context)));
+        }
+        MatchConditionConfig::HasSymbolContext if input.has_symbol_context => {
+            state.matched_any = true;
+            state
+                .matched_conditions
+                .push("symbol_context=present".to_string());
+        }
+        MatchConditionConfig::HasCandidateChild if input.has_candidate_child => {
+            state.matched_any = true;
+            state.matched_candidate_child = true;
+            state
+                .matched_conditions
+                .push("child_role=candidate".to_string());
+        }
+        MatchConditionConfig::HasTemplateChild if input.has_template_child => {
+            state.matched_any = true;
+            state
+                .matched_conditions
+                .push("child_note_kind=template_context".to_string());
+        }
+        MatchConditionConfig::HasChildNoteKind { child_note }
+            if input.has_child_note_kind(*child_note) =>
+        {
+            state.matched_any = true;
+            state.matched_conditions.push(format!(
+                "child_note_kind={}",
+                child_note_kind_name(*child_note)
+            ));
+        }
+        MatchConditionConfig::MessageTerms if !message_conditions.is_empty() => {
+            state.matched_any = true;
+            state.matched_message_terms = true;
+            state
+                .matched_conditions
+                .extend(message_conditions.iter().cloned());
+        }
+        MatchConditionConfig::ChildMessageTerms if !child_conditions.is_empty() => {
+            state.matched_any = true;
+            state
+                .matched_conditions
+                .extend(child_conditions.iter().cloned());
+        }
+        MatchConditionConfig::SemanticRoleIs { semantic_role }
+            if &input.node.semantic_role == semantic_role =>
+        {
+            state.matched_any = true;
+            state.matched_conditions.push(format!(
+                "semantic_role={}",
+                semantic_role_name(semantic_role)
+            ));
+        }
+        _ => {}
+    }
+}
+
+fn context_condition_name(kind: ContextConditionKind) -> &'static str {
+    match kind {
+        ContextConditionKind::TemplateInstantiation => "template_instantiation",
+        ContextConditionKind::MacroExpansion => "macro_expansion",
+        ContextConditionKind::Include => "include",
+        ContextConditionKind::LinkerResolution => "linker_resolution",
+    }
+}
+
+fn child_note_kind_name(kind: ChildNoteConditionKind) -> &'static str {
+    match kind {
+        ChildNoteConditionKind::TemplateContext => "template_context",
+        ChildNoteConditionKind::MacroExpansion => "macro_expansion",
+        ChildNoteConditionKind::Include => "include",
+    }
+}
+
+fn semantic_role_name(role: &SemanticRole) -> &'static str {
+    match role {
+        SemanticRole::Root => "root",
+        SemanticRole::Supporting => "supporting",
+        SemanticRole::Help => "help",
+        SemanticRole::Candidate => "candidate",
+        SemanticRole::PathEvent => "path_event",
+        SemanticRole::Summary => "summary",
+        SemanticRole::Passthrough => "passthrough",
+        SemanticRole::Unknown => "unknown",
+    }
 }
 
 fn finalize_family_decision(
     node: &DiagnosticNode,
+    rulepack: &EnrichRulepack,
     rule: &FamilyRuleConfig,
     mut matched_conditions: Vec<String>,
 ) -> FamilyDecision {
@@ -318,7 +426,7 @@ fn finalize_family_decision(
         matched_conditions.push(format!("existing_specific_family={existing_family}"));
         FamilyDecision {
             family: existing_family,
-            rule_id: rulepack().ingress_specific_override_rule_id.clone(),
+            rule_id: rulepack.ingress_specific_override_rule_id.clone(),
             matched_conditions,
             suppression_reason: Some("preserved_specific_family_from_ingress".to_string()),
         }
@@ -332,7 +440,7 @@ fn finalize_family_decision(
     }
 }
 
-fn finalize_unknown_family(node: &DiagnosticNode) -> FamilyDecision {
+fn finalize_unknown_family(node: &DiagnosticNode, rulepack: &EnrichRulepack) -> FamilyDecision {
     let existing_specific = node
         .analysis
         .as_ref()
@@ -343,16 +451,16 @@ fn finalize_unknown_family(node: &DiagnosticNode) -> FamilyDecision {
     if let Some(existing_family) = existing_specific {
         return FamilyDecision {
             family: existing_family,
-            rule_id: rulepack().ingress_specific_override_rule_id.clone(),
+            rule_id: rulepack.ingress_specific_override_rule_id.clone(),
             matched_conditions: vec!["derived_family=unknown".to_string()],
             suppression_reason: Some("preserved_specific_family_from_ingress".to_string()),
         };
     }
 
     let fallback = if matches!(node.semantic_role, SemanticRole::Passthrough) {
-        &rulepack().passthrough_fallback
+        &rulepack.passthrough_fallback
     } else {
-        &rulepack().unknown_fallback
+        &rulepack.unknown_fallback
     };
 
     FamilyDecision {
@@ -432,30 +540,6 @@ fn confidence_signal_matches(
     }
 }
 
-fn push_context_conditions(
-    matched_conditions: &mut Vec<String>,
-    input: &RuleInput<'_>,
-    rule: &FamilyRuleConfig,
-) {
-    for context in &rule.contexts {
-        if input.has_context(context.kind) {
-            matched_conditions.push(context.condition.clone());
-        }
-    }
-}
-
-fn push_child_note_conditions(
-    matched_conditions: &mut Vec<String>,
-    input: &RuleInput<'_>,
-    rule: &FamilyRuleConfig,
-) {
-    for child_note in &rule.child_notes {
-        if input.has_child_note_kind(child_note.kind) {
-            matched_conditions.push(child_note.condition.clone());
-        }
-    }
-}
-
 fn push_phase_annotations(
     matched_conditions: &mut Vec<String>,
     rule: &FamilyRuleConfig,
@@ -531,6 +615,42 @@ fn matching_conditions(prefix: &str, haystack: &str, patterns: &[String]) -> Vec
 #[cfg(test)]
 mod tests {
     use super::*;
+    use diag_core::{
+        Location, MessageText, NodeCompleteness, Origin, Provenance, ProvenanceSource, Severity,
+    };
+    use diag_rulepack::{ConfidenceLevelConfig, ConfidencePolicyConfig};
+
+    fn sample_node(message: &str) -> DiagnosticNode {
+        DiagnosticNode {
+            id: "n1".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Error,
+            semantic_role: SemanticRole::Root,
+            message: MessageText {
+                raw_text: message.to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![Location::caret(
+                "src/main.c",
+                3,
+                1,
+                diag_core::LocationRole::Primary,
+            )],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }
+    }
 
     #[test]
     fn loads_checked_in_enrich_rulepack() {
@@ -542,5 +662,55 @@ mod tests {
             rulepack.rule("syntax").rule_id,
             "rule.family.syntax.phase_or_message"
         );
+        assert_eq!(rulepack.rule("syntax").match_strategy, None);
+        assert!(!rulepack.rule("syntax").require_any_of.is_empty());
+    }
+
+    #[test]
+    fn classifies_dummy_family_from_rulepack_only_configuration() {
+        let mut custom_rulepack = rulepack().clone();
+        custom_rulepack.rules.insert(
+            0,
+            FamilyRuleConfig {
+                rule_id: "rule.family.dummy.message_terms".to_string(),
+                family: "dummy".to_string(),
+                phase_match: None,
+                require_any_of: vec![MatchConditionConfig::MessageTerms],
+                match_strategy: None,
+                message_groups: vec![TermGroupConfig {
+                    prefix: "message_contains".to_string(),
+                    terms: vec!["synthetic dummy marker".to_string()],
+                }],
+                child_message_groups: Vec::new(),
+                candidate_child_terms: Vec::new(),
+                contexts: Vec::new(),
+                child_notes: Vec::new(),
+                symbol_context_condition: None,
+                candidate_child_condition: None,
+                semantic_role_condition: None,
+                phase_annotations: Vec::new(),
+            },
+        );
+        custom_rulepack
+            .confidence_policies
+            .push(ConfidencePolicyConfig {
+                family: Some("dummy".to_string()),
+                fixed: Some(ConfidenceLevelConfig::Medium),
+                high_when_any: Vec::new(),
+                medium_when_any: Vec::new(),
+                default_confidence: ConfidenceLevelConfig::Low,
+            });
+
+        let node = sample_node("synthetic dummy marker from a JSON-only rule");
+        let family = classify_family_with_rulepack(&node, &custom_rulepack);
+        let confidence = classify_confidence_with_rulepack(&node, &family, &custom_rulepack);
+
+        assert_eq!(family.family, "dummy");
+        assert_eq!(family.rule_id, "rule.family.dummy.message_terms");
+        assert_eq!(
+            family.matched_conditions,
+            vec!["message_contains=synthetic dummy marker".to_string()]
+        );
+        assert_eq!(confidence, Confidence::Medium);
     }
 }

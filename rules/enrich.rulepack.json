@@ -22,7 +22,21 @@
     {
       "rule_id": "rule.family.linker.structured_or_message",
       "family": "linker",
-      "match_strategy": "structured_or_message",
+      "phase_match": [
+        "link"
+      ],
+      "require_any_of": [
+        {
+          "kind": "has_context",
+          "context": "linker_resolution"
+        },
+        {
+          "kind": "has_symbol_context"
+        },
+        {
+          "kind": "message_terms"
+        }
+      ],
       "message_groups": [
         {
           "prefix": "message_contains",
@@ -41,18 +55,27 @@
         }
       ],
       "symbol_context_condition": "symbol_context=present",
-      "phase_annotations": [
-        {
-          "phase": "link",
-          "condition": "phase=link",
-          "when": "rule_matched"
-        }
-      ]
+      "phase_annotations": []
     },
     {
       "rule_id": "rule.family.template.structured_or_message",
       "family": "template",
-      "match_strategy": "structured_or_message",
+      "require_any_of": [
+        {
+          "kind": "has_context",
+          "context": "template_instantiation"
+        },
+        {
+          "kind": "has_child_note_kind",
+          "child_note": "template_context"
+        },
+        {
+          "kind": "message_terms"
+        },
+        {
+          "kind": "child_message_terms"
+        }
+      ],
       "message_groups": [
         {
           "prefix": "message_contains",
@@ -96,7 +119,30 @@
     {
       "rule_id": "rule.family.macro_include.structured_or_message",
       "family": "macro_include",
-      "match_strategy": "structured_or_message",
+      "require_any_of": [
+        {
+          "kind": "has_context",
+          "context": "macro_expansion"
+        },
+        {
+          "kind": "has_context",
+          "context": "include"
+        },
+        {
+          "kind": "has_child_note_kind",
+          "child_note": "macro_expansion"
+        },
+        {
+          "kind": "has_child_note_kind",
+          "child_note": "include"
+        },
+        {
+          "kind": "message_terms"
+        },
+        {
+          "kind": "child_message_terms"
+        }
+      ],
       "message_groups": [
         {
           "prefix": "message_contains",
@@ -151,7 +197,14 @@
     {
       "rule_id": "rule.family.type_overload.structured_or_message",
       "family": "type_overload",
-      "match_strategy": "structured_or_message",
+      "require_any_of": [
+        {
+          "kind": "has_candidate_child"
+        },
+        {
+          "kind": "message_terms"
+        }
+      ],
       "message_groups": [
         {
           "prefix": "message_contains",
@@ -185,7 +238,11 @@
     {
       "rule_id": "rule.family.syntax.phase_or_message",
       "family": "syntax",
-      "match_strategy": "phase_or_message",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
       "message_groups": [
         {
           "prefix": "message_contains",
@@ -207,7 +264,12 @@
     {
       "rule_id": "rule.family.passthrough.semantic_role",
       "family": "passthrough",
-      "match_strategy": "semantic_role",
+      "require_any_of": [
+        {
+          "kind": "semantic_role_is",
+          "semantic_role": "passthrough"
+        }
+      ],
       "semantic_role_condition": "semantic_role=passthrough"
     }
   ],

@@ -2,7 +2,7 @@
 
 use crate::{
     ChildNoteConditionConfig, ConfidencePolicyConfig, ContextConditionConfig,
-    ENRICH_RULEPACK_SCHEMA_VERSION, EnrichRulepack, FallbackRuleConfig,
+    ENRICH_RULEPACK_SCHEMA_VERSION, EnrichRulepack, FallbackRuleConfig, MatchConditionConfig,
     RENDER_RULEPACK_SCHEMA_VERSION, RULEPACK_MANIFEST_SCHEMA_VERSION, RenderRulepack,
     RendererFamilyKind, RulepackError, RulepackManifest, TermGroupConfig,
 };
@@ -103,6 +103,26 @@ pub(crate) fn validate_enrich_rulepack(
             path,
             "rule.child_message_groups",
         )?;
+        if let Some(phases) = &rule.phase_match {
+            if phases.is_empty() {
+                return Err(invalid_rulepack(
+                    path,
+                    "rule.phase_match must not be an empty list",
+                ));
+            }
+        }
+        if rule.phase_match.is_none()
+            && rule.require_any_of.is_empty()
+            && rule.match_strategy.is_none()
+        {
+            return Err(invalid_rulepack(
+                path,
+                "family rules must declare either phase_match, require_any_of, or legacy match_strategy",
+            ));
+        }
+        for condition in &rule.require_any_of {
+            validate_match_condition(condition, rule, path)?;
+        }
         ensure_non_empty_strings(
             &rule.candidate_child_terms,
             path,
@@ -162,6 +182,28 @@ pub(crate) fn validate_enrich_rulepack(
         }
     }
     Ok(())
+}
+
+fn validate_match_condition(
+    condition: &MatchConditionConfig,
+    rule: &crate::FamilyRuleConfig,
+    path: &Path,
+) -> Result<(), RulepackError> {
+    match condition {
+        MatchConditionConfig::MessageTerms if rule.message_groups.is_empty() => {
+            Err(invalid_rulepack(
+                path,
+                "rule.require_any_of includes message_terms but rule.message_groups is empty",
+            ))
+        }
+        MatchConditionConfig::ChildMessageTerms if rule.child_message_groups.is_empty() => {
+            Err(invalid_rulepack(
+                path,
+                "rule.require_any_of includes child_message_terms but rule.child_message_groups is empty",
+            ))
+        }
+        _ => Ok(()),
+    }
 }
 
 pub(crate) fn validate_render_rulepack(
