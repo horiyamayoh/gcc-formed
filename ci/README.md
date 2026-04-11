@@ -2,7 +2,7 @@
 
 `pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`replay/` には `replay-report.json` に加えて `native-parity-report.json` を出し、line budget / disclosure honesty / color meaning / compaction の stop-ship分類を機械可読で残す。さらに `gate/replay-stop-ship.json` は `replay-report.json` を band / path / surface / concern へ正規化した gate blocker 正本とする。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。
 
-`cargo xtask check` は Rust workspace test だけでなく `python3 -B -m unittest discover -s ci -p test_*.py` も実行する。したがって `cargo-xtask-check` step が green であれば、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests も同じ入口で通っている。
+`cargo xtask check` は `cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、`python3 -B -m unittest discover -s ci -p test_*.py` を同じ標準 gate として実行する。したがって `cargo-xtask-check` step が green であれば、Rust workspace lint/test、representative replay、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests が同じ入口で通っている。
 
 ## Layout
 

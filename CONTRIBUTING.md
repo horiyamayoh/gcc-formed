@@ -35,7 +35,7 @@ cargo deny check
 cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl
 ```
 
-`cargo xtask check` now also runs the Python `ci/test_*.py` contract suite. For a faster docs-only loop, you can run just:
+`cargo xtask check` runs `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, representative replay, and the Python `ci/test_*.py` contract suite from one blessed developer gate. For a faster docs-only loop, you can run just:
 
 ```bash
 python3 -B -m unittest discover -s ci -p 'test_*.py'

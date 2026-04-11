@@ -157,6 +157,8 @@ cargo build --bin gcc-formed
 cargo xtask replay --root corpus
 ```
 
+`cargo xtask check` は、`cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、Python の `ci/test_*.py` contract suite を同じ標準 developer gate として順に実行する。
+
 Path-aware の実装が進んだら、band ごとの replay / snapshot / quality gate を追加で回す。  
 個別の release / install / rollback / stable-promotion 手順は [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
 
