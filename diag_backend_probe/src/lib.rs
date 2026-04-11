@@ -242,8 +242,8 @@ fn capability_profile_for_version_band(
 ) -> CapabilityProfile {
     // Keep the new vocabulary behind a probe-local compatibility seam until a
     // later issue installs dedicated path/capability probing.
-    let sarif_diagnostics = add_output_sarif_supported;
-    let dual_sink = sarif_diagnostics;
+    let sarif_diagnostics = matches!(version_band, VersionBand::Gcc15Plus | VersionBand::Gcc13_14);
+    let dual_sink = matches!(version_band, VersionBand::Gcc15Plus) && add_output_sarif_supported;
 
     match version_band {
         VersionBand::Gcc15Plus => CapabilityProfile {
@@ -472,7 +472,8 @@ mod tests {
         assert_eq!(gcc13.version_band, VersionBand::Gcc13_14);
         assert_eq!(gcc13.support_level, SupportLevel::Experimental);
         assert!(!gcc13.json_diagnostics);
-        assert!(!gcc13.sarif_diagnostics);
+        assert!(gcc13.sarif_diagnostics);
+        assert!(!gcc13.dual_sink);
         assert!(!gcc13.tty_color_control);
         assert_eq!(
             gcc13.default_processing_path,
@@ -512,6 +513,8 @@ mod tests {
                 .allowed_processing_paths
                 .contains(&ProcessingPath::Passthrough)
         );
+        assert!(!gcc12.sarif_diagnostics);
+        assert!(!gcc12.dual_sink);
 
         let gcc8 = capability_profile_for_major(8);
         assert_eq!(gcc8.version_band, VersionBand::Unknown);
@@ -585,6 +588,58 @@ mod tests {
                 ProcessingPath::SingleSinkStructured,
                 ProcessingPath::Passthrough,
             ])
+        );
+    }
+
+    #[test]
+    fn band_b_capability_profile_distinguishes_single_sink_sarif_from_dual_sink() {
+        let probe = ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: PathBuf::from("/usr/bin/gcc-13"),
+            version_string: "gcc (GCC) 13.3.0".to_string(),
+            major: 13,
+            minor: 3,
+            support_tier: SupportTier::B,
+            driver_kind: DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: ProbeKey {
+                realpath: PathBuf::from("/usr/bin/gcc-13"),
+                inode: 3,
+                mtime_seconds: 0,
+                size_bytes: 3,
+            },
+        };
+
+        let profile = probe.capability_profile();
+        assert_eq!(profile.version_band, VersionBand::Gcc13_14);
+        assert_eq!(
+            profile.default_processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert!(profile.sarif_diagnostics);
+        assert!(!profile.dual_sink);
+        assert!(!probe.add_output_sarif_supported);
+        assert_eq!(
+            profile.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
+    }
+
+    #[test]
+    fn band_c_capability_profile_keeps_json_single_sink_without_sarif() {
+        let profile = capability_profile_for_major(11);
+        assert_eq!(profile.version_band, VersionBand::Gcc9_12);
+        assert!(profile.json_diagnostics);
+        assert!(!profile.sarif_diagnostics);
+        assert!(!profile.dual_sink);
+        assert!(
+            profile
+                .allowed_processing_paths
+                .contains(&ProcessingPath::SingleSinkStructured)
         );
     }
 
