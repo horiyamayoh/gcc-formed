@@ -8,6 +8,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_PROVENANCE = REPO_ROOT / "ci" / "release_provenance.py"
+BUILD_MANIFEST_SOURCE = REPO_ROOT / "diag_trace" / "src" / "lib.rs"
+RELEASE_METADATA_SOURCE = REPO_ROOT / "xtask" / "src" / "commands" / "release.rs"
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -43,6 +45,13 @@ class ReleaseProvenanceTest(unittest.TestCase):
         env.update(extra)
         return env
 
+    def assert_current_multi_band_vocabulary(self, payload: dict) -> None:
+        serialized = json.dumps(payload, indent=2, sort_keys=True)
+        self.assertNotIn("support_tier", serialized)
+        self.assertNotIn("gcc15_primary", serialized)
+        self.assertNotIn("MATRIX_SUPPORT_TIER", serialized)
+        self.assertNotIn("matrix-support-tier", serialized)
+
     def test_pr_gate_records_release_scope_without_legacy_support_tier(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             report_root = Path(tmpdir) / "reports"
@@ -76,7 +85,7 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release_scope"]["target_triple"], "x86_64-unknown-linux-musl")
             self.assertEqual(payload["release"]["package"]["kind"], "package")
             self.assertEqual(payload["release"]["release_publish"]["kind"], "publish")
-            self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))
+            self.assert_current_multi_band_vocabulary(payload)
 
     def test_nightly_gate_records_version_band_in_matrix_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -122,8 +131,7 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release_scope"]["maturity_label"], "v1beta")
             self.assertEqual(payload["release"]["bench_smoke"]["kind"], "bench")
             self.assertIsNone(payload["release"]["fuzz_smoke"])
-            self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))
-            self.assertNotIn("gcc15_primary", output_path.read_text(encoding="utf-8"))
+            self.assert_current_multi_band_vocabulary(payload)
 
     def test_public_beta_release_records_release_scope_and_tag(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -169,7 +177,8 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release"]["snapshot_report"]["kind"], "snapshot")
             self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
             self.assertEqual(payload["release"]["replay_stop_ship"]["status"], "fail")
-            self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))
+            self.assertNotIn("rc_gate", payload["release"])
+            self.assert_current_multi_band_vocabulary(payload)
 
     def test_stable_release_records_rollback_scope_and_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -224,4 +233,23 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release"]["rc_gate"]["kind"], "rc-gate")
             self.assertEqual(payload["release"]["rollout_matrix_report"]["kind"], "rollout-matrix-report")
             self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
-            self.assertNotIn("support_tier", output_path.read_text(encoding="utf-8"))
+            self.assertNotIn("release_publish", payload["release"])
+            self.assertNotIn("install_release", payload["release"])
+            self.assert_current_multi_band_vocabulary(payload)
+
+
+class ReleaseManifestVocabularyTest(unittest.TestCase):
+    def test_build_manifest_uses_maturity_label_with_legacy_alias_only_on_read_side(self) -> None:
+        source = BUILD_MANIFEST_SOURCE.read_text(encoding="utf-8")
+        self.assertIn("pub struct BuildManifest", source)
+        self.assertIn("pub maturity_label: String", source)
+        self.assertIn('#[serde(alias = "support_tier_declaration")]', source)
+        self.assertNotIn("pub support_tier_declaration: String", source)
+        self.assertNotIn("pub support_tier: String", source)
+
+    def test_release_metadata_uses_maturity_label_with_legacy_alias_only_on_read_side(self) -> None:
+        source = RELEASE_METADATA_SOURCE.read_text(encoding="utf-8")
+        self.assertIn("pub(crate) struct PublishedRelease", source)
+        self.assertIn("pub(crate) maturity_label: String", source)
+        self.assertIn('#[serde(alias = "support_tier")]', source)
+        self.assertNotIn("pub(crate) support_tier: String", source)

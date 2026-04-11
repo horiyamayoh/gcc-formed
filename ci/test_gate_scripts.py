@@ -590,6 +590,10 @@ class CheckedInWorkflowTest(unittest.TestCase):
         workflow = (REPO_ROOT / workflow_relative_path).read_text(encoding="utf-8")
         return re.findall(r"--step-id ([a-z0-9-]+)", workflow)
 
+    def extract_step_names(self, workflow_relative_path: str) -> list[str]:
+        workflow = (REPO_ROOT / workflow_relative_path).read_text(encoding="utf-8")
+        return re.findall(r"- name: (.+)", workflow)
+
     def test_pr_workflow_step_ids_match_checked_in_plan_order(self) -> None:
         workflow_step_ids = self.extract_gate_step_ids(".github/workflows/pr.yml")
         plan = json.loads((REPO_ROOT / "ci/plans/pr-gate.json").read_text(encoding="utf-8"))
@@ -650,8 +654,18 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIn("ci/gate_replay_contract.py", workflow)
         self.assertIn('--replay-report "$REPORT_ROOT/replay/replay-report.json"', workflow)
         self.assertIn('--output "$REPORT_ROOT/release/replay-stop-ship.json"', workflow)
+        self.assertIn("--maturity-label", workflow)
+        self.assertNotIn("--support-tier", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
         self.assertNotIn("Representative GCC 15 snapshot check", workflow)
+
+    def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
+        step_names = self.extract_step_names(".github/workflows/release-beta.yml")
+        self.assertLess(step_names.index("Representative acceptance replay"), step_names.index("Path-aware replay stop-ship contract"))
+        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Representative reference-path snapshot check"))
+        self.assertLess(step_names.index("Assemble GitHub Release bundles"), step_names.index("Write release provenance"))
+        self.assertLess(step_names.index("Write release provenance"), step_names.index("Write release notes"))
+        self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub prerelease"))
 
     def test_release_stable_workflow_surfaces_release_gate_evidence_in_provenance(self) -> None:
         workflow = (
@@ -660,10 +674,20 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIn("Path-aware replay stop-ship contract", workflow)
         self.assertIn('--replay-report "$REPORT_ROOT/rc-gate/replay-report.json"', workflow)
         self.assertIn('--output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"', workflow)
+        self.assertIn("--maturity-label", workflow)
+        self.assertNotIn("--support-tier", workflow)
         self.assertIn("rollout-matrix-report.json", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
         self.assertIn("release-provenance.json", workflow)
         self.assertIn("stable-release", workflow)
+
+    def test_release_stable_workflow_orders_release_provenance_after_rc_gate_evidence(self) -> None:
+        step_names = self.extract_step_names(".github/workflows/release-stable.yml")
+        self.assertLess(step_names.index("Strict RC gate"), step_names.index("Path-aware replay stop-ship contract"))
+        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Assemble GitHub Release bundles"))
+        self.assertLess(step_names.index("Assemble GitHub Release bundles"), step_names.index("Write release provenance"))
+        self.assertLess(step_names.index("Write release provenance"), step_names.index("Write release notes"))
+        self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub release"))
 
 
 if __name__ == "__main__":

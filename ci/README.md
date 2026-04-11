@@ -44,6 +44,8 @@ $REPORT_ROOT/
 
 `release-beta.yml` と `release-stable.yml` は checked-in static plans の外側にある release workflows で、release provenance が path-aware release evidence の正本になる。release-provenance には `replay-stop-ship` と `rollout-matrix-report` のような release gate artifacts を含め、release notes と GitHub Release assets と整合させる。
 
+`ci/test_release_provenance.py` と `ci/test_gate_scripts.py` は、この release provenance 連携が workflow order と current multi-band vocabulary に従っているかを固定する。workflow step の並び、release provenance の workflow 別 artifact routing、manifest / published-release metadata の `maturity_label` vocabulary、そして legacy `support_tier` / `gcc15_primary` の再混入を contract test で検知する。
+
 ## Build Environment Schema
 
 `build-environment.json` は schema version `1` を使い、少なくとも次を持つ。

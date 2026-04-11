@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Hardened the release provenance and workflow contract tests so they now check workflow ordering, workflow-specific evidence routing, `maturity_label` manifest/release-metadata vocabulary, and legacy vocabulary regressions for public-beta and stable release paths.
 - Aligned `docs/releases/RELEASE-CHECKLIST.md` with the current multi-band gate semantics, removing stale GCC15-only blocker wording and adding CI regression coverage so current-authority docs now pin `nightly-gate` and representative snapshot blockers in path-aware terms.
 - Added regression coverage and release-doc wording for the beta/stable release evidence slice so release provenance now carries path-aware replay-stop-ship and rollout-matrix artifacts alongside the current `VersionBand`-aware release metadata.
 - Aligned the PR-gate docs/tests with the `gcc15_plus` reference-path slice, added regression coverage for the checked-in plan/workflow metadata and the new reference-path step labels, and documented that `pr-gate` is intentionally the primary fidelity slice while nightly expands across broader matrix bands.
