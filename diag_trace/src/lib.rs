@@ -108,7 +108,7 @@ pub struct TargetDescriptor {
     pub target_triple: String,
     /// Operating system (e.g. "linux", "macos").
     pub os: String,
-    /// CPU architecture (e.g. "x86_64", "aarch64").
+    /// CPU architecture (e.g. "`x86_64`", "`aarch64`").
     pub arch: String,
     /// C library family (e.g. "gnu", "musl").
     pub libc_family: String,

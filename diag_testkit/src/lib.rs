@@ -23,7 +23,7 @@ pub struct FixtureInvoke {
     pub standard: Option<String>,
     /// Compiler family to target (e.g. "gcc").
     pub target_compiler_family: String,
-    /// GCC version band for this fixture (e.g. "gcc15_plus").
+    /// GCC version band for this fixture (e.g. "`gcc15_plus`").
     pub version_band: String,
     /// Support level derived from the version band.
     pub support_level: String,
@@ -159,7 +159,7 @@ pub struct RenderExpectations {
     /// Expectations for the "ci" profile.
     #[serde(default)]
     pub ci: Option<RenderProfileExpectations>,
-    /// Expectations for the "raw_fallback" profile.
+    /// Expectations for the `raw_fallback` profile.
     #[serde(default)]
     pub raw_fallback: Option<RenderProfileExpectations>,
 }
@@ -213,9 +213,9 @@ pub struct FixtureExpectations {
     pub schema_version: u32,
     /// Unique identifier for this fixture.
     pub fixture_id: String,
-    /// GCC version band (e.g. "gcc15_plus").
+    /// GCC version band (e.g. "`gcc15_plus`").
     pub version_band: String,
-    /// Processing path used (e.g. "dual_sink_structured").
+    /// Processing path used (e.g. "`dual_sink_structured`").
     pub processing_path: String,
     /// Support level for this version band.
     pub support_level: String,

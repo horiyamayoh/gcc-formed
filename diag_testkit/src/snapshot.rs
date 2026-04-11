@@ -2,20 +2,20 @@ use diag_core::{ArtifactKind, CaptureArtifact, DiagnosticDocument, RunInfo};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-/// Canonical snapshot comparison lives in the test harness so volatile-field
-/// handling is centralized instead of being reimplemented per caller.
-///
-/// Allowed normalization is intentionally narrow:
-/// - temporary object paths and random suffixes
-/// - quote-style drift
-/// - line/column drift in volatile text and SARIF regions
-/// - non-semantic SARIF wrapper fields and transient capture metadata
-///
-/// Disallowed normalization is equally important:
-/// - family, severity, ownership, phase, provenance source
-/// - lead path identity
-/// - fallback semantics
-/// - rule-selected analysis content beyond the volatile text rules above
+// Canonical snapshot comparison lives in the test harness so volatile-field
+// handling is centralized instead of being reimplemented per caller.
+//
+// Allowed normalization is intentionally narrow:
+// - temporary object paths and random suffixes
+// - quote-style drift
+// - line/column drift in volatile text and SARIF regions
+// - non-semantic SARIF wrapper fields and transient capture metadata
+//
+// Disallowed normalization is equally important:
+// - family, severity, ownership, phase, provenance source
+// - lead path identity
+// - fallback semantics
+// - rule-selected analysis content beyond the volatile text rules above
 
 /// Classification of how two snapshot contents differ.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
