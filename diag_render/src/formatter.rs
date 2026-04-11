@@ -4,6 +4,7 @@ use crate::theme::ThemePolicy;
 use crate::view_model::{RenderViewModel, SummaryOnlyGroup};
 use crate::{DebugRefs, RenderRequest, RenderResult};
 
+/// Emits the final rendered text from a view model, applying layout, theme, and truncation.
 pub fn emit(
     request: &RenderRequest,
     view_model: RenderViewModel,

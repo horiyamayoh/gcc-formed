@@ -8,57 +8,90 @@ use diag_core::{
 };
 use serde::{Deserialize, Serialize};
 
+/// Top-level session summary included in the view model.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderSessionSummary {
+    /// Category of the session outcome (e.g. `"compile_failure"`, `"warnings_only"`).
     pub failure_kind: String,
+    /// Whether a partial-document notice should be shown.
     pub partial_notice: bool,
+    /// Optional hint directing the user to raw diagnostic output.
     pub raw_diagnostics_hint: Option<String>,
 }
 
+/// A diagnostic group rendered only as a one-line summary.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SummaryOnlyGroup {
+    /// Unique group identifier from the diagnostic node.
     pub group_id: String,
+    /// Severity label (e.g. `"error"`, `"warning"`).
     pub severity: String,
+    /// Display title for this group.
     pub title: String,
+    /// Formatted canonical location, if available.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub canonical_location: Option<String>,
 }
 
+/// A fully expanded diagnostic group card in the view model.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderGroupCard {
+    /// Unique group identifier from the diagnostic node.
     pub group_id: String,
+    /// Severity label (e.g. `"error"`, `"warning"`).
     pub severity: String,
+    /// Analysis family name, if one was matched.
     pub family: Option<String>,
+    /// Display title (analysis headline or raw message).
     pub title: String,
+    /// Confidence bucket label (e.g. `"certain"`, `"likely"`, `"possible"`).
     pub confidence_label: String,
+    /// Low-confidence honesty notice, if applicable.
     pub confidence_notice: Option<String>,
+    /// Suggested first action from the analysis overlay.
     pub first_action: Option<String>,
+    /// Formatted canonical source location.
     pub canonical_location: Option<String>,
+    /// Raw compiler message text.
     pub raw_message: String,
+    /// Source code excerpt blocks.
     pub excerpts: Vec<crate::ExcerptBlock>,
+    /// Context lines from supporting evidence (template, macro, linker chains).
     pub context_lines: Vec<String>,
+    /// Child compiler notes.
     pub child_notes: Vec<String>,
+    /// Notices about collapsed or omitted content.
     pub collapsed_notices: Vec<String>,
+    /// Label preceding the raw sub-block.
     #[serde(
         skip_serializing_if = "is_default_raw_block_label",
         default = "default_raw_block_label"
     )]
     pub raw_block_label: String,
+    /// Raw compiler message lines shown verbatim for partial nodes.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub raw_sub_block: Vec<String>,
+    /// Matched rule identifier from the analysis overlay.
     pub rule_id: Option<String>,
+    /// Matched condition strings from the analysis overlay.
     pub matched_conditions: Vec<String>,
+    /// Reason this group was suppressed, if applicable.
     pub suppression_reason: Option<String>,
 }
 
+/// The complete intermediate representation consumed by the formatter.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderViewModel {
+    /// Session-level summary metadata.
     pub summary: RenderSessionSummary,
+    /// Fully expanded diagnostic group cards.
     pub cards: Vec<RenderGroupCard>,
+    /// Groups shown only as one-line summaries.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub summary_only_groups: Vec<SummaryOnlyGroup>,
 }
 
+/// Builds a [`RenderViewModel`] from the selected diagnostic groups.
 pub fn build(
     request: &RenderRequest,
     cards: Vec<DiagnosticNode>,

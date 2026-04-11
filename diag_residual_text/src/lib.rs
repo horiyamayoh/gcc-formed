@@ -1,3 +1,6 @@
+//! Classifies and extracts residual text from compiler stderr that was not
+//! captured as structured diagnostics.
+
 use diag_core::{
     AnalysisOverlay, Confidence, ContextChain, ContextChainKind, DiagnosticNode, Location,
     MessageText, NodeCompleteness, Origin, Phase, Provenance, ProvenanceSource, SemanticRole,
@@ -36,6 +39,10 @@ struct LinkerMatch {
     template_values: BTreeMap<String, String>,
 }
 
+/// Classifies residual stderr lines into structured diagnostic nodes.
+///
+/// When `include_passthrough` is true, unclassified lines are emitted as a
+/// single passthrough node; otherwise they are silently dropped.
 pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> {
     let mut grouped = BTreeMap::<String, GroupedResidual>::new();
     let mut compiler_nodes = Vec::new();

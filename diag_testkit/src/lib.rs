@@ -1,3 +1,6 @@
+//! Test utilities, fixtures, and expectations for the diagnostic pipeline
+//! integration tests.
+
 mod snapshot;
 
 pub use snapshot::{
@@ -10,106 +13,159 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Compiler invocation parameters for a test fixture.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixtureInvoke {
+    /// Source language (e.g. "c", "cpp").
     pub language: String,
+    /// Language standard override (e.g. "c11").
     #[serde(default)]
     pub standard: Option<String>,
+    /// Compiler family to target (e.g. "gcc").
     pub target_compiler_family: String,
+    /// GCC version band for this fixture (e.g. "gcc15_plus").
     pub version_band: String,
+    /// Support level derived from the version band.
     pub support_level: String,
+    /// Major version selector used to locate the compiler.
     pub major_version_selector: String,
+    /// Command-line arguments passed to the compiler.
     pub argv: Vec<String>,
+    /// Working-directory policy for the invocation.
     pub cwd_policy: String,
+    /// Environment variable overrides injected during the run.
     #[serde(default)]
     pub env_overrides: BTreeMap<String, String>,
+    /// Expected readability of the source file.
     pub source_readability_expectation: String,
+    /// Whether the linker is expected to participate.
     pub linker_involvement: bool,
+    /// Expected processing mode (e.g. "render", "passthrough").
     pub expected_mode: String,
+    /// Policy for canonicalizing file paths.
     pub canonical_path_policy: String,
 }
 
+/// Whether a fallback rendering path is allowed, forbidden, or required.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ExpectedFallback {
+    /// Fallback rendering is permitted but not required.
     Allowed,
+    /// Fallback rendering must not occur.
     Forbidden,
+    /// Fallback rendering is expected.
     Required,
 }
 
+/// Expected primary source location for a diagnostic.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ExpectedPrimaryLocation {
+    /// Source file path.
     pub path: String,
+    /// One-based line number.
     pub line: u32,
+    /// Optional one-based column number.
     #[serde(default)]
     pub column: Option<u32>,
 }
 
+/// Semantic-level expectations for a fixture's diagnostic output.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SemanticExpectations {
+    /// Expected diagnostic family (e.g. "syntax", "template").
     pub family: String,
+    /// Expected severity of the lead diagnostic.
     pub severity: Severity,
+    /// Acceptable family values for the lead group.
     #[serde(default)]
     pub lead_group_any_of: Vec<String>,
+    /// Expected primary source locations.
     #[serde(default)]
     pub primary_locations: Vec<ExpectedPrimaryLocation>,
+    /// Whether the primary location must be user-owned.
     #[serde(default)]
     pub primary_location_user_owned_required: bool,
+    /// Whether a first-action hint is required.
     #[serde(default)]
     pub first_action_required: bool,
+    /// Whether raw provenance capture refs are required.
     #[serde(default)]
     pub raw_provenance_required: bool,
+    /// Fallback rendering expectation.
     #[serde(default)]
     pub fallback: Option<ExpectedFallback>,
+    /// Minimum acceptable confidence level.
     #[serde(default)]
     pub confidence_min: Option<Confidence>,
 }
 
+/// Render-profile-specific expectations for a single output profile.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RenderProfileExpectations {
+    /// Whether an omission notice must appear.
     #[serde(default)]
     pub omission_notice_required: Option<bool>,
+    /// Maximum lines allowed in the first screenful.
     #[serde(default)]
     pub first_screenful_max_lines: Option<usize>,
+    /// Maximum line number at which the first action must appear.
     #[serde(default)]
     pub first_action_max_line: Option<usize>,
+    /// Whether a partial-result notice is required.
     #[serde(default)]
     pub partial_notice_required: Option<bool>,
+    /// Whether a raw-diagnostics hint must appear.
     #[serde(default)]
     pub raw_diagnostics_hint_required: Option<bool>,
+    /// Whether a raw sub-block is required.
     #[serde(default)]
     pub raw_sub_block_required: Option<bool>,
+    /// Whether a low-confidence notice must appear.
     #[serde(default)]
     pub low_confidence_notice_required: Option<bool>,
+    /// Whether the file path must appear first.
     #[serde(default)]
     pub path_first_required: Option<bool>,
+    /// Whether color-meaning annotations are forbidden.
     #[serde(default)]
     pub color_meaning_forbidden: Option<bool>,
+    /// Substrings required in compacted output.
     #[serde(default)]
     pub compaction_required_substrings: Vec<String>,
+    /// Substrings forbidden in compacted output.
     #[serde(default)]
     pub compaction_forbidden_substrings: Vec<String>,
+    /// Substrings required in rendered output.
     #[serde(default)]
     pub required_substrings: Vec<String>,
+    /// Substrings forbidden in rendered output.
     #[serde(default)]
     pub forbidden_substrings: Vec<String>,
 }
 
+/// Per-profile render expectations keyed by profile name.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RenderExpectations {
+    /// Expectations for the "default" profile.
     #[serde(default)]
     pub default: Option<RenderProfileExpectations>,
+    /// Expectations for the "concise" profile.
     #[serde(default)]
     pub concise: Option<RenderProfileExpectations>,
+    /// Expectations for the "verbose" profile.
     #[serde(default)]
     pub verbose: Option<RenderProfileExpectations>,
+    /// Expectations for the "ci" profile.
     #[serde(default)]
     pub ci: Option<RenderProfileExpectations>,
+    /// Expectations for the "raw_fallback" profile.
     #[serde(default)]
     pub raw_fallback: Option<RenderProfileExpectations>,
 }
 
 impl RenderExpectations {
+    /// Returns all non-`None` profiles as `(name, expectations)` pairs.
     pub fn named_profiles(&self) -> Vec<(&'static str, &RenderProfileExpectations)> {
         let mut profiles = Vec::new();
         if let Some(expectations) = self.default.as_ref() {
@@ -131,73 +187,108 @@ impl RenderExpectations {
     }
 }
 
+/// Integrity-check expectations for a fixture.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IntegrityExpectations {
+    /// Issue codes that are acceptable in the output.
     #[serde(default)]
     pub allowed_issue_codes: Vec<String>,
 }
 
+/// Performance budget expectations for a fixture.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PerformanceExpectations {
+    /// Maximum allowed parse time in milliseconds.
     #[serde(default)]
     pub parse_time_ms_max: Option<u64>,
+    /// Maximum allowed render time in milliseconds.
     #[serde(default)]
     pub render_time_ms_max: Option<u64>,
 }
 
+/// Full set of expectations declared for a single test fixture.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixtureExpectations {
+    /// Schema version of the expectations file.
     pub schema_version: u32,
+    /// Unique identifier for this fixture.
     pub fixture_id: String,
+    /// GCC version band (e.g. "gcc15_plus").
     pub version_band: String,
+    /// Processing path used (e.g. "dual_sink_structured").
     pub processing_path: String,
+    /// Support level for this version band.
     pub support_level: String,
+    /// Expected processing mode.
     pub expected_mode: String,
+    /// Optional override for the diagnostic family.
     #[serde(default)]
     pub family: Option<String>,
+    /// Semantic-level expectations.
     #[serde(default)]
     pub semantic: Option<SemanticExpectations>,
+    /// Per-profile render expectations.
     #[serde(default)]
     pub render: RenderExpectations,
+    /// Integrity-check expectations.
     #[serde(default)]
     pub integrity: IntegrityExpectations,
+    /// Performance budget expectations.
     #[serde(default)]
     pub performance: PerformanceExpectations,
 }
 
+/// Metadata associated with a test fixture (provenance, review status, etc.).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixtureMeta {
+    /// Corpus identifier for this fixture.
     #[serde(default)]
     pub corpus_id: Option<String>,
+    /// Human-readable title.
     #[serde(default)]
     pub title: Option<String>,
+    /// Tags for categorization.
     #[serde(default)]
     pub tags: Vec<String>,
+    /// Ownership classification.
     #[serde(default)]
     pub ownership: Option<String>,
+    /// Where this fixture originated.
     #[serde(default)]
     pub provenance: Option<String>,
+    /// Primary reviewer handle (legacy, prefer `reviewers`).
     #[serde(default)]
     pub reviewer: Option<String>,
+    /// Redaction class for sensitive fixtures.
     #[serde(default)]
     pub redaction_class: Option<String>,
+    /// Owning team identifier.
     #[serde(default)]
     pub owner_team: Option<String>,
+    /// Date of last review.
     #[serde(default)]
     pub last_reviewed: Option<String>,
+    /// List of reviewer handles.
     #[serde(default)]
     pub reviewers: Vec<String>,
+    /// Promotion status (e.g. "promoted", "draft").
     #[serde(default)]
     pub promotion_status: Option<String>,
+    /// Notes about known version-drift issues.
     #[serde(default)]
     pub known_version_drift_notes: Vec<String>,
 }
 
+/// A fully-loaded test fixture with its invocation, expectations, and metadata.
 #[derive(Debug, Clone)]
 pub struct Fixture {
+    /// Root directory of this fixture on disk.
     pub root: PathBuf,
+    /// Compiler invocation parameters.
     pub invoke: FixtureInvoke,
+    /// Expected diagnostic outputs and constraints.
     pub expectations: FixtureExpectations,
+    /// Fixture metadata (provenance, review status, etc.).
     pub meta: FixtureMeta,
 }
 
@@ -250,10 +341,12 @@ struct RawFixtureExpectations {
 }
 
 impl Fixture {
+    /// Returns the fixture's unique identifier.
     pub fn fixture_id(&self) -> &str {
         &self.expectations.fixture_id
     }
 
+    /// Derives the diagnostic family key from the fixture directory name.
     pub fn family_key(&self) -> String {
         self.root
             .parent()
@@ -263,6 +356,7 @@ impl Fixture {
             .to_string()
     }
 
+    /// Derives the language key from the fixture directory hierarchy.
     pub fn language_key(&self) -> String {
         self.root
             .parent()
@@ -273,6 +367,7 @@ impl Fixture {
             .to_string()
     }
 
+    /// Returns the declared snapshot directory based on version band and processing path.
     pub fn declared_snapshot_root(&self) -> PathBuf {
         self.root
             .join("snapshots")
@@ -280,10 +375,12 @@ impl Fixture {
             .join(&self.expectations.processing_path)
     }
 
+    /// Returns the legacy `gcc15` snapshot directory.
     pub fn legacy_snapshot_root(&self) -> PathBuf {
         self.root.join("snapshots").join("gcc15")
     }
 
+    /// Returns the effective snapshot root, falling back to legacy if the declared path is absent.
     pub fn snapshot_root(&self) -> PathBuf {
         let declared = self.declared_snapshot_root();
         if declared.exists() {
@@ -298,6 +395,7 @@ impl Fixture {
         declared
     }
 
+    /// Returns the expected structured artifact filename, if applicable for the processing path.
     pub fn authoritative_structured_artifact_name(&self) -> Option<&'static str> {
         match self.expectations.processing_path.as_str() {
             "dual_sink_structured" => Some("diagnostics.sarif"),
@@ -310,25 +408,32 @@ impl Fixture {
         }
     }
 
+    /// Returns `true` if this fixture has been promoted (has semantic expectations).
     pub fn is_promoted(&self) -> bool {
         self.expectations.semantic.is_some()
     }
 
+    /// Returns `true` if the snapshot root contains `ir.facts.json`.
     pub fn has_snapshot_artifacts(&self) -> bool {
         self.snapshot_root().join("ir.facts.json").exists()
     }
 }
 
+/// Errors that can occur when loading or validating fixtures.
 #[derive(Debug, thiserror::Error)]
 pub enum FixtureError {
+    /// An I/O error occurred.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    /// A YAML deserialization error occurred.
     #[error("yaml error: {0}")]
     Yaml(#[from] serde_yaml::Error),
+    /// The fixture layout or content is invalid.
     #[error("fixture layout invalid: {0}")]
     Invalid(String),
 }
 
+/// Recursively discovers all fixtures under `root`, sorted by path.
 pub fn discover(root: &Path) -> Result<Vec<Fixture>, FixtureError> {
     let mut fixtures = Vec::new();
     walk(root, &mut fixtures)?;
@@ -336,6 +441,7 @@ pub fn discover(root: &Path) -> Result<Vec<Fixture>, FixtureError> {
     Ok(fixtures)
 }
 
+/// Returns a map of family key to fixture count.
 pub fn family_counts(fixtures: &[Fixture]) -> BTreeMap<String, usize> {
     let mut counts = BTreeMap::new();
     for fixture in fixtures {
@@ -344,6 +450,7 @@ pub fn family_counts(fixtures: &[Fixture]) -> BTreeMap<String, usize> {
     counts
 }
 
+/// Validates that a fixture's layout and internal consistency are correct.
 pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
     for relative in [
         "src",

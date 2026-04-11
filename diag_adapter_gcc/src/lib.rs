@@ -1,3 +1,13 @@
+//! GCC diagnostic artifact ingestion adapter.
+//!
+//! Parses SARIF and stderr output produced by GCC and converts them into
+//! [`DiagnosticDocument`] instances defined in the core IR.
+//!
+//! Key entry points:
+//! - [`ingest`] -- simplified one-shot conversion (SARIF path + stderr text).
+//! - [`ingest_bundle`] -- full-fidelity ingestion from a [`CaptureBundle`].
+//! - [`from_sarif`] -- parse a standalone SARIF file on disk.
+
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::{
     CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
@@ -17,37 +27,55 @@ use serde_json::Value;
 use std::fs;
 use std::path::Path;
 
+/// Errors that can occur during GCC diagnostic ingestion.
 #[derive(Debug, thiserror::Error)]
 pub enum AdapterError {
+    /// An I/O error occurred while reading an artifact from disk.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    /// The SARIF or GCC-JSON payload could not be parsed as valid JSON.
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
+    /// The SARIF `version` field is not a supported 2.1.x version.
     #[error("unsupported SARIF version: {0}")]
     UnsupportedVersion(String),
+    /// The SARIF payload has no top-level `runs` array.
     #[error("missing runs array in SARIF payload")]
     MissingRuns,
 }
 
+/// Result of a simplified ingestion via [`ingest_with_reason`].
 #[derive(Debug)]
 pub struct IngestOutcome {
+    /// The converted diagnostic document.
     pub document: DiagnosticDocument,
+    /// If the adapter fell back to a non-structured path, the reason why.
     pub fallback_reason: Option<FallbackReason>,
 }
 
+/// Configuration that governs how a capture bundle is ingested.
 #[derive(Debug, Clone)]
 pub struct IngestPolicy {
+    /// Metadata about the tool that produced the diagnostic document.
     pub producer: ProducerInfo,
+    /// Runtime context for the compiler invocation being ingested.
     pub run: RunInfo,
 }
 
+/// Full ingestion report returned by [`ingest_bundle`].
 #[derive(Debug)]
 pub struct IngestReport {
+    /// The converted diagnostic document.
     pub document: DiagnosticDocument,
+    /// Whether the document was derived from structured or residual input.
     pub source_authority: SourceAuthority,
+    /// Upper bound on the confidence of diagnostics in this report.
     pub confidence_ceiling: Confidence,
+    /// Degree to which fallback processing was applied.
     pub fallback_grade: FallbackGrade,
+    /// Integrity issues encountered during ingestion.
     pub warnings: Vec<IntegrityIssue>,
+    /// If the adapter fell back to a non-structured path, the reason why.
     pub fallback_reason: Option<FallbackReason>,
 }
 
@@ -67,6 +95,10 @@ enum ResidualContract {
     FailOpen,
 }
 
+/// Ingest GCC output and return a [`DiagnosticDocument`].
+///
+/// Convenience wrapper around [`ingest_with_reason`] that discards the
+/// fallback reason. Accepts an optional SARIF file path and raw stderr text.
 pub fn ingest(
     sarif_path: Option<&Path>,
     stderr_text: &str,
@@ -76,6 +108,12 @@ pub fn ingest(
     Ok(ingest_with_reason(sarif_path, stderr_text, producer, run)?.document)
 }
 
+/// Ingest a full [`CaptureBundle`] and return an [`IngestReport`].
+///
+/// This is the primary entry point for production use. It examines the
+/// bundle's structured artifacts (SARIF, GCC-JSON) and stderr text,
+/// selects the best ingestion strategy, and produces a report that
+/// includes source-authority, confidence, and fallback metadata.
 pub fn ingest_bundle(
     bundle: &CaptureBundle,
     policy: IngestPolicy,
@@ -246,6 +284,11 @@ fn materialize_capture_artifacts(document: &mut DiagnosticDocument, bundle: &Cap
     document.captures = bundle.capture_artifacts();
 }
 
+/// Ingest GCC output and return an [`IngestOutcome`] that includes a
+/// fallback reason when structured input was unavailable or unparseable.
+///
+/// Builds a compatibility [`CaptureBundle`] from the legacy path/stderr
+/// arguments and delegates to [`ingest_bundle`].
 pub fn ingest_with_reason(
     sarif_path: Option<&Path>,
     stderr_text: &str,
@@ -443,6 +486,10 @@ fn compatibility_bundle_from_legacy_inputs(
     }
 }
 
+/// Parse a SARIF file on disk and return a [`DiagnosticDocument`].
+///
+/// Reads the file at `sarif_path`, validates the SARIF version, and
+/// converts each run result into a [`DiagnosticNode`].
 pub fn from_sarif(
     sarif_path: &Path,
     producer: ProducerInfo,
@@ -1690,6 +1737,7 @@ fn passthrough_node(stderr_text: &str) -> DiagnosticNode {
     }
 }
 
+/// Build a [`ProducerInfo`] for the given adapter version string.
 pub fn producer_for_version(version: &str) -> ProducerInfo {
     ProducerInfo {
         name: "gcc-formed".to_string(),
@@ -1700,6 +1748,7 @@ pub fn producer_for_version(version: &str) -> ProducerInfo {
     }
 }
 
+/// Build a [`ToolInfo`] describing a GCC-family backend tool.
 pub fn tool_for_backend(name: &str, version: Option<String>) -> ToolInfo {
     ToolInfo {
         name: name.to_string(),

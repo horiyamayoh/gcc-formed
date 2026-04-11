@@ -1,3 +1,5 @@
+//! Main CLI entry point that wraps GCC with diagnostic enrichment and rendering.
+
 mod args;
 mod backend;
 mod config;

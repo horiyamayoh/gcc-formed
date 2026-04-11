@@ -1,3 +1,14 @@
+//! Diagnostic rendering engine for gcc-formed.
+//!
+//! Converts a [`DiagnosticDocument`] into formatted, themed text output suitable
+//! for terminal display, CI logs, or pipe consumption.
+//!
+//! Key types:
+//! - [`RenderRequest`] -- input bundle carrying the document, profile, and capabilities.
+//! - [`RenderResult`] -- output bundle with the rendered text and metadata.
+//! - [`RenderProfile`] -- verbosity/layout preset (default, concise, verbose, debug, CI, raw).
+//! - [`RenderViewModel`] -- structured intermediate representation used by the formatter.
+
 mod budget;
 mod excerpt;
 mod fallback;
@@ -12,113 +23,181 @@ mod view_model;
 use diag_core::{DiagnosticDocument, DocumentCompleteness, FallbackReason, IntegrityIssue};
 use serde::{Deserialize, Serialize};
 
+/// A single source-code excerpt block attached to a diagnostic card.
 pub use excerpt::ExcerptBlock;
+/// Selects and ranks diagnostic groups for rendering.
 pub use selector::select_groups;
+/// Re-exported view-model types used to inspect the rendering intermediate representation.
 pub use view_model::{RenderGroupCard, RenderSessionSummary, RenderViewModel, SummaryOnlyGroup};
 
+/// Controls the verbosity and layout preset for diagnostic rendering.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RenderProfile {
+    /// Balanced output for interactive terminal use.
     Default,
+    /// Minimal output focused on the primary error.
     Concise,
+    /// Expanded output including all groups and context frames.
     Verbose,
+    /// Maximum detail with rule explainability metadata.
     Debug,
+    /// Machine-friendly, path-first layout for CI log parsers.
     Ci,
+    /// Bypasses analysis entirely; emits preserved raw compiler output.
     RawFallback,
 }
 
+/// Describes the kind of output stream the renderer is targeting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StreamKind {
+    /// Interactive terminal (supports color, width detection).
     Tty,
+    /// Piped to another process.
     Pipe,
+    /// Redirected to a file.
     File,
+    /// CI/CD log capture.
     CiLog,
 }
 
+/// Controls how file paths are displayed in rendered output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PathPolicy {
+    /// Use the shortest suffix that uniquely identifies the file.
     ShortestUnambiguous,
+    /// Display paths relative to the current working directory.
     RelativeToCwd,
+    /// Always display absolute paths.
     Absolute,
 }
 
+/// Controls whether warnings are shown alongside errors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WarningVisibility {
+    /// Let the render profile decide based on failure context.
     Auto,
+    /// Always show all warnings.
     ShowAll,
+    /// Suppress all warnings.
     SuppressAll,
 }
 
+/// Controls which debug reference identifiers are appended to output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DebugRefs {
+    /// Do not append any debug references.
     None,
+    /// Append the invocation trace ID.
     TraceId,
+    /// Append capture artifact identifiers.
     CaptureRef,
 }
 
+/// Controls how C++ template and type names are displayed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TypeDisplayPolicy {
+    /// Show the full, unabbreviated type name.
     Full,
+    /// Use a compact representation when safe to do so.
     CompactSafe,
+    /// Prefer the raw compiler representation.
     RawFirst,
 }
 
+/// Controls whether source code excerpts are included in the output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SourceExcerptPolicy {
+    /// Let the profile and budget decide.
     Auto,
+    /// Always include source excerpts when source files are available.
     ForceOn,
+    /// Never include source excerpts.
     ForceOff,
 }
 
+/// Input bundle for the diagnostic renderer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderRequest {
+    /// The diagnostic document to render.
     pub document: DiagnosticDocument,
+    /// Verbosity and layout preset.
     pub profile: RenderProfile,
+    /// Terminal and stream capabilities of the target output.
     pub capabilities: RenderCapabilities,
+    /// Current working directory used for path resolution.
     pub cwd: Option<std::path::PathBuf>,
+    /// How file paths should be displayed.
     pub path_policy: PathPolicy,
+    /// Whether warnings are shown when errors are present.
     pub warning_visibility: WarningVisibility,
+    /// Which debug reference identifiers to append.
     pub debug_refs: DebugRefs,
+    /// How C++ type names are displayed.
     pub type_display_policy: TypeDisplayPolicy,
+    /// Whether source code excerpts are included.
     pub source_excerpt_policy: SourceExcerptPolicy,
 }
 
+/// Describes the capabilities and constraints of the target output stream.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderCapabilities {
+    /// The kind of output stream (TTY, pipe, file, CI log).
     pub stream_kind: StreamKind,
+    /// Terminal width in columns, if known.
     pub width_columns: Option<usize>,
+    /// Whether ANSI color escape sequences are supported.
     pub ansi_color: bool,
+    /// Whether Unicode box-drawing and symbols are supported.
     pub unicode: bool,
+    /// Whether terminal hyperlinks (OSC 8) are supported.
     pub hyperlinks: bool,
+    /// Whether the session is interactive (e.g. user can scroll).
     pub interactive: bool,
 }
 
+/// Output bundle produced by the diagnostic renderer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderResult {
+    /// The final rendered text ready for display.
     pub text: String,
+    /// Whether analysis overlays contributed to the output.
     pub used_analysis: bool,
+    /// Whether the output fell back to raw compiler output.
     pub used_fallback: bool,
+    /// The reason a fallback was triggered, if applicable.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallback_reason: Option<FallbackReason>,
+    /// Group reference IDs that were fully rendered.
     pub displayed_group_refs: Vec<String>,
+    /// Number of groups shown only as summary lines.
     pub suppressed_group_count: usize,
+    /// Number of warnings suppressed due to a co-occurring failure.
     pub suppressed_warning_count: usize,
+    /// Whether the output was truncated to fit the screen budget.
     pub truncation_occurred: bool,
+    /// Integrity issues encountered during rendering.
     pub render_issues: Vec<IntegrityIssue>,
 }
 
+/// Errors that can occur during diagnostic rendering.
 #[derive(Debug, thiserror::Error)]
 pub enum RenderError {
+    /// The render pipeline encountered an unrecoverable failure.
     #[error("render failed")]
     Failed,
 }
 
+/// Renders a [`DiagnosticDocument`] into formatted text.
+///
+/// Selects the appropriate rendering path based on the request profile and
+/// document completeness, falling back to raw output when necessary.
 pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
     if matches!(request.profile, RenderProfile::RawFallback) {
         return Ok(fallback::render_fallback(
@@ -160,6 +239,10 @@ pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
     ))
 }
 
+/// Builds the intermediate [`RenderViewModel`] without emitting text.
+///
+/// Returns `None` when the document would trigger a fallback path (raw profile,
+/// passthrough/failed completeness, or empty selection).
 pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
     if matches!(request.profile, RenderProfile::RawFallback)
         || matches!(

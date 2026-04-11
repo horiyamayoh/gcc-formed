@@ -1,40 +1,64 @@
 use crate::RenderProfile;
 
+/// How warnings are handled when a fatal or error diagnostic is present.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WarningFailureMode {
+    /// Show warnings as a summary count line.
     Summarize,
+    /// Hide warnings entirely.
     Suppress,
+    /// Show warnings in full alongside errors.
     Show,
 }
 
+/// Numeric limits that control how much detail the renderer emits.
 #[derive(Debug, Clone, Copy)]
 pub struct DisplayBudget {
+    /// Maximum number of diagnostic groups rendered in full.
     pub expanded_groups: usize,
+    /// Maximum output lines before truncation.
     pub first_screenful_max_lines: usize,
+    /// Maximum source code excerpt blocks per card.
     pub source_excerpts: usize,
+    /// Maximum template instantiation frames shown.
     pub template_frames: usize,
+    /// Maximum macro/include chain frames shown.
     pub macro_include_frames: usize,
+    /// Maximum overload candidate notes shown.
     pub candidate_notes: usize,
+    /// How warnings are handled when errors are present.
     pub warning_failure_mode: WarningFailureMode,
 }
 
+/// Static text and limits that govern disclosure notices and honesty labels.
 #[derive(Debug, Clone, Copy)]
 pub struct DisclosurePolicy {
+    /// Notice shown when the document is only partially structured.
     pub partial_document_notice: &'static str,
+    /// Notice shown when analysis confidence is low.
     pub low_confidence_notice: &'static str,
+    /// Hint directing the user to the raw fallback profile.
     pub raw_diagnostics_hint: &'static str,
+    /// Notice shown when output was truncated.
     pub truncation_notice: &'static str,
+    /// Label preceding the raw compiler excerpt block.
     pub raw_block_label: &'static str,
+    /// Notice shown when warnings were suppressed.
     pub suppressed_warning_notice: &'static str,
+    /// Maximum lines in the raw sub-block per card.
     pub raw_sub_block_lines: usize,
 }
 
+/// Combined budget and disclosure settings for a render profile.
 #[derive(Debug, Clone, Copy)]
 pub struct RenderPolicy {
+    /// Numeric display limits.
     pub budget: DisplayBudget,
+    /// Disclosure and honesty label configuration.
     pub disclosure: DisclosurePolicy,
 }
 
+/// Returns the combined render policy for the given profile.
 pub fn render_policy(profile: RenderProfile) -> RenderPolicy {
     RenderPolicy {
         budget: budget_for(profile),
@@ -42,6 +66,7 @@ pub fn render_policy(profile: RenderProfile) -> RenderPolicy {
     }
 }
 
+/// Returns the display budget for the given render profile.
 pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
     match profile {
         RenderProfile::Default => DisplayBudget {
@@ -101,6 +126,7 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
     }
 }
 
+/// Returns the disclosure policy for the given render profile.
 pub fn disclosure_policy_for(profile: RenderProfile) -> DisclosurePolicy {
     DisclosurePolicy {
         partial_document_notice: "note: some compiler details were not fully structured; original diagnostics are preserved",

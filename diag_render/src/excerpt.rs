@@ -6,14 +6,19 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
+/// A rendered source code excerpt block with annotations.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExcerptBlock {
+    /// Formatted file location string (e.g. `src/main.c:2:12`).
     pub location: String,
+    /// Source lines included in the excerpt.
     pub lines: Vec<String>,
+    /// Caret/range annotations aligned beneath the source lines.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub annotations: Vec<String>,
 }
 
+/// Loads source code excerpts for the primary locations of a diagnostic node.
 pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<ExcerptBlock> {
     if matches!(request.source_excerpt_policy, SourceExcerptPolicy::ForceOff) {
         return Vec::new();

@@ -17,23 +17,33 @@ use std::path::Path;
 /// - fallback semantics
 /// - rule-selected analysis content beyond the volatile text rules above
 
+/// Classification of how two snapshot contents differ.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SnapshotDiffKind {
+    /// Contents are byte-for-byte identical.
     Exact,
+    /// Contents differ only in normalized volatile fields.
     NormalizationOnly,
+    /// Contents have semantically meaningful differences.
     Semantic,
+    /// The expected snapshot is missing.
     MissingExpected,
 }
 
+/// Result of comparing two snapshot contents after normalization.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SnapshotComparison {
+    /// The kind of difference detected.
     pub diff_kind: SnapshotDiffKind,
+    /// Normalized form of the expected content.
     pub normalized_expected: String,
+    /// Normalized form of the actual content.
     pub normalized_actual: String,
 }
 
 impl SnapshotComparison {
+    /// Returns `true` if the snapshots are identical or differ only in volatile fields.
     pub fn matches_after_normalization(&self) -> bool {
         matches!(
             self.diff_kind,
@@ -42,6 +52,8 @@ impl SnapshotComparison {
     }
 }
 
+/// Compares `expected` and `actual` snapshot contents for `path`, applying
+/// format-aware normalization before diffing.
 pub fn compare_snapshot_contents(
     path: &Path,
     expected: &str,
@@ -63,6 +75,7 @@ pub fn compare_snapshot_contents(
     })
 }
 
+/// Normalizes snapshot `contents` based on the artifact filename in `path`.
 pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     match path.file_name().and_then(|value| value.to_str()) {
         Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),

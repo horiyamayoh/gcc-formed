@@ -6,13 +6,18 @@ use diag_core::{
     Severity,
 };
 
+/// The result of group selection: expanded cards, summary-only cards, and suppression counts.
 #[derive(Debug)]
 pub struct Selection {
+    /// Diagnostic nodes selected for full rendering.
     pub cards: Vec<DiagnosticNode>,
+    /// Diagnostic nodes shown only as one-line summaries.
     pub summary_only_cards: Vec<DiagnosticNode>,
+    /// Number of warnings suppressed because a failure was present.
     pub suppressed_warning_count: usize,
 }
 
+/// Selects, ranks, and partitions diagnostic groups from the request document.
 pub fn select_groups(request: &RenderRequest) -> Selection {
     let budget = budget_for(request.profile);
     let mut diagnostics = request.document.diagnostics.clone();

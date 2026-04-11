@@ -1,3 +1,6 @@
+//! Trace envelope generation, build manifests, and secure file operations for
+//! diagnostic artifacts.
+
 use diag_core::{ADAPTER_SPEC_VERSION, FallbackReason, RENDERER_SPEC_VERSION};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -6,189 +9,300 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// Default product name embedded in build manifests.
 pub const DEFAULT_PRODUCT_NAME: &str = "gcc-formed";
+/// Default maturity label for the current release cycle.
 pub const DEFAULT_MATURITY_LABEL: &str = "v1beta";
 
+/// Policy controlling when trace artifacts are retained on disk.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum RetentionPolicy {
+    /// Never retain trace artifacts.
     Never,
+    /// Retain only when the wrapper itself fails.
     OnWrapperFailure,
+    /// Retain when the wrapper or the child process fails.
     OnChildError,
+    /// Always retain trace artifacts.
     Always,
 }
 
+/// Resolved filesystem paths used by the wrapper at runtime.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WrapperPaths {
+    /// Path to the configuration file.
     pub config_path: PathBuf,
+    /// Root directory for cached data.
     pub cache_root: PathBuf,
+    /// Root directory for persistent state.
     pub state_root: PathBuf,
+    /// Root directory for runtime-only files.
     pub runtime_root: PathBuf,
+    /// Root directory for trace output.
     pub trace_root: PathBuf,
+    /// Root directory for installed artifacts.
     pub install_root: PathBuf,
 }
 
+/// Build manifest describing the product binary and its build environment.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildManifest {
+    /// Product name (e.g. "gcc-formed").
     pub product_name: String,
+    /// Semantic version of the product.
     pub product_version: String,
+    /// Target triple the artifact was compiled for.
     pub artifact_target_triple: String,
+    /// Operating system component of the target.
     pub artifact_os: String,
+    /// CPU architecture component of the target.
     pub artifact_arch: String,
+    /// C library family (e.g. "gnu", "musl").
     pub artifact_libc_family: String,
+    /// Git commit hash at build time.
     pub git_commit: String,
+    /// Cargo build profile (e.g. "release").
     pub build_profile: String,
+    /// Rust compiler version used.
     pub rustc_version: String,
+    /// Cargo version used.
     pub cargo_version: String,
+    /// Timestamp when the build was produced.
     pub build_timestamp: String,
+    /// SHA-256 hash of the lockfile.
     pub lockfile_hash: String,
+    /// SHA-256 hash of the vendored dependencies.
     pub vendor_hash: String,
+    /// IR specification version.
     pub ir_spec_version: String,
+    /// Adapter specification version.
     pub adapter_spec_version: String,
+    /// Renderer specification version.
     pub renderer_spec_version: String,
+    /// Maturity label for this build (e.g. "v1beta").
     #[serde(alias = "support_tier_declaration")]
     pub maturity_label: String,
+    /// Release channel (e.g. "stable", "dev").
     pub release_channel: String,
+    /// Checksums for the packaged artifacts.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub checksums: Vec<ChecksumEntry>,
 }
 
+/// A single file checksum entry within a build manifest.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ChecksumEntry {
+    /// Relative path of the artifact.
     pub path: String,
+    /// SHA-256 hex digest.
     pub sha256: String,
+    /// File size in bytes.
     pub size_bytes: u64,
 }
 
+/// Decomposed description of a Rust-style target triple.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TargetDescriptor {
+    /// Full target triple string.
     pub target_triple: String,
+    /// Operating system (e.g. "linux", "macos").
     pub os: String,
+    /// CPU architecture (e.g. "x86_64", "aarch64").
     pub arch: String,
+    /// C library family (e.g. "gnu", "musl").
     pub libc_family: String,
 }
 
+/// Top-level trace envelope written for each wrapper invocation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceEnvelope {
+    /// Unique identifier for this trace.
     pub trace_id: String,
+    /// Processing mode that was selected (e.g. "render", "passthrough").
     pub selected_mode: String,
+    /// Render profile that was selected (e.g. "default", "ci").
     pub selected_profile: String,
+    /// Overall verdict from the wrapper.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wrapper_verdict: Option<String>,
+    /// Version information summary.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version_summary: Option<TraceVersionSummary>,
+    /// Environment discovery summary.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub environment_summary: Option<TraceEnvironmentSummary>,
+    /// Terminal capability detection results.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capabilities: Option<TraceCapabilities>,
+    /// Timing measurements for the wrapper run.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<TraceTiming>,
+    /// Child process exit information.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub child_exit: Option<TraceChildExit>,
+    /// Summary of parser results.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parser_result_summary: Option<TraceParserResultSummary>,
+    /// Fingerprint summary for the diagnostic document.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fingerprint_summary: Option<TraceFingerprintSummary>,
+    /// Redaction status of the trace.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redaction_status: Option<TraceRedactionStatus>,
+    /// Ordered log of internal decision points.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
+    /// Reason the wrapper fell back to passthrough, if applicable.
     pub fallback_reason: Option<FallbackReason>,
+    /// Non-fatal warning messages emitted during the run.
     pub warning_messages: Vec<String>,
+    /// References to artifacts produced by this trace.
     pub artifacts: Vec<TraceArtifactRef>,
 }
 
+/// Version information recorded in a trace envelope.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceVersionSummary {
+    /// Wrapper binary version.
     pub wrapper_version: String,
+    /// Target triple the wrapper was built for.
     pub build_target_triple: String,
+    /// IR specification version.
     pub ir_spec_version: String,
+    /// Adapter specification version.
     pub adapter_spec_version: String,
+    /// Renderer specification version.
     pub renderer_spec_version: String,
 }
 
+/// Environment discovery summary recorded in a trace envelope.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceEnvironmentSummary {
+    /// Path to the compiler backend binary.
     pub backend_path: PathBuf,
+    /// Version string reported by the backend.
     pub backend_version: String,
+    /// Detected GCC version band.
     pub version_band: String,
+    /// Selected processing path.
     pub processing_path: String,
+    /// Computed support level.
     pub support_level: String,
+    /// Extra flags injected by the wrapper.
     #[serde(default)]
     pub injected_flags: Vec<String>,
+    /// Environment variable keys that were sanitized.
     #[serde(default)]
     pub sanitized_env_keys: Vec<String>,
+    /// Paths to temporary artifacts created during the run.
     #[serde(default)]
     pub temp_artifact_paths: Vec<PathBuf>,
 }
 
+/// Terminal capability detection results.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceCapabilities {
+    /// Stream kind (e.g. "tty", "pipe").
     pub stream_kind: String,
+    /// Terminal width in columns, if known.
     pub width_columns: Option<usize>,
+    /// Whether ANSI color output is supported.
     pub ansi_color: bool,
+    /// Whether Unicode output is supported.
     pub unicode: bool,
+    /// Whether terminal hyperlinks are supported.
     pub hyperlinks: bool,
+    /// Whether the stream is interactive.
     pub interactive: bool,
 }
 
+/// Timing measurements for a wrapper invocation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceTiming {
+    /// Time spent capturing compiler output, in milliseconds.
     pub capture_ms: u64,
+    /// Time spent rendering diagnostics, in milliseconds.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub render_ms: Option<u64>,
+    /// Total wall-clock time, in milliseconds.
     pub total_ms: u64,
 }
 
+/// Exit status of the child compiler process.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceChildExit {
+    /// Exit code, if the process exited normally.
     pub code: Option<i32>,
+    /// Signal number, if the process was terminated by a signal.
     pub signal: Option<i32>,
+    /// Whether the child exited successfully.
     pub success: bool,
 }
 
+/// Summary of the parser's output included in the trace.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceParserResultSummary {
+    /// Parser status (e.g. "ok", "error").
     pub status: String,
+    /// Document completeness level reported by the parser.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document_completeness: Option<String>,
+    /// Number of diagnostic nodes produced.
     pub diagnostic_count: usize,
+    /// Number of integrity issues found.
     pub integrity_issue_count: usize,
+    /// Number of capture artifacts collected.
     pub capture_count: usize,
 }
 
+/// Fingerprint summary for deduplication and drift detection.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceFingerprintSummary {
+    /// Raw fingerprint hash.
     pub raw: String,
+    /// Normalized fingerprint hash, if computed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub normalized: Option<String>,
+    /// Family-level fingerprint hash, if computed.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub family: Option<String>,
 }
 
+/// Redaction status of trace artifacts.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceRedactionStatus {
+    /// Redaction class applied.
     pub class: String,
+    /// Whether the trace is restricted to local storage.
     pub local_only: bool,
+    /// List of artifact IDs that were normalized for redaction.
     #[serde(default)]
     pub normalized_artifacts: Vec<String>,
 }
 
+/// Reference to an artifact produced during a trace.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TraceArtifactRef {
+    /// Artifact identifier.
     pub id: String,
+    /// Filesystem path where the artifact was written.
     pub path: Option<PathBuf>,
 }
 
+/// Errors that can occur when writing traces or manifests.
 #[derive(Debug, thiserror::Error)]
 pub enum TraceError {
+    /// An I/O error occurred.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    /// A JSON serialization error occurred.
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
 }
 
 impl WrapperPaths {
+    /// Discovers wrapper paths from the current environment using XDG conventions.
     pub fn discover() -> Self {
         Self::from_env(
             |key| env::var_os(key),
@@ -256,6 +370,7 @@ impl WrapperPaths {
         }
     }
 
+    /// Creates all required directories and secures private ones.
     pub fn ensure_dirs(&self) -> Result<(), std::io::Error> {
         for dir in [
             &self.cache_root,
@@ -272,10 +387,12 @@ impl WrapperPaths {
     }
 }
 
+/// Returns the compile-time target triple, or `"unknown-target"` if not set.
 pub fn build_target_triple() -> &'static str {
     option_env!("FORMED_TARGET").unwrap_or("unknown-target")
 }
 
+/// Sets directory permissions to owner-only (0700) on Unix.
 #[cfg(unix)]
 pub fn secure_private_dir(path: &Path) -> Result<(), std::io::Error> {
     use std::os::unix::fs::PermissionsExt;
@@ -286,11 +403,13 @@ pub fn secure_private_dir(path: &Path) -> Result<(), std::io::Error> {
     fs::set_permissions(path, permissions)
 }
 
+/// No-op on non-Unix platforms.
 #[cfg(not(unix))]
 pub fn secure_private_dir(_path: &Path) -> Result<(), std::io::Error> {
     Ok(())
 }
 
+/// Sets file permissions to owner-only (0600) on Unix.
 #[cfg(unix)]
 pub fn secure_private_file(path: &Path) -> Result<(), std::io::Error> {
     use std::os::unix::fs::PermissionsExt;
@@ -301,11 +420,13 @@ pub fn secure_private_file(path: &Path) -> Result<(), std::io::Error> {
     fs::set_permissions(path, permissions)
 }
 
+/// No-op on non-Unix platforms.
 #[cfg(not(unix))]
 pub fn secure_private_file(_path: &Path) -> Result<(), std::io::Error> {
     Ok(())
 }
 
+/// Generates a unique trace identifier based on the current system time.
 pub fn trace_id() -> String {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -314,6 +435,7 @@ pub fn trace_id() -> String {
     format!("trace-{nanos}")
 }
 
+/// Returns `true` if the given retention policy requires keeping the trace.
 pub fn should_retain(policy: RetentionPolicy, wrapper_failed: bool, child_failed: bool) -> bool {
     match policy {
         RetentionPolicy::Never => false,
@@ -323,6 +445,7 @@ pub fn should_retain(policy: RetentionPolicy, wrapper_failed: bool, child_failed
     }
 }
 
+/// Writes a trace envelope to the configured trace root, returning the output path.
 pub fn write_trace(
     paths: &WrapperPaths,
     trace: &TraceEnvelope,
@@ -334,6 +457,7 @@ pub fn write_trace(
     Ok(path)
 }
 
+/// Writes a trace envelope to an explicit path, creating parent directories as needed.
 pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -344,12 +468,14 @@ pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceErr
     Ok(())
 }
 
+/// Writes a build manifest as pretty-printed JSON and secures the file.
 pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), TraceError> {
     fs::write(path, serde_json::to_vec_pretty(manifest)?)?;
     secure_private_file(path)?;
     Ok(())
 }
 
+/// Parses a target triple string into a [`TargetDescriptor`].
 pub fn describe_target(target_triple: &str) -> TargetDescriptor {
     let segments = target_triple.split('-').collect::<Vec<_>>();
     let arch = segments.first().copied().unwrap_or("unknown").to_string();
@@ -385,6 +511,7 @@ pub fn describe_target(target_triple: &str) -> TargetDescriptor {
     }
 }
 
+/// Builds a [`BuildManifest`] for the given target triple and release metadata.
 pub fn build_manifest_for_target(
     lockfile_hash: String,
     vendor_hash: String,
@@ -426,6 +553,7 @@ pub fn build_manifest_for_target(
     }
 }
 
+/// Builds a [`BuildManifest`] using the compile-time target triple and default metadata.
 pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> BuildManifest {
     build_manifest_for_target(
         lockfile_hash,

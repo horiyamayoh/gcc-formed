@@ -1,3 +1,5 @@
+//! Captures diagnostic artifacts from compiler invocations, manages temporary files and cleanup.
+
 use diag_backend_probe::{ProbeResult, ProcessingPath};
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, IntegrityIssue, IssueSeverity, IssueStage,
@@ -22,63 +24,98 @@ const STDERR_CAPTURE_BUFFER_BYTES: usize = 4096;
 const STDERR_CAPTURE_PREVIEW_LIMIT_BYTES: usize = 1024 * 1024;
 const STDERR_CAPTURE_ID: &str = "stderr.raw";
 
+/// How the wrapper executes the backend compiler.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecutionMode {
+    /// Capture and re-render diagnostics through the wrapper pipeline.
     Render,
+    /// Run the backend and tee stderr while capturing artifacts.
     Shadow,
+    /// Pass execution directly to the backend without modification.
     Passthrough,
 }
 
+/// Policy for capturing structured diagnostic output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StructuredCapturePolicy {
+    /// No structured capture.
     Disabled,
+    /// Dual-sink SARIF via `-fdiagnostics-add-output`.
     SarifFile,
+    /// Single-sink SARIF via `-fdiagnostics-format=sarif-file`.
     SingleSinkSarifFile,
+    /// Single-sink JSON via `-fdiagnostics-format=json-file`.
     SingleSinkJsonFile,
 }
 
+/// Policy for handling native stderr text from the backend.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NativeTextCapturePolicy {
+    /// Forward stderr to the parent process without capture.
     Passthrough,
+    /// Capture stderr silently without forwarding.
     CaptureOnly,
+    /// Capture stderr and simultaneously forward to the parent.
     TeeToParent,
 }
 
+/// How the child process locale environment is managed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LocaleHandling {
+    /// Keep the inherited locale unchanged.
     Preserve,
+    /// Set `LC_MESSAGES=C` for stable English diagnostics.
     ForceMessagesC,
 }
 
+/// Fully resolved plan describing how a capture invocation will proceed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CapturePlan {
+    /// Execution mode for the backend invocation.
     pub execution_mode: ExecutionMode,
+    /// Diagnostic processing strategy in effect.
     pub processing_path: ProcessingPath,
+    /// Structured diagnostic capture policy.
     pub structured_capture: StructuredCapturePolicy,
+    /// Native stderr text handling policy.
     pub native_text_capture: NativeTextCapturePolicy,
+    /// Whether to inject color-always flags for native output.
     pub preserve_native_color: bool,
+    /// Locale management for the child process.
     pub locale_handling: LocaleHandling,
+    /// Trace retention policy after capture completes.
     pub retention_policy: RetentionPolicy,
 }
 
+/// Input parameters for a single diagnostic capture invocation.
 #[derive(Debug, Clone)]
 pub struct CaptureRequest {
+    /// Probed backend to invoke.
     pub backend: ProbeResult,
+    /// Arguments to pass to the backend.
     pub args: Vec<OsString>,
+    /// Working directory for the backend process.
     pub cwd: PathBuf,
+    /// Requested execution mode.
     pub mode: ExecutionMode,
+    /// Whether to tee stderr in passthrough mode.
     pub capture_passthrough_stderr: bool,
+    /// Trace retention policy.
     pub retention: RetentionPolicy,
+    /// Filesystem paths used by the wrapper runtime.
     pub paths: WrapperPaths,
+    /// Structured capture policy to apply.
     pub structured_capture: StructuredCapturePolicy,
+    /// Whether to inject color-always flags.
     pub preserve_native_color: bool,
 }
 
 impl CaptureRequest {
+    /// Derives the effective capture plan from this request.
     pub fn capture_plan(&self) -> CapturePlan {
         effective_capture_plan(
             self,
@@ -115,6 +152,7 @@ impl CaptureRequest {
         )
     }
 
+    /// Constructs a request from an already-resolved capture plan.
     pub fn from_plan(
         backend: ProbeResult,
         args: Vec<OsString>,
@@ -142,37 +180,56 @@ impl CaptureRequest {
     }
 }
 
+/// Portable representation of a child process exit status.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ExitStatusInfo {
+    /// Exit code, if the process exited normally.
     pub code: Option<i32>,
+    /// Signal number, if the process was terminated by a signal.
     pub signal: Option<i32>,
+    /// Whether the process exited successfully.
     pub success: bool,
 }
 
+/// Metadata describing the backend invocation that was executed.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CaptureInvocation {
+    /// Filesystem path to the backend binary.
     pub backend_path: String,
+    /// Full argument vector passed to the backend.
     pub argv: Vec<String>,
+    /// Fingerprint hash of the argument vector.
     pub argv_hash: String,
+    /// Working directory used for the invocation.
     pub cwd: String,
+    /// Execution mode that was in effect.
     pub selected_mode: ExecutionMode,
+    /// Processing path that was in effect.
     pub processing_path: ProcessingPath,
 }
 
+/// Serializable bundle of all capture results for a single invocation.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CaptureBundle {
+    /// The capture plan that governed this invocation.
     pub plan: CapturePlan,
+    /// Metadata about the backend invocation.
     pub invocation: CaptureInvocation,
+    /// Raw stderr text artifacts captured from the backend.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub raw_text_artifacts: Vec<CaptureArtifact>,
+    /// Structured diagnostic artifacts (SARIF/JSON) captured from the backend.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub structured_artifacts: Vec<CaptureArtifact>,
+    /// Exit status of the backend process.
     pub exit_status: ExitStatusInfo,
+    /// Integrity issues detected during capture.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub integrity_issues: Vec<IntegrityIssue>,
 }
 
 impl CaptureBundle {
+    /// Returns all artifacts (raw text and structured) combined.
     pub fn capture_artifacts(&self) -> Vec<CaptureArtifact> {
         let mut artifacts =
             Vec::with_capacity(self.raw_text_artifacts.len() + self.structured_artifacts.len());
@@ -181,6 +238,7 @@ impl CaptureBundle {
         artifacts
     }
 
+    /// Returns the inline stderr text from raw text artifacts, if present.
     pub fn stderr_text(&self) -> Option<&str> {
         self.raw_text_artifacts.iter().find_map(|artifact| {
             matches!(
@@ -192,6 +250,7 @@ impl CaptureBundle {
         })
     }
 
+    /// Returns the expected SARIF output path within the temp directory.
     pub fn authoritative_sarif_path(&self, temp_dir: &Path) -> Option<PathBuf> {
         matches!(
             self.plan.structured_capture,
@@ -200,6 +259,7 @@ impl CaptureBundle {
         .then(|| temp_dir.join("diagnostics.sarif"))
     }
 
+    /// Returns the diagnostic flags that were injected into the backend invocation.
     pub fn injected_flags(&self, temp_dir: &Path) -> Vec<String> {
         let mut flags = Vec::new();
         match self.plan.structured_capture {
@@ -225,6 +285,7 @@ impl CaptureBundle {
         flags
     }
 
+    /// Returns the list of temporary artifact paths created during capture.
     pub fn temp_artifact_paths(&self, temp_dir: &Path) -> Vec<PathBuf> {
         let mut paths = vec![temp_dir.to_path_buf(), temp_dir.join("invocation.json")];
         if let Some(path) = authoritative_structured_path(self.plan.structured_capture, temp_dir) {
@@ -234,24 +295,36 @@ impl CaptureBundle {
     }
 }
 
+/// Complete outcome of a capture invocation, including artifacts and metadata.
 #[derive(Debug)]
 pub struct CaptureOutcome {
+    /// Exit status of the backend process.
     pub exit_status: ExitStatusInfo,
+    /// Raw stderr bytes captured from the backend.
     pub stderr_bytes: Vec<u8>,
+    /// Path to the SARIF file, if one was produced.
     pub sarif_path: Option<PathBuf>,
+    /// Temporary directory used for this capture session.
     pub temp_dir: PathBuf,
+    /// Wall-clock capture duration in milliseconds.
     pub capture_duration_ms: u64,
+    /// Whether trace artifacts were retained on disk.
     pub retained: bool,
+    /// Directory where retained traces were stored, if any.
     pub retained_trace_dir: Option<PathBuf>,
+    /// All artifacts produced during capture.
     pub artifacts: Vec<CaptureArtifact>,
+    /// Serializable bundle summarizing the capture.
     pub bundle: CaptureBundle,
 }
 
 impl CaptureOutcome {
+    /// Returns all capture artifacts from the bundle.
     pub fn capture_artifacts(&self) -> Vec<CaptureArtifact> {
         self.bundle.capture_artifacts()
     }
 
+    /// Returns the captured stderr as a string, lossy-decoding if needed.
     pub fn stderr_text(&self) -> Cow<'_, str> {
         self.bundle
             .stderr_text()
@@ -259,31 +332,39 @@ impl CaptureOutcome {
             .unwrap_or_else(|| String::from_utf8_lossy(&self.stderr_bytes))
     }
 
+    /// Returns the expected SARIF output path for this outcome.
     pub fn authoritative_sarif_path(&self) -> Option<PathBuf> {
         self.bundle.authoritative_sarif_path(&self.temp_dir)
     }
 
+    /// Returns the processing path that was used.
     pub fn processing_path(&self) -> ProcessingPath {
         self.bundle.plan.processing_path
     }
 
+    /// Returns environment variable keys that were set or unset for the child.
     pub fn sanitized_env_keys(&self) -> Vec<String> {
         trace_sanitized_env_keys(self.bundle.plan.execution_mode)
     }
 
+    /// Returns the diagnostic flags injected into the backend invocation.
     pub fn injected_flags(&self) -> Vec<String> {
         self.bundle.injected_flags(&self.temp_dir)
     }
 
+    /// Returns temporary artifact paths created during capture.
     pub fn temp_artifact_paths(&self) -> Vec<PathBuf> {
         self.bundle.temp_artifact_paths(&self.temp_dir)
     }
 }
 
+/// Errors that can occur during a capture invocation.
 #[derive(Debug, thiserror::Error)]
 pub enum CaptureError {
+    /// An I/O error occurred during capture.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+    /// The backend process could not be spawned.
     #[error("failed to spawn backend command")]
     Spawn,
 }
@@ -530,6 +611,7 @@ fn structured_artifact_metadata(path: &Path) -> Option<(&'static str, ArtifactKi
     }
 }
 
+/// Executes the backend compiler and captures diagnostic artifacts.
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
     let capture_started = Instant::now();
     let plan = request.capture_plan();
@@ -714,6 +796,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     })
 }
 
+/// Removes temporary capture files unless they were retained for tracing.
 pub fn cleanup_capture(outcome: &CaptureOutcome) -> Result<(), std::io::Error> {
     if outcome.retained {
         return Ok(());
@@ -1135,6 +1218,7 @@ fn child_env_policy_for_mode(mode: ExecutionMode) -> ChildEnvPolicy {
     })
 }
 
+/// Returns the environment variable keys modified by the child env policy for the given mode.
 pub fn trace_sanitized_env_keys(mode: ExecutionMode) -> Vec<String> {
     let policy = child_env_policy_for_mode(mode);
     let mut keys = policy.set.into_keys().collect::<Vec<_>>();

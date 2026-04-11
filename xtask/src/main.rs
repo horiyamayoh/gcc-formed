@@ -1,3 +1,6 @@
+//! Development workflow automation tasks (snapshot management, release checks,
+//! packaging, installation, and evaluation).
+
 mod commands;
 mod util;
 

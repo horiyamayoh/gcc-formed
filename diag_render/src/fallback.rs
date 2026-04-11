@@ -3,6 +3,7 @@ use crate::{DebugRefs, RenderProfile, RenderRequest, RenderResult};
 use diag_core::FallbackReason;
 use std::fs;
 
+/// Produces a fallback render result using raw or reconstructed compiler output.
 pub fn render_fallback(request: &RenderRequest, fallback_reason: FallbackReason) -> RenderResult {
     let text = if renders_quiet_passthrough(request, fallback_reason) {
         render_quiet_passthrough(request)

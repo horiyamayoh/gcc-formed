@@ -9,10 +9,14 @@ use diag_rulepack::{
 };
 use std::path::Path;
 
+/// Collected supporting context lines, child notes, and collapse notices for a diagnostic card.
 #[derive(Debug, Default)]
 pub struct SupportingEvidence {
+    /// Context lines derived from context chains (template, macro, include, linker).
     pub context_lines: Vec<String>,
+    /// Compiler notes from child diagnostic nodes.
     pub child_notes: Vec<String>,
+    /// Notices about omitted content (e.g. "omitted N additional note(s)").
     pub collapsed_notices: Vec<String>,
 }
 
@@ -64,6 +68,7 @@ pub(crate) fn is_conservative_useful_subset_card(
         )
 }
 
+/// Summarizes supporting evidence (context chains, child notes) for a diagnostic node.
 pub fn summarize_supporting_evidence(
     request: &RenderRequest,
     node: &DiagnosticNode,

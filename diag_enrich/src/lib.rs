@@ -1,3 +1,6 @@
+//! Enriches diagnostic documents with family classification, action hints,
+//! headlines, and ownership information.
+
 mod action_hint;
 mod family;
 mod headline;
@@ -10,6 +13,8 @@ use crate::ownership::classify_ownership;
 use diag_core::{AnalysisOverlay, DiagnosticDocument, DiagnosticNode};
 use std::path::Path;
 
+/// Enriches every diagnostic node in `document` with family, confidence,
+/// headline, action hint, and file-ownership annotations.
 pub fn enrich_document(document: &mut DiagnosticDocument, cwd: &Path) {
     for node in &mut document.diagnostics {
         enrich_node(node, cwd);
