@@ -25,6 +25,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Renamed CI gate status, summary, and static-plan metadata from legacy `support_tier` selectors to explicit `gate_scope` plus `version_band`, and switched nightly workflow plumbing from `MATRIX_SUPPORT_TIER` to `MATRIX_VERSION_BAND`.
 - Removed remaining current-authority `SupportTier` phrasing from governance and ADR index docs, leaving any surviving `Support Tier` / `compatibility tier` wording explicitly marked as historical ADR-title context only.
 - Expanded `diag_core` IR location and analysis overlay shape so v1alpha semantics can carry structured file/range/role/source-kind data, numeric confidence scores, and preferred primary-location IDs without breaking legacy snapshot normalization or older JSON inputs.
+- Tightened `diag_core::DiagnosticDocument::validate()` so unparsable IR schema versions and dangling provenance capture refs are rejected before enrich/render stages, with regression coverage for schema, location, synthesized-node, and collapsed-child invariants.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

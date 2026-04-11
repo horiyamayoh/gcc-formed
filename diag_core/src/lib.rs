@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use regex::Regex;
+use semver::Version;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -1017,6 +1018,11 @@ impl DiagnosticDocument {
         }
         if self.schema_version.trim().is_empty() {
             errors.push("schema_version must be non-empty".to_string());
+        } else if Version::parse(self.schema_version.trim()).is_err() {
+            errors.push(format!(
+                "schema_version {} must be parseable semver",
+                self.schema_version
+            ));
         }
         if self.diagnostics.is_empty()
             && !matches!(
@@ -1044,8 +1050,11 @@ impl DiagnosticDocument {
                 ));
             }
         }
+        for (index, issue) in self.integrity_issues.iter().enumerate() {
+            validate_integrity_issue(issue, index, &capture_ids, &mut errors);
+        }
         for node in &self.diagnostics {
-            validate_node(node, &mut node_ids, &mut errors, true);
+            validate_node(node, &capture_ids, &mut node_ids, &mut errors, true);
         }
         if errors.is_empty() {
             Ok(())
@@ -1104,6 +1113,7 @@ impl DiagnosticNode {
 
 fn validate_node(
     node: &DiagnosticNode,
+    capture_ids: &HashSet<String>,
     node_ids: &mut HashSet<String>,
     errors: &mut Vec<String>,
     top_level: bool,
@@ -1111,6 +1121,12 @@ fn validate_node(
     if !node_ids.insert(node.id.clone()) {
         errors.push(format!("duplicate node id: {}", node.id));
     }
+    validate_provenance(
+        &format!("node {} provenance", node.id),
+        &node.provenance,
+        capture_ids,
+        errors,
+    );
     if node.message.raw_text.trim().is_empty() {
         errors.push(format!("node {} missing raw_text", node.id));
     }
@@ -1140,7 +1156,7 @@ fn validate_node(
                 child.id
             ));
         }
-        validate_node(child, node_ids, errors, false);
+        validate_node(child, capture_ids, node_ids, errors, false);
     }
     if matches!(node.node_completeness, NodeCompleteness::Synthesized)
         && !matches!(
@@ -1203,11 +1219,32 @@ fn validate_node(
         }
     }
     for location in &node.locations {
-        validate_location(node, location, errors);
+        validate_location(node, location, capture_ids, errors);
     }
 }
 
-fn validate_location(node: &DiagnosticNode, location: &Location, errors: &mut Vec<String>) {
+fn validate_integrity_issue(
+    issue: &IntegrityIssue,
+    index: usize,
+    capture_ids: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
+    if let Some(provenance) = issue.provenance.as_ref() {
+        validate_provenance(
+            &format!("integrity_issue[{index}] provenance"),
+            provenance,
+            capture_ids,
+            errors,
+        );
+    }
+}
+
+fn validate_location(
+    node: &DiagnosticNode,
+    location: &Location,
+    capture_ids: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
     if location.anchor.is_none() && location.range.is_none() {
         errors.push(format!(
             "node {} location {} must have anchor or range",
@@ -1233,6 +1270,33 @@ fn validate_location(node: &DiagnosticNode, location: &Location, errors: &mut Ve
             errors.push(format!(
                 "node {} location {} range.end line must be >= 1",
                 node.id, location.id
+            ));
+        }
+    }
+    if let Some(provenance) = location.provenance_override.as_ref() {
+        validate_provenance(
+            &format!(
+                "node {} location {} provenance_override",
+                node.id, location.id
+            ),
+            provenance,
+            capture_ids,
+            errors,
+        );
+    }
+}
+
+fn validate_provenance(
+    scope: &str,
+    provenance: &Provenance,
+    capture_ids: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
+    for capture_ref in &provenance.capture_refs {
+        if !capture_ids.contains(capture_ref) {
+            errors.push(format!(
+                "{scope} references missing capture {}",
+                capture_ref
             ));
         }
     }
@@ -1605,5 +1669,122 @@ mod tests {
                 .iter()
                 .any(|error| error.contains("preferred_primary_location_id"))
         );
+    }
+
+    #[test]
+    fn rejects_unparseable_schema_version() {
+        let mut document = sample_document();
+        document.schema_version = "v1alpha".to_string();
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("schema_version v1alpha must be parseable semver"))
+        );
+    }
+
+    #[test]
+    fn rejects_missing_capture_refs_across_document_scopes() {
+        let mut document = sample_document();
+        document.diagnostics[0].provenance.capture_refs = vec!["missing-node".to_string()];
+        document.diagnostics[0].locations[0].provenance_override = Some(Provenance {
+            source: ProvenanceSource::Policy,
+            capture_refs: vec!["missing-location".to_string()],
+        });
+        document.integrity_issues.push(IntegrityIssue {
+            severity: IssueSeverity::Warning,
+            stage: IssueStage::Normalize,
+            message: "capture drift".to_string(),
+            provenance: Some(Provenance {
+                source: ProvenanceSource::ResidualText,
+                capture_refs: vec!["missing-issue".to_string()],
+            }),
+        });
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("node root-1 provenance references missing capture missing-node")
+        }));
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("node root-1 location loc:src/main.c:4:1:4:1 provenance_override references missing capture missing-location"))
+        );
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("integrity_issue[0] provenance references missing capture missing-issue")
+        }));
+    }
+
+    #[test]
+    fn rejects_invalid_location_integrity() {
+        let mut document = sample_document();
+        document.diagnostics[0].locations[0]
+            .anchor
+            .as_mut()
+            .unwrap()
+            .line = 0;
+        document.diagnostics[0].locations.push(Location {
+            id: "loc:missing".to_string(),
+            file: FileRef::new("src/missing.c"),
+            anchor: None,
+            range: None,
+            role: LocationRole::Secondary,
+            source_kind: LocationSourceKind::Other,
+            label: None,
+            ownership_override: None,
+            provenance_override: None,
+            source_excerpt_ref: None,
+        });
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("anchor line must be >= 1"))
+        );
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("must have anchor or range"))
+        );
+    }
+
+    #[test]
+    fn rejects_synthesized_nodes_with_non_wrapper_provenance() {
+        let mut document = sample_document();
+        document.diagnostics[0].node_completeness = NodeCompleteness::Synthesized;
+        document.diagnostics[0].provenance.source = ProvenanceSource::Compiler;
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors.errors.iter().any(|error| error.contains(
+                "is synthesized but provenance.source is not wrapper_generated or policy"
+            ))
+        );
+    }
+
+    #[test]
+    fn rejects_collapsed_child_ids_that_are_not_descendants() {
+        let mut document = sample_document();
+        document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .collapsed_child_ids = vec!["missing-child".to_string()];
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("collapsed_child_id missing-child does not reference a descendant")
+        }));
     }
 }
