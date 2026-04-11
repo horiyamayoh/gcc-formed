@@ -195,4 +195,10 @@ pub enum CaptureError {
     /// The backend process could not be spawned.
     #[error("failed to spawn backend command")]
     Spawn,
+    /// The stderr capture worker failed while reading or spooling output.
+    #[error("stderr capture failed: {0}")]
+    StderrCapture(#[source] std::io::Error),
+    /// The stderr capture worker thread panicked.
+    #[error("stderr capture thread panicked")]
+    StderrCaptureThreadPanicked,
 }

@@ -143,9 +143,14 @@ pub(crate) fn is_compiler_introspection(args: &[OsString]) -> bool {
         let value = os_to_string(arg);
         matches!(
             value.as_str(),
-            "--help" | "--version" | "-dumpmachine" | "-dumpversion" | "-dumpfullversion" | "-###"
-        ) || value.starts_with("-dump")
-            || value.starts_with("-print-")
+            "--help"
+                | "--version"
+                | "-###"
+                | "-dumpmachine"
+                | "-dumpversion"
+                | "-dumpfullversion"
+                | "-dumpspecs"
+        ) || value.starts_with("-print-")
     })
 }
 
@@ -430,8 +435,12 @@ pub(crate) fn detect_profile_from_capabilities(capabilities: &RenderCapabilities
     }
 }
 
+fn ci_env_is_enabled(raw: Option<OsString>) -> bool {
+    raw.is_some_and(|value| !value.is_empty())
+}
+
 pub(crate) fn is_ci() -> bool {
-    env::var_os("CI").is_some()
+    ci_env_is_enabled(env::var_os("CI"))
 }
 
 pub(crate) fn language_mode_from_invocation(invoked_as: &str) -> LanguageMode {
@@ -635,6 +644,29 @@ mod tests {
             detect_profile_from_capabilities(&capabilities),
             RenderProfile::Ci
         );
+    }
+
+    #[test]
+    fn empty_ci_env_does_not_enable_ci_mode() {
+        assert!(ci_env_is_enabled(Some(OsString::from("1"))));
+        assert!(!ci_env_is_enabled(Some(OsString::new())));
+        assert!(!ci_env_is_enabled(None));
+    }
+
+    #[test]
+    fn compiler_introspection_is_limited_to_explicit_dump_allowlist() {
+        assert!(is_compiler_introspection(&[OsString::from("-dumpmachine")]));
+        assert!(is_compiler_introspection(&[OsString::from("-dumpspecs")]));
+        assert!(!is_compiler_introspection(&[
+            OsString::from("-c"),
+            OsString::from("main.c"),
+            OsString::from("-dumpdir"),
+            OsString::from("tmp/"),
+            OsString::from("-dumpbase"),
+            OsString::from("main.c"),
+            OsString::from("-dumpbase-ext"),
+            OsString::from(".c"),
+        ]));
     }
 
     #[test]

@@ -32,7 +32,13 @@ const ADAPTER_FAMILY_RULES: &[AdapterFamilyRule] = &[
     AdapterFamilyRule {
         id: "rule.family_seed.template",
         family: "template",
-        contains_any: &["template", "deduction/substitution", "deduced conflicting"],
+        contains_any: &[
+            "template",
+            "required from",
+            "required by substitution",
+            "deduction/substitution",
+            "deduced conflicting",
+        ],
     },
     AdapterFamilyRule {
         id: "rule.family_seed.macro_include",
@@ -96,6 +102,9 @@ pub(crate) fn first_action_hint(family: &str) -> String {
         "linker.undefined_reference" => {
             "define the missing symbol or adjust link order/library inputs".to_string()
         }
+        "linker.multiple_definition" => {
+            "keep exactly one definition and move shared declarations into headers".to_string()
+        }
         _ => "inspect the preserved compiler diagnostics for the first corrective step".to_string(),
     }
 }
@@ -127,7 +136,12 @@ pub(crate) fn infer_related_role(message: &str) -> SemanticRole {
 
 pub(crate) fn infer_related_phase(message: &str) -> Phase {
     let lowered = message.to_lowercase();
-    if lowered.contains("template") || lowered.contains("deduction/substitution") {
+    if lowered.contains("template")
+        || lowered.contains("required from")
+        || lowered.contains("required by substitution")
+        || lowered.contains("deduction/substitution")
+        || lowered.contains("deduced conflicting")
+    {
         Phase::Instantiate
     } else {
         Phase::Semantic
@@ -156,13 +170,7 @@ pub(crate) fn related_messages(result: &Value) -> Vec<String> {
         .and_then(Value::as_array)
         .into_iter()
         .flatten()
-        .filter_map(|location| {
-            location
-                .get("message")
-                .and_then(|message| message.get("text"))
-                .and_then(Value::as_str)
-                .map(ToString::to_string)
-        })
+        .filter_map(|location| structured_message_text(location.get("message")))
         .collect()
 }
 
@@ -170,4 +178,23 @@ pub(crate) fn combined_message_seed(raw_text: &str, related_messages: &[String])
     let mut parts = vec![raw_text.to_string()];
     parts.extend(related_messages.iter().cloned());
     parts.join("\n")
+}
+
+pub(crate) fn structured_message_text(message: Option<&Value>) -> Option<String> {
+    let message = message?;
+    if let Some(text) = message.as_str().filter(|text| !text.trim().is_empty()) {
+        return Some(text.to_string());
+    }
+
+    message
+        .get("text")
+        .and_then(Value::as_str)
+        .filter(|text| !text.trim().is_empty())
+        .or_else(|| {
+            message
+                .get("markdown")
+                .and_then(Value::as_str)
+                .filter(|text| !text.trim().is_empty())
+        })
+        .map(ToString::to_string)
 }

@@ -1,10 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use semver::Version;
 
 use crate::{
-    ArtifactStorage, DiagnosticDocument, DiagnosticNode, DocumentCompleteness, IntegrityIssue,
-    Location, NodeCompleteness, Phase, Provenance, ProvenanceSource, SemanticRole,
+    ArtifactKind, ArtifactStorage, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
+    IntegrityIssue, Location, NodeCompleteness, Phase, Provenance, ProvenanceSource, SemanticRole,
     ValidationErrors,
 };
 
@@ -16,6 +16,7 @@ impl DiagnosticDocument {
     pub fn validate(&self) -> Result<(), ValidationErrors> {
         let mut errors = Vec::new();
         let mut capture_ids = HashSet::new();
+        let mut capture_kinds = HashMap::new();
         let mut node_ids = HashSet::new();
 
         if self.document_id.trim().is_empty() {
@@ -40,26 +41,71 @@ impl DiagnosticDocument {
             );
         }
         for capture in &self.captures {
+            if capture.id.trim().is_empty() {
+                errors.push("capture id must be non-empty".to_string());
+            }
             if !capture_ids.insert(capture.id.clone()) {
                 errors.push(format!("duplicate capture id: {}", capture.id));
+            } else {
+                capture_kinds.insert(capture.id.clone(), capture.kind.clone());
             }
-            if matches!(capture.storage, ArtifactStorage::Inline) && capture.inline_text.is_none() {
-                errors.push(format!("inline capture {} missing inline_text", capture.id));
-            }
-            if matches!(capture.storage, ArtifactStorage::ExternalRef)
-                && capture.external_ref.is_none()
-            {
-                errors.push(format!(
-                    "external_ref capture {} missing external_ref",
-                    capture.id
-                ));
+            match capture.storage {
+                ArtifactStorage::Inline => {
+                    if capture.inline_text.is_none() {
+                        errors.push(format!("inline capture {} missing inline_text", capture.id));
+                    }
+                    if capture.external_ref.is_some() {
+                        errors.push(format!(
+                            "inline capture {} must not set external_ref",
+                            capture.id
+                        ));
+                    }
+                }
+                ArtifactStorage::ExternalRef => {
+                    if capture.external_ref.is_none() {
+                        errors.push(format!(
+                            "external_ref capture {} missing external_ref",
+                            capture.id
+                        ));
+                    } else if capture
+                        .external_ref
+                        .as_deref()
+                        .is_some_and(|external_ref| external_ref.trim().is_empty())
+                    {
+                        errors.push(format!(
+                            "external_ref capture {} external_ref must be non-empty",
+                            capture.id
+                        ));
+                    }
+                    if capture.inline_text.is_some() {
+                        errors.push(format!(
+                            "external_ref capture {} must not set inline_text",
+                            capture.id
+                        ));
+                    }
+                }
+                ArtifactStorage::Unavailable => {
+                    if capture.inline_text.is_some() || capture.external_ref.is_some() {
+                        errors.push(format!(
+                            "unavailable capture {} must not set inline_text or external_ref",
+                            capture.id
+                        ));
+                    }
+                }
             }
         }
         for (index, issue) in self.integrity_issues.iter().enumerate() {
             validate_integrity_issue(issue, index, &capture_ids, &mut errors);
         }
         for node in &self.diagnostics {
-            validate_node(node, &capture_ids, &mut node_ids, &mut errors, true);
+            validate_node(
+                node,
+                &capture_ids,
+                &capture_kinds,
+                &mut node_ids,
+                &mut errors,
+                true,
+            );
         }
         if errors.is_empty() {
             Ok(())
@@ -72,10 +118,14 @@ impl DiagnosticDocument {
 fn validate_node(
     node: &DiagnosticNode,
     capture_ids: &HashSet<String>,
+    capture_kinds: &HashMap<String, ArtifactKind>,
     node_ids: &mut HashSet<String>,
     errors: &mut Vec<String>,
     top_level: bool,
 ) {
+    if node.id.trim().is_empty() {
+        errors.push("node id must be non-empty".to_string());
+    }
     if !node_ids.insert(node.id.clone()) {
         errors.push(format!("duplicate node id: {}", node.id));
     }
@@ -114,7 +164,7 @@ fn validate_node(
                 child.id
             ));
         }
-        validate_node(child, capture_ids, node_ids, errors, false);
+        validate_node(child, capture_ids, capture_kinds, node_ids, errors, false);
     }
     if matches!(node.node_completeness, NodeCompleteness::Synthesized)
         && !matches!(
@@ -176,8 +226,15 @@ fn validate_node(
             }
         }
     }
+    let mut location_ids = HashSet::new();
     for location in &node.locations {
-        validate_location(node, location, capture_ids, errors);
+        if !location_ids.insert(location.id.clone()) {
+            errors.push(format!(
+                "node {} has duplicate location id {}",
+                node.id, location.id
+            ));
+        }
+        validate_location(node, location, capture_ids, capture_kinds, errors);
     }
 }
 
@@ -201,8 +258,18 @@ fn validate_location(
     node: &DiagnosticNode,
     location: &Location,
     capture_ids: &HashSet<String>,
+    capture_kinds: &HashMap<String, ArtifactKind>,
     errors: &mut Vec<String>,
 ) {
+    if location.id.trim().is_empty() {
+        errors.push(format!("node {} location id must be non-empty", node.id));
+    }
+    if location.file.path_raw.trim().is_empty() {
+        errors.push(format!(
+            "node {} location {} file.path_raw must be non-empty",
+            node.id, location.id
+        ));
+    }
     if location.anchor.is_none() && location.range.is_none() {
         errors.push(format!(
             "node {} location {} must have anchor or range",
@@ -230,6 +297,12 @@ fn validate_location(
                 node.id, location.id
             ));
         }
+        if source_point_order_key(&range.start) > source_point_order_key(&range.end) {
+            errors.push(format!(
+                "node {} location {} range.start must not come after range.end",
+                node.id, location.id
+            ));
+        }
     }
     if let Some(provenance) = location.provenance_override.as_ref() {
         validate_provenance(
@@ -242,6 +315,37 @@ fn validate_location(
             errors,
         );
     }
+    if let Some(source_excerpt_ref) = location.source_excerpt_ref.as_deref() {
+        if source_excerpt_ref.trim().is_empty() {
+            errors.push(format!(
+                "node {} location {} source_excerpt_ref must be non-empty when present",
+                node.id, location.id
+            ));
+        } else {
+            match capture_kinds.get(source_excerpt_ref) {
+                None => errors.push(format!(
+                    "node {} location {} source_excerpt_ref references missing capture {}",
+                    node.id, location.id, source_excerpt_ref
+                )),
+                Some(ArtifactKind::SourceSnippet) => {}
+                Some(_) => errors.push(format!(
+                    "node {} location {} source_excerpt_ref {} must reference a source_snippet capture",
+                    node.id, location.id, source_excerpt_ref
+                )),
+            }
+        }
+    }
+}
+
+fn source_point_order_key(point: &crate::SourcePoint) -> (u32, u32) {
+    (
+        point.line,
+        point
+            .column_display
+            .or(point.column_native)
+            .or(point.column_byte)
+            .unwrap_or(1),
+    )
 }
 
 fn validate_provenance(

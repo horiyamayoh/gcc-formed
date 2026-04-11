@@ -621,6 +621,86 @@ exit 0
 }
 
 #[test]
+fn dumpdir_compile_flags_do_not_trigger_introspection_passthrough() {
+    let temp = fixture("12.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .arg("-dumpdir")
+        .arg("tmp/")
+        .arg("-dumpbase")
+        .arg("main.c")
+        .arg("-dumpbase-ext")
+        .arg(".c")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_native_text_notice(),
+        ))
+        .stderr(predicate::str::contains(
+            "help: fix the first parser error at the user-owned location",
+        ));
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "native_text_capture"
+    );
+}
+
+#[test]
+fn empty_backend_env_falls_back_to_path_backend() {
+    let temp = fixture("12.2.0");
+    let path_backend = temp.path().join("gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+    fs::copy(temp.path().join("fake-gcc"), &path_backend).unwrap();
+    let mut permissions = fs::metadata(&path_backend).unwrap().permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&path_backend, permissions).unwrap();
+    let original_path = env::var_os("PATH").unwrap_or_default();
+    let mut path_entries = vec![temp.path().to_path_buf()];
+    path_entries.extend(env::split_paths(&original_path));
+    let path = env::join_paths(path_entries).unwrap();
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", "")
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .env("PATH", &path)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            expected_tier_c_native_text_notice(),
+        ))
+        .stderr(predicate::str::contains(
+            "help: fix the first parser error at the user-owned location",
+        ))
+        .stderr(predicate::str::contains("backend resolution failed").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
+}
+
+#[test]
 fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     let temp = fixture("15.2.0");
     let backend = temp.path().join("fake-gcc");
@@ -985,7 +1065,7 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
 }
 
 fn expected_non_tty_stream_kind() -> &'static str {
-    if env::var_os("CI").is_some() {
+    if env::var_os("CI").is_some_and(|value| !value.is_empty()) {
         "cilog"
     } else {
         "pipe"
@@ -1488,9 +1568,11 @@ if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
 	"#
     );
     let backend = temp.path().join("fake-gcc");
-    fs::write(&backend, script).unwrap();
-    let mut permissions = fs::metadata(&backend).unwrap().permissions();
+    let backend_tmp = temp.path().join("fake-gcc.tmp");
+    fs::write(&backend_tmp, script).unwrap();
+    let mut permissions = fs::metadata(&backend_tmp).unwrap().permissions();
     permissions.set_mode(0o755);
-    fs::set_permissions(&backend, permissions).unwrap();
+    fs::set_permissions(&backend_tmp, permissions).unwrap();
+    fs::rename(&backend_tmp, &backend).unwrap();
     temp
 }

@@ -109,13 +109,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     if let Some(path) = injected_sarif_path.as_ref().filter(|path| path.exists()) {
         secure_private_file(path)?;
     }
-    let stderr_capture = match stderr_handle {
-        Some(handle) => handle
-            .join()
-            .unwrap_or_else(|_| Ok(CapturedStderr::empty(stderr_spool_path.clone())))
-            .unwrap_or_else(|_| CapturedStderr::empty(stderr_spool_path.clone())),
-        None => CapturedStderr::empty(stderr_spool_path.clone()),
-    };
+    let stderr_capture = await_stderr_capture(stderr_handle, &stderr_spool_path)?;
     if stderr_capture.spool_path.exists() {
         secure_private_file(&stderr_capture.spool_path)?;
     }
@@ -259,6 +253,20 @@ pub(crate) fn capture_stderr_stream(
         total_bytes,
         spool_path: spool_path.to_path_buf(),
     })
+}
+
+pub(crate) fn await_stderr_capture(
+    stderr_handle: Option<thread::JoinHandle<Result<CapturedStderr, std::io::Error>>>,
+    stderr_spool_path: &Path,
+) -> Result<CapturedStderr, CaptureError> {
+    match stderr_handle {
+        Some(handle) => match handle.join() {
+            Ok(Ok(captured)) => Ok(captured),
+            Ok(Err(error)) => Err(CaptureError::StderrCapture(error)),
+            Err(_) => Err(CaptureError::StderrCaptureThreadPanicked),
+        },
+        None => Ok(CapturedStderr::empty(stderr_spool_path.to_path_buf())),
+    }
 }
 
 pub(crate) fn spawn_capture_reader(

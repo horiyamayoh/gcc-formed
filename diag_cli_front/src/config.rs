@@ -8,8 +8,9 @@ use diag_render::{DebugRefs, PathPolicy, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use serde::Deserialize;
 use std::env;
+use std::ffi::OsString;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub(crate) struct ConfigFile {
@@ -57,34 +58,49 @@ pub(crate) struct TraceSection {
 
 impl ConfigFile {
     pub(crate) fn load(paths: &WrapperPaths) -> Result<Self, CliError> {
+        Self::load_from_paths(admin_config_paths(), Some(&paths.config_path))
+    }
+
+    fn load_from_paths<I, P>(admin_paths: I, user_path: Option<P>) -> Result<Self, CliError>
+    where
+        I: IntoIterator<Item = PathBuf>,
+        P: AsRef<Path>,
+    {
         let mut merged = ConfigFile::default();
-        if let Some(admin) = admin_config_path()
-            && admin.exists()
-        {
-            merged = merge_config(
-                merged,
-                toml::from_str(&fs::read_to_string(admin)?)
-                    .map_err(|e| CliError::Config(e.to_string()))?,
-            );
+        if let Some(admin) = admin_paths.into_iter().find(|path| path.exists()) {
+            merged = merge_config(merged, load_config_file(&admin)?);
         }
-        if paths.config_path.exists() {
-            merged = merge_config(
-                merged,
-                toml::from_str(&fs::read_to_string(&paths.config_path)?)
-                    .map_err(|e| CliError::Config(e.to_string()))?,
-            );
+        if let Some(user_path) = user_path
+            && user_path.as_ref().exists()
+        {
+            merged = merge_config(merged, load_config_file(user_path.as_ref())?);
         }
         Ok(merged)
     }
 }
 
-fn admin_config_path() -> Option<PathBuf> {
-    let dirs = env::var_os("XDG_CONFIG_DIRS")
-        .map(|value| env::split_paths(&value).collect::<Vec<_>>())
+fn admin_config_paths() -> Vec<PathBuf> {
+    admin_config_paths_from(env::var_os("XDG_CONFIG_DIRS"))
+}
+
+fn admin_config_paths_from(raw_xdg_config_dirs: Option<OsString>) -> Vec<PathBuf> {
+    let dirs = raw_xdg_config_dirs
+        .as_deref()
+        .filter(|value| !value.is_empty())
+        .map(|value| {
+            env::split_paths(value)
+                .filter(|path| !path.as_os_str().is_empty())
+                .collect::<Vec<_>>()
+        })
+        .filter(|paths| !paths.is_empty())
         .unwrap_or_else(|| vec![PathBuf::from("/etc/xdg")]);
     dirs.into_iter()
-        .next()
         .map(|dir| dir.join("cc-formed").join("config.toml"))
+        .collect()
+}
+
+fn load_config_file(path: &Path) -> Result<ConfigFile, CliError> {
+    toml::from_str(&fs::read_to_string(path)?).map_err(|e| CliError::Config(e.to_string()))
 }
 
 fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
@@ -187,6 +203,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
 
     #[test]
     fn overlay_config_overrides_matching_fields_only() {
@@ -237,5 +254,102 @@ mod tests {
         assert_eq!(merged.render.path_policy, Some(PathPolicy::RelativeToCwd));
         assert_eq!(merged.render.debug_refs, Some(DebugRefs::CaptureRef));
         assert_eq!(merged.trace.retention_policy, Some(RetentionPolicy::Always));
+    }
+
+    #[test]
+    fn load_uses_first_existing_admin_config_candidate() {
+        let temp = tempdir().unwrap();
+        let missing_admin = temp
+            .path()
+            .join("etc-a")
+            .join("cc-formed")
+            .join("config.toml");
+        let fallback_admin = temp
+            .path()
+            .join("etc-b")
+            .join("cc-formed")
+            .join("config.toml");
+        fs::create_dir_all(fallback_admin.parent().unwrap()).unwrap();
+        fs::write(
+            &fallback_admin,
+            r#"
+                [backend]
+                gcc = "/opt/gcc-from-second"
+            "#,
+        )
+        .unwrap();
+
+        let loaded =
+            ConfigFile::load_from_paths([missing_admin, fallback_admin], Option::<&Path>::None)
+                .unwrap();
+
+        assert_eq!(
+            loaded.backend.gcc,
+            Some(PathBuf::from("/opt/gcc-from-second"))
+        );
+    }
+
+    #[test]
+    fn user_config_overrides_first_existing_admin_config() {
+        let temp = tempdir().unwrap();
+        let admin = temp
+            .path()
+            .join("etc")
+            .join("cc-formed")
+            .join("config.toml");
+        let user = temp.path().join("user-config.toml");
+        fs::create_dir_all(admin.parent().unwrap()).unwrap();
+        fs::write(
+            &admin,
+            r#"
+                [backend]
+                gcc = "/opt/gcc-from-admin"
+
+                [runtime]
+                mode = "shadow"
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &user,
+            r#"
+                [runtime]
+                mode = "render"
+            "#,
+        )
+        .unwrap();
+
+        let loaded = ConfigFile::load_from_paths([admin], Some(&user)).unwrap();
+
+        assert_eq!(
+            loaded.backend.gcc,
+            Some(PathBuf::from("/opt/gcc-from-admin"))
+        );
+        assert_eq!(loaded.runtime.mode, Some(ExecutionMode::Render));
+    }
+
+    #[test]
+    fn admin_config_paths_fall_back_to_default_when_xdg_config_dirs_is_empty() {
+        let paths = admin_config_paths_from(Some(OsString::new()));
+
+        assert_eq!(paths, vec![PathBuf::from("/etc/xdg/cc-formed/config.toml")]);
+    }
+
+    #[test]
+    fn admin_config_paths_ignore_empty_candidates_in_xdg_config_dirs() {
+        let separator = if cfg!(windows) { ";" } else { ":" };
+        let raw = OsString::from(format!(
+            "{separator}/opt/xdg-a{separator}/opt/xdg-b{separator}"
+        ));
+
+        let paths = admin_config_paths_from(Some(raw));
+
+        assert_eq!(
+            paths,
+            vec![
+                PathBuf::from("/opt/xdg-a/cc-formed/config.toml"),
+                PathBuf::from("/opt/xdg-b/cc-formed/config.toml"),
+            ]
+        );
     }
 }

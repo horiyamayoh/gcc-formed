@@ -377,6 +377,7 @@ pub(crate) fn normalize_invocation(argv: &[String], user_arg_count: usize) -> No
     let mut injected_flag_count = 0;
     let mut expect_output_path = false;
     let mut expect_language = false;
+    let mut skip_next_option_value = false;
 
     for (index, arg) in argv.iter().enumerate() {
         let wrapper_owned = index >= user_arg_count;
@@ -389,6 +390,10 @@ pub(crate) fn normalize_invocation(argv: &[String], user_arg_count: usize) -> No
             expect_language = false;
             continue;
         }
+        if skip_next_option_value {
+            skip_next_option_value = false;
+            continue;
+        }
 
         match arg.as_str() {
             "-c" => compile_only = true,
@@ -399,6 +404,14 @@ pub(crate) fn normalize_invocation(argv: &[String], user_arg_count: usize) -> No
                 expect_output_path = true;
             }
             "-x" => expect_language = true,
+            "-I" => {
+                include_path_count += 1;
+                skip_next_option_value = true;
+            }
+            "-D" => {
+                define_count += 1;
+                skip_next_option_value = true;
+            }
             _ if arg.starts_with("-I") => include_path_count += 1,
             _ if arg.starts_with("-D") => define_count += 1,
             _ if arg.starts_with("-fdiagnostics-") => {
@@ -411,6 +424,7 @@ pub(crate) fn normalize_invocation(argv: &[String], user_arg_count: usize) -> No
                     injected_flag_count += 1;
                 }
             }
+            _ if takes_separate_option_value(arg) => skip_next_option_value = true,
             _ if arg.starts_with('-') => {}
             _ => input_count += 1,
         }
@@ -429,6 +443,36 @@ pub(crate) fn normalize_invocation(argv: &[String], user_arg_count: usize) -> No
         diagnostics_flag_count,
         injected_flag_count,
     }
+}
+
+fn takes_separate_option_value(arg: &str) -> bool {
+    matches!(
+        arg,
+        "-U" | "-include"
+            | "-imacros"
+            | "-iquote"
+            | "-isystem"
+            | "-idirafter"
+            | "-iprefix"
+            | "-iwithprefix"
+            | "-iwithprefixbefore"
+            | "-isysroot"
+            | "--sysroot"
+            | "-MF"
+            | "-MT"
+            | "-MQ"
+            | "-L"
+            | "-B"
+            | "-specs"
+            | "-wrapper"
+            | "-Xassembler"
+            | "-Xpreprocessor"
+            | "-Xlinker"
+            | "-Xclang"
+            | "-dumpdir"
+            | "-dumpbase"
+            | "-dumpbase-ext"
+    )
 }
 
 pub(crate) fn write_invocation_record(

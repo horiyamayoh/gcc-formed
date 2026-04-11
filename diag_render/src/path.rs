@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 pub(crate) fn format_location(request: &RenderRequest, location: &Location) -> String {
     format!(
         "{}:{}:{}",
-        display_path(request, location.path_raw()),
+        display_path(request, display_path_input(location)),
         location.line(),
         location.column()
     )
@@ -68,13 +68,22 @@ fn collect_node_relative_candidates(
     candidates: &mut Vec<Vec<String>>,
 ) {
     for location in &node.locations {
-        if let Some(relative) = relative_display_path(request, location.path_raw()) {
+        if let Some(relative) = relative_display_path(request, display_path_input(location)) {
             candidates.push(path_components(&relative));
         }
     }
     for child in &node.children {
         collect_node_relative_candidates(request, child, candidates);
     }
+}
+
+fn display_path_input(location: &Location) -> &str {
+    location
+        .file
+        .display_path
+        .as_deref()
+        .filter(|path| !path.is_empty())
+        .unwrap_or_else(|| location.path_raw())
 }
 
 fn relative_display_path(request: &RenderRequest, raw_path: &str) -> Option<String> {

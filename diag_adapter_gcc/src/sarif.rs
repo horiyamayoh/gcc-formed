@@ -3,9 +3,10 @@
 use crate::classify::{
     classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
     infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
+    structured_message_text,
 };
 use crate::ingest::AdapterError;
-use crate::{json_str, json_u64};
+use crate::{json_str, json_u32};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
@@ -124,12 +125,8 @@ fn result_to_node(
     result: &Value,
     capture_ref: &str,
 ) -> DiagnosticNode {
-    let raw_text = result
-        .get("message")
-        .and_then(|message| message.get("text").or_else(|| message.get("markdown")))
-        .and_then(Value::as_str)
-        .unwrap_or("compiler reported a diagnostic")
-        .to_string();
+    let raw_text = structured_message_text(result.get("message"))
+        .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
     let related = related_messages(result);
     let family_seed = combined_message_seed(&raw_text, &related);
     let family_decision = classify_family_seed(&family_seed);
@@ -152,7 +149,7 @@ fn result_to_node(
     DiagnosticNode {
         id: format!("sarif-{run_index}-{result_index}"),
         origin: Origin::Gcc,
-        phase: infer_phase(&raw_text, &context_chains),
+        phase: infer_phase(&family_seed, &context_chains),
         severity,
         semantic_role: SemanticRole::Root,
         message: MessageText {
@@ -234,18 +231,17 @@ fn parse_locations(result: &Value) -> Vec<Location> {
         if path.is_empty() {
             continue;
         }
-        let start_line = json_u64(&region, "startLine").unwrap_or(1) as u32;
-        let start_column = json_u64(&region, "startColumn").unwrap_or(1) as u32;
+        let start_line = json_u32(&region, "startLine").unwrap_or(1);
+        let start_column = json_u32(&region, "startColumn").unwrap_or(1);
         let mut parsed = Location::caret(
             path,
             start_line,
             start_column,
             diag_core::LocationRole::Primary,
         );
-        if let (Some(end_line), Some(end_column)) = (
-            json_u64(&region, "endLine").map(|value| value as u32),
-            json_u64(&region, "endColumn").map(|value| value as u32),
-        ) {
+        if let (Some(end_line), Some(end_column)) =
+            (json_u32(&region, "endLine"), json_u32(&region, "endColumn"))
+        {
             parsed =
                 parsed.with_range_end(end_line, end_column, diag_core::BoundarySemantics::Unknown);
         }
@@ -269,11 +265,7 @@ fn parse_related_locations(
         .into_iter()
         .enumerate()
         .filter_map(|(index, location)| {
-            let message = location
-                .get("message")
-                .and_then(|message| message.get("text"))
-                .and_then(Value::as_str)
-                .map(str::to_string)?;
+            let message = structured_message_text(location.get("message"))?;
             if message.trim().is_empty() || is_candidate_count_message(&message) {
                 return None;
             }
@@ -313,10 +305,7 @@ fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
             frames: Vec::new(),
         });
     }
-    let message = result
-        .get("message")
-        .and_then(|message| message.get("text"))
-        .and_then(Value::as_str)
+    let message = structured_message_text(result.get("message"))
         .unwrap_or_default()
         .to_lowercase();
     if message.contains("template") {
@@ -343,14 +332,12 @@ fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
         .into_iter()
         .flatten()
     {
-        let related_message = location
-            .get("message")
-            .and_then(|message| message.get("text"))
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        let frame = context_frame_from_related_location(related_message, location);
+        let related_message = structured_message_text(location.get("message")).unwrap_or_default();
+        let frame = context_frame_from_related_location(&related_message, location);
         let lowered = related_message.to_lowercase();
         if lowered.contains("template")
+            || lowered.contains("required from")
+            || lowered.contains("required by substitution")
             || lowered.contains("deduction/substitution")
             || lowered.contains("deduced conflicting")
         {
@@ -385,8 +372,8 @@ fn context_frame_from_related_location(message: &str, location: &Value) -> diag_
             .and_then(|artifact| artifact.get("uri"))
             .and_then(Value::as_str)
             .map(ToString::to_string),
-        line: json_u64(&region, "startLine").map(|value| value as u32),
-        column: json_u64(&region, "startColumn").map(|value| value as u32),
+        line: json_u32(&region, "startLine"),
+        column: json_u32(&region, "startColumn"),
     }
 }
 

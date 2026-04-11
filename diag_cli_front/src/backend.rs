@@ -50,6 +50,14 @@ impl ExecutionPlan {
     }
 }
 
+fn normalized_backend_override(raw: Option<OsString>) -> Option<PathBuf> {
+    raw.filter(|value| !value.is_empty()).map(PathBuf::from)
+}
+
+pub(crate) fn env_backend_override() -> Option<PathBuf> {
+    normalized_backend_override(env::var_os("FORMED_BACKEND_GCC"))
+}
+
 fn build_capture_plan(
     compatibility_seam: &CliCompatibilitySeam,
     mode: ExecutionMode,
@@ -110,7 +118,7 @@ pub(crate) fn build_execution_plan(
     let backend = cache
         .get_or_probe(ResolveRequest {
             explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
-            env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
+            env_backend: env_backend_override(),
             invoked_as: argv0.to_string(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
@@ -354,6 +362,15 @@ mod tests {
         assert_eq!(
             plan.native_text_capture,
             NativeTextCapturePolicy::CaptureOnly
+        );
+    }
+
+    #[test]
+    fn normalized_backend_override_ignores_empty_env_values() {
+        assert_eq!(normalized_backend_override(Some(OsString::new())), None);
+        assert_eq!(
+            normalized_backend_override(Some(OsString::from("/opt/gcc"))),
+            Some(PathBuf::from("/opt/gcc"))
         );
     }
 }

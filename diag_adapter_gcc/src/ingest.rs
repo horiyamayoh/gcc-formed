@@ -299,23 +299,19 @@ pub fn ingest_with_reason(
 }
 
 fn structured_input(bundle: &CaptureBundle) -> StructuredInput<'_> {
-    if let Some(artifact) = bundle
-        .structured_artifacts
-        .iter()
-        .find(|artifact| matches!(artifact.kind, ArtifactKind::GccSarif))
+    if let Some((artifact, available)) =
+        preferred_structured_artifact(&bundle.structured_artifacts, ArtifactKind::GccSarif)
     {
-        if structured_artifact_payload_available(artifact) {
+        if available {
             return StructuredInput::AvailableSarif(artifact);
         }
         return StructuredInput::MissingSarif(artifact);
     }
 
-    if let Some(artifact) = bundle
-        .structured_artifacts
-        .iter()
-        .find(|artifact| matches!(artifact.kind, ArtifactKind::GccJson))
+    if let Some((artifact, available)) =
+        preferred_structured_artifact(&bundle.structured_artifacts, ArtifactKind::GccJson)
     {
-        if structured_artifact_payload_available(artifact) {
+        if available {
             return StructuredInput::AvailableGccJson(artifact);
         }
         return StructuredInput::MissingGccJson(artifact);
@@ -328,8 +324,31 @@ fn structured_input(bundle: &CaptureBundle) -> StructuredInput<'_> {
         .unwrap_or(StructuredInput::None)
 }
 
+fn preferred_structured_artifact(
+    artifacts: &[CaptureArtifact],
+    kind: ArtifactKind,
+) -> Option<(&CaptureArtifact, bool)> {
+    let mut first_matching = None;
+    for artifact in artifacts.iter().filter(|artifact| artifact.kind == kind) {
+        if first_matching.is_none() {
+            first_matching = Some(artifact);
+        }
+        if structured_artifact_payload_available(artifact) {
+            return Some((artifact, true));
+        }
+    }
+    first_matching.map(|artifact| (artifact, false))
+}
+
 fn structured_artifact_payload_available(artifact: &CaptureArtifact) -> bool {
-    artifact.inline_text.is_some() || artifact.external_ref.is_some()
+    artifact
+        .inline_text
+        .as_deref()
+        .is_some_and(|text| !text.trim().is_empty())
+        || artifact
+            .external_ref
+            .as_deref()
+            .is_some_and(|path| !path.trim().is_empty())
 }
 
 fn source_authority_for_residual(stderr_text: &str) -> SourceAuthority {

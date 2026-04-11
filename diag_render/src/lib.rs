@@ -270,10 +270,10 @@ mod tests {
     use crate::family::summarize_supporting_evidence;
     use crate::selector::select_groups;
     use diag_core::{
-        AnalysisOverlay, CaptureArtifact, ContextChain, ContextChainKind, ContextFrame,
-        DiagnosticDocument, DocumentCompleteness, Location, MessageText, NodeCompleteness, Origin,
-        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
-        Severity, ToolInfo,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
+        ContextChainKind, ContextFrame, DiagnosticDocument, DocumentCompleteness, Location,
+        MessageText, NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance,
+        ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -689,6 +689,40 @@ mod tests {
     }
 
     #[test]
+    fn renderer_prefers_display_path_for_location_and_excerpt_headers() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "raw/build/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        let raw = tempdir
+            .path()
+            .join("raw/build/main.c")
+            .display()
+            .to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::RelativeToCwd;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location(&raw, 2, 12, Ownership::User).with_display_path("src/main.c")];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some("src/main.c:2:12")
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
+
+        let output = render(request).unwrap();
+        assert!(output.text.contains("--> src/main.c:2:12"));
+        assert!(output.text.contains("| src/main.c:2:12"));
+        assert!(!output.text.contains("raw/build/main.c:2:12"));
+    }
+
+    #[test]
     fn shortest_unambiguous_path_policy_shortens_unique_location_and_excerpt_headers() {
         let tempdir = tempfile::tempdir().unwrap();
         write_source_file(
@@ -712,6 +746,75 @@ mod tests {
             Some("main.c:2:12")
         );
         assert_eq!(view.cards[0].excerpts[0].location, "main.c:2:12");
+    }
+
+    #[test]
+    fn shortest_unambiguous_path_policy_uses_display_paths_for_disambiguation() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "raw/cache/ab/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        write_source_file(
+            &tempdir,
+            "raw/cache/cd/main.c",
+            "int helper(void) {\n    return 0;\n}\n",
+        );
+        let primary = tempdir
+            .path()
+            .join("raw/cache/ab/main.c")
+            .display()
+            .to_string();
+        let competing = tempdir
+            .path()
+            .join("raw/cache/cd/main.c")
+            .display()
+            .to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::ShortestUnambiguous;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location(&primary, 2, 12, Ownership::User).with_display_path("src/main.c")];
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Warning,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "other main.c warning".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![
+                    sample_location(&competing, 2, 5, Ownership::User)
+                        .with_display_path("tests/main.c"),
+                ],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].canonical_location.as_deref(),
+            Some("src/main.c:2:12")
+        );
+        assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
     }
 
     #[test]
@@ -865,6 +968,86 @@ mod tests {
 
         let view = build_view_model(&request).unwrap();
         assert_eq!(view.cards[0].excerpts[0].annotations, vec!["column 9"]);
+    }
+
+    #[test]
+    fn force_on_source_excerpt_policy_ignores_profile_excerpt_budget() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(&tempdir, "src/main.c", "one();\ntwo();\nthree();\n");
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.profile = RenderProfile::Default;
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations = vec![
+            sample_location("src/main.c", 1, 1, Ownership::User),
+            sample_location("src/main.c", 2, 1, Ownership::User),
+            sample_location("src/main.c", 3, 1, Ownership::User),
+        ];
+
+        let view = build_view_model(&request).unwrap();
+
+        assert_eq!(view.cards[0].excerpts.len(), 3);
+        assert_eq!(
+            view.cards[0]
+                .excerpts
+                .iter()
+                .map(|excerpt| excerpt.location.as_str())
+                .collect::<Vec<_>>(),
+            vec!["src/main.c:1:1", "src/main.c:2:1", "src/main.c:3:1"]
+        );
+    }
+
+    #[test]
+    fn excerpt_budget_skips_unreadable_locations_and_uses_next_readable_source() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(&tempdir, "src/readable.c", "ok();\n");
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.profile = RenderProfile::Ci;
+        request.source_excerpt_policy = SourceExcerptPolicy::Auto;
+        request.document.diagnostics[0].locations = vec![
+            sample_location("src/missing.c", 1, 1, Ownership::User),
+            sample_location("src/readable.c", 1, 1, Ownership::User),
+        ];
+
+        let view = build_view_model(&request).unwrap();
+
+        assert_eq!(view.cards[0].excerpts.len(), 1);
+        assert_eq!(view.cards[0].excerpts[0].location, "src/readable.c:1:1");
+        assert_eq!(view.cards[0].excerpts[0].lines, vec!["ok();"]);
+    }
+
+    #[test]
+    fn excerpt_uses_source_snippet_capture_when_source_file_is_missing() {
+        let mut request = sample_request();
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.captures.push(CaptureArtifact {
+            id: "snippet-1".to_string(),
+            kind: ArtifactKind::SourceSnippet,
+            media_type: "text/plain".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(12),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some("captured();\n".to_string()),
+            external_ref: None,
+            produced_by: None,
+        });
+        let mut location = sample_location("src/missing.c", 42, 5, Ownership::User);
+        location.source_excerpt_ref = Some("snippet-1".to_string());
+        request.document.diagnostics[0].locations = vec![location];
+
+        let view = build_view_model(&request).unwrap();
+
+        assert_eq!(view.cards[0].excerpts.len(), 1);
+        assert_eq!(view.cards[0].excerpts[0].location, "src/missing.c:42:5");
+        assert_eq!(view.cards[0].excerpts[0].lines, vec!["captured();"]);
+        assert_eq!(
+            view.cards[0].excerpts[0].annotations,
+            vec![format!("{}^", " ".repeat(4))]
+        );
     }
 
     #[test]
@@ -1805,6 +1988,46 @@ mod tests {
         assert_eq!(
             evidence.context_lines[1],
             "because: candidate conversion remains internal at /usr/include/vector:18:7"
+        );
+    }
+
+    #[test]
+    fn overload_supporting_evidence_uses_display_path_and_strips_display_prefixed_note() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let raw = tempdir
+            .path()
+            .join("raw/build/main.cpp")
+            .display()
+            .to_string();
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.path_policy = PathPolicy::RelativeToCwd;
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .family = Some("type_overload".into());
+
+        let mut note = request.document.diagnostics[0].clone();
+        note.id = "candidate-remapped".to_string();
+        note.message.raw_text =
+            "src/main.cpp:21:9: note: candidate conversion matches the call site".to_string();
+        note.locations =
+            vec![sample_location(&raw, 21, 9, Ownership::User).with_display_path("src/main.cpp")];
+        note.children = Vec::new();
+        note.suggestions = Vec::new();
+        note.context_chains = Vec::new();
+        note.symbol_context = None;
+        note.analysis = None;
+        note.node_completeness = NodeCompleteness::Complete;
+
+        request.document.diagnostics[0].children = vec![note];
+
+        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        assert_eq!(
+            evidence.context_lines,
+            vec!["because: candidate conversion matches the call site at src/main.cpp:21:9"]
         );
     }
 

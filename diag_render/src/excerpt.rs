@@ -1,7 +1,7 @@
 use crate::budget::budget_for;
 use crate::path::{format_location, resolved_path};
 use crate::{RenderProfile, RenderRequest, SourceExcerptPolicy};
-use diag_core::{BoundarySemantics, DiagnosticNode, Location, Ownership};
+use diag_core::{ArtifactKind, BoundarySemantics, DiagnosticNode, Location, Ownership};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -25,6 +25,7 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
     }
     let limit = match request.profile {
         RenderProfile::RawFallback => 0,
+        _ if matches!(request.source_excerpt_policy, SourceExcerptPolicy::ForceOn) => usize::MAX,
         _ => budget_for(request.profile).source_excerpts,
     };
     let mut locations = node.locations.iter().enumerate().collect::<Vec<_>>();
@@ -33,18 +34,29 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
             .cmp(&excerpt_rank(request, left.1))
             .then_with(|| left.0.cmp(&right.0))
     });
-    locations
-        .iter()
-        .take(limit)
-        .filter_map(|(_, location)| build_excerpt_block(request, location))
-        .collect()
+    let mut excerpts = Vec::new();
+    for (_, location) in locations {
+        if excerpts.len() >= limit {
+            break;
+        }
+        if let Some(excerpt) = build_excerpt_block(request, location) {
+            excerpts.push(excerpt);
+        }
+    }
+    excerpts
 }
 
 fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<ExcerptBlock> {
-    let resolved_path = resolved_path(request, location.path_raw());
-    let content = fs::read_to_string(&resolved_path).ok()?;
+    let (content, snippet_backed) = excerpt_source_text(request, location)?;
     let line_index = usize::try_from(location.line().saturating_sub(1)).ok()?;
-    let source_line = content.lines().nth(line_index)?;
+    let source_line = if snippet_backed {
+        content
+            .lines()
+            .nth(line_index)
+            .or_else(|| content.lines().next())?
+    } else {
+        content.lines().nth(line_index)?
+    };
     let (display_line, precise_annotation_possible) = renderable_source_line(source_line);
 
     Some(ExcerptBlock {
@@ -52,6 +64,33 @@ fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<E
         lines: vec![display_line],
         annotations: excerpt_annotations(location, precise_annotation_possible),
     })
+}
+
+fn excerpt_source_text(request: &RenderRequest, location: &Location) -> Option<(String, bool)> {
+    if let Some(source_excerpt_ref) = location.source_excerpt_ref.as_deref()
+        && let Some(text) = source_snippet_text(request, source_excerpt_ref)
+    {
+        return Some((text, true));
+    }
+
+    let resolved_path = resolved_path(request, location.path_raw());
+    fs::read_to_string(&resolved_path)
+        .ok()
+        .map(|content| (content, false))
+}
+
+fn source_snippet_text(request: &RenderRequest, source_excerpt_ref: &str) -> Option<String> {
+    let capture = request.document.captures.iter().find(|capture| {
+        capture.id == source_excerpt_ref && matches!(capture.kind, ArtifactKind::SourceSnippet)
+    })?;
+    if let Some(text) = capture.inline_text.as_ref() {
+        return Some(text.clone());
+    }
+    capture
+        .external_ref
+        .as_ref()
+        .and_then(|path| fs::read(path).ok())
+        .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
 }
 
 fn excerpt_rank(request: &RenderRequest, location: &diag_core::Location) -> u8 {

@@ -24,7 +24,9 @@ pub fn enrich_document(document: &mut DiagnosticDocument, cwd: &Path) {
 
 fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
     for location in &mut node.locations {
-        location.file.ownership = Some(classify_ownership(location.path_raw(), cwd));
+        if location.file.ownership.is_none() {
+            location.file.ownership = Some(classify_ownership(location.path_raw(), cwd));
+        }
     }
 
     let family_decision = classify_family(node);
@@ -173,6 +175,28 @@ mod tests {
         assert_eq!(
             document.diagnostics[0].locations[0].ownership(),
             Some(&Ownership::User)
+        );
+    }
+
+    #[test]
+    fn preserves_existing_file_ownership_annotations() {
+        let mut node = sample_node("expected ';' before '}' token");
+        node.phase = Phase::Parse;
+        node.locations[0] =
+            sample_location("src/main.c").with_ownership(Ownership::Vendor, "fixture_vendor");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let location = &document.diagnostics[0].locations[0];
+        assert_eq!(location.ownership(), Some(&Ownership::Vendor));
+        assert_eq!(
+            location
+                .file
+                .ownership
+                .as_ref()
+                .map(|ownership| ownership.reason.as_str()),
+            Some("fixture_vendor")
         );
     }
 

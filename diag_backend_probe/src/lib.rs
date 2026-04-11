@@ -247,6 +247,12 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
             path: path.to_path_buf(),
             source,
         })?;
+    if !output.status.success() {
+        return Err(ProbeError::VersionProbe {
+            path: path.to_path_buf(),
+            source: std::io::Error::other(format!("--version exited with {}", output.status)),
+        });
+    }
     let version_string = String::from_utf8_lossy(&output.stdout)
         .lines()
         .next()
@@ -396,7 +402,8 @@ fn capability_profile_for_version_band(
 }
 
 fn parse_version(line: &str) -> Result<(u32, u32), ProbeError> {
-    for token in line.split_whitespace() {
+    let stripped = strip_parenthesized_segments(line);
+    for token in stripped.split_whitespace() {
         let parts = token.split('.').collect::<Vec<_>>();
         if parts.len() < 2 {
             continue;
@@ -408,6 +415,28 @@ fn parse_version(line: &str) -> Result<(u32, u32), ProbeError> {
         }
     }
     Err(ProbeError::UnparseableVersion(line.to_string()))
+}
+
+fn strip_parenthesized_segments(line: &str) -> String {
+    let mut stripped = String::with_capacity(line.len());
+    let mut depth = 0u32;
+
+    for ch in line.chars() {
+        match ch {
+            '(' => {
+                depth = depth.saturating_add(1);
+                stripped.push(' ');
+            }
+            ')' if depth > 0 => {
+                depth -= 1;
+                stripped.push(' ');
+            }
+            _ if depth == 0 => stripped.push(ch),
+            _ => stripped.push(' '),
+        }
+    }
+
+    stripped
 }
 
 fn driver_kind_for_path(path: &Path) -> DriverKind {
@@ -453,10 +482,32 @@ fn probe_key(path: &Path) -> Result<ProbeKey, ProbeError> {
 
 fn find_in_path(binary: &str) -> Option<PathBuf> {
     let path = env::var_os("PATH")?;
-    env::split_paths(&path)
+    find_in_path_with_path(binary, &path)
+}
+
+fn find_in_path_with_path(binary: &str, path: &OsStr) -> Option<PathBuf> {
+    env::split_paths(path)
         .map(|dir| dir.join(binary))
-        .find(|candidate| candidate.exists())
-        .and_then(|candidate| canonicalize_candidate(&candidate).ok())
+        .filter(|candidate| is_runnable_candidate(candidate))
+        .find_map(|candidate| canonicalize_candidate(&candidate).ok())
+}
+
+fn is_runnable_candidate(path: &Path) -> bool {
+    let Ok(metadata) = fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_file() {
+        return false;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        metadata.permissions().mode() & 0o111 != 0
+    }
+    #[cfg(not(unix))]
+    {
+        true
+    }
 }
 
 fn canonicalize_candidate(path: &Path) -> Result<PathBuf, ProbeError> {
@@ -466,6 +517,8 @@ fn canonicalize_candidate(path: &Path) -> Result<PathBuf, ProbeError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::path::Path;
 
     #[test]
     fn picks_cplusplus_driver_from_invocation_name() {
@@ -738,6 +791,13 @@ mod tests {
     }
 
     #[test]
+    fn ignores_parenthesized_vendor_version_tokens() {
+        let parsed = parse_version("gcc (Custom bundle 99.1 build) 13.2.0").unwrap();
+
+        assert_eq!(parsed, (13, 2));
+    }
+
+    #[test]
     fn rejects_empty_partial_and_malformed_version_lines() {
         for line in ["", "gcc", "gcc version 15", "gcc version fifteen.point.two"] {
             assert!(
@@ -745,6 +805,79 @@ mod tests {
                 "expected unparseable version for {line:?}"
             );
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn probe_backend_rejects_non_zero_version_exit_even_with_parseable_stdout() {
+        let temp = tempfile::tempdir().unwrap();
+        let backend = temp.path().join("fake-gcc");
+        fs::write(
+            &backend,
+            r#"#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  printf '%s\n' 'gcc (Fake) 15.2.0'
+  exit 1
+fi
+exit 0
+"#,
+        )
+        .unwrap();
+        make_executable(&backend);
+
+        let error = probe_backend(&backend, "gcc-formed".to_string()).unwrap_err();
+
+        match error {
+            ProbeError::VersionProbe { path, source } => {
+                assert_eq!(path, backend);
+                assert!(source.to_string().contains("exit"));
+            }
+            other => panic!("expected version probe failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn find_in_path_skips_directory_candidates() {
+        let temp = tempfile::tempdir().unwrap();
+        let blocked_dir = temp.path().join("blocked");
+        let valid_dir = temp.path().join("valid");
+        fs::create_dir_all(blocked_dir.join("gcc")).unwrap();
+        fs::create_dir_all(&valid_dir).unwrap();
+        let backend = valid_dir.join("gcc");
+        fs::write(&backend, "").unwrap();
+        make_executable(&backend);
+
+        let path = env::join_paths([blocked_dir.as_path(), valid_dir.as_path()]).unwrap();
+
+        assert_eq!(
+            find_in_path_with_path("gcc", &path),
+            Some(backend.canonicalize().unwrap())
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn find_in_path_skips_non_executable_file_candidates() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = tempfile::tempdir().unwrap();
+        let blocked_dir = temp.path().join("blocked");
+        let valid_dir = temp.path().join("valid");
+        fs::create_dir_all(&blocked_dir).unwrap();
+        fs::create_dir_all(&valid_dir).unwrap();
+        let blocked = blocked_dir.join("gcc");
+        let backend = valid_dir.join("gcc");
+        fs::write(&blocked, "#!/bin/sh\n").unwrap();
+        fs::write(&backend, "#!/bin/sh\n").unwrap();
+        fs::set_permissions(&blocked, fs::Permissions::from_mode(0o644)).unwrap();
+        make_executable(&backend);
+
+        let path = env::join_paths([blocked_dir.as_path(), valid_dir.as_path()]).unwrap();
+
+        assert_eq!(
+            find_in_path_with_path("gcc", &path),
+            Some(backend.canonicalize().unwrap())
+        );
     }
 
     #[test]
@@ -819,4 +952,16 @@ mod tests {
             BTreeSet::from([ProcessingPath::Passthrough])
         );
     }
+
+    #[cfg(unix)]
+    fn make_executable(path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
+    #[cfg(not(unix))]
+    fn make_executable(_path: &Path) {}
 }

@@ -1,4 +1,5 @@
 use crate::budget::budget_for;
+use crate::path::format_location;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{
     ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness, NodeCompleteness,
@@ -228,14 +229,7 @@ fn summarize_overload(
                 return None;
             }
             let location = best_location(request, child)
-                .map(|location| {
-                    format!(
-                        " at {}:{}:{}",
-                        location.path_raw(),
-                        location.line(),
-                        location.column()
-                    )
-                })
+                .map(|location| format!(" at {}", format_location(request, location)))
                 .unwrap_or_default();
             let rendered = if conservative && note.starts_with("candidate ") {
                 format!("{note}{location}")
@@ -524,20 +518,40 @@ fn normalized_child_note(request: &RenderRequest, node: &DiagnosticNode) -> Stri
         .trim()
         .to_string();
     if let Some(location) = best_location(request, node) {
-        let prefix = format!(
-            "{}:{}:{}:",
-            location.path_raw(),
-            location.line(),
-            location.column()
-        );
-        if let Some(stripped) = note.strip_prefix(&prefix) {
-            note = stripped.trim().to_string();
+        for prefix in location_prefixes(request, location) {
+            if let Some(stripped) = note.strip_prefix(&prefix) {
+                note = stripped.trim().to_string();
+                break;
+            }
         }
     }
     if let Some(stripped) = note.strip_prefix("note:") {
         note = stripped.trim().to_string();
     }
     note
+}
+
+fn location_prefixes(request: &RenderRequest, location: &diag_core::Location) -> Vec<String> {
+    let mut prefixes = vec![format!(
+        "{}:{}:{}:",
+        location.path_raw(),
+        location.line(),
+        location.column()
+    )];
+    if location.display_path() != location.path_raw() {
+        prefixes.push(format!(
+            "{}:{}:{}:",
+            location.display_path(),
+            location.line(),
+            location.column()
+        ));
+    }
+    let formatted = format!("{}:", format_location(request, location));
+    if !prefixes.iter().any(|prefix| prefix == &formatted) {
+        prefixes.push(formatted);
+    }
+    prefixes.sort_by_key(|prefix| std::cmp::Reverse(prefix.len()));
+    prefixes
 }
 
 fn ownership_rank(request: &RenderRequest, path: &str, ownership: Option<&Ownership>) -> u8 {

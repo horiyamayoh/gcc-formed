@@ -306,9 +306,7 @@ impl WrapperPaths {
     pub fn discover() -> Self {
         Self::from_env(
             |key| env::var_os(key),
-            env::var_os("HOME")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| PathBuf::from(".")),
+            home_from_env(env::var_os("HOME")),
             env::temp_dir(),
             build_target_triple(),
         )
@@ -318,47 +316,35 @@ impl WrapperPaths {
     where
         F: Fn(&str) -> Option<OsString>,
     {
-        let config_home = get_var("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| home.join(".config"));
-        let cache_home = get_var("XDG_CACHE_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| home.join(".cache"));
-        let state_home = get_var("XDG_STATE_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| home.join(".local").join("state"));
-        let runtime_home = get_var("XDG_RUNTIME_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| temp_dir.join("cc-formed-runtime"));
+        let env_path = |key: &str| {
+            get_var(key)
+                .filter(|value| !value.is_empty())
+                .map(PathBuf::from)
+        };
 
-        let config_path = get_var("FORMED_CONFIG_FILE")
-            .map(PathBuf::from)
-            .or_else(|| {
-                get_var("FORMED_CONFIG_DIR")
-                    .map(PathBuf::from)
-                    .map(|dir| dir.join("config.toml"))
-            })
+        let config_home = env_path("XDG_CONFIG_HOME").unwrap_or_else(|| home.join(".config"));
+        let cache_home = env_path("XDG_CACHE_HOME").unwrap_or_else(|| home.join(".cache"));
+        let state_home =
+            env_path("XDG_STATE_HOME").unwrap_or_else(|| home.join(".local").join("state"));
+        let runtime_home =
+            env_path("XDG_RUNTIME_DIR").unwrap_or_else(|| temp_dir.join("cc-formed-runtime"));
+
+        let config_path = env_path("FORMED_CONFIG_FILE")
+            .or_else(|| env_path("FORMED_CONFIG_DIR").map(|dir| dir.join("config.toml")))
             .unwrap_or_else(|| config_home.join("cc-formed").join("config.toml"));
-        let cache_root = get_var("FORMED_CACHE_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| cache_home.join("cc-formed"));
-        let state_root = get_var("FORMED_STATE_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| state_home.join("cc-formed"));
-        let runtime_root = get_var("FORMED_RUNTIME_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| runtime_home.join("cc-formed"));
-        let trace_root = get_var("FORMED_TRACE_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| state_root.join("traces"));
-        let install_root = get_var("FORMED_INSTALL_ROOT")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| {
-                home.join(".local")
-                    .join("opt")
-                    .join("cc-formed")
-                    .join(target_triple)
-            });
+        let cache_root =
+            env_path("FORMED_CACHE_DIR").unwrap_or_else(|| cache_home.join("cc-formed"));
+        let state_root =
+            env_path("FORMED_STATE_DIR").unwrap_or_else(|| state_home.join("cc-formed"));
+        let runtime_root =
+            env_path("FORMED_RUNTIME_DIR").unwrap_or_else(|| runtime_home.join("cc-formed"));
+        let trace_root = env_path("FORMED_TRACE_DIR").unwrap_or_else(|| state_root.join("traces"));
+        let install_root = env_path("FORMED_INSTALL_ROOT").unwrap_or_else(|| {
+            home.join(".local")
+                .join("opt")
+                .join("cc-formed")
+                .join(target_triple)
+        });
 
         Self {
             config_path,
@@ -385,6 +371,12 @@ impl WrapperPaths {
         secure_private_dir(&self.trace_root)?;
         Ok(())
     }
+}
+
+fn home_from_env(home: Option<OsString>) -> PathBuf {
+    home.filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// Returns the compile-time target triple, or `"unknown-target"` if not set.
@@ -460,8 +452,11 @@ pub fn write_trace(
 /// Writes a trace envelope to an explicit path, creating parent directories as needed.
 pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceError> {
     if let Some(parent) = path.parent() {
+        let parent_existed = parent.exists();
         fs::create_dir_all(parent)?;
-        secure_private_dir(parent)?;
+        if !parent_existed {
+            secure_private_dir(parent)?;
+        }
     }
     fs::write(path, serde_json::to_vec_pretty(trace)?)?;
     secure_private_file(path)?;
@@ -470,6 +465,13 @@ pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceErr
 
 /// Writes a build manifest as pretty-printed JSON and secures the file.
 pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), TraceError> {
+    if let Some(parent) = path.parent() {
+        let parent_existed = parent.exists();
+        fs::create_dir_all(parent)?;
+        if !parent_existed {
+            secure_private_dir(parent)?;
+        }
+    }
     fs::write(path, serde_json::to_vec_pretty(manifest)?)?;
     secure_private_file(path)?;
     Ok(())
@@ -714,6 +716,54 @@ mod tests {
     }
 
     #[test]
+    fn empty_env_overrides_fall_back_to_default_wrapper_paths() {
+        let env = BTreeMap::from([
+            ("XDG_CONFIG_HOME".to_string(), OsString::new()),
+            ("XDG_CACHE_HOME".to_string(), OsString::new()),
+            ("XDG_STATE_HOME".to_string(), OsString::new()),
+            ("XDG_RUNTIME_DIR".to_string(), OsString::new()),
+            ("FORMED_CONFIG_FILE".to_string(), OsString::new()),
+            ("FORMED_CONFIG_DIR".to_string(), OsString::new()),
+            ("FORMED_CACHE_DIR".to_string(), OsString::new()),
+            ("FORMED_STATE_DIR".to_string(), OsString::new()),
+            ("FORMED_RUNTIME_DIR".to_string(), OsString::new()),
+            ("FORMED_TRACE_DIR".to_string(), OsString::new()),
+            ("FORMED_INSTALL_ROOT".to_string(), OsString::new()),
+        ]);
+        let paths = WrapperPaths::from_env(
+            |key| env.get(key).cloned(),
+            PathBuf::from("/home/tester"),
+            PathBuf::from("/tmp"),
+            "x86_64-unknown-linux-gnu",
+        );
+
+        assert_eq!(
+            paths.config_path,
+            PathBuf::from("/home/tester/.config/cc-formed/config.toml")
+        );
+        assert_eq!(
+            paths.cache_root,
+            PathBuf::from("/home/tester/.cache/cc-formed")
+        );
+        assert_eq!(
+            paths.state_root,
+            PathBuf::from("/home/tester/.local/state/cc-formed")
+        );
+        assert_eq!(
+            paths.runtime_root,
+            PathBuf::from("/tmp/cc-formed-runtime/cc-formed")
+        );
+        assert_eq!(
+            paths.trace_root,
+            PathBuf::from("/home/tester/.local/state/cc-formed/traces")
+        );
+        assert_eq!(
+            paths.install_root,
+            PathBuf::from("/home/tester/.local/opt/cc-formed/x86_64-unknown-linux-gnu")
+        );
+    }
+
+    #[test]
     fn formed_overrides_take_precedence() {
         let env = BTreeMap::from([
             (
@@ -754,6 +804,13 @@ mod tests {
         assert_eq!(paths.runtime_root, PathBuf::from("/custom/runtime-root"));
         assert_eq!(paths.trace_root, PathBuf::from("/custom/trace-root"));
         assert_eq!(paths.install_root, PathBuf::from("/custom/install-root"));
+    }
+
+    #[test]
+    fn empty_home_env_uses_current_directory_fallback() {
+        let home = home_from_env(Some(OsString::new()));
+
+        assert_eq!(home, PathBuf::from("."));
     }
 
     #[cfg(unix)]
@@ -800,6 +857,88 @@ mod tests {
         assert_eq!(
             fs::metadata(&trace_path).unwrap().permissions().mode() & 0o777,
             0o600
+        );
+        assert_eq!(
+            fs::metadata(&manifest_path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn preserves_existing_parent_directory_permissions_when_writing_trace() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let parent = temp.join("existing-parent");
+        fs::create_dir_all(&parent).unwrap();
+        fs::set_permissions(&parent, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let trace_path = parent.join("trace.json");
+        let trace = TraceEnvelope {
+            trace_id: "trace-2".to_string(),
+            selected_mode: "render".to_string(),
+            selected_profile: "default".to_string(),
+            wrapper_verdict: None,
+            version_summary: None,
+            environment_summary: None,
+            capabilities: None,
+            timing: None,
+            child_exit: None,
+            parser_result_summary: None,
+            fingerprint_summary: None,
+            redaction_status: None,
+            decision_log: Vec::new(),
+            fallback_reason: None,
+            warning_messages: Vec::new(),
+            artifacts: Vec::new(),
+        };
+
+        write_trace_at(&trace_path, &trace).unwrap();
+
+        assert_eq!(
+            fs::metadata(&parent).unwrap().permissions().mode() & 0o777,
+            0o755
+        );
+        assert_eq!(
+            fs::metadata(&trace_path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn write_manifest_creates_missing_parent_directories() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let manifest_path = temp.join("nested/control/manifest.json");
+
+        write_manifest(
+            &manifest_path,
+            &default_build_manifest("lock".to_string(), "vendor".to_string()),
+        )
+        .unwrap();
+
+        let parent = manifest_path.parent().unwrap();
+        assert!(manifest_path.exists());
+        assert_eq!(
+            fs::metadata(parent).unwrap().permissions().mode() & 0o777,
+            0o700
         );
         assert_eq!(
             fs::metadata(&manifest_path).unwrap().permissions().mode() & 0o777,

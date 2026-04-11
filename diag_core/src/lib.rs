@@ -262,6 +262,128 @@ mod tests {
     }
 
     #[test]
+    fn rejects_empty_internal_ids() {
+        let mut document = sample_document();
+        document.captures[0].id.clear();
+        document.diagnostics[0].id.clear();
+        document.diagnostics[0].locations[0].id.clear();
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error == "capture id must be non-empty")
+        );
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error == "node id must be non-empty")
+        );
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| { error.contains("location id must be non-empty") })
+        );
+    }
+
+    #[test]
+    fn rejects_capture_storage_payload_mismatches() {
+        let mut document = sample_document();
+        document.captures[0].external_ref = Some("trace://stderr.raw".to_string());
+        document.captures.push(CaptureArtifact {
+            id: "sarif".to_string(),
+            kind: ArtifactKind::GccSarif,
+            media_type: "application/sarif+json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: Some("{\"version\":\"2.1.0\"}".to_string()),
+            external_ref: Some("trace://diagnostics.sarif".to_string()),
+            produced_by: None,
+        });
+        document.captures.push(CaptureArtifact {
+            id: "missing-json".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::Unavailable,
+            inline_text: Some("{}".to_string()),
+            external_ref: None,
+            produced_by: None,
+        });
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("inline capture stderr.raw must not set external_ref")
+        }));
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("external_ref capture sarif must not set inline_text")
+        }));
+        assert!(errors.errors.iter().any(|error| {
+            error.contains(
+                "unavailable capture missing-json must not set inline_text or external_ref",
+            )
+        }));
+    }
+
+    #[test]
+    fn rejects_blank_external_ref_payloads() {
+        let mut document = sample_document();
+        document.captures[0].storage = ArtifactStorage::ExternalRef;
+        document.captures[0].inline_text = None;
+        document.captures[0].external_ref = Some("   ".to_string());
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("external_ref capture stderr.raw external_ref must be non-empty")
+        }));
+    }
+
+    #[test]
+    fn rejects_duplicate_location_ids_within_a_node() {
+        let mut document = sample_document();
+        let duplicate = document.diagnostics[0].locations[0].clone();
+        document.diagnostics[0].locations.push(duplicate);
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors.errors.iter().any(|error| {
+                error.contains("has duplicate location id loc:src/main.c:4:1:4:1")
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_backwards_location_ranges() {
+        let mut document = sample_document();
+        document.diagnostics[0].locations[0] =
+            Location::caret("src/main.c", 8, 12, LocationRole::Primary).with_range_end(
+                8,
+                4,
+                BoundarySemantics::Unknown,
+            );
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| { error.contains("range.start must not come after range.end") })
+        );
+    }
+
+    #[test]
     fn rejects_invalid_location_integrity() {
         let mut document = sample_document();
         document.diagnostics[0].locations[0]
@@ -296,6 +418,89 @@ mod tests {
                 .iter()
                 .any(|error| error.contains("must have anchor or range"))
         );
+    }
+
+    #[test]
+    fn rejects_empty_location_path_and_blank_excerpt_ref() {
+        let mut document = sample_document();
+        document.diagnostics[0].locations[0].file.path_raw.clear();
+        document.diagnostics[0].locations[0].source_excerpt_ref = Some("   ".to_string());
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| { error.contains("file.path_raw must be non-empty") })
+        );
+        assert!(
+            errors.errors.iter().any(|error| {
+                error.contains("source_excerpt_ref must be non-empty when present")
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_missing_and_non_snippet_excerpt_refs() {
+        let mut document = sample_document();
+        document.diagnostics[0].locations[0].source_excerpt_ref =
+            Some("missing-snippet".to_string());
+        document.captures.push(CaptureArtifact {
+            id: "stderr.secondary".to_string(),
+            kind: ArtifactKind::CompilerStderrText,
+            media_type: "text/plain".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(8),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some("note: context".to_string()),
+            external_ref: None,
+            produced_by: None,
+        });
+        document.diagnostics[0].locations.push(Location {
+            id: "loc:src/snippet.c:9:2:9:2".to_string(),
+            file: FileRef::new("src/snippet.c"),
+            anchor: Some(SourcePoint::new(9, 2)),
+            range: None,
+            role: LocationRole::Secondary,
+            source_kind: LocationSourceKind::Caret,
+            label: None,
+            ownership_override: None,
+            provenance_override: None,
+            source_excerpt_ref: Some("stderr.secondary".to_string()),
+        });
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("source_excerpt_ref references missing capture missing-snippet")
+        }));
+        assert!(errors.errors.iter().any(|error| {
+            error.contains(
+                "source_excerpt_ref stderr.secondary must reference a source_snippet capture",
+            )
+        }));
+    }
+
+    #[test]
+    fn accepts_valid_source_snippet_excerpt_refs() {
+        let mut document = sample_document();
+        document.captures.push(CaptureArtifact {
+            id: "snippet-1".to_string(),
+            kind: ArtifactKind::SourceSnippet,
+            media_type: "text/plain".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(20),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some("int main(void) {}\n".to_string()),
+            external_ref: None,
+            produced_by: None,
+        });
+        document.diagnostics[0].locations[0].source_excerpt_ref = Some("snippet-1".to_string());
+
+        assert!(document.validate().is_ok());
     }
 
     #[test]

@@ -1,4 +1,5 @@
 use crate::args::WrapperIntrospection;
+use crate::backend::env_backend_override;
 use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
@@ -77,7 +78,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
     let backend = cache
         .get_or_probe(ResolveRequest {
             explicit_backend: None,
-            env_backend: env::var_os("FORMED_BACKEND_GCC").map(PathBuf::from),
+            env_backend: env_backend_override(),
             invoked_as: "gcc-formed".to_string(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
@@ -226,7 +227,7 @@ fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
 }
 
 fn hash_file(path: &Path) -> Result<String, CliError> {
-    let contents = fs::read_to_string(path).unwrap_or_default();
+    let contents = fs::read_to_string(path)?;
     Ok(diag_core::fingerprint_for(&contents))
 }
 
@@ -454,5 +455,12 @@ mod tests {
                 && case["scope_notice"]
                     == "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved."
         }));
+    }
+
+    #[test]
+    fn hash_file_errors_for_missing_inputs() {
+        let missing = Path::new("/definitely/missing/Cargo.lock");
+
+        assert!(matches!(hash_file(missing), Err(CliError::Io(_))));
     }
 }

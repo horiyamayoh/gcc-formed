@@ -2,11 +2,11 @@
 
 use crate::classify::{
     classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
-    infer_related_phase, infer_related_role,
+    infer_related_phase, infer_related_role, structured_message_text,
 };
 use crate::ingest::AdapterError;
 use crate::sarif::{push_chain_frame, read_structured_artifact_text};
-use crate::{json_str, json_u64};
+use crate::{json_str, json_u32};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
@@ -223,14 +223,13 @@ fn gcc_json_point_file(point: &Value) -> Option<String> {
 }
 
 fn gcc_json_point_line(point: &Value) -> Option<u32> {
-    json_u64(point, "line").map(|value| value as u32)
+    json_u32(point, "line")
 }
 
 fn gcc_json_point_column(point: &Value) -> Option<u32> {
-    json_u64(point, "column")
-        .or_else(|| json_u64(point, "display-column"))
-        .or_else(|| json_u64(point, "byte-column"))
-        .map(|value| value as u32)
+    json_u32(point, "column")
+        .or_else(|| json_u32(point, "display-column"))
+        .or_else(|| json_u32(point, "byte-column"))
 }
 
 fn parse_gcc_json_children(
@@ -257,14 +256,7 @@ fn parse_gcc_json_children(
 }
 
 fn json_message_text(message: Option<&Value>) -> Option<String> {
-    let message = message?;
-    message.as_str().map(ToString::to_string).or_else(|| {
-        message
-            .get("text")
-            .or_else(|| message.get("markdown"))
-            .and_then(Value::as_str)
-            .map(ToString::to_string)
-    })
+    structured_message_text(message)
 }
 
 fn json_child_messages(diagnostic: &Value) -> Vec<String> {
@@ -304,6 +296,7 @@ fn parse_gcc_json_context_chains(message: &str, children: &[DiagnosticNode]) -> 
         let lowered = child.message.raw_text.to_lowercase();
         if lowered.contains("template")
             || lowered.contains("required from")
+            || lowered.contains("required by substitution")
             || lowered.contains("deduction/substitution")
             || lowered.contains("deduced conflicting")
         {

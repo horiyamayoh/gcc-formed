@@ -20,12 +20,15 @@ mod tests {
         CapturedStderr, build_artifacts, build_capture_bundle, build_invocation_record,
         normalize_invocation, tool_info,
     };
-    use crate::capture::{capture_stderr_stream, path_is_safe_for_gcc_output};
+    use crate::capture::{
+        await_stderr_capture, capture_stderr_stream, path_is_safe_for_gcc_output,
+    };
     use crate::policy::{child_env_policy, child_env_policy_for_mode, child_env_policy_is_empty};
     use diag_backend_probe::{DriverKind, ProbeKey, SupportTier};
     use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, fingerprint_for};
     use std::io::Cursor;
     use std::path::PathBuf;
+    use std::thread;
 
     fn fake_probe() -> diag_backend_probe::ProbeResult {
         diag_backend_probe::ProbeResult {
@@ -764,6 +767,38 @@ exit 1
     }
 
     #[test]
+    fn await_stderr_capture_propagates_reader_io_error() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool_path = temp.path().join("stderr.raw");
+        let handle = thread::spawn(|| -> Result<CapturedStderr, std::io::Error> {
+            Err(std::io::Error::other("synthetic stderr capture failure"))
+        });
+
+        let error = await_stderr_capture(Some(handle), &spool_path).unwrap_err();
+
+        match error {
+            CaptureError::StderrCapture(source) => {
+                assert_eq!(source.kind(), std::io::ErrorKind::Other);
+                assert_eq!(source.to_string(), "synthetic stderr capture failure");
+            }
+            other => panic!("expected stderr capture error, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn await_stderr_capture_propagates_reader_panic() {
+        let temp = tempfile::tempdir().unwrap();
+        let spool_path = temp.path().join("stderr.raw");
+        let handle = thread::spawn(|| -> Result<CapturedStderr, std::io::Error> {
+            panic!("synthetic stderr capture panic");
+        });
+
+        let error = await_stderr_capture(Some(handle), &spool_path).unwrap_err();
+
+        assert!(matches!(error, CaptureError::StderrCaptureThreadPanicked));
+    }
+
+    #[test]
     fn bundle_helpers_preserve_injected_flag_and_temp_paths_when_sarif_is_missing() {
         let bundle = CaptureBundle {
             plan: CapturePlan {
@@ -982,6 +1017,30 @@ exit 1
         assert_eq!(normalized.define_count, 1);
         assert_eq!(normalized.diagnostics_flag_count, 0);
         assert_eq!(normalized.injected_flag_count, 0);
+    }
+
+    #[test]
+    fn separated_option_values_do_not_count_as_inputs() {
+        let normalized = normalize_invocation(
+            &[
+                "-c".to_string(),
+                "-I".to_string(),
+                "include".to_string(),
+                "-D".to_string(),
+                "DEBUG=1".to_string(),
+                "-include".to_string(),
+                "config.h".to_string(),
+                "-MF".to_string(),
+                "deps.d".to_string(),
+                "main.cc".to_string(),
+            ],
+            10,
+        );
+
+        assert_eq!(normalized.input_count, 1);
+        assert_eq!(normalized.include_path_count, 1);
+        assert_eq!(normalized.define_count, 1);
+        assert!(normalized.compile_only);
     }
 
     #[test]

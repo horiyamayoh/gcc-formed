@@ -34,6 +34,11 @@ pub(crate) fn json_u64(v: &Value, key: &str) -> Option<u64> {
     v.get(key).and_then(Value::as_u64)
 }
 
+/// Returns the `u32` value at `key`, if present, numeric, and in range.
+pub(crate) fn json_u32(v: &Value, key: &str) -> Option<u32> {
+    json_u64(v, key).and_then(|value| u32::try_from(value).ok())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,7 +46,7 @@ mod tests {
     use crate::ingest::compatibility_bundle_from_legacy_inputs;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
-        DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
+        DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness, Phase,
         ProvenanceSource, RunInfo, SemanticRole, SourceAuthority, WrapperSurface,
     };
     use diag_rulepack::checked_in_rulepack_version;
@@ -269,6 +274,498 @@ mod tests {
         assert_eq!(
             document.diagnostics[0].children[0].message.raw_text,
             "candidate 1: 'void takes(int, int)'"
+        );
+    }
+
+    #[test]
+    fn parses_markdown_only_sarif_messages_and_related_locations() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"markdown":"no matching function for call to `expect_ptr(int&)`"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":6,"startColumn":15}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":6,"startColumn":15}
+                          },
+                          "message":{"markdown":"there is 1 candidate"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":2,"startColumn":6}
+                          },
+                          "message":{"markdown":"candidate 1: `template<class T> void expect_ptr(T*)`"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":2,"startColumn":6}
+                          },
+                          "message":{"markdown":"template argument deduction/substitution failed:"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(
+            root.message.raw_text,
+            "no matching function for call to `expect_ptr(int&)`"
+        );
+        assert_eq!(root.phase, Phase::Instantiate);
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert_eq!(root.children.len(), 2);
+        assert_eq!(
+            root.children[0].message.raw_text,
+            "candidate 1: `template<class T> void expect_ptr(T*)`"
+        );
+        assert_eq!(
+            root.children[1].message.raw_text,
+            "template argument deduction/substitution failed:"
+        );
+    }
+
+    #[test]
+    fn prefers_non_empty_markdown_when_text_field_is_blank() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"   ","markdown":"expected ';' before '}' token"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":4,"startColumn":1}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":3,"startColumn":1}
+                          },
+                          "message":{"text":"","markdown":"to match this '{'"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.message.raw_text, "expected ';' before '}' token");
+        assert_eq!(root.children.len(), 1);
+        assert_eq!(root.children[0].message.raw_text, "to match this '{'");
+    }
+
+    #[test]
+    fn defaults_overflowing_sarif_location_values_without_wrapping() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"expected ';' before '}' token"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{
+                              "startLine":4294967296,
+                              "startColumn":4294967296,
+                              "endLine":4294967297,
+                              "endColumn":4294967297
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+
+        let location = document.diagnostics[0].primary_location().unwrap();
+        assert_eq!(location.line(), 1);
+        assert_eq!(location.column(), 1);
+        assert!(document.diagnostics[0].locations[0].range.is_none());
+    }
+
+    #[test]
+    fn prefers_non_empty_markdown_for_gcc_json_message_objects() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":{"text":"", "markdown":"expected ';' before '}' token"},
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":4,"column":1}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":{"text":"  ", "markdown":"to match this '{'"},
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.c","line":3,"column":1}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.message.raw_text, "expected ';' before '}' token");
+        assert_eq!(root.children.len(), 1);
+        assert_eq!(root.children[0].message.raw_text, "to match this '{'");
+    }
+
+    #[test]
+    fn defaults_overflowing_gcc_json_location_values_without_wrapping() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token",
+                "locations":[
+                  {
+                    "caret":{
+                      "file":"src/main.c",
+                      "line":4294967296,
+                      "column":4294967296
+                    },
+                    "finish":{
+                      "file":"src/main.c",
+                      "line":4294967297,
+                      "column":4294967297
+                    }
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let location = document.diagnostics[0].primary_location().unwrap();
+        assert_eq!(location.line(), 1);
+        assert_eq!(location.column(), 1);
+        assert!(document.diagnostics[0].locations[0].range.is_none());
+    }
+
+    #[test]
+    fn classifies_sarif_required_by_substitution_as_template_context() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"no matching function for call to 'expect_ptr(int&)'"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          },
+                          "message":{"text":"  required by substitution of 'template<class T> void expect_ptr(T*) [with T = int]'"}}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Instantiate);
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert!(
+            root.context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+        );
+    }
+
+    #[test]
+    fn classifies_gcc_json_required_by_substitution_as_template_context() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'expect_ptr(int&)'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":8,"column":15}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"  required by substitution of 'template<class T> void expect_ptr(T*) [with T = int]'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":8,"column":15}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Instantiate);
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert_eq!(root.children.len(), 1);
+        assert_eq!(root.children[0].phase, Phase::Instantiate);
+    }
+
+    #[test]
+    fn sarif_root_phase_uses_related_messages_for_linker_context() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"collect2: error: ld returned 1 exit status"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":8,"startColumn":1}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":8,"startColumn":1}
+                          },
+                          "message":{"text":"undefined reference to `missing_symbol`"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Link);
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("linker.undefined_reference")
+        );
+    }
+
+    #[test]
+    fn marks_template_deduction_child_notes_as_instantiate_phase() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'takes_same(int, double)'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":4,"column":24}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"  deduced conflicting types for parameter 'T' ('int' and 'double')",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":4,"column":24}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+        assert_eq!(root.children.len(), 1);
+        assert_eq!(root.children[0].phase, Phase::Instantiate);
+    }
+
+    #[test]
+    fn structured_multiple_definition_uses_specific_first_action_hint() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; main.c:(.text+0x0): first defined here",
+                "locations":[
+                  {
+                    "caret":{"file":"helper.c","line":1,"column":1}
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Link);
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("linker.multiple_definition")
+        );
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.first_action_hint.as_deref()),
+            Some("keep exactly one definition and move shared declarations into headers")
         );
     }
 
@@ -620,6 +1117,65 @@ mod tests {
     }
 
     #[test]
+    fn ingest_bundle_prefers_later_available_sarif_over_earlier_missing_placeholder() {
+        let run = base_run_info();
+        let sarif = r#"{
+          "version":"2.1.0",
+          "runs":[
+            {
+              "results":[
+                {
+                  "level":"error",
+                  "message":{"text":"expected ';' before '}' token"}
+                }
+              ]
+            }
+          ]
+        }"#;
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, "", &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.sarif.missing".to_string(),
+            kind: ArtifactKind::GccSarif,
+            media_type: "application/sarif+json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::Unavailable,
+            inline_text: None,
+            external_ref: None,
+            produced_by: Some(run.primary_tool.clone()),
+        });
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.sarif.inline".to_string(),
+            kind: ArtifactKind::GccSarif,
+            media_type: "application/sarif+json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(sarif.len() as u64),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some(sarif.to_string()),
+            external_ref: None,
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert!(report.fallback_reason.is_none());
+        assert_eq!(
+            report.document.diagnostics[0].provenance.capture_refs,
+            vec!["diagnostics.sarif.inline".to_string()]
+        );
+    }
+
+    #[test]
     fn ingest_bundle_scopes_stderr_context_augmentation_per_matching_root() {
         let run = base_run_info();
         let stderr = "\
@@ -906,6 +1462,63 @@ src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
         assert_eq!(report.document.captures.len(), 1);
         assert_eq!(report.document.captures[0].id, "diagnostics.json");
         assert!(report.document.validate().is_ok());
+    }
+
+    #[test]
+    fn ingest_bundle_prefers_later_available_gcc_json_over_earlier_missing_placeholder() {
+        let run = base_run_info();
+        let json = r#"[
+          {
+            "kind":"error",
+            "message":"expected ';' before '}' token",
+            "locations":[
+              {
+                "caret":{"file":"src/main.c","line":4,"column":1}
+              }
+            ]
+          }
+        ]"#;
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, "", &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json.missing".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: None,
+            storage: ArtifactStorage::Unavailable,
+            inline_text: None,
+            external_ref: None,
+            produced_by: Some(run.primary_tool.clone()),
+        });
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json.inline".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(json.len() as u64),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some(json.to_string()),
+            external_ref: None,
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert!(report.fallback_reason.is_none());
+        assert_eq!(
+            report.document.diagnostics[0].provenance.capture_refs,
+            vec!["diagnostics.json.inline".to_string()]
+        );
     }
 
     #[test]
