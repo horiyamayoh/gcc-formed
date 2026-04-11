@@ -1103,7 +1103,6 @@ fn trace_escape_envelope() -> TraceEnvelope {
         trace_id: "trace-\u{001b}[31mseed".to_string(),
         selected_mode: "render".to_string(),
         selected_profile: "default".to_string(),
-        support_tier: "gcc15_primary".to_string(),
         wrapper_verdict: Some("rendered".to_string()),
         version_summary: Some(TraceVersionSummary {
             wrapper_version: "0.2.0-beta.1".to_string(),

@@ -836,7 +836,7 @@ fn package_smoke_emits_release_artifacts() {
             target_triple: "x86_64-unknown-linux-musl".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -856,7 +856,7 @@ fn package_smoke_emits_release_artifacts() {
     assert_eq!(manifest.artifact_target_triple, "x86_64-unknown-linux-musl");
     assert_eq!(manifest.artifact_libc_family, "musl");
     assert_eq!(manifest.release_channel, "stable");
-    assert_eq!(manifest.support_tier_declaration, "gcc15_primary");
+    assert_eq!(manifest.maturity_label, "v1beta");
     assert_eq!(manifest.checksums.len(), 7);
     assert!(
         manifest
@@ -914,7 +914,7 @@ fn package_rejects_dirty_worktree() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -939,7 +939,7 @@ fn package_requires_release_documents() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -1050,7 +1050,7 @@ fn install_smoke_verifies_archive_and_creates_current_symlink() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -1103,7 +1103,7 @@ fn install_dry_run_reports_actions_without_mutating_install_layout() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -1162,7 +1162,7 @@ fn install_rejects_control_dir_with_bad_checksums() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: None,
         },
     )
@@ -1203,7 +1203,7 @@ fn signed_package_supports_pinned_signature_verification_and_system_wide_layout(
             target_triple: "x86_64-unknown-linux-musl".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1268,7 +1268,7 @@ fn install_rejects_signed_release_with_wrong_key_id() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1312,7 +1312,7 @@ fn install_rejects_signed_release_with_wrong_public_key_sha() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1356,7 +1356,7 @@ fn release_publish_promote_and_resolve_keep_same_bits() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1473,7 +1473,7 @@ fn install_release_supports_exact_version_and_checksum_pin() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1563,7 +1563,7 @@ fn install_release_from_channel_reports_exact_installed_version() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1630,7 +1630,7 @@ fn install_release_rejects_mismatched_pinned_checksum() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(signing_private_key),
         },
     )
@@ -1685,7 +1685,7 @@ fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollb
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(baseline_signing_private_key.clone()),
         },
     )
@@ -1727,7 +1727,7 @@ fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollb
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             out_dir: PathBuf::from("dist"),
             release_channel: "stable".to_string(),
-            support_tier: "gcc15_primary".to_string(),
+            maturity_label: "v1beta".to_string(),
             signing_private_key: Some(candidate_signing_private_key),
         },
     )

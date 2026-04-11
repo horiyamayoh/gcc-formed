@@ -18,7 +18,7 @@ pub(crate) struct PackageOptions {
     pub(crate) target_triple: String,
     pub(crate) out_dir: PathBuf,
     pub(crate) release_channel: String,
-    pub(crate) support_tier: String,
+    pub(crate) maturity_label: String,
     pub(crate) signing_private_key: Option<PathBuf>,
 }
 
@@ -236,7 +236,8 @@ pub(crate) struct PublishedRelease {
     pub(crate) product_name: String,
     pub(crate) product_version: String,
     pub(crate) target_triple: String,
-    pub(crate) support_tier: String,
+    #[serde(alias = "support_tier")]
+    pub(crate) maturity_label: String,
     pub(crate) artifact_release_channel: String,
     pub(crate) control_dir: String,
     pub(crate) primary_archive_path: String,
@@ -405,7 +406,7 @@ pub(crate) fn run_release_publish_at(
         product_name: manifest.product_name.clone(),
         product_version: manifest.product_version.clone(),
         target_triple: manifest.artifact_target_triple.clone(),
-        support_tier: manifest.support_tier_declaration.clone(),
+        maturity_label: manifest.maturity_label.clone(),
         artifact_release_channel: manifest.release_channel.clone(),
         control_dir: relative_display(&version_root, &copied_control_dir)?,
         primary_archive_path: relative_display(&version_root, &primary_archive)?,
@@ -955,14 +956,14 @@ pub(crate) fn run_package_at(
         lockfile_hash.clone(),
         vendor_hash.clone(),
         &options.target_triple,
-        &options.support_tier,
+        &options.maturity_label,
         &options.release_channel,
     );
     let debug_manifest = build_manifest_for_target(
         lockfile_hash,
         vendor_hash,
         &options.target_triple,
-        &options.support_tier,
+        &options.maturity_label,
         &options.release_channel,
     );
 
@@ -1242,11 +1243,7 @@ pub(crate) fn render_build_info(
     let _ = writeln!(&mut text, "rustc: {}", manifest.rustc_version);
     let _ = writeln!(&mut text, "cargo: {}", manifest.cargo_version);
     let _ = writeln!(&mut text, "build timestamp: {}", manifest.build_timestamp);
-    let _ = writeln!(
-        &mut text,
-        "support tier: {}",
-        manifest.support_tier_declaration
-    );
+    let _ = writeln!(&mut text, "maturity label: {}", manifest.maturity_label);
     let _ = writeln!(&mut text, "release channel: {}", manifest.release_channel);
     let _ = writeln!(&mut text, "archive role: {archive_role}");
     let _ = writeln!(&mut text, "binary source: {}", binary.display());

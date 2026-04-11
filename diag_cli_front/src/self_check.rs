@@ -33,7 +33,7 @@ pub(crate) fn handle_wrapper_introspection(
             println!("rustc version: {}", manifest.rustc_version);
             println!("cargo version: {}", manifest.cargo_version);
             println!("build timestamp: {}", manifest.build_timestamp);
-            println!("support tier: {}", manifest.support_tier_declaration);
+            println!("maturity label: {}", manifest.maturity_label);
             println!("IR spec version: {}", manifest.ir_spec_version);
             println!("adapter spec version: {}", manifest.adapter_spec_version);
             println!("renderer spec version: {}", manifest.renderer_spec_version);
@@ -113,7 +113,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, Box<dyn std::er
         "manifest": {
             "target_triple": manifest.artifact_target_triple,
             "target_triple_matches_build": target_matches_build,
-            "support_tier": manifest.support_tier_declaration,
+            "maturity_label": manifest.maturity_label,
         },
         "paths": {
             "config_path": paths.config_path,

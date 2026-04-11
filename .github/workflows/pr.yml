@@ -148,7 +148,7 @@ jobs:
             --binary target/hermetic-release/x86_64-unknown-linux-musl/release/gcc-formed \
             --target-triple x86_64-unknown-linux-musl \
             --release-channel beta \
-            --support-tier gcc15_primary \
+            --maturity-label v1beta \
             --signing-private-key "$RUNNER_TEMP/release-signing.key" \
             > "$REPORT_ROOT/release/package.json"
           EOF

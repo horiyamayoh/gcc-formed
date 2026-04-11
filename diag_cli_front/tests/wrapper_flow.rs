@@ -182,7 +182,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "shadow");
-    assert_eq!(trace["support_tier"], "b");
+    assert!(trace["support_tier"].is_null());
     assert_eq!(trace["wrapper_verdict"], "shadow_observed");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
     assert_eq!(
@@ -246,7 +246,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
-    assert_eq!(trace["support_tier"], "c");
+    assert!(trace["support_tier"].is_null());
     assert_eq!(trace["wrapper_verdict"], "render_fallback");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
     assert_eq!(
@@ -312,7 +312,7 @@ fn renders_with_explicit_single_sink_structured_json_on_fake_gcc12_backend() {
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
-    assert_eq!(trace["support_tier"], "c");
+    assert!(trace["support_tier"].is_null());
     assert_eq!(trace["wrapper_verdict"], "rendered");
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
@@ -910,6 +910,8 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
 
     assert_eq!(report["binary"], "ok");
     assert_eq!(report["manifest"]["target_triple_matches_build"], true);
+    assert_eq!(report["manifest"]["maturity_label"], "v1beta");
+    assert!(report["manifest"]["support_tier"].is_null());
     assert_eq!(report["paths"]["state_root_access"], "ok");
     assert_eq!(report["paths"]["runtime_root_access"], "ok");
     assert_eq!(report["paths"]["install_root_access"], "ok");

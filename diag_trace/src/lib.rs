@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const DEFAULT_PRODUCT_NAME: &str = "gcc-formed";
+pub const DEFAULT_MATURITY_LABEL: &str = "v1beta";
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -45,7 +46,8 @@ pub struct BuildManifest {
     pub ir_spec_version: String,
     pub adapter_spec_version: String,
     pub renderer_spec_version: String,
-    pub support_tier_declaration: String,
+    #[serde(alias = "support_tier_declaration")]
+    pub maturity_label: String,
     pub release_channel: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub checksums: Vec<ChecksumEntry>,
@@ -71,7 +73,6 @@ pub struct TraceEnvelope {
     pub trace_id: String,
     pub selected_mode: String,
     pub selected_profile: String,
-    pub support_tier: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wrapper_verdict: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -388,7 +389,7 @@ pub fn build_manifest_for_target(
     lockfile_hash: String,
     vendor_hash: String,
     target_triple: &str,
-    support_tier_declaration: &str,
+    maturity_label: &str,
     release_channel: &str,
 ) -> BuildManifest {
     let descriptor = describe_target(target_triple);
@@ -419,7 +420,7 @@ pub fn build_manifest_for_target(
         ir_spec_version: diag_core::IR_SPEC_VERSION.to_string(),
         adapter_spec_version: ADAPTER_SPEC_VERSION.to_string(),
         renderer_spec_version: RENDERER_SPEC_VERSION.to_string(),
-        support_tier_declaration: support_tier_declaration.to_string(),
+        maturity_label: maturity_label.to_string(),
         release_channel: release_channel.to_string(),
         checksums: Vec::new(),
     }
@@ -430,7 +431,7 @@ pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> Bui
         lockfile_hash,
         vendor_hash,
         build_target_triple(),
-        "gcc15_primary",
+        DEFAULT_MATURITY_LABEL,
         option_env!("FORMED_RELEASE_CHANNEL").unwrap_or("dev"),
     )
 }
@@ -545,7 +546,6 @@ mod tests {
             trace_id: "trace-1".to_string(),
             selected_mode: "render".to_string(),
             selected_profile: "default".to_string(),
-            support_tier: "a".to_string(),
             wrapper_verdict: None,
             version_summary: None,
             environment_summary: None,
@@ -598,7 +598,7 @@ mod tests {
             "lock".to_string(),
             "vendor".to_string(),
             "x86_64-unknown-linux-musl",
-            "gcc15_primary",
+            DEFAULT_MATURITY_LABEL,
             "stable",
         );
 
@@ -606,7 +606,7 @@ mod tests {
         assert_eq!(manifest.artifact_os, "linux");
         assert_eq!(manifest.artifact_arch, "x86_64");
         assert_eq!(manifest.artifact_libc_family, "musl");
-        assert_eq!(manifest.support_tier_declaration, "gcc15_primary");
+        assert_eq!(manifest.maturity_label, DEFAULT_MATURITY_LABEL);
         assert_eq!(manifest.release_channel, "stable");
         assert!(manifest.checksums.is_empty());
     }

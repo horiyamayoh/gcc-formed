@@ -89,7 +89,6 @@ pub(crate) fn maybe_write_trace(
         trace_id: request.document.run.invocation_id.clone(),
         selected_mode: format!("{:?}", request.common.mode_decision.mode).to_lowercase(),
         selected_profile: format!("{:?}", request.common.profile).to_lowercase(),
-        support_tier: format!("{:?}", request.common.backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(
             request.common.mode_decision.mode,
             request.ingest_trace,
@@ -153,7 +152,6 @@ pub(crate) fn maybe_write_passthrough_trace(
         trace_id: trace_id(),
         selected_mode: format!("{:?}", request.common.mode_decision.mode).to_lowercase(),
         selected_profile: format!("{:?}", request.common.profile).to_lowercase(),
-        support_tier: format!("{:?}", request.common.backend.support_tier).to_lowercase(),
         wrapper_verdict: Some(trace_wrapper_verdict(
             request.common.mode_decision.mode,
             IngestTraceMetadata {

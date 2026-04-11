@@ -74,8 +74,8 @@ enum Commands {
         out_dir: PathBuf,
         #[arg(long, default_value = "stable")]
         release_channel: String,
-        #[arg(long, default_value = "gcc15_primary")]
-        support_tier: String,
+        #[arg(long, default_value = "v1beta")]
+        maturity_label: String,
         #[arg(long)]
         signing_private_key: Option<PathBuf>,
     },
@@ -313,7 +313,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             target_triple,
             out_dir,
             release_channel,
-            support_tier,
+            maturity_label,
             signing_private_key,
         } => {
             let package = run_package(PackageOptions {
@@ -322,7 +322,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 target_triple,
                 out_dir,
                 release_channel,
-                support_tier,
+                maturity_label,
                 signing_private_key,
             })?;
             println!(
