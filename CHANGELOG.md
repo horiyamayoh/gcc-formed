@@ -68,6 +68,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Moved snapshot normalization and comparison logic into `diag_testkit` so harness-side volatile-field handling is centralized, and snapshot reports now distinguish `exact`, `normalization_only`, `semantic`, and `missing_expected` drift kinds.
 - Changed `diag_capture_runtime` to preselect safe diagnostics temp paths for SARIF sidecars instead of rewriting chosen paths after selection, so unsafe runtime roots no longer make the wrapper and GCC disagree about `diagnostics.sarif`.
 - Changed `diag_adapter_gcc::ingest_bundle` to materialize `DiagnosticDocument.captures` from the incoming `CaptureBundle`, so node and integrity provenance `capture_refs` resolve against real propagated artifacts instead of an empty document capture list.
+- Scoped `diag_adapter_gcc` stderr-derived include/macro context augmentation per matching diagnostic block instead of appending every recovered frame to the first root, so multi-result structured ingests no longer cross-contaminate context chains.
 
 ## [0.1.0] - 2026-04-07
 
