@@ -11,6 +11,9 @@ pub const IR_SPEC_VERSION: &str = "1.0.0-alpha.1";
 pub const ADAPTER_SPEC_VERSION: &str = "v1alpha";
 pub const RENDERER_SPEC_VERSION: &str = "v1alpha";
 pub type Score = OrderedFloat<f32>;
+pub const CONFIDENCE_CERTAIN_THRESHOLD: f32 = 0.85;
+pub const CONFIDENCE_LIKELY_THRESHOLD: f32 = 0.60;
+pub const CONFIDENCE_POSSIBLE_THRESHOLD: f32 = 0.35;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SnapshotKind {
@@ -601,6 +604,15 @@ pub enum Confidence {
     Unknown,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum DisclosureConfidence {
+    Certain,
+    Likely,
+    Possible,
+    Hidden,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FingerprintSet {
     pub raw: String,
@@ -625,19 +637,42 @@ impl Confidence {
     }
 
     pub fn from_score(score: Option<Score>) -> Self {
+        match DisclosureConfidence::from_score(score) {
+            DisclosureConfidence::Certain => Self::High,
+            DisclosureConfidence::Likely => Self::Medium,
+            DisclosureConfidence::Possible => Self::Low,
+            DisclosureConfidence::Hidden => Self::Unknown,
+        }
+    }
+}
+
+impl DisclosureConfidence {
+    pub fn from_score(score: Option<Score>) -> Self {
         let Some(score) = score else {
-            return Self::Unknown;
+            return Self::Hidden;
         };
         let score = score.into_inner();
-        if score >= 0.75 {
-            Self::High
-        } else if score >= 0.5 {
-            Self::Medium
-        } else if score > 0.0 {
-            Self::Low
+        if score >= CONFIDENCE_CERTAIN_THRESHOLD {
+            Self::Certain
+        } else if score >= CONFIDENCE_LIKELY_THRESHOLD {
+            Self::Likely
+        } else if score >= CONFIDENCE_POSSIBLE_THRESHOLD {
+            Self::Possible
         } else {
-            Self::Unknown
+            Self::Hidden
         }
+    }
+
+    pub fn allows_analysis_title(self) -> bool {
+        matches!(self, Self::Certain | Self::Likely)
+    }
+
+    pub fn allows_first_action(self) -> bool {
+        matches!(self, Self::Certain | Self::Likely)
+    }
+
+    pub fn requires_low_confidence_notice(self) -> bool {
+        matches!(self, Self::Possible | Self::Hidden)
     }
 }
 
@@ -808,13 +843,25 @@ impl Location {
 }
 
 impl AnalysisOverlay {
+    pub fn set_confidence_score(&mut self, score: f32) {
+        self.confidence = Some(OrderedFloat(score));
+    }
+
     pub fn set_confidence_bucket(&mut self, confidence: Confidence) {
         self.confidence = Some(confidence.score());
+    }
+
+    pub fn confidence_score(&self) -> Option<Score> {
+        self.confidence
     }
 
     pub fn confidence_bucket(&self) -> Option<Confidence> {
         self.confidence
             .map(|score| Confidence::from_score(Some(score)))
+    }
+
+    pub fn disclosure_confidence(&self) -> DisclosureConfidence {
+        DisclosureConfidence::from_score(self.confidence)
     }
 }
 
@@ -1786,5 +1833,41 @@ mod tests {
         assert!(errors.errors.iter().any(|error| {
             error.contains("collapsed_child_id missing-child does not reference a descendant")
         }));
+    }
+
+    #[test]
+    fn confidence_thresholds_follow_renderer_contract() {
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.85))),
+            DisclosureConfidence::Certain
+        );
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.84))),
+            DisclosureConfidence::Likely
+        );
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.60))),
+            DisclosureConfidence::Likely
+        );
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.59))),
+            DisclosureConfidence::Possible
+        );
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.35))),
+            DisclosureConfidence::Possible
+        );
+        assert_eq!(
+            DisclosureConfidence::from_score(Some(OrderedFloat(0.34))),
+            DisclosureConfidence::Hidden
+        );
+        assert_eq!(
+            Confidence::from_score(Some(OrderedFloat(0.84))),
+            Confidence::Medium
+        );
+        assert_eq!(
+            Confidence::from_score(Some(OrderedFloat(0.34))),
+            Confidence::Unknown
+        );
     }
 }

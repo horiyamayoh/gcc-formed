@@ -1,8 +1,8 @@
 use crate::budget::budget_for;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{
-    Confidence, ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness,
-    NodeCompleteness, Ownership, ProvenanceSource,
+    ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness, NodeCompleteness,
+    Ownership, ProvenanceSource,
 };
 use diag_rulepack::{
     RenderRulepack, RendererFamilyKind, RendererFamilyPolicy, checked_in_rulepack,
@@ -57,8 +57,10 @@ pub(crate) fn is_conservative_useful_subset_card(
         && matches!(
             node.analysis
                 .as_ref()
-                .and_then(|analysis| analysis.confidence_bucket()),
-            Some(Confidence::Low) | Some(Confidence::Unknown) | None
+                .map(|analysis| analysis.disclosure_confidence()),
+            Some(diag_core::DisclosureConfidence::Possible)
+                | Some(diag_core::DisclosureConfidence::Hidden)
+                | None
         )
 }
 
@@ -684,7 +686,7 @@ mod tests {
         WarningVisibility,
     };
     use diag_core::{
-        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChain,
         DiagnosticDocument, LanguageMode, Location, MessageText, NodeCompleteness, Origin,
         Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
         Severity, SymbolContext, ToolInfo, WrapperSurface,

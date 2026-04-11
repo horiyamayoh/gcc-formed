@@ -2,7 +2,8 @@ use crate::budget::{WarningFailureMode, budget_for};
 use crate::family::renderer_specificity_rank;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
-    Confidence, DiagnosticNode, NodeCompleteness, Ownership, Phase, SemanticRole, Severity,
+    DiagnosticNode, DisclosureConfidence, NodeCompleteness, Ownership, Phase, SemanticRole,
+    Severity,
 };
 
 #[derive(Debug)]
@@ -74,11 +75,7 @@ fn sort_key(node: &DiagnosticNode) -> (u8, u8, u8, u8, u8, u8, usize) {
     (
         severity_rank(&node.severity),
         ownership_rank(best_ownership(node)),
-        confidence_rank(
-            node.analysis
-                .as_ref()
-                .and_then(|analysis| analysis.confidence_bucket()),
-        ),
+        confidence_rank(disclosure_confidence(node)),
         phase_rank(&node.phase),
         semantic_role_rank(&node.semantic_role),
         specificity_rank(node),
@@ -120,12 +117,12 @@ fn best_ownership(node: &DiagnosticNode) -> Option<&Ownership> {
         })
 }
 
-fn confidence_rank(confidence: Option<Confidence>) -> u8 {
+fn confidence_rank(confidence: DisclosureConfidence) -> u8 {
     match confidence {
-        Some(Confidence::High) => 4,
-        Some(Confidence::Medium) => 3,
-        Some(Confidence::Low) => 2,
-        Some(Confidence::Unknown) | None => 1,
+        DisclosureConfidence::Certain => 4,
+        DisclosureConfidence::Likely => 3,
+        DisclosureConfidence::Possible => 2,
+        DisclosureConfidence::Hidden => 1,
     }
 }
 
@@ -145,12 +142,7 @@ fn phase_rank(phase: &Phase) -> u8 {
 
 fn specificity_rank(node: &DiagnosticNode) -> u8 {
     let symbol_rank = u8::from(node.symbol_context.is_some());
-    let first_action_rank = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.first_action_hint.as_ref())
-        .map(|hint| !hint.trim().is_empty())
-        .unwrap_or(false);
+    let first_action_rank = has_first_action(node);
     renderer_specificity_rank(node) + symbol_rank + u8::from(first_action_rank)
 }
 
@@ -168,12 +160,7 @@ fn semantic_role_rank(role: &SemanticRole) -> u8 {
 }
 
 fn is_low_confidence(node: &DiagnosticNode) -> bool {
-    matches!(
-        node.analysis
-            .as_ref()
-            .and_then(|analysis| analysis.confidence_bucket()),
-        Some(Confidence::Low) | Some(Confidence::Unknown) | None
-    )
+    disclosure_confidence(node).requires_low_confidence_notice()
 }
 
 fn is_summary_only(node: &DiagnosticNode) -> bool {
@@ -188,10 +175,23 @@ fn is_summary_only(node: &DiagnosticNode) -> bool {
 }
 
 fn has_first_action(node: &DiagnosticNode) -> bool {
+    let Some(analysis) = node.analysis.as_ref() else {
+        return false;
+    };
+    if !analysis.disclosure_confidence().allows_first_action() {
+        return false;
+    }
+    analysis
+        .first_action_hint
+        .as_ref()
+        .is_some_and(|hint| !hint.trim().is_empty())
+}
+
+fn disclosure_confidence(node: &DiagnosticNode) -> DisclosureConfidence {
     node.analysis
         .as_ref()
-        .and_then(|analysis| analysis.first_action_hint.as_ref())
-        .is_some_and(|hint| !hint.trim().is_empty())
+        .map(|analysis| analysis.disclosure_confidence())
+        .unwrap_or(DisclosureConfidence::Hidden)
 }
 
 #[cfg(test)]

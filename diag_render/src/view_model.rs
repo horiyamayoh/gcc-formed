@@ -2,7 +2,9 @@ use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::{RenderProfile, RenderRequest};
-use diag_core::{Confidence, DiagnosticNode, DocumentCompleteness, NodeCompleteness, Severity};
+use diag_core::{
+    DiagnosticNode, DisclosureConfidence, DocumentCompleteness, NodeCompleteness, Severity,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,7 +84,8 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let confidence = node
         .analysis
         .as_ref()
-        .and_then(|analysis| analysis.confidence_bucket());
+        .map(|analysis| analysis.disclosure_confidence())
+        .unwrap_or(DisclosureConfidence::Hidden);
     let confidence_label = confidence_label(confidence).to_string();
     let title = select_title(node, confidence);
     let first_action = select_first_action(node, confidence);
@@ -111,11 +114,9 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let confidence_notice = if conservative_useful_subset {
         Some(conservative_band_c_notice().to_string())
     } else {
-        matches!(
-            confidence,
-            Some(Confidence::Low) | Some(Confidence::Unknown) | None
-        )
-        .then_some(policy.disclosure.low_confidence_notice.to_string())
+        confidence
+            .requires_low_confidence_notice()
+            .then_some(policy.disclosure.low_confidence_notice.to_string())
     };
     let raw_sub_block = raw_sub_block(request, node);
 
@@ -168,33 +169,33 @@ fn severity_label(severity: &Severity) -> &'static str {
     }
 }
 
-fn select_title(node: &DiagnosticNode, confidence: Option<Confidence>) -> String {
-    match confidence {
-        Some(Confidence::High) | Some(Confidence::Medium) => node
-            .analysis
+fn select_title(node: &DiagnosticNode, confidence: DisclosureConfidence) -> String {
+    if confidence.allows_analysis_title() {
+        node.analysis
             .as_ref()
             .and_then(|analysis| analysis.headline.clone())
-            .unwrap_or_else(|| raw_title(node)),
-        Some(Confidence::Low) | Some(Confidence::Unknown) | None => raw_title(node),
+            .unwrap_or_else(|| raw_title(node))
+    } else {
+        raw_title(node)
     }
 }
 
-fn select_first_action(node: &DiagnosticNode, confidence: Option<Confidence>) -> Option<String> {
-    match confidence {
-        Some(Confidence::High) | Some(Confidence::Medium) => node
-            .analysis
+fn select_first_action(node: &DiagnosticNode, confidence: DisclosureConfidence) -> Option<String> {
+    if confidence.allows_first_action() {
+        node.analysis
             .as_ref()
-            .and_then(|analysis| analysis.first_action_hint.clone()),
-        Some(Confidence::Low) | Some(Confidence::Unknown) | None => None,
+            .and_then(|analysis| analysis.first_action_hint.clone())
+    } else {
+        None
     }
 }
 
-fn confidence_label(confidence: Option<Confidence>) -> &'static str {
+fn confidence_label(confidence: DisclosureConfidence) -> &'static str {
     match confidence {
-        Some(Confidence::High) => "certain",
-        Some(Confidence::Medium) => "likely",
-        Some(Confidence::Low) => "possible",
-        Some(Confidence::Unknown) | None => "hidden",
+        DisclosureConfidence::Certain => "certain",
+        DisclosureConfidence::Likely => "likely",
+        DisclosureConfidence::Possible => "possible",
+        DisclosureConfidence::Hidden => "hidden",
     }
 }
 

@@ -678,6 +678,51 @@ mod tests {
     }
 
     #[test]
+    fn subthreshold_score_hides_analysis_title_and_first_action() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].message.raw_text =
+            "static assertion failed: size must be 4 bytes".to_string();
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("unknown".to_string());
+        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.first_action_hint =
+            Some("compare the expected type and actual argument at the call site".to_string());
+        analysis.set_confidence_score(0.59);
+
+        let view_model = build_view_model(&request).unwrap();
+        let card = &view_model.cards[0];
+
+        assert_eq!(card.confidence_label, "possible");
+        assert_eq!(card.title, "static assertion failed: size must be 4 bytes");
+        assert_eq!(card.first_action, None);
+        assert!(card.confidence_notice.is_some());
+    }
+
+    #[test]
+    fn threshold_score_keeps_analysis_title_and_first_action() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].message.raw_text =
+            "static assertion failed: size must be 4 bytes".to_string();
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("unknown".to_string());
+        analysis.headline = Some("type or overload mismatch".to_string());
+        analysis.first_action_hint =
+            Some("compare the expected type and actual argument at the call site".to_string());
+        analysis.set_confidence_score(0.60);
+
+        let view_model = build_view_model(&request).unwrap();
+        let card = &view_model.cards[0];
+
+        assert_eq!(card.confidence_label, "likely");
+        assert_eq!(card.title, "type or overload mismatch");
+        assert_eq!(
+            card.first_action.as_deref(),
+            Some("compare the expected type and actual argument at the call site")
+        );
+        assert_eq!(card.confidence_notice, None);
+    }
+
+    #[test]
     fn band_c_useful_subset_render_strengthens_notice_and_raw_label() {
         let mut request = sample_request();
         request.document.run.primary_tool.version = Some("12.2.0".to_string());
