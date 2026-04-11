@@ -153,10 +153,13 @@ pub(crate) struct ManualMetricsEvaluation {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub(crate) struct RolloutMatrixCase {
-    pub(crate) support_tier: String,
+    pub(crate) version_band: String,
     pub(crate) requested_mode: Option<String>,
+    pub(crate) requested_processing_path: Option<String>,
     pub(crate) hard_conflict: bool,
     pub(crate) selected_mode: String,
+    pub(crate) processing_path: String,
+    pub(crate) support_level: String,
     pub(crate) fallback_reason: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) scope_notice: Option<String>,
@@ -275,13 +278,20 @@ pub(crate) struct FamilyCoverageMetricsReport {
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct CompatibilityVsPrimaryMetricsReport {
     pub(crate) rollout_matrix_status: GateStatus,
-    pub(crate) tier_a_default_mode: Option<String>,
-    pub(crate) tier_b_default_mode: Option<String>,
-    pub(crate) tier_c_default_mode: Option<String>,
-    pub(crate) tier_b_requested_render_mode: Option<String>,
-    pub(crate) tier_b_requested_shadow_mode: Option<String>,
+    pub(crate) primary_default_mode: Option<String>,
+    pub(crate) primary_default_processing_path: Option<String>,
+    pub(crate) band_b_default_mode: Option<String>,
+    pub(crate) band_b_default_processing_path: Option<String>,
+    pub(crate) band_c_default_mode: Option<String>,
+    pub(crate) band_c_default_processing_path: Option<String>,
+    pub(crate) band_b_explicit_structured_mode: Option<String>,
+    pub(crate) band_b_explicit_structured_processing_path: Option<String>,
+    pub(crate) band_c_explicit_structured_mode: Option<String>,
+    pub(crate) band_c_explicit_structured_processing_path: Option<String>,
     pub(crate) primary_enhanced_default: bool,
-    pub(crate) compatibility_default_is_conservative: bool,
+    pub(crate) compatibility_defaults_rendered: bool,
+    pub(crate) compatibility_defaults_use_native_text_capture: bool,
+    pub(crate) compatibility_explicit_structured_opt_in_available: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -747,98 +757,217 @@ fn compare_rollout_matrix_cases(
 }
 
 fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
-    vec![
-        rollout_case("a", None, false, "render", None, None),
-        rollout_case(
-            "a",
+    [
+        (
+            "gcc15_plus",
+            None,
+            None,
+            false,
+            "render",
+            "dual_sink_structured",
+            "preview",
+            None,
+            None,
+        ),
+        (
+            "gcc15_plus",
             Some("shadow"),
+            None,
             false,
             "shadow",
+            "dual_sink_structured",
+            "preview",
             Some("shadow_mode"),
             None,
         ),
-        rollout_case(
-            "a",
+        (
+            "gcc15_plus",
             Some("passthrough"),
+            None,
             false,
             "passthrough",
+            "passthrough",
+            "preview",
             Some("user_opt_out"),
             None,
         ),
-        rollout_case(
-            "a",
+        (
+            "gcc15_plus",
             Some("render"),
+            None,
             true,
             "passthrough",
+            "passthrough",
+            "preview",
             Some("incompatible_sink"),
             None,
         ),
-        rollout_case(
-            "b",
+        (
+            "gcc13_14",
+            None,
             None,
             false,
-            "passthrough",
-            Some("unsupported_tier"),
+            "render",
+            "native_text_capture",
+            "experimental",
+            None,
             Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
             ),
         ),
-        rollout_case(
-            "b",
+        (
+            "gcc13_14",
             Some("shadow"),
+            None,
             false,
             "shadow",
+            "native_text_capture",
+            "experimental",
             Some("shadow_mode"),
             Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=shadow; fallback reason=shadow_mode; conservative shadow capture is enabled and enhanced render output is not guaranteed.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in.",
             ),
         ),
-        rollout_case(
-            "b",
+        (
+            "gcc13_14",
             Some("render"),
+            None,
             false,
-            "passthrough",
-            Some("unsupported_tier"),
+            "render",
+            "native_text_capture",
+            "experimental",
+            None,
             Some(
-                "gcc-formed: support tier=b compatibility-only path (GCC 13/14); selected mode=passthrough; fallback reason=unsupported_tier; enhanced render output is not guaranteed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
             ),
         ),
-        rollout_case(
-            "c",
+        (
+            "gcc13_14",
+            Some("render"),
+            Some("single_sink_structured"),
+            false,
+            "render",
+            "single_sink_structured",
+            "experimental",
+            None,
+            Some(
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
+            ),
+        ),
+        (
+            "gcc13_14",
+            Some("passthrough"),
             None,
             false,
             "passthrough",
+            "passthrough",
+            "experimental",
+            Some("user_opt_out"),
+            Some(
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+            ),
+        ),
+        (
+            "gcc9_12",
+            None,
+            None,
+            false,
+            "render",
+            "native_text_capture",
+            "experimental",
+            None,
+            Some(
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in.",
+            ),
+        ),
+        (
+            "gcc9_12",
+            Some("shadow"),
+            None,
+            false,
+            "shadow",
+            "native_text_capture",
+            "experimental",
+            Some("shadow_mode"),
+            Some(
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in.",
+            ),
+        ),
+        (
+            "gcc9_12",
+            Some("render"),
+            Some("single_sink_structured"),
+            false,
+            "render",
+            "single_sink_structured",
+            "experimental",
+            None,
+            Some(
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
+            ),
+        ),
+        (
+            "gcc9_12",
+            Some("passthrough"),
+            None,
+            false,
+            "passthrough",
+            "passthrough",
+            "experimental",
+            Some("user_opt_out"),
+            Some(
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+            ),
+        ),
+        (
+            "unknown",
+            None,
+            None,
+            false,
+            "passthrough",
+            "passthrough",
+            "passthrough_only",
             Some("unsupported_tier"),
             Some(
-                "gcc-formed: support tier=c out-of-scope compatibility path; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the first-release support scope and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved.",
             ),
         ),
     ]
-}
-
-fn rollout_case(
-    support_tier: &str,
-    requested_mode: Option<&str>,
-    hard_conflict: bool,
-    selected_mode: &str,
-    fallback_reason: Option<&str>,
-    scope_notice: Option<&str>,
-) -> RolloutMatrixCase {
-    RolloutMatrixCase {
-        support_tier: support_tier.to_string(),
-        requested_mode: requested_mode.map(str::to_string),
-        hard_conflict,
-        selected_mode: selected_mode.to_string(),
-        fallback_reason: fallback_reason.map(str::to_string),
-        scope_notice: scope_notice.map(str::to_string),
-    }
+    .into_iter()
+    .map(
+        |(
+            version_band,
+            requested_mode,
+            requested_processing_path,
+            hard_conflict,
+            selected_mode,
+            processing_path,
+            support_level,
+            fallback_reason,
+            scope_notice,
+        )| RolloutMatrixCase {
+            version_band: version_band.to_string(),
+            requested_mode: requested_mode.map(str::to_string),
+            requested_processing_path: requested_processing_path.map(str::to_string),
+            hard_conflict,
+            selected_mode: selected_mode.to_string(),
+            processing_path: processing_path.to_string(),
+            support_level: support_level.to_string(),
+            fallback_reason: fallback_reason.map(str::to_string),
+            scope_notice: scope_notice.map(str::to_string),
+        },
+    )
+    .collect()
 }
 
 fn rollout_case_key(case: &RolloutMatrixCase) -> String {
     format!(
-        "{}:{}:{}",
-        case.support_tier,
+        "{}:{}:{}:{}",
+        case.version_band,
         case.requested_mode.as_deref().unwrap_or("default"),
+        case.requested_processing_path
+            .as_deref()
+            .unwrap_or("default"),
         case.hard_conflict
     )
 }
@@ -1024,32 +1153,90 @@ fn compatibility_metrics_from_rollout(
     rollout: &RolloutMatrixReport,
 ) -> CompatibilityVsPrimaryMetricsReport {
     let expected_cases = expected_rollout_matrix_cases();
-    let lookup = |support_tier: &str, requested_mode: Option<&str>, hard_conflict: bool| {
+    let lookup = |version_band: &str,
+                  requested_mode: Option<&str>,
+                  requested_processing_path: Option<&str>,
+                  hard_conflict: bool| {
         expected_cases
             .iter()
             .find(|case| {
-                case.support_tier == support_tier
+                case.version_band == version_band
                     && case.requested_mode.as_deref() == requested_mode
+                    && case.requested_processing_path.as_deref() == requested_processing_path
                     && case.hard_conflict == hard_conflict
             })
-            .map(|case| case.selected_mode.clone())
+            .cloned()
     };
-    let tier_a_default_mode = lookup("a", None, false);
-    let tier_b_default_mode = lookup("b", None, false);
-    let tier_c_default_mode = lookup("c", None, false);
-    let tier_b_requested_render_mode = lookup("b", Some("render"), false);
-    let tier_b_requested_shadow_mode = lookup("b", Some("shadow"), false);
+    let primary_default = lookup("gcc15_plus", None, None, false);
+    let band_b_default = lookup("gcc13_14", None, None, false);
+    let band_c_default = lookup("gcc9_12", None, None, false);
+    let band_b_explicit_structured = lookup(
+        "gcc13_14",
+        Some("render"),
+        Some("single_sink_structured"),
+        false,
+    );
+    let band_c_explicit_structured = lookup(
+        "gcc9_12",
+        Some("render"),
+        Some("single_sink_structured"),
+        false,
+    );
     CompatibilityVsPrimaryMetricsReport {
         rollout_matrix_status: rollout.status.clone(),
-        primary_enhanced_default: tier_a_default_mode.as_deref() == Some("render"),
-        compatibility_default_is_conservative: tier_b_default_mode.as_deref()
-            == Some("passthrough")
-            && tier_c_default_mode.as_deref() == Some("passthrough"),
-        tier_a_default_mode,
-        tier_b_default_mode,
-        tier_c_default_mode,
-        tier_b_requested_render_mode,
-        tier_b_requested_shadow_mode,
+        primary_default_mode: primary_default
+            .as_ref()
+            .map(|case| case.selected_mode.clone()),
+        primary_default_processing_path: primary_default
+            .as_ref()
+            .map(|case| case.processing_path.clone()),
+        band_b_default_mode: band_b_default
+            .as_ref()
+            .map(|case| case.selected_mode.clone()),
+        band_b_default_processing_path: band_b_default
+            .as_ref()
+            .map(|case| case.processing_path.clone()),
+        band_c_default_mode: band_c_default
+            .as_ref()
+            .map(|case| case.selected_mode.clone()),
+        band_c_default_processing_path: band_c_default
+            .as_ref()
+            .map(|case| case.processing_path.clone()),
+        band_b_explicit_structured_mode: band_b_explicit_structured
+            .as_ref()
+            .map(|case| case.selected_mode.clone()),
+        band_b_explicit_structured_processing_path: band_b_explicit_structured
+            .as_ref()
+            .map(|case| case.processing_path.clone()),
+        band_c_explicit_structured_mode: band_c_explicit_structured
+            .as_ref()
+            .map(|case| case.selected_mode.clone()),
+        band_c_explicit_structured_processing_path: band_c_explicit_structured
+            .as_ref()
+            .map(|case| case.processing_path.clone()),
+        primary_enhanced_default: primary_default.as_ref().is_some_and(|case| {
+            case.selected_mode == "render" && case.processing_path == "dual_sink_structured"
+        }),
+        compatibility_defaults_rendered: band_b_default
+            .as_ref()
+            .is_some_and(|case| case.selected_mode == "render")
+            && band_c_default
+                .as_ref()
+                .is_some_and(|case| case.selected_mode == "render"),
+        compatibility_defaults_use_native_text_capture: band_b_default
+            .as_ref()
+            .is_some_and(|case| case.processing_path == "native_text_capture")
+            && band_c_default
+                .as_ref()
+                .is_some_and(|case| case.processing_path == "native_text_capture"),
+        compatibility_explicit_structured_opt_in_available: band_b_explicit_structured
+            .as_ref()
+            .is_some_and(|case| {
+                case.selected_mode == "render" && case.processing_path == "single_sink_structured"
+            })
+            && band_c_explicit_structured.as_ref().is_some_and(|case| {
+                case.selected_mode == "render" && case.processing_path == "single_sink_structured"
+            }),
     }
 }
 
@@ -1817,6 +2004,37 @@ mod tests {
     }
 
     #[test]
+    fn expected_rollout_matrix_cases_match_current_band_and_path_contract() {
+        let cases = expected_rollout_matrix_cases();
+
+        assert_eq!(cases.len(), 14);
+        assert!(cases.iter().any(|case| {
+            case.version_band == "gcc13_14"
+                && case.requested_mode.is_none()
+                && case.selected_mode == "render"
+                && case.processing_path == "native_text_capture"
+        }));
+        assert!(cases.iter().any(|case| {
+            case.version_band == "gcc13_14"
+                && case.requested_mode.as_deref() == Some("render")
+                && case.requested_processing_path.as_deref() == Some("single_sink_structured")
+                && case.processing_path == "single_sink_structured"
+        }));
+        assert!(cases.iter().any(|case| {
+            case.version_band == "gcc9_12"
+                && case.requested_mode.is_none()
+                && case.selected_mode == "render"
+                && case.processing_path == "native_text_capture"
+        }));
+        assert!(cases.iter().any(|case| {
+            case.version_band == "gcc9_12"
+                && case.requested_mode.as_deref() == Some("render")
+                && case.requested_processing_path.as_deref() == Some("single_sink_structured")
+                && case.processing_path == "single_sink_structured"
+        }));
+    }
+
+    #[test]
     fn pending_manual_checks_stop_strict_rc_gate() {
         let check = manual_issue_budget_check(
             &IssueBudgetEvidence {
@@ -1889,7 +2107,31 @@ mod tests {
         assert!(
             report
                 .compatibility_vs_primary
-                .compatibility_default_is_conservative
+                .compatibility_defaults_rendered
+        );
+        assert!(
+            report
+                .compatibility_vs_primary
+                .compatibility_defaults_use_native_text_capture
+        );
+        assert!(
+            report
+                .compatibility_vs_primary
+                .compatibility_explicit_structured_opt_in_available
+        );
+        assert_eq!(
+            report
+                .compatibility_vs_primary
+                .band_b_default_processing_path
+                .as_deref(),
+            Some("native_text_capture")
+        );
+        assert_eq!(
+            report
+                .compatibility_vs_primary
+                .band_c_explicit_structured_processing_path
+                .as_deref(),
+            Some("single_sink_structured")
         );
     }
 
