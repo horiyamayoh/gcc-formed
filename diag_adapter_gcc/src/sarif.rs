@@ -5,13 +5,15 @@ use crate::classify::{
     infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
     structured_message_text,
 };
+use crate::fixits::suggestion_from_edits;
 use crate::ingest::AdapterError;
-use crate::{json_str, json_u32};
+use crate::{is_valid_text_edit, json_str, json_u32, text_edits_overlap};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
     IssueSeverity, IssueStage, Location, MessageText, NodeCompleteness, Origin, ProducerInfo,
-    Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity,
+    Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
+    SuggestionApplicability, TextEdit,
 };
 use serde_json::Value;
 use std::fs;
@@ -138,6 +140,7 @@ fn result_to_node(
         _ => Severity::Error,
     };
     let locations = parse_locations(result);
+    let suggestions = parse_suggestions(result);
     let context_chains = parse_context_chains(result);
     let children = parse_related_locations(run_index, result_index, result, capture_ref);
     let completeness = if locations.is_empty() {
@@ -159,7 +162,7 @@ fn result_to_node(
         },
         locations,
         children,
-        suggestions: Vec::new(),
+        suggestions,
         context_chains,
         symbol_context: None,
         node_completeness: completeness,
@@ -295,6 +298,106 @@ fn parse_related_locations(
             })
         })
         .collect()
+}
+
+fn parse_suggestions(result: &Value) -> Vec<Suggestion> {
+    result
+        .get("fixes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .enumerate()
+        .filter_map(|(index, fix)| parse_suggestion(index, fix))
+        .collect()
+}
+
+fn parse_suggestion(index: usize, fix: &Value) -> Option<Suggestion> {
+    let edits = parse_suggestion_edits(fix)?;
+    let description =
+        structured_message_text(fix.get("description")).filter(|text| !text.is_empty());
+    let applicability = if edits
+        .iter()
+        .map(|edit| edit.path.as_str())
+        .collect::<std::collections::BTreeSet<_>>()
+        .len()
+        > 1
+    {
+        SuggestionApplicability::Manual
+    } else if description.is_some() {
+        SuggestionApplicability::MaybeIncorrect
+    } else {
+        SuggestionApplicability::MachineApplicable
+    };
+
+    suggestion_from_edits(
+        description.or_else(|| {
+            if edits.len() > 1 {
+                Some(format!("apply compiler fix-it #{}", index + 1))
+            } else {
+                None
+            }
+        }),
+        applicability,
+        edits,
+    )
+}
+
+fn parse_suggestion_edits(fix: &Value) -> Option<Vec<TextEdit>> {
+    let artifact_changes = fix.get("artifactChanges")?.as_array()?;
+    if artifact_changes.is_empty() {
+        return None;
+    }
+
+    let mut edits = Vec::new();
+    for change in artifact_changes {
+        let path = change
+            .get("artifactLocation")
+            .and_then(|artifact| artifact.get("uri"))
+            .and_then(Value::as_str)
+            .filter(|path| !path.is_empty())?
+            .to_string();
+        let replacements = change.get("replacements")?.as_array()?;
+        if replacements.is_empty() {
+            return None;
+        }
+
+        for replacement in replacements {
+            edits.push(parse_replacement(&path, replacement)?);
+        }
+    }
+
+    if edits.is_empty() || text_edits_overlap(&edits) {
+        return None;
+    }
+
+    Some(edits)
+}
+
+fn parse_replacement(path: &str, replacement: &Value) -> Option<TextEdit> {
+    let deleted_region = replacement.get("deletedRegion")?;
+    let inserted_content = replacement.get("insertedContent");
+    let replacement_text = match inserted_content {
+        None => String::new(),
+        Some(Value::Object(_)) => inserted_content
+            .and_then(|content| content.get("text"))
+            .and_then(Value::as_str)
+            .map(ToString::to_string)?,
+        Some(_) => return None,
+    };
+
+    let start_line = json_u32(deleted_region, "startLine")?;
+    let start_column = json_u32(deleted_region, "startColumn")?;
+    let end_column = json_u32(deleted_region, "endColumn")?;
+    let edit = TextEdit {
+        path: path.to_string(),
+        start_line,
+        start_column,
+        end_line: json_u32(deleted_region, "endLine").unwrap_or(start_line),
+        end_column,
+        replacement: replacement_text,
+    };
+
+    is_valid_text_edit(&edit).then_some(edit)
 }
 
 fn parse_context_chains(result: &Value) -> Vec<ContextChain> {

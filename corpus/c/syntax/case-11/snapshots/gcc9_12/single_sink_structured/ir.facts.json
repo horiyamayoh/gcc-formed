@@ -3,7 +3,7 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:13: error: expected ';' before '}' token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            \n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:13: error: expected ';' before '}' token\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      |             ~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
@@ -15,26 +15,26 @@
     },
     {
       "encoding": "utf-8",
-      "external_ref": "<capture:diagnostics.sarif>",
-      "id": "diagnostics.sarif",
-      "kind": "gcc_sarif",
-      "media_type": "application/sarif+json",
+      "external_ref": "<capture:diagnostics.json>",
+      "id": "diagnostics.json",
+      "kind": "gcc_json",
+      "media_type": "application/json",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 4904,
+      "size_bytes": 754,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
       "fingerprints": {
-        "family": "3fdd2af0bf4d5ddbdb90d78eec183f9476d2231708fdae17ce6ef8709e45e038",
-        "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "329f9bfb13869e00da1fa0242ec244ef566ff52089738a979251c9547cf710e5"
+        "family": "3060873b053553fed80af662ad552c4b4e68eaba67b848fd7c7645a78ef6fd24",
+        "raw": "f7f61f654ae8f7b1d31ee984f605a7f126997670adcb3c2ed9bb2ab78e62455d",
+        "structural": "8e71a36cebdb0e547a4a1352c17d1e42ff90b789b72197d556353b0058789cdf"
       },
-      "id": "sarif-0-0",
+      "id": "json-0",
       "locations": [
         {
           "anchor": {
@@ -59,14 +59,14 @@
         }
       ],
       "message": {
-        "raw_text": "expected ';' before '}}' token"
+        "raw_text": "expected ';' before '}' token"
       },
       "node_completeness": "complete",
       "origin": "gcc",
       "phase": "parse",
       "provenance": {
         "capture_refs": [
-          "diagnostics.sarif"
+          "diagnostics.json"
         ],
         "source": "compiler"
       },
@@ -139,8 +139,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "9390e1b8338daddf09a9f998741fc3b36db69061c445fe9eb853111a5b77f657",
-    "structural": "9f7ad9f73453358d2e997c848db866f2a95df96b0ae359ae8c3689a44722a255"
+    "raw": "5aab6340a02768a8d094402cb7a8f7e3a80b8eb6236f582693bdf03d32595721",
+    "structural": "1a6c5577161547cd6f85ac4d9ae114eda942ce39327b264f748891c68b2bfd8b"
   },
   "producer": {
     "name": "gcc-formed",

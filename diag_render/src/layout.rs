@@ -62,6 +62,16 @@ impl LayoutProfile {
         for notice in &card.collapsed_notices {
             lines.push(format!("note: {}", theme.inline(notice)));
         }
+        for suggestion in &card.suggestions {
+            lines.push(format!(
+                "{}: {}",
+                suggestion.label,
+                theme.inline(&suggestion.text)
+            ));
+            for patch_line in &suggestion.inline_patch {
+                lines.push(format!("  {}", theme.inline(patch_line)));
+            }
+        }
         if !card.raw_sub_block.is_empty() {
             lines.push(card.raw_block_label.clone());
             for raw_line in &card.raw_sub_block {

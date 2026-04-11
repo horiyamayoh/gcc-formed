@@ -4,14 +4,16 @@ use crate::classify::{
     classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
     infer_related_phase, infer_related_role, structured_message_text,
 };
+use crate::fixits::suggestion_from_edits;
 use crate::ingest::AdapterError;
 use crate::sarif::{push_chain_frame, read_structured_artifact_text};
-use crate::{json_str, json_u32};
+use crate::{is_valid_text_edit, json_str, json_u32};
 use diag_core::{
     AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
     DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
     IssueSeverity, IssueStage, Location, MessageText, NodeCompleteness, Origin, ProducerInfo,
-    Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity,
+    Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
+    SuggestionApplicability, TextEdit,
 };
 use serde_json::Value;
 
@@ -97,6 +99,7 @@ fn gcc_json_diagnostic_to_node(
     let locations = parse_gcc_json_locations(diagnostic);
     let children = parse_gcc_json_children(&id, diagnostic, capture_ref);
     let context_chains = parse_gcc_json_context_chains(&raw_text, &children);
+    let suggestions = parse_fixit_suggestions(diagnostic);
     let completeness = if locations.is_empty() {
         NodeCompleteness::Partial
     } else {
@@ -127,7 +130,7 @@ fn gcc_json_diagnostic_to_node(
         },
         locations,
         children,
-        suggestions: Vec::new(),
+        suggestions,
         context_chains,
         symbol_context: None,
         node_completeness: completeness,
@@ -253,6 +256,43 @@ fn parse_gcc_json_children(
             )
         })
         .collect()
+}
+
+fn parse_fixit_suggestions(diagnostic: &Value) -> Vec<Suggestion> {
+    diagnostic
+        .get("fixits")
+        .or_else(|| diagnostic.get("fixit-hints"))
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(parse_fixit_suggestion)
+        .collect()
+}
+
+fn parse_fixit_suggestion(fixit: &Value) -> Option<Suggestion> {
+    let edit = parse_fixit_text_edit(fixit)?;
+    suggestion_from_edits(None, SuggestionApplicability::MachineApplicable, vec![edit])
+}
+
+fn parse_fixit_text_edit(fixit: &Value) -> Option<TextEdit> {
+    let start = fixit.get("start")?;
+    let end = fixit.get("next")?;
+    let path = gcc_json_point_file(start)?;
+    let end_path = gcc_json_point_file(end).unwrap_or_else(|| path.clone());
+    if path != end_path {
+        return None;
+    }
+
+    let edit = TextEdit {
+        path,
+        start_line: gcc_json_point_line(start)?,
+        start_column: gcc_json_point_column(start)?,
+        end_line: gcc_json_point_line(end)?,
+        end_column: gcc_json_point_column(end)?,
+        replacement: fixit.get("string")?.as_str()?.to_string(),
+    };
+
+    is_valid_text_edit(&edit).then_some(edit)
 }
 
 fn json_message_text(message: Option<&Value>) -> Option<String> {

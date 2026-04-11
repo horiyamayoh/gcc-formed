@@ -32,7 +32,7 @@
       "fingerprints": {
         "family": "8030cad6ffda694d1895716f07594f16cf6dcbf0f30f3f3e529edec2c4c44f71",
         "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
-        "structural": "819a8df1de1ab1937187d0feac5340a9207806a680c3d052f3043e9bab41c712"
+        "structural": "6b1b12bc512161ec3cca7ef5fe80bf6820c2784eabd56d41d11c634983fa21ad"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -71,13 +71,29 @@
         "source": "compiler"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 18,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ")",
+              "start_column": 18,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ')'"
+        }
+      ]
     },
     {
       "fingerprints": {
         "family": "3fdd2af0bf4d5ddbdb90d78eec183f9476d2231708fdae17ce6ef8709e45e038",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "3b0ed79575653b763fbc919fbfc1660dd5e86bfef351db85b825e78277306978"
+        "structural": "5c11f8ce50ec8d112e74bf570e742e2047512230ee1310d11dddb7403901f240"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -116,7 +132,23 @@
         "source": "compiler"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 19,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 19,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     },
     {
       "fingerprints": {
@@ -213,8 +245,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
-    "raw": "9c6e260758a9d5d957d8354c08ad0ffbc914af4f877a26d20f63566d4ed274d3",
-    "structural": "e11308d5f67781d796b4dfb947b62c59b76a69c6d5cb532b3917e2d648669bfd"
+    "raw": "624ad959f945887a47753bd23b94d2034f056ce3c1aa06a3c4d80acb5c8e065d",
+    "structural": "eed3f09436029a676b42a184c81ddc2bcd420b09b53a9a5d72a27a72f5fb45e4"
   },
   "producer": {
     "name": "gcc-formed",

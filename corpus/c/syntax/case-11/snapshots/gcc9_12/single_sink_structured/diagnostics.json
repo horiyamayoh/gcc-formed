@@ -1,0 +1,39 @@
+[
+  {
+    "kind": "error",
+    "message": "expected ';' before '}' token",
+    "children": [],
+    "column-origin": 1,
+    "locations": [
+      {
+        "caret": {
+          "file": "src/main.c",
+          "line": 2,
+          "display-column": 13,
+          "byte-column": 13,
+          "column": 13
+        }
+      }
+    ],
+    "fixits": [
+      {
+        "start": {
+          "file": "src/main.c",
+          "line": 2,
+          "display-column": 13,
+          "byte-column": 13,
+          "column": 13
+        },
+        "next": {
+          "file": "src/main.c",
+          "line": 2,
+          "display-column": 13,
+          "byte-column": 13,
+          "column": 13
+        },
+        "string": ";"
+      }
+    ],
+    "escape-source": false
+  }
+]

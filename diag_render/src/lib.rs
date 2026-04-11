@@ -17,6 +17,7 @@ mod formatter;
 mod layout;
 mod path;
 mod selector;
+mod suggestion;
 mod theme;
 mod view_model;
 
@@ -28,7 +29,9 @@ pub use excerpt::ExcerptBlock;
 /// Selects and ranks diagnostic groups for rendering.
 pub use selector::select_groups;
 /// Re-exported view-model types used to inspect the rendering intermediate representation.
-pub use view_model::{RenderGroupCard, RenderSessionSummary, RenderViewModel, SummaryOnlyGroup};
+pub use view_model::{
+    RenderActionItem, RenderGroupCard, RenderSessionSummary, RenderViewModel, SummaryOnlyGroup,
+};
 
 /// Controls the verbosity and layout preset for diagnostic rendering.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -273,7 +276,8 @@ mod tests {
         AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
         ContextChainKind, ContextFrame, DiagnosticDocument, DocumentCompleteness, Location,
         MessageText, NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance,
-        ProvenanceSource, RunInfo, SemanticRole, Severity, ToolInfo,
+        ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability,
+        TextEdit, ToolInfo,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -321,6 +325,18 @@ mod tests {
             reasons: Vec::new(),
             policy_profile: None,
             producer_version: None,
+        }
+    }
+
+    fn sample_suggestion(
+        label: &str,
+        applicability: SuggestionApplicability,
+        edits: Vec<TextEdit>,
+    ) -> Suggestion {
+        Suggestion {
+            label: label.to_string(),
+            applicability,
+            edits,
         }
     }
 
@@ -431,6 +447,125 @@ mod tests {
             fs::create_dir_all(parent).unwrap();
         }
         fs::write(path, contents).unwrap();
+    }
+
+    #[test]
+    fn view_model_builds_applicability_aware_suggestions_with_inline_patch() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return 0\n}\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.document.diagnostics[0].suggestions = vec![sample_suggestion(
+            "insert ';'",
+            SuggestionApplicability::MachineApplicable,
+            vec![TextEdit {
+                path: "src/main.c".to_string(),
+                start_line: 2,
+                start_column: 13,
+                end_line: 2,
+                end_column: 13,
+                replacement: ";".to_string(),
+            }],
+        )];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].suggestions.len(), 1);
+        assert_eq!(view.cards[0].suggestions[0].label, "suggested edit");
+        assert_eq!(
+            view.cards[0].suggestions[0].text,
+            "insert ';' at src/main.c:2:13"
+        );
+        assert_eq!(
+            view.cards[0].suggestions[0].inline_patch,
+            vec![
+                "patch: src/main.c".to_string(),
+                "2 -     return 0".to_string(),
+                "2 +     return 0;".to_string(),
+            ]
+        );
+
+        let output = render(request).unwrap();
+        assert!(
+            output
+                .text
+                .contains("suggested edit: insert ';' at src/main.c:2:13")
+        );
+        assert!(output.text.contains("  patch: src/main.c"));
+        assert!(output.text.contains("  2 -     return 0"));
+        assert!(output.text.contains("  2 +     return 0;"));
+    }
+
+    #[test]
+    fn render_keeps_summary_only_when_patch_cannot_be_reconstructed() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].suggestions = vec![sample_suggestion(
+            "replace the condition",
+            SuggestionApplicability::MaybeIncorrect,
+            vec![TextEdit {
+                path: "src/missing.c".to_string(),
+                start_line: 4,
+                start_column: 8,
+                end_line: 4,
+                end_column: 13,
+                replacement: "ready".to_string(),
+            }],
+        )];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].suggestions.len(), 1);
+        assert_eq!(view.cards[0].suggestions[0].label, "likely edit");
+        assert_eq!(
+            view.cards[0].suggestions[0].text,
+            "replace the condition at src/missing.c:4:8-13"
+        );
+        assert!(view.cards[0].suggestions[0].inline_patch.is_empty());
+
+        let output = render(request).unwrap();
+        assert!(
+            output
+                .text
+                .contains("likely edit: replace the condition at src/missing.c:4:8-13")
+        );
+        assert!(!output.text.contains("patch: src/missing.c"));
+    }
+
+    #[test]
+    fn render_skips_inline_patch_for_manual_suggestions() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(&tempdir, "src/main.c", "value()\n");
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.document.diagnostics[0].suggestions = vec![sample_suggestion(
+            "rename the helper for clarity",
+            SuggestionApplicability::Manual,
+            vec![TextEdit {
+                path: "src/main.c".to_string(),
+                start_line: 1,
+                start_column: 1,
+                end_line: 1,
+                end_column: 6,
+                replacement: "result".to_string(),
+            }],
+        )];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].suggestions.len(), 1);
+        assert_eq!(view.cards[0].suggestions[0].label, "consider");
+        assert!(view.cards[0].suggestions[0].inline_patch.is_empty());
+
+        let output = render(request).unwrap();
+        assert!(
+            output
+                .text
+                .contains("consider: rename the helper for clarity at src/main.c:1:1-6")
+        );
+        assert!(!output.text.contains("patch: src/main.c"));
     }
 
     #[test]

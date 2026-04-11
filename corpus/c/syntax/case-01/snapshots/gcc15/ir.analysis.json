@@ -44,7 +44,7 @@
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "b534b1c2a83f5a555633256d3ac885a15352d7ff74a8abecb1d82832567b9c2b"
+        "structural": "3920785e6f01afaa7ca1982625fbec0a101e0b974ec089328accf7743ea88e54"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -83,7 +83,23 @@
         "source": "compiler"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 13,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 13,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     },
     {
       "analysis": {
@@ -147,8 +163,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "b162217b7d5c0a8cf0e64f06c4959c2450d761513d9b0a569ada25c9dda7c901",
-    "structural": "d360ac9808da24298f1e0b7741fb09827120584e7bf370a62b967ed595ec687e"
+    "raw": "9f9398b9738ef794f30d8620ff7ea1a9607c69445e0572c866ec60be56b46ccd",
+    "structural": "f21ab84924ffa03e5510b363b6617c454c426e69b3316e13b18abc989d18a076"
   },
   "producer": {
     "name": "gcc-formed",

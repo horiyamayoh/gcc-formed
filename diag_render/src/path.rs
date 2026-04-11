@@ -1,4 +1,5 @@
 use crate::{PathPolicy, RenderRequest};
+use diag_core::TextEdit;
 use diag_core::{DiagnosticNode, Location};
 use std::path::{Path, PathBuf};
 
@@ -21,6 +22,27 @@ pub(crate) fn resolved_path(request: &RenderRequest, raw_path: &str) -> PathBuf 
         .as_ref()
         .map(|cwd| cwd.join(path))
         .unwrap_or_else(|| PathBuf::from(raw_path))
+}
+
+pub(crate) fn display_path_for_raw(request: &RenderRequest, raw_path: &str) -> String {
+    display_path(request, raw_path)
+}
+
+pub(crate) fn format_edit_span(request: &RenderRequest, edit: &TextEdit) -> String {
+    let display_path = display_path_for_raw(request, &edit.path);
+    if edit.start_line == edit.end_line {
+        if edit.start_column == edit.end_column {
+            return format!("{display_path}:{}:{}", edit.start_line, edit.start_column);
+        }
+        return format!(
+            "{display_path}:{}:{}-{}",
+            edit.start_line, edit.start_column, edit.end_column
+        );
+    }
+    format!(
+        "{display_path}:{}:{}-{}:{}",
+        edit.start_line, edit.start_column, edit.end_line, edit.end_column
+    )
 }
 
 fn display_path(request: &RenderRequest, raw_path: &str) -> String {

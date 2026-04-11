@@ -3,8 +3,10 @@ use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::path::format_location;
+use crate::suggestion::build_action_items;
 use diag_core::{
     DiagnosticNode, DisclosureConfidence, DocumentCompleteness, NodeCompleteness, Severity,
+    SuggestionApplicability,
 };
 use serde::{Deserialize, Serialize};
 
@@ -62,6 +64,9 @@ pub struct RenderGroupCard {
     pub child_notes: Vec<String>,
     /// Notices about collapsed or omitted content.
     pub collapsed_notices: Vec<String>,
+    /// Render-ready suggestions/fix-its for this diagnostic.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub suggestions: Vec<RenderActionItem>,
     /// Label preceding the raw sub-block.
     #[serde(
         skip_serializing_if = "is_default_raw_block_label",
@@ -77,6 +82,20 @@ pub struct RenderGroupCard {
     pub matched_conditions: Vec<String>,
     /// Reason this group was suppressed, if applicable.
     pub suppression_reason: Option<String>,
+}
+
+/// A render-ready suggestion or fix-it item.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RenderActionItem {
+    /// Applicability-aware display label.
+    pub label: String,
+    /// Human-readable summary text.
+    pub text: String,
+    /// Original applicability from the IR.
+    pub applicability: SuggestionApplicability,
+    /// Compact inline patch preview when it can be reconstructed safely.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub inline_patch: Vec<String>,
 }
 
 /// The complete intermediate representation consumed by the formatter.
@@ -158,6 +177,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let context_lines = supporting_evidence.context_lines;
     let child_notes = supporting_evidence.child_notes;
     let collapsed_notices = supporting_evidence.collapsed_notices;
+    let suggestions = build_action_items(request, node);
     let confidence_notice = if conservative_useful_subset {
         Some(conservative_band_c_notice().to_string())
     } else {
@@ -181,6 +201,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         context_lines,
         child_notes,
         collapsed_notices,
+        suggestions,
         raw_block_label: if conservative_useful_subset {
             conservative_raw_block_label().to_string()
         } else {

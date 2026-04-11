@@ -6,6 +6,7 @@ why: expected ';' before '}}' token
 | src/main.c:2:13
 |     return 0
 |             ^
+suggested edit: insert ';' at src/main.c:2:13
 debug: rule_id=rule.family.syntax.phase_or_message
 debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
 error: syntax error

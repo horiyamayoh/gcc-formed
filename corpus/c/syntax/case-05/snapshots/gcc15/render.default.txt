@@ -5,6 +5,10 @@ why: expected ';' before '}}' token
 | src/main.c:2:19
 |     return (1 + 2;
 |                   ^
+suggested edit: insert ';' at src/main.c:2:19
+  patch: src/main.c
+  2 -     return (1 + 2;
+  2 +     return (1 + 2;;
 other errors:
   - src/main.c:2:18: error: syntax error
   - src/main.c:2:18: error: syntax error

@@ -10,11 +10,13 @@
 
 mod classify;
 mod fallback;
+mod fixits;
 mod gcc_json;
 mod ingest;
 mod sarif;
 mod stderr;
 
+use diag_core::TextEdit;
 use serde_json::Value;
 
 pub use fallback::{producer_for_version, tool_for_backend};
@@ -39,6 +41,50 @@ pub(crate) fn json_u32(v: &Value, key: &str) -> Option<u32> {
     json_u64(v, key).and_then(|value| u32::try_from(value).ok())
 }
 
+pub(crate) fn is_valid_text_edit(edit: &TextEdit) -> bool {
+    edit.start_line >= 1
+        && edit.start_column >= 1
+        && edit.end_line >= 1
+        && edit.end_column >= 1
+        && point_leq(
+            edit.start_line,
+            edit.start_column,
+            edit.end_line,
+            edit.end_column,
+        )
+}
+
+pub(crate) fn text_edits_overlap(edits: &[TextEdit]) -> bool {
+    for (index, left) in edits.iter().enumerate() {
+        for right in edits.iter().skip(index + 1) {
+            if left.path != right.path {
+                continue;
+            }
+            if edit_ranges_overlap(left, right) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn edit_ranges_overlap(left: &TextEdit, right: &TextEdit) -> bool {
+    let left_start = (left.start_line, left.start_column);
+    let left_end = (left.end_line, left.end_column);
+    let right_start = (right.start_line, right.start_column);
+    let right_end = (right.end_line, right.end_column);
+
+    if left_start == left_end && right_start == right_end {
+        return left_start == right_start;
+    }
+
+    !(left_end <= right_start || right_end <= left_start)
+}
+
+fn point_leq(start_line: u32, start_column: u32, end_line: u32, end_column: u32) -> bool {
+    (start_line, start_column) <= (end_line, end_column)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,7 +93,8 @@ mod tests {
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
         DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness, Phase,
-        ProvenanceSource, RunInfo, SemanticRole, SourceAuthority, WrapperSurface,
+        ProvenanceSource, RunInfo, SemanticRole, SourceAuthority, SuggestionApplicability,
+        WrapperSurface,
     };
     use diag_rulepack::checked_in_rulepack_version;
     use std::fs;
@@ -151,6 +198,209 @@ mod tests {
             document.diagnostics[0].provenance.capture_refs,
             vec!["diagnostics.json".to_string()]
         );
+    }
+
+    #[test]
+    fn parses_sarif_fix_suggestions() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"expected ';' before '}' token"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":4,"startColumn":1}
+                          }
+                        }
+                      ],
+                      "fixes":[
+                        {
+                          "description":{"text":"insert missing punctuation"},
+                          "artifactChanges":[
+                            {
+                              "artifactLocation":{"uri":"src/main.c"},
+                              "replacements":[
+                                {
+                                  "deletedRegion":{"startLine":4,"startColumn":12,"endColumn":12},
+                                  "insertedContent":{"text":";"}
+                                }
+                              ]
+                            },
+                            {
+                              "artifactLocation":{"uri":"include/common.h"},
+                              "replacements":[
+                                {
+                                  "deletedRegion":{"startLine":2,"startColumn":1,"endLine":2,"endColumn":7},
+                                  "insertedContent":{"text":"static "}
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+        let suggestions = &document.diagnostics[0].suggestions;
+
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0].label, "insert missing punctuation");
+        assert_eq!(
+            suggestions[0].applicability,
+            SuggestionApplicability::Manual
+        );
+        assert_eq!(suggestions[0].edits.len(), 2);
+        assert_eq!(suggestions[0].edits[0].path, "src/main.c");
+        assert_eq!(suggestions[0].edits[0].start_line, 4);
+        assert_eq!(suggestions[0].edits[0].end_line, 4);
+        assert_eq!(suggestions[0].edits[0].replacement, ";");
+        assert_eq!(suggestions[0].edits[1].path, "include/common.h");
+        assert_eq!(suggestions[0].edits[1].replacement, "static ");
+    }
+
+    #[test]
+    fn drops_invalid_sarif_fix_suggestions() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"expected ';' before '}' token"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":4,"startColumn":1}
+                          }
+                        }
+                      ],
+                      "fixes":[
+                        {
+                          "artifactChanges":[
+                            {
+                              "artifactLocation":{"uri":"src/main.c"},
+                              "replacements":[
+                                {
+                                  "deletedRegion":{"startLine":4,"startColumn":12,"endColumn":11},
+                                  "insertedContent":{"text":";"}
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+        assert!(document.diagnostics[0].suggestions.is_empty());
+    }
+
+    #[test]
+    fn parses_gcc_json_fixits_into_suggestions() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":4,"column":1}
+                  }
+                ],
+                "fixits":[
+                  {
+                    "start":{"file":"src/main.c","line":4,"column":12},
+                    "next":{"file":"src/main.c","line":4,"column":12},
+                    "string":";"
+                  },
+                  {
+                    "start":{"file":"src/main.c","line":4,"column":5},
+                    "next":{"file":"src/main.c","line":4,"column":11},
+                    "string":"return"
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let suggestions = &document.diagnostics[0].suggestions;
+        assert_eq!(suggestions.len(), 2);
+        assert_eq!(
+            suggestions[0].applicability,
+            SuggestionApplicability::MachineApplicable
+        );
+        assert_eq!(suggestions[0].edits[0].replacement, ";");
+        assert_eq!(suggestions[1].edits[0].start_column, 5);
+        assert_eq!(suggestions[1].edits[0].end_column, 11);
+        assert_eq!(suggestions[1].edits[0].replacement, "return");
+    }
+
+    #[test]
+    fn parses_fixit_hints_compatibility_and_drops_invalid_regions() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"expected ';' before '}' token",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":4,"column":1}
+                  }
+                ],
+                "fixit-hints":[
+                  {
+                    "start":{"file":"src/main.c","line":4,"column":12},
+                    "next":{"file":"src/main.c","line":4,"column":12},
+                    "string":";"
+                  },
+                  {
+                    "start":{"file":"src/main.c","line":4,"column":9},
+                    "next":{"file":"src/main.c","line":4,"column":8},
+                    "string":"broken"
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let suggestions = &document.diagnostics[0].suggestions;
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0].edits[0].replacement, ";");
     }
 
     #[test]

@@ -44,7 +44,7 @@
       "fingerprints": {
         "family": "b9475557f45c8644921bda2f79d6409641ebf674132398f2b6496f72f6fa6642",
         "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
-        "structural": "007de072965c6866ef71b1791a6c18e0cc3acace4d7aaef57db964bef3aa5156"
+        "structural": "a6ff1b1eb663c8bad82f69058498e0cc869d53efd2938758987a14532f279eea"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -83,7 +83,23 @@
         "source": "compiler"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 18,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ")",
+              "start_column": 18,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ')'"
+        }
+      ]
     },
     {
       "analysis": {
@@ -101,7 +117,7 @@
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "d79615914dee423b121833e7a0e37356542a5a7db4cb5ac2f479f7e8e2ea5a5d"
+        "structural": "cc0283fa0bf2688923a91d8196f71fcf2919113cc123c613949d847b715885ee"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -140,7 +156,23 @@
         "source": "compiler"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 19,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 19,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     },
     {
       "analysis": {
@@ -261,8 +293,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "f506af7f50b1b9bd7b2fe9fe3da608b38b14be867c29ead5af81aee0f2882f26",
-    "raw": "93ef8d85cb7f75102f0971b6e64699713d10d1c5f28c817bff70eb9dd017a153",
-    "structural": "cc95e73787c7c3ee4050ba10f447abf7da8cc6c75cee09e6387ebae99243a469"
+    "raw": "05f50f4b702a8440ed688dd76509d296529b3b2d88a4df8e84ec886784a96cb3",
+    "structural": "1cbd565ad633b276620da4c012a0229a8c2a92b45595daacdc1153dda81d36a6"
   },
   "producer": {
     "name": "gcc-formed",

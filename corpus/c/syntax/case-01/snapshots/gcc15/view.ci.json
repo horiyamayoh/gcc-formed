@@ -29,6 +29,18 @@
       "raw_message": "expected ';' before '}}' token",
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "inline_patch": [
+            "patch: src/main.c",
+            "2 -     return 0",
+            "2 +     return 0;"
+          ],
+          "label": "suggested edit",
+          "text": "insert ';' at src/main.c:2:13"
+        }
+      ],
       "suppression_reason": null,
       "title": "syntax error"
     }
