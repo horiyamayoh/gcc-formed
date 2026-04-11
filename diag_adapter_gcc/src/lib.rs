@@ -9,6 +9,7 @@
 //! - [`from_sarif`] -- parse a standalone SARIF file on disk.
 
 mod classify;
+mod context;
 mod fallback;
 mod fixits;
 mod gcc_json;
@@ -887,6 +888,270 @@ mod tests {
     }
 
     #[test]
+    fn parses_sarif_codeflows_into_template_context_frames() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"no matching function for call to 'expect_ptr(int&)'"},
+                      "taxa":[
+                        {
+                          "id":"cpp.template_instantiation",
+                          "shortDescription":{"text":"template instantiation backtrace"}
+                        }
+                      ],
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/header.hpp"},
+                            "region":{"startLine":3,"startColumn":7}
+                          }
+                        }
+                      ],
+                      "codeFlows":[
+                        {
+                          "threadFlows":[
+                            {
+                              "locations":[
+                                {
+                                  "location":{
+                                    "physicalLocation":{
+                                      "artifactLocation":{"uri":"src/header.hpp"},
+                                      "region":{"startLine":3,"startColumn":7}
+                                    },
+                                    "message":{"text":"In instantiation of 'void expect_ptr(T*) [with T = int]'"}
+                                  }
+                                },
+                                {
+                                  "location":{
+                                    "physicalLocation":{
+                                      "artifactLocation":{"uri":"src/main.cpp"},
+                                      "region":{"startLine":8,"startColumn":15}
+                                    },
+                                    "message":{"text":"required from here"}
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        let template_chain = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+            .unwrap();
+
+        assert_eq!(root.phase, Phase::Instantiate);
+        assert_eq!(template_chain.frames.len(), 2);
+        assert_eq!(
+            template_chain.frames[0].path.as_deref(),
+            Some("src/header.hpp")
+        );
+        assert!(
+            template_chain.frames[0]
+                .label
+                .contains("In instantiation of")
+        );
+        assert_eq!(
+            template_chain.frames[1].path.as_deref(),
+            Some("src/main.cpp")
+        );
+        assert_eq!(template_chain.frames[1].line, Some(8));
+    }
+
+    #[test]
+    fn sarif_context_fallback_ignores_negative_include_phrases() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"record does not include member 'missing'"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          },
+                          "message":{"text":"record does not include member 'missing'"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert!(
+            !root
+                .context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::Include))
+        );
+    }
+
+    #[test]
+    fn gcc_json_option_drives_template_context() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "option":"-Wtemplate-body",
+                "message":"call expression is ill-formed",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":8,"column":15}
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Instantiate);
+        assert!(
+            root.context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+        );
+    }
+
+    #[test]
+    fn parses_gcc_json_context_chains_from_recursive_note_children() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'expect_ptr(int&)'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/header.hpp","line":3,"column":7}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"In instantiation of 'void expect_ptr(T*) [with T = int]'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/header.hpp","line":3,"column":7}
+                      }
+                    ],
+                    "children":[
+                      {
+                        "kind":"note",
+                        "message":"  required from here",
+                        "locations":[
+                          {
+                            "caret":{"file":"src/main.cpp","line":8,"column":15}
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("12.3.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        let template_chain = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+            .unwrap();
+
+        assert_eq!(template_chain.frames.len(), 2);
+        assert_eq!(
+            template_chain.frames[0].path.as_deref(),
+            Some("src/header.hpp")
+        );
+        assert_eq!(
+            template_chain.frames[1].path.as_deref(),
+            Some("src/main.cpp")
+        );
+        assert!(
+            template_chain.frames[1]
+                .label
+                .contains("required from here")
+        );
+    }
+
+    #[test]
     fn sarif_root_phase_uses_related_messages_for_linker_context() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("diag.sarif");
@@ -1576,6 +1841,84 @@ src/other.c:8:9: note: in expansion of macro 'FETCH_B'\n";
                 .any(|frame| frame.label.contains("FETCH_A"))
         );
         assert!(report.document.validate().is_ok());
+    }
+
+    #[test]
+    fn ingest_bundle_augments_template_context_from_stderr_instantiation_frames() {
+        let run = RunInfo {
+            argv_redacted: vec!["g++".to_string()],
+            primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+            language_mode: Some(LanguageMode::Cpp),
+            ..base_run_info()
+        };
+        let stderr = "\
+src/header.hpp: In instantiation of 'void expect_ptr(T*) [with T = int]':\n\
+src/main.cpp:8:15: note:   required from here\n\
+src/header.hpp:3:7: error: no matching function for call to 'expect_ptr(int&)'\n";
+        let sarif = r#"{
+          "version":"2.1.0",
+          "runs":[
+            {
+              "results":[
+                {
+                  "level":"error",
+                  "message":{"text":"no matching function for call to 'expect_ptr(int&)'"},
+                  "locations":[
+                    {
+                      "physicalLocation":{
+                        "artifactLocation":{"uri":"src/header.hpp"},
+                        "region":{"startLine":3,"startColumn":7}
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }"#;
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, stderr, &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.sarif".to_string(),
+            kind: ArtifactKind::GccSarif,
+            media_type: "application/sarif+json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(sarif.len() as u64),
+            storage: ArtifactStorage::Inline,
+            inline_text: Some(sarif.to_string()),
+            external_ref: None,
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        let root = &report.document.diagnostics[0];
+        let template_chain = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+            .unwrap();
+
+        assert_eq!(template_chain.frames.len(), 2);
+        assert!(
+            template_chain
+                .frames
+                .iter()
+                .any(|frame| frame.label.contains("In instantiation of"))
+        );
+        assert!(
+            template_chain
+                .frames
+                .iter()
+                .any(|frame| frame.label.contains("required from here"))
+        );
     }
 
     #[test]

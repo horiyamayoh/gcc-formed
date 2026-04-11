@@ -5,6 +5,7 @@ use crate::classify::{
     infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
     structured_message_text,
 };
+use crate::context::{extend_unique_context_kinds, metadata_context_kinds, text_context_kinds};
 use crate::fixits::suggestion_from_edits;
 use crate::ingest::AdapterError;
 use crate::{is_valid_text_edit, json_str, json_u32, text_edits_overlap};
@@ -402,33 +403,43 @@ fn parse_replacement(path: &str, replacement: &Value) -> Option<TextEdit> {
 
 fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
     let mut chains = Vec::new();
-    if result.get("codeFlows").is_some() {
-        chains.push(ContextChain {
-            kind: ContextChainKind::AnalyzerPath,
-            frames: Vec::new(),
-        });
+    let metadata_kinds = sarif_metadata_context_kinds(result);
+    let mut has_structured_frames = false;
+
+    for code_flow in result
+        .get("codeFlows")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        for thread_flow in code_flow
+            .get("threadFlows")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            let frames = parse_thread_flow_frames(thread_flow);
+            if frames.is_empty() {
+                continue;
+            }
+            let kind = infer_thread_flow_kind(thread_flow)
+                .or_else(|| metadata_kinds.first().cloned())
+                .unwrap_or(ContextChainKind::AnalyzerPath);
+            for frame in frames {
+                push_chain_frame(&mut chains, kind.clone(), frame);
+            }
+            has_structured_frames = true;
+        }
     }
-    let message = structured_message_text(result.get("message"))
-        .unwrap_or_default()
-        .to_lowercase();
-    if message.contains("template") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::TemplateInstantiation,
-            frames: Vec::new(),
-        });
+
+    if result.get("codeFlows").is_some() && !has_structured_frames && metadata_kinds.is_empty() {
+        ensure_chain(&mut chains, ContextChainKind::AnalyzerPath);
     }
-    if message.contains("macro") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::MacroExpansion,
-            frames: Vec::new(),
-        });
+
+    for kind in metadata_kinds {
+        ensure_chain(&mut chains, kind);
     }
-    if message.contains("include") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::Include,
-            frames: Vec::new(),
-        });
-    }
+
     for location in result
         .get("relatedLocations")
         .and_then(Value::as_array)
@@ -436,31 +447,114 @@ fn parse_context_chains(result: &Value) -> Vec<ContextChain> {
         .flatten()
     {
         let related_message = structured_message_text(location.get("message")).unwrap_or_default();
-        let frame = context_frame_from_related_location(&related_message, location);
-        let lowered = related_message.to_lowercase();
-        if lowered.contains("template")
-            || lowered.contains("required from")
-            || lowered.contains("required by substitution")
-            || lowered.contains("deduction/substitution")
-            || lowered.contains("deduced conflicting")
-        {
-            push_chain_frame(
-                &mut chains,
-                ContextChainKind::TemplateInstantiation,
-                frame.clone(),
-            );
-        }
-        if lowered.contains("macro") {
-            push_chain_frame(&mut chains, ContextChainKind::MacroExpansion, frame.clone());
-        }
-        if lowered.contains("include") {
-            push_chain_frame(&mut chains, ContextChainKind::Include, frame);
+        let Some(frame) = context_frame_from_related_location(&related_message, location) else {
+            continue;
+        };
+        for kind in text_context_kinds(&related_message) {
+            push_chain_frame(&mut chains, kind, frame.clone());
         }
     }
+
+    let message = structured_message_text(result.get("message")).unwrap_or_default();
+    for kind in text_context_kinds(&message) {
+        ensure_chain(&mut chains, kind);
+    }
+
     chains
 }
 
-fn context_frame_from_related_location(message: &str, location: &Value) -> diag_core::ContextFrame {
+fn sarif_metadata_context_kinds(result: &Value) -> Vec<ContextChainKind> {
+    let mut kinds = Vec::new();
+    if let Some(rule_id) = result.get("ruleId").and_then(Value::as_str) {
+        extend_unique_context_kinds(&mut kinds, metadata_context_kinds(rule_id));
+    }
+    for taxon in result
+        .get("taxa")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        for seed in sarif_taxon_metadata_seeds(taxon) {
+            extend_unique_context_kinds(&mut kinds, metadata_context_kinds(&seed));
+        }
+    }
+    kinds
+}
+
+fn sarif_taxon_metadata_seeds(taxon: &Value) -> Vec<String> {
+    let mut seeds = Vec::new();
+    for key in ["id", "name"] {
+        if let Some(text) = taxon.get(key).and_then(Value::as_str)
+            && !text.trim().is_empty()
+        {
+            seeds.push(text.to_string());
+        }
+    }
+    for key in ["shortDescription", "fullDescription"] {
+        if let Some(text) = structured_message_text(taxon.get(key))
+            && !text.trim().is_empty()
+        {
+            seeds.push(text);
+        }
+    }
+    seeds
+}
+
+fn parse_thread_flow_frames(thread_flow: &Value) -> Vec<diag_core::ContextFrame> {
+    thread_flow
+        .get("locations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(context_frame_from_thread_flow_location)
+        .collect()
+}
+
+fn infer_thread_flow_kind(thread_flow: &Value) -> Option<ContextChainKind> {
+    if let Some(message) = structured_message_text(thread_flow.get("message")) {
+        if let Some(kind) = text_context_kinds(&message).into_iter().next() {
+            return Some(kind);
+        }
+    }
+    thread_flow
+        .get("locations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(thread_flow_location_label)
+        .find_map(|label| text_context_kinds(&label).into_iter().next())
+}
+
+fn context_frame_from_thread_flow_location(
+    thread_flow_location: &Value,
+) -> Option<diag_core::ContextFrame> {
+    let location = thread_flow_location
+        .get("location")
+        .unwrap_or(thread_flow_location);
+    let message = structured_message_text(thread_flow_location.get("message"))
+        .or_else(|| structured_message_text(location.get("message")));
+    context_frame_from_sarif_location(message.as_deref(), location)
+}
+
+fn thread_flow_location_label(thread_flow_location: &Value) -> Option<String> {
+    structured_message_text(thread_flow_location.get("message")).or_else(|| {
+        thread_flow_location
+            .get("location")
+            .and_then(|location| structured_message_text(location.get("message")))
+    })
+}
+
+fn context_frame_from_related_location(
+    message: &str,
+    location: &Value,
+) -> Option<diag_core::ContextFrame> {
+    context_frame_from_sarif_location(Some(message), location)
+}
+
+fn context_frame_from_sarif_location(
+    message: Option<&str>,
+    location: &Value,
+) -> Option<diag_core::ContextFrame> {
     let physical = location
         .get("physicalLocation")
         .or_else(|| location.get("physical_location"));
@@ -468,16 +562,33 @@ fn context_frame_from_related_location(message: &str, location: &Value) -> diag_
         .and_then(|physical| physical.get("region"))
         .cloned()
         .unwrap_or(Value::Null);
-    diag_core::ContextFrame {
-        label: message.trim().to_string(),
-        path: physical
-            .and_then(|physical| physical.get("artifactLocation"))
-            .and_then(|artifact| artifact.get("uri"))
-            .and_then(Value::as_str)
-            .map(ToString::to_string),
+    let path = physical
+        .and_then(|physical| physical.get("artifactLocation"))
+        .and_then(|artifact| artifact.get("uri"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string);
+    let label = message
+        .map(str::trim)
+        .filter(|text| !text.is_empty())
+        .map(ToString::to_string)
+        .or_else(|| path.clone())?;
+
+    Some(diag_core::ContextFrame {
+        label,
+        path,
         line: json_u32(&region, "startLine"),
         column: json_u32(&region, "startColumn"),
+    })
+}
+
+pub(crate) fn ensure_chain(chains: &mut Vec<ContextChain>, kind: ContextChainKind) {
+    if chains.iter().any(|chain| chain.kind == kind) {
+        return;
     }
+    chains.push(ContextChain {
+        kind,
+        frames: Vec::new(),
+    });
 }
 
 pub(crate) fn push_chain_frame(

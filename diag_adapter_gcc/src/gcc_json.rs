@@ -4,16 +4,16 @@ use crate::classify::{
     classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
     infer_related_phase, infer_related_role, structured_message_text,
 };
+use crate::context::{option_context_kind, text_context_kinds};
 use crate::fixits::suggestion_from_edits;
 use crate::ingest::AdapterError;
-use crate::sarif::{push_chain_frame, read_structured_artifact_text};
+use crate::sarif::{ensure_chain, push_chain_frame, read_structured_artifact_text};
 use crate::{is_valid_text_edit, json_str, json_u32};
 use diag_core::{
-    AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, ContextChainKind,
-    DiagnosticDocument, DiagnosticNode, DocumentCompleteness, FingerprintSet, IntegrityIssue,
-    IssueSeverity, IssueStage, Location, MessageText, NodeCompleteness, Origin, ProducerInfo,
-    Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
-    SuggestionApplicability, TextEdit,
+    AnalysisOverlay, CaptureArtifact, Confidence, ContextChain, DiagnosticDocument, DiagnosticNode,
+    DocumentCompleteness, FingerprintSet, IntegrityIssue, IssueSeverity, IssueStage, Location,
+    MessageText, NodeCompleteness, Origin, ProducerInfo, Provenance, ProvenanceSource, RunInfo,
+    SemanticRole, Severity, Suggestion, SuggestionApplicability, TextEdit,
 };
 use serde_json::Value;
 
@@ -98,7 +98,7 @@ fn gcc_json_diagnostic_to_node(
     let family_decision = classify_family_seed(&family_seed);
     let locations = parse_gcc_json_locations(diagnostic);
     let children = parse_gcc_json_children(&id, diagnostic, capture_ref);
-    let context_chains = parse_gcc_json_context_chains(&raw_text, &children);
+    let context_chains = parse_gcc_json_context_chains(diagnostic, &raw_text);
     let suggestions = parse_fixit_suggestions(diagnostic);
     let completeness = if locations.is_empty() {
         NodeCompleteness::Partial
@@ -309,69 +309,67 @@ fn json_child_messages(diagnostic: &Value) -> Vec<String> {
         .collect()
 }
 
-fn parse_gcc_json_context_chains(message: &str, children: &[DiagnosticNode]) -> Vec<ContextChain> {
+fn parse_gcc_json_context_chains(diagnostic: &Value, message: &str) -> Vec<ContextChain> {
     let mut chains = Vec::new();
-    let lowered = message.to_lowercase();
-    if lowered.contains("template") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::TemplateInstantiation,
-            frames: Vec::new(),
-        });
+    if let Some(kind) = option_context_kind(json_str(diagnostic, "option")) {
+        ensure_chain(&mut chains, kind);
     }
-    if lowered.contains("macro") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::MacroExpansion,
-            frames: Vec::new(),
-        });
+    collect_gcc_json_child_context_chains(diagnostic, &mut chains);
+    for kind in text_context_kinds(message) {
+        ensure_chain(&mut chains, kind);
     }
-    if lowered.contains("include") {
-        chains.push(ContextChain {
-            kind: ContextChainKind::Include,
-            frames: Vec::new(),
-        });
-    }
-
-    for child in children {
-        let frame = context_frame_from_node(child);
-        let lowered = child.message.raw_text.to_lowercase();
-        if lowered.contains("template")
-            || lowered.contains("required from")
-            || lowered.contains("required by substitution")
-            || lowered.contains("deduction/substitution")
-            || lowered.contains("deduced conflicting")
-        {
-            push_chain_frame(
-                &mut chains,
-                ContextChainKind::TemplateInstantiation,
-                frame.clone(),
-            );
-        }
-        if lowered.contains("macro") {
-            push_chain_frame(&mut chains, ContextChainKind::MacroExpansion, frame.clone());
-        }
-        if lowered.contains("include")
-            || child
-                .message
-                .raw_text
-                .trim_start()
-                .starts_with("In file included from ")
-            || child.message.raw_text.trim_start().starts_with("from ")
-        {
-            push_chain_frame(&mut chains, ContextChainKind::Include, frame);
-        }
-    }
-
     chains
 }
 
-fn context_frame_from_node(node: &DiagnosticNode) -> diag_core::ContextFrame {
-    let location = node.primary_location();
-    diag_core::ContextFrame {
-        label: node.message.raw_text.trim().to_string(),
-        path: location.map(|location| location.path_raw().to_string()),
-        line: location.map(|location| location.line()),
-        column: location.map(|location| location.column()),
+fn collect_gcc_json_child_context_chains(diagnostic: &Value, chains: &mut Vec<ContextChain>) {
+    for child in diagnostic
+        .get("children")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        if json_str(child, "kind") == "note" {
+            let frame = context_frame_from_diagnostic_value(child);
+            let mut kinds = Vec::new();
+            if let Some(kind) = option_context_kind(json_str(child, "option")) {
+                kinds.push(kind);
+            }
+            if let Some(message) = json_message_text(child.get("message")) {
+                for kind in text_context_kinds(&message) {
+                    if !kinds.contains(&kind) {
+                        kinds.push(kind);
+                    }
+                }
+            }
+            if let Some(frame) = frame {
+                for kind in kinds {
+                    push_chain_frame(chains, kind, frame.clone());
+                }
+            } else {
+                for kind in kinds {
+                    ensure_chain(chains, kind);
+                }
+            }
+        }
+        collect_gcc_json_child_context_chains(child, chains);
     }
+}
+
+fn context_frame_from_diagnostic_value(diagnostic: &Value) -> Option<diag_core::ContextFrame> {
+    let location = parse_gcc_json_locations(diagnostic).into_iter().next();
+    let path = location
+        .as_ref()
+        .map(|location| location.path_raw().to_string());
+    let label = json_message_text(diagnostic.get("message"))
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty())
+        .or_else(|| path.clone())?;
+    Some(diag_core::ContextFrame {
+        label,
+        path,
+        line: location.as_ref().map(|location| location.line()),
+        column: location.as_ref().map(|location| location.column()),
+    })
 }
 
 fn gcc_json_severity(kind: &str) -> Severity {

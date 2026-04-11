@@ -1,11 +1,15 @@
 //! Stderr context augmentation for structured diagnostic documents.
 
-use diag_core::{ContextChain, ContextChainKind, DiagnosticDocument, DiagnosticNode, Location};
+use crate::context::message_has_template_context;
+use diag_core::{
+    ContextChain, ContextChainKind, DiagnosticDocument, DiagnosticNode, Location, ProvenanceSource,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct StderrContextBlock {
     include_frames: Vec<diag_core::ContextFrame>,
     macro_frames: Vec<diag_core::ContextFrame>,
+    template_frames: Vec<diag_core::ContextFrame>,
     location_hints: Vec<StderrLocationHint>,
     message_hint: Option<String>,
 }
@@ -34,12 +38,20 @@ pub(crate) fn augment_context_chains_from_stderr(
         if !block.macro_frames.is_empty() {
             push_chain_frames(target, ContextChainKind::MacroExpansion, block.macro_frames);
         }
+        if !block.template_frames.is_empty() {
+            push_chain_frames(
+                target,
+                ContextChainKind::TemplateInstantiation,
+                block.template_frames,
+            );
+        }
     }
 }
 
 fn parse_stderr_context_blocks(stderr_text: &str) -> Vec<StderrContextBlock> {
     let mut blocks = Vec::new();
     let mut pending_include_frames = Vec::new();
+    let mut pending_template_frames = Vec::new();
     let mut current_block: Option<StderrContextBlock> = None;
 
     for line in stderr_text.lines() {
@@ -56,12 +68,32 @@ fn parse_stderr_context_blocks(stderr_text: &str) -> Vec<StderrContextBlock> {
             if let Some(block) = current_block.take().filter(stderr_block_has_frames) {
                 blocks.push(block);
             }
+            let template_frames = std::mem::take(&mut pending_template_frames);
+            let mut location_hints = vec![hint];
+            location_hints.extend(
+                template_frames
+                    .iter()
+                    .filter_map(|frame| location_hint_from_frame(frame, 2)),
+            );
             current_block = Some(StderrContextBlock {
                 include_frames: std::mem::take(&mut pending_include_frames),
                 macro_frames: Vec::new(),
-                location_hints: vec![hint],
+                template_frames,
+                location_hints,
                 message_hint: Some(message_hint),
             });
+            continue;
+        }
+
+        if let Some(frame) = parse_template_instantiation_frame(trimmed) {
+            if let Some(block) = current_block.as_mut() {
+                if let Some(hint) = location_hint_from_frame(&frame, 2) {
+                    block.location_hints.push(hint);
+                }
+                block.template_frames.push(frame);
+            } else {
+                pending_template_frames.push(frame);
+            }
             continue;
         }
 
@@ -83,7 +115,9 @@ fn parse_stderr_context_blocks(stderr_text: &str) -> Vec<StderrContextBlock> {
 }
 
 fn stderr_block_has_frames(block: &StderrContextBlock) -> bool {
-    !block.include_frames.is_empty() || !block.macro_frames.is_empty()
+    !block.include_frames.is_empty()
+        || !block.macro_frames.is_empty()
+        || !block.template_frames.is_empty()
 }
 
 fn parse_root_diagnostic_hint(line: &str) -> Option<(StderrLocationHint, String)> {
@@ -120,6 +154,28 @@ fn parse_macro_expansion_frame(line: &str) -> Option<diag_core::ContextFrame> {
         })
 }
 
+fn parse_template_instantiation_frame(line: &str) -> Option<diag_core::ContextFrame> {
+    if !message_has_template_context(line) {
+        return None;
+    }
+    let lowered = line.to_lowercase();
+    if !(lowered.contains("in instantiation of")
+        || lowered.contains("required from")
+        || lowered.contains("required by substitution")
+        || lowered.contains("deduction/substitution")
+        || lowered.contains("deduced conflicting"))
+    {
+        return None;
+    }
+
+    Some(diag_core::ContextFrame {
+        label: line.to_string(),
+        path: parse_path_prefix(line),
+        line: parse_line_prefix(line),
+        column: parse_column_prefix(line),
+    })
+}
+
 fn location_hint_from_frame(
     frame: &diag_core::ContextFrame,
     priority: u8,
@@ -141,12 +197,21 @@ fn select_context_target(
         .enumerate()
         .filter_map(|(index, node)| {
             let score = score_context_block_for_node(block, node);
-            (score > 0).then_some((index, score))
+            (score > 0).then_some((index, score, context_target_bias(node)))
         })
-        .max_by_key(|(_, score)| *score)
-        .map(|(index, _)| index);
+        .max_by_key(|(_, score, bias)| (*score, *bias))
+        .map(|(index, _, _)| index);
 
     best.or_else(|| (diagnostics.len() == 1 && stderr_block_has_frames(block)).then_some(0))
+}
+
+fn context_target_bias(node: &DiagnosticNode) -> u8 {
+    match node.provenance.source {
+        ProvenanceSource::Compiler => 3,
+        ProvenanceSource::Linker => 2,
+        ProvenanceSource::WrapperGenerated | ProvenanceSource::Policy => 1,
+        ProvenanceSource::ResidualText | ProvenanceSource::Unknown => 0,
+    }
 }
 
 fn score_context_block_for_node(block: &StderrContextBlock, node: &DiagnosticNode) -> i32 {
@@ -199,23 +264,35 @@ fn parse_include_frame(line: &str) -> Option<diag_core::ContextFrame> {
     } else {
         line.strip_prefix("from ")?
     };
-    let (path, line_number) = split_path_line(prefix)?;
+    let (path, line_number, column) = split_path_line_column(prefix)?;
     Some(diag_core::ContextFrame {
         label: line.to_string(),
         path: Some(path.to_string()),
         line: Some(line_number),
-        column: None,
+        column,
     })
 }
 
-fn split_path_line(value: &str) -> Option<(&str, u32)> {
-    let separator = value.rfind(':')?;
-    let path = value[..separator].trim_end_matches(',').trim();
-    let remainder = value[separator + 1..]
+fn split_path_line_column(value: &str) -> Option<(&str, u32, Option<u32>)> {
+    let trimmed = value
+        .trim()
         .trim_end_matches(',')
         .trim_end_matches(':')
         .trim();
-    Some((path, remainder.parse().ok()?))
+    if let Some((prefix, column_str)) = trimmed.rsplit_once(':')
+        && let Ok(column) = column_str.trim().parse::<u32>()
+        && let Some((path, line_str)) = prefix.rsplit_once(':')
+        && let Ok(line) = line_str.trim().parse::<u32>()
+    {
+        return Some((path.trim_end_matches(',').trim(), line, Some(column)));
+    }
+
+    let (path, line_str) = trimmed.rsplit_once(':')?;
+    Some((
+        path.trim_end_matches(',').trim(),
+        line_str.trim().parse().ok()?,
+        None,
+    ))
 }
 
 fn parse_path_prefix(line: &str) -> Option<String> {
