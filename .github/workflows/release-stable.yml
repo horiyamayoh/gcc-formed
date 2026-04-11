@@ -150,57 +150,17 @@ jobs:
           tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
       - name: Write release provenance
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          report_root = Path(os.environ["REPORT_ROOT"])
-          release_root = report_root / "release"
-          stable_root = report_root / "stable-release"
-
-          def load(path):
-              path = Path(path)
-              if not path.exists():
-                  return None
-              return json.loads(path.read_text(encoding="utf-8"))
-
-          payload = {
-              "workflow": "stable-release",
-              "github": {
-                  "repository": os.environ.get("GITHUB_REPOSITORY"),
-                  "sha": os.environ.get("GITHUB_SHA"),
-                  "ref": os.environ.get("GITHUB_REF"),
-                  "run_id": os.environ.get("GITHUB_RUN_ID"),
-                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-                  "actor": os.environ.get("GITHUB_ACTOR"),
-                  "tag": os.environ.get("RELEASE_TAG"),
-              },
-              "release": {
-                  "package_version": os.environ.get("PACKAGE_VERSION"),
-                  "rollback_baseline_version": os.environ.get("ROLLBACK_BASELINE_VERSION"),
-                  "target_triple": os.environ.get("TARGET_TRIPLE"),
-                  "release_channel": os.environ.get("RELEASE_CHANNEL"),
-                  "signing_key_id": os.environ.get("RELEASE_SIGNING_KEY_ID"),
-                  "signing_public_key_sha256": os.environ.get("RELEASE_SIGNING_PUBLIC_KEY_SHA256"),
-                  "package": load(release_root / "package.json"),
-                  "stable_release_command": load(release_root / "stable-release-command.json"),
-                  "stable_release_report": load(stable_root / "stable-release-report.json"),
-                  "promotion_evidence": load(stable_root / "promotion-evidence.json"),
-                  "rollback_drill": load(stable_root / "rollback-drill.json"),
-                  "hermetic_release": load(release_root / "hermetic-release.json"),
-                  "vendor": load(release_root / "vendor.json"),
-                  "rc_gate": load(report_root / "rc-gate" / "rc-gate-report.json"),
-                  "metrics_report": load(report_root / "rc-gate" / "metrics-report.json"),
-                  "fuzz_report": load(report_root / "rc-gate" / "fuzz-smoke-report.json"),
-                  "human_eval": load(report_root / "rc-gate" / "human-eval" / "human-eval-report.json"),
-              },
-          }
-          (release_root / "release-provenance.json").write_text(
-              json.dumps(payload, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
+          python3 ci/release_provenance.py \
+            --workflow stable-release \
+            --report-root "$REPORT_ROOT" \
+            --output "$REPORT_ROOT/release/release-provenance.json" \
+            --package-version "$PACKAGE_VERSION" \
+            --target-triple "$TARGET_TRIPLE" \
+            --release-channel "$RELEASE_CHANNEL" \
+            --maturity-label "$MATURITY_LABEL" \
+            --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
+            --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes
         run: |
           cat > "$RELEASE_NOTES_PATH" <<EOF

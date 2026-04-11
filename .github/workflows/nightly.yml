@@ -327,55 +327,17 @@ jobs:
         if: always()
         run: |
           command=$(cat <<'EOF'
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          report_root = Path(os.environ["REPORT_ROOT"]) / "release"
-          report_root.mkdir(parents=True, exist_ok=True)
-
-          def load(name):
-              path = report_root / name
-              if not path.exists():
-                  return None
-              return json.loads(path.read_text(encoding="utf-8"))
-
-          payload = {
-              "workflow": "nightly-gate",
-              "matrix": {
-                  "gcc_image": os.environ.get("MATRIX_GCC_VERSION"),
-                  "support_tier": os.environ.get("MATRIX_SUPPORT_TIER"),
-                  "release_blocker": os.environ.get("RELEASE_BLOCKER"),
-              },
-              "github": {
-                  "repository": os.environ.get("GITHUB_REPOSITORY"),
-                  "sha": os.environ.get("GITHUB_SHA"),
-                  "ref": os.environ.get("GITHUB_REF"),
-                  "run_id": os.environ.get("GITHUB_RUN_ID"),
-                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-                  "actor": os.environ.get("GITHUB_ACTOR"),
-              },
-              "release": {
-                  "package": load("package.json"),
-                  "release_publish": load("release-publish.json"),
-                  "release_promote_canary": load("release-promote-canary.json"),
-                  "release_promote_beta": load("release-promote-beta.json"),
-                  "release_resolve_beta": load("release-resolve-beta.json"),
-                  "install": load("install.json"),
-                  "install_release": load("install-release.json"),
-                  "system_install": load("system-install.json"),
-                  "hermetic_release": load("hermetic-release.json"),
-                  "vendor": load("vendor.json"),
-                  "bench_smoke": load("bench-smoke.json"),
-                  "fuzz_smoke": load("fuzz-smoke-report.json"),
-              },
-          }
-          (report_root / "release-provenance.json").write_text(
-              json.dumps(payload, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
+          python3 ci/release_provenance.py \
+            --workflow nightly-gate \
+            --report-root "$REPORT_ROOT" \
+            --output "$REPORT_ROOT/release/release-provenance.json" \
+            --package-version "$PACKAGE_VERSION" \
+            --target-triple x86_64-unknown-linux-musl \
+            --release-channel beta \
+            --maturity-label v1beta \
+            --matrix-gcc-image "$MATRIX_GCC_VERSION" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
+            --release-blocker "$RELEASE_BLOCKER"
           EOF
           )
           python3 ci/gate_step.py \
@@ -387,9 +349,7 @@ jobs:
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
         env:
-          MATRIX_GCC_IMAGE: ${{ matrix.gcc_image }}
-          MATRIX_GCC_LABEL: ${{ matrix.gcc_label }}
-          MATRIX_RELEASE_BLOCKER: ${{ matrix.release_blocker }}
+          MATRIX_VERSION_BAND: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_14' || matrix.gcc_label == 'gcc14' && 'gcc13_14' || 'gcc15_plus' }}
       - name: Dependency and license gate
         if: matrix.release_blocker
         run: |

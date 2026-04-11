@@ -21,6 +21,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Added `docs/policies/GOVERNANCE.md`, strengthened `ADR-0020`, and expanded the PR template so stable-prep changes must declare `breaking` / `non-breaking` / `experimental` classification and keep post-`1.0.0` backlog items out of the current shipped contract unless they go through explicit ADR review.
 - Extended `cargo xtask check` to run the Python `ci/test_*.py` suite as well, so CI helper scripts and governance/support contract docs are checked through the same local and CI gate instead of relying on separate ad hoc commands.
 - Hardened `cargo xtask check` so the standard local and PR gate now fails on `cargo clippy --workspace --all-targets -- -D warnings` regressions instead of treating clippy-cleanliness as an out-of-band manual check.
+- Rekeyed release provenance generation around explicit `release_scope` metadata so CI and release workflows now record `maturity_label` and nightly `version_band` instead of emitting legacy `support_tier` fields in `release-provenance.json`.
 
 ## [0.2.0-beta.1] - 2026-04-09
 

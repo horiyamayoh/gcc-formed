@@ -172,53 +172,16 @@ jobs:
           tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
       - name: Write release provenance
         run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          report_root = Path(os.environ["REPORT_ROOT"]) / "release"
-
-          def load(name):
-              path = report_root / name
-              if not path.exists():
-                  return None
-              return json.loads(path.read_text(encoding="utf-8"))
-
-          payload = {
-              "workflow": "public-beta-release",
-              "github": {
-                  "repository": os.environ.get("GITHUB_REPOSITORY"),
-                  "sha": os.environ.get("GITHUB_SHA"),
-                  "ref": os.environ.get("GITHUB_REF"),
-                  "run_id": os.environ.get("GITHUB_RUN_ID"),
-                  "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-                  "actor": os.environ.get("GITHUB_ACTOR"),
-                  "tag": os.environ.get("RELEASE_TAG"),
-              },
-              "release": {
-                  "package_version": os.environ.get("PACKAGE_VERSION"),
-                  "target_triple": os.environ.get("TARGET_TRIPLE"),
-                  "release_channel": os.environ.get("RELEASE_CHANNEL"),
-                  "signing_key_id": os.environ.get("RELEASE_SIGNING_KEY_ID"),
-                  "signing_public_key_sha256": os.environ.get("RELEASE_SIGNING_PUBLIC_KEY_SHA256"),
-                  "package": load("package.json"),
-                  "release_publish": load("release-publish.json"),
-                  "release_promote_canary": load("release-promote-canary.json"),
-                  "release_promote_beta": load("release-promote-beta.json"),
-                  "release_resolve_beta": load("release-resolve-beta.json"),
-                  "install": load("install.json"),
-                  "install_release": load("install-release.json"),
-                  "system_install": load("system-install.json"),
-                  "hermetic_release": load("hermetic-release.json"),
-                  "vendor": load("vendor.json"),
-              },
-          }
-          (report_root / "release-provenance.json").write_text(
-              json.dumps(payload, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          PY
+          python3 ci/release_provenance.py \
+            --workflow public-beta-release \
+            --report-root "$REPORT_ROOT" \
+            --output "$REPORT_ROOT/release/release-provenance.json" \
+            --package-version "$PACKAGE_VERSION" \
+            --target-triple "$TARGET_TRIPLE" \
+            --release-channel "$RELEASE_CHANNEL" \
+            --maturity-label "$MATURITY_LABEL" \
+            --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes
         run: |
           cat > "$RELEASE_NOTES_PATH" <<EOF
