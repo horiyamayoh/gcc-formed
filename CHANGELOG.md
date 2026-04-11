@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Added caret/range excerpt annotations to `diag_render`, with honest multi-line and unsafe-alignment summaries plus representative native-parity coverage so rendered source snippets preserve native-GCC actionability instead of showing bare source lines only.
 - Refactored `diag_cli_front` into `args`, `config`, `mode`, `backend`, `execute`, `render`, and `self_check` modules so `src/main.rs` is dispatch-only while preserving the existing CLI contract, trace output, and self-check behavior.
 - Added `cargo xtask rc-gate` plus a manual `rc-gate` GitHub Actions workflow so curated replay, rollout matrix, benchmark smoke, deterministic replay, and RC sign-off evidence are aggregated into machine-readable `rc-gate-report.json` / `rc-gate-summary.md` artifacts instead of a checklist-only release-candidate process.
 - Changed `cargo xtask bench-smoke` from a target-only stub into a measured benchmark smoke that reports success-path overhead, simple failure p95, and template-heavy failure p95.

@@ -12,6 +12,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "                                       ^"
+          ],
           "lines": [
             "int main(void) { Box box = {1}; return READ_FIELD(box); }"
           ],

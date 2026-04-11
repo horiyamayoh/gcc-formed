@@ -9,6 +9,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "            ^"
+          ],
           "lines": [
             "    return 0"
           ],

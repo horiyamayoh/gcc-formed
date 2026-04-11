@@ -11,6 +11,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "                     ^"
+          ],
           "lines": [
             "    return takes_int(value);"
           ],
@@ -39,6 +42,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                     ^"
+          ],
           "lines": [
             "    return takes_int(value);"
           ],

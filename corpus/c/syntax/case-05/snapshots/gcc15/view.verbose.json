@@ -9,6 +9,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                  ^"
+          ],
           "lines": [
             "    return (1 + 2;"
           ],
@@ -38,6 +41,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                 ^"
+          ],
           "lines": [
             "    return (1 + 2;"
           ],
@@ -67,6 +73,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                 ^"
+          ],
           "lines": [
             "    return (1 + 2;"
           ],
@@ -99,6 +108,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                  ^"
+          ],
           "lines": [
             "    return (1 + 2;"
           ],

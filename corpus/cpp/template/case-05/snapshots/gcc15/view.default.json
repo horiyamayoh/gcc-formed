@@ -14,6 +14,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "    ^"
+          ],
           "lines": [
             "    combine(1, \"x\");"
           ],

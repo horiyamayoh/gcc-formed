@@ -11,6 +11,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "                     ^"
+          ],
           "lines": [
             "    return takes_int(value);"
           ],

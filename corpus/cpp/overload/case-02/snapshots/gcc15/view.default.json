@@ -9,6 +9,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "                                                ^"
+          ],
           "lines": [
             "int main() { const char *value = \"x\"; takes_int(value); }"
           ],

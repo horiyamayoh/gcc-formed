@@ -13,6 +13,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "    ^"
+          ],
           "lines": [
             "    expect_ptr(value);"
           ],

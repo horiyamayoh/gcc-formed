@@ -5,6 +5,7 @@ help: fix the first parser error at the user-owned location
 why: expected expression before ';' token
 | src/main.c:2:17
 |     int value = ;
+|                 ^
 debug: rule_id=rule.family.syntax.phase_or_message
 debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
 error: syntax error
@@ -13,6 +14,7 @@ help: fix the first parser error at the user-owned location
 why: src/main.c:2:17: error: expected expression before ';' token
 | src/main.c:2:17
 |     int value = ;
+|                 ^
 raw:
   src/main.c:2:17: error: expected expression before ';' token
 debug: rule_id=rule.family.syntax.phase_or_message

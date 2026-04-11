@@ -5,6 +5,7 @@ help: compare the expected type and actual argument at the call site
 why: invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
+|                                                 ^
 debug: rule_id=rule.family.type_overload.structured_or_message
 debug: matched_conditions=phase=semantic, message_contains=invalid conversion
 error: type or overload mismatch
@@ -13,6 +14,7 @@ help: compare the expected type and actual argument at the call site
 why: src/main.cpp:3:49: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
+|                                                 ^
 raw:
   src/main.cpp:3:49: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
 debug: rule_id=rule.family.type_overload.structured_or_message
@@ -23,6 +25,7 @@ note: wrapper confidence is low; verify against the preserved raw diagnostics
 why: initializing argument 1 of 'void takes_int(int)'
 | src/main.cpp:1:16
 | void takes_int(int);
+|                ^
 debug: rule_id=rule.family.unknown
 debug: matched_conditions=no_family_rule_matched
 debug: suppression_reason=generic_fallback

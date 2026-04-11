@@ -4,6 +4,7 @@ help: inspect the user-owned macro invocation or include edge that reaches the f
 why: 'Box' has no member named 'missing'
 | src/main.c:3:40
 | int main(void) { Box box = {1}; return READ_FIELD(box); }
+|                                        ^
 through macro expansion:
   - src/main.c:3:40 in expansion of macro 'READ_FIELD'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

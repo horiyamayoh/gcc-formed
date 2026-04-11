@@ -190,6 +190,7 @@ mod tests {
         Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
         Severity, ToolInfo,
     };
+    use std::fs;
     use std::path::PathBuf;
 
     fn sample_location(path: &str, line: u32, column: u32, ownership: Ownership) -> Location {
@@ -339,6 +340,14 @@ mod tests {
         }
     }
 
+    fn write_source_file(root: &tempfile::TempDir, relative: &str, contents: &str) {
+        let path = root.path().join(relative);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, contents).unwrap();
+    }
+
     #[test]
     fn view_model_serialization_is_stable() {
         let request = sample_request();
@@ -462,6 +471,95 @@ mod tests {
         ));
         assert!(first_index < second_index);
         assert!(second_index < third_index);
+    }
+
+    #[test]
+    fn excerpt_emits_caret_annotation_for_point_location() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return }\n}\n",
+        );
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 2, 12, Ownership::User)];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].excerpts[0].lines, vec!["    return }"]);
+        assert_eq!(
+            view.cards[0].excerpts[0].annotations,
+            vec![format!("{}^", " ".repeat(11))]
+        );
+
+        let output = render(request).unwrap();
+        assert!(output.text.contains("|     return }"));
+        assert!(output.text.contains(&format!("| {}^", " ".repeat(11))));
+    }
+
+    #[test]
+    fn excerpt_emits_range_annotation_for_single_line_range() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(&tempdir, "src/main.c", "int wrong;\n");
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        let mut location = sample_location("src/main.c", 1, 5, Ownership::User).with_range_end(
+            1,
+            8,
+            diag_core::BoundarySemantics::InclusiveEnd,
+        );
+        location.label = Some("bad token".to_string());
+        request.document.diagnostics[0].locations = vec![location];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards[0].excerpts[0].annotations,
+            vec![format!("{}^~~~ bad token", " ".repeat(4))]
+        );
+    }
+
+    #[test]
+    fn excerpt_uses_honest_summary_for_multiline_ranges() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    first();\n    second();\n}\n",
+        );
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations = vec![
+            sample_location("src/main.c", 2, 5, Ownership::User).with_range_end(
+                3,
+                10,
+                diag_core::BoundarySemantics::HalfOpen,
+            ),
+        ];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].excerpts[0].lines, vec!["    first();"]);
+        assert_eq!(
+            view.cards[0].excerpts[0].annotations,
+            vec![format!("{}^ range spans 2 lines to 3:10", " ".repeat(4))]
+        );
+    }
+
+    #[test]
+    fn excerpt_uses_column_summary_when_precise_alignment_is_not_safe() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(&tempdir, "src/main.c", "    café();\n");
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 1, 9, Ownership::User)];
+
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards[0].excerpts[0].annotations, vec!["column 9"]);
     }
 
     #[test]

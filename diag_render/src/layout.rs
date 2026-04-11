@@ -49,6 +49,9 @@ impl LayoutProfile {
             for source in &excerpt.lines {
                 lines.push(format!("| {}", theme.inline(source)));
             }
+            for annotation in &excerpt.annotations {
+                lines.push(format!("| {}", theme.inline(annotation)));
+            }
         }
         for context in &card.context_lines {
             lines.push(theme.inline(context));

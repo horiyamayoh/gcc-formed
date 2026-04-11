@@ -13,6 +13,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "    ^"
+          ],
           "lines": [
             "    takes(1);"
           ],

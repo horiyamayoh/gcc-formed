@@ -5,6 +5,7 @@ help: start from the first user-owned template frame and match template argument
 why: no matching function for call to 'takes_same(int, double)'
 | src/main.cpp:4:14
 | int main() { takes_same(1, 2.0); }
+|              ^
 while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void takes_same(T, T)'
   - src/main.cpp:2:6 template argument deduction/substitution failed:
@@ -17,6 +18,7 @@ help: compare the expected type and actual argument at the call site
 why: src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'
 | src/main.cpp:4:24
 | int main() { takes_same(1, 2.0); }
+|                        ^
 raw:
   src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'
 debug: rule_id=rule.family.type_overload.structured_or_message

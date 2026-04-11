@@ -4,6 +4,7 @@ help: fix the first parser error at the user-owned location
 why: expected expression before ';' token
 | src/main.c:2:17
 |     int value = ;
+|                 ^
 other errors:
   - src/main.c:2:17: error: syntax error
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

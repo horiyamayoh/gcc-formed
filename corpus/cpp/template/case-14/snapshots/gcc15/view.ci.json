@@ -15,6 +15,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "                     ^"
+          ],
           "lines": [
             "    Pair value(1, \"x\");"
           ],

@@ -4,6 +4,7 @@ help: compare the expected type and actual argument at the call site
 why: invalid conversion from ‘const char*’ to ‘short int’
 | src/main.cpp:5:17
 |     takes_short("x");
+|                 ^~
 other diagnostics:
   - src/main.cpp:1:18: note:   initializing argument 1 of ‘void takes_short(short int)’
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

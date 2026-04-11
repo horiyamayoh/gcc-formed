@@ -25,7 +25,7 @@ render:
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
-    first_screenful_max_lines: 40
+    first_screenful_max_lines: 42
   ci:
     first_screenful_max_lines: 12
     path_first_required: true

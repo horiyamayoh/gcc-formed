@@ -4,6 +4,7 @@ help: fix the first parser error at the user-owned location
 why: expected ';' before '}}' token
 | src/main.c:2:19
 |     return (1 + 2;
+|                   ^
 other errors:
   - src/main.c:2:18: error: syntax error
   - src/main.c:2:18: error: syntax error

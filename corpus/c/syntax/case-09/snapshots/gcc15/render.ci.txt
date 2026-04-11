@@ -4,6 +4,7 @@ help: fix the first parser error at the user-owned location
 why: src/main.c:5:1: error: expected expression before '}' token
 | src/main.c:5:1
 | }
+| ^
 raw:
   src/main.c:5:1: error: expected expression before '}' token
 other errors:
