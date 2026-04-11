@@ -21,6 +21,15 @@ license = "Apache-2.0"
 rust-version = "1.94"
 version = "0.2.0-beta.1"
 
+[workspace.lints.rust]
+missing_docs = "allow"
+
+[workspace.lints.clippy]
+doc_markdown = "warn"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
 [workspace.dependencies]
 assert_cmd = "2.1.1"
 clap = { version = "4.5.53", features = ["derive", "env"] }

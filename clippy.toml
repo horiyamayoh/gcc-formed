@@ -1,0 +1,3 @@
+too-many-lines-threshold = 200
+cognitive-complexity-threshold = 30
+doc-valid-idents = ["GCC", "SARIF", "IR", "TTY", "TOML", "JSON", "MUSL"]

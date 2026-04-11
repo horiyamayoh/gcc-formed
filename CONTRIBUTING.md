@@ -23,6 +23,16 @@ Keep support-boundary wording aligned with [docs/support/SUPPORT-BOUNDARY.md](do
 - `x86_64-unknown-linux-musl` target via `rustup target add x86_64-unknown-linux-musl`
 - Docker for the GCC 15 snapshot gate
 
+## Lint & Format Configuration
+
+Workspace-wide lint and format settings live in three places:
+
+- **`clippy.toml`** — Clippy thresholds: `too-many-lines-threshold = 200`, `cognitive-complexity-threshold = 30`, and `doc-valid-idents` for project terms (`GCC`, `SARIF`, `IR`, `TTY`, `TOML`, `JSON`, `MUSL`).
+- **`.rustfmt.toml`** — Format rules: `max_width = 100`, `use_field_init_shorthand = true`, `edition = "2024"`. Only stable rustfmt options are used.
+- **`Cargo.toml` `[workspace.lints]`** — Rust and Clippy lint levels inherited by every crate via `[lints] workspace = true`. Currently `missing_docs`, `must_use_candidate`, `missing_errors_doc`, and `missing_panics_doc` are set to `allow` and will be upgraded crate-by-crate as doc coverage improves. `doc_markdown` is set to `warn`.
+
+CI enforces `cargo fmt --check` and `cargo clippy --workspace --all-targets -- -D warnings`. Both must pass before merge.
+
 ## Required Checks Before Opening a Change
 
 Run these from the repository root unless the change is documentation-only:
