@@ -25,10 +25,13 @@ class GateSummaryTest(unittest.TestCase):
         failure_classification: str,
         status: str,
         exit_code: int | None,
+        gate_scope: str | None = "repository",
+        version_band: str | None = None,
+        legacy_support_tier: str | None = None,
         artifact_paths: list[str] | None = None,
     ) -> dict:
-        return {
-            "schema_version": 2,
+        payload = {
+            "schema_version": 3,
             "workflow": "test-gate",
             "job": "test-job",
             "step": {
@@ -43,7 +46,8 @@ class GateSummaryTest(unittest.TestCase):
             "exit_code": exit_code,
             "fixture": None,
             "gcc_version": "host",
-            "support_tier": "repository_gate",
+            "gate_scope": gate_scope,
+            "version_band": version_band,
             "artifact_paths": artifact_paths or [],
             "log_paths": {"stdout": None, "stderr": None},
             "started_at": "2026-04-09T00:00:00Z",
@@ -51,10 +55,13 @@ class GateSummaryTest(unittest.TestCase):
             "duration_ms": 1000,
             "matrix": {
                 "gcc_version": None,
-                "support_tier": None,
+                "version_band": None,
                 "release_blocker": "true",
             },
         }
+        if legacy_support_tier is not None:
+            payload["support_tier"] = legacy_support_tier
+        return payload
 
     def run_gate_summary(self, plan_path: Path, report_root: Path) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -144,6 +151,8 @@ class GateSummaryTest(unittest.TestCase):
             self.assertEqual(summary["failure_classification_counts"]["product"], 1)
             self.assertEqual(summary["failure_classification_counts"]["instrumentation"], 0)
             self.assertEqual(summary["build_environment"]["host"]["rustc"]["release"], "1.94.1")
+            self.assertEqual(summary["steps"][1]["gate_scope"], "repository")
+            self.assertIsNone(summary["steps"][1]["version_band"])
 
     def test_gate_summary_flags_missing_build_environment_as_instrumentation(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -192,6 +201,54 @@ class GateSummaryTest(unittest.TestCase):
             self.assertTrue(
                 any("build environment artifact missing" in anomaly for anomaly in summary["anomalies"])
             )
+
+    def test_gate_summary_normalizes_legacy_support_tier_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report_root = root / "reports"
+            plan_path = root / "plan.json"
+            status_dir = report_root / "gate" / "status"
+            write_json(
+                plan_path,
+                {
+                    "schema_version": 1,
+                    "workflow": "test-gate",
+                    "job": "test-job",
+                    "steps": [
+                        {
+                            "id": "legacy-step",
+                            "order": 1,
+                            "name": "Legacy step",
+                            "policy": "always",
+                            "failure_classification": "product",
+                            "support_tier": "gcc15_primary",
+                        }
+                    ],
+                },
+            )
+            write_json(
+                status_dir / "01-legacy-step.json",
+                self.make_status_payload(
+                    step_id="legacy-step",
+                    order=1,
+                    name="Legacy step",
+                    failure_classification="product",
+                    status="success",
+                    exit_code=0,
+                    gate_scope=None,
+                    version_band=None,
+                    legacy_support_tier="gcc15_primary",
+                ),
+            )
+
+            completed = self.run_gate_summary(plan_path, report_root)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+
+            summary = json.loads(
+                (report_root / "gate" / "gate-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary["steps"][0]["gate_scope"], "reference_path")
+            self.assertEqual(summary["steps"][0]["version_band"], "gcc15_plus")
 
     def test_gate_summary_surfaces_machine_readable_path_aware_blockers(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -387,6 +444,30 @@ class CheckedInPlanTest(unittest.TestCase):
                 stop_ship = steps_by_id["path-aware-replay-stop-ship"]
                 self.assertIn("$REPORT_ROOT/gate/replay-stop-ship.json", stop_ship["artifact_paths"])
                 self.assertGreater(stop_ship["order"], steps_by_id[prerequisite_id]["order"])
+
+    def test_checked_in_plans_use_gate_scope_and_drop_legacy_support_tier(self) -> None:
+        for relative_path in [
+            "ci/plans/pr-gate.json",
+            "ci/plans/nightly-gate.json",
+            "ci/plans/rc-gate.json",
+        ]:
+            with self.subTest(plan=relative_path):
+                plan = self.load_plan(relative_path)
+                self.assertEqual(plan["schema_version"], 3)
+                for step in plan["steps"]:
+                    self.assertIn("gate_scope", step)
+                    self.assertNotIn("support_tier", step)
+
+
+class CheckedInWorkflowTest(unittest.TestCase):
+    def test_nightly_workflow_uses_matrix_version_band_metadata(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "nightly.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("MATRIX_VERSION_BAND", workflow)
+        self.assertIn("--matrix-version-band", workflow)
+        self.assertNotIn("MATRIX_SUPPORT_TIER", workflow)
+        self.assertNotIn("--matrix-support-tier", workflow)
 
 
 if __name__ == "__main__":

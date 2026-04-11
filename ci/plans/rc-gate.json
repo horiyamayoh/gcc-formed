@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "workflow": "rc-gate",
   "job": "rc-gate",
   "steps": [
@@ -12,11 +12,11 @@
       "command": "mkdir -p \"$REPORT_ROOT/rc-gate\" \"$REPORT_ROOT/gate\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "release_candidate_gate",
       "artifact_paths": [
         "$REPORT_ROOT/rc-gate",
         "$REPORT_ROOT/gate"
-      ]
+      ],
+      "gate_scope": "release_candidate"
     },
     {
       "id": "capture-host-build-environment",
@@ -27,10 +27,10 @@
       "command": "python3 ci/gate_capture_environment.py --output \"$REPORT_ROOT/gate/build-environment.json\" --mode host --toolchain-file rust-toolchain.toml",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "release_candidate_gate",
       "artifact_paths": [
         "$REPORT_ROOT/gate/build-environment.json"
-      ]
+      ],
+      "gate_scope": "release_candidate"
     },
     {
       "id": "cargo-xtask-rc-gate",
@@ -41,7 +41,6 @@
       "command": "cargo xtask rc-gate --root corpus --report-dir \"$REPORT_ROOT/rc-gate\" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz --ux-signoff-report eval/rc/ux-signoff.json",
       "fixture": "subset:all",
       "gcc_version": "host",
-      "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/rc-gate",
         "$REPORT_ROOT/rc-gate/replay-report.json",
@@ -61,7 +60,9 @@
         "$REPORT_ROOT/rc-gate/metrics-manual-eval.json",
         "$REPORT_ROOT/rc-gate/rc-gate-report.json",
         "$REPORT_ROOT/rc-gate/rc-gate-summary.md"
-      ]
+      ],
+      "gate_scope": "reference_path",
+      "version_band": "gcc15_plus"
     },
     {
       "id": "path-aware-replay-stop-ship",
@@ -72,10 +73,11 @@
       "command": "python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/rc-gate/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
       "fixture": "subset:all",
       "gcc_version": "host",
-      "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/gate/replay-stop-ship.json"
-      ]
+      ],
+      "gate_scope": "reference_path",
+      "version_band": "gcc15_plus"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "workflow": "nightly-gate",
   "job": "matrix-gate",
   "steps": [
@@ -12,14 +12,14 @@
       "command": "mkdir -p \"$REPORT_ROOT/replay\" \"$REPORT_ROOT/snapshot\" \"$REPORT_ROOT/self-check\" \"$REPORT_ROOT/release\" \"$TARGET_DIR\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/replay",
         "$REPORT_ROOT/snapshot",
         "$REPORT_ROOT/self-check",
         "$REPORT_ROOT/release",
         "$REPORT_ROOT/gate"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "capture-host-build-environment",
@@ -30,10 +30,10 @@
       "command": "python3 ci/gate_capture_environment.py --output \"$REPORT_ROOT/gate/build-environment.json\" --mode host --toolchain-file rust-toolchain.toml",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/gate/build-environment.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "build-matrix-ci-image",
@@ -44,8 +44,9 @@
       "command": "docker build --build-arg GCC_IMAGE=${MATRIX_GCC_VERSION} -t gcc-formed-ci:nightly -f ci/images/gcc-matrix/Dockerfile .",
       "fixture": null,
       "gcc_version": "${MATRIX_GCC_VERSION}",
-      "support_tier": "${MATRIX_SUPPORT_TIER}",
-      "artifact_paths": []
+      "artifact_paths": [],
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "capture-matrix-ci-environment",
@@ -56,10 +57,11 @@
       "command": "python3 ci/gate_capture_environment.py --output \"$REPORT_ROOT/gate/build-environment.json\" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image ${MATRIX_GCC_VERSION} --docker-image-tag gcc-formed-ci:nightly",
       "fixture": null,
       "gcc_version": "${MATRIX_GCC_VERSION}",
-      "support_tier": "${MATRIX_SUPPORT_TIER}",
       "artifact_paths": [
         "$REPORT_ROOT/gate/build-environment.json"
-      ]
+      ],
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "cargo-test-workspace",
@@ -70,8 +72,8 @@
       "command": "cargo test --workspace",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
-      "artifact_paths": []
+      "artifact_paths": [],
+      "gate_scope": "repository"
     },
     {
       "id": "representative-acceptance-replay",
@@ -82,12 +84,13 @@
       "command": "cargo xtask replay --root corpus --subset representative --report-dir \"$REPORT_ROOT/replay\"",
       "fixture": "subset:representative",
       "gcc_version": "gcc:15",
-      "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/replay",
         "$REPORT_ROOT/replay/replay-report.json",
         "$REPORT_ROOT/replay/native-parity-report.json"
-      ]
+      ],
+      "gate_scope": "reference_path",
+      "version_band": "gcc15_plus"
     },
     {
       "id": "path-aware-replay-stop-ship",
@@ -98,10 +101,11 @@
       "command": "python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/replay/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
       "fixture": "subset:representative",
       "gcc_version": "gcc:15",
-      "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/gate/replay-stop-ship.json"
-      ]
+      ],
+      "gate_scope": "reference_path",
+      "version_band": "gcc15_plus"
     },
     {
       "id": "cargo-xtask-bench-smoke",
@@ -112,10 +116,10 @@
       "command": "cargo xtask bench-smoke > \"$REPORT_ROOT/release/bench-smoke.json\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/bench-smoke.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "cargo-xtask-fuzz-smoke",
@@ -126,10 +130,10 @@
       "command": "cargo xtask fuzz-smoke --root fuzz --report-dir \"$REPORT_ROOT/release\"",
       "fixture": "seed-suite:fuzz",
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/fuzz-smoke-report.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "build-wrapper-binary-matrix-image",
@@ -140,8 +144,9 @@
       "command": "docker run --rm -v \"$PWD:/workspace\" -v \"$TARGET_DIR:/tmp/gcc-formed-target\" -w /workspace gcc-formed-ci:nightly bash -lc \"export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo build --bin gcc-formed\"",
       "fixture": null,
       "gcc_version": "${MATRIX_GCC_VERSION}",
-      "support_tier": "${MATRIX_SUPPORT_TIER}",
-      "artifact_paths": []
+      "artifact_paths": [],
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "wrapper-self-check-matrix-image",
@@ -152,11 +157,12 @@
       "command": "docker run --rm -v \"$PWD:/workspace\" -v \"$TARGET_DIR:/tmp/gcc-formed-target\" -v \"$REPORT_ROOT:/reports\" -w /workspace gcc-formed-ci:nightly bash -lc \"export CARGO_TARGET_DIR=/tmp/gcc-formed-target && /tmp/gcc-formed-target/debug/gcc-formed --formed-self-check > /reports/self-check/report.json\"",
       "fixture": null,
       "gcc_version": "${MATRIX_GCC_VERSION}",
-      "support_tier": "${MATRIX_SUPPORT_TIER}",
       "artifact_paths": [
         "$REPORT_ROOT/self-check",
         "$REPORT_ROOT/self-check/report.json"
-      ]
+      ],
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     },
     {
       "id": "representative-gcc15-snapshot-check",
@@ -167,11 +173,12 @@
       "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir \"$REPORT_ROOT/snapshot\"",
       "fixture": "subset:representative",
       "gcc_version": "gcc:15",
-      "support_tier": "gcc15_primary",
       "artifact_paths": [
         "$REPORT_ROOT/snapshot",
         "$REPORT_ROOT/snapshot/snapshot-report.json"
-      ]
+      ],
+      "gate_scope": "reference_path",
+      "version_band": "gcc15_plus"
     },
     {
       "id": "vendor-dependency-tree",
@@ -182,10 +189,10 @@
       "command": "cargo xtask vendor --output-dir vendor > \"$REPORT_ROOT/release/vendor.json\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/vendor.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "hermetic-release-build-smoke",
@@ -196,10 +203,10 @@
       "command": "cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl > \"$REPORT_ROOT/release/hermetic-release.json\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/hermetic-release.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "release-packaging-smoke",
@@ -210,11 +217,11 @@
       "command": "package signed musl artifact and write $REPORT_ROOT/release/package.json",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/package.json",
         "dist"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "release-install-smoke",
@@ -225,12 +232,12 @@
       "command": "install packaged release, run --formed-version, and uninstall",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/install.json",
         "$REPORT_ROOT/release/installed-version.txt",
         "$REPORT_ROOT/release/uninstall.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "rollback-symlink-smoke",
@@ -241,10 +248,10 @@
       "command": "cargo test -p xtask rollback_switches_current_symlink_to_requested_version > \"$REPORT_ROOT/release/rollback-smoke.txt\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/rollback-smoke.txt"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "system-wide-layout-smoke",
@@ -255,12 +262,12 @@
       "command": "install packaged release into pseudo-root system layout and uninstall",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/system-install.json",
         "$REPORT_ROOT/release/system-version.txt",
         "$REPORT_ROOT/release/system-uninstall.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "release-repository-promote-and-pin-smoke",
@@ -271,7 +278,6 @@
       "command": "publish release repository, promote canary/beta, resolve beta, install exact version, and uninstall",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/release-publish.json",
         "$REPORT_ROOT/release/release-promote-canary.json",
@@ -280,7 +286,8 @@
         "$REPORT_ROOT/release/install-release.json",
         "$REPORT_ROOT/release/install-release-version.txt",
         "$REPORT_ROOT/release/install-release-uninstall.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "release-provenance-manifest",
@@ -291,10 +298,10 @@
       "command": "python3 release provenance manifest writer",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/release-provenance.json"
-      ]
+      ],
+      "gate_scope": "repository"
     },
     {
       "id": "dependency-and-license-gate",
@@ -305,10 +312,10 @@
       "command": "cargo install cargo-deny --locked && cargo deny check > \"$REPORT_ROOT/release/cargo-deny.txt\"",
       "fixture": null,
       "gcc_version": "host",
-      "support_tier": "repository_gate",
       "artifact_paths": [
         "$REPORT_ROOT/release/cargo-deny.txt"
-      ]
+      ],
+      "gate_scope": "repository"
     }
   ]
 }

@@ -8,13 +8,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 BUILD_ENVIRONMENT_SCHEMA_VERSION = 1
 REPLAY_STOP_SHIP_SCHEMA_VERSION = 1
 BUILD_ENVIRONMENT_STEP_SECTIONS = {
     "capture-host-build-environment": "host",
     "capture-gcc15-ci-environment": "ci_image",
     "capture-matrix-ci-environment": "ci_image",
+}
+LEGACY_SUPPORT_TIER_MAP = {
+    "repository_gate": ("repository", None),
+    "release_candidate_gate": ("release_candidate", None),
+    "gcc15_primary": ("reference_path", "gcc15_plus"),
+    "gcc13_compatibility": ("matrix", "gcc13_14"),
+    "gcc14_compatibility": ("matrix", "gcc13_14"),
 }
 
 
@@ -32,9 +39,15 @@ def parse_args() -> argparse.Namespace:
         help="Optional nightly matrix GCC selector such as gcc:13.",
     )
     parser.add_argument(
-        "--matrix-support-tier",
+        "--matrix-version-band",
         default=None,
-        help="Optional nightly matrix support tier such as gcc13_compatibility.",
+        help="Optional nightly matrix version band such as gcc13_14.",
+    )
+    parser.add_argument(
+        "--matrix-support-tier",
+        dest="legacy_matrix_support_tier",
+        default=None,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--release-blocker",
@@ -74,11 +87,61 @@ def substitute(value, mapping):
     return value
 
 
+def legacy_gate_metadata(legacy_support_tier: str | None) -> tuple[str | None, str | None]:
+    if legacy_support_tier is None:
+        return None, None
+    return LEGACY_SUPPORT_TIER_MAP.get(legacy_support_tier, (legacy_support_tier, None))
+
+
+def resolve_matrix_version_band(args: argparse.Namespace) -> str | None:
+    if args.matrix_version_band is not None:
+        return args.matrix_version_band
+    _, version_band = legacy_gate_metadata(args.legacy_matrix_support_tier)
+    return version_band
+
+
+def resolve_step_metadata(step: dict, mapping: dict) -> tuple[str | None, str | None]:
+    gate_scope = substitute(step.get("gate_scope"), mapping)
+    version_band = substitute(step.get("version_band"), mapping)
+    legacy_support_tier = substitute(step.get("support_tier"), mapping)
+    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(legacy_support_tier)
+    if gate_scope is None:
+        gate_scope = legacy_gate_scope
+    if version_band is None:
+        version_band = legacy_version_band
+    return gate_scope, version_band
+
+
+def normalize_status_payload(payload: dict) -> dict:
+    normalized = dict(payload)
+    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(payload.get("support_tier"))
+    normalized["gate_scope"] = payload.get("gate_scope")
+    normalized["version_band"] = payload.get("version_band")
+    if normalized["gate_scope"] is None:
+        normalized["gate_scope"] = legacy_gate_scope
+    if normalized["version_band"] is None:
+        normalized["version_band"] = legacy_version_band
+    matrix = dict(payload.get("matrix") or {})
+    _, legacy_matrix_version_band = legacy_gate_metadata(matrix.get("support_tier"))
+    matrix_version_band = matrix.get("version_band")
+    if matrix_version_band is None:
+        matrix_version_band = legacy_matrix_version_band
+    normalized["matrix"] = {
+        "gcc_version": matrix.get("gcc_version"),
+        "version_band": matrix_version_band,
+        "release_blocker": matrix.get("release_blocker"),
+    }
+    normalized["schema_version"] = payload.get("schema_version", SCHEMA_VERSION)
+    normalized.pop("support_tier", None)
+    return normalized
+
+
 def build_mapping(args: argparse.Namespace) -> dict:
     return {
         "REPORT_ROOT": args.report_root,
         "MATRIX_GCC_VERSION": args.matrix_gcc_version or "",
-        "MATRIX_SUPPORT_TIER": args.matrix_support_tier or "",
+        "MATRIX_SUPPORT_TIER": args.legacy_matrix_support_tier or "",
+        "MATRIX_VERSION_BAND": resolve_matrix_version_band(args) or "",
         "RELEASE_BLOCKER": args.release_blocker,
     }
 
@@ -87,7 +150,7 @@ def load_status_files(status_dir: Path) -> tuple[dict[str, dict], list[str]]:
     statuses: dict[str, dict] = {}
     unknown_files: list[str] = []
     for path in sorted(status_dir.glob("*.json")):
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = normalize_status_payload(json.loads(path.read_text(encoding="utf-8")))
         step = payload.get("step", {})
         step_id = step.get("id")
         if not step_id:
@@ -98,6 +161,7 @@ def load_status_files(status_dir: Path) -> tuple[dict[str, dict], list[str]]:
 
 
 def planned_status(step: dict, mapping: dict, status: str) -> dict:
+    gate_scope, version_band = resolve_step_metadata(step, mapping)
     return {
         "schema_version": SCHEMA_VERSION,
         "workflow": substitute(step["workflow"], mapping),
@@ -114,7 +178,8 @@ def planned_status(step: dict, mapping: dict, status: str) -> dict:
         "exit_code": None,
         "fixture": substitute(step.get("fixture"), mapping),
         "gcc_version": substitute(step.get("gcc_version"), mapping),
-        "support_tier": substitute(step.get("support_tier"), mapping),
+        "gate_scope": gate_scope,
+        "version_band": version_band,
         "artifact_paths": substitute(step.get("artifact_paths", []), mapping),
         "log_paths": {"stdout": None, "stderr": None},
         "started_at": None,
@@ -122,7 +187,7 @@ def planned_status(step: dict, mapping: dict, status: str) -> dict:
         "duration_ms": None,
         "matrix": {
             "gcc_version": mapping.get("MATRIX_GCC_VERSION") or None,
-            "support_tier": mapping.get("MATRIX_SUPPORT_TIER") or None,
+            "version_band": mapping.get("MATRIX_VERSION_BAND") or None,
             "release_blocker": mapping.get("RELEASE_BLOCKER") or None,
         },
     }
@@ -264,8 +329,8 @@ def build_markdown(summary: dict) -> str:
             ),
             *build_environment_markdown_lines(summary),
             "",
-            "| Order | Step | Class | Status | Exit | GCC | Tier | Fixture |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| Order | Step | Class | Status | Exit | GCC | Scope | Band | Fixture |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for step in summary["steps"]:
@@ -273,7 +338,8 @@ def build_markdown(summary: dict) -> str:
         fixture = step.get("fixture") or "-"
         exit_code = "-" if step.get("exit_code") is None else str(step["exit_code"])
         gcc_version = step.get("gcc_version") or "-"
-        support_tier = step.get("support_tier") or "-"
+        gate_scope = step.get("gate_scope") or "-"
+        version_band = step.get("version_band") or "-"
         failure_classification = step_meta.get("failure_classification") or "product"
         lines.append(
             "| "
@@ -283,7 +349,8 @@ def build_markdown(summary: dict) -> str:
             f"`{step['status']}` | "
             f"{exit_code} | "
             f"`{gcc_version}` | "
-            f"`{support_tier}` | "
+            f"`{gate_scope}` | "
+            f"`{version_band}` | "
             f"`{fixture}` |"
         )
 
@@ -463,7 +530,7 @@ def main() -> int:
         "build_environment": build_environment,
         "matrix": {
             "gcc_version": args.matrix_gcc_version,
-            "support_tier": args.matrix_support_tier,
+            "version_band": resolve_matrix_version_band(args),
             "release_blocker": args.release_blocker,
         },
     }

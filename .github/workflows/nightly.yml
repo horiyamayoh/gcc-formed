@@ -30,7 +30,7 @@ jobs:
       TARGET_DIR: ${{ runner.temp }}/gcc-formed-target
       GATE_PLAN: ci/plans/nightly-gate.json
       MATRIX_GCC_VERSION: ${{ matrix.gcc_image }}
-      MATRIX_SUPPORT_TIER: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_compatibility' || matrix.gcc_label == 'gcc14' && 'gcc14_compatibility' || 'gcc15_primary' }}
+      MATRIX_VERSION_BAND: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_14' || matrix.gcc_label == 'gcc14' && 'gcc13_14' || 'gcc15_plus' }}
       RELEASE_BLOCKER: ${{ matrix.release_blocker && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v5.0.0
@@ -58,7 +58,7 @@ jobs:
             --step-id prepare-report-directories \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/self-check" "$REPORT_ROOT/release" "$TARGET_DIR"'
       - name: Capture host build environment
@@ -68,7 +68,7 @@ jobs:
             --step-id capture-host-build-environment \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
       - name: Build matrix CI image
@@ -78,7 +78,7 @@ jobs:
             --step-id build-matrix-ci-image \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'docker build --build-arg GCC_IMAGE=${MATRIX_GCC_VERSION} -t gcc-formed-ci:nightly -f ci/images/gcc-matrix/Dockerfile .'
       - name: Capture matrix CI environment
@@ -88,7 +88,7 @@ jobs:
             --step-id capture-matrix-ci-environment \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile --docker-base-image "$MATRIX_GCC_VERSION" --docker-image-tag gcc-formed-ci:nightly'
       - name: cargo test --workspace
@@ -98,7 +98,7 @@ jobs:
             --step-id cargo-test-workspace \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo test --workspace'
       - name: Representative acceptance replay
@@ -109,7 +109,7 @@ jobs:
             --step-id representative-acceptance-replay \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
       - name: Replay stop-ship contract
@@ -120,7 +120,7 @@ jobs:
             --step-id path-aware-replay-stop-ship \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" --output "$REPORT_ROOT/gate/replay-stop-ship.json"'
       - name: cargo xtask bench-smoke
@@ -130,7 +130,7 @@ jobs:
             --step-id cargo-xtask-bench-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask bench-smoke > "$REPORT_ROOT/release/bench-smoke.json"'
       - name: cargo xtask fuzz-smoke
@@ -141,7 +141,7 @@ jobs:
             --step-id cargo-xtask-fuzz-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask fuzz-smoke --root fuzz --report-dir "$REPORT_ROOT/release"'
       - name: Build wrapper binary in matrix image
@@ -160,7 +160,7 @@ jobs:
             --step-id build-wrapper-binary-matrix-image \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Wrapper self-check in matrix image
@@ -180,7 +180,7 @@ jobs:
             --step-id wrapper-self-check-matrix-image \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Representative GCC 15 snapshot check
@@ -191,7 +191,7 @@ jobs:
             --step-id representative-gcc15-snapshot-check \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree
@@ -202,7 +202,7 @@ jobs:
             --step-id vendor-dependency-tree \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"'
       - name: Hermetic release build smoke
@@ -213,7 +213,7 @@ jobs:
             --step-id hermetic-release-build-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple x86_64-unknown-linux-musl > "$REPORT_ROOT/release/hermetic-release.json"'
       - name: Release packaging smoke
@@ -235,7 +235,7 @@ jobs:
             --step-id release-packaging-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Release install smoke
@@ -257,7 +257,7 @@ jobs:
             --step-id release-install-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Rollback symlink smoke
@@ -268,7 +268,7 @@ jobs:
             --step-id rollback-symlink-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command 'cargo test -p xtask rollback_switches_current_symlink_to_requested_version > "$REPORT_ROOT/release/rollback-smoke.txt"'
       - name: System-wide layout smoke
@@ -290,7 +290,7 @@ jobs:
             --step-id system-wide-layout-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Release repository promote and pin smoke
@@ -320,7 +320,7 @@ jobs:
             --step-id release-repository-promote-and-pin-smoke \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Release provenance manifest
@@ -345,11 +345,9 @@ jobs:
             --step-id release-provenance-manifest \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
-        env:
-          MATRIX_VERSION_BAND: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_14' || matrix.gcc_label == 'gcc14' && 'gcc13_14' || 'gcc15_plus' }}
       - name: Dependency and license gate
         if: matrix.release_blocker
         run: |
@@ -363,7 +361,7 @@ jobs:
             --step-id dependency-and-license-gate \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
             --command "$command"
       - name: Gate summary
@@ -373,7 +371,7 @@ jobs:
             --plan "$GATE_PLAN" \
             --report-root "$REPORT_ROOT" \
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
-            --matrix-support-tier "$MATRIX_SUPPORT_TIER" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER"
       - name: Upload nightly artifacts
         if: always()

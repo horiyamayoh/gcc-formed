@@ -11,7 +11,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+
+LEGACY_SUPPORT_TIER_MAP = {
+    "repository_gate": ("repository", None),
+    "release_candidate_gate": ("release_candidate", None),
+    "gcc15_primary": ("reference_path", "gcc15_plus"),
+    "gcc13_compatibility": ("matrix", "gcc13_14"),
+    "gcc14_compatibility": ("matrix", "gcc13_14"),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,9 +45,15 @@ def parse_args() -> argparse.Namespace:
         help="Optional nightly matrix GCC selector such as gcc:13.",
     )
     parser.add_argument(
-        "--matrix-support-tier",
+        "--matrix-version-band",
         default=None,
-        help="Optional nightly matrix support tier such as gcc13_compatibility.",
+        help="Optional nightly matrix version band such as gcc13_14.",
+    )
+    parser.add_argument(
+        "--matrix-support-tier",
+        dest="legacy_matrix_support_tier",
+        default=None,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--release-blocker",
@@ -79,6 +93,31 @@ def substitute(value, mapping):
     return value
 
 
+def legacy_gate_metadata(legacy_support_tier: str | None) -> tuple[str | None, str | None]:
+    if legacy_support_tier is None:
+        return None, None
+    return LEGACY_SUPPORT_TIER_MAP.get(legacy_support_tier, (legacy_support_tier, None))
+
+
+def resolve_matrix_version_band(args: argparse.Namespace) -> str | None:
+    if args.matrix_version_band is not None:
+        return args.matrix_version_band
+    _, version_band = legacy_gate_metadata(args.legacy_matrix_support_tier)
+    return version_band
+
+
+def resolve_step_metadata(step: dict, mapping: dict) -> tuple[str | None, str | None]:
+    gate_scope = substitute(step.get("gate_scope"), mapping)
+    version_band = substitute(step.get("version_band"), mapping)
+    legacy_support_tier = substitute(step.get("support_tier"), mapping)
+    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(legacy_support_tier)
+    if gate_scope is None:
+        gate_scope = legacy_gate_scope
+    if version_band is None:
+        version_band = legacy_version_band
+    return gate_scope, version_band
+
+
 def ensure_gate_dirs(report_root: Path) -> tuple[Path, Path, Path]:
     gate_root = report_root / "gate"
     logs_dir = gate_root / "logs"
@@ -113,7 +152,8 @@ def build_mapping(args: argparse.Namespace) -> dict:
     return {
         "REPORT_ROOT": args.report_root,
         "MATRIX_GCC_VERSION": args.matrix_gcc_version or "",
-        "MATRIX_SUPPORT_TIER": args.matrix_support_tier or "",
+        "MATRIX_SUPPORT_TIER": args.legacy_matrix_support_tier or "",
+        "MATRIX_VERSION_BAND": resolve_matrix_version_band(args) or "",
         "RELEASE_BLOCKER": args.release_blocker or "",
     }
 
@@ -123,8 +163,11 @@ def build_child_env(args: argparse.Namespace) -> dict:
     env["REPORT_ROOT"] = args.report_root
     if args.matrix_gcc_version is not None:
         env["MATRIX_GCC_VERSION"] = args.matrix_gcc_version
-    if args.matrix_support_tier is not None:
-        env["MATRIX_SUPPORT_TIER"] = args.matrix_support_tier
+    if args.legacy_matrix_support_tier is not None:
+        env["MATRIX_SUPPORT_TIER"] = args.legacy_matrix_support_tier
+    matrix_version_band = resolve_matrix_version_band(args)
+    if matrix_version_band is not None:
+        env["MATRIX_VERSION_BAND"] = matrix_version_band
     if args.release_blocker is not None:
         env["RELEASE_BLOCKER"] = args.release_blocker
     return env
@@ -143,6 +186,7 @@ def build_status_payload(
     stdout_path: Path,
     stderr_path: Path,
 ) -> dict:
+    gate_scope, version_band = resolve_step_metadata(step, mapping)
     return {
         "schema_version": SCHEMA_VERSION,
         "workflow": plan["workflow"],
@@ -159,7 +203,8 @@ def build_status_payload(
         "exit_code": exit_code,
         "fixture": substitute(step.get("fixture"), mapping),
         "gcc_version": substitute(step.get("gcc_version"), mapping),
-        "support_tier": substitute(step.get("support_tier"), mapping),
+        "gate_scope": gate_scope,
+        "version_band": version_band,
         "artifact_paths": substitute(step.get("artifact_paths", []), mapping),
         "log_paths": {
             "stdout": str(stdout_path),
@@ -170,7 +215,7 @@ def build_status_payload(
         "duration_ms": duration_ms,
         "matrix": {
             "gcc_version": args.matrix_gcc_version,
-            "support_tier": args.matrix_support_tier,
+            "version_band": resolve_matrix_version_band(args),
             "release_blocker": args.release_blocker,
         },
     }

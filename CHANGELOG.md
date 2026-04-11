@@ -22,6 +22,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 - Extended `cargo xtask check` to run the Python `ci/test_*.py` suite as well, so CI helper scripts and governance/support contract docs are checked through the same local and CI gate instead of relying on separate ad hoc commands.
 - Hardened `cargo xtask check` so the standard local and PR gate now fails on `cargo clippy --workspace --all-targets -- -D warnings` regressions instead of treating clippy-cleanliness as an out-of-band manual check.
 - Rekeyed release provenance generation around explicit `release_scope` metadata so CI and release workflows now record `maturity_label` and nightly `version_band` instead of emitting legacy `support_tier` fields in `release-provenance.json`.
+- Renamed CI gate status, summary, and static-plan metadata from legacy `support_tier` selectors to explicit `gate_scope` plus `version_band`, and switched nightly workflow plumbing from `MATRIX_SUPPORT_TIER` to `MATRIX_VERSION_BAND`.
 
 ## [0.2.0-beta.1] - 2026-04-09
 
