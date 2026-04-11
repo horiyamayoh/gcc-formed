@@ -1,6 +1,7 @@
 use super::*;
-use diag_core::FallbackReason;
-use diag_testkit::normalize_snapshot_contents;
+use diag_core::{DocumentCompleteness, FallbackReason, Origin, Phase, ProvenanceSource};
+use diag_render::{RenderProfile, build_view_model, render};
+use diag_testkit::{discover, normalize_snapshot_contents};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
@@ -43,6 +44,17 @@ fn run_command(root: &Path, binary: &str, args: &[&str]) {
         args.join(" "),
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+fn corpus_fixture(fixture_id: &str) -> diag_testkit::Fixture {
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("xtask crate should live under the repo root");
+    discover(&repo_root.join("corpus"))
+        .unwrap()
+        .into_iter()
+        .find(|fixture| fixture.fixture_id() == fixture_id)
+        .unwrap_or_else(|| panic!("fixture `{fixture_id}` not found"))
 }
 
 fn acceptance_summary(
@@ -533,6 +545,7 @@ fn normalizes_ir_location_span_drift_before_compare() {
   "semantic_role": "root",
   "severity": "error"
 }
+
   ],
   "document_completeness": "complete",
   "document_id": "<document>",
@@ -658,6 +671,108 @@ fn normalizes_ir_location_span_drift_before_compare() {
         normalize_snapshot_contents(Path::new("ir.analysis.json"), actual).unwrap();
 
     assert_eq!(normalized_expected, normalized_actual);
+}
+
+#[test]
+fn replay_fixture_keeps_collect2_as_driver_summary_without_changing_lead_family() {
+    let fixture = corpus_fixture("c/linker/case-12");
+    let replay = replay_fixture_document(&fixture).unwrap();
+    let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+    let render_result = render(request).unwrap();
+    let lead_node =
+        lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+    let collect2_node = replay
+        .document
+        .diagnostics
+        .iter()
+        .find(|node| {
+            node.message
+                .raw_text
+                .contains("collect2: error: ld returned 1 exit status")
+        })
+        .unwrap();
+    assert_eq!(collect2_node.origin, Origin::Driver);
+    assert_eq!(collect2_node.phase, Phase::Link);
+
+    let undefined_reference_node = replay
+        .document
+        .diagnostics
+        .iter()
+        .find(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                == Some("linker.undefined_reference")
+        })
+        .unwrap();
+    assert_eq!(undefined_reference_node.origin, Origin::Linker);
+
+    assert_eq!(
+        lead_node
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.family.as_deref()),
+        Some("linker.undefined_reference")
+    );
+}
+
+#[test]
+fn replay_fixture_keeps_structured_and_residual_roots_together_without_losing_lead_family() {
+    for fixture_id in ["c/syntax/case-10", "c/type/case-12", "cpp/overload/case-08"] {
+        let fixture = corpus_fixture(fixture_id);
+        let replay = replay_fixture_document(&fixture).unwrap();
+        let request =
+            render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+        let render_result = render(request).unwrap();
+        let lead_node =
+            lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+        assert_eq!(
+            replay.document.document_completeness,
+            DocumentCompleteness::Partial
+        );
+        assert!(replay.document.diagnostics.iter().any(|node| {
+            matches!(node.provenance.source, ProvenanceSource::Compiler)
+                && matches!(node.semantic_role, diag_core::SemanticRole::Root)
+        }));
+        assert!(replay.document.diagnostics.iter().any(|node| {
+            matches!(node.provenance.source, ProvenanceSource::ResidualText)
+                && matches!(node.semantic_role, diag_core::SemanticRole::Root)
+        }));
+        assert_eq!(
+            lead_node
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            fixture
+                .expectations
+                .semantic
+                .as_ref()
+                .map(|semantic| semantic.family.as_str())
+        );
+    }
+}
+
+#[test]
+fn macro_include_view_model_keeps_excerpt_lines_and_annotations() {
+    for fixture_id in ["c/macro_include/case-11", "c/macro_include/case-12"] {
+        let fixture = corpus_fixture(fixture_id);
+        let replay = replay_fixture_document(&fixture).unwrap();
+        let request =
+            render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+        let view = build_view_model(&request).unwrap();
+
+        let excerpt = view.cards[0].excerpts.first().unwrap();
+        assert!(
+            !excerpt.lines.is_empty(),
+            "{fixture_id} should keep source lines"
+        );
+        assert!(
+            !excerpt.annotations.is_empty(),
+            "{fixture_id} should keep caret annotations"
+        );
+    }
 }
 
 #[test]

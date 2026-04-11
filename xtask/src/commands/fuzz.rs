@@ -902,8 +902,7 @@ fn root_node(
                         .into()
                 }
                 "linker" => {
-                    "inspect the preserved compiler stderr and the first failing link input"
-                        .into()
+                    "inspect the preserved compiler stderr and the first failing link input".into()
                 }
                 _ => "fix the first parser error before reading follow-up notes".into(),
             }),

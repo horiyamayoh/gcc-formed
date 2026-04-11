@@ -177,12 +177,23 @@ fn result_to_node(
             root_cause_score: None,
             actionability_score: None,
             user_code_priority: None,
-            headline: Some(raw_text.lines().next().unwrap_or(&raw_text).to_string().into()),
+            headline: Some(
+                raw_text
+                    .lines()
+                    .next()
+                    .unwrap_or(&raw_text)
+                    .to_string()
+                    .into(),
+            ),
             first_action_hint: Some(first_action_hint(family_decision.family.as_str()).into()),
             confidence: Some(Confidence::Medium.score()),
             preferred_primary_location_id: None,
             rule_id: Some(family_decision.rule_id.into()),
-            matched_conditions: family_decision.matched_conditions.into_iter().map(Into::into).collect(),
+            matched_conditions: family_decision
+                .matched_conditions
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
             collapsed_chain_ids: Vec::new(),

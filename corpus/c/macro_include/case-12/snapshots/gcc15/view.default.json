@@ -15,6 +15,9 @@
       ],
       "excerpts": [
         {
+          "annotations": [
+            "           ^"
+          ],
           "lines": [
             "    return OUTER_ACCESS(counter);"
           ],

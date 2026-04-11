@@ -61,16 +61,30 @@
       "fingerprints": {
         "family": "91b254a09582495e7da9fa0e493667b6de8fb3f0b779e0a61e1a4485c3024fc0",
         "raw": "7837484658def323d49ec677857a7e0720c09ada0397b0ff9203885bd6abf0a6",
-        "structural": "780b103424e7b839e2c28441c233e926743736df45c1a7960cb1c6867b9a599a"
+        "structural": "84fcdbf7ee9ac8fedb22921fcdbaec0f80823e02e1a52d1272d475849b29fb30"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 12,
-          "end_column": 13,
-          "line": 9,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 9
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:9:12:9:12",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -93,8 +107,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "a87c10bbde42b52ca23ae56bb7280e29b62afc73e4b7ad31458e51501bda783f",
-    "structural": "747832a8aa8954071c76882ad407ffe97230b7cdf6f9247ac8f8a7059f2c399d"
+    "raw": "28da46cdba943b07caa01d19274625901b262ea61aca1fa41105ca09d6453303",
+    "structural": "64e03781dc9bf064edb26efd5d199beb9e320243ee6805135cb3afbead4823f3"
   },
   "producer": {
     "name": "gcc-formed",

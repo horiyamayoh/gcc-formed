@@ -194,7 +194,13 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
         matched_conditions: node
             .analysis
             .as_ref()
-            .map(|analysis| analysis.matched_conditions.iter().map(|c| c.to_string()).collect())
+            .map(|analysis| {
+                analysis
+                    .matched_conditions
+                    .iter()
+                    .map(|c| c.to_string())
+                    .collect()
+            })
             .unwrap_or_default(),
         suppression_reason: node
             .analysis

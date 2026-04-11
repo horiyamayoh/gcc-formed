@@ -1351,8 +1351,7 @@ mod tests {
         analysis.family = Some("unknown".into());
         analysis.headline = Some("template instantiation failed".into());
         analysis.first_action_hint = Some(
-            "start from the first user-owned template frame and match template arguments"
-                .into(),
+            "start from the first user-owned template frame and match template arguments".into(),
         );
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
 

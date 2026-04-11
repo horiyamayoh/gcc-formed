@@ -3,7 +3,12 @@ help: compare the expected type and actual argument at the call site
 why: no matching function for call to 'takes_ref(const char*&)'
 | src/main.cpp:6:5
 |     takes_ref(value);
+|     ^
 because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6
 because: conversion of argument 1 would be ill-formed:
 omitted 5 other overload notes
+other errors:
+  - src/main.cpp:6:15: error: type or overload mismatch
+  - src/main.cpp:6:15: error: type or overload mismatch
+  - src/main.cpp:6:14: error: type or overload mismatch
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -58,7 +58,11 @@ fn enrich_node(node: &mut DiagnosticNode, cwd: &Path) {
     analysis.first_action_hint = Some(first_action_hint.into());
     analysis.set_confidence_bucket(confidence);
     analysis.rule_id = Some(family_decision.rule_id.into());
-    analysis.matched_conditions = family_decision.matched_conditions.into_iter().map(Into::into).collect();
+    analysis.matched_conditions = family_decision
+        .matched_conditions
+        .into_iter()
+        .map(Into::into)
+        .collect();
     analysis.suppression_reason = family_decision.suppression_reason;
 
     for child in &mut node.children {

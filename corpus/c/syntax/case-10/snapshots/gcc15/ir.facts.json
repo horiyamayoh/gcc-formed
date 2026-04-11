@@ -32,16 +32,30 @@
       "fingerprints": {
         "family": "cf0dd364ebc6ec5196daa20260ea3171bf0ca2561e8ce8e0f7c7ae6b11dfda74",
         "raw": "c325ce1ab487532c58d61baca170572bb8d2f085dd88ea8f271f5fdc097debb1",
-        "structural": "ffd46ec7ccc985df6737299d3a320a0d9d399fd6800825b7211ec42db3422a34"
+        "structural": "ca875a8b8f42f5f879e904f3fb579c2be3b1a364daa4546e8382f9b9f96e7f21"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 26,
-          "end_column": 27,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 26,
+            "column_native": 26,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:26:2:26",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -63,16 +77,30 @@
       "fingerprints": {
         "family": "22bb3118cda2d98797637c640372dcc42d2aff2e59f973b7f14f2a659db11ffb",
         "raw": "fc3ebac37cc8eac98ef430b53abdb4068cdec47fb2554165cb4d4e9ba8f164b2",
-        "structural": "57911d1b4f4019378da951024dab2ae5a7ba9bf9887d8e2cb7e6dab5725b947f"
+        "structural": "c6142a635554f0a7161b31a9e4e05bdf9219a7a0a90b8f02a7c0d277b9a70894"
       },
       "id": "sarif-0-1",
       "locations": [
         {
-          "column": 1,
-          "end_column": 2,
-          "line": 4,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -94,16 +122,30 @@
       "fingerprints": {
         "family": "46a04b890912282c689fd06c8c1ebc68c577b3386e4175ba2b6ce285871aa520",
         "raw": "5f927caf8e2a26f37435e5ce135c9c0277c8428a617841c5134b747badca2381",
-        "structural": "cf648e248c40b38a239585b93c2ea7788e86fbe02bec13e136e4f5de4fd38531"
+        "structural": "ff697a669d91265d6955a4917ac4bfaa438d81fdf0f54d07b77bdfb7827e56e7"
       },
       "id": "sarif-0-2",
       "locations": [
         {
-          "column": 1,
-          "end_column": 2,
-          "line": 4,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -120,14 +162,149 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "1b48276a89b369234e241c25939d6962cd4bd6b8085a0e166346ff25f2381528",
+        "raw": "f886942aa7346babccc9887a2ed8af96d51eeb057dcdeb011bebfee070310fac",
+        "structural": "2884175cf564e9df4e9c43832f46bf111e763e7266bdaddbf729f9c87a365e76"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 26,
+            "column_native": 26,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:26:2:26",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:26: error: expected '}' before ';' token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "93679532cbba6f2112a10360168e9e7cf7f1139d91e1b0d265a9b9dea3720afc",
+        "raw": "1487626dd64b8582935b7348bfca1e51df3a6ac1437d334899bf3aa6a7716e42",
+        "structural": "01aca5306643421d25c2c245245d1e8b3c1d0198373ce19727777015f218eaa4"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:4:1: error: expected ',' or ';' at end of input"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "3782b9693432264a3b848fbd637f5eb7579569f3b2bd149d8cc797bf67eb7fe0",
+        "raw": "e5e1abe8aa8f332da7290025e8feb1ab47604b7461ac490937943c8c0154a629",
+        "structural": "554a91983cd8518537aa14a4804f85d881441eaaf67d57ada23e99fc0223f247"
+      },
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:4:1: error: expected declaration or statement at end of input"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "685e2fe96cbf23d6fb048d4c6329060d81711356d055125f17b211f2e07b63cc",
-    "structural": "e2023c2e2db1d66f63e20599c6bb0da88ab149f15354e24de7884936d64e8e2d"
+    "family": "02ba024715853df7417bbd7e6935f834038a6d1e2c1385c9e24378903ccf2c9d",
+    "raw": "14d34e0c6931b4ba9dc5aa01bd16fc5e62359cdf5fec06235595bbca054fe5d9",
+    "structural": "94d01db4a1c860fa9acb963eb76a2aea80d8a5449c7abadc4a37f267eddea936"
   },
   "producer": {
     "name": "gcc-formed",

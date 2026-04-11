@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -44,16 +44,30 @@
       "fingerprints": {
         "family": "e5e5380bdea9ec665158cc18b81bd1f7ac351307125d66cd1899d4948f3cbd8c",
         "raw": "c325ce1ab487532c58d61baca170572bb8d2f085dd88ea8f271f5fdc097debb1",
-        "structural": "9de4d8d8aa5c32658cb73d27e226ffc61f8aac070eaf557e1fa72353293ba67b"
+        "structural": "26720767434351f156dc24b64eeb83fd1ab4c2ee9d641f5df497ac514edfea06"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 26,
-          "end_column": 27,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 26,
+            "column_native": 26,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:26:2:26",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -73,7 +87,7 @@
     },
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -86,16 +100,30 @@
       "fingerprints": {
         "family": "1f6b3d794b5ad468fb38b8da1d3641df94c0c2dbebb3d226e80b30eb4f227ad3",
         "raw": "fc3ebac37cc8eac98ef430b53abdb4068cdec47fb2554165cb4d4e9ba8f164b2",
-        "structural": "bd2f3cf629a8871f577ffa1d671d3e8c8c0a92a9586827a20f059c930d90f7c4"
+        "structural": "2174c193589360c573361e4a2666d8801a748feb2ce718f5605871a1ce628cff"
       },
       "id": "sarif-0-1",
       "locations": [
         {
-          "column": 1,
-          "end_column": 2,
-          "line": 4,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -115,7 +143,7 @@
     },
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
@@ -128,16 +156,30 @@
       "fingerprints": {
         "family": "62ec51a69ab1fbc4dbb6d42aa20622207af6e4bc1e7c4174cda1e32ba5ae02f8",
         "raw": "5f927caf8e2a26f37435e5ce135c9c0277c8428a617841c5134b747badca2381",
-        "structural": "78aeb223169a5721d1a41f494aad6b05ee4945d1c1c9f89d9309fa32ef49501f"
+        "structural": "0e6201fbb71dc138797ba7955e01546fb66cda9550cd2c229277d47a5da169a4"
       },
       "id": "sarif-0-2",
       "locations": [
         {
-          "column": 1,
-          "end_column": 2,
-          "line": 4,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -154,14 +196,183 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "a2063f22be5a80bf27aca2b4f41eb730038b254b96a93d34af75dfc903f0613f",
+        "raw": "f886942aa7346babccc9887a2ed8af96d51eeb057dcdeb011bebfee070310fac",
+        "structural": "4aa8dec9d8a855624c5ef00e578b41ebda257dffb066b957bc03dbbea2a5013a"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 26,
+            "column_native": 26,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:26:2:26",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:26: error: expected '}' before ';' token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "6a5e71deab3dd56c79c09bc3fb215b4961ee06e85361656882a052e3509fd798",
+        "raw": "1487626dd64b8582935b7348bfca1e51df3a6ac1437d334899bf3aa6a7716e42",
+        "structural": "1ce3da4e0cef0c045ffcfbea325e61f4e2982ff994ed60e4bd9f7867c715378c"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:4:1: error: expected ',' or ';' at end of input"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "c3b94169a5be9e046036889e080c8e779146477fa05fa6468d7046344352badf",
+        "raw": "e5e1abe8aa8f332da7290025e8feb1ab47604b7461ac490937943c8c0154a629",
+        "structural": "cfeec3288a8cd9f5128759fd00cca0c69e88d142a9b62bb11ded6bd9e2457477"
+      },
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:1:4:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:4:1: error: expected declaration or statement at end of input"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
-    "raw": "f5845657c9cf561d158b21b5cad500b3ecaf73dc966b9628cb914764e1481a35",
-    "structural": "b05cc865e5360fb1275639ab72c6a56a129139801ab19e05afb9502ed3701e3d"
+    "family": "fbe301a8e07262b99fe7dee3cd9b202128d625f7baee87ca92445e868b9c5983",
+    "raw": "d4e8ee66307452849b70b5697c62c0ac217876f064a2b0a69a0c36ebcc818142",
+    "structural": "7a6b402944643c3fe03790bbda8a12bcf915c2996b3f7ddabe4d4b3a0cd0268f"
   },
   "producer": {
     "name": "gcc-formed",

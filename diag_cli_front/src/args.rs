@@ -71,15 +71,15 @@ pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, CliError> {
     }
 }
 
-pub(crate) fn parse_processing_path(
-    value: &str,
-) -> Result<ProcessingPath, CliError> {
+pub(crate) fn parse_processing_path(value: &str) -> Result<ProcessingPath, CliError> {
     match value {
         "dual_sink_structured" => Ok(ProcessingPath::DualSinkStructured),
         "single_sink_structured" => Ok(ProcessingPath::SingleSinkStructured),
         "native_text_capture" => Ok(ProcessingPath::NativeTextCapture),
         "passthrough" => Ok(ProcessingPath::Passthrough),
-        _ => Err(CliError::Config(format!("unsupported processing path: {value}"))),
+        _ => Err(CliError::Config(format!(
+            "unsupported processing path: {value}"
+        ))),
     }
 }
 
@@ -95,15 +95,15 @@ pub(crate) fn parse_profile(value: &str) -> Result<RenderProfile, CliError> {
     }
 }
 
-pub(crate) fn parse_retention_policy(
-    value: &str,
-) -> Result<RetentionPolicy, CliError> {
+pub(crate) fn parse_retention_policy(value: &str) -> Result<RetentionPolicy, CliError> {
     match value {
         "never" => Ok(RetentionPolicy::Never),
         "on-wrapper-failure" => Ok(RetentionPolicy::OnWrapperFailure),
         "on-child-error" => Ok(RetentionPolicy::OnChildError),
         "always" => Ok(RetentionPolicy::Always),
-        _ => Err(CliError::Config(format!("unsupported trace policy: {value}"))),
+        _ => Err(CliError::Config(format!(
+            "unsupported trace policy: {value}"
+        ))),
     }
 }
 
@@ -112,7 +112,9 @@ pub(crate) fn parse_debug_refs(value: &str) -> Result<DebugRefs, CliError> {
         "none" => Ok(DebugRefs::None),
         "trace_id" => Ok(DebugRefs::TraceId),
         "capture_ref" => Ok(DebugRefs::CaptureRef),
-        _ => Err(CliError::Config(format!("unsupported debug ref mode: {value}"))),
+        _ => Err(CliError::Config(format!(
+            "unsupported debug ref mode: {value}"
+        ))),
     }
 }
 

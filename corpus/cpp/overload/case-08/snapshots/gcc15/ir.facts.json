@@ -34,16 +34,30 @@
           "fingerprints": {
             "family": "f840285381e3eb1aedd6178485fe28543bbc3fd00fe91ca62f72868d117e9fb1",
             "raw": "846c6239c3f4f1a0875c6216a86209cca13169760312c3362da67c37bd34c45b",
-            "structural": "c68ace53a49289da42b5f35db21f31a61db3efee396c4d81271ec00871082463"
+            "structural": "532a057b2d43fc4df2c3f686e7d7d6b530f7bce9efe9bbfb7572b5214d4f4f2f"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
             {
-              "column": 6,
-              "end_column": 15,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -65,16 +79,30 @@
           "fingerprints": {
             "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
             "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
-            "structural": "72ebdc5ae1791f9c40d323ea02b1d5730ac1bb86b715c92ad4c2b97575fc7567"
+            "structural": "4c077fe6a13fac1166d027e170a40a8da7ef306641a85c84ef28c8f2e2b63031"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
             {
-              "column": 6,
-              "end_column": 15,
-              "line": 1,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -96,16 +124,30 @@
           "fingerprints": {
             "family": "12bb5280200d29d987a6706e7bb4010fac8a727408f9b156ecfdd2fae96c4254",
             "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-            "structural": "a850eede3431b493fca6264533b8773ed481bc663f815f4d3bfd68337fde3f26"
+            "structural": "12905de7f97a93ef8fac30fee71ce622eda9ed70c52aa2526b1474841581e57c"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
             {
-              "column": 15,
-              "end_column": 20,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 15,
+                "column_native": 15,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:15:6:15",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -127,16 +169,30 @@
           "fingerprints": {
             "family": "4a48fd23e0b2907f206f81a49108ab0a3e3da35aefb692a92dc62a341a5b8f59",
             "raw": "3f46fa02fdb4d3ce87692d3acfdb008113021e426612ec939df434e40c445fce",
-            "structural": "3878980279ab80ed6fa806dc346326096ab615f5fd038d892fad9cfb7943f9b9"
+            "structural": "263f5063861521a52fb99038d63f6f34c112e5f9d2759228ed3aa24412d5e2b2"
           },
           "id": "sarif-0-0-related-4",
           "locations": [
             {
-              "column": 15,
-              "end_column": 20,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 15,
+                "column_native": 15,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:15:6:15",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -158,16 +214,30 @@
           "fingerprints": {
             "family": "315b9d13eb2c35f845afb7694903cb4d1760055e9f742c475ca0cdc4c1500dd0",
             "raw": "aeead032b9e45607e06e6557537835b0dcc43c6ce40c0247b9182b3f58c13241",
-            "structural": "26f34b05249964cc7e9eecad0282dd79e3f9905ad3d9b9bf4add55f442b76c70"
+            "structural": "ed9a5b49d2e437ed8bdcf2d38a09ea189e7dedbc35794dfe9c4962057e18146e"
           },
           "id": "sarif-0-0-related-5",
           "locations": [
             {
-              "column": 6,
-              "end_column": 15,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -189,16 +259,30 @@
           "fingerprints": {
             "family": "5b69511ddb794030efccac43cab5c69e16b835a75ccc87c3b22d75198e5909d4",
             "raw": "c178cf2f4c38739d2a3b318ff0dfa2556ba28cf150f5ff4afe646f2276210dea",
-            "structural": "851d1d73eb0f0258edab71afebf690c5b36663abd0c63841eb48a84dce43ceae"
+            "structural": "9cf780a845dea04ad6148249357bbb3615b9db765204f20fcc65042cad8301cc"
           },
           "id": "sarif-0-0-related-6",
           "locations": [
             {
-              "column": 6,
-              "end_column": 15,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -220,16 +304,30 @@
           "fingerprints": {
             "family": "8960c8c8d48528f3944bba75d1758dfcca38bf97c825748c636e5ed424a3add1",
             "raw": "dda2415f5a8b50911539da02f5603cf1616293ae5ede2648549b9b205b5f3806",
-            "structural": "2d1575c92e8cfb8c62c40d5d34d964bad72e9c5b9f6ebeeab4df398d8ae2fc39"
+            "structural": "a996dc3a138ea4a2c383144b7e4559a17223f2a9001da5f68b6bbdb1eeac9ea2"
           },
           "id": "sarif-0-0-related-7",
           "locations": [
             {
-              "column": 15,
-              "end_column": 20,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 15,
+                "column_native": 15,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:15:6:15",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -251,16 +349,30 @@
           "fingerprints": {
             "family": "ff8f2511a3e3ce7d22a38bee35824b2b00412d4d74c8b93c9c586b24d0a751dc",
             "raw": "99acf3dd425e542772622c50bce1c4855b5ebb8ee701ebf8a66b0adc61b0eea0",
-            "structural": "36fd4441d692d2611de10807f377cfa4fff917f9bf80879e2c51bac0228366ba"
+            "structural": "09211a098199435c93f6511da62d33edaa66b934c9e26c8facd111560974e547"
           },
           "id": "sarif-0-0-related-8",
           "locations": [
             {
-              "column": 15,
-              "end_column": 20,
-              "line": 6,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 15,
+                "column_native": 15,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:15:6:15",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
@@ -282,16 +394,30 @@
       "fingerprints": {
         "family": "35bac6ba8e449a24954582112bce5773d02e29414e02e2bd62b43e959cea9280",
         "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
-        "structural": "063de25e85a3d2d9ba1b1189efa087ce4a3db4d1ca39db8a81b2d412e04b60a3"
+        "structural": "02105dc80ae9cb7c51c90278d09274546a410ebb9d112189efed60ed7e3dc166"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 5,
-          "end_column": 21,
-          "line": 6,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -308,14 +434,149 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "ca61048a1ef3913c6619abb2cd3fda72ee4c6a8e5af352a96b1babecb81d7a1b",
+        "raw": "402722442b0dd044417e4507a40d8bd24c97664451a5fc77dba4663694d8caff",
+        "structural": "4b06cfde5ca1802313cdb735c7b47804d32f0119fe9d68453deeec82eacc5e53"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 14,
+            "column_native": 14,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:14:6:14",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "7a64b86e8d2eb2f41bfadaa185a7bc37f0534fbef2a1c3c95d9874096a13d3de",
+        "raw": "5729a83676b3483e4108df8f836e1005c8c0168edce91814a4ace2650b7bf394",
+        "structural": "d781e41ec110ff801ce0e3868b0a2622333334df7d0d9f5c5c5fe1d8f45d110d"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "feb91457a95577746b8ead65ffcca62b52ba53889801394eaa2273a93ee75f69",
+        "raw": "a02ec7e2a9ebda436b0f6b226f990ea507d685213c60f5ae2cc927279ff10b6a",
+        "structural": "8c8ab658bfa7d31b9b47e630973014981177f35963d25579ec11a4bb1b89fadb"
+      },
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "f5c9cbc4eaad28116065a8e37cfeba31280ceca838dab2b6d968d3350d54c903",
-    "structural": "f21a058edfe0a6f38638475de66e6439cd771381133eafab3a27ba868d6679e2"
+    "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
+    "raw": "b16b1005a3bf3b23ac02f288d15cdd57e7f743de2c9f05a7306c458d6c9e87d9",
+    "structural": "6e6a273cecfcd783a4f90cc5a6f9f4c334d2c8e761ab1a00c1b6ff1886327638"
   },
   "producer": {
     "name": "gcc-formed",

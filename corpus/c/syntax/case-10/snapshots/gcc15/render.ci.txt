@@ -3,4 +3,11 @@ help: fix the first parser error at the user-owned location
 why: expected declaration or statement at end of input
 | src/main.c:4:1
 | }
+| ^
+other errors:
+  - src/main.c:4:1: error: syntax error
+  - src/main.c:2:26: error: syntax error
+  - src/main.c:4:1: error: syntax error
+  - src/main.c:4:1: error: syntax error
+  - src/main.c:2:26: error: syntax error
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

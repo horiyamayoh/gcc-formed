@@ -76,9 +76,7 @@ pub(crate) struct PassthroughTraceWriteRequest<'a> {
     pub(crate) common: CommonTraceContext<'a>,
 }
 
-pub(crate) fn maybe_write_trace(
-    request: TraceWriteRequest<'_>,
-) -> Result<(), CliError> {
+pub(crate) fn maybe_write_trace(request: TraceWriteRequest<'_>) -> Result<(), CliError> {
     let retained_trace_dir = request.common.capture.retained_trace_dir.as_ref();
     if retained_trace_dir.is_none()
         && !matches!(

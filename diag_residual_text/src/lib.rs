@@ -352,9 +352,7 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
                 .iter()
                 .any(|condition| condition == "family=template")
             {
-                analysis
-                    .matched_conditions
-                    .push("family=template".into());
+                analysis.matched_conditions.push("family=template".into());
             }
         }
     }

@@ -3,8 +3,8 @@ use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version, tool_for_backend};
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::{
-    CapturePlan, CaptureInvocation, CaptureBundle, ExitStatusInfo,
-    ExecutionMode, LocaleHandling, NativeTextCapturePolicy, StructuredCapturePolicy,
+    CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
+    NativeTextCapturePolicy, StructuredCapturePolicy,
 };
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, LanguageMode, RunInfo, WrapperSurface,

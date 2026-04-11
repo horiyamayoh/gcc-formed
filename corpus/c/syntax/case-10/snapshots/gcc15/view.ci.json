@@ -9,6 +9,9 @@
       "context_lines": [],
       "excerpts": [
         {
+          "annotations": [
+            "^"
+          ],
           "lines": [
             "}"
           ],
@@ -33,5 +36,37 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.c:4:1",
+      "group_id": "sarif-0-1",
+      "severity": "error",
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:2:26",
+      "group_id": "sarif-0-0",
+      "severity": "error",
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:4:1",
+      "group_id": "residual-compiler-2",
+      "severity": "error",
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:4:1",
+      "group_id": "residual-compiler-1",
+      "severity": "error",
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:2:26",
+      "group_id": "residual-compiler-0",
+      "severity": "error",
+      "title": "syntax error"
+    }
+  ]
 }

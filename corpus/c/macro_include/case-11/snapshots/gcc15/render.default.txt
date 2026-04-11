@@ -4,6 +4,7 @@ help: inspect the user-owned macro invocation or include edge that reaches the f
 why: 'Box' has no member named 'missing_field'
 | src/main.c:9:12
 |     return READ_MISSING(box);
+|            ^
 through macro expansion:
   - src/main.c:9:12 in expansion of macro 'READ_MISSING'
 from include chain:
