@@ -16,7 +16,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const HUMAN_EVAL_SCHEMA_VERSION: u32 = 1;
+const HUMAN_EVAL_SCHEMA_VERSION: u32 = 2;
 const MINIMUM_TASK_STUDY_FIXTURE_COUNT: usize = 10;
 const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "syntax",
@@ -27,13 +27,22 @@ const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "linker",
 ];
 
+#[derive(Debug, Clone)]
+struct CurrentFixtureVocabulary {
+    version_band: String,
+    support_level: String,
+    processing_path: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct HumanEvalFixtureReport {
     pub(crate) fixture_id: String,
     pub(crate) family_key: String,
     pub(crate) language_key: String,
     pub(crate) title: Option<String>,
-    pub(crate) support_tier: String,
+    pub(crate) version_band: String,
+    pub(crate) support_level: String,
+    pub(crate) processing_path: String,
     pub(crate) expected_mode: String,
     pub(crate) tags: Vec<String>,
     pub(crate) expert_review: bool,
@@ -204,6 +213,7 @@ fn build_fixture_report_bundle(
     fixture: &Fixture,
     report_dir: &Path,
 ) -> Result<HumanEvalFixtureReport, Box<dyn std::error::Error>> {
+    let vocabulary = current_fixture_vocabulary(fixture);
     let summary = collect_acceptance_fixture_summary(fixture, None)
         .map_err(|failure| verification_failure_message("collect summary", &failure))?;
     let artifacts = collect_human_eval_artifacts(fixture)?;
@@ -232,7 +242,9 @@ fn build_fixture_report_bundle(
             "family_key": fixture.family_key(),
             "language_key": fixture.language_key(),
             "title": fixture.meta.title.clone(),
-            "support_tier": fixture.expectations.support_tier.clone(),
+            "version_band": vocabulary.version_band.clone(),
+            "support_level": vocabulary.support_level.clone(),
+            "processing_path": vocabulary.processing_path.clone(),
             "expected_mode": fixture.expectations.expected_mode.clone(),
             "tags": fixture.meta.tags.clone(),
             "acceptance_summary": summary,
@@ -245,7 +257,9 @@ fn build_fixture_report_bundle(
         family_key: family_key.clone(),
         language_key: fixture.language_key(),
         title: fixture.meta.title.clone(),
-        support_tier: fixture.expectations.support_tier.clone(),
+        version_band: vocabulary.version_band,
+        support_level: vocabulary.support_level,
+        processing_path: vocabulary.processing_path,
         expected_mode: fixture.expectations.expected_mode.clone(),
         tags: fixture.meta.tags.clone(),
         expert_review: true,
@@ -265,6 +279,14 @@ fn build_fixture_report_bundle(
         ),
         gcc_formed_ci_path: format!("fixtures/{}/actual/render.ci.txt", fixture.fixture_id()),
     })
+}
+
+fn current_fixture_vocabulary(fixture: &Fixture) -> CurrentFixtureVocabulary {
+    CurrentFixtureVocabulary {
+        version_band: fixture.invoke.version_band.clone(),
+        support_level: fixture.invoke.support_level.clone(),
+        processing_path: fixture.expectations.processing_path.clone(),
+    }
 }
 
 fn collect_human_eval_artifacts(
@@ -669,7 +691,9 @@ mod tests {
             family_key: family_key.to_string(),
             language_key: "c".to_string(),
             title: Some(title.to_string()),
-            support_tier: "A".to_string(),
+            version_band: "gcc15_plus".to_string(),
+            support_level: "preview".to_string(),
+            processing_path: "dual_sink_structured".to_string(),
             expected_mode: "render".to_string(),
             tags: vec!["representative".to_string()],
             expert_review: true,
@@ -686,6 +710,105 @@ mod tests {
             gcc_formed_default_path: format!("fixtures/{fixture_id}/actual/render.default.txt"),
             gcc_formed_ci_path: format!("fixtures/{fixture_id}/actual/render.ci.txt"),
         }
+    }
+
+    fn sample_input_fixture(
+        version_band: &str,
+        support_level: &str,
+        processing_path: &str,
+        tags: Vec<String>,
+    ) -> Fixture {
+        Fixture {
+            root: PathBuf::from("corpus/c/syntax/case-01"),
+            invoke: diag_testkit::FixtureInvoke {
+                language: "c".to_string(),
+                standard: None,
+                target_compiler_family: "gcc".to_string(),
+                version_band: version_band.to_string(),
+                support_level: support_level.to_string(),
+                major_version_selector: "15".to_string(),
+                argv: vec!["-c".to_string()],
+                cwd_policy: "fixture_root".to_string(),
+                env_overrides: BTreeMap::new(),
+                source_readability_expectation: "readable".to_string(),
+                linker_involvement: false,
+                expected_mode: "render".to_string(),
+                canonical_path_policy: "relative_to_cwd".to_string(),
+            },
+            expectations: diag_testkit::FixtureExpectations {
+                schema_version: 1,
+                fixture_id: "c/syntax/case-01".to_string(),
+                version_band: version_band.to_string(),
+                processing_path: processing_path.to_string(),
+                support_level: support_level.to_string(),
+                expected_mode: "render".to_string(),
+                family: Some("syntax".to_string()),
+                semantic: None,
+                render: diag_testkit::RenderExpectations::default(),
+                integrity: diag_testkit::IntegrityExpectations::default(),
+                performance: diag_testkit::PerformanceExpectations::default(),
+            },
+            meta: diag_testkit::FixtureMeta {
+                corpus_id: None,
+                title: None,
+                tags,
+                ownership: Some("curated".to_string()),
+                provenance: Some("manual".to_string()),
+                reviewer: Some("codex".to_string()),
+                redaction_class: None,
+                owner_team: None,
+                last_reviewed: None,
+                reviewers: Vec::new(),
+                promotion_status: None,
+                known_version_drift_notes: Vec::new(),
+            },
+        }
+    }
+
+    #[test]
+    fn current_fixture_vocabulary_uses_current_labels() {
+        let fixture = sample_input_fixture(
+            "gcc13_14",
+            "experimental",
+            "single_sink_structured",
+            vec![
+                "representative".to_string(),
+                "processing_path:single_sink_structured".to_string(),
+            ],
+        );
+
+        let vocabulary = current_fixture_vocabulary(&fixture);
+
+        assert_eq!(vocabulary.version_band, "gcc13_14");
+        assert_eq!(vocabulary.support_level, "experimental");
+        assert_eq!(vocabulary.processing_path, "single_sink_structured");
+    }
+
+    #[test]
+    fn current_fixture_vocabulary_uses_expectations_processing_path() {
+        let fixture = sample_input_fixture(
+            "gcc9_12",
+            "experimental",
+            "native_text_capture",
+            vec!["representative".to_string()],
+        );
+
+        let vocabulary = current_fixture_vocabulary(&fixture);
+
+        assert_eq!(vocabulary.version_band, "gcc9_12");
+        assert_eq!(vocabulary.support_level, "experimental");
+        assert_eq!(vocabulary.processing_path, "native_text_capture");
+    }
+
+    #[test]
+    fn human_eval_report_serializes_current_fixture_vocabulary_only() {
+        let report = sample_fixture("c/syntax/case-01", "syntax", "syntax");
+        let value = serde_json::to_value(&report).unwrap();
+
+        assert_eq!(value["version_band"], "gcc15_plus");
+        assert_eq!(value["support_level"], "preview");
+        assert_eq!(value["processing_path"], "dual_sink_structured");
+        assert!(value.get("support_tier").is_none());
     }
 
     #[test]

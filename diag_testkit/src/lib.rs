@@ -16,7 +16,8 @@ pub struct FixtureInvoke {
     #[serde(default)]
     pub standard: Option<String>,
     pub target_compiler_family: String,
-    pub required_support_tier: String,
+    pub version_band: String,
+    pub support_level: String,
     pub major_version_selector: String,
     pub argv: Vec<String>,
     pub cwd_policy: String,
@@ -148,7 +149,9 @@ pub struct PerformanceExpectations {
 pub struct FixtureExpectations {
     pub schema_version: u32,
     pub fixture_id: String,
-    pub support_tier: String,
+    pub version_band: String,
+    pub processing_path: String,
+    pub support_level: String,
     pub expected_mode: String,
     #[serde(default)]
     pub family: Option<String>,
@@ -196,6 +199,54 @@ pub struct Fixture {
     pub invoke: FixtureInvoke,
     pub expectations: FixtureExpectations,
     pub meta: FixtureMeta,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RawFixtureInvoke {
+    language: String,
+    #[serde(default)]
+    standard: Option<String>,
+    target_compiler_family: String,
+    #[serde(default)]
+    version_band: Option<String>,
+    #[serde(default)]
+    support_level: Option<String>,
+    #[serde(default)]
+    required_support_tier: Option<String>,
+    major_version_selector: String,
+    argv: Vec<String>,
+    cwd_policy: String,
+    #[serde(default)]
+    env_overrides: BTreeMap<String, String>,
+    source_readability_expectation: String,
+    linker_involvement: bool,
+    expected_mode: String,
+    canonical_path_policy: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RawFixtureExpectations {
+    schema_version: u32,
+    fixture_id: String,
+    #[serde(default)]
+    version_band: Option<String>,
+    #[serde(default)]
+    processing_path: Option<String>,
+    #[serde(default)]
+    support_level: Option<String>,
+    #[serde(default)]
+    support_tier: Option<String>,
+    expected_mode: String,
+    #[serde(default)]
+    family: Option<String>,
+    #[serde(default)]
+    semantic: Option<SemanticExpectations>,
+    #[serde(default)]
+    render: RenderExpectations,
+    #[serde(default)]
+    integrity: IntegrityExpectations,
+    #[serde(default)]
+    performance: PerformanceExpectations,
 }
 
 impl Fixture {
@@ -324,6 +375,24 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
         }
     }
 
+    if fixture.invoke.version_band != fixture.expectations.version_band {
+        return Err(FixtureError::Invalid(format!(
+            "fixture {} invoke/expectations version_band mismatch: {} vs {}",
+            fixture.fixture_id(),
+            fixture.invoke.version_band,
+            fixture.expectations.version_band
+        )));
+    }
+
+    if fixture.invoke.support_level != fixture.expectations.support_level {
+        return Err(FixtureError::Invalid(format!(
+            "fixture {} invoke/expectations support_level mismatch: {} vs {}",
+            fixture.fixture_id(),
+            fixture.invoke.support_level,
+            fixture.expectations.support_level
+        )));
+    }
+
     Ok(())
 }
 
@@ -352,11 +421,13 @@ fn walk(root: &Path, fixtures: &mut Vec<Fixture>) -> Result<(), FixtureError> {
 }
 
 fn load_fixture(root: &Path) -> Result<Fixture, FixtureError> {
-    let invoke =
-        serde_yaml::from_str::<FixtureInvoke>(&fs::read_to_string(root.join("invoke.yaml"))?)?;
-    let expectations = serde_yaml::from_str::<FixtureExpectations>(&fs::read_to_string(
+    let raw_invoke =
+        serde_yaml::from_str::<RawFixtureInvoke>(&fs::read_to_string(root.join("invoke.yaml"))?)?;
+    let invoke = normalize_invoke(raw_invoke)?;
+    let raw_expectations = serde_yaml::from_str::<RawFixtureExpectations>(&fs::read_to_string(
         root.join("expectations.yaml"),
     )?)?;
+    let expectations = normalize_expectations(raw_expectations, &invoke)?;
     let meta = serde_yaml::from_str::<FixtureMeta>(&fs::read_to_string(root.join("meta.yaml"))?)?;
     Ok(Fixture {
         root: root.to_path_buf(),
@@ -364,6 +435,154 @@ fn load_fixture(root: &Path) -> Result<Fixture, FixtureError> {
         expectations,
         meta,
     })
+}
+
+fn normalize_invoke(raw: RawFixtureInvoke) -> Result<FixtureInvoke, FixtureError> {
+    let version_band = normalize_version_band(
+        raw.version_band.as_deref(),
+        raw.required_support_tier.as_deref(),
+        Some(raw.major_version_selector.as_str()),
+    )?;
+    let support_level =
+        normalize_support_level(raw.support_level.as_deref(), version_band.as_str())?;
+
+    Ok(FixtureInvoke {
+        language: raw.language,
+        standard: raw.standard,
+        target_compiler_family: raw.target_compiler_family,
+        version_band,
+        support_level,
+        major_version_selector: raw.major_version_selector,
+        argv: raw.argv,
+        cwd_policy: raw.cwd_policy,
+        env_overrides: raw.env_overrides,
+        source_readability_expectation: raw.source_readability_expectation,
+        linker_involvement: raw.linker_involvement,
+        expected_mode: raw.expected_mode,
+        canonical_path_policy: raw.canonical_path_policy,
+    })
+}
+
+fn normalize_expectations(
+    raw: RawFixtureExpectations,
+    invoke: &FixtureInvoke,
+) -> Result<FixtureExpectations, FixtureError> {
+    let version_band = normalize_version_band(
+        raw.version_band.as_deref(),
+        raw.support_tier.as_deref(),
+        Some(invoke.major_version_selector.as_str()),
+    )?;
+    let support_level =
+        normalize_support_level(raw.support_level.as_deref(), version_band.as_str())?;
+    let processing_path = normalize_processing_path(
+        raw.processing_path.as_deref(),
+        version_band.as_str(),
+        raw.expected_mode.as_str(),
+    )?;
+
+    Ok(FixtureExpectations {
+        schema_version: raw.schema_version,
+        fixture_id: raw.fixture_id,
+        version_band,
+        processing_path,
+        support_level,
+        expected_mode: raw.expected_mode,
+        family: raw.family,
+        semantic: raw.semantic,
+        render: raw.render,
+        integrity: raw.integrity,
+        performance: raw.performance,
+    })
+}
+
+fn normalize_version_band(
+    version_band: Option<&str>,
+    legacy_support_tier: Option<&str>,
+    major_version_selector: Option<&str>,
+) -> Result<String, FixtureError> {
+    if let Some(value) = version_band
+        .or(legacy_support_tier)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return match value.to_ascii_lowercase().as_str() {
+            "gcc15_plus" | "a" => Ok("gcc15_plus".to_string()),
+            "gcc13_14" | "b" => Ok("gcc13_14".to_string()),
+            "gcc9_12" | "c" => Ok("gcc9_12".to_string()),
+            "unknown" => Ok("unknown".to_string()),
+            _ => Err(FixtureError::Invalid(format!(
+                "unsupported fixture version_band `{value}`"
+            ))),
+        };
+    }
+
+    match major_version_selector
+        .and_then(|selector| selector.parse::<u32>().ok())
+        .unwrap_or_default()
+    {
+        major if major >= 15 => Ok("gcc15_plus".to_string()),
+        13 | 14 => Ok("gcc13_14".to_string()),
+        9..=12 => Ok("gcc9_12".to_string()),
+        _ => Ok("unknown".to_string()),
+    }
+}
+
+fn normalize_support_level(
+    support_level: Option<&str>,
+    version_band: &str,
+) -> Result<String, FixtureError> {
+    if let Some(value) = support_level
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return match value.to_ascii_lowercase().as_str() {
+            "preview" => Ok("preview".to_string()),
+            "experimental" => Ok("experimental".to_string()),
+            "passthrough_only" => Ok("passthrough_only".to_string()),
+            _ => Err(FixtureError::Invalid(format!(
+                "unsupported fixture support_level `{value}`"
+            ))),
+        };
+    }
+
+    Ok(match version_band {
+        "gcc15_plus" => "preview",
+        "gcc13_14" | "gcc9_12" => "experimental",
+        _ => "passthrough_only",
+    }
+    .to_string())
+}
+
+fn normalize_processing_path(
+    processing_path: Option<&str>,
+    version_band: &str,
+    expected_mode: &str,
+) -> Result<String, FixtureError> {
+    if let Some(value) = processing_path
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        return match value.to_ascii_lowercase().as_str() {
+            "dual_sink_structured" => Ok("dual_sink_structured".to_string()),
+            "single_sink_structured" => Ok("single_sink_structured".to_string()),
+            "native_text_capture" => Ok("native_text_capture".to_string()),
+            "passthrough" => Ok("passthrough".to_string()),
+            _ => Err(FixtureError::Invalid(format!(
+                "unsupported fixture processing_path `{value}`"
+            ))),
+        };
+    }
+
+    Ok(
+        if expected_mode == "passthrough" || version_band == "unknown" {
+            "passthrough"
+        } else if version_band == "gcc15_plus" {
+            "dual_sink_structured"
+        } else {
+            "native_text_capture"
+        }
+        .to_string(),
+    )
 }
 
 #[cfg(test)]
@@ -379,7 +598,8 @@ mod tests {
                     language: "c".to_string(),
                     standard: None,
                     target_compiler_family: "gcc".to_string(),
-                    required_support_tier: "A".to_string(),
+                    version_band: "gcc15_plus".to_string(),
+                    support_level: "preview".to_string(),
                     major_version_selector: "15".to_string(),
                     argv: vec!["-c".to_string()],
                     cwd_policy: "fixture_root".to_string(),
@@ -392,7 +612,9 @@ mod tests {
                 expectations: FixtureExpectations {
                     schema_version: 1,
                     fixture_id: "c/syntax/case-01".to_string(),
-                    support_tier: "A".to_string(),
+                    version_band: "gcc15_plus".to_string(),
+                    processing_path: "dual_sink_structured".to_string(),
+                    support_level: "preview".to_string(),
                     expected_mode: "render".to_string(),
                     family: Some("syntax".to_string()),
                     semantic: None,
@@ -421,7 +643,8 @@ mod tests {
                     language: "c".to_string(),
                     standard: None,
                     target_compiler_family: "gcc".to_string(),
-                    required_support_tier: "A".to_string(),
+                    version_band: "gcc15_plus".to_string(),
+                    support_level: "preview".to_string(),
                     major_version_selector: "15".to_string(),
                     argv: vec!["-c".to_string()],
                     cwd_policy: "fixture_root".to_string(),
@@ -434,7 +657,9 @@ mod tests {
                 expectations: FixtureExpectations {
                     schema_version: 1,
                     fixture_id: "c/syntax/case-02".to_string(),
-                    support_tier: "A".to_string(),
+                    version_band: "gcc15_plus".to_string(),
+                    processing_path: "dual_sink_structured".to_string(),
+                    support_level: "preview".to_string(),
                     expected_mode: "render".to_string(),
                     family: Some("syntax".to_string()),
                     semantic: None,
@@ -475,7 +700,8 @@ mod tests {
 language: c
 standard: c11
 target_compiler_family: gcc
-required_support_tier: A
+version_band: gcc15_plus
+support_level: preview
 major_version_selector: "15"
 argv: ["-c", "src/main.c"]
 cwd_policy: fixture_root
@@ -492,7 +718,9 @@ canonical_path_policy: relative_to_cwd
             r#"
 schema_version: 1
 fixture_id: c/syntax/case-01
-support_tier: A
+version_band: gcc15_plus
+processing_path: dual_sink_structured
+support_level: preview
 expected_mode: render
 semantic:
   family: syntax
@@ -517,5 +745,58 @@ tags: [syntax]
         let error = validate_fixture(&fixture).unwrap_err().to_string();
         assert!(error.contains("promoted fixture"));
         assert!(error.contains("missing"));
+    }
+
+    #[test]
+    fn legacy_tier_fields_normalize_to_current_fixture_vocabulary() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = tempdir.path().join("corpus/c/syntax/case-09");
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::create_dir_all(root.join("snapshots/gcc15")).unwrap();
+        fs::write(root.join("src/main.c"), "int main(void) { return 0; }\n").unwrap();
+        fs::write(
+            root.join("invoke.yaml"),
+            r#"
+language: c
+standard: c11
+target_compiler_family: gcc
+required_support_tier: C
+major_version_selector: "12"
+argv: ["-c", "src/main.c"]
+cwd_policy: fixture_root
+env_overrides: { LC_MESSAGES: C }
+source_readability_expectation: readable
+linker_involvement: false
+expected_mode: render
+canonical_path_policy: relative_to_cwd
+"#,
+        )
+        .unwrap();
+        fs::write(
+            root.join("expectations.yaml"),
+            r#"
+schema_version: 1
+fixture_id: c/syntax/case-09
+support_tier: C
+expected_mode: render
+"#,
+        )
+        .unwrap();
+        fs::write(
+            root.join("meta.yaml"),
+            r#"
+corpus_id: c/syntax/case-09
+title: legacy tier fixture
+tags: [syntax]
+"#,
+        )
+        .unwrap();
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(fixture.invoke.version_band, "gcc9_12");
+        assert_eq!(fixture.invoke.support_level, "experimental");
+        assert_eq!(fixture.expectations.version_band, "gcc9_12");
+        assert_eq!(fixture.expectations.support_level, "experimental");
+        assert_eq!(fixture.expectations.processing_path, "native_text_capture");
     }
 }

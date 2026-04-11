@@ -1740,15 +1740,17 @@ pub(crate) fn text_line_count(text: &str) -> usize {
 }
 
 pub(crate) fn fixture_support_band(fixture: &Fixture) -> VersionBand {
-    match fixture.invoke.major_version_selector.parse::<u32>().ok() {
-        Some(major) if major >= 15 => VersionBand::Gcc15Plus,
-        Some(13 | 14) => VersionBand::Gcc13_14,
-        Some(9..=12) => VersionBand::Gcc9_12,
-        _ => VersionBand::Unknown,
-    }
+    parse_version_band_label(&fixture.expectations.version_band)
+        .or_else(|| parse_version_band_label(&fixture.invoke.version_band))
+        .unwrap_or_else(|| {
+            inferred_fixture_support_band(fixture.invoke.major_version_selector.as_str())
+        })
 }
 
 pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
+    if let Some(path) = parse_processing_path_label(&fixture.expectations.processing_path) {
+        return path;
+    }
     if fixture_has_any_tag(
         fixture,
         &[
@@ -1778,9 +1780,9 @@ pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
         return ProcessingPath::DualSinkStructured;
     }
 
-    match fixture.invoke.required_support_tier.as_str() {
-        "A" => ProcessingPath::DualSinkStructured,
-        "B" => {
+    match fixture_support_band(fixture) {
+        VersionBand::Gcc15Plus => ProcessingPath::DualSinkStructured,
+        VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {
             if fixture.invoke.expected_mode == "passthrough"
                 || fixture.expectations.expected_mode == "passthrough"
             {
@@ -1789,7 +1791,36 @@ pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
                 ProcessingPath::NativeTextCapture
             }
         }
-        _ => ProcessingPath::Passthrough,
+        VersionBand::Unknown => ProcessingPath::Passthrough,
+    }
+}
+
+fn parse_version_band_label(label: &str) -> Option<VersionBand> {
+    match label.trim().to_ascii_lowercase().as_str() {
+        "gcc15_plus" => Some(VersionBand::Gcc15Plus),
+        "gcc13_14" => Some(VersionBand::Gcc13_14),
+        "gcc9_12" => Some(VersionBand::Gcc9_12),
+        "unknown" => Some(VersionBand::Unknown),
+        _ => None,
+    }
+}
+
+fn inferred_fixture_support_band(major_version_selector: &str) -> VersionBand {
+    match major_version_selector.parse::<u32>().ok() {
+        Some(major) if major >= 15 => VersionBand::Gcc15Plus,
+        Some(13 | 14) => VersionBand::Gcc13_14,
+        Some(9..=12) => VersionBand::Gcc9_12,
+        _ => VersionBand::Unknown,
+    }
+}
+
+fn parse_processing_path_label(label: &str) -> Option<ProcessingPath> {
+    match label.trim().to_ascii_lowercase().as_str() {
+        "dual_sink_structured" => Some(ProcessingPath::DualSinkStructured),
+        "single_sink_structured" => Some(ProcessingPath::SingleSinkStructured),
+        "native_text_capture" => Some(ProcessingPath::NativeTextCapture),
+        "passthrough" => Some(ProcessingPath::Passthrough),
+        _ => None,
     }
 }
 
@@ -2749,17 +2780,37 @@ mod tests {
         tags: &[&str],
         fallback: Option<ExpectedFallback>,
     ) -> Fixture {
+        let version_band = match major_version_selector {
+            "15" => "gcc15_plus",
+            "13" | "14" => "gcc13_14",
+            "9" | "10" | "11" | "12" => "gcc9_12",
+            _ => "unknown",
+        };
+        let support_level = match version_band {
+            "gcc15_plus" => "preview",
+            "gcc13_14" | "gcc9_12" => "experimental",
+            _ => "passthrough_only",
+        };
+        let processing_path = tags
+            .iter()
+            .find_map(|tag| tag.strip_prefix("processing_path:"))
+            .unwrap_or_else(|| {
+                if expected_mode == "passthrough" || version_band == "unknown" {
+                    "passthrough"
+                } else if version_band == "gcc15_plus" {
+                    "dual_sink_structured"
+                } else {
+                    "native_text_capture"
+                }
+            });
         Fixture {
             root: PathBuf::from(format!("/tmp/{fixture_id}")),
             invoke: FixtureInvoke {
                 language: "c".to_string(),
                 standard: Some("c11".to_string()),
                 target_compiler_family: "gcc".to_string(),
-                required_support_tier: match major_version_selector {
-                    "15" => "A".to_string(),
-                    "13" | "14" => "B".to_string(),
-                    _ => "C".to_string(),
-                },
+                version_band: version_band.to_string(),
+                support_level: support_level.to_string(),
                 major_version_selector: major_version_selector.to_string(),
                 argv: vec!["-c".to_string(), "src/main.c".to_string()],
                 cwd_policy: "fixture_root".to_string(),
@@ -2772,11 +2823,9 @@ mod tests {
             expectations: FixtureExpectations {
                 schema_version: 1,
                 fixture_id: fixture_id.to_string(),
-                support_tier: match major_version_selector {
-                    "15" => "A".to_string(),
-                    "13" | "14" => "B".to_string(),
-                    _ => "C".to_string(),
-                },
+                version_band: version_band.to_string(),
+                processing_path: processing_path.to_string(),
+                support_level: support_level.to_string(),
                 expected_mode: expected_mode.to_string(),
                 family: Some("syntax".to_string()),
                 semantic: Some(SemanticExpectations {
@@ -2994,6 +3043,23 @@ mod tests {
         assert_eq!(
             bundle.structured_artifacts[0].storage,
             ArtifactStorage::Unavailable
+        );
+    }
+
+    #[test]
+    fn untagged_band_c_render_defaults_to_native_text_capture() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-band-c-default",
+            "12",
+            "render",
+            &[],
+            Some(ExpectedFallback::Forbidden),
+        );
+
+        assert_eq!(fixture_support_band(&fixture), VersionBand::Gcc9_12);
+        assert_eq!(
+            fixture_processing_path(&fixture),
+            ProcessingPath::NativeTextCapture
         );
     }
 }
