@@ -6,6 +6,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+diag_adapter_contract.workspace = true
 diag_backend_probe.workspace = true
 diag_capture_runtime.workspace = true
 diag_core.workspace = true

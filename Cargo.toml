@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "diag_adapter_contract",
     "diag_adapter_gcc",
     "diag_backend_probe",
     "diag_capture_runtime",
@@ -48,6 +49,9 @@ toml = "0.9.8"
 
 [workspace.dependencies.diag_adapter_gcc]
 path = "diag_adapter_gcc"
+
+[workspace.dependencies.diag_adapter_contract]
+path = "diag_adapter_contract"
 
 [workspace.dependencies.diag_backend_probe]
 path = "diag_backend_probe"

@@ -4,6 +4,7 @@ use crate::fallback::{failed_document, fallback_document, passthrough_document, 
 use crate::gcc_json::from_gcc_json_artifact;
 use crate::sarif::from_sarif_artifact;
 use crate::stderr::augment_context_chains_from_stderr;
+use diag_adapter_contract::{DiagnosticAdapter, IngestPolicy, IngestReport};
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::{
     CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
@@ -12,7 +13,7 @@ use diag_capture_runtime::{
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, DiagnosticDocument,
     DocumentCompleteness, FallbackGrade, FallbackReason, IntegrityIssue, IssueSeverity, IssueStage,
-    NodeCompleteness, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
+    NodeCompleteness, Origin, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
     SourceAuthority,
 };
 use diag_residual_text::classify;
@@ -46,31 +47,17 @@ pub struct IngestOutcome {
     pub fallback_reason: Option<FallbackReason>,
 }
 
-/// Configuration that governs how a capture bundle is ingested.
-#[derive(Debug, Clone)]
-pub struct IngestPolicy {
-    /// Metadata about the tool that produced the diagnostic document.
-    pub producer: ProducerInfo,
-    /// Runtime context for the compiler invocation being ingested.
-    pub run: RunInfo,
-}
+/// GCC implementation of the shared diagnostic adapter contract.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct GccAdapter;
 
-/// Full ingestion report returned by [`crate::ingest_bundle`].
-#[derive(Debug)]
-pub struct IngestReport {
-    /// The converted diagnostic document.
-    pub document: DiagnosticDocument,
-    /// Whether the document was derived from structured or residual input.
-    pub source_authority: SourceAuthority,
-    /// Upper bound on the confidence of diagnostics in this report.
-    pub confidence_ceiling: Confidence,
-    /// Degree to which fallback processing was applied.
-    pub fallback_grade: FallbackGrade,
-    /// Integrity issues encountered during ingestion.
-    pub warnings: Vec<IntegrityIssue>,
-    /// If the adapter fell back to a non-structured path, the reason why.
-    pub fallback_reason: Option<FallbackReason>,
-}
+const GCC_SUPPORTED_ORIGINS: &[Origin] = &[
+    Origin::Gcc,
+    Origin::Driver,
+    Origin::Linker,
+    Origin::Wrapper,
+    Origin::ExternalTool,
+];
 
 #[derive(Debug, Clone, Copy)]
 enum StructuredInput<'a> {
@@ -108,6 +95,13 @@ pub fn ingest(
 /// selects the best ingestion strategy, and produces a report that
 /// includes source-authority, confidence, and fallback metadata.
 pub fn ingest_bundle(
+    bundle: &CaptureBundle,
+    policy: IngestPolicy,
+) -> Result<IngestReport, AdapterError> {
+    GccAdapter.ingest(bundle, policy)
+}
+
+fn ingest_bundle_with_gcc_adapter(
     bundle: &CaptureBundle,
     policy: IngestPolicy,
 ) -> Result<IngestReport, AdapterError> {
@@ -271,6 +265,22 @@ pub fn ingest_bundle(
         warnings,
         fallback_reason,
     })
+}
+
+impl DiagnosticAdapter for GccAdapter {
+    type Error = AdapterError;
+
+    fn ingest(
+        &self,
+        bundle: &CaptureBundle,
+        policy: IngestPolicy,
+    ) -> Result<IngestReport, Self::Error> {
+        ingest_bundle_with_gcc_adapter(bundle, policy)
+    }
+
+    fn supported_origins(&self) -> &[Origin] {
+        GCC_SUPPORTED_ORIGINS
+    }
 }
 
 fn materialize_capture_artifacts(document: &mut DiagnosticDocument, bundle: &CaptureBundle) {

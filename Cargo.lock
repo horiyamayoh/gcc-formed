@@ -347,10 +347,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "diag_adapter_contract"
+version = "0.2.0-beta.1"
+dependencies = [
+ "diag_backend_probe",
+ "diag_capture_runtime",
+ "diag_core",
+ "diag_trace",
+]
+
+[[package]]
 name = "diag_adapter_gcc"
 version = "0.2.0-beta.1"
 dependencies = [
  "criterion",
+ "diag_adapter_contract",
  "diag_backend_probe",
  "diag_capture_runtime",
  "diag_core",
@@ -391,6 +402,7 @@ version = "0.2.0-beta.1"
 dependencies = [
  "assert_cmd",
  "clap",
+ "diag_adapter_contract",
  "diag_adapter_gcc",
  "diag_backend_probe",
  "diag_capture_runtime",

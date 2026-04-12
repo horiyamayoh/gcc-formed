@@ -17,13 +17,13 @@ mod ingest;
 mod sarif;
 mod stderr;
 
+pub use diag_adapter_contract::{DiagnosticAdapter, IngestPolicy, IngestReport};
 use diag_core::TextEdit;
 use serde_json::Value;
 
 pub use fallback::{producer_for_version, tool_for_backend};
 pub use ingest::{
-    AdapterError, IngestOutcome, IngestPolicy, IngestReport, ingest, ingest_bundle,
-    ingest_with_reason,
+    AdapterError, GccAdapter, IngestOutcome, ingest, ingest_bundle, ingest_with_reason,
 };
 pub use sarif::from_sarif;
 
@@ -93,9 +93,9 @@ mod tests {
     use crate::ingest::compatibility_bundle_from_legacy_inputs;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
-        DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness, Phase,
-        ProvenanceSource, RunInfo, SemanticRole, SourceAuthority, SuggestionApplicability,
-        WrapperSurface,
+        DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
+        Origin, Phase, ProvenanceSource, RunInfo, SemanticRole, SourceAuthority,
+        SuggestionApplicability, WrapperSurface,
     };
     use diag_rulepack::checked_in_rulepack_version;
     use std::fs;
@@ -129,6 +129,16 @@ mod tests {
             producer.rulepack_version.as_deref(),
             Some(checked_in_rulepack_version())
         );
+    }
+
+    #[test]
+    fn gcc_adapter_reports_supported_origins() {
+        let adapter = GccAdapter;
+        assert!(adapter.supported_origins().contains(&Origin::Gcc));
+        assert!(adapter.supported_origins().contains(&Origin::Driver));
+        assert!(adapter.supported_origins().contains(&Origin::Linker));
+        assert!(adapter.supported_origins().contains(&Origin::Wrapper));
+        assert!(adapter.supported_origins().contains(&Origin::ExternalTool));
     }
 
     #[test]

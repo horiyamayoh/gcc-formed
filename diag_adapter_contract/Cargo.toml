@@ -1,0 +1,17 @@
+[package]
+name = "diag_adapter_contract"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_capture_runtime.workspace = true
+diag_core.workspace = true
+
+[dev-dependencies]
+diag_backend_probe.workspace = true
+diag_trace.workspace = true
+
+[lints]
+workspace = true

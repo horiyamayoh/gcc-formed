@@ -206,6 +206,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 
 - `diag_backend_probe`: VersionBand / CapabilityProfile の解決
 - `diag_capture_runtime`: child spawn、capture、artifact 収集
+- `diag_adapter_contract`: compiler adapter trait と共通 ingest 契約
 - `diag_adapter_gcc`: GCC structured artifact / raw text の ingest
 - `diag_core`: Diagnostic IR、validation、fallback metadata
 - `diag_enrich`: family / confidence / first-action / ownership などの分析
