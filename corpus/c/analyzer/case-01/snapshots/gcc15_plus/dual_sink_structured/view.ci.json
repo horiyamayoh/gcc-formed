@@ -1,0 +1,58 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:6:5",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [
+        "path: src/main.c:4:16 allocated here",
+        "path: src/main.c:5:5 first 'free' here",
+        "path: src/main.c:6:5 second 'free' here; first 'free' was at [(2)](sarif:/runs/0/results/1/codeFlows/0/threadFlows/0/locations/1)"
+      ],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    free(ptr);"
+          ],
+          "location": "src/main.c:6:5"
+        }
+      ],
+      "family": "analyzer",
+      "first_action": "follow the analyzer event path and fix the first invalid state transition",
+      "group_id": "sarif-0-1",
+      "matched_conditions": [
+        "message_contains=double-'free'",
+        "phase=analyze"
+      ],
+      "raw_message": "double-'free' of 'ptr'",
+      "rule_id": "rule.family.analyzer.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "static analysis found a potential defect"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.c:6:5",
+      "group_id": "residual-compiler-1",
+      "severity": "warning",
+      "title": "static analysis found a potential defect"
+    },
+    {
+      "canonical_location": "src/main.c:6:5",
+      "group_id": "sarif-0-0",
+      "severity": "warning",
+      "title": "pointer 'ptr' used after 'free'"
+    }
+  ]
+}

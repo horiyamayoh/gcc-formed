@@ -864,6 +864,10 @@ mod tests {
             RendererFamilyKind::MacroInclude
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("preprocessor_directive")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("scope_declaration")),
             RendererFamilyKind::Syntax
         );
@@ -873,6 +877,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("deleted_function")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("concepts_constraints")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(
@@ -889,6 +897,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("uninitialized")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("analyzer")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(
@@ -925,6 +937,18 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("init_order")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("coroutine")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("module_import")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("deprecated")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(

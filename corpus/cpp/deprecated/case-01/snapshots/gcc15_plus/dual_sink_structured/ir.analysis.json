@@ -1,0 +1,181 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:4:19: warning: 'int old_api()' is deprecated: use new_api [-Wdeprecated-declarations]\n    4 |     return old_api();\n      |            ~~~~~~~^~\nsrc/main.cpp:1:35: note: declared here\n    1 | [[deprecated(\"use new_api\")]] int old_api() { return 1; }\n      |                                   ^~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 353,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4844,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "deprecated",
+        "first_action_hint": "replace the deprecated API with the recommended alternative or silence the warning intentionally",
+        "headline": "use of deprecated feature",
+        "matched_conditions": [
+          "message_contains=is deprecated",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.deprecated.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "declared here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "a8ffd372375f5755b9bdd994daa2aeb5faedaefecd62e2393c3545dc5c1b8ce1",
+            "raw": "c4658929ec05cc4b272593263c4f30e647f9d7e4ff3c3f5c95f374b8ce287e86",
+            "structural": "821381a5a04be94cda5fa1024da9cb37bd64f22400d2472736c106fb387db787"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 35,
+                "column_native": 35,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:35:1:35",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "declared here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "4894313702658b721e7f10c48ecb2c96ecf2065631d5ace6f9accf1594e4a5b4",
+        "raw": "b58cd71ecdc02f7cf6698fe0c2aed60b308d0f2e131fa9ad9eb50d64b2fa6775",
+        "structural": "02650a3dd13a13307a3038272b4d83903300b276efa0f2c11c8aed14028dc254"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:4:12:4:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'int old_api()' is deprecated: use new_api"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "0dd6f9b905566559970a48cf4d3cb7b1335e1e8bb5fa376da4781544f56e1cc5",
+    "raw": "85d759bb02ad3506f87c1b9d3c8644ef8f914b7d2304089e98cdb6b216bd09d4",
+    "structural": "03cfcd85f01c93df8e4e723b44fe698d36d38802b51380ec3208fcb49dc8221a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wdeprecated-declarations",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

@@ -1,0 +1,11 @@
+warning: use of deprecated feature
+--> src/main.cpp:4:12
+help: replace the deprecated API with the recommended alternative or silence the warning intentionally
+why: 'int old_api()' is deprecated: use new_api
+| src/main.cpp:4:12
+|     return old_api();
+|            ^
+note: declared here
+debug: rule_id=rule.family.deprecated.message_terms
+debug: matched_conditions=message_contains=is deprecated, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

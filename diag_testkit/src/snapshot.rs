@@ -143,27 +143,24 @@ fn normalize_volatile_compiler_text(contents: &str) -> String {
 
 fn normalize_linker_offsets(contents: &str) -> String {
     let mut normalized = String::with_capacity(contents.len());
-    let bytes = contents.as_bytes();
-    let mut index = 0;
+    let mut remaining = contents;
 
-    while index < bytes.len() {
-        if bytes[index] == b'+'
-            && index + 3 < bytes.len()
-            && bytes[index + 1] == b'0'
-            && bytes[index + 2] == b'x'
-        {
-            let mut digit_end = index + 3;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_hexdigit() {
-                digit_end += 1;
-            }
-            if digit_end > index + 3 {
+    while !remaining.is_empty() {
+        if let Some(tail) = remaining.strip_prefix("+0x") {
+            let digit_len = tail
+                .chars()
+                .take_while(|ch| ch.is_ascii_hexdigit())
+                .map(char::len_utf8)
+                .sum::<usize>();
+            if digit_len > 0 {
                 normalized.push_str("+0x0");
-                index = digit_end;
+                remaining = &tail[digit_len..];
                 continue;
             }
         }
-        normalized.push(bytes[index] as char);
-        index += 1;
+        let ch = remaining.chars().next().expect("remaining is non-empty");
+        normalized.push(ch);
+        remaining = &remaining[ch.len_utf8()..];
     }
 
     normalized
@@ -171,24 +168,24 @@ fn normalize_linker_offsets(contents: &str) -> String {
 
 fn normalize_candidate_line(line: &str) -> String {
     let mut normalized = String::with_capacity(line.len());
-    let bytes = line.as_bytes();
-    let mut index = 0;
+    let mut remaining = line;
 
-    while index < bytes.len() {
-        if line[index..].starts_with("candidate ") {
-            let digit_start = index + "candidate ".len();
-            let mut digit_end = digit_start;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
-                digit_end += 1;
-            }
-            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
+    while !remaining.is_empty() {
+        if let Some(tail) = remaining.strip_prefix("candidate ") {
+            let digit_len = tail
+                .chars()
+                .take_while(|ch| ch.is_ascii_digit())
+                .map(char::len_utf8)
+                .sum::<usize>();
+            if digit_len > 0 && tail[digit_len..].starts_with(':') {
                 normalized.push_str("candidate:");
-                index = digit_end + 1;
+                remaining = &tail[digit_len + 1..];
                 continue;
             }
         }
-        normalized.push(bytes[index] as char);
-        index += 1;
+        let ch = remaining.chars().next().expect("remaining is non-empty");
+        normalized.push(ch);
+        remaining = &remaining[ch.len_utf8()..];
     }
 
     let normalized = normalized
@@ -335,25 +332,25 @@ fn normalize_gutter_line_numbers(contents: &str) -> String {
 
 fn normalize_colon_number_sequences(contents: &str) -> String {
     let mut normalized = String::with_capacity(contents.len());
-    let bytes = contents.as_bytes();
-    let mut index = 0;
+    let mut remaining = contents;
 
-    while index < bytes.len() {
-        if bytes[index] == b':' {
-            let digit_start = index + 1;
-            let mut digit_end = digit_start;
-            while digit_end < bytes.len() && bytes[digit_end].is_ascii_digit() {
-                digit_end += 1;
-            }
-            if digit_end > digit_start && digit_end < bytes.len() && bytes[digit_end] == b':' {
+    while !remaining.is_empty() {
+        if let Some(tail) = remaining.strip_prefix(':') {
+            let digit_len = tail
+                .chars()
+                .take_while(|ch| ch.is_ascii_digit())
+                .map(char::len_utf8)
+                .sum::<usize>();
+            if digit_len > 0 && tail[digit_len..].starts_with(':') {
                 normalized.push(':');
                 normalized.push('1');
-                index = digit_end;
+                remaining = &tail[digit_len..];
                 continue;
             }
         }
-        normalized.push(bytes[index] as char);
-        index += 1;
+        let ch = remaining.chars().next().expect("remaining is non-empty");
+        normalized.push(ch);
+        remaining = &remaining[ch.len_utf8()..];
     }
 
     normalized

@@ -267,6 +267,52 @@ mod tests {
     }
 
     #[test]
+    fn classifies_concepts_constraints_from_child_note_before_type_overload() {
+        let mut node = sample_node("no matching function for call to 'consume(1)'");
+        node.phase = Phase::Constraints;
+        node.children.push(DiagnosticNode {
+            id: "constraints".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Constraints,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "constraints not satisfied".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.cpp")],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        });
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("concepts_constraints"));
+        assert_eq!(
+            analysis.rule_id.as_deref(),
+            Some("rule.family.concepts_constraints.structured_or_message")
+        );
+        assert!(
+            analysis
+                .matched_conditions
+                .iter()
+                .any(|condition| condition == "child_message_contains=constraints not satisfied")
+        );
+    }
+
+    #[test]
     fn classifies_template_from_context_chain_and_child_notes() {
         let mut node = sample_node("no matching function for call to 'expect_ptr(int&)'");
         node.phase = Phase::Instantiate;

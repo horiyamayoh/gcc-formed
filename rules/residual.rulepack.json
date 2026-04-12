@@ -15,6 +15,10 @@
         "text": "error surfaced through macro/include context"
       },
       {
+        "family": "preprocessor_directive",
+        "text": "preprocessor directive error"
+      },
+      {
         "family": "scope_declaration",
         "text": "identifier not found in scope"
       },
@@ -25,6 +29,10 @@
       {
         "family": "deleted_function",
         "text": "use of a deleted or unavailable function"
+      },
+      {
+        "family": "concepts_constraints",
+        "text": "template constraint not satisfied"
       },
       {
         "family": "unused",
@@ -41,6 +49,10 @@
       {
         "family": "uninitialized",
         "text": "variable used without initialization"
+      },
+      {
+        "family": "analyzer",
+        "text": "static analysis found a potential defect"
       },
       {
         "family": "conversion_narrowing",
@@ -79,6 +91,18 @@
         "text": "initialization order or aggregate init issue"
       },
       {
+        "family": "coroutine",
+        "text": "coroutine promise type error"
+      },
+      {
+        "family": "module_import",
+        "text": "C++20 module import error"
+      },
+      {
+        "family": "deprecated",
+        "text": "use of deprecated feature"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -105,6 +129,10 @@
         "text": "inspect the user-owned macro invocation or include edge that reaches the failing line"
       },
       {
+        "family": "preprocessor_directive",
+        "text": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics"
+      },
+      {
         "family": "scope_declaration",
         "text": "check for typos, missing #include, or missing namespace qualifier"
       },
@@ -115,6 +143,10 @@
       {
         "family": "deleted_function",
         "text": "check whether the type is movable/copyable, or provide the required special member"
+      },
+      {
+        "family": "concepts_constraints",
+        "text": "match the required concept or requires-clause against the actual template arguments"
       },
       {
         "family": "unused",
@@ -131,6 +163,10 @@
       {
         "family": "uninitialized",
         "text": "initialize the variable at its declaration or before first use"
+      },
+      {
+        "family": "analyzer",
+        "text": "follow the analyzer event path and fix the first invalid state transition"
       },
       {
         "family": "conversion_narrowing",
@@ -169,6 +205,18 @@
         "text": "reorder member initializers to match declaration order, or fix the initializer list"
       },
       {
+        "family": "coroutine",
+        "text": "define a valid promise_type or align the coroutine return type with the coroutine body"
+      },
+      {
+        "family": "module_import",
+        "text": "build or export the requested module interface before importing it"
+      },
+      {
+        "family": "deprecated",
+        "text": "replace the deprecated API with the recommended alternative or silence the warning intentionally"
+      },
+      {
         "family": "passthrough",
         "text": "inspect the preserved raw diagnostics for the first corrective action"
       },
@@ -204,15 +252,36 @@
     "compiler_groups": [
       {
         "kind": "preprocess",
-        "family": "compiler.preprocess",
+        "family": "preprocessor_directive",
         "phase": "preprocess",
-        "rule_id": "rule.residual.compiler_preprocess",
-        "headline_strategy": "message_passthrough",
-        "first_action_hint": "inspect the failing preprocessor directive or include edge in the preserved raw diagnostics",
+        "rule_id": "rule.residual.compiler_preprocessor_directive",
+        "headline_strategy": "fixed_text",
+        "headline": "preprocessor directive error",
+        "first_action_hint": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
         "match_any": [
           "#error",
           "#warning",
-          "no such file or directory"
+          "is not defined, evaluates to 0",
+          "unterminated #if",
+          "#endif without #if",
+          "missing binary operator before token"
+        ]
+      },
+      {
+        "kind": "type_overload",
+        "family": "concepts_constraints",
+        "phase": "constraints",
+        "rule_id": "rule.residual.compiler_concepts_constraints",
+        "headline_strategy": "fixed_text",
+        "headline": "template constraint not satisfied",
+        "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+        "match_any": [
+          "constraints not satisfied",
+          "does not satisfy",
+          "associated constraints",
+          "the required expression",
+          "the required type",
+          "required for the satisfaction of"
         ]
       },
       {
@@ -361,6 +430,26 @@
       },
       {
         "kind": "syntax",
+        "family": "analyzer",
+        "phase": "analyze",
+        "rule_id": "rule.residual.compiler_analyzer",
+        "headline_strategy": "fixed_text",
+        "headline": "static analysis found a potential defect",
+        "first_action_hint": "follow the analyzer event path and fix the first invalid state transition",
+        "match_any": [
+          "use after 'free'",
+          "double-'free'",
+          "dereference of null",
+          "leak of",
+          "use of uninitialized value",
+          "out-of-bounds",
+          "use-after-close",
+          "infinite loop",
+          "-wanalyzer-"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "conversion_narrowing",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_conversion_narrowing",
@@ -496,6 +585,53 @@
           "dangling pointer",
           "return-local-addr",
           "storing the address of local variable"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "coroutine",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_coroutine",
+        "headline_strategy": "fixed_text",
+        "headline": "coroutine promise type error",
+        "first_action_hint": "define a valid promise_type or align the coroutine return type with the coroutine body",
+        "match_any": [
+          "promise type",
+          "promise_type",
+          "co_await",
+          "co_yield",
+          "co_return",
+          "coroutine"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "module_import",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_module_import",
+        "headline_strategy": "fixed_text",
+        "headline": "C++20 module import error",
+        "first_action_hint": "build or export the requested module interface before importing it",
+        "match_any": [
+          "import of module",
+          "import declaration",
+          "was not exported from module",
+          "failed to read compiled module",
+          "imports must be built before being imported"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "deprecated",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_deprecated",
+        "headline_strategy": "fixed_text",
+        "headline": "use of deprecated feature",
+        "first_action_hint": "replace the deprecated API with the recommended alternative or silence the warning intentionally",
+        "match_any": [
+          "is deprecated",
+          "deprecated-declarations",
+          "implicit declaration of function"
         ]
       },
       {

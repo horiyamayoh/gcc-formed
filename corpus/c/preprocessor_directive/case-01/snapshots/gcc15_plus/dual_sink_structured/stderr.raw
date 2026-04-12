@@ -1,0 +1,3 @@
+src/main.c:1:2: error: #error macro guard missing
+    1 | #error macro guard missing
+      |  ^~~~~

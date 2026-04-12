@@ -58,6 +58,51 @@
       "phase_annotations": []
     },
     {
+      "rule_id": "rule.family.concepts_constraints.structured_or_message",
+      "family": "concepts_constraints",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        },
+        {
+          "kind": "child_message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "constraints not satisfied",
+            "does not satisfy",
+            "associated constraints",
+            "the required expression",
+            "the required type",
+            "required for the satisfaction of"
+          ]
+        }
+      ],
+      "child_message_groups": [
+        {
+          "prefix": "child_message_contains",
+          "terms": [
+            "constraints not satisfied",
+            "does not satisfy",
+            "associated constraints",
+            "the required expression",
+            "the required type",
+            "required for the satisfaction of"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "constraints",
+          "condition": "phase=constraints",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.template.structured_or_message",
       "family": "template",
       "require_any_of": [
@@ -112,6 +157,35 @@
         {
           "phase": "instantiate",
           "condition": "phase=instantiate",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.preprocessor_directive.message_terms",
+      "family": "preprocessor_directive",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "#error",
+            "#warning",
+            "is not defined, evaluates to 0",
+            "unterminated #if",
+            "#endif without #if",
+            "missing binary operator before token"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "preprocess",
+          "condition": "phase=preprocess",
           "when": "rule_matched"
         }
       ]
@@ -373,6 +447,38 @@
         {
           "phase": "semantic",
           "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.analyzer.message_terms",
+      "family": "analyzer",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "use after 'free'",
+            "double-'free'",
+            "dereference of null",
+            "leak of",
+            "use of uninitialized value",
+            "out-of-bounds",
+            "use-after-close",
+            "infinite loop",
+            "-wanalyzer-"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "analyze",
+          "condition": "phase=analyze",
           "when": "rule_matched"
         }
       ]
@@ -672,6 +778,89 @@
       ]
     },
     {
+      "rule_id": "rule.family.coroutine.message_terms",
+      "family": "coroutine",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "promise type",
+            "promise_type",
+            "co_await",
+            "co_yield",
+            "co_return",
+            "coroutine"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.module_import.message_terms",
+      "family": "module_import",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "import of module",
+            "import declaration",
+            "was not exported from module",
+            "failed to read compiled module",
+            "imports must be built before being imported"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.deprecated.message_terms",
+      "family": "deprecated",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "is deprecated",
+            "deprecated-declarations",
+            "implicit declaration of function"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.type_overload.structured_or_message",
       "family": "type_overload",
       "require_any_of": [
@@ -768,6 +957,19 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.concepts_constraints",
+      "family": "concepts_constraints",
+      "priority": 29,
+      "terms": [
+        "constraints not satisfied",
+        "does not satisfy",
+        "associated constraints",
+        "the required expression",
+        "the required type",
+        "required for the satisfaction of"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.template",
       "family": "template",
       "priority": 30,
@@ -780,12 +982,41 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.preprocessor_directive",
+      "family": "preprocessor_directive",
+      "priority": 35,
+      "terms": [
+        "#error",
+        "#warning",
+        "is not defined, evaluates to 0",
+        "unterminated #if",
+        "#endif without #if",
+        "missing binary operator before token"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.macro_include",
       "family": "macro_include",
       "priority": 40,
       "terms": [
         "macro",
         "include"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.analyzer",
+      "family": "analyzer",
+      "priority": 41,
+      "terms": [
+        "use after 'free'",
+        "double-'free'",
+        "dereference of null",
+        "leak of",
+        "use of uninitialized value",
+        "out-of-bounds",
+        "use-after-close",
+        "infinite loop",
+        "-wanalyzer-"
       ]
     },
     {
@@ -1007,6 +1238,41 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.coroutine",
+      "family": "coroutine",
+      "priority": 62,
+      "terms": [
+        "promise type",
+        "promise_type",
+        "co_await",
+        "co_yield",
+        "co_return",
+        "coroutine"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.module_import",
+      "family": "module_import",
+      "priority": 63,
+      "terms": [
+        "import of module",
+        "import declaration",
+        "was not exported from module",
+        "failed to read compiled module",
+        "imports must be built before being imported"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.deprecated",
+      "family": "deprecated",
+      "priority": 64,
+      "terms": [
+        "is deprecated",
+        "deprecated-declarations",
+        "implicit declaration of function"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.syntax",
       "family": "syntax",
       "priority": 70,
@@ -1070,6 +1336,44 @@
         {
           "all": [
             "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "concepts_constraints",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "preprocessor_directive",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
             "lexical_signal"
           ]
         }
@@ -1173,6 +1477,25 @@
     },
     {
       "family": "format_string",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "analyzer",
       "high_when_any": [
         {
           "all": [
@@ -1363,6 +1686,63 @@
     },
     {
       "family": "init_order",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "coroutine",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "module_import",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "deprecated",
       "high_when_any": [
         {
           "all": [

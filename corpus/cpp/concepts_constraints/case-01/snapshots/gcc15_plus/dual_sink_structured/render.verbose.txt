@@ -1,0 +1,18 @@
+error: template constraint not satisfied
+--> src/main.cpp:8:12
+help: match the required concept or requires-clause against the actual template arguments
+why: no matching function for call to 'consume(int)'
+| src/main.cpp:8:12
+|     return consume(1);
+|            ^
+template: src/main.cpp:5:5 candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'
+template: src/main.cpp:5:5 template argument deduction/substitution failed:
+template: src/main.cpp:8:19 required from here
+note: candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'
+note: template argument deduction/substitution failed:
+note: constraints not satisfied
+note: the required expression 'value.size()' is invalid
+note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail
+debug: rule_id=rule.family.concepts_constraints.structured_or_message
+debug: matched_conditions=child_message_contains=constraints not satisfied, child_message_contains=the required expression, phase=constraints
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

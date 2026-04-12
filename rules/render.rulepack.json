@@ -4,6 +4,12 @@
   "family_policies": [
     {
       "kind": "syntax",
+      "match_exact": "preprocessor_directive",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "scope_declaration",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -17,6 +23,12 @@
     {
       "kind": "syntax",
       "match_exact": "deleted_function",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "concepts_constraints",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },
@@ -41,6 +53,12 @@
     {
       "kind": "syntax",
       "match_exact": "uninitialized",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "analyzer",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },
@@ -95,6 +113,24 @@
     {
       "kind": "syntax",
       "match_exact": "init_order",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "coroutine",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "module_import",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "deprecated",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },

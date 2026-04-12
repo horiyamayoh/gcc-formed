@@ -1,0 +1,20 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:8:19: error: no matching function for call to 'consume(int)'
+    8 |     return consume(1);
+      |            ~~~~~~~^~~
+src/main.cpp:8:19: note: there is 1 candidate
+src/main.cpp:5:5: note: candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'
+    5 | int consume(T value) { return static_cast<int>(value.size()); }
+      |     ^~~~~~~
+src/main.cpp:5:5: note: template argument deduction/substitution failed:
+src/main.cpp:5:5: note: constraints not satisfied
+src/main.cpp: In substitution of 'template<class T>  requires  HasSize<T> int consume(T) [with T = int]':
+src/main.cpp:8:19:   required from here
+    8 |     return consume(1);
+      |            ~~~~~~~^~~
+src/main.cpp:2:9:   required for the satisfaction of 'HasSize<T>' [with T = int]
+src/main.cpp:2:19:   in requirements with 'T value' [with T = int]
+src/main.cpp:2:49: note: the required expression 'value.size()' is invalid
+    2 | concept HasSize = requires(T value) { value.size(); };
+      |                                       ~~~~~~~~~~^~
+cc1plus: note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail

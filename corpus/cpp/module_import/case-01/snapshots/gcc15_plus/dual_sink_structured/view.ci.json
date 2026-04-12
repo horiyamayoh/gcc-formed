@@ -1,0 +1,34 @@
+{
+  "cards": [
+    {
+      "canonical_location": "missing_module:1:1",
+      "child_notes": [
+        "compiled module file is 'gcm.cache/missing_module.gcm'",
+        "imports must be built before being imported"
+      ],
+      "collapsed_notices": [
+        "omitted 1 additional note(s)"
+      ],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "module_import",
+      "first_action": "build or export the requested module interface before importing it",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=failed to read compiled module"
+      ],
+      "raw_message": "failed to read compiled module: No such file or directory",
+      "rule_id": "rule.family.module_import.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "C++20 module import error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

@@ -482,6 +482,28 @@ mod tests {
     }
 
     #[test]
+    fn classifies_concepts_constraints_seed_from_combined_message() {
+        let decision = classify_family_seed(
+            "no matching function for call to 'consume(1)'\nconstraints not satisfied",
+        );
+
+        assert_eq!(decision.family, "concepts_constraints");
+        assert_eq!(decision.rule_id, "rule.family_seed.concepts_constraints");
+        assert_eq!(
+            decision.first_action_hint,
+            "match the required concept or requires-clause against the actual template arguments"
+        );
+    }
+
+    #[test]
+    fn classifies_preprocessor_directive_seed_before_macro_terms() {
+        let decision = classify_family_seed("#error macro guard missing");
+
+        assert_eq!(decision.family, "preprocessor_directive");
+        assert_eq!(decision.rule_id, "rule.family_seed.preprocessor_directive");
+    }
+
+    #[test]
     fn classifies_unused_seed_from_rulepack() {
         let decision = classify_family_seed("unused variable 'temporary' [-Wunused-variable]");
 
@@ -490,6 +512,19 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "remove the unused declaration or prefix with underscore if intentional"
+        );
+    }
+
+    #[test]
+    fn classifies_analyzer_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]");
+
+        assert_eq!(decision.family, "analyzer");
+        assert_eq!(decision.rule_id, "rule.family_seed.analyzer");
+        assert_eq!(
+            decision.first_action_hint,
+            "follow the analyzer event path and fix the first invalid state transition"
         );
     }
 
@@ -504,6 +539,46 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "add an explicit cast or change the variable type to match"
+        );
+    }
+
+    #[test]
+    fn classifies_coroutine_seed_from_rulepack() {
+        let decision = classify_family_seed("unable to find the promise type for this coroutine");
+
+        assert_eq!(decision.family, "coroutine");
+        assert_eq!(decision.rule_id, "rule.family_seed.coroutine");
+        assert_eq!(
+            decision.first_action_hint,
+            "define a valid promise_type or align the coroutine return type with the coroutine body"
+        );
+    }
+
+    #[test]
+    fn classifies_module_import_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "failed to read compiled module: imports must be built before being imported",
+        );
+
+        assert_eq!(decision.family, "module_import");
+        assert_eq!(decision.rule_id, "rule.family_seed.module_import");
+        assert_eq!(
+            decision.first_action_hint,
+            "build or export the requested module interface before importing it"
+        );
+    }
+
+    #[test]
+    fn classifies_deprecated_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "'int old_api()' is deprecated: use new_api [-Wdeprecated-declarations]",
+        );
+
+        assert_eq!(decision.family, "deprecated");
+        assert_eq!(decision.rule_id, "rule.family_seed.deprecated");
+        assert_eq!(
+            decision.first_action_hint,
+            "replace the deprecated API with the recommended alternative or silence the warning intentionally"
         );
     }
 

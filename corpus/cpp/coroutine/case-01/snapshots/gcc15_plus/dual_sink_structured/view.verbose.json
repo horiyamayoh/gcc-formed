@@ -1,0 +1,41 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:6:5",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    co_return;"
+          ],
+          "location": "src/main.cpp:6:5"
+        }
+      ],
+      "family": "coroutine",
+      "first_action": "define a valid promise_type or align the coroutine return type with the coroutine body",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=promise type",
+        "message_contains=coroutine",
+        "phase=semantic"
+      ],
+      "raw_message": "unable to find the promise type for this coroutine",
+      "rule_id": "rule.family.coroutine.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "coroutine promise type error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

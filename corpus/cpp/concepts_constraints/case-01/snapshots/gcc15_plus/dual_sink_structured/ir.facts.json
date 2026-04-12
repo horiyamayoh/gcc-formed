@@ -1,0 +1,346 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:8:19: error: no matching function for call to 'consume(int)'\n    8 |     return consume(1);\n      |            ~~~~~~~^~~\nsrc/main.cpp:8:19: note: there is 1 candidate\nsrc/main.cpp:5:5: note: candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'\n    5 | int consume(T value) { return static_cast<int>(value.size()); }\n      |     ^~~~~~~\nsrc/main.cpp:5:5: note: template argument deduction/substitution failed:\nsrc/main.cpp:5:5: note: constraints not satisfied\nsrc/main.cpp: In substitution of 'template<class T>  requires  HasSize<T> int consume(T) [with T = int]':\nsrc/main.cpp:8:19:   required from here\n    8 |     return consume(1);\n      |            ~~~~~~~^~~\nsrc/main.cpp:2:9:   required for the satisfaction of 'HasSize<T>' [with T = int]\nsrc/main.cpp:2:19:   in requirements with 'T value' [with T = int]\nsrc/main.cpp:2:49: note: the required expression 'value.size()' is invalid\n    2 | concept HasSize = requires(T value) { value.size(); };\n      |                                       ~~~~~~~~~~^~\ncc1plus: note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1163,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 8796,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "2acfa22f69a54726f2cae2ed5562e9eaa398674184d33e964e98cf48a6194606",
+            "raw": "9187c5e9ae767a5e163ed82e66f3008b8bb56aff5cad5e070cabb2962e6fa833",
+            "structural": "15570725ee2944f6079f559fcaf368fc895fe2d25daabfd22c7e3badac997f02"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "0e4a21d4f2f150b4c0ffb09f243b1f6b9dfed5850ed54c2f8eff0c9fce303a0c"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "95764140863bbb7c393cdfd1d75d745df7320ac2e4f4300584f6e692bb428a9a",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "9360edd5d7951a7cc369998d4d37cce5ee3ffe50b2d552499421537aeeb77abf"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "1a5a99af23d30052fd234a84ef6100382b7923aabafb530936746aecd00802d5",
+            "raw": "76d09b9482eeaa382356bc982fec93f674a8c8a644e070e3b60a6c910eada56a",
+            "structural": "a9f2a7926b5fac44090d546a7302a9e40d97660460b0610c5cb6be43fcfade5a"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 39,
+                "column_native": 39,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:39:2:39",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the required expression 'value.size()' is invalid"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "54e785f3d15035a6bfdb9de67b201e255189937bea76ea5176976658dcd560d8",
+            "raw": "799c1c4557c58f8d2ab7a6363dfee6849da062514cc63ee2d658f08444003e29",
+            "structural": "d589e4a9fe6816ff56b90cef78b321e23db3fcf97c9c7b3295b005891dafbfce"
+          },
+          "id": "sarif-0-0-related-5",
+          "message": {
+            "raw_text": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 5,
+              "label": "candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'",
+              "line": 5,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 5,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "src/main.cpp:5:5: note: template argument deduction/substitution failed:",
+              "line": 5,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 19,
+              "label": "src/main.cpp:8:19:   required from here",
+              "line": 8,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "72004a6783f611d64d5d265cdde703693cbd143e7794c2968bfb95fa08656a13",
+        "raw": "239812f5231a137ed1c15673f1474059bc835a082023b3bb4b839cc79de98e19",
+        "structural": "23d0673ed87fcd449484faabf4768d64887d75efaffe034a91e53c277bb82fde"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 8
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:8:12:8:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to 'consume(int)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "constraints",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "dc27c6026d4982adbd1040c5cf3c6970e6c8df510ee802999aea5171fcd5bb56",
+    "structural": "4267810494e3ad3d1181b156ccb4c4506311f525a8d8e29f20579c7c37ec8fa6"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

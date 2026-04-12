@@ -352,6 +352,26 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
         }
     }
 
+    let note_seed = compiler_residual_seed(&message);
+    if note_seed.family == "concepts_constraints" {
+        node.phase = note_seed.phase.clone();
+        if let Some(analysis) = node.analysis.as_mut() {
+            analysis.family = Some(note_seed.family.clone().into());
+            analysis.headline = Some(compiler_headline(note_seed, &message).into());
+            analysis.first_action_hint = Some(note_seed.first_action_hint.clone().into());
+            analysis.rule_id = Some(note_seed.rule_id.clone().into());
+            if !analysis
+                .matched_conditions
+                .iter()
+                .any(|condition| condition == "family=concepts_constraints")
+            {
+                analysis
+                    .matched_conditions
+                    .push("family=concepts_constraints".into());
+            }
+        }
+    }
+
     node.children.push(DiagnosticNode {
         id: format!("{}-child-{}", node.id, node.children.len() + 1),
         origin: Origin::Gcc,
@@ -698,7 +718,7 @@ mod tests {
                 .analysis
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
-            Some("compiler.preprocess")
+            Some("preprocessor_directive")
         );
     }
 
@@ -772,6 +792,25 @@ main.cpp:3:5: note: declared here\n";
     }
 
     #[test]
+    fn classifies_concepts_constraints_compiler_error() {
+        let stderr = "\
+main.cpp:7:19: error: no matching function for call to 'consume(int)'\n\
+main.cpp:2:9: note: constraints not satisfied\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].phase, Phase::Constraints);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("concepts_constraints")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
     fn classifies_unused_compiler_warning() {
         let stderr = "main.c:2:9: warning: unused variable 'temporary' [-Wunused-variable]\n";
         let nodes = classify(stderr, true);
@@ -827,6 +866,24 @@ main.cpp:3:5: note: declared here\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("format_string")
+        );
+    }
+
+    #[test]
+    fn classifies_analyzer_compiler_warning() {
+        let stderr =
+            "main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Analyze);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("analyzer")
         );
     }
 
@@ -920,6 +977,58 @@ access.cpp:3:9: note: declared private here\n";
             Some("access_control")
         );
         assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_coroutine_compiler_error() {
+        let stderr = "main.cpp:5:5: error: unable to find the promise type for this coroutine\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("coroutine")
+        );
+    }
+
+    #[test]
+    fn classifies_module_import_compiler_error() {
+        let stderr =
+            "main.cpp:1:8: error: failed to read compiled module: No such file or directory\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("module_import")
+        );
+    }
+
+    #[test]
+    fn classifies_deprecated_compiler_warning() {
+        let stderr = "main.cpp:4:19: warning: 'int old_api()' is deprecated: use new_api [-Wdeprecated-declarations]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("deprecated")
+        );
     }
 
     #[test]

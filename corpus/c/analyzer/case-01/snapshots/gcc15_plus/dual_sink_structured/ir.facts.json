@@ -1,0 +1,274 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:6:5: warning: pointer 'ptr' used after 'free' [-Wuse-after-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\nsrc/main.c:5:5: note: call to 'free' here\n    5 |     free(ptr);\n      |     ^~~~~~~~~\nsrc/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\n  'main': events 1-3\n    4 |     int *ptr = malloc(sizeof(int));\n      |                ^~~~~~~~~~~~~~~~~~~\n      |                |\n      |                (1) allocated here\n    5 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (2) first 'free' here\n    6 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (3) ⚠️  second 'free' here; first 'free' was at (2)\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 769,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 14412,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "0f7b9b2c074190d502637026cc82106aaacb6cb5418699a246bf90d0dc561ae6",
+            "raw": "1d6534f2639902a4c175fcb7a909c81b26a76efb910e3336447724b419e7593c",
+            "structural": "6aa29844239f620a261794f53007da9ae51f42bebdbd365dc3d19f3789514252"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "call to 'free' here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "ae1fa046ff8e5fa1e8513e71016409ed18091bddfe6a664c894bb65bf4545517",
+        "raw": "47390f4becbd7e07d4645ebf7ece91fa244a9f8a974f9249d544cc455f9484fa",
+        "structural": "348c20611a509b3564da780e94a9288aac0800312802d8dcc596aba72ca66afb"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "pointer 'ptr' used after 'free'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 16,
+              "label": "allocated here",
+              "line": 4,
+              "path": "src/main.c"
+            },
+            {
+              "column": 5,
+              "label": "first 'free' here",
+              "line": 5,
+              "path": "src/main.c"
+            },
+            {
+              "column": 5,
+              "label": "second 'free' here; first 'free' was at [(2)](sarif:/runs/0/results/1/codeFlows/0/threadFlows/0/locations/1)",
+              "line": 6,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "analyzer_path"
+        }
+      ],
+      "fingerprints": {
+        "family": "a44d65778bb5ace524e8fdc136ce6447d3aeca7d2bdb2135b7f2d7f9c22a387a",
+        "raw": "1606bbb8fa799ee24993f22d94654d81b4f2fe0eb1429a574457dc45424c8a90",
+        "structural": "0d7e4581e44ef45e0925adf0e621e63b2d14d3724ff172f589ceb92e37f1f327"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "double-'free' of 'ptr'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "analyze",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "fingerprints": {
+        "family": "c056487f9172c2f4bf3b956c76eb9dd0db35ecbb73e5f60226911f31a641f778",
+        "raw": "6cebde077d4e0a77180ea3e88fc513eb7b8fd402fb9208aa3b05eb261d2f77d8",
+        "structural": "7dfb9ef9f0f2117de2123bc4c74016e0b749e831a887aedb4ad49625b6e04a85"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "analyze",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "865f8522e6701f8d18813da035dbb7f2755b7f7b7670ca271df4a0dada35a434",
+    "structural": "cd1094374fda5fa2433bd0527ff4e49f51f9f98c4ea51d911f8fbb6cf4a81a08"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-fanalyzer",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

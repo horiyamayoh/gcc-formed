@@ -1,0 +1,291 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is 'gcm.cache/missing_module.gcm'\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated.\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 362,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 6565,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "module_import",
+        "first_action_hint": "build or export the requested module interface before importing it",
+        "headline": "C++20 module import error",
+        "matched_conditions": [
+          "message_contains=failed to read compiled module"
+        ],
+        "rule_id": "rule.family.module_import.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "syntax",
+            "first_action_hint": "fix the first parser error at the user-owned location",
+            "headline": "syntax error",
+            "matched_conditions": [
+              "message_contains=missing"
+            ],
+            "rule_id": "rule.family.syntax.phase_or_message"
+          },
+          "fingerprints": {
+            "family": "5eb836f457aed77011fa9ae6b0cf41ae555ce26548469f04df15b1e6d9262b2d",
+            "raw": "17e3817a481d41680da6d1b3ef431538c34ecef161c5c692a783de499e64eb67",
+            "structural": "05a0c7f8e26e389608e7733198962223944aa9c02c4ae81954ea2abaf20b8fe0"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 1,
+                "column_native": 1,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "missing_module",
+                "path_style": "posix"
+              },
+              "id": "loc:missing_module:1:1:1:1",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "compiled module file is 'gcm.cache/missing_module.gcm'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.8999999761581421,
+            "family": "module_import",
+            "first_action_hint": "build or export the requested module interface before importing it",
+            "headline": "C++20 module import error",
+            "matched_conditions": [
+              "message_contains=imports must be built before being imported",
+              "phase=semantic"
+            ],
+            "rule_id": "rule.family.module_import.message_terms"
+          },
+          "fingerprints": {
+            "family": "735c6db4ea2dbe1b22430d5310befc338723d393171720e600a8e1960d254661",
+            "raw": "dab454d610bad9a89559ffa80522586262a7ac04dd26476ac98a6f8541be3e18",
+            "structural": "9cc7ef4c44cdb48fce8e15a45fe58b93537cb22a8b0434128486a12f0c6381f6"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 1,
+                "column_native": 1,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "missing_module",
+                "path_style": "posix"
+              },
+              "id": "loc:missing_module:1:1:1:1",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "imports must be built before being imported"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "returning to the gate for a mechanical issue",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "055bcd0aa309533108302f98b13c28a964b285c6b79bb6935fb7ec68b69fd1f1",
+            "raw": "8aa3d2fdf3066253658f7943f9f3bfc4a38633941e257eac0627ab664630eb0b",
+            "structural": "ede077dccfd674735a788db45e7c27faca166d28030b19abc2f0474e642b582c"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 1,
+                "column_native": 1,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "missing_module",
+                "path_style": "posix"
+              },
+              "id": "loc:missing_module:1:1:1:1",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "returning to the gate for a mechanical issue"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "873dcaef8767e795ba4fa5e70fe06c56c4c214391fb45c2cce8a7b721b2602e0",
+        "raw": "5c48020342a9729f417b3eaed05a71ee314ef02e5ad9b5c8360aa016f0c0aac4",
+        "structural": "1a82f5be8f224ed75cd2ce211f3700ec4120569dc15068e7b3b5a6ef63f625dc"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "missing_module",
+            "path_style": "posix"
+          },
+          "id": "loc:missing_module:1:1:1:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "failed to read compiled module: No such file or directory"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "124744772988e68197d235084492097aada9f47effa3edf13374504044d02dee",
+    "raw": "003ecfb1cc487c53d4d8172cc74267f6b35e3c7d444be08cd899cf5c5d7ad771",
+    "structural": "92d9d4cf9415c2ef21f2e9b5fbf9273e06c156ecb2be5deb8af48c988e28ca7a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-fmodules-ts",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

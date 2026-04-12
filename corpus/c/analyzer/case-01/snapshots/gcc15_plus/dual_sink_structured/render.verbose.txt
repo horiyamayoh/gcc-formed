@@ -1,0 +1,36 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+warning: static analysis found a potential defect
+--> src/main.c:6:5
+help: follow the analyzer event path and fix the first invalid state transition
+why: double-'free' of 'ptr'
+| src/main.c:6:5
+|     free(ptr);
+|     ^
+path: src/main.c:4:16 allocated here
+path: src/main.c:5:5 first 'free' here
+path: src/main.c:6:5 second 'free' here; first 'free' was at [(2)](sarif:/runs/0/results/1/codeFlows/0/threadFlows/0/locations/1)
+debug: rule_id=rule.family.analyzer.message_terms
+debug: matched_conditions=message_contains=double-'free', phase=analyze
+warning: static analysis found a potential defect
+--> src/main.c:6:5
+help: follow the analyzer event path and fix the first invalid state transition
+why: src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]
+| src/main.c:6:5
+|     free(ptr);
+|     ^
+raw:
+  src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]
+debug: rule_id=rule.family.analyzer.message_terms
+debug: matched_conditions=message_contains=double-'free', message_contains=-wanalyzer-, phase=analyze
+warning: pointer 'ptr' used after 'free'
+--> src/main.c:6:5
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+why: pointer 'ptr' used after 'free'
+| src/main.c:6:5
+|     free(ptr);
+|     ^
+note: call to 'free' here
+debug: rule_id=rule.family.unknown
+debug: matched_conditions=no_family_rule_matched
+debug: suppression_reason=generic_fallback
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

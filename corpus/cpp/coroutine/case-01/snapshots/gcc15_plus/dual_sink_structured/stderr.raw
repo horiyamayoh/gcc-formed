@@ -1,0 +1,4 @@
+src/main.cpp: In function 'Task make_task()':
+src/main.cpp:6:5: error: unable to find the promise type for this coroutine
+    6 |     co_return;
+      |     ^~~~~~~~~

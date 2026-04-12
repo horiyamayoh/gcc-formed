@@ -1,0 +1,7 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:4:19: warning: 'int old_api()' is deprecated: use new_api [-Wdeprecated-declarations]
+    4 |     return old_api();
+      |            ~~~~~~~^~
+src/main.cpp:1:35: note: declared here
+    1 | [[deprecated("use new_api")]] int old_api() { return 1; }
+      |                                   ^~~~~~~

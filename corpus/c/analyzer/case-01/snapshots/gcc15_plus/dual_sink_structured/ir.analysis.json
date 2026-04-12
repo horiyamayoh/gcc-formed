@@ -1,0 +1,319 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:6:5: warning: pointer 'ptr' used after 'free' [-Wuse-after-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\nsrc/main.c:5:5: note: call to 'free' here\n    5 |     free(ptr);\n      |     ^~~~~~~~~\nsrc/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\n  'main': events 1-3\n    4 |     int *ptr = malloc(sizeof(int));\n      |                ^~~~~~~~~~~~~~~~~~~\n      |                |\n      |                (1) allocated here\n    5 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (2) first 'free' here\n    6 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (3) ⚠️  second 'free' here; first 'free' was at (2)\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 769,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 14412,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.3499999940395355,
+        "family": "unknown",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "pointer 'ptr' used after 'free'",
+        "matched_conditions": [
+          "no_family_rule_matched"
+        ],
+        "rule_id": "rule.family.unknown",
+        "suppression_reason": "generic_fallback"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "call to 'free' here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "0f7b9b2c074190d502637026cc82106aaacb6cb5418699a246bf90d0dc561ae6",
+            "raw": "1d6534f2639902a4c175fcb7a909c81b26a76efb910e3336447724b419e7593c",
+            "structural": "4b794ef80bd041a178a1459fd14fdc1fe77825ae5593c244e0010c14abe06ca0"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "call to 'free' here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "ae1fa046ff8e5fa1e8513e71016409ed18091bddfe6a664c894bb65bf4545517",
+        "raw": "47390f4becbd7e07d4645ebf7ece91fa244a9f8a974f9249d544cc455f9484fa",
+        "structural": "56082d94ac42b5e037c187d041e8b72c815eacd2081dbe14118ca522c70339fb"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "pointer 'ptr' used after 'free'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "analyzer",
+        "first_action_hint": "follow the analyzer event path and fix the first invalid state transition",
+        "headline": "static analysis found a potential defect",
+        "matched_conditions": [
+          "message_contains=double-'free'",
+          "phase=analyze"
+        ],
+        "rule_id": "rule.family.analyzer.message_terms"
+      },
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 16,
+              "label": "allocated here",
+              "line": 4,
+              "path": "src/main.c"
+            },
+            {
+              "column": 5,
+              "label": "first 'free' here",
+              "line": 5,
+              "path": "src/main.c"
+            },
+            {
+              "column": 5,
+              "label": "second 'free' here; first 'free' was at [(2)](sarif:/runs/0/results/1/codeFlows/0/threadFlows/0/locations/1)",
+              "line": 6,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "analyzer_path"
+        }
+      ],
+      "fingerprints": {
+        "family": "79101378ae8a5fcd3da7be9cb250a18a0018212b346b3960fd2dd73328ef6995",
+        "raw": "1606bbb8fa799ee24993f22d94654d81b4f2fe0eb1429a574457dc45424c8a90",
+        "structural": "64d49a63567768e2f52d4f4a2c68758b99a7a31ddbc8c96908db83d340dbed9d"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "double-'free' of 'ptr'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "analyze",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "analyzer",
+        "first_action_hint": "follow the analyzer event path and fix the first invalid state transition",
+        "headline": "static analysis found a potential defect",
+        "matched_conditions": [
+          "message_contains=double-'free'",
+          "message_contains=-wanalyzer-",
+          "phase=analyze"
+        ],
+        "rule_id": "rule.family.analyzer.message_terms"
+      },
+      "fingerprints": {
+        "family": "0cdb1094af8ae85944225a90524fe09705d12c48f1e95a953970c6ee65133388",
+        "raw": "6cebde077d4e0a77180ea3e88fc513eb7b8fd402fb9208aa3b05eb261d2f77d8",
+        "structural": "c1ceb404d7ef57c7d5a5be06addd6c62f60ded1ff4b7fa10fed5ebe2bebe108f"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "analyze",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1d2185b9fcec3223308146cbdce24acc4f681d2097c67ae67709ad2afb4b0818",
+    "raw": "d02328ffed69e3784264e3db250c69c4279e687ce56178a954fb4e451e2b59f1",
+    "structural": "611690f81aaba15ff13aaa5f51385d5fbd8cbb68249b8494fd0b7d642ed2ed09"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-fanalyzer",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
