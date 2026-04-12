@@ -1,0 +1,180 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'void f()':\nsrc/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\n    2 |     throw 1;\n      |           ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 163,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3692,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "exception_handling",
+        "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
+        "headline": "exception handling configuration or usage error",
+        "matched_conditions": [
+          "message_contains=exception handling disabled",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.exception_handling.message_terms"
+      },
+      "fingerprints": {
+        "family": "efacc6557db4e7655e9a302106276f9a77588ac2cd88cdf3a54a65d60a83ca52",
+        "raw": "2bb0dbe4dadf26347f9f8bc05c990d55d861ec71fa87bfcc293141d90025634b",
+        "structural": "76c2e72ecbfad9f3ee9a20430313e5256f5f33929ce487bcdc468ab3817ad4cb"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 11,
+            "column_native": 11,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:2:11:2:11",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Code-Gen-Options.html#index-fexceptions)' to enable"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "exception_handling",
+        "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
+        "headline": "exception handling configuration or usage error",
+        "matched_conditions": [
+          "message_contains=exception handling disabled",
+          "message_contains=use '-fexceptions' to enable",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.exception_handling.message_terms"
+      },
+      "fingerprints": {
+        "family": "a8ab64141dea058bc8b4d88677d94290e41147b3a2aaccab14508be9637c396a",
+        "raw": "8e17a96b89c0699f3dc3532d00080da918c3d6b283abebb8d89afb3520513882",
+        "structural": "d7ba8a4d4a25c60d127f5f9c9d5fd5d20f63b47a9958eacb9146bacb467e9c8c"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 11,
+            "column_native": 11,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:2:11:2:11",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b60e439f34400a5057db80fa2712aa30ed430e3201171322ae0fad7698a6c311",
+    "raw": "0e4444b4e0806fd2abac5202b4757c128c7125cd5ac3367c811b9090c23316eb",
+    "structural": "997771bdd942c8d4ed38d8443eed987a165f0be5dfe917788eccfe6eab7118b0"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-fno-exceptions",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

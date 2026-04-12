@@ -1,0 +1,7 @@
+src/main.c:1:1: warning: function or type attribute issue
+help: check the attribute spelling, placement, and argument requirements
+why: 'unknown_attr' attribute directive ignored
+| src/main.c:1:1
+| void f(void) __attribute__((unknown_attr));
+| ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

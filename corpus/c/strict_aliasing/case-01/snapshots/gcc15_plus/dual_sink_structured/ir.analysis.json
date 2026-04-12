@@ -1,0 +1,127 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'pun':\nsrc/main.c:2:13: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]\n    2 |     return *(int *)&value;\n      |             ^~~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 213,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3809,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "strict_aliasing",
+        "first_action_hint": "use memcpy or a union for type punning instead of pointer casts",
+        "headline": "strict aliasing rule violation",
+        "matched_conditions": [
+          "message_contains=strict-aliasing",
+          "message_contains=type-punned pointer",
+          "message_contains=will break strict-aliasing rules",
+          "message_contains=dereferencing type-punned pointer",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.strict_aliasing.message_terms"
+      },
+      "fingerprints": {
+        "family": "1d59b8732c2654cd94caf619fc2d674f3ea69593d735a0d4d9816dbfe26d6b42",
+        "raw": "340a6899aac1530c8cf9989a8d2f239a99fcb3e38ed5c9a527b7d44d8a5c7f72",
+        "structural": "eb150bcdb7094ab53c6f9feb9cf1238ae987263eef465db426771c891910475c"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:13:2:13",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "dereferencing type-punned pointer will break strict-aliasing rules"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1da34caefb3e5254c19bd4f95f2c42d535c368ce15dd7a0739273bc7fc415aa2",
+    "raw": "8168764c58bb3ccc346c6521f132b65fb0cdf9a327ba6368b4c26034b22a874c",
+    "structural": "13549e760600f8ffb3fdccfa87075726e0e13615cb9ee8a5a442349d952075b8"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Wstrict-aliasing=3",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

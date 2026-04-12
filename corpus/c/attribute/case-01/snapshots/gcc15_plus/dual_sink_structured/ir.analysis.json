@@ -1,0 +1,123 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c:1:1: warning: 'unknown_attr' attribute directive ignored [-Wattributes]\n    1 | void f(void) __attribute__((unknown_attr));\n      | ^~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 148,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3399,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "attribute",
+        "first_action_hint": "check the attribute spelling, placement, and argument requirements",
+        "headline": "function or type attribute issue",
+        "matched_conditions": [
+          "message_contains=attribute directive ignored",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.attribute.message_terms"
+      },
+      "fingerprints": {
+        "family": "4d2d9d9cf878bc2b0599d514981cba4b80ad97652d979959f2eb5642f6344c25",
+        "raw": "217d7cc10b2658c2744c2ddc72ae57a7e734454a195ffc383dafb6ff4c6eb3d6",
+        "structural": "622b6b9ade6fd46f3336978be76c2df42d5b819a1e69f4dc2bbfa8cfb5233b54"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:1:1:1:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'unknown_attr' attribute directive ignored"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "857f61596eb45b475a655ab5ef77d58ef5d757922d500522e72774fa2e6d3f82",
+    "raw": "0091fc4557f015bb2d63fe6902a640347b1177c19aa03cdc127d54152525cb52",
+    "structural": "b9d85d9995ef1dafdc1025e729a99e3b8760023fab2fe6d825c81bcfde0f5fa1"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wattributes",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

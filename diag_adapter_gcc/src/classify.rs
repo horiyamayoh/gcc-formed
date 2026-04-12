@@ -606,6 +606,110 @@ mod tests {
     }
 
     #[test]
+    fn classifies_strict_aliasing_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]",
+        );
+
+        assert_eq!(decision.family, "strict_aliasing");
+        assert_eq!(decision.rule_id, "rule.family_seed.strict_aliasing");
+        assert_eq!(
+            decision.first_action_hint,
+            "use memcpy or a union for type punning instead of pointer casts"
+        );
+    }
+
+    #[test]
+    fn classifies_abi_alignment_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]",
+        );
+
+        assert_eq!(decision.family, "abi_alignment");
+        assert_eq!(decision.rule_id, "rule.family_seed.abi_alignment");
+        assert_eq!(
+            decision.first_action_hint,
+            "check struct packing, alignment attributes, and target-specific ABI requirements"
+        );
+    }
+
+    #[test]
+    fn classifies_abi_alignment_seed_from_cast_align_warning() {
+        let decision =
+            classify_family_seed("cast increases required alignment of target type [-Wcast-align]");
+
+        assert_eq!(decision.family, "abi_alignment");
+        assert_eq!(decision.rule_id, "rule.family_seed.abi_alignment");
+    }
+
+    #[test]
+    fn classifies_storage_class_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("static declaration of 'value' follows non-static declaration");
+
+        assert_eq!(decision.family, "storage_class");
+        assert_eq!(decision.rule_id, "rule.family_seed.storage_class");
+        assert_eq!(
+            decision.first_action_hint,
+            "use a single consistent storage class specifier and linkage for the declaration"
+        );
+    }
+
+    #[test]
+    fn classifies_exception_handling_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("exception handling disabled, use '-fexceptions' to enable");
+
+        assert_eq!(decision.family, "exception_handling");
+        assert_eq!(decision.rule_id, "rule.family_seed.exception_handling");
+        assert_eq!(
+            decision.first_action_hint,
+            "enable -fexceptions/-frtti or adjust the exception specification"
+        );
+    }
+
+    #[test]
+    fn classifies_attribute_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("'unknown_attr' attribute directive ignored [-Wattributes]");
+
+        assert_eq!(decision.family, "attribute");
+        assert_eq!(decision.rule_id, "rule.family_seed.attribute");
+        assert_eq!(
+            decision.first_action_hint,
+            "check the attribute spelling, placement, and argument requirements"
+        );
+    }
+
+    #[test]
+    fn classifies_odr_inline_linkage_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "type of 'helper' does not match original declaration [-Wlto-type-mismatch]",
+        );
+
+        assert_eq!(decision.family, "odr_inline_linkage");
+        assert_eq!(decision.rule_id, "rule.family_seed.odr_inline_linkage");
+        assert_eq!(
+            decision.first_action_hint,
+            "ensure the inline function is defined in a header or fix the type mismatch across TUs"
+        );
+    }
+
+    #[test]
+    fn classifies_sizeof_allocation_seed_before_pointer_reference() {
+        let decision = classify_family_seed(
+            "invalid application of 'sizeof' to incomplete type 'struct Node'",
+        );
+
+        assert_eq!(decision.family, "sizeof_allocation");
+        assert_eq!(decision.rule_id, "rule.family_seed.sizeof_allocation");
+        assert_eq!(
+            decision.first_action_hint,
+            "check whether sizeof is applied to the intended type rather than a pointer"
+        );
+    }
+
+    #[test]
     fn classifies_coroutine_seed_from_rulepack() {
         let decision = classify_family_seed("unable to find the promise type for this coroutine");
 

@@ -20,6 +20,39 @@
   },
   "rules": [
     {
+      "rule_id": "rule.family.odr_inline_linkage.message_terms",
+      "family": "odr_inline_linkage",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "used but never defined",
+            "always_inline function might not be inlinable",
+            "does not match original declaration",
+            "lto-type-mismatch",
+            "-wundefined-inline"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        },
+        {
+          "phase": "link",
+          "condition": "phase=link",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.linker.structured_or_message",
       "family": "linker",
       "phase_match": [
@@ -615,7 +648,7 @@
             "nonnull argument",
             "compared to null",
             "-wnull-dereference",
-            "-waddress",
+            "[-waddress]",
             "-wnonnull-compare"
           ]
         }
@@ -645,6 +678,178 @@
             "moving a local object in a return",
             "redundant move in return",
             "cannot bind rvalue reference"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.strict_aliasing.message_terms",
+      "family": "strict_aliasing",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "strict-aliasing",
+            "type-punned pointer",
+            "will break strict-aliasing rules",
+            "dereferencing type-punned pointer"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.abi_alignment.message_terms",
+      "family": "abi_alignment",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "the abi of passing",
+            "parameter passing for argument",
+            "cast increases required alignment",
+            "increases required alignment of target type",
+            "address-of-packed-member",
+            "taking address of packed member",
+            "unaligned pointer value"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.storage_class.message_terms",
+      "family": "storage_class",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "multiple storage classes in declaration specifiers",
+            "follows non-static declaration",
+            "follows static declaration",
+            "'extern' variable has an initializer"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.exception_handling.message_terms",
+      "family": "exception_handling",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "exception handling disabled",
+            "use '-fexceptions' to enable",
+            "cannot use 'typeid' with '-fno-rtti'",
+            "non-throwing exception specification",
+            "dynamic exception specification",
+            "-wcatch-value"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.attribute.message_terms",
+      "family": "attribute",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "'noreturn' function does return",
+            "attribute directive ignored",
+            "attribute argument",
+            "unknown attribute",
+            "'fallthrough' attribute not preceding",
+            "'cleanup' attribute"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.sizeof_allocation.message_terms",
+      "family": "sizeof_allocation",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "sizeof-pointer-memaccess",
+            "'sizeof' on array function parameter",
+            "will return size of",
+            "sizeof-array-argument",
+            "sizeof-array-div",
+            "invalid application of 'sizeof' to incomplete type",
+            "size of array is negative"
           ]
         }
       ],
@@ -1382,7 +1587,7 @@
         "nonnull argument",
         "compared to null",
         "-wnull-dereference",
-        "-waddress",
+        "[-waddress]",
         "-wnonnull-compare"
       ]
     },
@@ -1399,9 +1604,97 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.strict_aliasing",
+      "family": "strict_aliasing",
+      "priority": 58,
+      "terms": [
+        "strict-aliasing",
+        "type-punned pointer",
+        "will break strict-aliasing rules",
+        "dereferencing type-punned pointer"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.abi_alignment",
+      "family": "abi_alignment",
+      "priority": 59,
+      "terms": [
+        "the abi of passing",
+        "parameter passing for argument",
+        "cast increases required alignment",
+        "increases required alignment of target type",
+        "address-of-packed-member",
+        "taking address of packed member",
+        "unaligned pointer value"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.storage_class",
+      "family": "storage_class",
+      "priority": 60,
+      "terms": [
+        "multiple storage classes in declaration specifiers",
+        "follows non-static declaration",
+        "follows static declaration",
+        "'extern' variable has an initializer"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.exception_handling",
+      "family": "exception_handling",
+      "priority": 61,
+      "terms": [
+        "exception handling disabled",
+        "use '-fexceptions' to enable",
+        "cannot use 'typeid' with '-fno-rtti'",
+        "non-throwing exception specification",
+        "dynamic exception specification",
+        "-wcatch-value"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.attribute",
+      "family": "attribute",
+      "priority": 62,
+      "terms": [
+        "'noreturn' function does return",
+        "attribute directive ignored",
+        "attribute argument",
+        "unknown attribute",
+        "'fallthrough' attribute not preceding",
+        "'cleanup' attribute"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.odr_inline_linkage",
+      "family": "odr_inline_linkage",
+      "priority": 63,
+      "terms": [
+        "used but never defined",
+        "always_inline function might not be inlinable",
+        "does not match original declaration",
+        "lto-type-mismatch",
+        "-wundefined-inline"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.sizeof_allocation",
+      "family": "sizeof_allocation",
+      "priority": 64,
+      "terms": [
+        "sizeof-pointer-memaccess",
+        "'sizeof' on array function parameter",
+        "will return size of",
+        "sizeof-array-argument",
+        "sizeof-array-div",
+        "invalid application of 'sizeof' to incomplete type",
+        "size of array is negative"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.conversion_narrowing",
       "family": "conversion_narrowing",
-      "priority": 60,
+      "priority": 65,
       "terms": [
         "narrowing conversion",
         "implicit conversion",
@@ -1413,7 +1706,7 @@
     {
       "rule_id": "rule.family_seed.const_qualifier",
       "family": "const_qualifier",
-      "priority": 61,
+      "priority": 66,
       "terms": [
         "discards qualifiers",
         "discards 'const' qualifier",
@@ -1427,7 +1720,7 @@
     {
       "rule_id": "rule.family_seed.pointer_reference",
       "family": "pointer_reference",
-      "priority": 62,
+      "priority": 67,
       "terms": [
         "incomplete type",
         "invalid use of incomplete type",
@@ -1442,7 +1735,7 @@
     {
       "rule_id": "rule.family_seed.access_control",
       "family": "access_control",
-      "priority": 63,
+      "priority": 68,
       "terms": [
         "is private within this context",
         "is protected within this context",
@@ -1453,7 +1746,7 @@
     {
       "rule_id": "rule.family_seed.inheritance_virtual",
       "family": "inheritance_virtual",
-      "priority": 64,
+      "priority": 69,
       "terms": [
         "abstract type",
         "pure virtual",
@@ -1466,7 +1759,7 @@
     {
       "rule_id": "rule.family_seed.constexpr",
       "family": "constexpr",
-      "priority": 65,
+      "priority": 70,
       "terms": [
         "is not a constant expression",
         "not usable in a constant expression",
@@ -1481,7 +1774,7 @@
     {
       "rule_id": "rule.family_seed.lambda_closure",
       "family": "lambda_closure",
-      "priority": 66,
+      "priority": 71,
       "terms": [
         "cannot be implicitly captured",
         "is not captured",
@@ -1496,7 +1789,7 @@
     {
       "rule_id": "rule.family_seed.lifetime_dangling",
       "family": "lifetime_dangling",
-      "priority": 67,
+      "priority": 72,
       "terms": [
         "returns address of local variable",
         "address of local variable",
@@ -1508,7 +1801,7 @@
     {
       "rule_id": "rule.family_seed.init_order",
       "family": "init_order",
-      "priority": 68,
+      "priority": 73,
       "terms": [
         "will be initialized after",
         "too many initializers",
@@ -1521,7 +1814,7 @@
     {
       "rule_id": "rule.family_seed.coroutine",
       "family": "coroutine",
-      "priority": 71,
+      "priority": 75,
       "terms": [
         "promise type",
         "promise_type",
@@ -1534,7 +1827,7 @@
     {
       "rule_id": "rule.family_seed.module_import",
       "family": "module_import",
-      "priority": 72,
+      "priority": 76,
       "terms": [
         "import of module",
         "import declaration",
@@ -1546,7 +1839,7 @@
     {
       "rule_id": "rule.family_seed.deprecated",
       "family": "deprecated",
-      "priority": 73,
+      "priority": 77,
       "terms": [
         "is deprecated",
         "deprecated-declarations",
@@ -1556,7 +1849,7 @@
     {
       "rule_id": "rule.family_seed.fallthrough",
       "family": "fallthrough",
-      "priority": 69,
+      "priority": 74,
       "terms": [
         "this statement may fall through",
         "implicit-fallthrough",
@@ -1566,7 +1859,7 @@
     {
       "rule_id": "rule.family_seed.pedantic_compliance",
       "family": "pedantic_compliance",
-      "priority": 74,
+      "priority": 78,
       "terms": [
         "iso c++ forbids",
         "iso c does not",
@@ -1900,6 +2193,139 @@
     },
     {
       "family": "move_semantics",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "strict_aliasing",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "abi_alignment",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "storage_class",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "exception_handling",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "attribute",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "odr_inline_linkage",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "sizeof_allocation",
       "high_when_any": [
         {
           "all": [

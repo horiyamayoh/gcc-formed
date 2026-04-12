@@ -1,0 +1,13 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+warning: ODR violation or inline linkage mismatch
+--> src/main.c:1:5
+help: ensure the inline function is defined in a header or fix the type mismatch across TUs
+why: src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+| src/main.c:1:5
+| int helper(int value);
+|     ^
+raw:
+  src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+debug: rule_id=rule.family.odr_inline_linkage.message_terms
+debug: matched_conditions=message_contains=does not match original declaration, message_contains=lto-type-mismatch, phase=link
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

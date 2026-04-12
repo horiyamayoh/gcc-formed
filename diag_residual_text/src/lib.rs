@@ -1043,6 +1043,133 @@ main.cpp:2:9: note: constraints not satisfied\n";
     }
 
     #[test]
+    fn classifies_strict_aliasing_compiler_warning() {
+        let stderr = "main.c:2:13: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("strict_aliasing")
+        );
+    }
+
+    #[test]
+    fn classifies_abi_alignment_compiler_warning() {
+        let stderr = "main.c:7:12: warning: taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("abi_alignment")
+        );
+    }
+
+    #[test]
+    fn classifies_storage_class_compiler_error() {
+        let stderr = "\
+main.c:2:12: error: static declaration of 'value' follows non-static declaration\n\
+main.c:1:5: note: previous declaration of 'value' with type 'int'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("storage_class")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_exception_handling_compiler_error() {
+        let stderr =
+            "main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("exception_handling")
+        );
+    }
+
+    #[test]
+    fn classifies_attribute_compiler_warning() {
+        let stderr =
+            "main.c:1:1: warning: 'unknown_attr' attribute directive ignored [-Wattributes]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("attribute")
+        );
+    }
+
+    #[test]
+    fn classifies_odr_inline_linkage_compiler_warning() {
+        let stderr = "\
+main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n\
+helper.c:1:6: note: return value type mismatch\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Link);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("odr_inline_linkage")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_sizeof_allocation_compiler_error_before_pointer_reference() {
+        let stderr = "main.c:2:12: error: invalid application of 'sizeof' to incomplete type 'struct Node'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("sizeof_allocation")
+        );
+    }
+
+    #[test]
     fn classifies_pointer_reference_compiler_error() {
         let stderr = "\
 main.cpp:5:16: error: invalid use of incomplete type 'struct Node'\n\

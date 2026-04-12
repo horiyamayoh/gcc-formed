@@ -1,0 +1,40 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:1:1",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "^"
+          ],
+          "lines": [
+            "void f(void) __attribute__((unknown_attr));"
+          ],
+          "location": "src/main.c:1:1"
+        }
+      ],
+      "family": "attribute",
+      "first_action": "check the attribute spelling, placement, and argument requirements",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=attribute directive ignored",
+        "phase=semantic"
+      ],
+      "raw_message": "'unknown_attr' attribute directive ignored",
+      "rule_id": "rule.family.attribute.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "function or type attribute issue"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

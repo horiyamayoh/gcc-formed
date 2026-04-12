@@ -1,0 +1,6 @@
+src/main.c:2:12: error: static declaration of 'value' follows non-static declaration
+    2 | static int value;
+      |            ^~~~~
+src/main.c:1:5: note: previous declaration of 'value' with type 'int'
+    1 | int value;
+      |     ^~~~~

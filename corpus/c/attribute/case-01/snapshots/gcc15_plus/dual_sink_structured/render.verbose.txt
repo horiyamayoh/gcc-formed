@@ -1,0 +1,10 @@
+warning: function or type attribute issue
+--> src/main.c:1:1
+help: check the attribute spelling, placement, and argument requirements
+why: 'unknown_attr' attribute directive ignored
+| src/main.c:1:1
+| void f(void) __attribute__((unknown_attr));
+| ^
+debug: rule_id=rule.family.attribute.message_terms
+debug: matched_conditions=message_contains=attribute directive ignored, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

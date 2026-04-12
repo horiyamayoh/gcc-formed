@@ -1,0 +1,4 @@
+src/main.c: In function 'get_ptr':
+src/main.c:7:12: warning: taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]
+    7 |     return &packed->value;
+      |            ^~~~~~~~~~~~~~

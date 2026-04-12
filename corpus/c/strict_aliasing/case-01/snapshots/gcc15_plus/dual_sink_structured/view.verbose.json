@@ -1,0 +1,43 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:13",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "            ^"
+          ],
+          "lines": [
+            "    return *(int *)&value;"
+          ],
+          "location": "src/main.c:2:13"
+        }
+      ],
+      "family": "strict_aliasing",
+      "first_action": "use memcpy or a union for type punning instead of pointer casts",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=strict-aliasing",
+        "message_contains=type-punned pointer",
+        "message_contains=will break strict-aliasing rules",
+        "message_contains=dereferencing type-punned pointer",
+        "phase=semantic"
+      ],
+      "raw_message": "dereferencing type-punned pointer will break strict-aliasing rules",
+      "rule_id": "rule.family.strict_aliasing.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "strict aliasing rule violation"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

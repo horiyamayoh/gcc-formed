@@ -1,0 +1,11 @@
+error: storage class or linkage conflict
+--> src/main.c:2:12
+help: use a single consistent storage class specifier and linkage for the declaration
+why: static declaration of 'value' follows non-static declaration
+| src/main.c:2:12
+| static int value;
+|            ^
+note: previous declaration of 'value' with type 'int'
+debug: rule_id=rule.family.storage_class.message_terms
+debug: matched_conditions=message_contains=follows non-static declaration, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

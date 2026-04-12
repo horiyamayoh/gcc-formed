@@ -1,0 +1,8 @@
+src/main.c:2:18: warning: suspicious sizeof usage or allocation size
+help: check whether sizeof is applied to the intended type rather than a pointer
+why: 'sizeof' on array function parameter 'values' will return size of 'int *'
+| src/main.c:2:18
+|     return sizeof(values);
+|                  ^
+note: declared here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

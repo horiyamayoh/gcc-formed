@@ -1,0 +1,138 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^\nsrc/helper.c:1:6: note: return value type mismatch\n    1 | long helper(long value) {\n      |      ^\nsrc/helper.c:1:6: note: type 'long int' should match type 'int'\nsrc/helper.c:1:6: note: 'helper' was previously declared here\nsrc/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 458,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1912,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "odr_inline_linkage",
+        "first_action_hint": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
+        "headline": "ODR violation or inline linkage mismatch",
+        "matched_conditions": [
+          "message_contains=does not match original declaration",
+          "message_contains=lto-type-mismatch",
+          "phase=link"
+        ],
+        "rule_id": "rule.family.odr_inline_linkage.message_terms"
+      },
+      "fingerprints": {
+        "family": "7ff077599d34bee284e2ffe8e88f04b8cb4ff7411078148a0efb6d71c3a2e3cd",
+        "raw": "4ec7c92bfb3d6f4f2668df5e98c947eb2134f941b031fd2261873ed20580cdf9",
+        "structural": "c0475b40ed5f92557c0a5acd5773f010e1f3e5180e637e91dab60522ac035519"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:1:5:1:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b7b71de73b60c4dc5487b287e852aa402b1b818208c78ef3de6e883faa439110",
+    "raw": "e739707e0cf2d3285565e27ec028a9c94a79877a2e9842d9e170e04bed146998",
+    "structural": "33d58ac7897a22c45efbad60ec56e3e04773b13bc3fbcb943537879fc0d52556"
+  },
+  "integrity_issues": [
+    {
+      "message": "SARIF contained no diagnostic results",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "severity": "warning",
+      "stage": "parse"
+    }
+  ],
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-flto",
+      "-Wlto-type-mismatch",
+      "src/main.c",
+      "src/helper.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

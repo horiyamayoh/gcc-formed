@@ -1,0 +1,9 @@
+src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+    1 | int helper(int value);
+      |     ^
+src/helper.c:1:6: note: return value type mismatch
+    1 | long helper(long value) {
+      |      ^
+src/helper.c:1:6: note: type 'long int' should match type 'int'
+src/helper.c:1:6: note: 'helper' was previously declared here
+src/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used

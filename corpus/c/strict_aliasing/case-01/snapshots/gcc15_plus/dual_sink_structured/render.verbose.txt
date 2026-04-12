@@ -1,0 +1,10 @@
+warning: strict aliasing rule violation
+--> src/main.c:2:13
+help: use memcpy or a union for type punning instead of pointer casts
+why: dereferencing type-punned pointer will break strict-aliasing rules
+| src/main.c:2:13
+|     return *(int *)&value;
+|             ^
+debug: rule_id=rule.family.strict_aliasing.message_terms
+debug: matched_conditions=message_contains=strict-aliasing, message_contains=type-punned pointer, message_contains=will break strict-aliasing rules, message_contains=dereferencing type-punned pointer, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

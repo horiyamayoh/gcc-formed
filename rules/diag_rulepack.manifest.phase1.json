@@ -6,17 +6,17 @@
     {
       "kind": "enrich",
       "path": "enrich.rulepack.json",
-      "sha256": "31064f9fc2aa02008b9752cf171203a8e352419b1185d45bccf1945c57ecc7a2"
+      "sha256": "b1a6dc0ae2d988bb61ed5dfaf3e522fcdd3bcbd7478ecb82779f10b4172cff83"
     },
     {
       "kind": "render",
       "path": "render.rulepack.json",
-      "sha256": "968c94ccf4c04fcef670d3a8d6a9b462ed0fec1c727e854c86ed5a54f5052101"
+      "sha256": "98b570efb1adfcddb47fface805f5b25ec08809a0721b3354068ccf5c71ddb03"
     },
     {
       "kind": "residual",
       "path": "residual.rulepack.json",
-      "sha256": "861f89ce9c8beb36107c09fdf4318318b3c52e73a0e7510302c98b4376ef2f9e"
+      "sha256": "c06093ba0b9bd0a868d26bc8ebc3c9a75ab95fa6b7e328df9b30e8ebcd6878be"
     }
   ]
 }

@@ -1,0 +1,7 @@
+src/main.c: In function 'f':
+src/main.c:2:18: warning: 'sizeof' on array function parameter 'values' will return size of 'int *' [-Wsizeof-array-argument]
+    2 |     return sizeof(values);
+      |                  ^
+src/main.c:1:21: note: declared here
+    1 | unsigned long f(int values[]) {
+      |                 ~~~~^~~~~~~~

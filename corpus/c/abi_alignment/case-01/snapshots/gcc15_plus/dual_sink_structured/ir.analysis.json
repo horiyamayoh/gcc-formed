@@ -1,0 +1,124 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'get_ptr':\nsrc/main.c:7:12: warning: taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]\n    7 |     return &packed->value;\n      |            ^~~~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 251,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3919,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "abi_alignment",
+        "first_action_hint": "check struct packing, alignment attributes, and target-specific ABI requirements",
+        "headline": "ABI or alignment compatibility issue",
+        "matched_conditions": [
+          "message_contains=taking address of packed member",
+          "message_contains=unaligned pointer value",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.abi_alignment.message_terms"
+      },
+      "fingerprints": {
+        "family": "f272feb805b338d7519aacc04b4a1622426f4def36131918e23c8da440c2f8f7",
+        "raw": "0c07ac86ede3b474a8063fbc11e94b2cc5395f3ff2a4ae6fc432eaa28b4163b4",
+        "structural": "a2efd54d96a9a192a4ac3526f8afae6d51123fdd7b2ece658970dc8c8f42ffe1"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:7:12:7:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "taking address of packed member of 'struct Packed' may result in an unaligned pointer value"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "3797d7365c4b092e394c4f600cc79a55fc372a9f553086e4f6744352f5293054",
+    "raw": "64c2aafad43b503dfc5bda02dce0aa1cd158847a9ff3d6b84dec69426499b2bf",
+    "structural": "07c5c681a9d95b86e1d68ff1ced185b7c91d7d4eece8eed59b1328e43d5162d6"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Waddress-of-packed-member",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

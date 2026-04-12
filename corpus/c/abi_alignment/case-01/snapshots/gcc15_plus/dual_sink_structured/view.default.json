@@ -1,0 +1,41 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:7:12",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return &packed->value;"
+          ],
+          "location": "src/main.c:7:12"
+        }
+      ],
+      "family": "abi_alignment",
+      "first_action": "check struct packing, alignment attributes, and target-specific ABI requirements",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=taking address of packed member",
+        "message_contains=unaligned pointer value",
+        "phase=semantic"
+      ],
+      "raw_message": "taking address of packed member of 'struct Packed' may result in an unaligned pointer value",
+      "rule_id": "rule.family.abi_alignment.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "ABI or alignment compatibility issue"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

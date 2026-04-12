@@ -350,6 +350,90 @@ mod tests {
     }
 
     #[test]
+    fn classifies_strict_aliasing_from_message_terms() {
+        let node = sample_node(
+            "dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("strict_aliasing"));
+    }
+
+    #[test]
+    fn classifies_abi_alignment_from_message_terms() {
+        let node = sample_node(
+            "taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("abi_alignment"));
+    }
+
+    #[test]
+    fn classifies_storage_class_from_message_terms() {
+        let node = sample_node("static declaration of 'value' follows non-static declaration");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("storage_class"));
+    }
+
+    #[test]
+    fn classifies_exception_handling_from_message_terms() {
+        let node = sample_node("exception handling disabled, use '-fexceptions' to enable");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("exception_handling"));
+    }
+
+    #[test]
+    fn classifies_attribute_from_message_terms() {
+        let node = sample_node("'unknown_attr' attribute directive ignored [-Wattributes]");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("attribute"));
+    }
+
+    #[test]
+    fn classifies_odr_inline_linkage_from_link_message_terms() {
+        let mut node = sample_node(
+            "type of 'helper' does not match original declaration [-Wlto-type-mismatch]",
+        );
+        node.phase = Phase::Link;
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("odr_inline_linkage"));
+    }
+
+    #[test]
+    fn classifies_sizeof_allocation_before_pointer_reference() {
+        let node = sample_node("invalid application of 'sizeof' to incomplete type 'struct Node'");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("sizeof_allocation"));
+    }
+
+    #[test]
     fn classifies_sanitizer_buffer_before_format_string() {
         let node = sample_node(
             "'%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]",

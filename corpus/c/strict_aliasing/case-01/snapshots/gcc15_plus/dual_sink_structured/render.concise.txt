@@ -1,0 +1,8 @@
+warning: strict aliasing rule violation
+--> src/main.c:2:13
+help: use memcpy or a union for type punning instead of pointer casts
+why: dereferencing type-punned pointer will break strict-aliasing rules
+| src/main.c:2:13
+|     return *(int *)&value;
+|             ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

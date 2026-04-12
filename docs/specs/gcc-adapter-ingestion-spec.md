@@ -964,29 +964,36 @@ raw stderr residual classifier は、structured path の外側にある text を
 16. `enum_switch`
 17. `analyzer`
 18. `null_pointer`
-19. `conversion_narrowing`
-20. `const_qualifier`
-21. `move_semantics`
-22. `pointer_reference`
-23. `access_control`
-24. `inheritance_virtual`
-25. `constexpr`
-26. `lambda_closure`
-27. `lifetime_dangling`
-28. `init_order`
-29. `coroutine`
-30. `module_import`
-31. `deprecated`
-32. `pedantic_compliance`
-33. `driver_fatal`
-34. `linker.undefined_reference`
-35. `linker.multiple_definition`
-36. `linker.cannot_find_library`
-37. `linker.file_format_or_relocation`
-38. `collect2_summary`
-39. `assembler_error`
-40. `internal_compiler_error_banner`
-41. `passthrough`
+19. `move_semantics`
+20. `strict_aliasing`
+21. `abi_alignment`
+22. `storage_class`
+23. `exception_handling`
+24. `attribute`
+25. `odr_inline_linkage`
+26. `sizeof_allocation`
+27. `conversion_narrowing`
+28. `const_qualifier`
+29. `pointer_reference`
+30. `access_control`
+31. `inheritance_virtual`
+32. `constexpr`
+33. `lambda_closure`
+34. `lifetime_dangling`
+35. `init_order`
+36. `coroutine`
+37. `module_import`
+38. `deprecated`
+39. `pedantic_compliance`
+40. `driver_fatal`
+41. `linker.undefined_reference`
+42. `linker.multiple_definition`
+43. `linker.cannot_find_library`
+44. `linker.file_format_or_relocation`
+45. `collect2_summary`
+46. `assembler_error`
+47. `internal_compiler_error_banner`
+48. `passthrough`
 
 ### 20.3 classifier の安全原則
 
@@ -994,7 +1001,7 @@ raw stderr residual classifier は、structured path の外側にある text を
 - **MUST NOT** weak / open-ended な generic GCC text diagnostics を推定で family 化する
 - **MUST NOT** location を捏造する
 - **SHOULD** confidence を family ごとに固定または narrow range で出す
-- **MAY** `preprocessor_directive` / `scope_declaration` / `redefinition` / `deleted_function` / `concepts_constraints` / `unused` / `return_type` / `fallthrough` / `sanitizer_buffer` / `format_string` / `uninitialized` / `overflow_arithmetic` / `enum_switch` / `analyzer` / `null_pointer` / `conversion_narrowing` / `const_qualifier` / `move_semantics` / `pointer_reference` / `access_control` / `inheritance_virtual` / `constexpr` / `lambda_closure` / `lifetime_dangling` / `init_order` / `coroutine` / `module_import` / `deprecated` / `pedantic_compliance` のような high-precision compiler residual family を明示 wording で分類する
+- **MAY** `preprocessor_directive` / `scope_declaration` / `redefinition` / `deleted_function` / `concepts_constraints` / `unused` / `return_type` / `fallthrough` / `sanitizer_buffer` / `format_string` / `uninitialized` / `overflow_arithmetic` / `enum_switch` / `analyzer` / `null_pointer` / `move_semantics` / `strict_aliasing` / `abi_alignment` / `storage_class` / `exception_handling` / `attribute` / `odr_inline_linkage` / `sizeof_allocation` / `conversion_narrowing` / `const_qualifier` / `pointer_reference` / `access_control` / `inheritance_virtual` / `constexpr` / `lambda_closure` / `lifetime_dangling` / `init_order` / `coroutine` / `module_import` / `deprecated` / `pedantic_compliance` のような high-precision compiler residual family を明示 wording で分類する
 - **MAY** symbol / archive / object file 名を抽出する
 
 ### 20.4 grouping 規則

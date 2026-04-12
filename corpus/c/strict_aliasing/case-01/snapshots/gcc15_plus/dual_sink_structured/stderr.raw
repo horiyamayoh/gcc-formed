@@ -1,0 +1,4 @@
+src/main.c: In function 'pun':
+src/main.c:2:13: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+    2 |     return *(int *)&value;
+      |             ^~~~~~~~~~~~~

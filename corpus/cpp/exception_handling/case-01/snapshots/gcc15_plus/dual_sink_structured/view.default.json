@@ -1,0 +1,48 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:2:11",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "          ^"
+          ],
+          "lines": [
+            "    throw 1;"
+          ],
+          "location": "src/main.cpp:2:11"
+        }
+      ],
+      "family": "exception_handling",
+      "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=exception handling disabled",
+        "phase=semantic"
+      ],
+      "raw_message": "exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Code-Gen-Options.html#index-fexceptions)' to enable",
+      "rule_id": "rule.family.exception_handling.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "exception handling configuration or usage error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.cpp:2:11",
+      "group_id": "residual-compiler-0",
+      "severity": "error",
+      "title": "exception handling configuration or usage error"
+    }
+  ]
+}

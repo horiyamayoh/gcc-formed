@@ -1,0 +1,4 @@
+src/main.cpp: In function 'void f()':
+src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable
+    2 |     throw 1;
+      |           ^

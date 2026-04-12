@@ -79,6 +79,34 @@
         "text": "unnecessary or incorrect move operation"
       },
       {
+        "family": "strict_aliasing",
+        "text": "strict aliasing rule violation"
+      },
+      {
+        "family": "abi_alignment",
+        "text": "ABI or alignment compatibility issue"
+      },
+      {
+        "family": "storage_class",
+        "text": "storage class or linkage conflict"
+      },
+      {
+        "family": "exception_handling",
+        "text": "exception handling configuration or usage error"
+      },
+      {
+        "family": "attribute",
+        "text": "function or type attribute issue"
+      },
+      {
+        "family": "odr_inline_linkage",
+        "text": "ODR violation or inline linkage mismatch"
+      },
+      {
+        "family": "sizeof_allocation",
+        "text": "suspicious sizeof usage or allocation size"
+      },
+      {
         "family": "pointer_reference",
         "text": "invalid pointer or reference operation"
       },
@@ -219,6 +247,34 @@
       {
         "family": "move_semantics",
         "text": "remove the std::move to allow copy elision, or fix the value category"
+      },
+      {
+        "family": "strict_aliasing",
+        "text": "use memcpy or a union for type punning instead of pointer casts"
+      },
+      {
+        "family": "abi_alignment",
+        "text": "check struct packing, alignment attributes, and target-specific ABI requirements"
+      },
+      {
+        "family": "storage_class",
+        "text": "use a single consistent storage class specifier and linkage for the declaration"
+      },
+      {
+        "family": "exception_handling",
+        "text": "enable -fexceptions/-frtti or adjust the exception specification"
+      },
+      {
+        "family": "attribute",
+        "text": "check the attribute spelling, placement, and argument requirements"
+      },
+      {
+        "family": "odr_inline_linkage",
+        "text": "ensure the inline function is defined in a header or fix the type mismatch across TUs"
+      },
+      {
+        "family": "sizeof_allocation",
+        "text": "check whether sizeof is applied to the intended type rather than a pointer"
       },
       {
         "family": "pointer_reference",
@@ -377,6 +433,21 @@
           "-wpedantic",
           "-wvla",
           "-wwrite-strings"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "storage_class",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_storage_class",
+        "headline_strategy": "fixed_text",
+        "headline": "storage class or linkage conflict",
+        "first_action_hint": "use a single consistent storage class specifier and linkage for the declaration",
+        "match_any": [
+          "multiple storage classes in declaration specifiers",
+          "follows non-static declaration",
+          "follows static declaration",
+          "'extern' variable has an initializer"
         ]
       },
       {
@@ -572,7 +643,7 @@
           "nonnull argument",
           "compared to null",
           "-wnull-dereference",
-          "-waddress",
+          "[-waddress]",
           "-wnonnull-compare"
         ]
       },
@@ -660,6 +731,107 @@
           "moving a local object in a return",
           "redundant move in return",
           "cannot bind rvalue reference"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "strict_aliasing",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_strict_aliasing",
+        "headline_strategy": "fixed_text",
+        "headline": "strict aliasing rule violation",
+        "first_action_hint": "use memcpy or a union for type punning instead of pointer casts",
+        "match_any": [
+          "strict-aliasing",
+          "type-punned pointer",
+          "will break strict-aliasing rules",
+          "dereferencing type-punned pointer"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "abi_alignment",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_abi_alignment",
+        "headline_strategy": "fixed_text",
+        "headline": "ABI or alignment compatibility issue",
+        "first_action_hint": "check struct packing, alignment attributes, and target-specific ABI requirements",
+        "match_any": [
+          "the abi of passing",
+          "parameter passing for argument",
+          "cast increases required alignment",
+          "increases required alignment of target type",
+          "address-of-packed-member",
+          "taking address of packed member",
+          "unaligned pointer value"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "exception_handling",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_exception_handling",
+        "headline_strategy": "fixed_text",
+        "headline": "exception handling configuration or usage error",
+        "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
+        "match_any": [
+          "exception handling disabled",
+          "use '-fexceptions' to enable",
+          "cannot use 'typeid' with '-fno-rtti'",
+          "non-throwing exception specification",
+          "dynamic exception specification",
+          "-wcatch-value"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "attribute",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_attribute",
+        "headline_strategy": "fixed_text",
+        "headline": "function or type attribute issue",
+        "first_action_hint": "check the attribute spelling, placement, and argument requirements",
+        "match_any": [
+          "'noreturn' function does return",
+          "attribute directive ignored",
+          "attribute argument",
+          "unknown attribute",
+          "'fallthrough' attribute not preceding",
+          "'cleanup' attribute"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "odr_inline_linkage",
+        "phase": "link",
+        "rule_id": "rule.residual.compiler_odr_inline_linkage",
+        "headline_strategy": "fixed_text",
+        "headline": "ODR violation or inline linkage mismatch",
+        "first_action_hint": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
+        "match_any": [
+          "used but never defined",
+          "always_inline function might not be inlinable",
+          "does not match original declaration",
+          "lto-type-mismatch",
+          "-wundefined-inline"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "sizeof_allocation",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_sizeof_allocation",
+        "headline_strategy": "fixed_text",
+        "headline": "suspicious sizeof usage or allocation size",
+        "first_action_hint": "check whether sizeof is applied to the intended type rather than a pointer",
+        "match_any": [
+          "sizeof-pointer-memaccess",
+          "'sizeof' on array function parameter",
+          "will return size of",
+          "sizeof-array-argument",
+          "sizeof-array-div",
+          "invalid application of 'sizeof' to incomplete type",
+          "size of array is negative"
         ]
       },
       {
