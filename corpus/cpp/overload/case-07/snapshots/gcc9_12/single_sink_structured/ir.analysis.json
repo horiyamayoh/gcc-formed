@@ -33,6 +33,7 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-f0d86376e771",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "message_contains=invalid conversion",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "6a2a5e104cee19b7cd847cc021698709de0696d15a43dbf7f2d52d88baaebc6a",
         "raw": "6dfc7f826c76e7631d308e3dbf22bf07896113e1f1d07e6d7843c617e5d19a74",
-        "structural": "bcc813879e8e19b3bbcddc98f841abca186a32e423c5e1d240690fa3845b3b70"
+        "structural": "6be150e9fbe1c8040e3100d926139329058266cef79cca7a3792027851c3c165"
       },
       "id": "json-0",
       "locations": [
@@ -106,6 +107,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-f44638368e33",
         "headline": "initializing argument 1 of 'void takes_short(short int)'",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -116,7 +118,7 @@
       "fingerprints": {
         "family": "e1f81f2eeec82216cd3e5caaac1d91b70a9a055d5c73aa656a7db763cc350a17",
         "raw": "aa73c4d7a4d40bdc6a0f07d075267e76fec3eed699e62de0c306715349ee6fa6",
-        "structural": "09734d09bd325066f55588914d13acbd966012bbd37e0c793e1c4a0e801edeb1"
+        "structural": "680336e1f84f027967552d5f04bbcdc2ea60998607c26b3d4b1bc229aae09ab1"
       },
       "id": "json-1",
       "locations": [
@@ -175,12 +177,81 @@
       "severity": "note"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-3f02c305e274",
+          "family": "type_overload",
+          "lead_group_ref": "group-f0d86376e771",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-f0d86376e771"
+          ]
+        },
+        {
+          "confidence": 0.38999998569488525,
+          "episode_ref": "episode-1e3c4b005005",
+          "family": "unknown",
+          "lead_group_ref": "group-f44638368e33",
+          "lead_root_score": 0.38999998569488525,
+          "member_group_refs": [
+            "group-f44638368e33"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-3f02c305e274",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f0d86376e771",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-1e3c4b005005",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f44638368e33",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.38999998569488525,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 1
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "6ce00530de0631f7d1c5f6f457c2fe3f219849d263b7f435e554a0d9a72f654d",
-    "structural": "ba62736fab2c7257fa4e36ec8204961ce622152288f53a19bd61fda3068b454a"
+    "raw": "adceae6c3fff77c998c4ab19845c4db2c5075829ea9da3ddf73a9b60b26e5316",
+    "structural": "5d0c3901fa017835b3310ebef38cec313aeed154f1c2ab52c49b6b91a9df0e41"
   },
   "producer": {
     "name": "gcc-formed",

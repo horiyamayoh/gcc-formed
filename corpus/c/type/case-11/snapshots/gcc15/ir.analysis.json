@@ -20,6 +20,7 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-489fab7b076b",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "message_contains=passing argument",
@@ -30,7 +31,7 @@
       "fingerprints": {
         "family": "d4fa125e4ab162c54197a305efd471dae016b0c65b2b393f1b01b39aee5f6343",
         "raw": "6f9d9cf209991e2d5f287b6b16d936e8ef72c4d2ff2437a7fc0621e6b77d537c",
-        "structural": "2a355d61526360e17e40598a0ef369f9b9140bc6e90d66a590555c68e1c1c3e8"
+        "structural": "baf39117a8d87e3d8dff814153b5360d0e4272d57c6e82184e0c6bf14ae45a40"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -76,6 +77,7 @@
         "confidence": 0.6499999761581421,
         "family": "linker",
         "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "group_ref": "group-abe91b79ea07",
         "headline": "linker reported a failure",
         "matched_conditions": [
           "phase=link"
@@ -85,7 +87,7 @@
       "fingerprints": {
         "family": "b32b4821b941680ef9fe52ba412f45d186b380a618890a3819a9ae35cf663842",
         "raw": "05d0d194d07b64ae09b6764e51bdd1ab797e965c89a96eb7cdd5bf3e60d72cdd",
-        "structural": "1d4ffd0614704899089fbe41fbdb077c79876cb7d481e9aa0f180ae726a4c30b"
+        "structural": "99897079cec4b379f1b34b548beb0a0e32e3d5a7f0300e27f063f9e503178706"
       },
       "id": "residual-passthrough",
       "message": {
@@ -104,12 +106,81 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-d22d72c64c54",
+          "family": "type_overload",
+          "lead_group_ref": "group-489fab7b076b",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-489fab7b076b"
+          ]
+        },
+        {
+          "confidence": 0.43000003695487976,
+          "episode_ref": "episode-effeba5c4f59",
+          "family": "linker",
+          "lead_group_ref": "group-abe91b79ea07",
+          "lead_root_score": 0.43000003695487976,
+          "member_group_refs": [
+            "group-abe91b79ea07"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-d22d72c64c54",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-489fab7b076b",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-effeba5c4f59",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "no_primary_location"
+        ],
+        "group_ref": "group-abe91b79ea07",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.43000003695487976,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 1
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "d3537ece516726c7ce200965236071d7858c1600ae0fa7a52037e07687f1cb23",
-    "raw": "3cec33b97ce3fc27e2cb99f4f3aeb60b0ac6c26bd999e2b509e90074d283ddd9",
-    "structural": "5b1789fdb4b9c349de0d9bf08523b65a984f139c65f133f6a35454c4619f6f0b"
+    "raw": "e33951f62a40c4a17d191f09e255cac801e6ba05f4192bfa25a80a77488b144a",
+    "structural": "570121785174750e10059c1717d57f33f3ad8cedacd7e255f23269ac747dd9ec"
   },
   "producer": {
     "name": "gcc-formed",

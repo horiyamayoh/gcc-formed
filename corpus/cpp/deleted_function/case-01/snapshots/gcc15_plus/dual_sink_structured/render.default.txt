@@ -6,7 +6,13 @@ why: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'
 |     take(value);
 |     ^
 note: declared here
+note: type or overload mismatch
+--> src/main.cpp:10:5
+help: compare the expected type and actual argument at the call site
+why: use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
+| src/main.cpp:10:5
+|     take(value);
+|     ^
 other diagnostics:
-  - src/main.cpp:10:5: note: type or overload mismatch
   - src/main.cpp:6:11: note: initializing argument 1 of 'void take(NoCopy)'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -26,7 +26,7 @@
       ],
       "family": "template",
       "first_action": "start from the first user-owned template frame and match template arguments",
-      "group_id": "json-0",
+      "group_id": "group-c3df049a5b85",
       "matched_conditions": [
         "context=template_instantiation",
         "child_note_kind=template_context",

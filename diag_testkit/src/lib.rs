@@ -130,6 +130,15 @@ pub struct RenderProfileExpectations {
     /// Whether color-meaning annotations are forbidden.
     #[serde(default)]
     pub color_meaning_forbidden: Option<bool>,
+    /// Exact count of summary-only groups expected for this surface.
+    #[serde(default)]
+    pub expected_summary_only_group_count: Option<usize>,
+    /// Exact count of fully hidden groups expected for this surface.
+    #[serde(default)]
+    pub expected_hidden_group_count: Option<usize>,
+    /// Exact count of suppressed groups expected for this surface.
+    #[serde(default)]
+    pub expected_suppressed_group_count: Option<usize>,
     /// Substrings required in compacted output.
     #[serde(default)]
     pub compaction_required_substrings: Vec<String>,
@@ -156,6 +165,9 @@ pub struct RenderExpectations {
     /// Expectations for the "verbose" profile.
     #[serde(default)]
     pub verbose: Option<RenderProfileExpectations>,
+    /// Expectations for the "debug" profile.
+    #[serde(default)]
+    pub debug: Option<RenderProfileExpectations>,
     /// Expectations for the "ci" profile.
     #[serde(default)]
     pub ci: Option<RenderProfileExpectations>,
@@ -176,6 +188,9 @@ impl RenderExpectations {
         }
         if let Some(expectations) = self.verbose.as_ref() {
             profiles.push(("verbose", expectations));
+        }
+        if let Some(expectations) = self.debug.as_ref() {
+            profiles.push(("debug", expectations));
         }
         if let Some(expectations) = self.ci.as_ref() {
             profiles.push(("ci", expectations));
@@ -206,6 +221,37 @@ pub struct PerformanceExpectations {
     pub render_time_ms_max: Option<u64>,
 }
 
+/// Document-level cascade expectations for a fixture.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CascadeExpectations {
+    /// Exact number of cascade episodes expected in document analysis.
+    #[serde(default)]
+    pub expected_independent_episode_count: Option<usize>,
+    /// Exact number of independent roots expected in cascade stats.
+    #[serde(default)]
+    pub expected_independent_root_count: Option<u32>,
+    /// Exact number of follow-on groups expected in cascade stats.
+    #[serde(default)]
+    pub expected_dependent_follow_on_count: Option<u32>,
+    /// Exact number of duplicate groups expected in cascade stats.
+    #[serde(default)]
+    pub expected_duplicate_count: Option<u32>,
+    /// Exact number of uncertain groups expected in cascade stats.
+    #[serde(default)]
+    pub expected_uncertain_count: Option<u32>,
+}
+
+impl CascadeExpectations {
+    /// Returns `true` when this block does not declare any assertions.
+    pub fn is_empty(&self) -> bool {
+        self.expected_independent_episode_count.is_none()
+            && self.expected_independent_root_count.is_none()
+            && self.expected_dependent_follow_on_count.is_none()
+            && self.expected_duplicate_count.is_none()
+            && self.expected_uncertain_count.is_none()
+    }
+}
+
 /// Full set of expectations declared for a single test fixture.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixtureExpectations {
@@ -230,6 +276,9 @@ pub struct FixtureExpectations {
     /// Per-profile render expectations.
     #[serde(default)]
     pub render: RenderExpectations,
+    /// Document-level cascade expectations.
+    #[serde(default)]
+    pub cascade: CascadeExpectations,
     /// Integrity-check expectations.
     #[serde(default)]
     pub integrity: IntegrityExpectations,
@@ -334,6 +383,8 @@ struct RawFixtureExpectations {
     semantic: Option<SemanticExpectations>,
     #[serde(default)]
     render: RenderExpectations,
+    #[serde(default)]
+    cascade: CascadeExpectations,
     #[serde(default)]
     integrity: IntegrityExpectations,
     #[serde(default)]
@@ -633,6 +684,7 @@ fn normalize_expectations(
         family: raw.family,
         semantic: raw.semantic,
         render: raw.render,
+        cascade: raw.cascade,
         integrity: raw.integrity,
         performance: raw.performance,
     })
@@ -795,6 +847,10 @@ semantic:
 render:
   default:
     first_screenful_max_lines: 24
+  debug:
+    expected_summary_only_group_count: 0
+cascade:
+  expected_independent_episode_count: 1
 "#,
                 fixture_id = spec.fixture_id,
                 version_band = spec.version_band,
@@ -861,6 +917,7 @@ tags: [syntax]
                     family: Some("syntax".to_string()),
                     semantic: None,
                     render: RenderExpectations::default(),
+                    cascade: CascadeExpectations::default(),
                     integrity: IntegrityExpectations::default(),
                     performance: PerformanceExpectations::default(),
                 },
@@ -906,6 +963,7 @@ tags: [syntax]
                     family: Some("syntax".to_string()),
                     semantic: None,
                     render: RenderExpectations::default(),
+                    cascade: CascadeExpectations::default(),
                     integrity: IntegrityExpectations::default(),
                     performance: PerformanceExpectations::default(),
                 },
@@ -1028,6 +1086,8 @@ tags: [syntax]
         );
         let snapshot_root = root.join("snapshots/gcc13_14/native_text_capture");
         write_required_promoted_artifacts(&snapshot_root);
+        fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
         assert_eq!(fixture.snapshot_root(), snapshot_root);
@@ -1053,6 +1113,8 @@ tags: [syntax]
         );
         let snapshot_root = root.join("snapshots/gcc9_12/single_sink_structured");
         write_required_promoted_artifacts(&snapshot_root);
+        fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
         assert_eq!(fixture.snapshot_root(), snapshot_root);
@@ -1064,6 +1126,48 @@ tags: [syntax]
         assert!(error.contains("diagnostics.json"));
 
         fs::write(snapshot_root.join("diagnostics.json"), "{}\n").unwrap();
+        validate_fixture(&fixture).unwrap();
+    }
+
+    #[test]
+    fn cascade_expectations_and_debug_profile_round_trip_from_yaml() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/cpp/template/case-13",
+                language: "cpp",
+                source_name: "main.cpp",
+                version_band: "gcc13_14",
+                support_level: "experimental",
+                major_version_selector: "13",
+                processing_path: "single_sink_structured",
+                snapshot_layout: "snapshots/gcc13_14/single_sink_structured",
+            },
+        );
+        let snapshot_root = root.join("snapshots/gcc13_14/single_sink_structured");
+        write_required_promoted_artifacts(&snapshot_root);
+        fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("diagnostics.sarif"), "{}\n").unwrap();
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(
+            fixture
+                .expectations
+                .cascade
+                .expected_independent_episode_count,
+            Some(1)
+        );
+        assert_eq!(
+            fixture
+                .expectations
+                .render
+                .debug
+                .as_ref()
+                .and_then(|profile| profile.expected_summary_only_group_count),
+            Some(0)
+        );
         validate_fixture(&fixture).unwrap();
     }
 }

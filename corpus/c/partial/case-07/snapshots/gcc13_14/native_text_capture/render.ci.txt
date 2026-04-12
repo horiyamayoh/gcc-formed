@@ -5,7 +5,11 @@ why: main.c:(.text+0x5): undefined reference to `missing_symbol'
 linker: symbol `missing_symbol`
 raw:
   main.c:(.text+0x5): undefined reference to `missing_symbol'
+linker: error: linker reported a failure
+help: check the missing/duplicate symbol and the object or library inputs
+why: /usr/bin/ld: <temp-object>: in function `main':
+raw:
+  /usr/bin/ld: <temp-object>: in function `main':
 other errors:
   - error: driver reported a linker failure summary
-  - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

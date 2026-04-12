@@ -1,0 +1,20 @@
+error: type or overload mismatch
+--> src/main.cpp:5:17
+help: compare the expected type and actual argument at the call site
+why: invalid conversion from 'const char*' to 'short int'
+| src/main.cpp:5:17
+|     takes_short("x");
+|                 ^~
+debug: rule_id=rule.family.type_overload.structured_or_message
+debug: matched_conditions=message_contains=invalid conversion, phase=semantic
+note: initializing argument 1 of 'void takes_short(short int)'
+--> src/main.cpp:1:18
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+why: initializing argument 1 of 'void takes_short(short int)'
+| src/main.cpp:1:18
+| void takes_short(short);
+|                  ^~~~
+debug: rule_id=rule.family.unknown
+debug: matched_conditions=no_family_rule_matched
+debug: suppression_reason=generic_fallback
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

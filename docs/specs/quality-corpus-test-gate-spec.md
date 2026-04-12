@@ -405,7 +405,7 @@ hard gate と trend metric を分ける。
 - user-visible output drift をレビュー可能にする
 
 対象軸:
-- profile: `default`, `concise`, `verbose`, `ci`, `raw_fallback`
+- profile: `default`, `concise`, `verbose`, `debug`, `ci`, `raw_fallback`
 - color: on/off
 - width: 60 / 80 / 100 / 140
 - source availability: readable / unreadable
@@ -608,12 +608,12 @@ GCC13-14 / GCC9-12 を first-class beta band として扱う場合、curated cor
 
 | VersionBand | ProcessingPath | Surface | Corpus expectation | Preferred meta tags |
 |---|---|---|---|---|
-| `GCC13-14` | `NativeTextCapture` | `default`, `ci` | bounded render か honest fallback のどちらを期待するかを fixture で明示し、default/CI surface の replay expectation を両方持つ | `band:gcc13_14`, `processing_path:native_text_capture`, `surface:default`, `surface:ci`, `fallback_contract:honest_fallback` |
-| `GCC13-14` | `SingleSinkStructured` | `default`, `ci` | explicit structured capture の bounded render を fixture で明示し、default/CI surface の replay expectation を両方持つ | `band:gcc13_14`, `processing_path:single_sink_structured`, `surface:default`, `surface:ci`, `fallback_contract:bounded_render` |
-| `GCC9-12` | `NativeTextCapture` | `default`, `ci` | useful-subset family では bounded render か honest fallback のどちらを期待するかを fixture で明示し、default/CI surface の replay expectation を両方持つ | `band:gcc9_12`, `processing_path:native_text_capture`, `surface:default`, `surface:ci`, `fallback_contract:bounded_render` |
-| `GCC9-12` | `SingleSinkStructured` | `default`, `ci` | explicit JSON structured capture の bounded render を fixture で明示し、default/CI surface の replay expectation を両方持つ | `band:gcc9_12`, `processing_path:single_sink_structured`, `surface:default`, `surface:ci`, `fallback_contract:bounded_render` |
+| `GCC13-14` | `NativeTextCapture` | `default`, `ci`, `debug` | bounded render か honest fallback のどちらを期待するかを fixture で明示し、default/CI/debug surface の replay expectation を持つ | `band:gcc13_14`, `processing_path:native_text_capture`, `surface:default`, `surface:ci`, `surface:debug`, `fallback_contract:honest_fallback` |
+| `GCC13-14` | `SingleSinkStructured` | `default`, `ci`, `debug` | explicit structured capture の bounded render を fixture で明示し、default/CI/debug surface の replay expectation を持つ | `band:gcc13_14`, `processing_path:single_sink_structured`, `surface:default`, `surface:ci`, `surface:debug`, `fallback_contract:bounded_render` |
+| `GCC9-12` | `NativeTextCapture` | `default`, `ci`, `debug` | useful-subset family では bounded render か honest fallback のどちらを期待するかを fixture で明示し、default/CI/debug surface の replay expectation を持つ | `band:gcc9_12`, `processing_path:native_text_capture`, `surface:default`, `surface:ci`, `surface:debug`, `fallback_contract:bounded_render` |
+| `GCC9-12` | `SingleSinkStructured` | `default`, `ci`, `debug` | explicit JSON structured capture の bounded render を fixture で明示し、default/CI/debug surface の replay expectation を持つ | `band:gcc9_12`, `processing_path:single_sink_structured`, `surface:default`, `surface:ci`, `surface:debug`, `fallback_contract:bounded_render` |
 
-Band B / Band C fixture を gate に含めるときは、`VersionBand` を A/B だけで潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。
+Band B / Band C fixture を gate に含めるときは、`VersionBand` を A/B だけで潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。`debug` surface を宣言した fixture は explainability signal と suppressed-group visibility の差分を replay で検証できなければならない。
 
 ---
 
@@ -690,6 +690,8 @@ corpus/
 - expected primary location(s)
 - expected first action presence
 - expected omission notice presence
+- expected cascade episode / root / follow-on / duplicate / uncertain counts
+- expected summary-only / hidden / suppressed group counts per surface
 - expected raw provenance retention
 - allowed integrity issue codes
 - allowed compiler drift notes
@@ -938,6 +940,8 @@ Clang には parseable fix-its と parseable source ranges がある。将来の
 - presence of declaration/use pair
 - presence of template/macro/include/linker context chain
 - suggestion availability / machine applicability
+- cascade episode / independent-root count
+- cascade follow-on / duplicate / uncertain count
 - confidence band
 - first action presence
 
@@ -945,6 +949,7 @@ Clang には parseable fix-its と parseable source ranges がある。将来の
 
 - first screenful line budget
 - omission notice presence
+- summary-only / hidden / suppressed group count per surface
 - raw message retained
 - path-first CI output
 - color-free readability
@@ -1531,9 +1536,24 @@ render:
   default:
     omission_notice_required: true
     first_screenful_max_lines: 24
+    expected_summary_only_group_count: 1
   ci:
     path_first_required: true
     color_meaning_forbidden: true
+    expected_summary_only_group_count: 1
+  debug:
+    expected_summary_only_group_count: 0
+    expected_hidden_group_count: 0
+    expected_suppressed_group_count: 0
+    required_substrings:
+      - "debug: rule_id="
+
+cascade:
+  expected_independent_episode_count: 2
+  expected_independent_root_count: 1
+  expected_dependent_follow_on_count: 0
+  expected_duplicate_count: 0
+  expected_uncertain_count: 1
 
 integrity:
   allowed_issue_codes: []

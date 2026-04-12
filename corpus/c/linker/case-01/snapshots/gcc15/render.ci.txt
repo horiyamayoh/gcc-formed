@@ -5,6 +5,10 @@ why: helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:mai
 linker: symbol `duplicate`
 raw:
   helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
-other errors:
-  - error: driver reported a linker failure summary
+error: driver reported a linker failure summary
+help: inspect the linker diagnostics immediately above this summary
+why: collect2: error: ld returned 1 exit status
+linker: preserved
+raw:
+  collect2: error: ld returned 1 exit status
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

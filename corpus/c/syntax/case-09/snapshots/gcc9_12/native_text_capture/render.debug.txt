@@ -1,0 +1,36 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: syntax error
+--> src/main.c:2:10
+help: fix the first parser error at the user-owned location
+why: src/main.c:2:10: error: expected ')' before '{' token
+| src/main.c:2:10
+|     if (1 {
+|          ^
+raw:
+  src/main.c:2:10: error: expected ')' before '{' token
+debug: rule_id=rule.family.syntax.phase_or_message
+debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
+error: syntax error
+--> src/main.c:5:1
+help: fix the first parser error at the user-owned location
+why: src/main.c:5:1: error: expected expression before '}' token
+| src/main.c:5:1
+| }
+| ^
+raw:
+  src/main.c:5:1: error: expected expression before '}' token
+debug: rule_id=rule.family.syntax.phase_or_message
+debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
+error: linker reported a failure
+help: check the missing/duplicate symbol and the object or library inputs
+why: src/main.c: In function 'main':
+raw:
+  src/main.c: In function 'main':
+      2 |     if (1 {
+        |        ~ ^~
+        |          )
+      5 | }
+        | ^
+debug: rule_id=rule.family.linker.structured_or_message
+debug: matched_conditions=phase=link
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

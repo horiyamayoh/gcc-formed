@@ -102,6 +102,15 @@ fn acceptance_summary(
         diagnostic_compression_ratio: Some(2.0),
         parse_time_ms: 12,
         render_time_ms: 7,
+        cascade_analysis_present: true,
+        cascade_independent_episode_count: 1,
+        cascade_independent_root_count: 1,
+        cascade_dependent_follow_on_count: 0,
+        cascade_duplicate_count: 0,
+        cascade_uncertain_count: 0,
+        default_summary_only_group_count: 0,
+        default_hidden_group_count: 0,
+        default_suppressed_group_count: 0,
         verified: true,
     }
 }

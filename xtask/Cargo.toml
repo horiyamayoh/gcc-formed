@@ -9,6 +9,7 @@ version.workspace = true
 clap.workspace = true
 diag_adapter_gcc.workspace = true
 diag_backend_probe.workspace = true
+diag_cascade.workspace = true
 diag_capture_runtime.workspace = true
 diag_core.workspace = true
 diag_enrich.workspace = true

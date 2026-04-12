@@ -15,11 +15,29 @@ semantic:
 render:
   default:
     first_screenful_max_lines: 24
+    expected_summary_only_group_count: 0
+    expected_hidden_group_count: 0
+    expected_suppressed_group_count: 0
     required_substrings:
       - "|                 ^~"
   ci:
     first_screenful_max_lines: 16
+    expected_summary_only_group_count: 0
+    expected_hidden_group_count: 0
+    expected_suppressed_group_count: 0
     path_first_required: true
     color_meaning_forbidden: true
     required_substrings:
       - "|                 ^~"
+  debug:
+    expected_summary_only_group_count: 0
+    expected_hidden_group_count: 0
+    expected_suppressed_group_count: 0
+    required_substrings:
+      - "debug: rule_id="
+cascade:
+  expected_independent_episode_count: 2
+  expected_independent_root_count: 1
+  expected_dependent_follow_on_count: 0
+  expected_duplicate_count: 0
+  expected_uncertain_count: 1

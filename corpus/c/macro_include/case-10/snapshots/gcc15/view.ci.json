@@ -23,7 +23,7 @@
       ],
       "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "sarif-0-0",
+      "group_id": "group-94d6c9018be2",
       "matched_conditions": [
         "context=macro_expansion"
       ],

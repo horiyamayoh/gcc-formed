@@ -6,13 +6,36 @@
       "collapsed_notices": [],
       "confidence_label": "likely",
       "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
+      "group_id": "group-5d0374b5181d",
+      "matched_conditions": [
+        "phase=link"
+      ],
+      "raw_message": "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':",
+      "raw_sub_block": [
+        "/usr/bin/ld: /tmp/ccVWCcwI.o: in function `duplicate_symbol':"
+      ],
+      "rule_id": "rule.family.linker.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "linker reported a failure"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
       "context_lines": [
         "linker: symbol `duplicate_symbol`"
       ],
       "excerpts": [],
       "family": "linker.multiple_definition",
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
-      "group_id": "residual-1",
+      "group_id": "group-833b6332dddb",
       "matched_conditions": [
         "phase=link",
         "context=linker_resolution",
@@ -20,9 +43,9 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccsl82mW.o:main.c:(.text+0x0): first defined here",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here",
       "raw_sub_block": [
-        "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/ccsl82mW.o:main.c:(.text+0x0): first defined here"
+        "helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; /tmp/cckbQVUl.o:main.c:(.text+0x0): first defined here"
       ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
@@ -37,14 +60,9 @@
   },
   "summary_only_groups": [
     {
-      "group_id": "residual-0",
+      "group_id": "group-ac2f5a684011",
       "severity": "error",
       "title": "driver reported a linker failure summary"
-    },
-    {
-      "group_id": "residual-passthrough",
-      "severity": "error",
-      "title": "linker reported a failure"
     }
   ]
 }

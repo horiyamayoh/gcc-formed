@@ -20,7 +20,7 @@
       ],
       "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "residual-compiler-0",
+      "group_id": "group-489fab7b076b",
       "matched_conditions": [
         "message_contains=passing argument",
         "phase=semantic"
@@ -33,18 +33,35 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
+      "group_id": "group-abe91b79ea07",
+      "matched_conditions": [
+        "phase=link"
+      ],
+      "raw_message": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~",
+      "raw_sub_block": [
+        "src/main.c: In function 'main':",
+        "    9 |     takes_int_ptr(&box);"
+      ],
+      "rule_id": "rule.family.linker.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "linker reported a failure"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "group_id": "residual-passthrough",
-      "severity": "error",
-      "title": "linker reported a failure"
-    }
-  ]
+  }
 }

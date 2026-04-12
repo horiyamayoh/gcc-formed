@@ -22,7 +22,7 @@
       ],
       "family": "deleted_function",
       "first_action": "check whether the type is movable/copyable, or provide the required special member",
-      "group_id": "sarif-0-0",
+      "group_id": "group-c2ba4f91897a",
       "matched_conditions": [
         "message_contains=use of deleted function",
         "phase=semantic"
@@ -53,7 +53,7 @@
       ],
       "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "sarif-0-1",
+      "group_id": "group-bf691203aed4",
       "matched_conditions": [
         "message_contains=candidate",
         "phase=semantic"
@@ -84,7 +84,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "sarif-0-2",
+      "group_id": "group-d84feff7273f",
       "matched_conditions": [
         "no_family_rule_matched"
       ],

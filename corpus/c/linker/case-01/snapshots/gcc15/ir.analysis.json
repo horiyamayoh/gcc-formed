@@ -33,6 +33,7 @@
         "confidence": 0.6499999761581421,
         "family": "collect2_summary",
         "first_action_hint": "inspect the linker diagnostics immediately above this summary",
+        "group_ref": "group-ac2f5a684011",
         "headline": "driver reported a linker failure summary",
         "matched_conditions": [
           "phase=link",
@@ -48,9 +49,9 @@
         }
       ],
       "fingerprints": {
-        "family": "0fcb4ae5580c6e64a93785658dac914609a2e2d758cbdf97b21f1a251581804a",
+        "family": "e736395337f576d965269dccb524b7736319719dd47225bd9dce6a12061f2141",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "e6b937c63d2df4d384c5bcd31c5f7bdf7237d0aa992dd38e1e9f4d3e925cb6d3"
+        "structural": "72c85554f5bfe35bfbb70f1710b38b8182b3ede9d9be72a99ee249578e1b52a1"
       },
       "id": "residual-0",
       "message": {
@@ -73,6 +74,7 @@
         "confidence": 0.6499999761581421,
         "family": "linker.multiple_definition",
         "first_action_hint": "remove the duplicate definition or make the symbol internal to one translation unit",
+        "group_ref": "group-c37207e6ba9e",
         "headline": "multiple definition of `duplicate`",
         "matched_conditions": [
           "phase=link",
@@ -92,7 +94,7 @@
       "fingerprints": {
         "family": "28fe16eca0514e0e55e5d7714620c877226850cdc7e76c657e8063f865e136d7",
         "raw": "bd8ba8437f6d6add5418059fbb45038f5664dc5db3fdee74a69ded4a212fbc6c",
-        "structural": "82596f2181c467cab3a7c0506fa2374658bc2e5b6a6a0ca557494b08ce90193d"
+        "structural": "645ef1c7f46687592fcffcefd9266962ed532ee2a916541daa86053aebb9e4ed"
       },
       "id": "residual-1",
       "message": {
@@ -114,12 +116,85 @@
       }
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 1.4901161193847656e-8,
+          "episode_ref": "episode-da5205a3f6d2",
+          "family": "collect2_summary",
+          "lead_group_ref": "group-ac2f5a684011",
+          "lead_root_score": 1.4901161193847656e-8,
+          "member_group_refs": [
+            "group-ac2f5a684011"
+          ]
+        },
+        {
+          "confidence": 0.39000001549720764,
+          "episode_ref": "episode-740607356a8e",
+          "family": "linker.multiple_definition",
+          "lead_group_ref": "group-c37207e6ba9e",
+          "lead_root_score": 0.39000001549720764,
+          "member_group_refs": [
+            "group-c37207e6ba9e"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-da5205a3f6d2",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "generic_follow_on",
+          "generic_linker_wrapper",
+          "no_primary_location"
+        ],
+        "group_ref": "group-ac2f5a684011",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 1.4901161193847656e-8,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-740607356a8e",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "no_primary_location",
+          "specific_symbol_or_frontier",
+          "strong_root_family"
+        ],
+        "group_ref": "group-c37207e6ba9e",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.39000001549720764,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 0,
+      "uncertain_count": 2
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "282c627a0e59994ceb3587b4cc893500520d8b55f2596a9a7870d525642172a5",
-    "raw": "0eadd0a5219c0b4b82f8dfc8552bb4f2ab5c537f96daaa4d08fe123419d38ad4",
-    "structural": "09c02714a0aa2f051033902854aaf761fb588d02a2206a874122e6abb0a0fe1e"
+    "family": "fc23e1ca9c546ff736874a4fe3bd165d6d67b67eb6918b7e0ec4d7b506bab970",
+    "raw": "ead6f9b90412f4bf3f6bb714e44ded887b909cd63afbcafa5e2759bb38b7049f",
+    "structural": "94948ee422a4b355ede261880a470ade929cbd6cd85319ec677ecb9a12d25c91"
   },
   "integrity_issues": [
     {

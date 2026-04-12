@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "macro_include",
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "group_ref": "group-d890bfb119c0",
         "headline": "error surfaced through macro/include context",
         "matched_conditions": [
           "context=macro_expansion",
@@ -135,7 +136,7 @@
       "fingerprints": {
         "family": "b00ae28cb4b4d6243f411603dc008defe6392244139e3547ddd171a5c9bb75bd",
         "raw": "24ff3c191f05e40e98d68af90fdb3f9b0e50d39f0d053385f64ed53c4ca8ba2a",
-        "structural": "955227ef868d5ad692fb207e754d65e5320dfb03abd6c61c1c2dc7f5dafe5177"
+        "structural": "2a824839672e040f6f712acb943519b5b093e6d3cdcbfffabbac1f472411ddf2"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -177,12 +178,56 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.9599999785423279,
+          "episode_ref": "episode-02e6d37f8618",
+          "family": "macro_include",
+          "lead_group_ref": "group-d890bfb119c0",
+          "lead_root_score": 0.9599999785423279,
+          "member_group_refs": [
+            "group-d890bfb119c0"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-02e6d37f8618",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-d890bfb119c0",
+        "independence_score": 0.9599999785423279,
+        "role": "independent_root",
+        "root_score": 0.9599999785423279,
+        "summary_likelihood": 0.36400002241134644,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "75d027447cf0220f690818a69484f6986691ca061d43c2e7ea1f666c6aa1366a",
-    "structural": "bbc64d8f02a1ad80f425d9e61c3d098459014095b2ee117775bd646e90d3c537"
+    "raw": "99382583db41e195ce62ca60b5c5e8f48f8daacbf12334a2c6cb3559fbe60391",
+    "structural": "f8f42e2d2256300139e956c00cc75d0f999cb6052e5e792115ee4548c2e52f15"
   },
   "producer": {
     "name": "gcc-formed",

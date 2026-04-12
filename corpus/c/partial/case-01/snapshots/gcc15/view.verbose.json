@@ -12,7 +12,7 @@
       "excerpts": [],
       "family": "linker.undefined_reference",
       "first_action": "define the missing symbol or link the object/library that provides it",
-      "group_id": "residual-1",
+      "group_id": "group-5a2b7fabe834",
       "matched_conditions": [
         "phase=link",
         "context=linker_resolution",
@@ -41,7 +41,7 @@
       "excerpts": [],
       "family": "collect2_summary",
       "first_action": "inspect the linker diagnostics immediately above this summary",
-      "group_id": "residual-0",
+      "group_id": "group-ac2f5a684011",
       "matched_conditions": [
         "phase=link",
         "context=linker_resolution",

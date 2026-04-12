@@ -12,7 +12,7 @@
       "excerpts": [],
       "family": "linker.multiple_definition",
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
-      "group_id": "residual-1",
+      "group_id": "group-1b07d5c4c593",
       "matched_conditions": [
         "phase=link",
         "context=linker_resolution",
@@ -20,26 +20,46 @@
         "message_contains=multiple definition",
         "existing_specific_family=linker.multiple_definition"
       ],
-      "raw_message": "/usr/bin/ld: /tmp/ccVAtQzn.o:(.data+0x0): multiple definition of `shared'; /tmp/cclg6Xzi.o:(.data+0x0): first defined here",
+      "raw_message": "/usr/bin/ld: /tmp/ccp3iCvq.o:(.data+0x0): multiple definition of `shared'; /tmp/ccTw0tHg.o:(.data+0x0): first defined here",
       "raw_sub_block": [
-        "/usr/bin/ld: /tmp/ccVAtQzn.o:(.data+0x0): multiple definition of `shared'; /tmp/cclg6Xzi.o:(.data+0x0): first defined here"
+        "/usr/bin/ld: /tmp/ccp3iCvq.o:(.data+0x0): multiple definition of `shared'; /tmp/ccTw0tHg.o:(.data+0x0): first defined here"
       ],
       "rule_id": "rule.family.ingress_specific_override",
       "severity": "error",
       "suppression_reason": "preserved_specific_family_from_ingress",
       "title": "multiple definition of `shared`"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "family": "collect2_summary",
+      "first_action": "inspect the linker diagnostics immediately above this summary",
+      "group_id": "group-ac2f5a684011",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "existing_specific_family=collect2_summary"
+      ],
+      "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "driver reported a linker failure summary"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "group_id": "residual-0",
-      "severity": "error",
-      "title": "driver reported a linker failure summary"
-    }
-  ]
+  }
 }

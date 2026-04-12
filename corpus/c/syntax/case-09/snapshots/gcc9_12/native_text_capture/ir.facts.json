@@ -19,15 +19,30 @@
       "fingerprints": {
         "family": "0f599c3f30da91aa02bf34db3c93b25c3de476a640d70e8d144549f0525ea81a",
         "raw": "ae89a61ebe068a845d514be79177a38f39ddd6dac94e8e7c1ab088f5b3930a4a",
-        "structural": "287db5babf334c4755e03d7ed13882115b0c68171086dfe74ae375da413fe3df"
+        "structural": "a357ca19b0fd0ace8cbd59c6d8ae5633065f1cac59919c7243fb6265dc74ba0a"
       },
       "id": "residual-compiler-0",
       "locations": [
         {
-          "column": 10,
-          "line": 2,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 10,
+            "column_native": 10,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:10:2:10",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -49,15 +64,30 @@
       "fingerprints": {
         "family": "4ab26fb5f5900601120cd9dd5e7f6a424f1748555d6d58864660a1781f4f78ad",
         "raw": "63ef0da2b4d6433f53587506e4ba48708c2e7f35551370480130cd54f57d797e",
-        "structural": "c8e8b73612675edec3c6ecbe43f00a0e784522df6af0d2c33fecb144210a0419"
+        "structural": "82782957d4b457264b45ae3dc6a2f3e117b687dc694c9c5e2f1ef8d303afa005"
       },
       "id": "residual-compiler-1",
       "locations": [
         {
-          "column": 1,
-          "line": 5,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:5:1:5:1",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -102,8 +132,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "ffb368ce946c985bea6ed650a98a757afadd5e1342594c6fa918791e7d0ac638",
-    "structural": "ecebceb69ca0accdc74a94469c350000e39833fc239911da6f60938330d41c1d"
+    "raw": "4eec8a1d6e4e4621dea03adbe2fe54a6eb51634f921522d8208dd25ef05ce18c",
+    "structural": "4ae12e9155b5e358304a3e6ead4a9a71ca98d7462d31ade09cab36a62920aae2"
   },
   "producer": {
     "name": "gcc-formed",

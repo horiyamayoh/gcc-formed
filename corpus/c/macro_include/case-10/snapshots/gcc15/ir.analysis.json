@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "macro_include",
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "group_ref": "group-94d6c9018be2",
         "headline": "error surfaced through macro/include context",
         "matched_conditions": [
           "context=macro_expansion"
@@ -55,7 +56,7 @@
       "fingerprints": {
         "family": "516564eab95cb51a46bf524b54f13491c931446af0f4b478c92e1b30661679cb",
         "raw": "8656d4c1dae0beda317273d663831c673c42cb168fd5b819a61dd687004a8f28",
-        "structural": "8f719bde7a2decae32116fe66c63356fe9eca02e020574e0009af3c8bfe00bee"
+        "structural": "24079722718ef896910146e994b4d88836259d8e5692e0d941e5ca542cc76f21"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -97,12 +98,56 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.9599999785423279,
+          "episode_ref": "episode-de28b3880666",
+          "family": "macro_include",
+          "lead_group_ref": "group-94d6c9018be2",
+          "lead_root_score": 0.9599999785423279,
+          "member_group_refs": [
+            "group-94d6c9018be2"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-de28b3880666",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-94d6c9018be2",
+        "independence_score": 0.9599999785423279,
+        "role": "independent_root",
+        "root_score": 0.9599999785423279,
+        "summary_likelihood": 0.36400002241134644,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "b6c6113f93f9f243bf0126f3898dc4c67d4276edb4f165f53d2ed73a8297fe9a",
-    "structural": "0e775ed34130f1eae97fe080a6acb08f81de4c1517839b01eee46c71638d5fc0"
+    "raw": "cafbff3b3cc5580007221e05483e23855e6ff8766845f11a9dd6aa3827894644",
+    "structural": "c5b7224293b52f25187d676d3a48b846ee72c756da3d6309c86f8ff3f155d355"
   },
   "producer": {
     "name": "gcc-formed",

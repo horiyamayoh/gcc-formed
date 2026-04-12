@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "group_ref": "group-c3df049a5b85",
         "headline": "template instantiation failed",
         "matched_conditions": [
           "context=template_instantiation",
@@ -566,7 +567,7 @@
       "fingerprints": {
         "family": "04902793a5e1d730f0710d529e694e3ac8a6015380933796d2ff26b05d8d1d20",
         "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
-        "structural": "91b779aff09f39c031d10cf55d3434767f6a388e91c35df7ef17f78782811df3"
+        "structural": "7305a7175440a33784d970848bc9f6a2e30b68898e1ea205c5962cd8303b87a0"
       },
       "id": "json-0",
       "locations": [
@@ -608,12 +609,56 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.9599999785423279,
+          "episode_ref": "episode-708609e00e3b",
+          "family": "template",
+          "lead_group_ref": "group-c3df049a5b85",
+          "lead_root_score": 0.9599999785423279,
+          "member_group_refs": [
+            "group-c3df049a5b85"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-708609e00e3b",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-c3df049a5b85",
+        "independence_score": 0.9599999785423279,
+        "role": "independent_root",
+        "root_score": 0.9599999785423279,
+        "summary_likelihood": 0.36400002241134644,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
-    "raw": "5ee643147fe8b11f1aa96e739f9d488e0c2174b98820cb13a8e494e15b51e8be",
-    "structural": "2395e6994311ab999891ab6d65274d523664e12fead317d382531d06b9a33989"
+    "raw": "26d8b2730ac6de7f81cc87cc7f340a9a3e399b0b35cccb3a9bc26fb54b1997c4",
+    "structural": "4192dd2813bd936ef8b3be20663f1d381f48f7dd0bc9e79777b414019b4be1ed"
   },
   "producer": {
     "name": "gcc-formed",

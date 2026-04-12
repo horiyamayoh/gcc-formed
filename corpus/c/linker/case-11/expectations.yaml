@@ -5,7 +5,7 @@ processing_path: native_text_capture
 support_level: experimental
 expected_mode: render
 semantic:
-  family: linker.multiple_definition
+  family: linker
   severity: error
   raw_provenance_required: true
   fallback: forbidden

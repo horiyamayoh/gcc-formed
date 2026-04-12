@@ -5,9 +5,11 @@ use diag_capture_runtime::{
     CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
     NativeTextCapturePolicy, StructuredCapturePolicy,
 };
+use diag_cascade::{CascadeContext, DocumentAnalyzer, SafeDocumentAnalyzer};
 use diag_core::{
-    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackReason,
-    LanguageMode, Ownership, RunInfo, SnapshotKind, WrapperSurface, fingerprint_for, snapshot_json,
+    ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackGrade,
+    FallbackReason, LanguageMode, Ownership, RunInfo, SnapshotKind, SourceAuthority,
+    WrapperSurface, fingerprint_for, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -23,6 +25,7 @@ use diag_trace::RetentionPolicy;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::fs;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
@@ -106,6 +109,15 @@ pub(crate) struct AcceptanceFixtureSummary {
     pub(crate) diagnostic_compression_ratio: Option<f64>,
     pub(crate) parse_time_ms: u64,
     pub(crate) render_time_ms: u64,
+    pub(crate) cascade_analysis_present: bool,
+    pub(crate) cascade_independent_episode_count: usize,
+    pub(crate) cascade_independent_root_count: u32,
+    pub(crate) cascade_dependent_follow_on_count: u32,
+    pub(crate) cascade_duplicate_count: u32,
+    pub(crate) cascade_uncertain_count: u32,
+    pub(crate) default_summary_only_group_count: usize,
+    pub(crate) default_hidden_group_count: usize,
+    pub(crate) default_suppressed_group_count: usize,
     pub(crate) verified: bool,
 }
 
@@ -230,6 +242,7 @@ pub(crate) enum FallbackContract {
 pub(crate) enum FixtureSurface {
     Default,
     Ci,
+    Debug,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -244,6 +257,22 @@ pub(crate) struct FixtureCoverageReport {
     pub(crate) counts_by_band_path_surface: BTreeMap<String, usize>,
     pub(crate) fixture_ids_by_band_path_surface: BTreeMap<String, Vec<String>>,
     pub(crate) missing_required_band_path_surfaces: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct CascadeCountSummary {
+    pub(crate) independent_episode_count: usize,
+    pub(crate) independent_root_count: u32,
+    pub(crate) dependent_follow_on_count: u32,
+    pub(crate) duplicate_count: u32,
+    pub(crate) uncertain_count: u32,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct RenderSurfaceCounts {
+    pub(crate) summary_only_group_count: usize,
+    pub(crate) hidden_group_count: usize,
+    pub(crate) suppressed_group_count: usize,
 }
 
 #[derive(Debug)]
@@ -565,6 +594,9 @@ pub(crate) fn collect_acceptance_fixture_summary(
     let raw_diagnostics_hint_present = contains_raw_diagnostics_hint(&default_render_result.text);
     let raw_sub_block_present = contains_raw_sub_block(&default_render_result.text);
     let low_confidence_notice_present = contains_low_confidence_notice(&default_render_result.text);
+    let default_surface_counts =
+        render_surface_counts(default_view_model.as_ref(), &default_render_result);
+    let cascade_summary = cascade_count_summary(&replay.document);
     let raw_line_count = text_line_count(
         &fs::read_to_string(fixture.snapshot_root().join("stderr.raw")).map_err(|error| {
             VerificationFailure {
@@ -704,6 +736,15 @@ pub(crate) fn collect_acceptance_fixture_summary(
         diagnostic_compression_ratio,
         parse_time_ms: replay.parse_time_ms,
         render_time_ms,
+        cascade_analysis_present: replay.document.document_analysis.is_some(),
+        cascade_independent_episode_count: cascade_summary.independent_episode_count,
+        cascade_independent_root_count: cascade_summary.independent_root_count,
+        cascade_dependent_follow_on_count: cascade_summary.dependent_follow_on_count,
+        cascade_duplicate_count: cascade_summary.duplicate_count,
+        cascade_uncertain_count: cascade_summary.uncertain_count,
+        default_summary_only_group_count: default_surface_counts.summary_only_group_count,
+        default_hidden_group_count: default_surface_counts.hidden_group_count,
+        default_suppressed_group_count: default_surface_counts.suppressed_group_count,
         verified: false,
     })
 }
@@ -769,6 +810,7 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
         summary: "default render produced no lead diagnostic".to_string(),
     })?;
     verify_semantic_expectations(fixture, &replay.document, lead_node, &default_render_result)?;
+    verify_cascade_expectations(fixture, &replay.document)?;
 
     for (profile_name, expectations) in fixture.expectations.render.named_profiles() {
         let profile =
@@ -820,6 +862,8 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
             profile_name,
             expectations,
             &render_result.text,
+            view_model.as_ref(),
+            &render_result,
             lead_node
                 .primary_location()
                 .map(|location| location.path_raw()),
@@ -1100,11 +1144,73 @@ pub(crate) fn replay_document_from_ingress(
     let mut document = ingest.document;
     document.captures = bundle.capture_artifacts();
     enrich_document(&mut document, &fixture.root);
+    run_cascade_analysis_for_fixture(
+        &mut document,
+        fixture,
+        ingest.source_authority,
+        ingest.fallback_grade,
+    );
     Ok(ReplayOutcomeAndDocument {
         document,
         fallback_reason: ingest.fallback_reason,
         parse_time_ms: 0,
     })
+}
+
+pub(crate) fn run_cascade_analysis_for_fixture(
+    document: &mut DiagnosticDocument,
+    fixture: &Fixture,
+    source_authority: SourceAuthority,
+    fallback_grade: FallbackGrade,
+) {
+    let context = CascadeContext {
+        version_band: fixture_support_band(fixture),
+        processing_path: fixture_processing_path(fixture),
+        source_authority,
+        fallback_grade,
+        cwd: fixture.root.clone(),
+    };
+    match catch_unwind(AssertUnwindSafe(|| {
+        SafeDocumentAnalyzer.analyze_document(
+            document,
+            &context,
+            &diag_core::CascadePolicySnapshot::default(),
+        )
+    })) {
+        Ok(Ok(_)) => {}
+        Ok(Err(_)) | Err(_) => {
+            document.document_analysis = None;
+        }
+    }
+}
+
+pub(crate) fn cascade_count_summary(document: &DiagnosticDocument) -> CascadeCountSummary {
+    let Some(document_analysis) = document.document_analysis.as_ref() else {
+        return CascadeCountSummary::default();
+    };
+    CascadeCountSummary {
+        independent_episode_count: document_analysis.episode_graph.episodes.len(),
+        independent_root_count: document_analysis.stats.independent_root_count,
+        dependent_follow_on_count: document_analysis.stats.dependent_follow_on_count,
+        duplicate_count: document_analysis.stats.duplicate_count,
+        uncertain_count: document_analysis.stats.uncertain_count,
+    }
+}
+
+pub(crate) fn render_surface_counts(
+    view_model: Option<&diag_render::RenderViewModel>,
+    render_result: &diag_render::RenderResult,
+) -> RenderSurfaceCounts {
+    let summary_only_group_count = view_model
+        .map(|model| model.summary_only_groups.len())
+        .unwrap_or_default();
+    let suppressed_group_count = render_result.suppressed_group_count;
+    let hidden_group_count = suppressed_group_count.saturating_sub(summary_only_group_count);
+    RenderSurfaceCounts {
+        summary_only_group_count,
+        hidden_group_count,
+        suppressed_group_count,
+    }
 }
 
 pub(crate) fn run_info_for_fixture(fixture: &Fixture) -> RunInfo {
@@ -1389,11 +1495,82 @@ pub(crate) fn verify_semantic_expectations(
     Ok(())
 }
 
+pub(crate) fn verify_cascade_expectations(
+    fixture: &Fixture,
+    document: &DiagnosticDocument,
+) -> Result<(), VerificationFailure> {
+    if fixture.expectations.cascade.is_empty() {
+        return Ok(());
+    }
+
+    let Some(_) = document.document_analysis.as_ref() else {
+        return Err(VerificationFailure {
+            layer: "cascade.analysis".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: "fixture declared cascade expectations but document_analysis was absent"
+                .to_string(),
+        });
+    };
+
+    let actual = cascade_count_summary(document);
+    let expected = &fixture.expectations.cascade;
+
+    if let Some(count) = expected.expected_independent_episode_count
+        && actual.independent_episode_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.independent_episode_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.independent_episode_count),
+        });
+    }
+    if let Some(count) = expected.expected_independent_root_count
+        && actual.independent_root_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.independent_root_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.independent_root_count),
+        });
+    }
+    if let Some(count) = expected.expected_dependent_follow_on_count
+        && actual.dependent_follow_on_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.dependent_follow_on_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.dependent_follow_on_count),
+        });
+    }
+    if let Some(count) = expected.expected_duplicate_count
+        && actual.duplicate_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.duplicate_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.duplicate_count),
+        });
+    }
+    if let Some(count) = expected.expected_uncertain_count
+        && actual.uncertain_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.uncertain_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.uncertain_count),
+        });
+    }
+
+    Ok(())
+}
+
 pub(crate) fn verify_render_expectations(
     fixture: &Fixture,
     profile_name: &str,
     expectations: &RenderProfileExpectations,
     text: &str,
+    view_model: Option<&diag_render::RenderViewModel>,
+    render_result: &diag_render::RenderResult,
     lead_path: Option<&str>,
 ) -> Result<(), VerificationFailure> {
     let omission_notice_present = contains_omission_notice(text);
@@ -1513,6 +1690,43 @@ pub(crate) fn verify_render_expectations(
             layer: format!("render.{profile_name}.ansi"),
             fixture_id: fixture.fixture_id().to_string(),
             summary: "render output used ANSI escapes".to_string(),
+        });
+    }
+    let surface_counts = render_surface_counts(view_model, render_result);
+    if let Some(count) = expectations.expected_summary_only_group_count
+        && surface_counts.summary_only_group_count != count
+    {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.summary_only_group_count"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "expected {count}, got {}",
+                surface_counts.summary_only_group_count
+            ),
+        });
+    }
+    if let Some(count) = expectations.expected_hidden_group_count
+        && surface_counts.hidden_group_count != count
+    {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.hidden_group_count"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "expected {count}, got {}",
+                surface_counts.hidden_group_count
+            ),
+        });
+    }
+    if let Some(count) = expectations.expected_suppressed_group_count
+        && surface_counts.suppressed_group_count != count
+    {
+        return Err(VerificationFailure {
+            layer: format!("render.{profile_name}.suppressed_group_count"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "expected {count}, got {}",
+                surface_counts.suppressed_group_count
+            ),
         });
     }
     for required in &expectations.compaction_required_substrings {
@@ -1675,8 +1889,15 @@ pub(crate) fn lead_node_for_document<'a>(
     document: &'a DiagnosticDocument,
     displayed_group_refs: &[String],
 ) -> Option<&'a diag_core::DiagnosticNode> {
-    let lead_id = displayed_group_refs.first()?;
-    document.diagnostics.iter().find(|node| &node.id == lead_id)
+    let lead_group_ref = displayed_group_refs.first()?;
+    document.diagnostics.iter().find(|node| {
+        node.id == *lead_group_ref
+            || node
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.group_ref.as_deref())
+                == Some(lead_group_ref.as_str())
+    })
 }
 
 pub(crate) fn confidence_rank(confidence: diag_core::Confidence) -> u8 {
@@ -1884,6 +2105,7 @@ pub(crate) fn fixture_surface_label(surface: FixtureSurface) -> &'static str {
     match surface {
         FixtureSurface::Default => "default",
         FixtureSurface::Ci => "ci",
+        FixtureSurface::Debug => "debug",
     }
 }
 
@@ -1986,9 +2208,13 @@ pub(crate) fn required_representative_band_path_surfaces() -> Vec<String> {
     required_representative_band_paths()
         .into_iter()
         .flat_map(|band_path| {
-            [FixtureSurface::Default, FixtureSurface::Ci]
-                .into_iter()
-                .map(move |surface| format!("{band_path}/{}", fixture_surface_label(surface)))
+            [
+                FixtureSurface::Default,
+                FixtureSurface::Ci,
+                FixtureSurface::Debug,
+            ]
+            .into_iter()
+            .map(move |surface| format!("{band_path}/{}", fixture_surface_label(surface)))
         })
         .collect()
 }
@@ -2001,6 +2227,9 @@ pub(crate) fn fixture_surfaces(fixture: &Fixture) -> Vec<FixtureSurface> {
     if fixture_has_any_tag(fixture, &["surface:ci"]) {
         surfaces.push(FixtureSurface::Ci);
     }
+    if fixture_has_any_tag(fixture, &["surface:debug"]) {
+        surfaces.push(FixtureSurface::Debug);
+    }
     if !surfaces.is_empty() {
         surfaces.sort();
         surfaces.dedup();
@@ -2012,6 +2241,9 @@ pub(crate) fn fixture_surfaces(fixture: &Fixture) -> Vec<FixtureSurface> {
     }
     if fixture.expectations.render.ci.is_some() {
         surfaces.push(FixtureSurface::Ci);
+    }
+    if fixture.expectations.render.debug.is_some() {
+        surfaces.push(FixtureSurface::Debug);
     }
     surfaces
 }
@@ -2771,8 +3003,8 @@ mod tests {
     use super::*;
     use diag_core::Severity;
     use diag_testkit::{
-        FixtureExpectations, FixtureInvoke, FixtureMeta, IntegrityExpectations,
-        PerformanceExpectations, RenderExpectations, SemanticExpectations,
+        CascadeExpectations, FixtureExpectations, FixtureInvoke, FixtureMeta,
+        IntegrityExpectations, PerformanceExpectations, RenderExpectations, SemanticExpectations,
     };
     use std::collections::BTreeMap;
     use std::path::PathBuf;
@@ -2844,6 +3076,7 @@ mod tests {
                     confidence_min: None,
                 }),
                 render: RenderExpectations::default(),
+                cascade: CascadeExpectations::default(),
                 integrity: IntegrityExpectations::default(),
                 performance: PerformanceExpectations::default(),
             },
@@ -2927,8 +3160,27 @@ mod tests {
         );
         fixture.expectations.render.default = Some(RenderProfileExpectations::default());
         fixture.expectations.render.ci = Some(RenderProfileExpectations::default());
+        fixture.expectations.render.debug = Some(RenderProfileExpectations::default());
 
         assert_eq!(fixture_surfaces(&fixture), vec![FixtureSurface::Default]);
+    }
+
+    #[test]
+    fn fixture_surfaces_infer_debug_when_expectations_declare_it() {
+        let mut fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[],
+            Some(ExpectedFallback::Forbidden),
+        );
+        fixture.expectations.render.default = Some(RenderProfileExpectations::default());
+        fixture.expectations.render.debug = Some(RenderProfileExpectations::default());
+
+        assert_eq!(
+            fixture_surfaces(&fixture),
+            vec![FixtureSurface::Default, FixtureSurface::Debug]
+        );
     }
 
     #[test]
@@ -2959,12 +3211,16 @@ mod tests {
             coverage.missing_required_band_path_surfaces,
             vec![
                 "gcc13_14/native_text_capture/ci".to_string(),
+                "gcc13_14/native_text_capture/debug".to_string(),
                 "gcc13_14/single_sink_structured/default".to_string(),
                 "gcc13_14/single_sink_structured/ci".to_string(),
+                "gcc13_14/single_sink_structured/debug".to_string(),
                 "gcc9_12/native_text_capture/default".to_string(),
                 "gcc9_12/native_text_capture/ci".to_string(),
+                "gcc9_12/native_text_capture/debug".to_string(),
                 "gcc9_12/single_sink_structured/default".to_string(),
                 "gcc9_12/single_sink_structured/ci".to_string(),
+                "gcc9_12/single_sink_structured/debug".to_string(),
             ]
         );
     }

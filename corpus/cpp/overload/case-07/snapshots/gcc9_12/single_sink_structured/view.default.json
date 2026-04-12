@@ -20,7 +20,7 @@
       ],
       "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "json-0",
+      "group_id": "group-f0d86376e771",
       "matched_conditions": [
         "message_contains=invalid conversion",
         "phase=semantic"
@@ -30,19 +30,41 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:1:18",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "possible",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "                 ^~~~"
+          ],
+          "lines": [
+            "void takes_short(short);"
+          ],
+          "location": "src/main.cpp:1:18"
+        }
+      ],
+      "family": "unknown",
+      "first_action": null,
+      "group_id": "group-f44638368e33",
+      "matched_conditions": [
+        "no_family_rule_matched"
+      ],
+      "raw_message": "initializing argument 1 of 'void takes_short(short int)'",
+      "rule_id": "rule.family.unknown",
+      "severity": "note",
+      "suppression_reason": "generic_fallback",
+      "title": "initializing argument 1 of 'void takes_short(short int)'"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.cpp:1:18",
-      "group_id": "json-1",
-      "severity": "note",
-      "title": "initializing argument 1 of 'void takes_short(short int)'"
-    }
-  ]
+  }
 }

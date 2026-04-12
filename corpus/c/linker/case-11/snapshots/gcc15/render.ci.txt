@@ -1,4 +1,9 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
+linker: error: linker reported a failure
+help: check the missing/duplicate symbol and the object or library inputs
+why: /usr/bin/ld: <temp-object>: in function `duplicate_symbol':
+raw:
+  /usr/bin/ld: <temp-object>: in function `duplicate_symbol':
 linker: error: multiple definition of `duplicate_symbol`
 help: remove the duplicate definition or make the symbol internal to one translation unit
 why: helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; <temp-object>:main.c:(.text+0x0): first defined here
@@ -7,5 +12,4 @@ raw:
   helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; <temp-object>:main.c:(.text+0x0): first defined here
 other errors:
   - error: driver reported a linker failure summary
-  - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

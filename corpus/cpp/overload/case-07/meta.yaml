@@ -9,13 +9,14 @@ tags:
 - 'processing_path:single_sink_structured'
 - 'surface:default'
 - 'surface:ci'
+- 'surface:debug'
 - 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex
 redaction_class: public
 owner_team: compiler-ux
-last_reviewed: '2026-04-11'
+last_reviewed: '2026-04-12'
 reviewers:
 - codex
 promotion_status: curated

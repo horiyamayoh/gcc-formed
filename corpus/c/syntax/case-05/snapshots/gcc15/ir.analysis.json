@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-f6c2d6e105be",
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
@@ -44,7 +45,7 @@
       "fingerprints": {
         "family": "b9475557f45c8644921bda2f79d6409641ebf674132398f2b6496f72f6fa6642",
         "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
-        "structural": "a6ff1b1eb663c8bad82f69058498e0cc869d53efd2938758987a14532f279eea"
+        "structural": "179e48fa0b12709181eb8571003eef93ef6586f59a81445e3377c167832143e1"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -106,6 +107,7 @@
         "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-7359321864f4",
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
@@ -117,7 +119,7 @@
       "fingerprints": {
         "family": "b0b7f837419bd22b62482dbff0faea8e4137ac557563b1dcb4ba7380609cc410",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "cc0283fa0bf2688923a91d8196f71fcf2919113cc123c613949d847b715885ee"
+        "structural": "2d0c9d9e9d385c2e0ae51e3b8c48e5a81ec85e0b6624331e3ab3339db15ead50"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -179,6 +181,7 @@
         "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-114ea2e0d577",
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
@@ -190,7 +193,7 @@
       "fingerprints": {
         "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
         "raw": "681dc866b644030d3d2e6e3d73f1eb5da1bc08be598cdef8a1008296cffffa9e",
-        "structural": "83c5df4a757465661ff50b5f3dbdba8acdc539a1a327ba3b7da5d3cc3ab36525"
+        "structural": "cc67cb5216453ee16a8aefc35d136b86826ac1b285a973a1c7e884520d860ead"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -232,12 +235,107 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-e69e0def1ae6",
+          "family": "syntax",
+          "lead_group_ref": "group-f6c2d6e105be",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-f6c2d6e105be"
+          ]
+        },
+        {
+          "confidence": 0.8700000047683716,
+          "episode_ref": "episode-2abd727e05f1",
+          "family": "syntax",
+          "lead_group_ref": "group-7359321864f4",
+          "lead_root_score": 0.8700000047683716,
+          "member_group_refs": [
+            "group-7359321864f4"
+          ]
+        },
+        {
+          "confidence": 0.8399999737739563,
+          "episode_ref": "episode-1fbbc6249733",
+          "family": "syntax",
+          "lead_group_ref": "group-114ea2e0d577",
+          "lead_root_score": 0.8399999737739563,
+          "member_group_refs": [
+            "group-114ea2e0d577"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-e69e0def1ae6",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f6c2d6e105be",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-2abd727e05f1",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-7359321864f4",
+        "independence_score": 0.8700000047683716,
+        "role": "independent_root",
+        "root_score": 0.8700000047683716,
+        "summary_likelihood": 0.37300002574920654,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-1fbbc6249733",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-114ea2e0d577",
+        "independence_score": 0.8399999737739563,
+        "role": "independent_root",
+        "root_score": 0.8399999737739563,
+        "summary_likelihood": 0.3760000169277191,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 3,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
-    "raw": "fb9ae99f144db5a444228e91f7ac9a1909f66c9e6574d07fdeea4b099a3609df",
-    "structural": "c5d18f8ae23b656496aec6a6a2217f8ea9b5ffcd9f73629caf45e2b55c310335"
+    "raw": "b6a6d5ea23980426cb05a0ea5798821176dd5c9aa6bd40c8df4144ee14df416c",
+    "structural": "7b620106be9944a8ddd1c0551716fdc48b36a5a5a7b2a88b81416533c165667c"
   },
   "producer": {
     "name": "gcc-formed",

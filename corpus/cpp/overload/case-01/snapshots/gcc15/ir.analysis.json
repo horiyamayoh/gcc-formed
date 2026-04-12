@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-fb462edc9599",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "child_role=candidate",
@@ -270,7 +271,7 @@
       "fingerprints": {
         "family": "7ceebab4d46866807b15600aad5b717cfc02866708c7252fba1099669804f4ae",
         "raw": "473e8fef50f407fe921a63bd544d45ce34019d91f88bde2b0f2dd3020a940208",
-        "structural": "57c4a2e02e7a13c19312350beeccdecc3f0841d4533facb51c2114ed8e2efa3c"
+        "structural": "b27939dfa9711bd1ac859f4e7fec53b6dce680e46488fc74f2ef16584f758719"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -312,12 +313,55 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-6065f981217c",
+          "family": "type_overload",
+          "lead_group_ref": "group-fb462edc9599",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-fb462edc9599"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-6065f981217c",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-fb462edc9599",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
-    "raw": "b782e001ef0044f6405c4b300247270d272daa2cfcdcfc25e88150398bfffccc",
-    "structural": "8eef7f9d506f2ec8fc2640ad4a82e766d2f4a5fb9eefcf396251cbc5ffcfd50e"
+    "raw": "51f18cf3a1a727f31e1b9a1dccd998e976a38294dbc75368d6dbe2e89aac3b71",
+    "structural": "abac9a925c6f056f24af807bbcfb85b78d582eaad306fb94264e1920c0c058f1"
   },
   "producer": {
     "name": "gcc-formed",

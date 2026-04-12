@@ -8,11 +8,12 @@ semantic:
   family: syntax
   severity: error
   lead_group_any_of:
+    - sarif-0-0
     - sarif-0-1
   primary_locations:
     - path: src/main.c
       line: 2
-      column: 19
+      column: 18
   primary_location_user_owned_required: true
   first_action_required: true
   raw_provenance_required: true
@@ -21,9 +22,9 @@ semantic:
 render:
   default:
     omission_notice_required: false
-    first_screenful_max_lines: 20
+    first_screenful_max_lines: 26
   concise:
-    omission_notice_required: false
+    omission_notice_required: true
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
@@ -33,7 +34,7 @@ render:
     path_first_required: true
     color_meaning_forbidden: true
     required_substrings:
-      - "suggested edit: insert ';' at src/main.c:2:19"
+      - "suggested edit: insert ')' at src/main.c:2:18"
 integrity:
   allowed_issue_codes: []
 performance:

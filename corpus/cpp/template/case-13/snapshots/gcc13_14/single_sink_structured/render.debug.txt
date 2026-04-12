@@ -1,0 +1,13 @@
+error: template instantiation failed
+--> src/main.cpp:6:5
+help: start from the first user-owned template frame and match template arguments
+why: no matching function for call to 'expect_ptr(int&)'
+| src/main.cpp:6:5
+|     expect_ptr(value);
+|     ^
+while instantiating:
+  - src/main.cpp:2:6 candidate 1: 'template<class T> void expect_ptr(T*)'
+  - src/main.cpp:2:6 template argument deduction/substitution failed:
+debug: rule_id=rule.family.template.structured_or_message
+debug: matched_conditions=context=template_instantiation, child_note_kind=template_context, child_message_contains=template, child_message_contains=deduction/substitution, phase=instantiate
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

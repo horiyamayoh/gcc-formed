@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "deleted_function",
         "first_action_hint": "check whether the type is movable/copyable, or provide the required special member",
+        "group_ref": "group-c2ba4f91897a",
         "headline": "use of a deleted or unavailable function",
         "matched_conditions": [
           "message_contains=use of deleted function",
@@ -101,7 +102,7 @@
       "fingerprints": {
         "family": "c62dd4b34a3a558f8a25ea52eb289d913eba28983514c23ce7037b610ab52844",
         "raw": "9e86cbf57304a919e6e0040f1519b1fa753fa293f48314381acb93553da04e79",
-        "structural": "96905ff191b1b44fd111641c4c1d186f731821dc7d5982b11e3c4724115fba36"
+        "structural": "79f8ee64e12abc0436fda64735a1f5f703acf13d53d22e1f28ea0fb573b1ff80"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -147,6 +148,7 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-bf691203aed4",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "message_contains=candidate",
@@ -157,7 +159,7 @@
       "fingerprints": {
         "family": "ef29737d6c219aa25c8366e3c1088b97a2d31c10225acd426f3be7fa48984055",
         "raw": "53617adde887862b206929609bb04620066f2583727748d00b6727447fe159de",
-        "structural": "f472d706a739ba43dfd7c9f7f5cc19a6c367de262a8265be3016e4c7562830d7"
+        "structural": "e8728a5c14b7ef11cec0fca2e4ee04c0eb5950d7a9de3d5d81e91b6a178a08e2"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -203,6 +205,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-d84feff7273f",
         "headline": "initializing argument 1 of 'void take(NoCopy)'",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -213,7 +216,7 @@
       "fingerprints": {
         "family": "2ac5f4660b361f3599920167952311ba0234017cd07fbac95a9575afb5426e61",
         "raw": "a4966c05170f3b306167658f793f9397e4906024726ad13ada5f8bd8ca4a6fcd",
-        "structural": "b3c98f82da3f6377d7d4606f8ee6a1cd57e3b12de0c2520a471509160220c218"
+        "structural": "4ad565028a8f2f90cdd1dcf84a18ec2c5cfb5e073c1e82a5c5e47bb223658446"
       },
       "id": "sarif-0-2",
       "locations": [
@@ -255,12 +258,108 @@
       "severity": "note"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-822201738a46",
+          "family": "deleted_function",
+          "lead_group_ref": "group-c2ba4f91897a",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-c2ba4f91897a"
+          ]
+        },
+        {
+          "confidence": 0.6100000143051147,
+          "episode_ref": "episode-70e53b159dea",
+          "family": "type_overload",
+          "lead_group_ref": "group-bf691203aed4",
+          "lead_root_score": 0.6100000143051147,
+          "member_group_refs": [
+            "group-bf691203aed4"
+          ]
+        },
+        {
+          "confidence": 0.35999995470046997,
+          "episode_ref": "episode-e1bf01f38ff5",
+          "family": "unknown",
+          "lead_group_ref": "group-d84feff7273f",
+          "lead_root_score": 0.35999995470046997,
+          "member_group_refs": [
+            "group-d84feff7273f"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-822201738a46",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-c2ba4f91897a",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-70e53b159dea",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-bf691203aed4",
+        "independence_score": 0.6200000047683716,
+        "role": "independent_root",
+        "root_score": 0.6100000143051147,
+        "summary_likelihood": 0.39900001883506775,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-e1bf01f38ff5",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-d84feff7273f",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.35999995470046997,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 2,
+      "uncertain_count": 1
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "e131a05e61e19290dab41278115bead80993cd9d8fee2117fb4c4b95d389f82b",
-    "raw": "db8c6ea12cf623f140fff0f0b38a81e87d4db52b5089f9cb8062c32fa82b8d8c",
-    "structural": "0d4640c7c4f0dc0d56e818007aec798265b57964afc49d6938a1556cbc344b80"
+    "raw": "60e7cd47d6d2c75897b43ba496ac0205fd0104f80597c436ab0d5c2c40f9c68b",
+    "structural": "4153bffbf2949634490a07956a2040185141f85c2381af3afc377ebf92e5e6f7"
   },
   "producer": {
     "name": "gcc-formed",

@@ -1,0 +1,107 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:10",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "         ^"
+          ],
+          "lines": [
+            "    if (1 {"
+          ],
+          "location": "src/main.c:2:10"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-7fd4f877b5aa",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:2:10: error: expected ')' before '{' token",
+      "raw_sub_block": [
+        "src/main.c:2:10: error: expected ')' before '{' token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:5:1",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "^"
+          ],
+          "lines": [
+            "}"
+          ],
+          "location": "src/main.c:5:1"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-acc4d5d3731f",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:5:1: error: expected expression before '}' token",
+      "raw_sub_block": [
+        "src/main.c:5:1: error: expected expression before '}' token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
+      "group_id": "group-abe91b79ea07",
+      "matched_conditions": [
+        "phase=link"
+      ],
+      "raw_message": "src/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    5 | }\n      | ^",
+      "raw_sub_block": [
+        "src/main.c: In function 'main':",
+        "    2 |     if (1 {",
+        "      |        ~ ^~",
+        "      |          )",
+        "    5 | }",
+        "      | ^"
+      ],
+      "rule_id": "rule.family.linker.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "linker reported a failure"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

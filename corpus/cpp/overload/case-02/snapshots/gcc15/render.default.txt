@@ -5,6 +5,11 @@ why: invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
 |                                                 ^
-other diagnostics:
-  - src/main.cpp:1:16: note: initializing argument 1 of 'void takes_int(int)'
+note: initializing argument 1 of 'void takes_int(int)'
+--> src/main.cpp:1:16
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+why: initializing argument 1 of 'void takes_int(int)'
+| src/main.cpp:1:16
+| void takes_int(int);
+|                ^
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

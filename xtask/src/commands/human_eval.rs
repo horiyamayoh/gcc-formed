@@ -752,6 +752,7 @@ mod tests {
                 family: Some("syntax".to_string()),
                 semantic: None,
                 render: diag_testkit::RenderExpectations::default(),
+                cascade: diag_testkit::CascadeExpectations::default(),
                 integrity: diag_testkit::IntegrityExpectations::default(),
                 performance: diag_testkit::PerformanceExpectations::default(),
             },

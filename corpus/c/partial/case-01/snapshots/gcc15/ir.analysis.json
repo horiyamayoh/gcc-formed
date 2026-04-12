@@ -33,6 +33,7 @@
         "confidence": 0.6499999761581421,
         "family": "collect2_summary",
         "first_action_hint": "inspect the linker diagnostics immediately above this summary",
+        "group_ref": "group-ac2f5a684011",
         "headline": "driver reported a linker failure summary",
         "matched_conditions": [
           "phase=link",
@@ -48,9 +49,9 @@
         }
       ],
       "fingerprints": {
-        "family": "0fcb4ae5580c6e64a93785658dac914609a2e2d758cbdf97b21f1a251581804a",
+        "family": "e736395337f576d965269dccb524b7736319719dd47225bd9dce6a12061f2141",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "e6b937c63d2df4d384c5bcd31c5f7bdf7237d0aa992dd38e1e9f4d3e925cb6d3"
+        "structural": "72c85554f5bfe35bfbb70f1710b38b8182b3ede9d9be72a99ee249578e1b52a1"
       },
       "id": "residual-0",
       "message": {
@@ -73,6 +74,7 @@
         "confidence": 0.6499999761581421,
         "family": "linker.undefined_reference",
         "first_action_hint": "define the missing symbol or link the object/library that provides it",
+        "group_ref": "group-5a2b7fabe834",
         "headline": "undefined reference to `missing_symbol`",
         "matched_conditions": [
           "phase=link",
@@ -92,7 +94,7 @@
       "fingerprints": {
         "family": "a443f087e89bf51fb7a6dc30df1614fe65b8fe53a8e6e9a8dc0182c4fff33eda",
         "raw": "ef1481135f640c9a1f6d38d67a20b874699a86d127869ef489957501ef0b9de6",
-        "structural": "fd41bd36bf1c3c830cc8f19b463cd2ac689fe699ef6fe6070648e8774fe30d70"
+        "structural": "781f906897a065d60012530495b26e6e6a4a2b659d35644c9c17ff5d93b1edcf"
       },
       "id": "residual-1",
       "message": {
@@ -114,12 +116,84 @@
       }
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 1.4901161193847656e-8,
+          "episode_ref": "episode-da5205a3f6d2",
+          "family": "collect2_summary",
+          "lead_group_ref": "group-ac2f5a684011",
+          "lead_root_score": 1.4901161193847656e-8,
+          "member_group_refs": [
+            "group-ac2f5a684011"
+          ]
+        },
+        {
+          "confidence": 0.6499999761581421,
+          "episode_ref": "episode-18fb65ae404a",
+          "family": "linker.undefined_reference",
+          "lead_group_ref": "group-5a2b7fabe834",
+          "lead_root_score": 0.6499999761581421,
+          "member_group_refs": [
+            "group-5a2b7fabe834"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-da5205a3f6d2",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "generic_follow_on",
+          "generic_linker_wrapper",
+          "no_primary_location"
+        ],
+        "group_ref": "group-ac2f5a684011",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 1.4901161193847656e-8,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-18fb65ae404a",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "no_primary_location",
+          "specific_symbol_or_frontier",
+          "strong_root_family"
+        ],
+        "group_ref": "group-5a2b7fabe834",
+        "independence_score": 0.6499999761581421,
+        "role": "independent_root",
+        "root_score": 0.6499999761581421,
+        "summary_likelihood": 0.39500001072883606,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 1
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "feb616571f5601ea4a0ab96d216bec5f35c3099576facd6359961e6668891b7c",
-    "raw": "db98cbed7e2c4206ae3f9d9e5a8d9e4f6acbd51c65e7eb279bfcf34c726bad69",
-    "structural": "caa46e605d23c3047dd5de66417312e769684eea3defa59ef2a99fd1ef36f5e4"
+    "family": "512df654bf1ad9e8eb062c57ef25676c9e465422f39d3dd1cdc5be0d04c733dc",
+    "raw": "019345e02e880985075b642077c000ea313a8c8d33b261a8e56748d8572fbf62",
+    "structural": "cc71c7ce40ba1e0fbe0b3bce522616e03e865866ebad7ea72647f9ba80901b49"
   },
   "integrity_issues": [
     {

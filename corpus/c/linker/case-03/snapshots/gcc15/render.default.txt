@@ -5,6 +5,10 @@ why: /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <t
 linker: symbol `shared`
 raw:
   /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
-other errors:
-  - error: driver reported a linker failure summary
+error: driver reported a linker failure summary
+help: inspect the linker diagnostics immediately above this summary
+why: collect2: error: ld returned 1 exit status
+linker: preserved
+raw:
+  collect2: error: ld returned 1 exit status
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
