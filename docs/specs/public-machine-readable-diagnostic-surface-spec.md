@@ -33,6 +33,7 @@ This spec does not cover:
 - the internal `Diagnostic IR` schema
 - trace-bundle layout
 - terminal renderer text
+- terminal presentation presets, display-family labels, or template IDs
 - GitHub Release body or repo metadata
 
 ## 2. Emission Contract
@@ -176,6 +177,8 @@ Each entry in `diagnostics` is a recursive public diagnostic node. A diagnostic 
 - `suggestions`
 - `related_diagnostics`
 
+`family` remains the machine-facing diagnostic family. It is not a promise that terminal rendering will expose the same label, because display-family mapping is presentation policy rather than public export schema.
+
 If present, `primary_location` contains:
 
 - `path`
@@ -216,6 +219,7 @@ The public export must be deterministic for the same input, compiler band, proce
 - Array order must remain semantically stable.
 - Volatile values such as wrapper version, invocation id, and tool version may be normalized in snapshot comparison, but the field layout itself must remain stable.
 - Consumers must not need terminal text scraping to recover the same meaning.
+- Presentation customization, template selection, and location-host decisions must not be required to interpret the export.
 
 The canonical snapshot artifact for this surface is `public.export.json`.
 
@@ -224,6 +228,7 @@ The canonical snapshot artifact for this surface is `public.export.json`.
 - Additive optional fields are allowed.
 - Removing, renaming, or semantically redefining an existing public field requires a schema-version change and same-change doc updates.
 - The public JSON surface must not silently inherit internal-only field names just because they exist in the internal IR.
+- The public JSON surface must remain presentation-independent even when terminal text becomes subject-first, preset-driven, or otherwise configurable.
 - Consumers should ignore unknown additive fields and anchor on the documented required fields first.
 
 Report bundles may emit `public.export.schema-shape-fingerprint.txt` as a schema-shape compatibility sentinel. That sidecar is for review and gate logic; the golden snapshot remains `public.export.json`.
@@ -265,6 +270,7 @@ gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 Automation should prefer this public export over:
 
 - scraping terminal stderr
+- scraping any subject-first / preset-customized terminal block format
 - parsing internal IR snapshots as if they were public
 - mining trace bundles when a public export is sufficient
 

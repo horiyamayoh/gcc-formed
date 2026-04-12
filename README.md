@@ -18,7 +18,7 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After: `error: template instantiation failed` と `help:` / `why:` から読める
+> After (Presentation V2 contract shape): `error: [type_mismatch] arguments do not match` と `want:` / `got:` / `via:` から読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
 - **状態**: Public Beta
@@ -43,6 +43,9 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
+Presentation V2 の header / evidence grammar は current-authority contract として先に固定し、runtime rollout は `opt-in preset -> default promotion` で進める。  
+この issue の変更は docs / ADR の rewrite であり、現在の code behavior は変えない。
+
 ### 1. テンプレートエラー（C++）
 
 出典: [GCC raw](corpus/cpp/template/case-05/snapshots/gcc15/stderr.raw) / [gcc-formed render](corpus/cpp/template/case-05/snapshots/gcc15/render.default.txt)
@@ -59,20 +62,14 @@ src/main.cpp:2:6: note: template argument deduction/substitution failed:
 src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')
 ```
 
-**After (gcc-formed)**
+**After (Presentation V2 contract example)**
 
 ```text
-error: template instantiation failed
---> src/main.cpp:5:5
-help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to 'combine(int, const char [2])'
-| src/main.cpp:5:5
-|     combine(1, "x");
-|     ^
-while instantiating:
-  - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
-  - src/main.cpp:2:6 template argument deduction/substitution failed:
-  - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
+error: [type_mismatch] arguments do not match @ src/main.cpp:5:12
+help: make both arguments the same type
+want: T, T
+got : int, const char*
+via : combine(T, T)  +2 notes
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
 ```
 
@@ -87,18 +84,13 @@ main.c:(.text+0x5): undefined reference to `missing_symbol'
 collect2: error: ld returned 1 exit status
 ```
 
-**After (gcc-formed)**
+**After (Presentation V2 contract example)**
 
 ```text
-note: some compiler details were not fully structured; original diagnostics are preserved
-error: undefined reference to `missing_symbol`
-help: define the missing symbol or link the object/library that provides it
-why: main.c:(.text+0x5): undefined reference to `missing_symbol'
-linker: symbol `missing_symbol`
-raw:
-  main.c:(.text+0x5): undefined reference to `missing_symbol'
-other errors:
-  - error: linker reported a failure
+error: [linker] symbol could not be resolved
+help: define the symbol or link the object/library that provides it
+symbol: missing_symbol
+from  : main.o  +1 reference
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
 ```
 
@@ -160,7 +152,7 @@ stdout を JSON 専用チャネルとして安全に使える invocation では 
 gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 ```
 
-この surface の正本は [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md) であり、internal IR や trace bundle の代替 public contract ではない。
+この surface の正本は [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md) であり、internal IR や trace bundle の代替 public contract ではない。presentation preset や terminal header grammar が今後変わっても、machine consumer は terminal text を scrape せずこの surface を使う。
 
 ---
 
