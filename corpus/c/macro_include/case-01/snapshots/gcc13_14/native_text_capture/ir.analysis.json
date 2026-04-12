@@ -1,0 +1,130 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 750,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "group_ref": "group-34ce1d2e6211",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "60b9d75cddf0ab3659f32889911eab58fe966cf398304dae11e25d246b63f6fe",
+        "raw": "db58e1d00e6149d5d6aec75e4c28cb1ec6eae731e8fdc2fade940d5396d825ec",
+        "structural": "2bb65363a226c612f3010447f36cf4c8a9d6f47ae68a429c0d0a9dc0e781fe7b"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.20000001788139343,
+          "episode_ref": "episode-c63f72b1085a",
+          "family": "linker",
+          "lead_group_ref": "group-34ce1d2e6211",
+          "lead_root_score": 0.20000001788139343,
+          "member_group_refs": [
+            "group-34ce1d2e6211"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-c63f72b1085a",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "generic_follow_on",
+          "no_primary_location"
+        ],
+        "group_ref": "group-34ce1d2e6211",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.20000001788139343,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 0,
+      "uncertain_count": 1
+    }
+  },
+  "document_completeness": "passthrough",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "df8fb10d3ff096d2c82b917394d7b006986631e83c040a4bd3a64952efed09d5",
+    "raw": "8451457100ff403803c446ecaf83793584e03b343b78c2a1678bcd338c8d0157",
+    "structural": "a5db3ce1756cc24b7f28939643732912f5548d47b29209ddd35923f419f50a53"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

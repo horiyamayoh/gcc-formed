@@ -1,7 +1,0 @@
-schema_version: 1
-fixture_id: c/macro_include/case-02
-version_band: gcc15_plus
-processing_path: dual_sink_structured
-support_level: preview
-expected_mode: render
-family: macro_include

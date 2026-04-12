@@ -1,0 +1,18 @@
+error: showing a conservative wrapper view; original compiler diagnostics are preserved
+note: fallback reason = residual_only
+raw:
+  In file included from src/wrapper.h:1,
+                   from src/main.c:1:
+  src/main.c: In function 'main':
+  src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)
+      1 | #define CALL_BAD() missing_symbol
+        |                    ^~~~~~~~~~~~~~
+  src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
+      3 | int main(void) { return CALL_BAD(); }
+        |                         ^~~~~~~~
+  src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in
+      1 | #define CALL_BAD() missing_symbol
+        |                    ^~~~~~~~~~~~~~
+  src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
+      3 | int main(void) { return CALL_BAD(); }
+        |                         ^~~~~~~~

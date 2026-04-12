@@ -1309,6 +1309,20 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     assert_eq!(report["backend"]["version_band"], "gcc15_plus");
     assert_eq!(report["backend"]["processing_path"], "dual_sink_structured");
     assert_eq!(report["backend"]["support_level"], "preview");
+    assert_eq!(
+        report["operator_guidance"]["summary"].as_str(),
+        Some(
+            "operator next step=keep direct CC/CXX replacement, and keep at most one wrapper-owned backend launcher behind the wrapper."
+        )
+    );
+    assert_eq!(
+        report["operator_guidance"]["representative_limitations"][0],
+        "GCC15+ remains the highest-fidelity reference path."
+    );
+    assert_eq!(
+        report["operator_guidance"]["actionable_next_steps"][0],
+        "Keep direct CC/CXX replacement as the default insertion shape."
+    );
     let rollout_cases = report["rollout_matrix"]["cases"].as_array().unwrap();
     assert!(rollout_cases.iter().any(|case| {
         case["version_band"] == "gcc15_plus"
@@ -1945,23 +1959,23 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
 }
 
 fn expected_tier_b_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
 }
 
 fn expected_tier_b_single_sink_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
 }
 
 fn expected_tier_b_shadow_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
+    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
 }
 
 fn expected_tier_c_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
+    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
 }
 
 fn expected_tier_c_single_sink_notice() -> &'static str {
-    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
 }
 
 #[cfg(unix)]

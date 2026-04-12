@@ -1190,6 +1190,7 @@ fuzz とは別に、人手で作る adversarial corpus を持つ。
 - 10 名以上の internal participants
 - 10 ケース以上
 - syntax / type / template / macro / linker を含む
+- C-first operator packet として `compile`, `link`, `include_path`, `macro`, `preprocessor`, `honest_fallback` を少なくとも 1 件ずつ含む
 - raw GCC との A/B もしくは counterbalanced 比較
 
 ### 22.5 release sign-off 条件

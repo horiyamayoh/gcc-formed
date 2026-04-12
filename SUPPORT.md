@@ -35,7 +35,7 @@ Keep wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPOR
 - `GCC9-12`: in-scope `Experimental` path with narrower expected wins. Fail-open behavior or honest passthrough may still be the correct result.
 - `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
 
-Current runtime and trace output may still expose legacy internal tier-oriented fields until the M1 vocabulary migration lands. Attach those raw fields as evidence, but use `VersionBand`, `ProcessingPath`, and `SupportLevel` as the canonical public labels in new issues and PRs.
+Runtime and trace output use `VersionBand`, `ProcessingPath`, and `SupportLevel` as the canonical public labels. Use `--formed-self-check` for the current operator guidance, and keep [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md) as the shared next-step reference for older GCC and C-first builds.
 
 You can confirm the local wrapper layout and capture backend with:
 

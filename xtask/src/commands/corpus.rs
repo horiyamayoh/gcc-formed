@@ -44,6 +44,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/syntax/case-09",
     "c/syntax/case-12",
     "c/macro_include/case-01",
+    "c/macro_include/case-13",
     "c/macro_include/case-03",
     "c/macro_include/case-10",
     "cpp/template/case-01",

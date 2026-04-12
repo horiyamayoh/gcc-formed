@@ -1,0 +1,170 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c:1:2: error: #error macro guard missing\n    1 | #error macro guard missing\n      |  ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 100,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3141,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "preprocessor_directive",
+        "first_action_hint": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
+        "group_ref": "group-3689c3635616",
+        "headline": "preprocessor directive error",
+        "matched_conditions": [
+          "message_contains=#error",
+          "phase=preprocess"
+        ],
+        "rule_id": "rule.family.preprocessor_directive.message_terms"
+      },
+      "context_chains": [
+        {
+          "kind": "macro_expansion"
+        }
+      ],
+      "fingerprints": {
+        "family": "0809dccd60cead7fa535afc77230cf4b74968cf92c4935a47d4694d779ec19db",
+        "raw": "33309f5c52bbcc35b29abbf359f07e2c95a5fed15faa06f29c55b2d126233c74",
+        "structural": "10b9d1ea9b529d31bab2e9246e936c01fdea6af49eed1fd4094e8c8a9cc0103c"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 2,
+            "column_native": 2,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:1:2:1:2",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "#error macro guard missing"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "preprocess",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.6600000262260437,
+          "episode_ref": "episode-268987d93b91",
+          "family": "preprocessor_directive",
+          "lead_group_ref": "group-3689c3635616",
+          "lead_root_score": 0.6600000262260437,
+          "member_group_refs": [
+            "group-3689c3635616"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-268987d93b91",
+        "evidence_tags": [
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-3689c3635616",
+        "independence_score": 0.6600000262260437,
+        "role": "independent_root",
+        "root_score": 0.6600000262260437,
+        "summary_likelihood": 0.39400002360343933,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "835954bece9e15439588ebd5107f908eba09d14818f77d8c7fa21577a10fff3f",
+    "raw": "06676c1aea1c7e0fb7da21f5226d55a5d31315fa467aadd160ab9ff57035322a",
+    "structural": "fa7610b18c62cbc86ada64c8b154ea5a822485b68c0d30260d6f9e7b2de1164d"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

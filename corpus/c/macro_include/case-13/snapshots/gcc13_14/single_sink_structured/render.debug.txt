@@ -1,0 +1,13 @@
+error: identifier not found in scope
+--> src/main.c:9:12
+help: check for typos, missing #include, or missing namespace qualifier
+why: ‘Box’ has no member named ‘missing_field’
+| src/main.c:9:12
+|     return READ_MISSING(box);
+|            ^
+debug: rule_id=rule.family.scope_declaration.message_terms
+debug: matched_conditions=message_contains=has no member named, phase=semantic
+debug-facts: group_ref=group-6131f19f2701, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-c60b416f6ffc
+debug-facts: evidence_tags=actionability_short, classified_family, early_invocation, user_owned_primary
+debug-raw: provenance_capture_refs=diagnostics.sarif
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

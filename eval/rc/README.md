@@ -14,6 +14,7 @@
 - `cargo xtask human-eval-kit --root corpus --report-dir target/human-eval`
 - `cargo xtask rc-gate --report-dir ...` を実行すると `.../human-eval/` に同じ bundle が自動生成される
 - bundle には `README.md`, `expert-review-sheet.csv`, `task-study-sheet.csv`, `counterbalance.csv`, `metrics-manual-eval.template.json`, `ux-signoff.template.json`, fixture-local actual/expected artifacts が含まれる
+- human-eval bundle は C-first operator packet も兼ね、`compile`, `link`, `include_path`, `macro`, `preprocessor`, `honest_fallback` の各 category を `human-eval-report.json` と CSV に明示する
 - `bench-smoke-report.json` には core smoke scenario に加えて `operator_real_workloads`, `band_path_breakdown`, `baseline_comparison` が入り、release candidate の benchmark evidence 正本として保持する
 
 運用ルール:

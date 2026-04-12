@@ -1,0 +1,166 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1268,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "scope_declaration",
+        "first_action_hint": "check for typos, missing #include, or missing namespace qualifier",
+        "group_ref": "group-6131f19f2701",
+        "headline": "identifier not found in scope",
+        "matched_conditions": [
+          "message_contains=has no member named",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.scope_declaration.message_terms"
+      },
+      "fingerprints": {
+        "family": "839f14060ad534730cf58c76f12dd16d0a9115cf1b8ad823eb3cb8381381443e",
+        "raw": "ad6b685ef86cc66dd4cbde94a18b7dfab74a08147dc2aff8830cf377c2882bae",
+        "structural": "9e2cb335b8bcf5eaa8cc1ed58e5d5d3dbd6456b3508edc3fd1ef6495b4f34a50"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 9
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:9:12:9:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "‘Box’ has no member named ‘missing_field’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-c60b416f6ffc",
+          "family": "scope_declaration",
+          "lead_group_ref": "group-6131f19f2701",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-6131f19f2701"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-c60b416f6ffc",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-6131f19f2701",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1fb5e5b8b63ba7b0984ed5ae187d7192de0ba5ce1e89a89ad12b73212d4ca63a",
+    "raw": "b2d58404c05db1f1b5fc725c3972ca918df280c926e3865f09d1b22cbe85a775",
+    "structural": "b59941bba9941785f2c4f2b07fccc5d91a5bebe1df982f76be7d3effa22799a5"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

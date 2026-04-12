@@ -35,7 +35,7 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - `ProcessingPath` may vary by invocation, diagnostics sink, or explicit mode request.
 - `x86_64-unknown-linux-gnu` remains a compatibility smoke and exception path, not the primary shipped artifact.
 - Older or unknown compiler variants may still resolve conservatively to passthrough behavior.
-- Current runtime and self-check output still expose some legacy tier-oriented fields and notices. Treat those as implementation detail and use `VersionBand` / `ProcessingPath` / `SupportLevel` as the canonical public vocabulary in new issues.
+- Current runtime and self-check output already use the current vocabulary. The remaining limit is band-dependent fidelity and raw-preservation behavior, not legacy tier wording. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.
 - Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
 - The checked-in interop lab covers `make -j`, `cmake --build`, one wrapper-owned backend launcher, depfile generation, response-file pass-through, and stdout-sensitive compiler probes under `eval/interop/`, but that coverage is intentionally narrow and does not prove launcher stacks in front of the wrapper or multi-launcher chains.
 

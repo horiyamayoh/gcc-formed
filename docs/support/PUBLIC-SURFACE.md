@@ -20,6 +20,7 @@ beta_release_intro: This GitHub prerelease ships artifact `{version}` in the `v1
 beta_release_gate_scope:
   - `GCC15+ / DualSinkStructured` remains the blocking reference-path snapshot smoke in this workflow.
   - `gcc13_14` and `gcc9_12` product-path blockers are classified by `replay-stop-ship.json`.
+  - Nightly real-compiler evidence includes a `gcc:12` matrix lane for `gcc9_12`, so Band C workflow artifacts stay visible before RC promotion.
   - `replay-stop-ship.json` preserves missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions from representative replay.
 beta_install_path_lines:
   - Direct install / rollback path: see `docs/releases/PUBLIC-BETA-RELEASE.md` and use the `.control.tar.gz` bundle.
@@ -59,6 +60,7 @@ stable_evidence_lines:
 stable_release_gate_scope:
   - `GCC15+` remains the primary fidelity reference path for shipped release quality.
   - Stable promotion is blocked by strict `rc-gate`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off.
+  - Band C real-compiler evidence stays visible through the nightly `gcc:12` lane plus the RC bundle's band/path reports.
   - `rollout-matrix-report.json` records the expected current `VersionBand` / `ProcessingPath` cases.
   - `replay-stop-ship.json` records missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions from representative replay.
 stable_release_doc_paths:

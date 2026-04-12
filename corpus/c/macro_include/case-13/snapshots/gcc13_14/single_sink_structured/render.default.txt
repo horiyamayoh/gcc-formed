@@ -1,0 +1,8 @@
+error: identifier not found in scope
+--> src/main.c:9:12
+help: check for typos, missing #include, or missing namespace qualifier
+why: ‘Box’ has no member named ‘missing_field’
+| src/main.c:9:12
+|     return READ_MISSING(box);
+|            ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

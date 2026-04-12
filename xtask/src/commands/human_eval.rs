@@ -17,7 +17,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const HUMAN_EVAL_SCHEMA_VERSION: u32 = 3;
+const HUMAN_EVAL_SCHEMA_VERSION: u32 = 4;
 const MINIMUM_TASK_STUDY_FIXTURE_COUNT: usize = 10;
 const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "syntax",
@@ -26,6 +26,21 @@ const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "type",
     "overload",
     "linker",
+];
+const C_FIRST_TASK_CATEGORIES: &[&str] = &[
+    "compile",
+    "link",
+    "include_path",
+    "macro",
+    "preprocessor",
+    "honest_fallback",
+];
+const C_FIRST_TASK_FIXTURES: &[(&str, &[&str])] = &[
+    ("c/syntax/case-11", &["compile"]),
+    ("c/linker/case-11", &["link"]),
+    ("c/macro_include/case-13", &["include_path", "macro"]),
+    ("c/preprocessor_directive/case-01", &["preprocessor"]),
+    ("c/macro_include/case-01", &["honest_fallback"]),
 ];
 
 #[derive(Debug, Clone)]
@@ -48,6 +63,8 @@ pub(crate) struct HumanEvalFixtureReport {
     pub(crate) tags: Vec<String>,
     pub(crate) expert_review: bool,
     pub(crate) task_study: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) c_first_categories: Vec<String>,
     pub(crate) used_fallback: bool,
     pub(crate) lead_confidence: String,
     pub(crate) rendered_first_action_line: Option<usize>,
@@ -68,8 +85,20 @@ pub(crate) struct HumanEvalTaskStudyRow {
     pub(crate) fixture_id: String,
     pub(crate) family_key: String,
     pub(crate) title: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) c_first_categories: Vec<String>,
     pub(crate) first_interface: String,
     pub(crate) second_interface: String,
+    pub(crate) raw_gcc_path: String,
+    pub(crate) gcc_formed_path: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct HumanEvalCFirstTaskReport {
+    pub(crate) fixture_id: String,
+    pub(crate) categories: Vec<String>,
+    pub(crate) version_band: String,
+    pub(crate) processing_path: String,
     pub(crate) raw_gcc_path: String,
     pub(crate) gcc_formed_path: String,
 }
@@ -85,6 +114,11 @@ pub(crate) struct HumanEvalKitReport {
     pub(crate) family_counts: BTreeMap<String, usize>,
     pub(crate) covered_required_families: Vec<String>,
     pub(crate) missing_required_families: Vec<String>,
+    pub(crate) c_first_task_fixture_count: usize,
+    pub(crate) covered_c_first_categories: Vec<String>,
+    pub(crate) missing_c_first_categories: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) c_first_tasks: Vec<HumanEvalCFirstTaskReport>,
     pub(crate) fixtures: Vec<HumanEvalFixtureReport>,
     pub(crate) task_study_matrix: Vec<HumanEvalTaskStudyRow>,
 }
@@ -116,6 +150,9 @@ pub(crate) fn run_human_eval_kit(
     let task_study_matrix = build_task_study_matrix(&fixture_reports);
     let covered_required_families = covered_required_families(&fixture_reports);
     let missing_required_families = missing_required_families(&fixture_reports);
+    let c_first_tasks = collect_c_first_tasks(&fixture_reports);
+    let covered_c_first_categories = covered_c_first_categories(&fixture_reports);
+    let missing_c_first_categories = missing_c_first_categories(&fixture_reports);
 
     let report = HumanEvalKitReport {
         schema_version: HUMAN_EVAL_SCHEMA_VERSION,
@@ -130,6 +167,10 @@ pub(crate) fn run_human_eval_kit(
         family_counts,
         covered_required_families,
         missing_required_families,
+        c_first_task_fixture_count: c_first_tasks.len(),
+        covered_c_first_categories,
+        missing_c_first_categories,
+        c_first_tasks,
         fixtures: fixture_reports,
         task_study_matrix,
     };
@@ -181,6 +222,7 @@ pub(crate) fn run_human_eval_kit(
 pub(crate) fn human_eval_kit_is_complete(report: &HumanEvalKitReport) -> bool {
     report.task_study_fixture_count >= MINIMUM_TASK_STUDY_FIXTURE_COUNT
         && report.missing_required_families.is_empty()
+        && report.missing_c_first_categories.is_empty()
 }
 
 fn select_human_eval_fixtures(fixtures: &[Fixture]) -> Vec<&Fixture> {
@@ -253,6 +295,7 @@ fn build_fixture_report_bundle(
     )?;
 
     let family_key = fixture.family_key();
+    let c_first_categories = c_first_categories_for_fixture(fixture.fixture_id());
     Ok(HumanEvalFixtureReport {
         fixture_id: fixture.fixture_id().to_string(),
         family_key: family_key.clone(),
@@ -264,7 +307,9 @@ fn build_fixture_report_bundle(
         expected_mode: fixture.expectations.expected_mode.clone(),
         tags: fixture.meta.tags.clone(),
         expert_review: true,
-        task_study: REQUIRED_TASK_STUDY_FAMILIES.contains(&family_key.as_str()),
+        task_study: REQUIRED_TASK_STUDY_FAMILIES.contains(&family_key.as_str())
+            || !c_first_categories.is_empty(),
+        c_first_categories,
         used_fallback: summary.used_fallback,
         lead_confidence: summary.lead_confidence,
         rendered_first_action_line: summary.rendered_first_action_line,
@@ -404,6 +449,7 @@ fn task_study_row(
             .title
             .clone()
             .unwrap_or_else(|| fixture.fixture_id.clone()),
+        c_first_categories: fixture.c_first_categories.clone(),
         first_interface: if formed_first {
             "gcc_formed".to_string()
         } else {
@@ -419,6 +465,24 @@ fn task_study_row(
     }
 }
 
+fn c_first_categories_for_fixture(fixture_id: &str) -> Vec<String> {
+    C_FIRST_TASK_FIXTURES
+        .iter()
+        .find_map(|(candidate, categories)| {
+            if *candidate == fixture_id {
+                Some(
+                    categories
+                        .iter()
+                        .map(|category| (*category).to_string())
+                        .collect(),
+                )
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default()
+}
+
 fn covered_required_families(fixtures: &[HumanEvalFixtureReport]) -> Vec<String> {
     REQUIRED_TASK_STUDY_FAMILIES
         .iter()
@@ -428,6 +492,51 @@ fn covered_required_families(fixtures: &[HumanEvalFixtureReport]) -> Vec<String>
                 .any(|fixture| fixture.task_study && fixture.family_key == **family)
         })
         .map(|family| (*family).to_string())
+        .collect()
+}
+
+fn covered_c_first_categories(fixtures: &[HumanEvalFixtureReport]) -> Vec<String> {
+    C_FIRST_TASK_CATEGORIES
+        .iter()
+        .filter(|category| {
+            fixtures.iter().any(|fixture| {
+                fixture
+                    .c_first_categories
+                    .iter()
+                    .any(|item| item == **category)
+            })
+        })
+        .map(|category| (*category).to_string())
+        .collect()
+}
+
+fn missing_c_first_categories(fixtures: &[HumanEvalFixtureReport]) -> Vec<String> {
+    C_FIRST_TASK_CATEGORIES
+        .iter()
+        .filter(|category| {
+            !fixtures.iter().any(|fixture| {
+                fixture
+                    .c_first_categories
+                    .iter()
+                    .any(|item| item == **category)
+            })
+        })
+        .map(|category| (*category).to_string())
+        .collect()
+}
+
+fn collect_c_first_tasks(fixtures: &[HumanEvalFixtureReport]) -> Vec<HumanEvalCFirstTaskReport> {
+    fixtures
+        .iter()
+        .filter(|fixture| !fixture.c_first_categories.is_empty())
+        .map(|fixture| HumanEvalCFirstTaskReport {
+            fixture_id: fixture.fixture_id.clone(),
+            categories: fixture.c_first_categories.clone(),
+            version_band: fixture.version_band.clone(),
+            processing_path: fixture.processing_path.clone(),
+            raw_gcc_path: fixture.raw_gcc_path.clone(),
+            gcc_formed_path: fixture.gcc_formed_default_path.clone(),
+        })
         .collect()
 }
 
@@ -476,6 +585,25 @@ fn build_bundle_readme(report: &HumanEvalKitReport) -> String {
             report.missing_required_families.join(", ")
         );
     }
+    let _ = writeln!(
+        &mut text,
+        "- C-first task fixtures: `{}`",
+        report.c_first_task_fixture_count
+    );
+    let _ = writeln!(
+        &mut text,
+        "- Covered C-first categories: `{}`",
+        report.covered_c_first_categories.join(", ")
+    );
+    if report.missing_c_first_categories.is_empty() {
+        let _ = writeln!(&mut text, "- Missing C-first categories: none");
+    } else {
+        let _ = writeln!(
+            &mut text,
+            "- Missing C-first categories: `{}`",
+            report.missing_c_first_categories.join(", ")
+        );
+    }
     let _ = writeln!(&mut text);
     let _ = writeln!(&mut text, "## Procedure");
     let _ = writeln!(&mut text);
@@ -486,6 +614,10 @@ fn build_bundle_readme(report: &HumanEvalKitReport) -> String {
     let _ = writeln!(
         &mut text,
         "2. Use `counterbalance.csv` to assign participant group A or B. Then fill `task-study-sheet.csv` while comparing `raw_gcc_path` and `gcc_formed_path` for each fixture."
+    );
+    let _ = writeln!(
+        &mut text,
+        "   The C-first operator packet must cover `compile`, `link`, `include_path`, `macro`, `preprocessor`, and `honest_fallback` before RC sign-off."
     );
     let _ = writeln!(
         &mut text,
@@ -568,7 +700,7 @@ fn build_expert_review_sheet(report: &HumanEvalKitReport) -> String {
 fn build_task_study_sheet(report: &HumanEvalKitReport) -> String {
     let mut csv = String::new();
     csv.push_str(
-        "participant_id,participant_group,sequence_index,fixture_id,family_key,title,first_interface,second_interface,raw_gcc_path,gcc_formed_path,raw_ttfah_seconds,gcc_formed_ttfah_seconds,raw_trc_seconds,gcc_formed_trc_seconds,raw_first_fix_success,gcc_formed_first_fix_success,high_confidence_case,mislead_observed,notes\n",
+        "participant_id,participant_group,sequence_index,fixture_id,family_key,title,c_first_categories,first_interface,second_interface,raw_gcc_path,gcc_formed_path,raw_ttfah_seconds,gcc_formed_ttfah_seconds,raw_trc_seconds,gcc_formed_trc_seconds,raw_first_fix_success,gcc_formed_first_fix_success,high_confidence_case,mislead_observed,notes\n",
     );
     for row in &report.task_study_matrix {
         csv.push_str(&csv_line(&[
@@ -578,6 +710,7 @@ fn build_task_study_sheet(report: &HumanEvalKitReport) -> String {
             row.fixture_id.clone(),
             row.family_key.clone(),
             row.title.clone(),
+            row.c_first_categories.join("|"),
             row.first_interface.clone(),
             row.second_interface.clone(),
             row.raw_gcc_path.clone(),
@@ -599,7 +732,7 @@ fn build_task_study_sheet(report: &HumanEvalKitReport) -> String {
 fn build_counterbalance_csv(report: &HumanEvalKitReport) -> String {
     let mut csv = String::new();
     csv.push_str(
-        "participant_group,sequence_index,fixture_id,family_key,title,first_interface,second_interface,raw_gcc_path,gcc_formed_path\n",
+        "participant_group,sequence_index,fixture_id,family_key,title,c_first_categories,first_interface,second_interface,raw_gcc_path,gcc_formed_path\n",
     );
     for row in &report.task_study_matrix {
         csv.push_str(&csv_line(&[
@@ -608,6 +741,7 @@ fn build_counterbalance_csv(report: &HumanEvalKitReport) -> String {
             row.fixture_id.clone(),
             row.family_key.clone(),
             row.title.clone(),
+            row.c_first_categories.join("|"),
             row.first_interface.clone(),
             row.second_interface.clone(),
             row.raw_gcc_path.clone(),
@@ -693,6 +827,7 @@ mod tests {
     use super::*;
 
     fn sample_fixture(fixture_id: &str, family_key: &str, title: &str) -> HumanEvalFixtureReport {
+        let c_first_categories = c_first_categories_for_fixture(fixture_id);
         HumanEvalFixtureReport {
             fixture_id: fixture_id.to_string(),
             family_key: family_key.to_string(),
@@ -704,7 +839,9 @@ mod tests {
             expected_mode: "render".to_string(),
             tags: vec!["representative".to_string()],
             expert_review: true,
-            task_study: REQUIRED_TASK_STUDY_FAMILIES.contains(&family_key),
+            task_study: REQUIRED_TASK_STUDY_FAMILIES.contains(&family_key)
+                || !c_first_categories.is_empty(),
+            c_first_categories,
             used_fallback: false,
             lead_confidence: confidence_label(diag_core::Confidence::High).to_string(),
             rendered_first_action_line: Some(2),
@@ -872,6 +1009,51 @@ mod tests {
     }
 
     #[test]
+    fn c_first_categories_cover_expected_fixture_map() {
+        assert_eq!(
+            c_first_categories_for_fixture("c/macro_include/case-13"),
+            vec!["include_path".to_string(), "macro".to_string()]
+        );
+        assert_eq!(
+            c_first_categories_for_fixture("c/macro_include/case-01"),
+            vec!["honest_fallback".to_string()]
+        );
+        assert_eq!(
+            c_first_categories_for_fixture("c/preprocessor_directive/case-01"),
+            vec!["preprocessor".to_string()]
+        );
+        assert!(c_first_categories_for_fixture("c/syntax/case-01").is_empty());
+    }
+
+    #[test]
+    fn c_first_task_study_fixtures_are_marked_for_human_eval() {
+        let fixtures = [
+            sample_fixture("c/syntax/case-11", "syntax", "compile"),
+            sample_fixture("c/linker/case-11", "linker", "link"),
+            sample_fixture("c/macro_include/case-13", "macro_include", "macro"),
+            sample_fixture(
+                "c/preprocessor_directive/case-01",
+                "preprocessor_directive",
+                "preprocessor",
+            ),
+            sample_fixture("c/macro_include/case-01", "macro_include", "fallback"),
+        ];
+
+        let c_first_task_study_ids = fixtures
+            .iter()
+            .filter(|fixture| fixture.task_study)
+            .map(|fixture| fixture.fixture_id.as_str())
+            .collect::<Vec<_>>();
+
+        assert_eq!(c_first_task_study_ids.len(), 5);
+        assert!(c_first_task_study_ids.contains(&"c/syntax/case-11"));
+        assert!(c_first_task_study_ids.contains(&"c/linker/case-11"));
+        assert!(c_first_task_study_ids.contains(&"c/macro_include/case-13"));
+        assert!(c_first_task_study_ids.contains(&"c/macro_include/case-01"));
+        assert!(c_first_task_study_ids.contains(&"c/preprocessor_directive/case-01"));
+    }
+
+    #[test]
     fn completeness_requires_required_families_and_minimum_case_count() {
         let mut fixtures = Vec::new();
         for family in REQUIRED_TASK_STUDY_FAMILIES {
@@ -897,6 +1079,13 @@ mod tests {
             family_counts: BTreeMap::new(),
             covered_required_families: covered_required_families(&fixtures),
             missing_required_families: missing_required_families(&fixtures),
+            c_first_task_fixture_count: 5,
+            covered_c_first_categories: C_FIRST_TASK_CATEGORIES
+                .iter()
+                .map(|category| (*category).to_string())
+                .collect(),
+            missing_c_first_categories: Vec::new(),
+            c_first_tasks: Vec::new(),
             fixtures,
             task_study_matrix: Vec::new(),
         };

@@ -1,0 +1,75 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 750,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "4bdc9abaf45d62ea0e24147c1e277744127f7771179c1e346f529ae812717456",
+        "raw": "db58e1d00e6149d5d6aec75e4c28cb1ec6eae731e8fdc2fade940d5396d825ec",
+        "structural": "c3968b7210a786825c6371f89d84de9fc1fe843d9a97138c0af56ce7b3f395fb"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "passthrough",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "5548f43242415209552d7e7b13a8931e228882526963d9faf9e080d7dc928360",
+    "structural": "fcefe65e58431de0e36f80f1088e744d8388fd790e3fba8fa8bbf5a2225097f6"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-I",
+      "src",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

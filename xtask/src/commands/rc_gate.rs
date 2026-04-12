@@ -1092,7 +1092,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             None,
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1105,7 +1105,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             Some("shadow_mode"),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1118,7 +1118,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             None,
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1131,7 +1131,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             None,
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1144,7 +1144,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             Some("user_opt_out"),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1157,7 +1157,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             None,
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1170,7 +1170,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             Some("shadow_mode"),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1183,7 +1183,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             None,
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1196,7 +1196,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "experimental",
             Some("user_opt_out"),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         ),
         (
@@ -1209,7 +1209,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough_only",
             Some("unsupported_tier"),
             Some(
-                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed.",
             ),
         ),
     ]
@@ -1621,7 +1621,7 @@ fn build_rc_gate_checks(
             title: "Benchmark Budgets".to_string(),
             status: bench.overall_status.clone(),
             summary: format!(
-                "success_path={:?}, simple_failure={:?}, template_heavy={:?}, operator_real_failures={}",
+                "success_path={:?}, simple_failure={:?}, template_heavy={:?}, operator_real_failures={}, band_c_paths={}",
                 bench.success_path.status,
                 bench.simple_failure.status,
                 bench.template_heavy_failure.status,
@@ -1629,7 +1629,20 @@ fn build_rc_gate_checks(
                     .operator_real_workloads
                     .iter()
                     .filter(|scenario| scenario.status == GateStatus::Fail)
-                    .count()
+                    .count(),
+                {
+                    let band_c_paths = bench
+                        .band_path_breakdown
+                        .iter()
+                        .filter(|report| report.support_band == "gcc9_12")
+                        .map(|report| format!("{}/{}", report.support_band, report.processing_path))
+                        .collect::<Vec<_>>();
+                    if band_c_paths.is_empty() {
+                        "none".to_string()
+                    } else {
+                        band_c_paths.join(",")
+                    }
+                }
             ),
             blocker: bench.overall_status == GateStatus::Fail,
             manual: false,
@@ -1792,13 +1805,19 @@ fn human_eval_kit_check(report: &HumanEvalKitReport) -> RcGateCheck {
         title: "Human Evaluation Kit".to_string(),
         status: status.clone(),
         summary: format!(
-            "expert_fixtures={} task_study_fixtures={} missing_required_families={}",
+            "expert_fixtures={} task_study_fixtures={} c_first_task_fixtures={} missing_required_families={} missing_c_first_categories={}",
             report.expert_review_fixture_count,
             report.task_study_fixture_count,
+            report.c_first_task_fixture_count,
             if report.missing_required_families.is_empty() {
                 "none".to_string()
             } else {
                 report.missing_required_families.join(",")
+            },
+            if report.missing_c_first_categories.is_empty() {
+                "none".to_string()
+            } else {
+                report.missing_c_first_categories.join(",")
             }
         ),
         blocker: status == GateStatus::Fail,
@@ -2696,6 +2715,10 @@ mod tests {
             family_counts: BTreeMap::new(),
             covered_required_families: vec!["syntax".to_string()],
             missing_required_families: vec!["template".to_string()],
+            c_first_task_fixture_count: 0,
+            covered_c_first_categories: Vec::new(),
+            missing_c_first_categories: Vec::new(),
+            c_first_tasks: Vec::new(),
             fixtures: Vec::new(),
             task_study_matrix: Vec::new(),
         };

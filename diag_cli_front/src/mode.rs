@@ -31,6 +31,14 @@ pub(crate) struct CliCompatibilitySeam {
     tty_color_control: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct OperatorGuidance {
+    pub(crate) summary: &'static str,
+    pub(crate) representative_limitations: &'static [&'static str],
+    pub(crate) actionable_next_steps: &'static [&'static str],
+    pub(crate) c_first_focus_areas: &'static [&'static str],
+}
+
 impl CliCompatibilitySeam {
     pub(crate) fn from_probe(backend: &ProbeResult) -> Self {
         Self::from_profile(backend.capability_profile())
@@ -298,41 +306,105 @@ pub(crate) fn compatibility_scope_notice_for_path(
         VersionBand::Gcc15Plus => None,
         VersionBand::Gcc13_14 => match (decision.mode, processing_path, decision.fallback_reason) {
             (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in.",
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         },
         VersionBand::Gcc9_12 => match (decision.mode, processing_path, decision.fallback_reason) {
             (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
             (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in.",
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ),
         },
         VersionBand::Unknown => Some(
-            "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved.",
+            "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed.",
         ),
+    }
+}
+
+pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> OperatorGuidance {
+    match version_band {
+        VersionBand::Gcc15Plus => OperatorGuidance {
+            summary: "operator next step=keep direct CC/CXX replacement, and keep at most one wrapper-owned backend launcher behind the wrapper.",
+            representative_limitations: &[
+                "GCC15+ remains the highest-fidelity reference path.",
+                "Launcher stacks in front of the wrapper are still outside the current beta contract.",
+            ],
+            actionable_next_steps: &[
+                "Keep direct CC/CXX replacement as the default insertion shape.",
+                "If you need one cache or remote-exec launcher, keep it behind the wrapper.",
+            ],
+            c_first_focus_areas: &["compile", "type", "macro_include", "linker"],
+        },
+        VersionBand::Gcc13_14 => OperatorGuidance {
+            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
+            representative_limitations: &[
+                "native_text_capture is the default first-class product path.",
+                "explicit single_sink_structured selection remains opt-in.",
+                "raw native diagnostics may not be preserved in the same run when explicit structured capture is active.",
+            ],
+            actionable_next_steps: &[
+                "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
+                "Keep at most one wrapper-owned backend launcher behind the wrapper.",
+                "Use raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
+            ],
+            c_first_focus_areas: &["compile", "link", "include_path", "macro", "preprocessor"],
+        },
+        VersionBand::Gcc9_12 => OperatorGuidance {
+            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
+            representative_limitations: &[
+                "native_text_capture is the default first-class product path.",
+                "explicit single_sink_structured JSON selection remains opt-in.",
+                "prefer C-first compile/type/linker/basic include+macro cases; do not assume GCC15+ fidelity.",
+            ],
+            actionable_next_steps: &[
+                "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
+                "Prefer native_text_capture for ordinary runs and opt into single_sink_structured when you need JSON.",
+                "Use raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
+            ],
+            c_first_focus_areas: &[
+                "compile",
+                "type",
+                "link",
+                "include_path",
+                "macro",
+                "preprocessor",
+            ],
+        },
+        VersionBand::Unknown => OperatorGuidance {
+            summary: "operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed.",
+            representative_limitations: &[
+                "this compiler version is outside the current product bands.",
+                "conservative raw diagnostics will be preserved.",
+            ],
+            actionable_next_steps: &[
+                "Use raw gcc/g++ for production builds until a supported VersionBand is confirmed.",
+                "Use --formed-mode=passthrough when you need the wrapper path for triage only.",
+            ],
+            c_first_focus_areas: &[],
+        },
     }
 }
 
@@ -503,7 +575,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
             )
         );
     }
@@ -514,7 +586,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::B, &decision),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
             )
         );
     }
@@ -544,7 +616,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
+                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
             )
         );
     }
@@ -574,7 +646,7 @@ mod tests {
                 ProcessingPath::NativeTextCapture
             ),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
             )
         );
     }
@@ -590,7 +662,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
             )
         );
     }
@@ -601,7 +673,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(SupportTier::C, &decision),
             Some(
-                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved."
+                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed."
             )
         );
     }

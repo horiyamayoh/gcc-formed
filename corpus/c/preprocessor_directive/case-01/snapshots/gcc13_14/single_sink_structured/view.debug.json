@@ -1,0 +1,56 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:1:2",
+      "cascade_debug": {
+        "cascade_role": "independent_root",
+        "episode_ref": "episode-268987d93b91",
+        "evidence_tags": [
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-3689c3635616",
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "visibility_floor": "never_hidden"
+      },
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [
+        "macro: preserved"
+      ],
+      "excerpts": [
+        {
+          "annotations": [
+            " ^"
+          ],
+          "lines": [
+            "#error macro guard missing"
+          ],
+          "location": "src/main.c:1:2"
+        }
+      ],
+      "family": "preprocessor_directive",
+      "first_action": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
+      "group_id": "group-3689c3635616",
+      "matched_conditions": [
+        "message_contains=#error",
+        "phase=preprocess"
+      ],
+      "raw_message": "#error macro guard missing",
+      "rule_id": "rule.family.preprocessor_directive.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "preprocessor directive error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

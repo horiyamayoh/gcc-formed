@@ -628,6 +628,16 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("MATRIX_SUPPORT_TIER", workflow)
         self.assertNotIn("--matrix-support-tier", workflow)
 
+    def test_nightly_workflow_includes_gcc9_12_matrix_lane(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "nightly.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("gcc_image: gcc:12", workflow)
+        self.assertIn("gcc_label: gcc12", workflow)
+        self.assertIn("version_band: gcc9_12", workflow)
+        self.assertIn("MATRIX_VERSION_BAND: ${{ matrix.version_band }}", workflow)
+        self.assertIn("name: nightly-${{ matrix.gcc_label }}-artifacts", workflow)
+
     def test_nightly_workflow_uses_matrix_snapshot_step_without_gcc15_only_markers(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "nightly.yml"

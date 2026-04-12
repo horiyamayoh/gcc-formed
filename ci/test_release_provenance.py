@@ -88,50 +88,56 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assert_current_multi_band_vocabulary(payload)
 
     def test_nightly_gate_records_version_band_in_matrix_metadata(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            report_root = Path(tmpdir) / "reports"
-            output_path = report_root / "release" / "release-provenance.json"
-            write_json(report_root / "release" / "package.json", {"kind": "package"})
-            write_json(report_root / "release" / "bench-smoke.json", {"kind": "bench"})
+        matrix_cases = [
+            ("gcc:14", "gcc13_14", "false"),
+            ("gcc:12", "gcc9_12", "false"),
+        ]
+        for gcc_image, version_band, release_blocker in matrix_cases:
+            with self.subTest(gcc_image=gcc_image, version_band=version_band):
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    report_root = Path(tmpdir) / "reports"
+                    output_path = report_root / "release" / "release-provenance.json"
+                    write_json(report_root / "release" / "package.json", {"kind": "package"})
+                    write_json(report_root / "release" / "bench-smoke.json", {"kind": "bench"})
 
-            completed = self.run_release_provenance(
-                "--workflow",
-                "nightly-gate",
-                "--report-root",
-                str(report_root),
-                "--output",
-                str(output_path),
-                "--package-version",
-                "0.2.0-beta.1",
-                "--target-triple",
-                "x86_64-unknown-linux-musl",
-                "--release-channel",
-                "beta",
-                "--maturity-label",
-                "v1beta",
-                "--matrix-gcc-image",
-                "gcc:14",
-                "--matrix-version-band",
-                "gcc13_14",
-                "--release-blocker",
-                "false",
-                env=self.github_env(),
-            )
-            self.assertEqual(completed.returncode, 0, completed.stderr)
+                    completed = self.run_release_provenance(
+                        "--workflow",
+                        "nightly-gate",
+                        "--report-root",
+                        str(report_root),
+                        "--output",
+                        str(output_path),
+                        "--package-version",
+                        "0.2.0-beta.1",
+                        "--target-triple",
+                        "x86_64-unknown-linux-musl",
+                        "--release-channel",
+                        "beta",
+                        "--maturity-label",
+                        "v1beta",
+                        "--matrix-gcc-image",
+                        gcc_image,
+                        "--matrix-version-band",
+                        version_band,
+                        "--release-blocker",
+                        release_blocker,
+                        env=self.github_env(),
+                    )
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
 
-            payload = json.loads(output_path.read_text(encoding="utf-8"))
-            self.assertEqual(
-                payload["matrix"],
-                {
-                    "gcc_image": "gcc:14",
-                    "version_band": "gcc13_14",
-                    "release_blocker": "false",
-                },
-            )
-            self.assertEqual(payload["release_scope"]["maturity_label"], "v1beta")
-            self.assertEqual(payload["release"]["bench_smoke"]["kind"], "bench")
-            self.assertIsNone(payload["release"]["fuzz_smoke"])
-            self.assert_current_multi_band_vocabulary(payload)
+                    payload = json.loads(output_path.read_text(encoding="utf-8"))
+                    self.assertEqual(
+                        payload["matrix"],
+                        {
+                            "gcc_image": gcc_image,
+                            "version_band": version_band,
+                            "release_blocker": release_blocker,
+                        },
+                    )
+                    self.assertEqual(payload["release_scope"]["maturity_label"], "v1beta")
+                    self.assertEqual(payload["release"]["bench_smoke"]["kind"], "bench")
+                    self.assertIsNone(payload["release"]["fuzz_smoke"])
+                    self.assert_current_multi_band_vocabulary(payload)
 
     def test_public_beta_release_records_release_scope_and_tag(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

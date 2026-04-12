@@ -299,6 +299,14 @@ def build_markdown(summary: dict) -> str:
         f"- Job: `{summary['job']}`",
         f"- Overall status: `{summary['overall_status']}`",
     ]
+    matrix = summary.get("matrix") or {}
+    if matrix.get("gcc_version") or matrix.get("version_band"):
+        lines.append(
+            "- Matrix selector: "
+            f"gcc=`{matrix.get('gcc_version') or '-'}`, "
+            f"version_band=`{matrix.get('version_band') or '-'}`, "
+            f"release_blocker=`{matrix.get('release_blocker') or '-'}'"
+        )
     failure_classification = summary.get("overall_failure_classification") or "none"
     lines.append(f"- Failure classification: `{failure_classification}`")
     first_failed = summary.get("first_failed_step")

@@ -3,7 +3,8 @@ use crate::backend::{env_backend_override, env_launcher_override};
 use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
-    fallback_reason_label, select_mode_for_seam, select_processing_path_for_seam,
+    fallback_reason_label, operator_guidance_for_version_band, select_mode_for_seam,
+    select_processing_path_for_seam,
 };
 use diag_backend_probe::{
     ProbeCache, ProcessingPath, ResolveRequest, VersionBand, backend_topology_policy,
@@ -88,6 +89,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
             wrapper_path: env::current_exe().ok(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
+    let operator_guidance = operator_guidance_for_version_band(backend.version_band());
 
     paths.ensure_dirs()?;
     let state_access = probe_write_access(&paths.state_root);
@@ -156,6 +158,12 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
             "topology_policy_version": backend.execution_topology.policy_version,
             "topology_disposition": snake_case_label(&backend.execution_topology.disposition),
             "topology_policy": backend_topology_policy(),
+        },
+        "operator_guidance": {
+            "summary": operator_guidance.summary,
+            "representative_limitations": operator_guidance.representative_limitations,
+            "actionable_next_steps": operator_guidance.actionable_next_steps,
+            "c_first_focus_areas": operator_guidance.c_first_focus_areas,
         },
         "rollout_matrix": {
             "schema_version": 2,
@@ -382,7 +390,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -392,7 +400,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured selection remains opt-in."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -402,7 +410,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -413,7 +421,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run."
+                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -423,7 +431,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -433,7 +441,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled and explicit single_sink_structured JSON selection remains opt-in."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -444,7 +452,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -454,7 +462,7 @@ mod tests {
                 && case["support_level"] == "experimental"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "unknown"
@@ -464,7 +472,7 @@ mod tests {
                 && case["support_level"] == "passthrough_only"
                 && case["fallback_reason"] == "unsupported_tier"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed."
         }));
     }
 

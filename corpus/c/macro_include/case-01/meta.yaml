@@ -1,15 +1,19 @@
 corpus_id: c/macro_include/case-01
-title: undeclared identifier reached through include and macro expansion
+title: GCC13 native-text honest fallback preserves raw include and macro context
 tags:
   - macro_include
   - phase1
   - representative
+  - beta-bar
+  - 'band:gcc13_14'
+  - 'processing_path:native_text_capture'
+  - 'fallback_contract:honest_fallback'
 ownership: curated
 provenance: hand-authored
 reviewer: codex
 redaction_class: public
 owner_team: compiler-ux
-last_reviewed: '2026-04-08'
+last_reviewed: '2026-04-12'
 reviewers:
   - codex
 promotion_status: curated

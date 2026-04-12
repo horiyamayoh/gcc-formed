@@ -17,17 +17,24 @@ jobs:
         include:
           - gcc_image: gcc:13
             gcc_label: gcc13
+            version_band: gcc13_14
             release_blocker: false
           - gcc_image: gcc:14
             gcc_label: gcc14
+            version_band: gcc13_14
+            release_blocker: false
+          - gcc_image: gcc:12
+            gcc_label: gcc12
+            version_band: gcc9_12
             release_blocker: false
           - gcc_image: gcc:15
             gcc_label: gcc15
+            version_band: gcc15_plus
             release_blocker: true
     env:
       GATE_PLAN: ci/plans/nightly-gate.json
       MATRIX_GCC_VERSION: ${{ matrix.gcc_image }}
-      MATRIX_VERSION_BAND: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_14' || matrix.gcc_label == 'gcc14' && 'gcc13_14' || 'gcc15_plus' }}
+      MATRIX_VERSION_BAND: ${{ matrix.version_band }}
       RELEASE_BLOCKER: ${{ matrix.release_blocker && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v5.0.0

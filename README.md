@@ -302,6 +302,8 @@ cmake --build build -j
 
 If the wrapper is not yet proven for a build, fall back to raw `gcc` / `g++` for that build or use `--formed-mode=passthrough` on a direct invocation. Do not put ccache / distcc / sccache-style launchers in front of the wrapper, and do not build a multi-launcher chain.
 
+`--formed-self-check` and the runtime notices use the same current-vocabulary operator guidance. The self-check output keeps a shared `summary`, `representative_limitations`, `actionable_next_steps`, and `c_first_focus_areas`; the same band-specific next-step wording is documented in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md).
+
 The full topology policy is in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md); rollback and raw-fallback instructions remain in [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md).
 
 ---

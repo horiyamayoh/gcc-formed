@@ -1,49 +1,26 @@
 schema_version: 1
 fixture_id: c/macro_include/case-01
-version_band: gcc15_plus
-processing_path: dual_sink_structured
-support_level: preview
+version_band: gcc13_14
+processing_path: native_text_capture
+support_level: experimental
 expected_mode: render
 semantic:
-  family: macro_include
+  family: linker
   severity: error
-  lead_group_any_of:
-    - sarif-0-0
-  primary_locations:
-    - path: src/main.c
-      line: 3
-      column: 25
-  primary_location_user_owned_required: true
-  first_action_required: true
-  raw_provenance_required: true
-  fallback: forbidden
-  confidence_min: medium
+  fallback: required
 render:
   default:
-    omission_notice_required: false
-    first_screenful_max_lines: 24
-    first_action_max_line: 3
-    raw_diagnostics_hint_required: true
-    compaction_required_substrings:
-      - "through macro expansion:"
-      - "from include chain:"
-  concise:
-    omission_notice_required: false
-    first_screenful_max_lines: 14
-  verbose:
-    omission_notice_required: false
-    first_screenful_max_lines: 40
+    first_screenful_max_lines: 16
+    required_substrings:
+      - "In file included from src/wrapper.h:1,"
+      - "note: in expansion of macro 'CALL_BAD'"
   ci:
     first_screenful_max_lines: 16
-    first_action_max_line: 3
-    path_first_required: true
     color_meaning_forbidden: true
-    raw_diagnostics_hint_required: true
-    compaction_required_substrings:
-      - "through macro expansion:"
-      - "from include chain:"
-integrity:
-  allowed_issue_codes: []
+    required_substrings:
+      - "src/config.h:1:20: error: 'missing_symbol' undeclared"
+  debug:
+    first_screenful_max_lines: 24
 performance:
   parse_time_ms_max: 50
   render_time_ms_max: 40

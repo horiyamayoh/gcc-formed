@@ -1,14 +1,12 @@
 schema_version: 1
 fixture_id: c/preprocessor_directive/case-01
-version_band: gcc15_plus
-processing_path: dual_sink_structured
-support_level: preview
+version_band: gcc13_14
+processing_path: single_sink_structured
+support_level: experimental
 expected_mode: render
 semantic:
   family: preprocessor_directive
   severity: error
-  lead_group_any_of:
-    - sarif-0-0
   primary_locations:
     - path: src/main.c
       line: 1
@@ -30,8 +28,9 @@ render:
     first_screenful_max_lines: 40
   ci:
     first_screenful_max_lines: 14
-    path_first_required: true
     color_meaning_forbidden: true
+  debug:
+    first_screenful_max_lines: 40
 integrity:
   allowed_issue_codes: []
 performance:

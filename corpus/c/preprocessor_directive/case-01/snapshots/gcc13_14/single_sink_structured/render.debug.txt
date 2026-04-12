@@ -1,0 +1,14 @@
+error: preprocessor directive error
+--> src/main.c:1:2
+help: inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics
+why: #error macro guard missing
+| src/main.c:1:2
+| #error macro guard missing
+|  ^
+macro: preserved
+debug: rule_id=rule.family.preprocessor_directive.message_terms
+debug: matched_conditions=message_contains=#error, phase=preprocess
+debug-facts: group_ref=group-3689c3635616, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-268987d93b91
+debug-facts: evidence_tags=classified_family, early_invocation, user_owned_primary
+debug-raw: provenance_capture_refs=diagnostics.sarif
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
