@@ -2361,23 +2361,15 @@ fn parse_version_band_label(label: &str) -> Option<VersionBand> {
     }
 }
 
-/// Returns `true` if a fixture's declared version band is compatible with the
-/// runtime version band (i.e. the GCC version actually available in the Docker
-/// image).  A fixture requires *at least* its declared band — for example a
-/// `gcc15_plus` fixture cannot run on a `gcc13_14` runtime.
+/// Returns `true` if a fixture's declared version band exactly matches the
+/// runtime version band used for snapshot capture.
+///
+/// Snapshot goldens are band-specific: newer runtimes may emit different
+/// structured diagnostics, quote styles, or ordering even when they can compile
+/// the same source successfully. For gate comparability, cross-band capture is
+/// intentionally excluded here.
 fn fixture_compatible_with_version_band(fixture: &Fixture, runtime_band: VersionBand) -> bool {
-    let fixture_band = fixture_support_band(fixture);
-    match fixture_band {
-        VersionBand::Gcc15Plus => matches!(runtime_band, VersionBand::Gcc15Plus),
-        VersionBand::Gcc13_14 => {
-            matches!(runtime_band, VersionBand::Gcc13_14 | VersionBand::Gcc15Plus)
-        }
-        VersionBand::Gcc9_12 => matches!(
-            runtime_band,
-            VersionBand::Gcc9_12 | VersionBand::Gcc13_14 | VersionBand::Gcc15Plus
-        ),
-        VersionBand::Unknown => true,
-    }
+    fixture_support_band(fixture) == runtime_band
 }
 
 fn inferred_fixture_support_band(major_version_selector: &str) -> VersionBand {
@@ -3261,6 +3253,11 @@ pub(crate) fn capture_fixture_ingress(
 
     let compiler = compiler_binary_for_fixture(fixture);
     let fixture_capture_plan = capture_plan_for_fixture(fixture);
+    let single_sink_json_via_stderr =
+        matches!(
+            fixture_capture_plan.plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkJsonFile
+        ) && matches!(fixture_support_band(fixture), VersionBand::Gcc9_12);
     let mut shell_args = vec![compiler.to_string()];
     if let Some(standard) = fixture.invoke.standard.as_ref() {
         shell_args.push(format!("-std={standard}"));
@@ -3274,7 +3271,11 @@ pub(crate) fn capture_fixture_ingress(
             shell_args.push("-fdiagnostics-format=sarif-file".to_string());
         }
         StructuredCapturePolicy::SingleSinkJsonFile => {
-            shell_args.push("-fdiagnostics-format=json-file".to_string());
+            if single_sink_json_via_stderr {
+                shell_args.push("-fdiagnostics-format=json".to_string());
+            } else {
+                shell_args.push("-fdiagnostics-format=json-file".to_string());
+            }
         }
     }
     let command_line = format!(
@@ -3321,11 +3322,12 @@ pub(crate) fn capture_fixture_ingress(
     }
 
     let stderr_path = sandbox.path().join("stderr.raw");
-    let stderr_text = fs::read_to_string(&stderr_path).map_err(|error| VerificationFailure {
-        layer: "capture".to_string(),
-        fixture_id: fixture.fixture_id().to_string(),
-        summary: format!("failed to read {}: {error}", stderr_path.display()),
-    })?;
+    let mut stderr_text =
+        fs::read_to_string(&stderr_path).map_err(|error| VerificationFailure {
+            layer: "capture".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("failed to read {}: {error}", stderr_path.display()),
+        })?;
     let structured_text = match fixture_capture_plan.plan.structured_capture {
         StructuredCapturePolicy::Disabled => None,
         StructuredCapturePolicy::SarifFile => {
@@ -3340,20 +3342,26 @@ pub(crate) fn capture_fixture_ingress(
         }
         StructuredCapturePolicy::SingleSinkSarifFile
         | StructuredCapturePolicy::SingleSinkJsonFile => {
-            let spec = structured_artifact_spec_for_fixture(fixture).ok_or_else(|| {
-                VerificationFailure {
-                    layer: "capture".to_string(),
-                    fixture_id: fixture.fixture_id().to_string(),
-                    summary: "structured artifact spec missing".to_string(),
-                }
-            })?;
-            discover_single_sink_structured(sandbox.path(), spec).map_err(|error| {
-                VerificationFailure {
-                    layer: "capture".to_string(),
-                    fixture_id: fixture.fixture_id().to_string(),
-                    summary: error,
-                }
-            })?
+            if single_sink_json_via_stderr {
+                let structured = (!stderr_text.trim().is_empty()).then_some(stderr_text.clone());
+                stderr_text.clear();
+                structured
+            } else {
+                let spec = structured_artifact_spec_for_fixture(fixture).ok_or_else(|| {
+                    VerificationFailure {
+                        layer: "capture".to_string(),
+                        fixture_id: fixture.fixture_id().to_string(),
+                        summary: "structured artifact spec missing".to_string(),
+                    }
+                })?;
+                discover_single_sink_structured(sandbox.path(), spec).map_err(|error| {
+                    VerificationFailure {
+                        layer: "capture".to_string(),
+                        fixture_id: fixture.fixture_id().to_string(),
+                        summary: error,
+                    }
+                })?
+            }
         }
     };
     Ok(CapturedIngress {
@@ -3965,7 +3973,7 @@ mod tests {
     }
 
     #[test]
-    fn runtime_version_band_filters_out_newer_representative_fixtures() {
+    fn runtime_version_band_filters_to_exact_snapshot_band() {
         let band_a_fixture = fixture_with_tags(
             "c/linker/case-band-a-reference",
             "15",
@@ -4005,12 +4013,24 @@ mod tests {
             VersionBand::Gcc13_14
         ));
         assert!(fixture_compatible_with_version_band(
+            &band_a_fixture,
+            VersionBand::Gcc15Plus
+        ));
+        assert!(fixture_compatible_with_version_band(
             &band_b_fixture,
             VersionBand::Gcc13_14
         ));
-        assert!(fixture_compatible_with_version_band(
+        assert!(!fixture_compatible_with_version_band(
             &band_c_fixture,
             VersionBand::Gcc13_14
+        ));
+        assert!(!fixture_compatible_with_version_band(
+            &band_b_fixture,
+            VersionBand::Gcc15Plus
+        ));
+        assert!(fixture_compatible_with_version_band(
+            &band_c_fixture,
+            VersionBand::Gcc9_12
         ));
     }
 

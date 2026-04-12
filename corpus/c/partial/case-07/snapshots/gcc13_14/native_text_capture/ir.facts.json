@@ -100,7 +100,7 @@
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
     "raw": "f34eff1dd4ccf3c2dcc1ce33c14e9f43561c67cda86b4a49f6f10c39b72cbeb0",
-    "structural": "e13733fc0b8bd8d063fa4988fd28dfe4040fea87578672c0f18d0eb23acc2d26"
+    "structural": "c1ddfa1955553c9a3a35c8a581e543b734606d65ef960e95393085db91569ba6"
   },
   "producer": {
     "name": "gcc-formed",
@@ -111,7 +111,6 @@
     "argv_redacted": [
       "gcc",
       "-std=c11",
-      "-c",
       "src/main.c"
     ],
     "cwd_display": "<cwd>",

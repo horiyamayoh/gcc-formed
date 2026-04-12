@@ -80,6 +80,7 @@ pub fn compare_snapshot_contents(
 /// Normalizes snapshot `contents` based on the artifact filename in `path`.
 pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     match path.file_name().and_then(|value| value.to_str()) {
+        Some("render.debug.txt") => Ok(normalize_render_debug_snapshot_contents(contents)),
         Some(file_name) if is_view_snapshot_name(file_name) => {
             normalize_view_snapshot_contents(path, contents)
         }
@@ -136,12 +137,10 @@ fn normalize_public_export_snapshot_contents(
         )
     })?;
     normalize_export_for_snapshot_compare(&mut export);
-    if let Some(result) = export.result.as_mut() {
-        for diagnostic in &mut result.diagnostics {
-            diagnostic.message = normalize_snapshot_text(&diagnostic.message);
-        }
-    }
-    diag_core::canonical_json(&export)
+    let mut value = serde_json::to_value(export)
+        .map_err(|error| format!("failed to serialize {}: {error}", path.display()))?;
+    normalize_snapshot_value_strings(&mut value);
+    diag_core::canonical_json(&value)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
@@ -209,11 +208,133 @@ fn normalize_named_ref_value(
     *raw = normalized;
 }
 
+fn normalize_render_debug_snapshot_contents(contents: &str) -> String {
+    let contents = normalize_snapshot_text(contents);
+    let mut refs = SnapshotRefNormalizer::default();
+    let mut normalized = String::with_capacity(contents.len());
+    for segment in contents.split_inclusive('\n') {
+        let (line, newline) = segment
+            .strip_suffix('\n')
+            .map(|line| (line, "\n"))
+            .unwrap_or((segment, ""));
+        let line = normalize_named_ref_in_text_line(
+            line,
+            "group_ref=",
+            "group",
+            &mut refs.group_refs,
+            &mut refs.next_group_ref,
+        );
+        let line = normalize_named_ref_in_text_line(
+            &line,
+            "best_parent_group_ref=",
+            "group",
+            &mut refs.group_refs,
+            &mut refs.next_group_ref,
+        );
+        let line = normalize_named_ref_in_text_line(
+            &line,
+            "episode_ref=",
+            "episode",
+            &mut refs.episode_refs,
+            &mut refs.next_episode_ref,
+        );
+        normalized.push_str(&line);
+        normalized.push_str(newline);
+    }
+    normalized
+}
+
+fn normalize_named_ref_in_text_line(
+    line: &str,
+    marker: &str,
+    normalized_prefix: &str,
+    mapping: &mut BTreeMap<String, String>,
+    next_index: &mut usize,
+) -> String {
+    let mut normalized = String::with_capacity(line.len());
+    let mut remaining = line;
+
+    while let Some(offset) = remaining.find(marker) {
+        let marker_end = offset + marker.len();
+        normalized.push_str(&remaining[..marker_end]);
+        let tail = &remaining[marker_end..];
+        let raw_len = tail
+            .chars()
+            .take_while(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_'))
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if raw_len == 0 {
+            remaining = tail;
+            continue;
+        }
+        let raw = &tail[..raw_len];
+        let normalized_ref = mapping
+            .entry(raw.to_string())
+            .or_insert_with(|| {
+                *next_index += 1;
+                format!("{normalized_prefix}-{}", *next_index)
+            })
+            .clone();
+        normalized.push_str(&normalized_ref);
+        remaining = &tail[raw_len..];
+    }
+
+    normalized.push_str(remaining);
+    normalized
+}
+
 fn normalize_snapshot_text(contents: &str) -> String {
     let contents = normalize_transient_object_paths(contents);
+    let contents = normalize_gcc_docs_versioned_urls(&contents);
     let contents = normalize_gcc_quote_style(&contents);
     let contents = normalize_volatile_compiler_text(&contents);
     normalize_transient_line_numbers(&contents)
+}
+
+fn normalize_gcc_docs_versioned_urls(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let mut remaining = contents;
+    let marker = "https://gcc.gnu.org/onlinedocs/gcc-";
+    let replacement = "https://gcc.gnu.org/onlinedocs/gcc/";
+
+    while let Some(start) = remaining.find(marker) {
+        normalized.push_str(&remaining[..start]);
+        let tail = &remaining[start + marker.len()..];
+        let version_len = tail
+            .chars()
+            .take_while(|ch| ch.is_ascii_digit() || *ch == '.')
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if version_len == 0 || !tail[version_len..].starts_with("/gcc/") {
+            normalized.push_str(marker);
+            remaining = tail;
+            continue;
+        }
+        normalized.push_str(replacement);
+        remaining = &tail[version_len + "/gcc/".len()..];
+    }
+
+    normalized.push_str(remaining);
+    normalized
+}
+
+fn normalize_snapshot_value_strings(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(object) => {
+            for nested in object.values_mut() {
+                normalize_snapshot_value_strings(nested);
+            }
+        }
+        serde_json::Value::Array(items) => {
+            for item in items {
+                normalize_snapshot_value_strings(item);
+            }
+        }
+        serde_json::Value::String(text) => {
+            *text = normalize_snapshot_text(text);
+        }
+        _ => {}
+    }
 }
 
 fn normalize_volatile_compiler_text(contents: &str) -> String {
@@ -1806,5 +1927,53 @@ mod tests {
 
         assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
         assert_eq!(comparison.normalized_expected, comparison.normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_render_debug_refs_before_compare() {
+        let expected = "debug-facts: group_ref=group-6131f19f2701, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-c60b416f6ffc\n";
+        let actual = "debug-facts: group_ref=group-de502cecec03, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-d71f91df1f28\n";
+
+        let comparison =
+            compare_snapshot_contents(Path::new("render.debug.txt"), expected, actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+    }
+
+    #[test]
+    fn normalizes_nested_public_export_messages_before_compare() {
+        let expected = include_str!(
+            "../../corpus/cpp/template/case-15/snapshots/gcc13_14/single_sink_structured/public.export.json"
+        );
+        let actual = expected
+            .replace(
+                "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’",
+                "candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
+            )
+            .replace(
+                "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
+                "candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
+            );
+
+        let comparison =
+            compare_snapshot_contents(Path::new("public.export.json"), expected, &actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+    }
+
+    #[test]
+    fn normalizes_versioned_gcc_docs_urls_in_text_snapshots() {
+        let expected = include_str!(
+            "../../corpus/cpp/overload/case-07/snapshots/gcc9_12/single_sink_structured/diagnostics.json"
+        );
+        let actual = expected.replace(
+            "https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Warning-Options.html#index-fpermissive",
+            "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive",
+        );
+
+        let comparison =
+            compare_snapshot_contents(Path::new("diagnostics.json"), expected, &actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
     }
 }

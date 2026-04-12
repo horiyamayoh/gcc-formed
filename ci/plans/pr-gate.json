@@ -142,7 +142,7 @@
       "name": "Representative reference-path snapshot check",
       "policy": "always",
       "failure_classification": "product",
-      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir \"$REPORT_ROOT/snapshot\"",
+      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --version-band gcc15_plus --report-dir \"$REPORT_ROOT/snapshot\"",
       "fixture": "subset:representative",
       "gcc_version": "gcc:15",
       "artifact_paths": [

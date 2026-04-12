@@ -127,7 +127,7 @@ jobs:
             --plan "$GATE_PLAN" \
             --step-id representative-reference-snapshot-check \
             --report-root "$REPORT_ROOT" \
-            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --report-dir "$REPORT_ROOT/snapshot"'
+            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --version-band gcc15_plus --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree
         run: |
           python3 ci/gate_step.py \
