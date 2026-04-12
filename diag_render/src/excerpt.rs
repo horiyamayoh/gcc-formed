@@ -6,6 +6,10 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
+const DEFAULT_EXCERPT_WIDTH: usize = 100;
+const EXCERPT_LINE_PREFIX_WIDTH: usize = 2;
+const ELLIPSIS: &str = "...";
+
 /// A rendered source code excerpt block with annotations.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExcerptBlock {
@@ -16,6 +20,18 @@ pub struct ExcerptBlock {
     /// Caret/range annotations aligned beneath the source lines.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub annotations: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct AnnotationColumns {
+    start: u32,
+    end: u32,
+}
+
+#[derive(Debug, Clone)]
+struct WindowedSourceLine {
+    text: String,
+    columns: AnnotationColumns,
 }
 
 /// Loads source code excerpts for the primary locations of a diagnostic node.
@@ -63,11 +79,16 @@ pub(crate) fn source_line_text(request: &RenderRequest, location: &Location) -> 
 fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<ExcerptBlock> {
     let source_line = source_line_text(request, location)?;
     let (display_line, precise_annotation_possible) = renderable_source_line(&source_line);
+    let windowed_line = window_excerpt_line(request, location, &display_line);
 
     Some(ExcerptBlock {
         location: format_location(request, location),
-        lines: vec![display_line],
-        annotations: excerpt_annotations(location, precise_annotation_possible),
+        lines: vec![windowed_line.text],
+        annotations: excerpt_annotations(
+            location,
+            precise_annotation_possible,
+            windowed_line.columns,
+        ),
     })
 }
 
@@ -144,8 +165,135 @@ fn expand_tabs(source_line: &str) -> String {
     expanded
 }
 
-fn excerpt_annotations(location: &Location, precise_annotation_possible: bool) -> Vec<String> {
+fn window_excerpt_line(
+    request: &RenderRequest,
+    location: &Location,
+    display_line: &str,
+) -> WindowedSourceLine {
+    let columns = annotation_columns(location);
+    let max_width = excerpt_window_width(request);
+    if display_line.chars().count() <= max_width {
+        return WindowedSourceLine {
+            text: display_line.to_string(),
+            columns,
+        };
+    }
+
+    let highlight_end = highlight_end_column(location);
+    let highlight_width = highlight_end
+        .saturating_sub(columns.start)
+        .saturating_add(1) as usize;
+    let min_window_body_width = ELLIPSIS.len() * 2 + 1;
+    if max_width <= min_window_body_width || highlight_width + ELLIPSIS.len() * 2 >= max_width {
+        return WindowedSourceLine {
+            text: display_line.to_string(),
+            columns,
+        };
+    }
+
+    let line_chars = display_line.chars().collect::<Vec<_>>();
+    let line_len = line_chars.len();
+    let body_width = max_width.saturating_sub(ELLIPSIS.len() * 2);
+    let highlight_start = columns.start.saturating_sub(1) as usize;
+    let highlight_end = highlight_end.saturating_sub(1) as usize;
+    let available_context = body_width.saturating_sub(highlight_width);
+    let desired_left_context = available_context / 2;
+
+    let mut window_start = highlight_start.saturating_sub(desired_left_context);
+    let min_window_end = highlight_end.saturating_add(1).min(line_len);
+    let mut window_end = window_start.saturating_add(body_width).min(line_len);
+    if window_end < min_window_end {
+        window_end = min_window_end;
+        window_start = window_end.saturating_sub(body_width);
+    }
+    if window_end == line_len {
+        window_start = line_len.saturating_sub(body_width);
+    }
+
+    let left_trimmed = window_start > 0;
+    let right_trimmed = window_end < line_len;
+    let mut text = String::new();
+    if left_trimmed {
+        text.push_str(ELLIPSIS);
+    }
+    text.extend(line_chars[window_start..window_end].iter());
+    if right_trimmed {
+        text.push_str(ELLIPSIS);
+    }
+
+    let display_start = if left_trimmed {
+        ELLIPSIS.len() as u32 + 1
+    } else {
+        1
+    };
+    let columns = AnnotationColumns {
+        start: display_start + (highlight_start.saturating_sub(window_start) as u32),
+        end: display_start
+            + (columns
+                .end
+                .saturating_sub(1)
+                .saturating_sub(window_start as u32)),
+    };
+
+    WindowedSourceLine { text, columns }
+}
+
+fn excerpt_window_width(request: &RenderRequest) -> usize {
+    request
+        .capabilities
+        .width_columns
+        .map(|width| width.saturating_sub(EXCERPT_LINE_PREFIX_WIDTH).max(1))
+        .unwrap_or(DEFAULT_EXCERPT_WIDTH.saturating_sub(EXCERPT_LINE_PREFIX_WIDTH))
+}
+
+fn annotation_columns(location: &Location) -> AnnotationColumns {
+    let start = location.column().max(1);
+    AnnotationColumns {
+        start,
+        end: marker_end_input(location),
+    }
+}
+
+fn highlight_end_column(location: &Location) -> u32 {
     let start_column = location.column().max(1);
+    let Some(range) = location.range.as_ref() else {
+        return start_column;
+    };
+    if range.start.line != range.end.line {
+        return start_column;
+    }
+    let end_column = location.end_column().unwrap_or(start_column);
+    match range.boundary_semantics {
+        BoundarySemantics::InclusiveEnd => end_column.max(start_column),
+        BoundarySemantics::Point => start_column,
+        BoundarySemantics::HalfOpen | BoundarySemantics::Unknown => {
+            end_column.saturating_sub(1).max(start_column)
+        }
+    }
+}
+
+fn marker_end_input(location: &Location) -> u32 {
+    let start_column = location.column().max(1);
+    let Some(range) = location.range.as_ref() else {
+        return start_column;
+    };
+    if range.start.line != range.end.line {
+        return start_column;
+    }
+    match range.boundary_semantics {
+        BoundarySemantics::Point => start_column,
+        BoundarySemantics::InclusiveEnd
+        | BoundarySemantics::HalfOpen
+        | BoundarySemantics::Unknown => location.end_column().unwrap_or(start_column),
+    }
+}
+
+fn excerpt_annotations(
+    location: &Location,
+    precise_annotation_possible: bool,
+    columns: AnnotationColumns,
+) -> Vec<String> {
+    let start_column = columns.start.max(1);
     let prefix = " ".repeat(start_column.saturating_sub(1) as usize);
     match location.range.as_ref() {
         None => vec![annotation_line(
@@ -153,7 +301,7 @@ fn excerpt_annotations(location: &Location, precise_annotation_possible: bool) -
             &prefix,
             "^",
             location.label.as_deref(),
-            &format!("column {}", start_column),
+            &format!("column {}", location.column().max(1)),
         )],
         Some(range) if range.start.line != range.end.line => {
             let span_lines = range
@@ -175,14 +323,14 @@ fn excerpt_annotations(location: &Location, precise_annotation_possible: bool) -
         Some(range) => {
             let marker = range_marker(
                 start_column,
-                location.end_column().unwrap_or(start_column),
+                columns.end.max(start_column),
                 range.boundary_semantics,
             );
             let summary = if marker == "^" {
-                format!("column {}", start_column)
+                format!("column {}", location.column().max(1))
             } else {
                 let end_column = location.end_column().unwrap_or(start_column);
-                format!("columns {}-{}", start_column, end_column)
+                format!("columns {}-{}", location.column().max(1), end_column)
             };
             vec![annotation_line(
                 precise_annotation_possible,

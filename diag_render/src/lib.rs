@@ -786,7 +786,7 @@ mod tests {
                 .text
                 .contains("help: fix the first parser error at the user-owned location")
         );
-        assert!(output.text.contains("why: expected ';' before '}' token"));
+        assert!(output.text.contains("why : expected ';' before '}' token"));
     }
 
     #[test]
@@ -969,6 +969,28 @@ mod tests {
         assert!(output.text.contains("| src/main.c:2:10"));
         assert!(output.text.contains("|     if (1 {"));
         assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_long_header_moves_location_to_evidence_suffix() {
+        let mut request = sample_request();
+        request.capabilities.width_columns = Some(60);
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .headline =
+            Some("syntax error while parsing a declaration with a very long subject line".into());
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        let first_line = output.text.lines().next().unwrap();
+
+        assert!(!first_line.contains(" @ src/main.c:2:13"));
+        assert!(!output.text.contains("--> src/main.c:2:13"));
+        assert!(output.text.contains(
+            "help: fix the first parser error at the user-owned location @ src/main.c:2:13"
+        ));
     }
 
     #[test]
@@ -1286,7 +1308,7 @@ mod tests {
                 .contains("implicit or narrowing conversion detected")
         );
         assert!(output.text.contains(
-            "why: comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+            "why : comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
         ));
         assert!(!output.text.contains("want:"));
     }
@@ -1786,6 +1808,35 @@ mod tests {
     }
 
     #[test]
+    fn excerpt_windows_long_lines_around_the_highlight() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let source_line = "int value = really_long_prefix_that_pushes_the_highlight_into_the_middle(target_token, trailing_argument_for_windowing);\n";
+        let target_column = source_line.find("target_token").unwrap() as u32 + 1;
+        write_source_file(&tempdir, "src/main.c", source_line);
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.capabilities.width_columns = Some(40);
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations = vec![sample_location(
+            "src/main.c",
+            1,
+            target_column,
+            Ownership::User,
+        )];
+
+        let view = build_view_model(&request).unwrap();
+        let excerpt = &view.cards[0].excerpts[0];
+
+        assert!(excerpt.lines[0].starts_with("..."));
+        assert!(excerpt.lines[0].ends_with("..."));
+        assert!(excerpt.lines[0].contains("target_token"));
+        assert!(excerpt.lines[0].len() < source_line.len());
+        assert_eq!(excerpt.annotations.len(), 1);
+        assert!(excerpt.annotations[0].contains('^'));
+    }
+
+    #[test]
     fn excerpt_uses_honest_summary_for_multiline_ranges() {
         let tempdir = tempfile::tempdir().unwrap();
         write_source_file(
@@ -1824,6 +1875,110 @@ mod tests {
 
         let view = build_view_model(&request).unwrap();
         assert_eq!(view.cards[0].excerpts[0].annotations, vec!["column 9"]);
+    }
+
+    #[test]
+    fn windowed_non_ascii_excerpt_keeps_summary_annotation_without_caret() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let source_line = "prefix_prefix_prefix_prefix_prefix_prefix_cafe_cafe_cafe_cafe café_target suffix_suffix_suffix_suffix_suffix\n";
+        let target_column = source_line.chars().position(|ch| ch == 'é').unwrap() as u32 + 1;
+        write_source_file(&tempdir, "src/main.c", source_line);
+
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.capabilities.width_columns = Some(44);
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].locations = vec![sample_location(
+            "src/main.c",
+            1,
+            target_column,
+            Ownership::User,
+        )];
+
+        let view = build_view_model(&request).unwrap();
+        let excerpt = &view.cards[0].excerpts[0];
+
+        assert!(excerpt.lines[0].contains("..."));
+        assert_eq!(excerpt.annotations, vec![format!("column {target_column}")]);
+        assert!(!excerpt.annotations[0].contains('^'));
+    }
+
+    #[test]
+    fn evidence_labels_use_a_four_column_floor() {
+        let request = sample_request();
+        let layout = crate::layout::LayoutProfile::for_request(&request);
+        let theme = crate::theme::ThemePolicy::for_request(&request);
+        let mut lines = Vec::new();
+
+        let card = RenderGroupCard {
+            group_id: "group.synthetic".to_string(),
+            severity: "error".to_string(),
+            family: Some("type_overload".to_string()),
+            title: "type or overload mismatch".to_string(),
+            confidence_label: "high".to_string(),
+            confidence_notice: None,
+            first_action: None,
+            canonical_location: Some("src/main.c:5:22".to_string()),
+            raw_message: "raw mismatch".to_string(),
+            excerpts: Vec::new(),
+            context_lines: Vec::new(),
+            child_notes: Vec::new(),
+            collapsed_notices: Vec::new(),
+            suggestions: Vec::new(),
+            raw_block_label: "raw:".to_string(),
+            raw_sub_block: Vec::new(),
+            rule_id: None,
+            matched_conditions: Vec::new(),
+            suppression_reason: None,
+            cascade_debug: None,
+            semantic_card: crate::presentation::RenderSemanticCard {
+                internal_family: Some("type_overload".to_string()),
+                display_family: Some("type_mismatch".to_string()),
+                subject: "type or overload mismatch".to_string(),
+                presentation: ResolvedCardPresentation {
+                    template_id: "contrast_block".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    subject_first_header: true,
+                    location_policy: ResolvedLocationPolicy {
+                        default_placement: LocationPlacement::HeaderSuffix,
+                        fallback_order: vec![LocationPlacement::EvidenceSuffix],
+                    },
+                    fell_back_to_generic_template: false,
+                },
+                slots: vec![
+                    crate::presentation::RenderSemanticSlot {
+                        slot: SemanticSlotId::Got,
+                        value: "const char *".to_string(),
+                        label: Some("got".to_string()),
+                    },
+                    crate::presentation::RenderSemanticSlot {
+                        slot: SemanticSlotId::Via,
+                        value: "takes_int".to_string(),
+                        label: Some("via".to_string()),
+                    },
+                ],
+                canonical_location: Some("src/main.c:5:22".to_string()),
+                raw_message: "raw mismatch".to_string(),
+            },
+        };
+
+        layout.render_card(&theme, &card, &mut lines);
+
+        assert!(lines.iter().any(|line| line == "got : const char *"));
+        assert!(lines.iter().any(|line| line == "via : takes_int"));
+    }
+
+    #[test]
+    fn ansi_color_styles_severity_family_and_evidence_labels() {
+        let mut request = sample_request();
+        request.capabilities.ansi_color = true;
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
+        assert!(output.text.contains("\u{1b}[1;31merror\u{1b}[0m"));
+        assert!(output.text.contains("\u{1b}[2m[syntax]\u{1b}[0m"));
+        assert!(output.text.contains("\u{1b}[36mhelp:\u{1b}[0m"));
     }
 
     #[test]

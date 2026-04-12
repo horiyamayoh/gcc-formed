@@ -113,6 +113,8 @@ pub struct ResolvedCardPresentation {
     pub display_family: Option<String>,
     #[serde(default)]
     pub subject_first_header: bool,
+    #[serde(default = "default_card_location_policy")]
+    pub location_policy: ResolvedLocationPolicy,
     #[serde(default)]
     pub fell_back_to_generic_template: bool,
 }
@@ -624,6 +626,7 @@ impl ResolvedPresentationPolicy {
             },
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
             subject_first_header: self.preset_id == "subject_blocks_v1",
+            location_policy: self.location_policy.clone(),
             fell_back_to_generic_template,
         }
     }
@@ -660,6 +663,7 @@ impl Default for ResolvedCardPresentation {
             template_id: GENERIC_TEMPLATE_ID.to_string(),
             display_family: None,
             subject_first_header: false,
+            location_policy: default_card_location_policy(),
             fell_back_to_generic_template: false,
         }
     }
@@ -689,6 +693,17 @@ fn default_template_id() -> String {
 
 fn generic_template_id() -> String {
     GENERIC_TEMPLATE_ID.to_string()
+}
+
+fn default_card_location_policy() -> ResolvedLocationPolicy {
+    ResolvedLocationPolicy {
+        default_placement: LocationPlacement::DedicatedLine,
+        fallback_order: vec![
+            LocationPlacement::DedicatedLine,
+            LocationPlacement::ExcerptHeader,
+            LocationPlacement::None,
+        ],
+    }
 }
 
 fn matcher_matches(matcher: &str, family: &str) -> bool {
