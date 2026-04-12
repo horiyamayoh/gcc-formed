@@ -34,6 +34,10 @@ impl ExecutionPlan {
         self.capture_plan.execution_mode
     }
 
+    pub(crate) fn processing_path(&self) -> ProcessingPath {
+        self.capture_plan.processing_path
+    }
+
     pub(crate) fn capture_request(
         &self,
         paths: &WrapperPaths,

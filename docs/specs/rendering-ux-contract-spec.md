@@ -107,12 +107,14 @@ terminal text / CI log text / raw fallback text
 
 本仕様が直接扱わないものは以下である。
 
-- machine-readable export（SARIF / JSON / editor transport）
+- machine-readable export（SARIF / editor transport / public JSON surface）
 - IDE の widget / tree / hover UI
 - public plugin API
 - color theme の具体 palette
 - 自動 apply-fix の実行
 - 画面内インタラクション（paging, keyboard navigation, TUI）
+
+public JSON surface の正本は [public-machine-readable-diagnostic-surface-spec.md](public-machine-readable-diagnostic-surface-spec.md) に置く。
 
 ---
 

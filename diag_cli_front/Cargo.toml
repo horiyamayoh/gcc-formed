@@ -20,6 +20,7 @@ diag_cascade.workspace = true
 diag_capture_runtime.workspace = true
 diag_core.workspace = true
 diag_enrich.workspace = true
+diag_public_export.workspace = true
 diag_render.workspace = true
 diag_trace.workspace = true
 serde.workspace = true

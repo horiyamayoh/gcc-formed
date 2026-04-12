@@ -1,0 +1,327 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-overload-case-08",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "type_overload",
+        "first_action": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "message": "no matching function for call to 'takes_ref(const char*&)'",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "candidate 1: 'void takes_ref(int&)' (near match)",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "conversion of argument 1 would be ill-formed:",
+            "message": "conversion of argument 1 would be ill-formed:",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "invalid conversion from 'const char*' to 'int'",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 15,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "high",
+            "family": "pointer_reference",
+            "first_action": "provide the full type definition via #include or fix the value category",
+            "headline": "invalid pointer or reference operation",
+            "message": "cannot bind rvalue '(int)value' to 'int&'",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 15,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "candidate 2: 'void takes_ref(long int&)' (near match)",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "conversion of argument 1 would be ill-formed:",
+            "message": "conversion of argument 1 would be ill-formed:",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "invalid conversion from 'const char*' to 'long int'",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 15,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "high",
+            "family": "pointer_reference",
+            "first_action": "provide the full type definition via #include or fix the value category",
+            "headline": "invalid pointer or reference operation",
+            "message": "cannot bind rvalue '(long int)value' to 'long int&'",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 15,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "medium",
+        "family": "type_overload",
+        "first_action": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 15,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "pointer_reference",
+        "first_action": "provide the full type definition via #include or fix the value category",
+        "headline": "invalid pointer or reference operation",
+        "message": "src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 15,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "medium",
+        "family": "type_overload",
+        "first_action": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 15,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "pointer_reference",
+        "first_action": "provide the full type definition via #include or fix the value category",
+        "headline": "invalid pointer or reference operation",
+        "message": "src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 15,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 14,
+      "duplicate_count": 0,
+      "error_count": 5,
+      "independent_root_count": 5,
+      "note_count": 9,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

@@ -1,6 +1,6 @@
 use crate::SnapshotSubset;
 use diag_adapter_gcc::{IngestPolicy, ingest_bundle, producer_for_version, tool_for_backend};
-use diag_backend_probe::{ProcessingPath, VersionBand};
+use diag_backend_probe::{ProcessingPath, VersionBand, support_level_for_version_band};
 use diag_capture_runtime::{
     CaptureBundle, CaptureInvocation, CapturePlan, ExecutionMode, ExitStatusInfo, LocaleHandling,
     NativeTextCapturePolicy, StructuredCapturePolicy,
@@ -12,6 +12,7 @@ use diag_core::{
     SourceAuthority, VisibilityFloor, WrapperSurface, fingerprint_for, snapshot_json,
 };
 use diag_enrich::enrich_document;
+use diag_public_export::{PublicExportContext, export_from_document};
 use diag_render::{
     DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest, SourceExcerptPolicy,
     StreamKind, TypeDisplayPolicy, WarningVisibility, build_view_model, render,
@@ -29,6 +30,9 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
+
+pub(crate) const PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT: &str =
+    "public.export.schema-shape-fingerprint.txt";
 
 pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/partial/case-01",
@@ -781,6 +785,21 @@ pub(crate) fn collect_acceptance_fixture_summary(
                 }
             })?,
         );
+        let public_export = public_export_for_fixture(&replay, fixture)?;
+        artifacts.insert(
+            "public.export.json".to_string(),
+            public_export
+                .canonical_json()
+                .map_err(|error| VerificationFailure {
+                    layer: "public.export".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: error.to_string(),
+                })?,
+        );
+        artifacts.insert(
+            PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT.to_string(),
+            public_export_schema_shape_fingerprint_for_export(&public_export),
+        );
         artifacts.insert(
             "view.default.json".to_string(),
             canonical_json_for_view_model(default_view_model.as_ref()).map_err(|error| {
@@ -797,6 +816,10 @@ pub(crate) fn collect_acceptance_fixture_summary(
         );
         let mut artifact_diffs = Vec::new();
         for (relative, contents) in &artifacts {
+            // The fingerprint sidecar is a report-only compatibility sentinel, not a snapshot target.
+            if relative == PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT {
+                continue;
+            }
             let path = fixture.snapshot_root().join(relative);
             let (diff, _) =
                 classify_snapshot_artifact_diff(fixture, relative, &path, contents, false)?;
@@ -914,6 +937,12 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
                 summary: error.to_string(),
             }
         })?,
+    )?;
+    verify_snapshot_file(
+        fixture,
+        "public.export",
+        &fixture.snapshot_root().join("public.export.json"),
+        &public_export_json_for_fixture(&replay, fixture)?,
     )?;
 
     let default_request =
@@ -1120,6 +1149,21 @@ pub(crate) fn materialize_fixture_snapshots(
             }
         })?,
     );
+    let public_export = public_export_for_fixture(&replay, fixture)?;
+    artifacts.insert(
+        "public.export.json".to_string(),
+        public_export
+            .canonical_json()
+            .map_err(|error| VerificationFailure {
+                layer: "snapshot".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: error.to_string(),
+            })?,
+    );
+    artifacts.insert(
+        PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT.to_string(),
+        public_export_schema_shape_fingerprint_for_export(&public_export),
+    );
 
     let mut effective_fallback_reason = replay.fallback_reason;
     for (profile_name, _) in fixture.expectations.render.named_profiles() {
@@ -1155,6 +1199,9 @@ pub(crate) fn materialize_fixture_snapshots(
     let mut artifact_diffs = Vec::new();
     let mut pending_failure = None;
     for (relative, contents) in &artifacts {
+        if relative == PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT {
+            continue;
+        }
         let path = snapshot_root.join(relative);
         let (diff, failure) =
             classify_snapshot_artifact_diff(fixture, relative, &path, contents, check)?;
@@ -1175,6 +1222,9 @@ pub(crate) fn materialize_fixture_snapshots(
     }
 
     for (relative, contents) in artifacts {
+        if relative == PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT {
+            continue;
+        }
         let path = snapshot_root.join(relative);
         if !check {
             fs::write(&path, contents).map_err(|error| VerificationFailure {
@@ -1250,6 +1300,8 @@ pub(crate) fn replay_fixture_document(
 #[derive(Debug)]
 pub(crate) struct ReplayOutcomeAndDocument {
     pub(crate) document: DiagnosticDocument,
+    pub(crate) source_authority: SourceAuthority,
+    pub(crate) fallback_grade: FallbackGrade,
     pub(crate) fallback_reason: Option<FallbackReason>,
     pub(crate) parse_time_ms: u64,
 }
@@ -1279,9 +1331,46 @@ pub(crate) fn replay_document_from_ingress(
     );
     Ok(ReplayOutcomeAndDocument {
         document,
+        source_authority: ingest.source_authority,
+        fallback_grade: ingest.fallback_grade,
         fallback_reason: ingest.fallback_reason,
         parse_time_ms: 0,
     })
+}
+
+fn public_export_json_for_fixture(
+    replay: &ReplayOutcomeAndDocument,
+    fixture: &Fixture,
+) -> Result<String, VerificationFailure> {
+    public_export_for_fixture(replay, fixture)?
+        .canonical_json()
+        .map_err(|error| VerificationFailure {
+            layer: "public.export".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.to_string(),
+        })
+}
+
+fn public_export_for_fixture(
+    replay: &ReplayOutcomeAndDocument,
+    fixture: &Fixture,
+) -> Result<diag_public_export::PublicDiagnosticExport, VerificationFailure> {
+    let context = PublicExportContext::from_document(
+        &replay.document,
+        fixture_support_band(fixture),
+        fixture_processing_path(fixture),
+        support_level_for_version_band(fixture_support_band(fixture)),
+        replay.source_authority,
+        replay.fallback_grade,
+        replay.fallback_reason,
+    );
+    Ok(export_from_document(&replay.document, &context))
+}
+
+pub(crate) fn public_export_schema_shape_fingerprint_for_export(
+    export: &diag_public_export::PublicDiagnosticExport,
+) -> String {
+    format!("{}\n", diag_public_export::schema_shape_fingerprint(export))
 }
 
 pub(crate) fn run_cascade_analysis_for_fixture(
@@ -3339,6 +3428,10 @@ pub(crate) fn enforce_minimum_corpus_shape(
 mod tests {
     use super::*;
     use diag_core::Severity;
+    use diag_public_export::{
+        PublicDiagnosticExport, PublicExportExecution, PublicExportInvocation,
+        PublicExportProducer, PublicExportStatus, PublicExportTool, schema_shape_fingerprint,
+    };
     use diag_testkit::{
         CascadeExpectations, FixtureExpectations, FixtureInvoke, FixtureMeta,
         IntegrityExpectations, PerformanceExpectations, RenderExpectations, SemanticExpectations,
@@ -3434,6 +3527,42 @@ mod tests {
         }
     }
 
+    fn sample_public_export() -> PublicDiagnosticExport {
+        PublicDiagnosticExport {
+            schema_version: "1.0.0-alpha.1".to_string(),
+            kind: diag_public_export::PUBLIC_EXPORT_KIND.to_string(),
+            status: PublicExportStatus::Available,
+            producer: PublicExportProducer {
+                name: "gcc-formed".to_string(),
+                version: "0.2.0-beta.1".to_string(),
+            },
+            invocation: PublicExportInvocation {
+                invocation_id: Some("inv-1".to_string()),
+                invoked_as: Some("gcc-formed".to_string()),
+                exit_status: 1,
+                primary_tool: Some(PublicExportTool {
+                    name: "gcc".to_string(),
+                    version: Some("15.2.0".to_string()),
+                    component: None,
+                    vendor: Some("GNU".to_string()),
+                }),
+                language_mode: Some("c".to_string()),
+                wrapper_mode: Some("terminal".to_string()),
+            },
+            execution: PublicExportExecution {
+                version_band: "gcc13_14".to_string(),
+                processing_path: "native_text_capture".to_string(),
+                support_level: "experimental".to_string(),
+                source_authority: Some("residual_text".to_string()),
+                fallback_grade: Some("compatibility".to_string()),
+                fallback_reason: None,
+                document_completeness: Some("partial".to_string()),
+            },
+            result: None,
+            unavailable_reason: None,
+        }
+    }
+
     fn acceptance_summary_for_fixture(
         fixture: &Fixture,
         independent_root_total_count: usize,
@@ -3506,6 +3635,16 @@ mod tests {
                 .collect(),
             verified: true,
         }
+    }
+
+    #[test]
+    fn public_export_schema_fingerprint_sidecar_is_single_line_hex() {
+        let export = sample_public_export();
+        let sidecar = public_export_schema_shape_fingerprint_for_export(&export);
+
+        assert!(sidecar.ends_with('\n'));
+        assert_eq!(sidecar.trim_end(), schema_shape_fingerprint(&export));
+        assert_eq!(sidecar.trim_end().len(), 64);
     }
 
     #[test]

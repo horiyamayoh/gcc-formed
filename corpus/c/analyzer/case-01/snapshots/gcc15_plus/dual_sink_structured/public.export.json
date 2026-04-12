@@ -1,0 +1,125 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-analyzer-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "low",
+        "family": "unknown",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "pointer 'ptr' used after 'free'",
+        "message": "pointer 'ptr' used after 'free'",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "call to 'free' here",
+            "message": "call to 'free' here",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 5,
+              "line": 5,
+              "ownership": "user",
+              "path": "src/main.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      },
+      {
+        "confidence": "high",
+        "family": "analyzer",
+        "first_action": "follow the analyzer event path and fix the first invalid state transition",
+        "headline": "static analysis found a potential defect",
+        "message": "double-'free' of 'ptr'",
+        "phase": "analyze",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      },
+      {
+        "confidence": "high",
+        "family": "analyzer",
+        "first_action": "follow the analyzer event path and fix the first invalid state transition",
+        "headline": "static analysis found a potential defect",
+        "message": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]",
+        "phase": "analyze",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 4,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 3,
+      "note_count": 1,
+      "uncertain_count": 0,
+      "warning_count": 3
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

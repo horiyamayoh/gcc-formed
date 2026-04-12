@@ -1,0 +1,238 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-ranges_views-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "ranges_views",
+        "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+        "headline": "C++20 ranges or views error",
+        "message": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')",
+        "phase": "constraints",
+        "primary_location": {
+          "column": 22,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "ranges_views",
+            "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "message": "candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 981,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 981,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "concepts_constraints",
+            "first_action": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "message": "constraints not satisfied",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 5,
+              "line": 981,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "ranges_views",
+            "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "message": "the required expression 'std::ranges::views::__adaptor::__is_range_adaptor_closure_fn(__t, __t)' is invalid",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 30,
+              "line": 963,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
+            "message": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
+            "phase": "semantic",
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "ranges_views",
+            "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "message": "candidate 2: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 972,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 972,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "concepts_constraints",
+            "first_action": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "message": "constraints not satisfied",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 5,
+              "line": 972,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "concepts_constraints",
+            "first_action": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "message": "the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 20,
+              "line": 933,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/15.2.0/ranges",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 10,
+      "duplicate_count": 0,
+      "error_count": 1,
+      "independent_root_count": 1,
+      "note_count": 9,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

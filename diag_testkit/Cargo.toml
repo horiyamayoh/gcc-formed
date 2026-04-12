@@ -7,6 +7,7 @@ version.workspace = true
 
 [dependencies]
 diag_core.workspace = true
+diag_public_export.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

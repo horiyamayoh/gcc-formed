@@ -1,0 +1,82 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "experimental",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-partial-case-07",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "13.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "medium",
+        "family": "collect2_summary",
+        "first_action": "inspect the linker diagnostics immediately above this summary",
+        "headline": "driver reported a linker failure summary",
+        "message": "collect2: error: ld returned 1 exit status",
+        "phase": "link",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "medium",
+        "family": "linker.undefined_reference",
+        "first_action": "define the missing symbol or link the object/library that provides it",
+        "headline": "undefined reference to `missing_symbol`",
+        "message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+        "phase": "link",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "message": "/usr/bin/ld: /tmp/ccTGB25x.o: in function `main':",
+        "phase": "link",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "passthrough",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 3,
+      "duplicate_count": 0,
+      "error_count": 3,
+      "independent_root_count": 1,
+      "note_count": 0,
+      "uncertain_count": 2,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

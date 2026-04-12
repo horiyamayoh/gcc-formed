@@ -1,0 +1,15 @@
+[package]
+name = "diag_public_export"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+diag_backend_probe.workspace = true
+diag_core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

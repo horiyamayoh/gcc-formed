@@ -26,6 +26,12 @@ Use this file as the default starting point for AI coding agents working in this
 
 Only documents marked as `doc_role: current-authority` may drive implementation decisions.
 
+## Public Machine Surface
+
+For machine-readable diagnostic consumption, prefer `--formed-public-json=<path>` and the public export contract in `docs/specs/public-machine-readable-diagnostic-surface-spec.md`.
+
+Do not treat terminal text, trace bundles, or internal IR snapshots as the public automation contract unless the task explicitly asks for those internal artifacts.
+
 ## Ignore By Default
 
 - `docs/history/`

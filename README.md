@@ -34,6 +34,7 @@ superseded_by: []
 目標は、**GCC 9〜15 にまたがる複数の capture / ingest 経路を持ちながら、1 つの UX 原則で価値を返すこと**である。
 
 AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md) である。
+機械可読の public surface は [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md) に別契約として置く。
 
 ---
 
@@ -143,6 +144,22 @@ Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` 
 | GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `Experimental` | in-scope product path。価値の幅はより限定的 |
 | Unknown / other | `Passthrough` | `PassthroughOnly` | fail-open と provenance 保持を優先 |
 
+## Public Machine-Readable Export
+
+CI、agent、wrapper integration が診断を機械可読で消費するときは、terminal text や internal trace を scrape せず、`--formed-public-json` を使う。
+
+```bash
+gcc-formed --formed-public-json=artifacts/diagnostic.json -c src/main.c
+```
+
+stdout を JSON 専用チャネルとして安全に使える invocation では `--formed-public-json=-` も使える。
+
+```bash
+gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
+```
+
+この surface の正本は [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md) であり、internal IR や trace bundle の代替 public contract ではない。
+
 ---
 
 ## この repo の読み方
@@ -159,12 +176,10 @@ Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` 
    capture / ingest の実装契約
 5. [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md)  
    renderer と disclosure の実装契約
-6. [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md)  
-   corpus-driven quality gate の実装契約
-7. [adr-initial-set/README.md](adr-initial-set/README.md)  
-   採択済み ADR の索引
-8. [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) / [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md)  
-   成熟度ラベル、artifact 系列、変更分類の用語契約
+6. [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md): public JSON export の実装契約
+7. [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): corpus-driven quality gate の実装契約
+8. [adr-initial-set/README.md](adr-initial-set/README.md): 採択済み ADR の索引
+9. [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) / [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md): 成熟度ラベル、artifact 系列、変更分類の用語契約
 
 全体の文書索引は [docs/README.md](docs/README.md) を参照。
 
@@ -197,6 +212,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 - [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md): IR 契約
 - [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md): capture / ingest 契約
 - [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md): terminal / CI renderer 契約
+- [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md): public JSON export 契約
 - [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): quality gate 契約
 - [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md): packaging / install / rollback / release engineering 契約
 - [docs/process/implementation-bootstrap-sequence.md](docs/process/implementation-bootstrap-sequence.md): 実装開始順の正本

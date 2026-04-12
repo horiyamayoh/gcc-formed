@@ -1,0 +1,63 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-coroutine-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "coroutine",
+        "first_action": "define a valid promise_type or align the coroutine return type with the coroutine body",
+        "headline": "coroutine promise type error",
+        "message": "unable to find the promise type for this coroutine",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 1,
+      "duplicate_count": 0,
+      "error_count": 1,
+      "independent_root_count": 1,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

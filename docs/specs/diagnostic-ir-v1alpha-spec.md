@@ -101,6 +101,8 @@ superseded_by: []
 - organization 固有 knowledge base 連携
 - AI/LLM による自由文説明
 
+public machine-readable diagnostic surface の正本は [public-machine-readable-diagnostic-surface-spec.md](public-machine-readable-diagnostic-surface-spec.md) に置く。
+
 ---
 
 ## 3. IR の位置づけ

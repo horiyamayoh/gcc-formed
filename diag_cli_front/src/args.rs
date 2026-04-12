@@ -16,6 +16,7 @@ pub(crate) struct ParsedArgs {
     pub(crate) launcher: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
     pub(crate) debug_refs: Option<DebugRefs>,
+    pub(crate) public_json: Option<PublicJsonSink>,
     pub(crate) cascade_compression_level: Option<CompressionLevel>,
     pub(crate) cascade_suppress_likelihood_threshold: Option<f32>,
     pub(crate) cascade_summary_likelihood_threshold: Option<f32>,
@@ -45,6 +46,8 @@ impl ParsedArgs {
                 parsed.trace = Some(parse_retention_policy(policy)?);
             } else if let Some(debug_refs) = value.strip_prefix("--formed-debug-refs=") {
                 parsed.debug_refs = Some(parse_debug_refs(debug_refs)?);
+            } else if let Some(sink) = value.strip_prefix("--formed-public-json=") {
+                parsed.public_json = Some(parse_public_json_sink(sink));
             } else if let Some(level) = value.strip_prefix("--formed-cascade-level=") {
                 parsed.cascade_compression_level = Some(parse_compression_level(level)?);
             } else if let Some(threshold) =
@@ -108,6 +111,18 @@ pub(crate) enum WrapperIntrospection {
     DumpBuildManifest,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum PublicJsonSink {
+    Stdout,
+    File(PathBuf),
+}
+
+impl PublicJsonSink {
+    pub(crate) fn is_stdout(&self) -> bool {
+        matches!(self, Self::Stdout)
+    }
+}
+
 pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, CliError> {
     match value {
         "render" => Ok(ExecutionMode::Render),
@@ -161,6 +176,14 @@ pub(crate) fn parse_debug_refs(value: &str) -> Result<DebugRefs, CliError> {
         _ => Err(CliError::Config(format!(
             "unsupported debug ref mode: {value}"
         ))),
+    }
+}
+
+pub(crate) fn parse_public_json_sink(value: &str) -> PublicJsonSink {
+    if value == "-" || value == "stdout" {
+        PublicJsonSink::Stdout
+    } else {
+        PublicJsonSink::File(PathBuf::from(value))
     }
 }
 
@@ -225,6 +248,7 @@ mod tests {
             OsString::from("--formed-backend-launcher=/usr/bin/ccache"),
             OsString::from("--formed-trace=always"),
             OsString::from("--formed-debug-refs=trace_id"),
+            OsString::from("--formed-public-json=out.json"),
             OsString::from("--formed-cascade-level=balanced"),
             OsString::from("--formed-cascade-suppress-threshold=0.81"),
             OsString::from("--formed-cascade-summary-threshold=0.61"),
@@ -245,6 +269,10 @@ mod tests {
         assert_eq!(parsed.launcher, Some(PathBuf::from("/usr/bin/ccache")));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
         assert_eq!(parsed.debug_refs, Some(DebugRefs::TraceId));
+        assert_eq!(
+            parsed.public_json,
+            Some(PublicJsonSink::File(PathBuf::from("out.json")))
+        );
         assert_eq!(
             parsed.cascade_compression_level,
             Some(CompressionLevel::Balanced)
@@ -317,5 +345,16 @@ mod tests {
         .unwrap_err();
 
         assert!(error.to_string().contains("cascade summary threshold"));
+    }
+
+    #[test]
+    fn parses_public_json_stdout_sink() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-public-json=-"),
+        ])
+        .expect("parsed args");
+
+        assert_eq!(parsed.public_json, Some(PublicJsonSink::Stdout));
     }
 }

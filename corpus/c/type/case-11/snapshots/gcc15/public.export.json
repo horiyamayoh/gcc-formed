@@ -1,0 +1,76 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "experimental",
+    "version_band": "gcc9_12"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-type-case-11",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "12.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "medium",
+        "family": "type_overload",
+        "first_action": "compare the expected type and actual argument at the call site",
+        "headline": "type or overload mismatch",
+        "message": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 19,
+          "line": 9,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "medium",
+        "family": "linker",
+        "first_action": "check the missing/duplicate symbol and the object or library inputs",
+        "headline": "linker reported a failure",
+        "message": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~",
+        "phase": "link",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "passthrough",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 2,
+      "duplicate_count": 0,
+      "error_count": 2,
+      "independent_root_count": 1,
+      "note_count": 0,
+      "uncertain_count": 1,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

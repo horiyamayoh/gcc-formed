@@ -3,6 +3,10 @@ use crate::backend::build_execution_plan;
 use crate::config::ConfigFile;
 use crate::error::CliError;
 use crate::mode::is_compiler_introspection;
+use crate::public_json::{
+    ensure_public_json_stdout_safe, export_context_for_unavailable, unavailable_export_with_reason,
+    write_public_json,
+};
 use crate::render::{
     CommonTraceContext, IngestTraceMetadata, PassthroughTraceWriteRequest, TraceWriteRequest,
     argv_for_trace, build_language_mode, build_primary_tool, maybe_write_passthrough_trace,
@@ -18,6 +22,9 @@ use diag_capture_runtime::{
 use diag_cascade::{CascadeContext, CascadeReport, DocumentAnalyzer, SafeDocumentAnalyzer};
 use diag_core::{CascadePolicySnapshot, DiagnosticDocument, RunInfo};
 use diag_enrich::enrich_document;
+use diag_public_export::{
+    PublicExportContext, PublicExportUnavailableReason, export_from_document,
+};
 use diag_render::{
     PathPolicy, RenderRequest, SourceExcerptPolicy, TypeDisplayPolicy, WarningVisibility, render,
 };
@@ -56,9 +63,29 @@ fn real_main() -> Result<i32, CliError> {
     let cascade_policy = config.resolve_cascade_policy(&parsed);
     let mut cache = ProbeCache::default();
     let plan = build_execution_plan(&argv0, &parsed, &config, &mut cache)?;
+    ensure_public_json_stdout_safe(
+        parsed.public_json.as_ref(),
+        plan.mode(),
+        &parsed.forwarded_args,
+    )?;
 
     if is_compiler_introspection(&parsed.forwarded_args) {
-        return passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?);
+        let exit_code =
+            passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?)?;
+        let export_context = export_context_for_unavailable(
+            &argv0,
+            &plan.backend,
+            exit_code,
+            wrapper_surface(),
+            plan.processing_path(),
+            plan.mode_decision.fallback_reason,
+        );
+        let export = unavailable_export_with_reason(
+            &export_context,
+            PublicExportUnavailableReason::IntrospectionLike,
+        );
+        write_public_json(parsed.public_json.as_ref(), &export)?;
+        return Ok(exit_code);
     }
 
     if let Some(note) = plan.scope_notice {
@@ -84,6 +111,19 @@ fn real_main() -> Result<i32, CliError> {
         maybe_write_passthrough_trace(PassthroughTraceWriteRequest {
             common: trace_context(wrapper_started.elapsed().as_millis() as u64),
         })?;
+        let export_context = export_context_for_unavailable(
+            &argv0,
+            &plan.backend,
+            exit_code,
+            wrapper_surface(),
+            capture.processing_path(),
+            plan.mode_decision.fallback_reason,
+        );
+        let export = unavailable_export_with_reason(
+            &export_context,
+            PublicExportUnavailableReason::PassthroughMode,
+        );
+        write_public_json(parsed.public_json.as_ref(), &export)?;
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -131,6 +171,19 @@ fn real_main() -> Result<i32, CliError> {
     );
 
     if matches!(plan.mode(), ExecutionMode::Shadow) {
+        let shadow_export_context = PublicExportContext::from_document(
+            &document,
+            plan.backend.version_band(),
+            capture.processing_path(),
+            plan.backend.support_level(),
+            ingest_trace.source_authority,
+            ingest_trace.fallback_grade,
+            plan.mode_decision
+                .fallback_reason
+                .or(ingest_trace.fallback_reason),
+        );
+        let export = export_from_document(&document, &shadow_export_context);
+        write_public_json(parsed.public_json.as_ref(), &export)?;
         maybe_write_trace(TraceWriteRequest {
             common: trace_context(wrapper_started.elapsed().as_millis() as u64),
             document: &document,
@@ -172,6 +225,18 @@ fn real_main() -> Result<i32, CliError> {
     if !render_result.text.ends_with('\n') {
         stderr.write_all(b"\n")?;
     }
+
+    let public_export_context = PublicExportContext::from_document(
+        &document,
+        plan.backend.version_band(),
+        capture.processing_path(),
+        plan.backend.support_level(),
+        ingest_trace.source_authority,
+        ingest_trace.fallback_grade,
+        effective_fallback_reason,
+    );
+    let export = export_from_document(&document, &public_export_context);
+    write_public_json(parsed.public_json.as_ref(), &export)?;
 
     maybe_write_trace(TraceWriteRequest {
         common: trace_context(wrapper_started.elapsed().as_millis() as u64),

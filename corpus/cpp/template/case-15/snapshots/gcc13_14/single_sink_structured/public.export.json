@@ -1,0 +1,287 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "single_sink_structured",
+    "source_authority": "structured",
+    "support_level": "experimental",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-template-case-15",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "13.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "class template argument deduction failed:",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 22,
+          "line": 17,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "no matching function for call to ‘Pair(int, const char [2])’",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 22,
+          "line": 17,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 11,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 11,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 22,
+              "line": 17,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 8,
+              "line": 10,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 8,
+              "line": 10,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  mismatched types ‘Pair<T>’ and ‘int’",
+            "message": "  mismatched types ‘Pair<T>’ and ‘int’",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 22,
+              "line": 17,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "no matching function for call to ‘expect_ptr(int&)’",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 5,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "candidate: ‘template<class T> void expect_ptr(T*)’",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  mismatched types ‘T*’ and ‘int’",
+            "message": "  mismatched types ‘T*’ and ‘int’",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 5,
+              "line": 6,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 12,
+      "duplicate_count": 0,
+      "error_count": 3,
+      "independent_root_count": 3,
+      "note_count": 9,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

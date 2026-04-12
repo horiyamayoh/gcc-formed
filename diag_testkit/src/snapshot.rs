@@ -1,4 +1,5 @@
 use diag_core::{ArtifactKind, CaptureArtifact, DiagnosticDocument, RunInfo};
+use diag_public_export::{PublicDiagnosticExport, normalize_export_for_snapshot_compare};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -83,6 +84,7 @@ pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String
             normalize_view_snapshot_contents(path, contents)
         }
         Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),
+        Some("public.export.json") => normalize_public_export_snapshot_contents(path, contents),
         Some("ir.facts.json") | Some("ir.analysis.json") => {
             normalize_ir_snapshot_contents(path, contents)
         }
@@ -120,6 +122,21 @@ fn normalize_view_snapshot_contents(path: &Path, contents: &str) -> Result<Strin
     let mut refs = SnapshotRefNormalizer::default();
     normalize_view_snapshot_value(&mut value, &mut refs);
     diag_core::canonical_json(&value)
+        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_public_export_snapshot_contents(
+    path: &Path,
+    contents: &str,
+) -> Result<String, String> {
+    let mut export: PublicDiagnosticExport = serde_json::from_str(contents).map_err(|error| {
+        format!(
+            "failed to parse {} as public diagnostic export: {error}",
+            path.display()
+        )
+    })?;
+    normalize_export_for_snapshot_compare(&mut export);
+    diag_core::canonical_json(&export)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
 
@@ -1522,6 +1539,129 @@ mod tests {
 
         let comparison =
             compare_snapshot_contents(Path::new("view.default.json"), expected, actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+        assert_eq!(comparison.normalized_expected, comparison.normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_public_export_snapshots_before_compare() {
+        let expected = r#"{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "experimental",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "primary_tool": {
+      "name": "gcc"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "<normalized>"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action": "insert the missing semicolon",
+        "headline": "syntax error",
+        "message": "expected ';' before '}' token",
+        "phase": "parse",
+        "primary_location": {
+          "column": 1,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "diagnostic_count": 1,
+      "error_count": 1,
+      "note_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}"#;
+        let actual = r#"{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "experimental",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "inv-47",
+    "invoked_as": "gcc-formed",
+    "primary_tool": {
+      "name": "gcc",
+      "version": "13.3.0"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "0.2.0-beta.1"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action": "insert the missing semicolon",
+        "headline": "syntax error",
+        "message": "expected ';' before '}' token",
+        "phase": "parse",
+        "primary_location": {
+          "column": 1,
+          "line": 4,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "diagnostic_count": 1,
+      "error_count": 1,
+      "note_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}"#;
+
+        let comparison =
+            compare_snapshot_contents(Path::new("public.export.json"), expected, actual).unwrap();
 
         assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
         assert_eq!(comparison.normalized_expected, comparison.normalized_actual);

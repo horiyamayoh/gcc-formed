@@ -29,6 +29,7 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 - [specs/diagnostic-ir-v1alpha-spec.md](specs/diagnostic-ir-v1alpha-spec.md): Diagnostic IR 契約
 - [specs/gcc-adapter-ingestion-spec.md](specs/gcc-adapter-ingestion-spec.md): capture / ingest 契約
 - [specs/rendering-ux-contract-spec.md](specs/rendering-ux-contract-spec.md): renderer 契約
+- [specs/public-machine-readable-diagnostic-surface-spec.md](specs/public-machine-readable-diagnostic-surface-spec.md): public JSON export contract
 - [specs/quality-corpus-test-gate-spec.md](specs/quality-corpus-test-gate-spec.md): quality gate 契約
 - [specs/packaging-runtime-operations-spec.md](specs/packaging-runtime-operations-spec.md): packaging / install / release 契約
 - [releases/](releases/): current artifact / release / signing 契約

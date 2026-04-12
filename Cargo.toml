@@ -8,6 +8,7 @@ members = [
     "diag_cli_front",
     "diag_core",
     "diag_enrich",
+    "diag_public_export",
     "diag_rulepack",
     "diag_render",
     "diag_residual_text",
@@ -68,6 +69,9 @@ path = "diag_core"
 
 [workspace.dependencies.diag_enrich]
 path = "diag_enrich"
+
+[workspace.dependencies.diag_public_export]
+path = "diag_public_export"
 
 [workspace.dependencies.diag_rulepack]
 path = "diag_rulepack"

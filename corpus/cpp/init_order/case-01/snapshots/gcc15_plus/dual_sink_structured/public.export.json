@@ -1,0 +1,103 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-init_order-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "init_order",
+        "first_action": "reorder member initializers to match declaration order, or fix the initializer list",
+        "headline": "initialization order or aggregate init issue",
+        "message": "'Example::value' will be initialized after",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 9,
+          "line": 3,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      },
+      {
+        "confidence": "low",
+        "family": "unknown",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "  'int Example::count'",
+        "message": "  'int Example::count'",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 9,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      },
+      {
+        "confidence": "low",
+        "family": "unknown",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "  when initialized here",
+        "message": "  when initialized here",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 5,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 3,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 3,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 3
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

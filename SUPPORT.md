@@ -25,6 +25,7 @@ Keep wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPOR
 - Runtime triage and maintainer initial response: use [docs/runbooks/incident-triage.md](docs/runbooks/incident-triage.md).
 - Trace capture and redaction: use [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md).
 - Session handoff and resumability: use [docs/runbooks/agent-handoff.md](docs/runbooks/agent-handoff.md).
+- Machine-readable export / automation consumers: use [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md) and prefer attaching the JSON export over screen-scraped excerpts.
 
 ## VersionBand / ProcessingPath Routing
 
@@ -50,5 +51,6 @@ For non-security incidents, ask for this minimum packet before deep triage:
 3. The exact failing command line
 4. The `VersionBand`, `ProcessingPath`, and user surface chosen in the bug template
 5. A trace bundle or an explicit note that no trace bundle was captured
+6. If available, the public JSON export artifact produced by the run, without hand-formatting or screenshotting it
 
 The detailed collection steps live in [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md).

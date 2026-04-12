@@ -27,6 +27,98 @@ fn renders_with_fake_gcc15_backend() {
 }
 
 #[test]
+fn render_mode_writes_public_json_to_file() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let export_path = temp.path().join("artifacts").join("public.json");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg(format!("--formed-public-json={}", export_path.display()))
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("help: fix the first parser error"));
+
+    let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
+    assert_eq!(export["schema_version"], "1.0.0-alpha.1");
+    assert_eq!(export["kind"], "gcc_formed_public_diagnostic_export");
+    assert_eq!(export["status"], "available");
+    assert_eq!(export["execution"]["version_band"], "gcc15_plus");
+    assert_eq!(
+        export["execution"]["processing_path"],
+        "dual_sink_structured"
+    );
+    assert_eq!(export["execution"]["support_level"], "preview");
+    assert_eq!(export["execution"]["source_authority"], "structured");
+    assert_eq!(export["execution"]["fallback_grade"], "none");
+    assert!(export["execution"]["fallback_reason"].is_null());
+    assert_eq!(export["result"]["summary"]["error_count"].as_u64(), Some(1));
+    assert_eq!(
+        export["result"]["diagnostics"][0]["message"].as_str(),
+        Some("expected ';' before '}' token")
+    );
+}
+
+#[test]
+fn safe_public_json_stdout_emits_json_without_interleaving_render_output() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-public-json=-")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("help: fix the first parser error"));
+
+    let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
+    let export: Value = serde_json::from_str(&stdout).unwrap();
+    assert_eq!(export["status"], "available");
+    assert_eq!(
+        export["execution"]["processing_path"],
+        "dual_sink_structured"
+    );
+    assert_eq!(
+        export["result"]["summary"]["diagnostic_count"].as_u64(),
+        Some(1)
+    );
+}
+
+#[test]
+fn unsafe_public_json_stdout_is_rejected_for_preprocess_invocations() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-public-json=-")
+        .arg("-E")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::contains(
+            "public JSON export to stdout is unsafe for this invocation",
+        ));
+}
+
+#[test]
 fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
     let temp = fixture("13.3.0");
     let backend = temp.path().join("fake-gcc");
@@ -1515,6 +1607,38 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         invocation["normalized_invocation"]["injected_flag_count"].as_u64(),
         Some(0)
     );
+}
+
+#[test]
+fn passthrough_public_json_file_reports_unavailable_reason() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let export_path = temp.path().join("artifacts").join("public.json");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg(format!("--formed-public-json={}", export_path.display()))
+        .arg("-fdiagnostics-format=text")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("help:").not());
+
+    let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
+    assert_eq!(export["status"], "unavailable");
+    assert_eq!(export["unavailable_reason"], "passthrough_mode");
+    assert!(export["result"].is_null());
+    assert_eq!(export["execution"]["version_band"], "gcc15_plus");
+    assert_eq!(export["execution"]["processing_path"], "passthrough");
+    assert_eq!(export["execution"]["support_level"], "preview");
+    assert_eq!(export["execution"]["fallback_reason"], "incompatible_sink");
 }
 
 #[test]
