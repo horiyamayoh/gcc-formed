@@ -36,6 +36,15 @@ pub enum AdapterError {
     /// The SARIF payload has no top-level `runs` array.
     #[error("missing runs array in SARIF payload")]
     MissingRuns,
+    /// The structured artifact exceeded the bounded ingest size cap.
+    #[error(
+        "structured artifact '{artifact_id}' size {actual_bytes} bytes exceeded ingest cap {max_bytes} bytes"
+    )]
+    ArtifactTooLarge {
+        artifact_id: String,
+        actual_bytes: u64,
+        max_bytes: u64,
+    },
 }
 
 /// Result of a simplified ingestion via [`crate::ingest_with_reason`].

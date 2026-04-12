@@ -85,6 +85,8 @@ def case_env(
     base_env: dict[str, str],
     backend_script: Path,
     log_dir: Path,
+    runtime_root: Path,
+    trace_root: Path,
     gcc_wrapper: Path,
     gxx_wrapper: Path,
     launcher_script: Path | None = None,
@@ -93,6 +95,8 @@ def case_env(
     env = base_env.copy()
     env["FORMED_BACKEND_GCC"] = str(backend_script)
     env["INTEROP_FAKE_GCC_LOG_DIR"] = str(log_dir)
+    env["FORMED_RUNTIME_DIR"] = str(runtime_root)
+    env["FORMED_TRACE_DIR"] = str(trace_root)
     env["CC"] = str(gcc_wrapper)
     env["CXX"] = str(gxx_wrapper)
     env["PATH"] = os.pathsep.join([str(gcc_wrapper.parent), env.get("PATH", "")])
@@ -111,6 +115,81 @@ def make_case_report(name: str, command: list[str], logs: list[dict], **extra: o
         "command": command,
         "backend_invocations": len(logs),
         **extra,
+    }
+
+
+def list_relative_entries(root: Path) -> list[str]:
+    if not root.exists():
+        return []
+    entries: list[str] = []
+    for path in sorted(root.rglob("*")):
+        entries.append(str(path.relative_to(root)))
+    return entries
+
+
+def run_stress_round(
+    *,
+    suite: str,
+    round_index: int,
+    root_base: Path,
+    pre_commands: list[list[str]] | None,
+    command: list[str],
+    cwd: Path,
+    base_env: dict[str, str],
+    backend_script: Path,
+    gcc_wrapper: Path,
+    gxx_wrapper: Path,
+    launcher_script: Path | None = None,
+    launcher_log_dir: Path | None = None,
+    depfile_paths: list[Path] | None = None,
+) -> dict[str, object]:
+    round_root = root_base / "stress-runs" / suite / f"round-{round_index}"
+    runtime_root = round_root / "runtime"
+    trace_root = round_root / "trace"
+    log_dir = round_root / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    if launcher_log_dir is not None:
+        launcher_log_dir.mkdir(parents=True, exist_ok=True)
+
+    env = case_env(
+        base_env,
+        backend_script,
+        log_dir,
+        runtime_root,
+        trace_root,
+        gcc_wrapper,
+        gxx_wrapper,
+        launcher_script,
+        launcher_log_dir,
+    )
+    for pre_command in pre_commands or []:
+        run(pre_command, cwd=cwd, env=env)
+    run(command, cwd=cwd, env=env)
+
+    logs = read_json_logs(log_dir)
+    launcher_logs = read_json_logs(launcher_log_dir) if launcher_log_dir is not None else []
+    runtime_entries = list_relative_entries(runtime_root)
+    trace_entries = list_relative_entries(trace_root)
+    return {
+        "suite": suite,
+        "round": round_index,
+        "command": command,
+        "runtime_root": str(runtime_root),
+        "trace_root": str(trace_root),
+        "runtime_entries_after": runtime_entries,
+        "trace_entries_after": trace_entries,
+        "runtime_cleanup_ok": not runtime_entries,
+        "trace_cleanup_ok": not trace_entries,
+        "backend_invocations": len(logs),
+        "launcher_invocations": len(launcher_logs) if launcher_logs else 0,
+        "launcher_received_compiler_path": (
+            all(log["compiler_path"] == str(backend_script) for log in launcher_logs)
+            if launcher_logs
+            else None
+        ),
+        "depfiles_present": (
+            all(path.exists() for path in depfile_paths) if depfile_paths is not None else None
+        ),
     }
 
 
@@ -136,7 +215,17 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
     make_build_dir = workspace / "make-build"
     make_build_log_dir = workspace / "logs" / "make-build"
     make_build_log_dir.mkdir(parents=True, exist_ok=True)
-    make_build_env = case_env(base_env, backend_script, make_build_log_dir, gcc_wrapper, gxx_wrapper)
+    make_build_runtime_root = workspace / "runtime" / "make-build"
+    make_build_trace_root = workspace / "trace" / "make-build"
+    make_build_env = case_env(
+        base_env,
+        backend_script,
+        make_build_log_dir,
+        make_build_runtime_root,
+        make_build_trace_root,
+        gcc_wrapper,
+        gxx_wrapper,
+    )
     make_build_command = ["make", "-j2", f"BUILD_DIR={make_build_dir}", "build"]
     run(make_build_command, cwd=project_root, env=make_build_env)
     make_build_logs = read_json_logs(make_build_log_dir)
@@ -165,6 +254,8 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
         base_env,
         backend_script,
         make_launcher_backend_log_dir,
+        workspace / "runtime" / "make-launcher-build",
+        workspace / "trace" / "make-launcher-build",
         gcc_wrapper,
         gxx_wrapper,
         launcher_script,
@@ -192,7 +283,15 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
     make_response_dir = workspace / "make-response"
     make_response_log_dir = workspace / "logs" / "make-response"
     make_response_log_dir.mkdir(parents=True, exist_ok=True)
-    make_response_env = case_env(base_env, backend_script, make_response_log_dir, gcc_wrapper, gxx_wrapper)
+    make_response_env = case_env(
+        base_env,
+        backend_script,
+        make_response_log_dir,
+        workspace / "runtime" / "make-response",
+        workspace / "trace" / "make-response",
+        gcc_wrapper,
+        gxx_wrapper,
+    )
     make_response_command = ["make", "-j2", f"BUILD_DIR={make_response_dir}", "response-file"]
     run(make_response_command, cwd=project_root, env=make_response_env)
     make_response_logs = read_json_logs(make_response_log_dir)
@@ -214,7 +313,15 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
     cmake_build_dir = workspace / "cmake-build"
     cmake_log_dir = workspace / "logs" / "cmake-build"
     cmake_log_dir.mkdir(parents=True, exist_ok=True)
-    cmake_env = case_env(base_env, backend_script, cmake_log_dir, gcc_wrapper, gxx_wrapper)
+    cmake_env = case_env(
+        base_env,
+        backend_script,
+        cmake_log_dir,
+        workspace / "runtime" / "cmake-build",
+        workspace / "trace" / "cmake-build",
+        gcc_wrapper,
+        gxx_wrapper,
+    )
     cmake_configure_command = [
         "cmake",
         "-S",
@@ -255,6 +362,8 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
         base_env,
         backend_script,
         cmake_launcher_backend_log_dir,
+        workspace / "runtime" / "cmake-launcher-build",
+        workspace / "trace" / "cmake-launcher-build",
         gcc_wrapper,
         gxx_wrapper,
         launcher_script,
@@ -301,7 +410,13 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
     cmake_response_log_dir = workspace / "logs" / "cmake-response"
     cmake_response_log_dir.mkdir(parents=True, exist_ok=True)
     cmake_response_env = case_env(
-        base_env, backend_script, cmake_response_log_dir, gcc_wrapper, gxx_wrapper
+        base_env,
+        backend_script,
+        cmake_response_log_dir,
+        workspace / "runtime" / "cmake-response",
+        workspace / "trace" / "cmake-response",
+        gcc_wrapper,
+        gxx_wrapper,
     )
     cmake_response_command = [
         "cmake",
@@ -331,7 +446,15 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
 
     stdout_log_dir = workspace / "logs" / "stdout-sensitive"
     stdout_log_dir.mkdir(parents=True, exist_ok=True)
-    stdout_env = case_env(base_env, backend_script, stdout_log_dir, gcc_wrapper, gxx_wrapper)
+    stdout_env = case_env(
+        base_env,
+        backend_script,
+        stdout_log_dir,
+        workspace / "runtime" / "stdout-sensitive",
+        workspace / "trace" / "stdout-sensitive",
+        gcc_wrapper,
+        gxx_wrapper,
+    )
     source = project_root / "src" / "preprocess.c"
     preprocess = run([str(gcc_wrapper), "-E", str(source)], cwd=workspace, env=stdout_env)
     print_search_dirs = run(
@@ -362,12 +485,127 @@ def run_lab(lab_root: Path, report_dir: Path) -> dict[str, object]:
         )
     )
 
+    stress_runs: list[dict[str, object]] = []
+
+    for round_index in range(1, 4):
+        make_build_dir = workspace / "stress-runs" / "make-stress" / f"round-{round_index}" / "build"
+        make_launcher_dir = (
+            workspace / "stress-runs" / "make-launcher-stress" / f"round-{round_index}" / "build"
+        )
+        stress_runs.append(
+            run_stress_round(
+                suite="make-stress",
+                round_index=round_index,
+                root_base=workspace,
+                pre_commands=None,
+                command=["make", "-j4", f"BUILD_DIR={make_build_dir}", "build"],
+                cwd=project_root,
+                base_env=base_env,
+                backend_script=backend_script,
+                gcc_wrapper=gcc_wrapper,
+                gxx_wrapper=gxx_wrapper,
+                depfile_paths=[make_build_dir / "main.d", make_build_dir / "helper.d"],
+            )
+        )
+        stress_runs.append(
+            run_stress_round(
+                suite="make-launcher-stress",
+                round_index=round_index,
+                root_base=workspace,
+                pre_commands=None,
+                command=["make", "-j4", f"BUILD_DIR={make_launcher_dir}", "build"],
+                cwd=project_root,
+                base_env=base_env,
+                backend_script=backend_script,
+                gcc_wrapper=gcc_wrapper,
+                gxx_wrapper=gxx_wrapper,
+                launcher_script=launcher_script,
+                launcher_log_dir=(
+                    workspace
+                    / "stress-runs"
+                    / "make-launcher-stress"
+                    / f"round-{round_index}"
+                    / "launcher-logs"
+                ),
+                depfile_paths=[make_launcher_dir / "main.d", make_launcher_dir / "helper.d"],
+            )
+        )
+
+        cmake_build_dir = workspace / "stress-runs" / "cmake-stress" / f"round-{round_index}" / "build"
+        cmake_launcher_dir = (
+            workspace / "stress-runs" / "cmake-launcher-stress" / f"round-{round_index}" / "build"
+        )
+        cmake_configure = [
+            "cmake",
+            "-S",
+            str(project_root),
+            "-B",
+            str(cmake_build_dir),
+            "-G",
+            "Unix Makefiles",
+            f"-DCMAKE_C_COMPILER={gcc_wrapper}",
+            f"-DCMAKE_CXX_COMPILER={gxx_wrapper}",
+        ]
+        stress_runs.append(
+            run_stress_round(
+                suite="cmake-stress",
+                round_index=round_index,
+                root_base=workspace,
+                pre_commands=[cmake_configure],
+                command=["cmake", "--build", str(cmake_build_dir), "--parallel", "4"],
+                cwd=workspace,
+                base_env=base_env,
+                backend_script=backend_script,
+                gcc_wrapper=gcc_wrapper,
+                gxx_wrapper=gxx_wrapper,
+                depfile_paths=[cmake_build_dir / "cmake-main.d", cmake_build_dir / "cmake-helper.d"],
+            )
+        )
+        cmake_launcher_configure = [
+            "cmake",
+            "-S",
+            str(project_root),
+            "-B",
+            str(cmake_launcher_dir),
+            "-G",
+            "Unix Makefiles",
+            f"-DCMAKE_C_COMPILER={gcc_wrapper}",
+            f"-DCMAKE_CXX_COMPILER={gxx_wrapper}",
+        ]
+        stress_runs.append(
+            run_stress_round(
+                suite="cmake-launcher-stress",
+                round_index=round_index,
+                root_base=workspace,
+                pre_commands=[cmake_launcher_configure],
+                command=["cmake", "--build", str(cmake_launcher_dir), "--parallel", "4"],
+                cwd=workspace,
+                base_env=base_env,
+                backend_script=backend_script,
+                gcc_wrapper=gcc_wrapper,
+                gxx_wrapper=gxx_wrapper,
+                launcher_script=launcher_script,
+                launcher_log_dir=(
+                    workspace
+                    / "stress-runs"
+                    / "cmake-launcher-stress"
+                    / f"round-{round_index}"
+                    / "launcher-logs"
+                ),
+                depfile_paths=[
+                    cmake_launcher_dir / "cmake-main.d",
+                    cmake_launcher_dir / "cmake-helper.d",
+                ],
+            )
+        )
+
     report = {
         "schema_version": 1,
         "lab_root": str(lab_root),
         "workspace_root": str(workspace),
         "wrapper_binary": str(wrapper_binary),
         "cases": cases,
+        "stress_runs": stress_runs,
     }
     report_path = report_dir / "interop-lab-report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

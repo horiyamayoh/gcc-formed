@@ -91,6 +91,7 @@ mod tests {
     use super::*;
     use crate::gcc_json::from_gcc_json_payload;
     use crate::ingest::compatibility_bundle_from_legacy_inputs;
+    use crate::sarif::MAX_STRUCTURED_ARTIFACT_BYTES;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
         DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
@@ -1681,6 +1682,27 @@ mod tests {
     }
 
     #[test]
+    fn rejects_oversized_standalone_sarif_before_parse() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(&path, "{}").unwrap();
+        let file = fs::OpenOptions::new().write(true).open(&path).unwrap();
+        file.set_len(MAX_STRUCTURED_ARTIFACT_BYTES + 1).unwrap();
+
+        let error = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap_err();
+
+        assert!(matches!(
+            error,
+            AdapterError::ArtifactTooLarge {
+                actual_bytes,
+                max_bytes,
+                ..
+            } if actual_bytes == MAX_STRUCTURED_ARTIFACT_BYTES + 1
+                && max_bytes == MAX_STRUCTURED_ARTIFACT_BYTES
+        ));
+    }
+
+    #[test]
     fn parses_gcc_json_context_chains_from_nested_children() {
         let document = from_gcc_json_payload(
             r#"[
@@ -2790,6 +2812,50 @@ src/main.c:4:1: note: extra opaque detail\n";
             issue
                 .message
                 .contains("failed to parse structured GCC JSON")
+        }));
+        assert!(report.document.diagnostics.iter().any(|node| {
+            node.message
+                .raw_text
+                .contains("expected ';' before '}' token")
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_fail_opens_on_oversized_gcc_json() {
+        let run = base_run_info();
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diagnostics.json");
+        fs::write(&path, "[]").unwrap();
+        let stderr = "src/main.c:4:1: error: expected ';' before '}' token\n";
+        let mut bundle = compatibility_bundle_from_legacy_inputs(None, stderr, &run);
+        bundle.structured_artifacts.push(CaptureArtifact {
+            id: "diagnostics.json".to_string(),
+            kind: ArtifactKind::GccJson,
+            media_type: "application/json".to_string(),
+            encoding: Some("utf-8".to_string()),
+            digest_sha256: None,
+            size_bytes: Some(MAX_STRUCTURED_ARTIFACT_BYTES + 1),
+            storage: ArtifactStorage::ExternalRef,
+            inline_text: None,
+            external_ref: Some(path.display().to_string()),
+            produced_by: Some(run.primary_tool.clone()),
+        });
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
+        assert!(report.fallback_reason.is_none());
+        assert!(report.document.integrity_issues.iter().any(|issue| {
+            issue.message.contains("exceeded ingest cap")
+                && issue.message.contains("structured GCC JSON")
         }));
         assert!(report.document.diagnostics.iter().any(|node| {
             node.message

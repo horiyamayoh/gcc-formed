@@ -7,12 +7,14 @@
 - `metrics-manual-eval.json`: TRC / TFAH / first-fix success / high-confidence mislead の manual raw-GCC comparison packet
 - `issue-budget.json`: RC 時点の open `P0` / `P1` bug budget
 - `ux-signoff.json`: human UX review sign-off 状態
+- `bench-smoke-baseline.json`: designated benchmark baseline。`cargo xtask bench-smoke --subset all` の scenario-level `p95_ms` を current-authority scenario names で固定し、report の `baseline_comparison` がこの file を参照する
 
 生成される補助 bundle:
 
 - `cargo xtask human-eval-kit --root corpus --report-dir target/human-eval`
 - `cargo xtask rc-gate --report-dir ...` を実行すると `.../human-eval/` に同じ bundle が自動生成される
 - bundle には `README.md`, `expert-review-sheet.csv`, `task-study-sheet.csv`, `counterbalance.csv`, `metrics-manual-eval.template.json`, `ux-signoff.template.json`, fixture-local actual/expected artifacts が含まれる
+- `bench-smoke-report.json` には core smoke scenario に加えて `operator_real_workloads`, `band_path_breakdown`, `baseline_comparison` が入り、release candidate の benchmark evidence 正本として保持する
 
 運用ルール:
 

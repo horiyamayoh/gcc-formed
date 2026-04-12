@@ -53,6 +53,47 @@ class InteropLabTest(unittest.TestCase):
                 },
             )
 
+            stress_runs = report["stress_runs"]
+            self.assertEqual(len(stress_runs), 12)
+            self.assertEqual(
+                {run["suite"] for run in stress_runs},
+                {
+                    "make-stress",
+                    "make-launcher-stress",
+                    "cmake-stress",
+                    "cmake-launcher-stress",
+                },
+            )
+
+            for suite in {
+                "make-stress",
+                "make-launcher-stress",
+                "cmake-stress",
+                "cmake-launcher-stress",
+            }:
+                runs = [run for run in stress_runs if run["suite"] == suite]
+                self.assertEqual({run["round"] for run in runs}, {1, 2, 3})
+                self.assertEqual(len({run["runtime_root"] for run in runs}), 3)
+                self.assertEqual(len({run["trace_root"] for run in runs}), 3)
+                for run in runs:
+                    self.assertTrue(run["runtime_cleanup_ok"])
+                    self.assertTrue(run["trace_cleanup_ok"])
+                    self.assertEqual(run["runtime_entries_after"], [])
+                    self.assertEqual(run["trace_entries_after"], [])
+                    self.assertGreaterEqual(run["backend_invocations"], 2)
+                    command_text = " ".join(run["command"])
+                    if suite.startswith("make"):
+                        self.assertIn("-j4", command_text)
+                    else:
+                        self.assertIn("--parallel 4", command_text)
+                    if suite in {"make-launcher-stress", "cmake-launcher-stress"}:
+                        self.assertGreaterEqual(run["launcher_invocations"], 2)
+                        self.assertTrue(run["launcher_received_compiler_path"])
+                    else:
+                        self.assertEqual(run["launcher_invocations"], 0)
+                        self.assertIsNone(run["launcher_received_compiler_path"])
+                    self.assertTrue(run["depfiles_present"])
+
             make_build = next(case for case in report["cases"] if case["name"] == "make-build")
             self.assertTrue(make_build["depfiles_present"])
             self.assertGreaterEqual(make_build["backend_invocations"], 2)

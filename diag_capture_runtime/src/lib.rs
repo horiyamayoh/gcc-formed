@@ -21,7 +21,7 @@ mod tests {
         normalize_invocation, tool_info,
     };
     use crate::capture::{
-        await_stderr_capture, capture_stderr_stream, path_is_safe_for_gcc_output,
+        await_stderr_capture, capture_stderr_stream, path_is_safe_for_gcc_output, unique_temp_dir,
     };
     use crate::policy::{child_env_policy, child_env_policy_for_mode, child_env_policy_is_empty};
     use diag_backend_probe::{
@@ -29,6 +29,7 @@ mod tests {
         BackendTopologyKind, DriverKind, ProbeKey, SupportTier,
     };
     use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, fingerprint_for};
+    use std::collections::BTreeSet;
     use std::io::Cursor;
     use std::path::PathBuf;
     use std::thread;
@@ -1132,6 +1133,26 @@ exit 1
         assert!(record.normalized_invocation.preprocess_only);
         assert_eq!(record.normalized_invocation.input_count, 2);
         assert_eq!(record.normalized_invocation.diagnostics_flag_count, 0);
+    }
+
+    #[test]
+    fn unique_temp_dir_remains_unique_under_parallel_calls() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("runtime-root");
+        let handles = (0..16)
+            .map(|_| {
+                let root = root.clone();
+                thread::spawn(move || unique_temp_dir(&root).unwrap())
+            })
+            .collect::<Vec<_>>();
+
+        let mut allocated = BTreeSet::new();
+        for handle in handles {
+            let path = handle.join().unwrap();
+            assert!(path.exists());
+            assert!(allocated.insert(path.file_name().unwrap().to_string_lossy().to_string()));
+        }
+        assert_eq!(allocated.len(), 16);
     }
 
     #[test]

@@ -749,6 +749,8 @@ Path A render path で structured ingestion を「成功」とみなす条件:
 - **MUST** 必要最小限の構造検証 + graceful degradation とする
 - **SHOULD** unknown properties / extra payload を無視できる
 - **MUST** `-ftime-report` 由来の追加 JSON を想定し、結果配列以外のノイズで壊れない [R8]
+- **MUST** structured sidecar を unbounded `read_to_string` しない
+- **MUST** oversized SARIF / JSON sidecar は explicit size-cap failure として扱い、raw residual / retained artifact へ fail-open する
 
 ### 15.6 GCC 所有診断の authoritative source
 
@@ -1120,6 +1122,7 @@ child exit 非ゼロなのに diagnostic roots が 0 件になった場合:
 | Path A, SARIF ok, validator ok | render |
 | Path A, SARIF missing, raw に高信頼 linker あり | render（linker-only） |
 | Path A, SARIF invalid, raw stderr あり | raw fallback |
+| Path A, SARIF exceeds ingest size cap, raw stderr あり | raw fallback + explicit integrity issue |
 | Path A, renderer crash | raw fallback |
 | Path B default (`NativeTextCapture`) | render or passthrough |
 | Path B explicit `SingleSinkStructured`, parse fail | raw residual + retained SARIF path、必要なら wrapper warning |
@@ -1412,6 +1415,7 @@ Path A では最低 3 層の fixture を持つ。
 - 巨大 include chain
 - linker flood
 - stderr truncation cap 超過
+- oversized / malformed SARIF or JSON sidecar
 
 ### 29.5 race / cleanup tests
 
@@ -1420,6 +1424,7 @@ Path A では最低 3 層の fixture を持つ。
 - child signal termination
 - interrupted wrapper
 - concurrent invocations
+- retained trace write contention でも partial / corrupt JSON を残さないこと
 
 ---
 

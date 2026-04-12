@@ -10,9 +10,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
-use std::fs::{self, File};
-use std::io::Cursor;
+use std::fs::{self, File, OpenOptions};
+use std::io::{Cursor, Write};
 use std::path::{Component, Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tar::{Archive, Builder, Header};
 
@@ -519,6 +520,8 @@ pub enum TraceError {
     InvalidBundlePath(String),
 }
 
+static TRACE_WRITE_NONCE: AtomicU64 = AtomicU64::new(0);
+
 impl WrapperPaths {
     /// Discovers wrapper paths from the current environment using XDG conventions.
     pub fn discover() -> Self {
@@ -669,6 +672,7 @@ pub fn write_trace(
 
 /// Writes a trace envelope to an explicit path, creating parent directories as needed.
 pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceError> {
+    let bytes = serde_json::to_vec_pretty(trace)?;
     if let Some(parent) = path.parent() {
         let parent_existed = parent.exists();
         fs::create_dir_all(parent)?;
@@ -676,9 +680,61 @@ pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceErr
             secure_private_dir(parent)?;
         }
     }
-    fs::write(path, serde_json::to_vec_pretty(trace)?)?;
-    secure_private_file(path)?;
-    Ok(())
+    atomic_private_write(path, &bytes)
+}
+
+fn atomic_private_write(path: &Path, bytes: &[u8]) -> Result<(), TraceError> {
+    let parent = path.parent().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("trace path has no parent: {}", path.display()),
+        )
+    })?;
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("trace");
+    for _ in 0..32 {
+        let nonce = TRACE_WRITE_NONCE.fetch_add(1, Ordering::Relaxed);
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or_default();
+        let temp_path = parent.join(format!(
+            ".{file_name}.tmp-{}-{nanos}-{nonce}",
+            std::process::id()
+        ));
+        let mut file = match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp_path)
+        {
+            Ok(file) => file,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error.into()),
+        };
+        let result = (|| -> Result<(), TraceError> {
+            file.write_all(bytes)?;
+            file.sync_all()?;
+            drop(file);
+            secure_private_file(&temp_path)?;
+            fs::rename(&temp_path, path)?;
+            secure_private_file(path)?;
+            Ok(())
+        })();
+        if result.is_err() {
+            let _ = fs::remove_file(&temp_path);
+        }
+        return result;
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        format!(
+            "could not allocate a unique temporary trace file for {}",
+            path.display()
+        ),
+    )
+    .into())
 }
 
 /// Builds trace-visible explainability for suppressed cascade groups.
@@ -946,6 +1002,7 @@ mod tests {
     use std::collections::BTreeMap;
     use std::ffi::OsString;
     use std::path::PathBuf;
+    use std::thread;
 
     #[test]
     fn retention_policy_matches_wrapper_expectations() {
@@ -1518,6 +1575,62 @@ mod tests {
             fs::metadata(&trace_path).unwrap().permissions().mode() & 0o777,
             0o600
         );
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[test]
+    fn concurrent_trace_writes_leave_a_valid_latest_trace() {
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&temp).unwrap();
+        let trace_path = temp.join("trace.json");
+        let handles = (0..8)
+            .map(|index| {
+                let trace_path = trace_path.clone();
+                thread::spawn(move || {
+                    let trace = TraceEnvelope {
+                        trace_id: format!("trace-{index}"),
+                        selected_mode: "render".to_string(),
+                        selected_profile: "default".to_string(),
+                        wrapper_verdict: None,
+                        version_summary: None,
+                        environment_summary: None,
+                        capabilities: None,
+                        timing: None,
+                        child_exit: None,
+                        parser_result_summary: None,
+                        fingerprint_summary: None,
+                        redaction_status: None,
+                        decision_log: Vec::new(),
+                        cascade_explainability: None,
+                        fallback_reason: None,
+                        warning_messages: Vec::new(),
+                        artifacts: Vec::new(),
+                    };
+                    write_trace_at(&trace_path, &trace).unwrap();
+                })
+            })
+            .collect::<Vec<_>>();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let final_trace: TraceEnvelope =
+            serde_json::from_slice(&fs::read(&trace_path).unwrap()).unwrap();
+        assert!(final_trace.trace_id.starts_with("trace-"));
+        assert!(fs::read_dir(&temp).unwrap().all(|entry| {
+            !entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .contains(".tmp-")
+        }));
         fs::remove_dir_all(temp).unwrap();
     }
 

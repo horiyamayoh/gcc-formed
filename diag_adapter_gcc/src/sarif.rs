@@ -17,8 +17,11 @@ use diag_core::{
     SuggestionApplicability, TextEdit,
 };
 use serde_json::Value;
-use std::fs;
+use std::fs::{self, File};
+use std::io::Read;
 use std::path::Path;
+
+pub(crate) const MAX_STRUCTURED_ARTIFACT_BYTES: u64 = 32 * 1024 * 1024;
 
 /// Parse a SARIF file on disk and return a [`DiagnosticDocument`].
 ///
@@ -29,7 +32,7 @@ pub fn from_sarif(
     producer: ProducerInfo,
     run: RunInfo,
 ) -> Result<DiagnosticDocument, AdapterError> {
-    let json = fs::read_to_string(sarif_path)?;
+    let json = read_bounded_utf8_file(sarif_path, "diagnostics.sarif", None)?;
     from_sarif_payload(&json, "diagnostics.sarif", &producer, &run)
 }
 
@@ -115,6 +118,14 @@ pub(crate) fn read_structured_artifact_text(
     artifact: &CaptureArtifact,
 ) -> Result<String, AdapterError> {
     if let Some(text) = artifact.inline_text.as_ref() {
+        let actual_bytes = artifact.size_bytes.unwrap_or(text.len() as u64);
+        if actual_bytes > MAX_STRUCTURED_ARTIFACT_BYTES {
+            return Err(AdapterError::ArtifactTooLarge {
+                artifact_id: artifact.id.clone(),
+                actual_bytes,
+                max_bytes: MAX_STRUCTURED_ARTIFACT_BYTES,
+            });
+        }
         return Ok(text.clone());
     }
 
@@ -127,7 +138,46 @@ pub(crate) fn read_structured_artifact_text(
             ),
         )
     })?;
-    Ok(fs::read_to_string(path)?)
+    read_bounded_utf8_file(Path::new(path), &artifact.id, artifact.size_bytes)
+}
+
+fn read_bounded_utf8_file(
+    path: &Path,
+    artifact_id: &str,
+    declared_size: Option<u64>,
+) -> Result<String, AdapterError> {
+    let actual_bytes = declared_size.unwrap_or_else(|| {
+        fs::metadata(path)
+            .ok()
+            .map(|metadata| metadata.len())
+            .unwrap_or_default()
+    });
+    if actual_bytes > MAX_STRUCTURED_ARTIFACT_BYTES {
+        return Err(AdapterError::ArtifactTooLarge {
+            artifact_id: artifact_id.to_string(),
+            actual_bytes,
+            max_bytes: MAX_STRUCTURED_ARTIFACT_BYTES,
+        });
+    }
+
+    let file = File::open(path)?;
+    let mut bytes = Vec::new();
+    file.take(MAX_STRUCTURED_ARTIFACT_BYTES + 1)
+        .read_to_end(&mut bytes)?;
+    if bytes.len() as u64 > MAX_STRUCTURED_ARTIFACT_BYTES {
+        return Err(AdapterError::ArtifactTooLarge {
+            artifact_id: artifact_id.to_string(),
+            actual_bytes: bytes.len() as u64,
+            max_bytes: MAX_STRUCTURED_ARTIFACT_BYTES,
+        });
+    }
+    String::from_utf8(bytes).map_err(|error| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("structured artifact '{artifact_id}' was not valid utf-8: {error}"),
+        )
+        .into()
+    })
 }
 
 fn result_to_node(

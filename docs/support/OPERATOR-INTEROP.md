@@ -97,8 +97,10 @@ The checked-in lab covers:
 - direct Make and CMake insertion
 - wrapper-owned single backend-launcher insertion
 - parallel build execution
+- repeated stress rounds at `make -j4` / `cmake --build --parallel 4`
 - depfile generation
 - response-file non-expansion
 - stdout-sensitive compiler probes
+- runtime / trace root cleanup after successful concurrent builds
 
 The lab does not claim support for launcher stacks in front of the wrapper, multi-launcher chains, or shell-based re-parsing by the wrapper.

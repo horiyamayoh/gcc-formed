@@ -11,8 +11,12 @@ The lab is intentionally narrow. It proves:
 - depfile generation
 - response-file pass-through without wrapper expansion
 - stdout-sensitive compiler probes like `-E` and `-print-*`
+- a deterministic stress layer that replays Make/CMake at `-j4` / `--parallel 4`
+  across repeated isolated rounds and records runtime / trace cleanup state
 
 The runner executes `make -j2` and `cmake --build ... --parallel 2` against the checked-in fixtures.
+It also emits stress-round records with per-run runtime/trace roots, cleanup
+status, and launcher/backend invocation counts.
 
 Run the lab with:
 

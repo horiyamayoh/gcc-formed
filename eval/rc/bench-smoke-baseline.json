@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {
+      "scenario": "success_path",
+      "p95_ms": 3,
+      "notes": [
+        "designated baseline from `cargo xtask bench-smoke --subset all` on 2026-04-12"
+      ]
+    },
+    {
+      "scenario": "simple_failure",
+      "p95_ms": 23
+    },
+    {
+      "scenario": "template_heavy_failure",
+      "p95_ms": 43
+    },
+    {
+      "scenario": "linker_heavy_failure",
+      "p95_ms": 20
+    },
+    {
+      "scenario": "compatibility_native_text_capture",
+      "p95_ms": 22
+    }
+  ]
+}

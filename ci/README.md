@@ -1,6 +1,6 @@
 # CI Gate Artifacts
 
-`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`pr-gate` は intentionally `gcc15_plus` の reference path で、`nightly-gate` は `GCC13-14` / `GCC15+` の matrix へ coverage を広げる。`replay/` には `replay-report.json` に加えて `native-parity-report.json` を出し、line budget / disclosure honesty / color meaning / compaction の stop-ship分類を機械可読で残す。さらに `gate/replay-stop-ship.json` は `replay-report.json` を band / path / surface / concern へ正規化した gate blocker 正本とする。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。
+`pr-gate`、`nightly-gate`、`rc-gate` は、既存の replay / snapshot / release report に加えて、`REPORT_ROOT/gate/` 配下へ step-level observability artifacts を出力する。`pr-gate` は intentionally `gcc15_plus` の reference path で、`nightly-gate` は `GCC13-14` / `GCC15+` の matrix へ coverage を広げる。`replay/` には `replay-report.json` に加えて `native-parity-report.json` を出し、line budget / disclosure honesty / color meaning / compaction の stop-ship分類を機械可読で残す。さらに `gate/replay-stop-ship.json` は `replay-report.json` を band / path / surface / concern へ正規化した gate blocker 正本とする。`rc-gate` は加えて `REPORT_ROOT/rc-gate/` に release-candidate 判定用の machine-readable report、metrics packet、fuzz packet、human-eval bundle を保存する。`bench-smoke-report.json` は issue `#131` の current benchmark artifact として core smoke scenario だけでなく `operator_real_workloads`, `band_path_breakdown`, `baseline_comparison` を保持し、designated baseline は checked-in `eval/rc/bench-smoke-baseline.json` を使う。
 
 `cargo xtask check` は `cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、`python3 -B -m unittest discover -s ci -p test_*.py` を同じ標準 gate として実行する。したがって `cargo-xtask-check` step が green であれば、Rust workspace lint/test、representative replay、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests が同じ入口で通っている。
 
@@ -20,7 +20,7 @@ $REPORT_ROOT/
       <nn>-<step>.stderr.log
 ```
 
-既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`replay/` の `native-parity-report.json` は representative replay の分類正本とする。`gate/replay-stop-ship.json` は missing `VersionBand × ProcessingPath × Surface` cell と path-aware quality blocker を reviewer 向け prose に潰す前の machine-readable blocker list とする。`rc-gate/` は release-candidate verdict、`metrics-report.json`、`native-parity-report.json`、`fuzz-smoke-report.json`、manual evaluation packet、`human-eval/` review bundle を保持する。`gate/` は「どの step が、どの command で、どの gate scope / GCC version / VersionBand で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
+既存の `replay/`, `snapshot/`, `self-check/`, `release/` はそのまま維持し、`replay/` の `native-parity-report.json` は representative replay の分類正本とする。`gate/replay-stop-ship.json` は missing `VersionBand × ProcessingPath × Surface` cell と path-aware quality blocker を reviewer 向け prose に潰す前の machine-readable blocker list とする。`rc-gate/` は release-candidate verdict、`metrics-report.json`、`native-parity-report.json`、`bench-smoke-report.json`、`fuzz-smoke-report.json`、manual evaluation packet、`human-eval/` review bundle を保持する。`gate/` は「どの step が、どの command で、どの gate scope / GCC version / VersionBand で失敗したか」に加えて、「どの build environment でその結果になったか」を集約する。
 
 ## Status Schema
 

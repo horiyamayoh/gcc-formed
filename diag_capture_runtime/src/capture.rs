@@ -19,8 +19,11 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::Instant;
+
+static TEMP_DIR_NONCE: AtomicU64 = AtomicU64::new(0);
 
 /// Executes the backend compiler and captures diagnostic artifacts.
 pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureError> {
@@ -345,16 +348,31 @@ pub(crate) fn unique_temp_dir(root: &Path) -> Result<PathBuf, std::io::Error> {
     let safe_root = safe_runtime_root(root)?;
     fs::create_dir_all(&safe_root)?;
     secure_private_dir(&safe_root)?;
-    let unique = format!(
-        "formed-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|duration| duration.as_nanos())
-            .unwrap_or_default()
-    );
-    let path = safe_root.join(unique);
-    fs::create_dir_all(&path)?;
-    secure_private_dir(&path)?;
-    Ok(path)
+    for _ in 0..64 {
+        let unique = format!(
+            "formed-{}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|duration| duration.as_nanos())
+                .unwrap_or_default(),
+            TEMP_DIR_NONCE.fetch_add(1, Ordering::Relaxed)
+        );
+        let path = safe_root.join(unique);
+        match fs::create_dir(&path) {
+            Ok(()) => {
+                secure_private_dir(&path)?;
+                return Ok(path);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        format!(
+            "could not allocate a unique capture temp directory under {}",
+            safe_root.display()
+        ),
+    ))
 }

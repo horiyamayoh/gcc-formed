@@ -11,7 +11,7 @@ use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_c
 use diag_trace::{RetentionPolicy, WrapperPaths, build_target_triple};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -22,6 +22,10 @@ const RC_GATE_SCHEMA_VERSION: u32 = 1;
 const SUCCESS_PATH_P95_TARGET_MS: u64 = 40;
 const SIMPLE_FAILURE_P95_TARGET_MS: u64 = 80;
 const TEMPLATE_HEAVY_P95_TARGET_MS: u64 = 250;
+const LINKER_HEAVY_P95_TARGET_MS: u64 = 250;
+const HONEST_FALLBACK_P95_TARGET_MS: u64 = 80;
+const COMPATIBILITY_NATIVE_TEXT_P95_TARGET_MS: u64 = 80;
+const BENCH_BASELINE_P95_TOLERANCE_MS: u64 = 10;
 const UNEXPECTED_FALLBACK_RATE_TARGET: f64 = 0.001;
 const SUCCESS_PATH_BENCH_SAMPLES: usize = 20;
 const SUCCESS_PATH_WARMUP_RUNS: usize = 2;
@@ -68,12 +72,70 @@ pub(crate) struct BenchScenarioReport {
     pub(crate) status: GateStatus,
     pub(crate) metric: String,
     pub(crate) target_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) p50_ms: Option<u64>,
     pub(crate) p95_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) p99_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) max_ms: Option<u64>,
     pub(crate) sample_count: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) observed_band_paths: Vec<String>,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub(crate) fallback_fixture_count: usize,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) samples_ms: Vec<u64>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) slowest_fixtures: Vec<SlowFixtureReport>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) notes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct BenchBandPathReport {
+    pub(crate) support_band: String,
+    pub(crate) processing_path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) p50_ms: Option<u64>,
+    pub(crate) p95_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) p99_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) max_ms: Option<u64>,
+    pub(crate) sample_count: usize,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub(crate) fallback_fixture_count: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) slowest_fixtures: Vec<SlowFixtureReport>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct BenchBaselineScenario {
+    pub(crate) scenario: String,
+    pub(crate) p95_ms: u64,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) notes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct BenchBaselineFile {
+    pub(crate) schema_version: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) scenarios: Vec<BenchBaselineScenario>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct BenchBaselineComparison {
+    pub(crate) scenario: String,
+    pub(crate) status: GateStatus,
+    pub(crate) baseline_p95_ms: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) current_p95_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) delta_ms: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) regression_ratio: Option<f64>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) notes: Vec<String>,
 }
@@ -87,6 +149,14 @@ pub(crate) struct BenchSmokeReport {
     pub(crate) success_path: BenchScenarioReport,
     pub(crate) simple_failure: BenchScenarioReport,
     pub(crate) template_heavy_failure: BenchScenarioReport,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) operator_real_workloads: Vec<BenchScenarioReport>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) band_path_breakdown: Vec<BenchBandPathReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) baseline_path: Option<PathBuf>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) baseline_comparison: Vec<BenchBaselineComparison>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -265,6 +335,9 @@ pub(crate) struct PerformanceMetricsReport {
     pub(crate) success_path_p95_overhead_ms: Option<u64>,
     pub(crate) simple_failure_p95_postprocess_ms: Option<u64>,
     pub(crate) template_heavy_p95_postprocess_ms: Option<u64>,
+    pub(crate) operator_real_workload_p95_postprocess_ms: BTreeMap<String, u64>,
+    pub(crate) band_path_p95_postprocess_ms: BTreeMap<String, u64>,
+    pub(crate) band_path_sample_counts: BTreeMap<String, usize>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -461,17 +534,53 @@ pub(crate) fn bench_smoke_report_from_replay(
         replay,
         "simple_failure",
         SIMPLE_FAILURE_P95_TARGET_MS,
-        |family| !is_template_heavy_family(family),
+        |fixture| {
+            !is_template_heavy_family(&fixture.family_key)
+                && !is_linker_heavy_family(&fixture.family_key)
+        },
     );
     let template_heavy_failure = failure_scenario_report(
         replay,
         "template_heavy_failure",
         TEMPLATE_HEAVY_P95_TARGET_MS,
-        is_template_heavy_family,
+        |fixture| is_template_heavy_family(&fixture.family_key),
     );
+    let operator_real_workloads = vec![
+        failure_scenario_report(
+            replay,
+            "linker_heavy_failure",
+            LINKER_HEAVY_P95_TARGET_MS,
+            |fixture| is_linker_heavy_family(&fixture.family_key),
+        ),
+        failure_scenario_report_with_empty_status(
+            replay,
+            "honest_fallback_failure",
+            HONEST_FALLBACK_P95_TARGET_MS,
+            GateStatus::Pending,
+            |fixture| fixture.used_fallback || fixture.fallback_reason.is_some(),
+        ),
+        failure_scenario_report(
+            replay,
+            "compatibility_native_text_capture",
+            COMPATIBILITY_NATIVE_TEXT_P95_TARGET_MS,
+            |fixture| {
+                matches!(fixture.support_band.as_str(), "gcc13_14" | "gcc9_12")
+                    && fixture.processing_path == "native_text_capture"
+            },
+        ),
+    ];
+    let band_path_breakdown = band_path_breakdown_from_replay(replay);
 
     let mut blockers = Vec::new();
     for scenario in [&success_path, &simple_failure, &template_heavy_failure] {
+        if scenario.status == GateStatus::Fail {
+            blockers.push(format!(
+                "{} exceeded {}ms budget",
+                scenario.scenario, scenario.target_ms
+            ));
+        }
+    }
+    for scenario in &operator_real_workloads {
         if scenario.status == GateStatus::Fail {
             blockers.push(format!(
                 "{} exceeded {}ms budget",
@@ -484,6 +593,15 @@ pub(crate) fn bench_smoke_report_from_replay(
     } else {
         GateStatus::Fail
     };
+    let baseline_path = repo_root().join("eval/rc/bench-smoke-baseline.json");
+    let baseline_file = load_bench_baseline(&baseline_path)?;
+    let baseline_comparison = baseline_comparison_for_report(
+        baseline_file.as_ref(),
+        &success_path,
+        &simple_failure,
+        &template_heavy_failure,
+        &operator_real_workloads,
+    );
 
     Ok(BenchSmokeReport {
         schema_version: RC_GATE_SCHEMA_VERSION,
@@ -493,6 +611,10 @@ pub(crate) fn bench_smoke_report_from_replay(
         success_path,
         simple_failure,
         template_heavy_failure,
+        operator_real_workloads,
+        band_path_breakdown,
+        baseline_path: baseline_file.map(|_| PathBuf::from("eval/rc/bench-smoke-baseline.json")),
+        baseline_comparison,
     })
 }
 
@@ -503,16 +625,44 @@ fn failure_scenario_report<F>(
     predicate: F,
 ) -> BenchScenarioReport
 where
-    F: Fn(&str) -> bool,
+    F: Fn(&crate::commands::corpus::AcceptanceFixtureSummary) -> bool,
+{
+    failure_scenario_report_with_empty_status(
+        replay,
+        scenario,
+        target_ms,
+        GateStatus::Fail,
+        predicate,
+    )
+}
+
+fn failure_scenario_report_with_empty_status<F>(
+    replay: &ReplayReport,
+    scenario: &str,
+    target_ms: u64,
+    empty_status: GateStatus,
+    predicate: F,
+) -> BenchScenarioReport
+where
+    F: Fn(&crate::commands::corpus::AcceptanceFixtureSummary) -> bool,
 {
     let mut samples = Vec::new();
     let mut slowest = Vec::new();
+    let mut band_paths = BTreeSet::new();
+    let mut fallback_fixture_count = 0;
     for fixture in &replay.fixtures {
-        if !predicate(&fixture.family_key) {
+        if !predicate(fixture) {
             continue;
         }
         let postprocess_ms = fixture.parse_time_ms.saturating_add(fixture.render_time_ms);
         samples.push(postprocess_ms);
+        band_paths.insert(format!(
+            "{}/{}",
+            fixture.support_band, fixture.processing_path
+        ));
+        if fixture.used_fallback || fixture.fallback_reason.is_some() {
+            fallback_fixture_count += 1;
+        }
         slowest.push(SlowFixtureReport {
             fixture_id: fixture.fixture_id.clone(),
             family_key: fixture.family_key.clone(),
@@ -522,9 +672,9 @@ where
     slowest.sort_by(|left, right| right.postprocess_ms.cmp(&left.postprocess_ms));
     slowest.truncate(3);
 
-    let p95_ms = percentile_95(&samples);
+    let (p50_ms, p95_ms, p99_ms, max_ms) = scenario_percentiles(&samples);
     let status = if samples.is_empty() {
-        GateStatus::Fail
+        empty_status
     } else if p95_ms.unwrap_or_default() <= target_ms {
         GateStatus::Pass
     } else {
@@ -541,8 +691,13 @@ where
         status,
         metric: "p95_postprocess_ms".to_string(),
         target_ms,
+        p50_ms,
         p95_ms,
+        p99_ms,
+        max_ms,
         sample_count: samples.len(),
+        observed_band_paths: band_paths.into_iter().collect(),
+        fallback_fixture_count,
         samples_ms: samples,
         slowest_fixtures: slowest,
         notes,
@@ -629,7 +784,7 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
         cleanup_capture(&outcome)?;
     }
 
-    let p95_ms = percentile_95(&overhead_samples);
+    let (p50_ms, p95_ms, p99_ms, max_ms) = scenario_percentiles(&overhead_samples);
     let mut notes = Vec::new();
     notes.push(format!(
         "backend={} ({:?})",
@@ -654,12 +809,132 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
         },
         metric: "p95_wrapper_overhead_ms".to_string(),
         target_ms: SUCCESS_PATH_P95_TARGET_MS,
+        p50_ms,
         p95_ms,
+        p99_ms,
+        max_ms,
         sample_count: overhead_samples.len(),
+        observed_band_paths: Vec::new(),
+        fallback_fixture_count: 0,
         samples_ms: overhead_samples,
         slowest_fixtures: Vec::new(),
         notes,
     })
+}
+
+fn band_path_breakdown_from_replay(replay: &ReplayReport) -> Vec<BenchBandPathReport> {
+    let mut grouped: BTreeMap<
+        (String, String),
+        Vec<&crate::commands::corpus::AcceptanceFixtureSummary>,
+    > = BTreeMap::new();
+    for fixture in &replay.fixtures {
+        grouped
+            .entry((
+                fixture.support_band.clone(),
+                fixture.processing_path.clone(),
+            ))
+            .or_default()
+            .push(fixture);
+    }
+
+    grouped
+        .into_iter()
+        .map(|((support_band, processing_path), fixtures)| {
+            let mut samples = Vec::new();
+            let mut slowest = Vec::new();
+            let mut fallback_fixture_count = 0;
+            for fixture in fixtures {
+                let postprocess_ms = fixture.parse_time_ms.saturating_add(fixture.render_time_ms);
+                samples.push(postprocess_ms);
+                if fixture.used_fallback || fixture.fallback_reason.is_some() {
+                    fallback_fixture_count += 1;
+                }
+                slowest.push(SlowFixtureReport {
+                    fixture_id: fixture.fixture_id.clone(),
+                    family_key: fixture.family_key.clone(),
+                    postprocess_ms,
+                });
+            }
+            slowest.sort_by(|left, right| right.postprocess_ms.cmp(&left.postprocess_ms));
+            slowest.truncate(3);
+            let (p50_ms, p95_ms, p99_ms, max_ms) = scenario_percentiles(&samples);
+            BenchBandPathReport {
+                support_band,
+                processing_path,
+                p50_ms,
+                p95_ms,
+                p99_ms,
+                max_ms,
+                sample_count: samples.len(),
+                fallback_fixture_count,
+                slowest_fixtures: slowest,
+            }
+        })
+        .collect()
+}
+
+fn load_bench_baseline(
+    path: &Path,
+) -> Result<Option<BenchBaselineFile>, Box<dyn std::error::Error>> {
+    if !path.exists() {
+        return Ok(None);
+    }
+    let baseline: BenchBaselineFile = serde_json::from_slice(&fs::read(path)?)?;
+    Ok(Some(baseline))
+}
+
+fn baseline_comparison_for_report(
+    baseline: Option<&BenchBaselineFile>,
+    success_path: &BenchScenarioReport,
+    simple_failure: &BenchScenarioReport,
+    template_heavy_failure: &BenchScenarioReport,
+    operator_real_workloads: &[BenchScenarioReport],
+) -> Vec<BenchBaselineComparison> {
+    let Some(baseline) = baseline else {
+        return Vec::new();
+    };
+    let scenario_reports = std::iter::once(success_path)
+        .chain(std::iter::once(simple_failure))
+        .chain(std::iter::once(template_heavy_failure))
+        .chain(operator_real_workloads.iter())
+        .map(|report| (report.scenario.as_str(), report))
+        .collect::<BTreeMap<_, _>>();
+    baseline
+        .scenarios
+        .iter()
+        .map(|scenario| {
+            let current = scenario_reports.get(scenario.scenario.as_str()).copied();
+            let current_p95_ms = current.and_then(|report| report.p95_ms);
+            let delta_ms = current_p95_ms.map(|current| current as i64 - scenario.p95_ms as i64);
+            let regression_ratio = current_p95_ms.and_then(|current| {
+                (scenario.p95_ms > 0).then_some(current as f64 / scenario.p95_ms as f64)
+            });
+            BenchBaselineComparison {
+                scenario: scenario.scenario.clone(),
+                status: match current_p95_ms {
+                    Some(current)
+                        if current
+                            <= scenario
+                                .p95_ms
+                                .saturating_add(BENCH_BASELINE_P95_TOLERANCE_MS) =>
+                    {
+                        GateStatus::Pass
+                    }
+                    Some(_) => GateStatus::Fail,
+                    None => GateStatus::Pending,
+                },
+                baseline_p95_ms: scenario.p95_ms,
+                current_p95_ms,
+                delta_ms,
+                regression_ratio,
+                notes: {
+                    let mut notes = scenario.notes.clone();
+                    notes.push(format!("tolerance_ms={BENCH_BASELINE_P95_TOLERANCE_MS}"));
+                    notes
+                },
+            }
+        })
+        .collect()
 }
 
 fn measure_direct_backend_duration(
@@ -1072,6 +1347,33 @@ fn build_metrics_report(
             success_path_p95_overhead_ms: bench.success_path.p95_ms,
             simple_failure_p95_postprocess_ms: bench.simple_failure.p95_ms,
             template_heavy_p95_postprocess_ms: bench.template_heavy_failure.p95_ms,
+            operator_real_workload_p95_postprocess_ms: bench
+                .operator_real_workloads
+                .iter()
+                .filter_map(|scenario| scenario.p95_ms.map(|p95| (scenario.scenario.clone(), p95)))
+                .collect(),
+            band_path_p95_postprocess_ms: bench
+                .band_path_breakdown
+                .iter()
+                .filter_map(|report| {
+                    report.p95_ms.map(|p95| {
+                        (
+                            format!("{}/{}", report.support_band, report.processing_path),
+                            p95,
+                        )
+                    })
+                })
+                .collect(),
+            band_path_sample_counts: bench
+                .band_path_breakdown
+                .iter()
+                .map(|report| {
+                    (
+                        format!("{}/{}", report.support_band, report.processing_path),
+                        report.sample_count,
+                    )
+                })
+                .collect(),
         },
         family_coverage,
         compatibility_vs_primary,
@@ -1319,10 +1621,15 @@ fn build_rc_gate_checks(
             title: "Benchmark Budgets".to_string(),
             status: bench.overall_status.clone(),
             summary: format!(
-                "success_path={:?}, simple_failure={:?}, template_heavy={:?}",
+                "success_path={:?}, simple_failure={:?}, template_heavy={:?}, operator_real_failures={}",
                 bench.success_path.status,
                 bench.simple_failure.status,
-                bench.template_heavy_failure.status
+                bench.template_heavy_failure.status,
+                bench
+                    .operator_real_workloads
+                    .iter()
+                    .filter(|scenario| scenario.status == GateStatus::Fail)
+                    .count()
             ),
             blocker: bench.overall_status == GateStatus::Fail,
             manual: false,
@@ -1759,14 +2066,31 @@ fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), Box<dyn std::e
     Ok(())
 }
 
-fn percentile_95(samples: &[u64]) -> Option<u64> {
+fn is_zero(value: &usize) -> bool {
+    *value == 0
+}
+
+fn percentile(samples: &[u64], percentile: usize) -> Option<u64> {
     if samples.is_empty() {
         return None;
     }
     let mut ordered = samples.to_vec();
     ordered.sort_unstable();
-    let index = ((ordered.len() * 95).saturating_sub(1)) / 100;
+    let index = ((ordered.len() * percentile).saturating_sub(1)) / 100;
     ordered.get(index).copied()
+}
+
+fn scenario_percentiles(samples: &[u64]) -> (Option<u64>, Option<u64>, Option<u64>, Option<u64>) {
+    (
+        percentile(samples, 50),
+        percentile(samples, 95),
+        percentile(samples, 99),
+        samples.iter().copied().max(),
+    )
+}
+
+fn percentile_95(samples: &[u64]) -> Option<u64> {
+    percentile(samples, 95)
 }
 
 fn median_usize(samples: &[usize]) -> Option<usize> {
@@ -1788,7 +2112,11 @@ fn median_f64(samples: &[f64]) -> Option<f64> {
 }
 
 fn is_template_heavy_family(family: &str) -> bool {
-    matches!(family, "template" | "overload" | "linker")
+    matches!(family, "template" | "overload")
+}
+
+fn is_linker_heavy_family(family: &str) -> bool {
+    family == "linker"
 }
 
 fn default_execution_mode_for(tier: SupportTier) -> ExecutionMode {
@@ -1920,8 +2248,13 @@ mod tests {
                 status: GateStatus::Pass,
                 metric: "p95_wrapper_overhead_ms".to_string(),
                 target_ms: SUCCESS_PATH_P95_TARGET_MS,
+                p50_ms: Some(2),
                 p95_ms: Some(3),
+                p99_ms: Some(3),
+                max_ms: Some(3),
                 sample_count: 5,
+                observed_band_paths: Vec::new(),
+                fallback_fixture_count: 0,
                 samples_ms: vec![1, 2, 3, 3, 3],
                 slowest_fixtures: Vec::new(),
                 notes: Vec::new(),
@@ -1931,8 +2264,13 @@ mod tests {
                 status: GateStatus::Pass,
                 metric: "p95_postprocess_ms".to_string(),
                 target_ms: SIMPLE_FAILURE_P95_TARGET_MS,
+                p50_ms: Some(15),
                 p95_ms: Some(18),
+                p99_ms: Some(18),
+                max_ms: Some(18),
                 sample_count: 5,
+                observed_band_paths: vec!["gcc15_plus/dual_sink_structured".to_string()],
+                fallback_fixture_count: 0,
                 samples_ms: vec![10, 12, 15, 18, 18],
                 slowest_fixtures: Vec::new(),
                 notes: Vec::new(),
@@ -1942,12 +2280,72 @@ mod tests {
                 status: GateStatus::Pass,
                 metric: "p95_postprocess_ms".to_string(),
                 target_ms: TEMPLATE_HEAVY_P95_TARGET_MS,
+                p50_ms: Some(30),
                 p95_ms: Some(40),
+                p99_ms: Some(40),
+                max_ms: Some(40),
                 sample_count: 5,
+                observed_band_paths: vec!["gcc15_plus/dual_sink_structured".to_string()],
+                fallback_fixture_count: 0,
                 samples_ms: vec![20, 24, 30, 40, 40],
                 slowest_fixtures: Vec::new(),
                 notes: Vec::new(),
             },
+            operator_real_workloads: vec![
+                BenchScenarioReport {
+                    scenario: "linker_heavy_failure".to_string(),
+                    status: GateStatus::Pass,
+                    metric: "p95_postprocess_ms".to_string(),
+                    target_ms: LINKER_HEAVY_P95_TARGET_MS,
+                    p50_ms: Some(55),
+                    p95_ms: Some(60),
+                    p99_ms: Some(60),
+                    max_ms: Some(60),
+                    sample_count: 3,
+                    observed_band_paths: vec!["gcc15_plus/dual_sink_structured".to_string()],
+                    fallback_fixture_count: 1,
+                    samples_ms: vec![48, 55, 60],
+                    slowest_fixtures: Vec::new(),
+                    notes: Vec::new(),
+                },
+                BenchScenarioReport {
+                    scenario: "honest_fallback_failure".to_string(),
+                    status: GateStatus::Pass,
+                    metric: "p95_postprocess_ms".to_string(),
+                    target_ms: HONEST_FALLBACK_P95_TARGET_MS,
+                    p50_ms: Some(22),
+                    p95_ms: Some(25),
+                    p99_ms: Some(25),
+                    max_ms: Some(25),
+                    sample_count: 2,
+                    observed_band_paths: vec!["gcc13_14/native_text_capture".to_string()],
+                    fallback_fixture_count: 2,
+                    samples_ms: vec![22, 25],
+                    slowest_fixtures: Vec::new(),
+                    notes: Vec::new(),
+                },
+            ],
+            band_path_breakdown: vec![BenchBandPathReport {
+                support_band: "gcc15_plus".to_string(),
+                processing_path: "dual_sink_structured".to_string(),
+                p50_ms: Some(18),
+                p95_ms: Some(40),
+                p99_ms: Some(40),
+                max_ms: Some(40),
+                sample_count: 5,
+                fallback_fixture_count: 0,
+                slowest_fixtures: Vec::new(),
+            }],
+            baseline_path: Some(PathBuf::from("eval/rc/bench-smoke-baseline.json")),
+            baseline_comparison: vec![BenchBaselineComparison {
+                scenario: "success_path".to_string(),
+                status: GateStatus::Pass,
+                baseline_p95_ms: 3,
+                current_p95_ms: Some(3),
+                delta_ms: Some(0),
+                regression_ratio: Some(1.0),
+                notes: Vec::new(),
+            }],
         }
     }
 
@@ -1979,19 +2377,30 @@ mod tests {
             &replay,
             "simple_failure",
             SIMPLE_FAILURE_P95_TARGET_MS,
-            |family| !is_template_heavy_family(family),
+            |fixture| {
+                !is_template_heavy_family(&fixture.family_key)
+                    && !is_linker_heavy_family(&fixture.family_key)
+            },
         );
         let heavy = failure_scenario_report(
             &replay,
             "template_heavy_failure",
             TEMPLATE_HEAVY_P95_TARGET_MS,
-            is_template_heavy_family,
+            |fixture| is_template_heavy_family(&fixture.family_key),
+        );
+        let linker = failure_scenario_report(
+            &replay,
+            "linker_heavy_failure",
+            LINKER_HEAVY_P95_TARGET_MS,
+            |fixture| is_linker_heavy_family(&fixture.family_key),
         );
 
         assert_eq!(simple.sample_count, 1);
         assert_eq!(simple.p95_ms, Some(30));
-        assert_eq!(heavy.sample_count, 2);
+        assert_eq!(heavy.sample_count, 1);
         assert_eq!(heavy.p95_ms, Some(160));
+        assert_eq!(linker.sample_count, 1);
+        assert_eq!(linker.p95_ms, Some(160));
     }
 
     #[test]
@@ -1999,6 +2408,103 @@ mod tests {
         assert_eq!(percentile_95(&[]), None);
         assert_eq!(percentile_95(&[10]), Some(10));
         assert_eq!(percentile_95(&[10, 20, 30, 40, 50]), Some(50));
+    }
+
+    #[test]
+    fn band_path_breakdown_tracks_processing_path_groups() {
+        let mut band_b = fixture_summary("c/syntax/case-01", "syntax", 10, 5);
+        band_b.support_band = "gcc13_14".to_string();
+        band_b.processing_path = "native_text_capture".to_string();
+        let mut band_c = fixture_summary("cpp/template/case-01", "template", 20, 15);
+        band_c.support_band = "gcc9_12".to_string();
+        band_c.processing_path = "single_sink_structured".to_string();
+        band_c.used_fallback = true;
+        let replay = replay_report(vec![band_b, band_c]);
+
+        let breakdown = band_path_breakdown_from_replay(&replay);
+
+        assert_eq!(breakdown.len(), 2);
+        assert_eq!(breakdown[0].support_band, "gcc13_14");
+        assert_eq!(breakdown[0].processing_path, "native_text_capture");
+        assert_eq!(breakdown[0].p95_ms, Some(15));
+        assert_eq!(breakdown[1].support_band, "gcc9_12");
+        assert_eq!(breakdown[1].processing_path, "single_sink_structured");
+        assert_eq!(breakdown[1].fallback_fixture_count, 1);
+    }
+
+    #[test]
+    fn baseline_comparison_marks_regression_and_missing_scenarios() {
+        let baseline = BenchBaselineFile {
+            schema_version: 1,
+            scenarios: vec![
+                BenchBaselineScenario {
+                    scenario: "success_path".to_string(),
+                    p95_ms: 3,
+                    notes: Vec::new(),
+                },
+                BenchBaselineScenario {
+                    scenario: "honest_fallback_failure".to_string(),
+                    p95_ms: 20,
+                    notes: Vec::new(),
+                },
+            ],
+        };
+        let success = BenchScenarioReport {
+            scenario: "success_path".to_string(),
+            status: GateStatus::Pass,
+            metric: "p95_wrapper_overhead_ms".to_string(),
+            target_ms: SUCCESS_PATH_P95_TARGET_MS,
+            p50_ms: Some(2),
+            p95_ms: Some(15),
+            p99_ms: Some(15),
+            max_ms: Some(15),
+            sample_count: 2,
+            observed_band_paths: Vec::new(),
+            fallback_fixture_count: 0,
+            samples_ms: vec![2, 15],
+            slowest_fixtures: Vec::new(),
+            notes: Vec::new(),
+        };
+        let simple = BenchScenarioReport {
+            scenario: "simple_failure".to_string(),
+            status: GateStatus::Pass,
+            metric: "p95_postprocess_ms".to_string(),
+            target_ms: SIMPLE_FAILURE_P95_TARGET_MS,
+            p50_ms: Some(10),
+            p95_ms: Some(12),
+            p99_ms: Some(12),
+            max_ms: Some(12),
+            sample_count: 2,
+            observed_band_paths: Vec::new(),
+            fallback_fixture_count: 0,
+            samples_ms: vec![10, 12],
+            slowest_fixtures: Vec::new(),
+            notes: Vec::new(),
+        };
+        let template = BenchScenarioReport {
+            scenario: "template_heavy_failure".to_string(),
+            status: GateStatus::Pass,
+            metric: "p95_postprocess_ms".to_string(),
+            target_ms: TEMPLATE_HEAVY_P95_TARGET_MS,
+            p50_ms: Some(18),
+            p95_ms: Some(20),
+            p99_ms: Some(20),
+            max_ms: Some(20),
+            sample_count: 2,
+            observed_band_paths: Vec::new(),
+            fallback_fixture_count: 0,
+            samples_ms: vec![18, 20],
+            slowest_fixtures: Vec::new(),
+            notes: Vec::new(),
+        };
+
+        let comparisons =
+            baseline_comparison_for_report(Some(&baseline), &success, &simple, &template, &[]);
+
+        assert_eq!(comparisons[0].status, GateStatus::Fail);
+        assert_eq!(comparisons[0].delta_ms, Some(12));
+        assert_eq!(comparisons[1].status, GateStatus::Pending);
+        assert_eq!(comparisons[1].current_p95_ms, None);
     }
 
     #[test]

@@ -462,6 +462,8 @@ GCC では `-fdiagnostics-plain-output` のような option を **harness 限定
 - 参照マシン構成を固定する
 - warm/cold の両方を分けて測る
 - p50/p95/p99 と peak RSS を記録する
+- operator-real workload を `VersionBand × ProcessingPath` で breakdown し、少なくとも linker-heavy / compatibility-native-text / honest-fallback availability を report に残す
+- benchmark artifact は scenario list だけでなく band/path breakdown と designated baseline comparison を machine-readable に retain する
 
 ### 9.9 Layer 9: robustness / fuzz / adversarial tests
 
@@ -1115,6 +1117,7 @@ performance は absolute threshold だけでなく、baseline 比でも監視す
 **MUST**:
 - benchmark は versioned fixture set に対して実行する
 - 参照 CPU / memory / storage 条件を記録する
+- designated checked-in benchmark baseline がある場合、report は scenario-level `p95_ms` delta を machine-readable に記録する
 
 ---
 
