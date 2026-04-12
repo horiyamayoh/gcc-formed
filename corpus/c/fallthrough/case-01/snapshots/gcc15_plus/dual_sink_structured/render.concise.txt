@@ -1,7 +1,6 @@
-warning: implicit fallthrough between switch cases
---> src/main.c:5:9
+warning: [fallthrough] implicit fallthrough between switch cases @ src/main.c:5:9
 help: add a break, return, or [[fallthrough]] attribute between cases
-why: this statement may fall through
+raw : this statement may fall through
 | src/main.c:5:9
 |         value = 1;
 |         ^

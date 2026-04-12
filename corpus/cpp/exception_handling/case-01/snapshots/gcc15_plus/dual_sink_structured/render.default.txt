@@ -1,15 +1,14 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: exception handling configuration or usage error
---> src/main.cpp:2:11
+error: [exception_handling] exception handling configuration or usage error @ src/main.cpp:2:11
 help: enable -fexceptions/-frtti or adjust the exception specification
-why: exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Code-Gen-Options.html#index-fexceptions)' to enable
+raw : exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Code-Gen-Options.html#index-fexceptions)' to enable
 | src/main.cpp:2:11
 |     throw 1;
 |           ^
-error: exception handling configuration or usage error
---> src/main.cpp:2:11
+
+error: [exception_handling] exception handling configuration or usage error @ src/main.cpp:2:11
 help: enable -fexceptions/-frtti or adjust the exception specification
-why: src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable
+raw : src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable
 | src/main.cpp:2:11
 |     throw 1;
 |           ^

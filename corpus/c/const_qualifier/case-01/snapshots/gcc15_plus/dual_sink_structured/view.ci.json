@@ -2,9 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.c:7:18",
-      "child_notes": [
-        "expected 'int *' but argument is of type 'const int *'"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
@@ -22,7 +20,7 @@
       ],
       "family": "const_qualifier",
       "first_action": "make the destination const-correct or remove the const from the source",
-      "group_id": "sarif-0-0",
+      "group_id": "group-dcb0de028b80",
       "matched_conditions": [
         "message_contains=discards 'const' qualifier",
         "phase=semantic"

@@ -1,7 +1,6 @@
-error: template instantiation failed
---> src/main.cpp:7:22
+error: [template] template instantiation failed @ src/main.cpp:7:22
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to 'Pair(int, const char [2])'
+raw : no matching function for call to 'Pair(int, const char [2])'
 | src/main.cpp:7:22
 |     Pair value(1, "x");
 |                      ^
@@ -10,10 +9,10 @@ while instantiating:
   - src/main.cpp:7:22 deduced conflicting types for parameter 'T' ('int' and 'const char*')
   - src/main.cpp:2:8 candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'
 omitted 1 internal template frames
-error: template instantiation failed
---> src/main.cpp:7:22
+
+error: [template] template instantiation failed @ src/main.cpp:7:22
 help: start from the first user-owned template frame and match template arguments
-why: class template argument deduction failed:
+raw : class template argument deduction failed:
 | src/main.cpp:7:22
 |     Pair value(1, "x");
 |                      ^

@@ -1,7 +1,6 @@
-error: template instantiation failed
---> src/main.cpp:17:22
+error: [template] template instantiation failed @ src/main.cpp:17:22
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to ‘Pair(int, const char [2])’
+raw : no matching function for call to ‘Pair(int, const char [2])’
 | src/main.cpp:17:22
 |     Pair other(1, "x");
 |                      ^
@@ -10,16 +9,22 @@ while instantiating:
   - src/main.cpp:17:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)
   - src/main.cpp:10:8 candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’
 omitted 1 internal template frames
-error: template instantiation failed
---> src/main.cpp:6:5
+
+error: [template] template instantiation failed @ src/main.cpp:6:5
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to ‘expect_ptr(int&)’
+raw : no matching function for call to ‘expect_ptr(int&)’
 | src/main.cpp:6:5
 |     expect_ptr(value);
 |     ^
 while instantiating:
   - src/main.cpp:2:6 candidate: ‘template<class T> void expect_ptr(T*)’
 omitted 1 internal template frames
-other errors:
-  - src/main.cpp:17:22: error: template instantiation failed
+
+error: [template] template instantiation failed @ src/main.cpp:17:22
+help: start from the first user-owned template frame and match template arguments
+raw : class template argument deduction failed:
+| src/main.cpp:17:22
+|     Pair other(1, "x");
+|                      ^
+while instantiating:
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

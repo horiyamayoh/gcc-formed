@@ -1,13 +1,14 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: multiple definition of `shared`
-help: remove the duplicate definition or make the symbol internal to one translation unit
-why: /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
-linker: symbol `shared`
+error: [linker] multiple definition of `shared`
+help  : remove the duplicate definition or make the symbol internal to one translation unit
+symbol: shared
+from  : <temp-object>:(.data+0x0)
 raw:
   /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
-error: driver reported a linker failure summary
+
+error: [collect2_summary] driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
-why: collect2: error: ld returned 1 exit status
+raw : collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status

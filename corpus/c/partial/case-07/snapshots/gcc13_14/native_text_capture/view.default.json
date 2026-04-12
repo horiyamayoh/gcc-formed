@@ -6,9 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "likely",
       "confidence_notice": null,
-      "context_lines": [
-        "linker: symbol `missing_symbol`"
-      ],
+      "context_lines": [],
       "excerpts": [],
       "family": "linker.undefined_reference",
       "first_action": "define the missing symbol or link the object/library that provides it",
@@ -51,18 +49,38 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "linker reported a failure"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "family": "collect2_summary",
+      "first_action": "inspect the linker diagnostics immediately above this summary",
+      "group_id": "group-ac2f5a684011",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "existing_specific_family=collect2_summary"
+      ],
+      "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "driver reported a linker failure summary"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "group_id": "group-ac2f5a684011",
-      "severity": "error",
-      "title": "driver reported a linker failure summary"
-    }
-  ]
+  }
 }

@@ -1,7 +1,6 @@
-error: thread safety or atomic operation error
---> src/main.c:7:5
+error: [thread_safety] thread safety or atomic operation error @ src/main.c:7:5
 help: ensure the type is trivially copyable for atomic operations or fix the thread_local linkage
-why: operand type ‘struct Blob *’ is incompatible with argument 1 of ‘__atomic_store_n’
+raw : operand type ‘struct Blob *’ is incompatible with argument 1 of ‘__atomic_store_n’
 | src/main.c:7:5
 |     __atomic_store_n(&blob, blob, __ATOMIC_SEQ_CST);
 |     ^

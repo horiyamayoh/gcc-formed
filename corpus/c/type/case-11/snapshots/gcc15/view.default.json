@@ -25,42 +25,19 @@
         "message_contains=passing argument",
         "phase=semantic"
       ],
-      "raw_message": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]",
+      "raw_message": "src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\nsrc/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *",
       "raw_sub_block": [
-        "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]"
+        "src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]",
+        "src/main.c: In function 'main':"
       ],
       "rule_id": "rule.family.type_overload.structured_or_message",
-      "severity": "error",
+      "severity": "warning",
       "suppression_reason": null,
       "title": "type or overload mismatch"
-    },
-    {
-      "canonical_location": null,
-      "child_notes": [],
-      "collapsed_notices": [],
-      "confidence_label": "likely",
-      "confidence_notice": null,
-      "context_lines": [],
-      "excerpts": [],
-      "family": "linker",
-      "first_action": "check the missing/duplicate symbol and the object or library inputs",
-      "group_id": "group-abe91b79ea07",
-      "matched_conditions": [
-        "phase=link"
-      ],
-      "raw_message": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~",
-      "raw_sub_block": [
-        "src/main.c: In function 'main':",
-        "    9 |     takes_int_ptr(&box);"
-      ],
-      "rule_id": "rule.family.linker.structured_or_message",
-      "severity": "error",
-      "suppression_reason": null,
-      "title": "linker reported a failure"
     }
   ],
   "summary": {
-    "failure_kind": "compile_failure",
+    "failure_kind": "warnings_only",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }

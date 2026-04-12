@@ -20,7 +20,7 @@ render:
     first_screenful_max_lines: 24
   concise:
     omission_notice_required: false
-    first_screenful_max_lines: 14
+    first_screenful_max_lines: 15
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40

@@ -1,11 +1,12 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-src/main.c:9:19: warning: type or overload mismatch
+src/main.c:9:19: warning: [type_mismatch] type or overload mismatch
 help: compare the expected type and actual argument at the call site
-why: src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]
+want: int *
+got : struct Box *
+via : takes_int_ptr
 | src/main.c:9:19
 |     takes_int_ptr(&box);
 |                   ^
-because: expected 'int *' but argument is of type 'struct Box *'
 raw:
   src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

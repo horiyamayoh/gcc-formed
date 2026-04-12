@@ -6,10 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
-      "context_lines": [
-        "through macro expansion:",
-        "  - src/main.c:3:40 in expansion of macro 'READ_FIELD'"
-      ],
+      "context_lines": [],
       "excerpts": [
         {
           "annotations": [

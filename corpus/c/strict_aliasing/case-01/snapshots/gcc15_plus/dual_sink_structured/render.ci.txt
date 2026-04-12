@@ -1,6 +1,6 @@
-src/main.c:2:13: warning: strict aliasing rule violation
+src/main.c:2:13: warning: [strict_aliasing] strict aliasing rule violation
 help: use memcpy or a union for type punning instead of pointer casts
-why: dereferencing type-punned pointer will break strict-aliasing rules
+raw : dereferencing type-punned pointer will break strict-aliasing rules
 | src/main.c:2:13
 |     return *(int *)&value;
 |             ^

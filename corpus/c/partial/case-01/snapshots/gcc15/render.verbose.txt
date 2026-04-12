@@ -1,16 +1,17 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: undefined reference to `missing_symbol`
-help: define the missing symbol or link the object/library that provides it
-why: main.c:(.text+0x5): undefined reference to `missing_symbol'
-linker: symbol `missing_symbol`
+error: [linker] undefined reference to `missing_symbol`
+help  : define the missing symbol or link the object/library that provides it
+symbol: missing_symbol
+from  : main.c:(.text+0x5)
 raw:
   main.c:(.text+0x5): undefined reference to `missing_symbol'
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=undefined reference, existing_specific_family=linker.undefined_reference
 debug: suppression_reason=preserved_specific_family_from_ingress
-error: driver reported a linker failure summary
+
+error: [collect2_summary] driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
-why: collect2: error: ld returned 1 exit status
+raw : collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status

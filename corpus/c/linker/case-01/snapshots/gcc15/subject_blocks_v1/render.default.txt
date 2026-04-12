@@ -8,7 +8,7 @@ raw:
 
 error: [collect2_summary] driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
-why : collect2: error: ld returned 1 exit status
+raw : collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status

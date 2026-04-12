@@ -1,7 +1,6 @@
-warning: enum or switch coverage issue
---> src/main.cpp:5:12
+warning: [enum_switch] enum or switch coverage issue @ src/main.cpp:5:12
 help: add missing case labels or a default case to handle all enum values
-why: enumeration value 'Blue' not handled in switch
+raw : enumeration value 'Blue' not handled in switch
 | src/main.cpp:5:12
 |     switch (color) {
 |            ^

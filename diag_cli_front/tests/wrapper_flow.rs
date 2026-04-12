@@ -26,7 +26,7 @@ fn renders_with_fake_gcc15_backend() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains("help: fix the first parser error"));
 }
 
@@ -47,7 +47,7 @@ fn render_mode_writes_public_json_to_file() {
         .assert()
         .failure()
         .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains("help: fix the first parser error"));
 
     let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
@@ -85,7 +85,7 @@ fn safe_public_json_stdout_emits_json_without_interleaving_render_output() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains("help: fix the first parser error"));
 
     let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
@@ -144,13 +144,13 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
-            "error: expected ';' before '}' token",
+            "error: [syntax] syntax error @ main.c:4:1",
         ))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
         ))
         .stderr(predicate::str::contains(
-            "why: main.c:4:1: error: expected ';' before '}' token",
+            "raw:\n  main.c:4:1: error: expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
@@ -209,7 +209,7 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
         .stderr(predicate::str::contains(
             expected_tier_b_single_sink_notice(),
         ))
-        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
         ))
@@ -400,7 +400,7 @@ fn renders_with_explicit_single_sink_structured_json_on_fake_gcc12_backend() {
         .stderr(predicate::str::contains(
             expected_tier_c_single_sink_notice(),
         ))
-        .stderr(predicate::str::contains("error: syntax error"))
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
         ))

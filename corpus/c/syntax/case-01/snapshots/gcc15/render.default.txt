@@ -1,8 +1,8 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: syntax error
---> src/main.c:2:13
+error: [syntax] syntax error @ src/main.c:2:13
 help: fix the first parser error at the user-owned location
-why: expected ';' before '}}' token
+want: ;
+near: }} token
 | src/main.c:2:13
 |     return 0
 |             ^
@@ -10,10 +10,11 @@ suggested edit: insert ';' at src/main.c:2:13
   patch: src/main.c
   2 -     return 0
   2 +     return 0;
-error: syntax error
---> src/main.c:2:13
+
+error: [syntax] syntax error @ src/main.c:2:13
 help: fix the first parser error at the user-owned location
-why: src/main.c:2:13: error: expected ';' before '}' token
+want: ;
+near: } token
 | src/main.c:2:13
 |     return 0
 |             ^

@@ -39,7 +39,7 @@ pub struct Selection {
 
 /// Selects, ranks, and partitions diagnostic groups from the request document.
 pub fn select_groups(request: &RenderRequest) -> Selection {
-    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    let presentation_policy = ResolvedPresentationPolicy::default();
     select_groups_with_presentation_policy(request, &presentation_policy)
 }
 

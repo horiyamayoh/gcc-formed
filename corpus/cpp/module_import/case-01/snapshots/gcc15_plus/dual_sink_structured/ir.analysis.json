@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "module_import",
         "first_action_hint": "build or export the requested module interface before importing it",
+        "group_ref": "group-dbf9335ebb7f",
         "headline": "C++20 module import error",
         "matched_conditions": [
           "message_contains=failed to read compiled module"
@@ -211,7 +212,7 @@
       "fingerprints": {
         "family": "873dcaef8767e795ba4fa5e70fe06c56c4c214391fb45c2cce8a7b721b2602e0",
         "raw": "5c48020342a9729f417b3eaed05a71ee314ef02e5ad9b5c8360aa016f0c0aac4",
-        "structural": "1a82f5be8f224ed75cd2ce211f3700ec4120569dc15068e7b3b5a6ef63f625dc"
+        "structural": "31b9ac0bb718510aaf1b8e7efe48bf224e4edd340cbc720d19afda5d0c38e0a2"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -253,12 +254,55 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-58b765d937de",
+          "family": "module_import",
+          "lead_group_ref": "group-dbf9335ebb7f",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-dbf9335ebb7f"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-58b765d937de",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-dbf9335ebb7f",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "124744772988e68197d235084492097aada9f47effa3edf13374504044d02dee",
-    "raw": "003ecfb1cc487c53d4d8172cc74267f6b35e3c7d444be08cd899cf5c5d7ad771",
-    "structural": "92d9d4cf9415c2ef21f2e9b5fbf9273e06c156ecb2be5deb8af48c988e28ca7a"
+    "raw": "ba22edf073387b46ea82caee59244cd11c0d256dfbd1aa26adaaef938db4e3f4",
+    "structural": "96c101880db5e30d6029ec3df78ecc75da25cefc88a74e1f0b568e9403dea4c9"
   },
   "producer": {
     "name": "gcc-formed",

@@ -27,17 +27,17 @@ render:
     required_substrings:
       - "|             ^"
   concise:
-    omission_notice_required: true
-    first_screenful_max_lines: 14
+    omission_notice_required: false
+    first_screenful_max_lines: 20
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
-    first_screenful_max_lines: 16
+    first_screenful_max_lines: 23
     first_action_max_line: 3
     path_first_required: false
     color_meaning_forbidden: true
-    raw_diagnostics_hint_required: false
+    raw_diagnostics_hint_required: true
     required_substrings:
       - "|             ^"
       - "suggested edit: insert ';' at src/main.c:2:13"

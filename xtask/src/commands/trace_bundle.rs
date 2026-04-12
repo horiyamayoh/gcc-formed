@@ -622,7 +622,7 @@ mod tests {
         let report = run_replay_trace_bundle(&bundle_path, &report_dir).unwrap();
         let render_text = fs::read_to_string(&report.render_path).unwrap();
         assert!(
-            render_text.contains("error: syntax error")
+            render_text.contains("error: [syntax] syntax error")
                 || render_text.contains("expected ';' before '}' token")
         );
         assert!(render_text.contains("note: replay uses stored bundle contents only"));

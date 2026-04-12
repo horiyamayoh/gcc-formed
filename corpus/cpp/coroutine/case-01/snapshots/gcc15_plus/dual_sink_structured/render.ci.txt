@@ -1,6 +1,6 @@
-src/main.cpp:6:5: error: coroutine promise type error
+src/main.cpp:6:5: error: [syntax] coroutine promise type error
 help: define a valid promise_type or align the coroutine return type with the coroutine body
-why: unable to find the promise type for this coroutine
+raw : unable to find the promise type for this coroutine
 | src/main.cpp:6:5
 |     co_return;
 |     ^

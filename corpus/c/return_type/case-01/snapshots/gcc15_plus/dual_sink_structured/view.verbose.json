@@ -20,7 +20,7 @@
       ],
       "family": "return_type",
       "first_action": "add a return statement to all control-flow paths of the non-void function",
-      "group_id": "sarif-0-0",
+      "group_id": "group-9211d2c7c5a8",
       "matched_conditions": [
         "message_contains=control reaches end of non-void function",
         "phase=semantic"

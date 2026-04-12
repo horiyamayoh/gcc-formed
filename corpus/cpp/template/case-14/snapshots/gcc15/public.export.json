@@ -43,53 +43,33 @@
         "provenance_capture_refs": [
           "diagnostics.json"
         ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "no matching function for call to 'Pair(int, const char [2])'",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 22,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.json"
+        ],
         "related_diagnostics": [
-          {
-            "confidence": "medium",
-            "family": "type_overload",
-            "first_action": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch",
-            "message": "no matching function for call to 'Pair(int, const char [2])'",
-            "phase": "semantic",
-            "primary_location": {
-              "column": 22,
-              "line": 7,
-              "ownership": "user",
-              "path": "src/main.cpp",
-              "role": "primary"
-            },
-            "provenance_capture_refs": [
-              "diagnostics.json"
-            ],
-            "semantic_role": "supporting",
-            "severity": "error"
-          },
-          {
-            "confidence": "medium",
-            "family": "type_overload",
-            "first_action": "compare the expected type and actual argument at the call site",
-            "headline": "type or overload mismatch",
-            "message": "there are 2 candidates",
-            "phase": "semantic",
-            "primary_location": {
-              "column": 22,
-              "line": 7,
-              "ownership": "user",
-              "path": "src/main.cpp",
-              "role": "primary"
-            },
-            "provenance_capture_refs": [
-              "diagnostics.json"
-            ],
-            "semantic_role": "supporting",
-            "severity": "note"
-          },
           {
             "confidence": "high",
             "family": "template",
             "first_action": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
-            "message": "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
+            "message": "candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
             "phase": "instantiate",
             "primary_location": {
               "column": 5,
@@ -109,7 +89,7 @@
             "family": "template",
             "first_action": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
-            "message": "template argument deduction/substitution failed:",
+            "message": "  template argument deduction/substitution failed:",
             "phase": "instantiate",
             "primary_location": {
               "column": 5,
@@ -149,7 +129,7 @@
             "family": "template",
             "first_action": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
-            "message": "candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'",
+            "message": "candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
             "phase": "instantiate",
             "primary_location": {
               "column": 8,
@@ -169,7 +149,7 @@
             "family": "type_overload",
             "first_action": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
-            "message": "candidate expects 1 argument, 2 provided",
+            "message": "  candidate expects 1 argument, 2 provided",
             "phase": "semantic",
             "primary_location": {
               "column": 8,
@@ -191,11 +171,11 @@
     ],
     "summary": {
       "dependent_follow_on_count": 0,
-      "diagnostic_count": 8,
+      "diagnostic_count": 7,
       "duplicate_count": 0,
       "error_count": 2,
-      "independent_root_count": 1,
-      "note_count": 6,
+      "independent_root_count": 2,
+      "note_count": 5,
       "uncertain_count": 0,
       "warning_count": 0
     }

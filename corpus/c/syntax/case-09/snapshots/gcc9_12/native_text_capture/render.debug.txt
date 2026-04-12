@@ -1,8 +1,8 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: syntax error
---> src/main.c:2:10
+error: [syntax] syntax error @ src/main.c:2:10
 help: fix the first parser error at the user-owned location
-why: src/main.c:2:10: error: expected ')' before '{' token
+want: )
+near: { token
 | src/main.c:2:10
 |     if (1 {
 |          ^
@@ -17,10 +17,11 @@ debug: matched_conditions=message_contains=expected, message_contains=before, ph
 debug-facts: group_ref=group-7fd4f877b5aa, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-a41e1a468d2a
 debug-facts: evidence_tags=actionability_short, early_invocation, strong_root_family, user_owned_primary
 debug-raw: provenance_capture_refs=stderr.raw
-error: syntax error
---> src/main.c:5:1
+
+error: [syntax] syntax error @ src/main.c:5:1
 help: fix the first parser error at the user-owned location
-why: src/main.c:5:1: error: expected expression before '}' token
+want: expression
+near: } token
 | src/main.c:5:1
 | }
 | ^

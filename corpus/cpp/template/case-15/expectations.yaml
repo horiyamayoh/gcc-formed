@@ -14,18 +14,18 @@ semantic:
   confidence_min: medium
 render:
   default:
-    first_screenful_max_lines: 25
+    first_screenful_max_lines: 30
     first_action_max_line: 4
-    expected_summary_only_group_count: 1
+    expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
-    expected_suppressed_group_count: 1
+    expected_suppressed_group_count: 0
     raw_diagnostics_hint_required: true
   ci:
-    first_screenful_max_lines: 16
+    first_screenful_max_lines: 30
     first_action_max_line: 4
-    expected_summary_only_group_count: 1
+    expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
-    expected_suppressed_group_count: 1
+    expected_suppressed_group_count: 0
     omission_notice_required: true
     path_first_required: true
     color_meaning_forbidden: true

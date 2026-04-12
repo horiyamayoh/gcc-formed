@@ -18,14 +18,14 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After (opt-in `subject_blocks_v1`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
+> After (default `subject_blocks_v1`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
 - **状態**: Public Beta
 - **成熟度ラベル**: `v1beta`
 - **artifact semver 系列**: `0.2.0-beta.N`
 - **一般利用向け安定版**: 未提供
-- **日付**: 2026-04-11
+- **日付**: 2026-04-13
 - **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 
 `gcc-formed` は、GCC をラップし、C/C++ のコンパイルエラーやリンクエラーを**より短く、より根因に近く、より誠実に**提示するためのリポジトリである。
@@ -43,13 +43,15 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
-Presentation V2 の `subject_blocks_v1` は **opt-in preset** であり、runtime default はまだ `legacy_v1` のままである。  
-rollout は `opt-in preset -> corpus / snapshot / review -> default promotion` の順で進める。  
+Presentation V2 の `subject_blocks_v1` は beta runtime default であり、no-config の terminal render は subject-first blocks を使う。  
+rollout は `docs / ADR -> opt-in preset -> corpus / snapshot / review -> default promotion` の gate を通した。  
+`legacy_v1` は explicit rollback preset として残しており、`[render] presentation = "legacy_v1"` または `--formed-presentation=legacy_v1` で切り戻せる。  
+`cascade.max_expanded_independent_roots` は visible-root cap としては deprecated であり、新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
 representative corpus は `snapshots/.../subject_blocks_v1/` に review 用 cluster を持てるが、`render.presentation.json` は internal artifact であり public contract ではない。
 
 ### 1. テンプレートエラー（C++）
 
-出典: [GCC raw](corpus/cpp/overload/case-01/snapshots/gcc15/stderr.raw) / [subject_blocks_v1 render](corpus/cpp/overload/case-01/snapshots/gcc15/subject_blocks_v1/render.default.txt)
+出典: [GCC raw](corpus/cpp/overload/case-01/snapshots/gcc15/stderr.raw) / [default render](corpus/cpp/overload/case-01/snapshots/gcc15/render.default.txt)
 
 **Before (GCC raw)**
 
@@ -63,7 +65,7 @@ src/main.cpp:1:6: note: declared here
       |      ^~~~~
 ```
 
-**After (opt-in `subject_blocks_v1`)**
+**After (default `subject_blocks_v1`)**
 
 ```text
 error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
@@ -76,7 +78,7 @@ raw: rerun with --formed-profile=raw_fallback to inspect the original compiler o
 
 ### 2. リンカーエラー（C）
 
-出典: [GCC raw](corpus/c/linker/case-01/snapshots/gcc15/stderr.raw) / [subject_blocks_v1 render](corpus/c/linker/case-01/snapshots/gcc15/subject_blocks_v1/render.default.txt)
+出典: [GCC raw](corpus/c/linker/case-01/snapshots/gcc15/stderr.raw) / [default render](corpus/c/linker/case-01/snapshots/gcc15/render.default.txt)
 
 **Before (GCC raw)**
 
@@ -85,7 +87,7 @@ helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c
 collect2: error: ld returned 1 exit status
 ```
 
-**After (opt-in `subject_blocks_v1`)**
+**After (default `subject_blocks_v1`)**
 
 ```text
 error: [linker] multiple definition of `duplicate`

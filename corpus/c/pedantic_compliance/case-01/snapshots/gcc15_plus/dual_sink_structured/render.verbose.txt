@@ -1,16 +1,14 @@
-warning: non-standard or non-portable extension used
---> src/main.c:3:5
+warning: [pedantic_compliance] non-standard or non-portable extension used @ src/main.c:3:5
 help: use the standard-conforming alternative or pass the required -std= flag
-why: ISO C90 forbids variable length array 'values'
+raw : ISO C90 forbids variable length array 'values'
 | src/main.c:3:5
 |     int values[size];
 |     ^
 debug: rule_id=rule.family.pedantic_compliance.message_terms
 debug: matched_conditions=message_contains=iso c90 forbids, message_contains=variable length array, phase=semantic
-warning: variable used without initialization
---> src/main.c:4:12
+warning: [uninitialized] variable used without initialization @ src/main.c:4:12
 help: initialize the variable at its declaration or before first use
-why: '*values[0]' is used uninitialized
+raw : '*values[0]' is used uninitialized
 | src/main.c:4:12
 |     return values[0];
 |            ^

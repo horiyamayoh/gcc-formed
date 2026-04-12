@@ -1,6 +1,6 @@
-src/main.c:3:9: warning: potential null pointer issue
+src/main.c:3:9: warning: [null_pointer] potential null pointer issue
 help: remove the redundant null check or guard the dereference with a null check
-why: the address of 'value' will always evaluate as 'true'
+raw : the address of 'value' will always evaluate as 'true'
 | src/main.c:3:9
 |     if (&value) {
 |         ^

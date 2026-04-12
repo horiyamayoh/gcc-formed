@@ -1,8 +1,8 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: undefined reference to `missing_symbol`
-help: define the missing symbol or link the object/library that provides it
-why: main.c:(.text+0x5): undefined reference to `missing_symbol'
-linker: symbol `missing_symbol`
+error: [linker] undefined reference to `missing_symbol`
+help  : define the missing symbol or link the object/library that provides it
+symbol: missing_symbol
+from  : main.c:(.text+0x5)
 raw:
   main.c:(.text+0x5): undefined reference to `missing_symbol'
 debug: rule_id=rule.family.ingress_specific_override
@@ -11,9 +11,10 @@ debug: suppression_reason=preserved_specific_family_from_ingress
 debug-facts: group_ref=group-5a2b7fabe834, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-18fb65ae404a
 debug-facts: evidence_tags=actionability_short, early_invocation, no_primary_location, specific_symbol_or_frontier, strong_root_family
 debug-raw: provenance_capture_refs=stderr.raw
-error: linker reported a failure
+
+error: [linker] linker reported a failure
 help: check the missing/duplicate symbol and the object or library inputs
-why: /usr/bin/ld: <temp-object>: in function `main':
+raw : /usr/bin/ld: <temp-object>: in function `main':
 raw:
   /usr/bin/ld: <temp-object>: in function `main':
 debug: rule_id=rule.family.linker.structured_or_message
@@ -21,9 +22,10 @@ debug: matched_conditions=phase=link
 debug-facts: group_ref=group-42afde19f5a0, role=uncertain, visibility_floor=never_hidden, episode_ref=episode-a14e9330eff1
 debug-facts: evidence_tags=actionability_short, classified_family, early_invocation, no_primary_location
 debug-raw: provenance_capture_refs=stderr.raw
-error: driver reported a linker failure summary
+
+error: [collect2_summary] driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
-why: collect2: error: ld returned 1 exit status
+raw : collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status

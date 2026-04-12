@@ -1,6 +1,6 @@
-src/main.cpp:6:5: error: template instantiation failed
+src/main.cpp:6:5: error: [template] template instantiation failed
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to 'expect_ptr(int&)'
+raw : no matching function for call to 'expect_ptr(int&)'
 | src/main.cpp:6:5
 |     expect_ptr(value);
 |     ^

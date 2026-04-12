@@ -348,7 +348,7 @@ profile が明示されない場合、既定は以下とする。
 - Presentation V2 の subject-first preset では、visible root は `default` / `concise` / `verbose` / `debug` / `ci` のいずれでも block として反復表示する。
 - `document.document_analysis.episode_graph` がある場合、独立 root group は visibility を失ってはならない。visible root は built-in default で summary-only へ落としてはならない。
 - `all_visible_blocks` は failure run の既定 session mode である。`lead_plus_summary` と `capped_blocks` は legacy compatibility, warning-only optimization, user opt-in, または extreme safety cap のために残してよい。
-- `max_expanded_independent_roots = 1` は current-authority の unconditional contract ではない。visible root cap を設ける場合でも、それは cascade の意味論ではなく presentation/session policy として扱う。
+- `max_expanded_independent_roots = 1` は current-authority の unconditional contract ではない。visible root cap を設ける場合でも、それは cascade の意味論ではなく presentation/session policy として扱う。`cascade.max_expanded_independent_roots` は legacy compatibility knob としてのみ残し、新しい visible-root behavior の正本にはしない。
 - hidden / collapsed / summary-only にできるのは、cascade で dependent / duplicate / follow-on と判定された member、または warning-tail policy の対象だけである。
 
 ---
@@ -1348,10 +1348,12 @@ Presentation V2 の rollout は次の順で進める。
 1. docs / ADR で grammar と責務境界を固定する
 2. opt-in preset として導入する
 3. corpus / snapshot / review を通した後に default promotion を判断する
+4. default promotion 後も `legacy_v1` rollback path と internal review artifact を残す
 
 interactive default と CI preset は同一のタイミングで promote しなくてもよい。
 
-現時点の beta runtime default は `legacy_v1` であり、`subject_blocks_v1` は opt-in preset のままとする。  
+current beta runtime default は `subject_blocks_v1` であり、no-config terminal render は subject-first blocks を使う。`legacy_v1` は explicit rollback / compatibility preset として維持する。  
+`cascade.max_expanded_independent_roots` は visible-root cap meaning では deprecated であり、互換用途を除く新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
 corpus replay / snapshot review のために `subject_blocks_v1/render.presentation.json` のような internal artifact を持ってよいが、それは public machine contract ではない。
 
 ---

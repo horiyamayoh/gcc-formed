@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "fallthrough",
         "first_action_hint": "add a break, return, or [[fallthrough]] attribute between cases",
+        "group_ref": "group-3d451bd29db8",
         "headline": "implicit fallthrough between switch cases",
         "matched_conditions": [
           "message_contains=this statement may fall through",
@@ -102,7 +103,7 @@
       "fingerprints": {
         "family": "7844b0c259a5651a3cc0c3886e546c3a796bc95e82d2f134fb8d58e5c4fe2ca3",
         "raw": "69b2bdb7e7f269fc747a01b11e8c98bd5c9445337dfcc167cd4c0f2d168e7428",
-        "structural": "8172e9e0a8259b3855cb61fd436177c8970ec4d31b2a26bf5c64f82c9286c073"
+        "structural": "546ba5269390130f1ecc36a6e3eb5e606c004ff705cda317784119acf7fe651a"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -144,12 +145,55 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-f78f740d9c82",
+          "family": "fallthrough",
+          "lead_group_ref": "group-3d451bd29db8",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-3d451bd29db8"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-f78f740d9c82",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-3d451bd29db8",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "e59b8482325993a05aa1139ac3dd2a2ad60d1a367ee5eba8f5c1c29c279b7570",
-    "raw": "707c1766881c554c57edfaee4037318cc2e31afaff2de02c3005d85d801a7a21",
-    "structural": "3bf3dd82fe22eeaad32d91bd4ac625311bed8a6dd5bf54a442ff8d095d748bda"
+    "raw": "3714fce50c44ef9f3a7043e7c417d7bf9169715d51c61194899905f423b53320",
+    "structural": "233909eb29abfd850e25b79a0302cf234a5c3ef351a9959851d64b74af7109b2"
   },
   "producer": {
     "name": "gcc-formed",

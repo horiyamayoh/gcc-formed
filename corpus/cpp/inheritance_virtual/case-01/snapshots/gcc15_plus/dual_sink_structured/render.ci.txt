@@ -1,6 +1,6 @@
-src/main.cpp:8:13: error: inheritance or virtual function error
+src/main.cpp:8:13: error: [inheritance_virtual] inheritance or virtual function error
 help: implement all pure virtual functions or fix the class hierarchy
-why: cannot declare variable 'value' to be of abstract type 'Derived'
+raw : cannot declare variable 'value' to be of abstract type 'Derived'
 | src/main.cpp:8:13
 |     Derived value;
 |             ^

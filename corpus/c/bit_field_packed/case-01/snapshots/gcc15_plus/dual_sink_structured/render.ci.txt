@@ -1,6 +1,6 @@
-src/main.c:7:12: warning: bit-field or packed struct issue
+src/main.c:7:12: warning: [bit_field_packed] bit-field or packed struct issue
 help: check field width against the declared type or avoid taking address of packed members
-why: taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value
+raw : taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value
 | src/main.c:7:12
 |     return &packet->value;
 |            ^

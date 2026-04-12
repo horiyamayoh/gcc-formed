@@ -7,7 +7,14 @@ use crate::error::CliError;
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_core::{CascadePolicySnapshot, CompressionLevel, SuppressedCountVisibility};
-use diag_render::{DebugRefs, PathPolicy, RenderProfile};
+use diag_render::{
+    DebugRefs, LocationPlacement, PathPolicy, RenderProfile,
+    ResolvedFamilyPresentation as RenderResolvedFamilyPresentation,
+    ResolvedLocationPolicy as RenderResolvedLocationPolicy,
+    ResolvedPresentationPolicy as RenderResolvedPresentationPolicy,
+    ResolvedTemplate as RenderResolvedTemplate, ResolvedTemplateLine as RenderResolvedTemplateLine,
+    SemanticSlotId, SessionMode,
+};
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use serde::Deserialize;
 use std::collections::BTreeMap;
@@ -16,7 +23,7 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_PRESENTATION_PRESET: &str = "legacy_v1";
+const DEFAULT_PRESENTATION_PRESET: &str = "subject_blocks_v1";
 const PRESENTATION_SCHEMA_KIND: &str = "cc_formed_presentation";
 const PRESENTATION_SCHEMA_VERSION: u32 = 1;
 const GENERIC_BLOCK_TEMPLATE: &str = "generic_block";
@@ -146,6 +153,12 @@ pub(crate) struct ResolvedPresentationPolicy {
     pub(crate) fell_back_to_default: bool,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct ResolvedCascadePolicy {
+    pub(crate) policy: CascadePolicySnapshot,
+    pub(crate) warnings: Vec<String>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 pub(crate) struct ConfigFile {
     #[serde(default)]
@@ -228,9 +241,9 @@ impl ConfigFile {
         Self::load_from_paths(admin_config_paths(), Some(&paths.config_path))
     }
 
-    pub(crate) fn resolve_cascade_policy(&self, parsed: &ParsedArgs) -> CascadePolicySnapshot {
+    pub(crate) fn resolve_cascade_policy(&self, parsed: &ParsedArgs) -> ResolvedCascadePolicy {
         let defaults = CascadePolicySnapshot::default();
-        CascadePolicySnapshot {
+        let policy = CascadePolicySnapshot {
             compression_level: parsed
                 .cascade_compression_level
                 .or(self.cascade.compression_level)
@@ -255,7 +268,18 @@ impl ConfigFile {
                 .cascade_show_suppressed_count
                 .or(self.cascade.show_suppressed_count)
                 .unwrap_or(defaults.show_suppressed_count),
-        }
+        };
+        let warnings = if parsed.cascade_max_expanded_independent_roots.is_some()
+            || self.cascade.max_expanded_independent_roots.is_some()
+        {
+            vec![
+                "note: cascade.max_expanded_independent_roots and the corresponding CLI flags are deprecated as visible-root caps; the current value is still honored for compatibility, but new visible-root behavior should be expressed through render.presentation or render.presentation_file.session.visible_root_mode".to_string(),
+            ]
+        } else {
+            Vec::new()
+        };
+
+        ResolvedCascadePolicy { policy, warnings }
     }
 
     #[allow(dead_code)]
@@ -333,6 +357,90 @@ impl ConfigFile {
             merged = merge_config(merged, load_config_file(user_path.as_ref())?);
         }
         Ok(merged)
+    }
+}
+
+impl ResolvedPresentationPolicy {
+    pub(crate) fn to_render_policy(&self) -> RenderResolvedPresentationPolicy {
+        let label_catalog = resolved_label_catalog(&self.policy);
+        let templates = self
+            .policy
+            .templates
+            .iter()
+            .map(|template| {
+                (
+                    template.id.clone(),
+                    RenderResolvedTemplate {
+                        id: template.id.clone(),
+                        core: template
+                            .core
+                            .iter()
+                            .filter_map(|line| {
+                                Some(RenderResolvedTemplateLine {
+                                    slot: semantic_slot_id(&line.slot)?,
+                                    label: line.label.clone(),
+                                    suffix_slot: line.suffix_slot.clone(),
+                                    optional: line.optional.unwrap_or(false),
+                                })
+                            })
+                            .collect(),
+                    },
+                )
+            })
+            .collect();
+
+        RenderResolvedPresentationPolicy {
+            preset_id: self.preset_id.clone(),
+            session_mode: session_mode(
+                self.policy
+                    .session
+                    .visible_root_mode
+                    .as_deref()
+                    .unwrap_or("all_visible_blocks"),
+            ),
+            location_policy: RenderResolvedLocationPolicy {
+                default_placement: location_placement(
+                    self.policy
+                        .location
+                        .default_placement
+                        .as_deref()
+                        .unwrap_or("inline_suffix"),
+                ),
+                fallback_order: self
+                    .policy
+                    .location
+                    .fallback_order
+                    .as_ref()
+                    .into_iter()
+                    .flatten()
+                    .map(|placement| location_placement(placement))
+                    .collect(),
+            },
+            label_catalog,
+            templates,
+            family_mappings: self
+                .policy
+                .family_mappings
+                .iter()
+                .flat_map(|mapping| {
+                    mapping
+                        .matchers
+                        .iter()
+                        .map(|matcher| RenderResolvedFamilyPresentation {
+                            matcher: matcher.clone(),
+                            display_family: mapping.display_family.clone(),
+                            template_id: mapping
+                                .template
+                                .clone()
+                                .unwrap_or_else(|| GENERIC_BLOCK_TEMPLATE.to_string()),
+                        })
+                })
+                .collect(),
+            default_template_id: default_template_id_for_preset(&self.preset_id).to_string(),
+            generic_template_id: GENERIC_BLOCK_TEMPLATE.to_string(),
+            warnings: self.warnings.clone(),
+            fell_back_to_default: self.fell_back_to_default,
+        }
     }
 }
 
@@ -545,6 +653,72 @@ fn merge_family_mappings(
         }
     }
     base
+}
+
+fn semantic_slot_id(slot: &str) -> Option<SemanticSlotId> {
+    match slot {
+        "first_action" => Some(SemanticSlotId::FirstAction),
+        "expected" => Some(SemanticSlotId::Want),
+        "actual" => Some(SemanticSlotId::Got),
+        "via" => Some(SemanticSlotId::Via),
+        "name" => Some(SemanticSlotId::Name),
+        "use" => Some(SemanticSlotId::Use),
+        "need" => Some(SemanticSlotId::Need),
+        "from" => Some(SemanticSlotId::From),
+        "near" => Some(SemanticSlotId::Near),
+        "now" => Some(SemanticSlotId::Now),
+        "prev" => Some(SemanticSlotId::Prev),
+        "symbol" => Some(SemanticSlotId::Symbol),
+        "archive" => Some(SemanticSlotId::Archive),
+        "why_raw" => Some(SemanticSlotId::WhyRaw),
+        _ => None,
+    }
+}
+
+fn session_mode(mode: &str) -> SessionMode {
+    match mode {
+        "all_visible_blocks" => SessionMode::AllVisibleBlocks,
+        "lead_plus_summary" => SessionMode::LeadPlusSummary,
+        "capped_blocks" => SessionMode::CappedBlocks,
+        _ => SessionMode::AllVisibleBlocks,
+    }
+}
+
+fn location_placement(placement: &str) -> LocationPlacement {
+    match placement {
+        "inline_suffix" => LocationPlacement::InlineSuffix,
+        "header" => LocationPlacement::HeaderSuffix,
+        "header_suffix" => LocationPlacement::HeaderSuffix,
+        "evidence" => LocationPlacement::EvidenceSuffix,
+        "evidence_suffix" => LocationPlacement::EvidenceSuffix,
+        "excerpt_header" => LocationPlacement::ExcerptHeader,
+        "dedicated_line" => LocationPlacement::DedicatedLine,
+        "none" => LocationPlacement::None,
+        _ => LocationPlacement::None,
+    }
+}
+
+fn resolved_label_catalog(policy: &PresentationConfigFile) -> BTreeMap<String, String> {
+    let mut labels = policy.labels.clone();
+    for template in &policy.templates {
+        for line in &template.core {
+            if let (Some(slot), Some(label_id)) =
+                (semantic_slot_id(&line.slot), line.label.as_deref())
+                && !labels.contains_key(slot.stable_id())
+                && let Some(label) = policy.labels.get(label_id)
+            {
+                labels.insert(slot.stable_id().to_string(), label.clone());
+            }
+        }
+    }
+    labels
+}
+
+fn default_template_id_for_preset(preset_id: &str) -> &'static str {
+    match preset_id {
+        "legacy_v1" => "legacy_primary_block",
+        _ => GENERIC_BLOCK_TEMPLATE,
+    }
 }
 
 fn normalize_presentation_config(
@@ -1213,22 +1387,25 @@ mod tests {
 
         let resolved = config.resolve_cascade_policy(&parsed);
 
-        assert_eq!(resolved.compression_level, CompressionLevel::Off);
-        assert_eq!(resolved.suppress_likelihood_threshold, 0.76);
-        assert_eq!(resolved.summary_likelihood_threshold, 0.91);
-        assert_eq!(resolved.min_parent_margin, 0.08);
-        assert_eq!(resolved.max_expanded_independent_roots, 1);
+        assert_eq!(resolved.policy.compression_level, CompressionLevel::Off);
+        assert_eq!(resolved.policy.suppress_likelihood_threshold, 0.76);
+        assert_eq!(resolved.policy.summary_likelihood_threshold, 0.91);
+        assert_eq!(resolved.policy.min_parent_margin, 0.08);
+        assert_eq!(resolved.policy.max_expanded_independent_roots, 1);
         assert_eq!(
-            resolved.show_suppressed_count,
+            resolved.policy.show_suppressed_count,
             SuppressedCountVisibility::Never
         );
+        assert_eq!(resolved.warnings.len(), 1);
+        assert!(resolved.warnings[0].contains("deprecated"));
     }
 
     #[test]
     fn resolve_cascade_policy_uses_built_in_defaults_when_unset() {
         let resolved = ConfigFile::default().resolve_cascade_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved, CascadePolicySnapshot::default());
+        assert_eq!(resolved.policy, CascadePolicySnapshot::default());
+        assert!(resolved.warnings.is_empty());
     }
 
     #[test]
@@ -1355,7 +1532,7 @@ mod tests {
         let config = ConfigFile::load_from_paths([], Some(&user)).unwrap();
         let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved.preset_id, "legacy_v1");
+        assert_eq!(resolved.preset_id, "subject_blocks_v1");
         assert!(resolved.fell_back_to_default);
         assert!(
             resolved
@@ -1365,7 +1542,7 @@ mod tests {
         );
         assert_eq!(
             resolved.policy.session.visible_root_mode.as_deref(),
-            Some("lead_plus_summary")
+            Some("all_visible_blocks")
         );
     }
 
@@ -1436,11 +1613,49 @@ mod tests {
     }
 
     #[test]
-    fn existing_config_without_presentation_keys_keeps_legacy_default() {
+    fn existing_config_without_presentation_keys_uses_subject_blocks_default() {
         let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved.preset_id, "legacy_v1");
+        assert_eq!(resolved.preset_id, "subject_blocks_v1");
         assert!(!resolved.fell_back_to_default);
         assert!(resolved.warnings.is_empty());
+    }
+
+    #[test]
+    fn resolved_presentation_policy_converts_to_subject_blocks_render_policy() {
+        let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
+
+        let render_policy = resolved.to_render_policy();
+
+        assert_eq!(render_policy.preset_id, "subject_blocks_v1");
+        assert_eq!(render_policy.session_mode, SessionMode::AllVisibleBlocks);
+        assert_eq!(render_policy.default_template_id, "generic_block");
+        assert_eq!(render_policy.generic_template_id, "generic_block");
+        assert_eq!(render_policy.label("why_raw"), Some("raw"));
+        assert_eq!(
+            render_policy.slot_label(SemanticSlotId::WhyRaw),
+            Some("raw")
+        );
+    }
+
+    #[test]
+    fn legacy_render_policy_conversion_keeps_legacy_default_template() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation=legacy_v1"),
+        ])
+        .unwrap();
+
+        let render_policy = ConfigFile::default()
+            .resolve_presentation_policy(&parsed)
+            .to_render_policy();
+
+        assert_eq!(render_policy.preset_id, "legacy_v1");
+        assert_eq!(render_policy.session_mode, SessionMode::LeadPlusSummary);
+        assert_eq!(render_policy.default_template_id, "legacy_primary_block");
+        assert_eq!(
+            render_policy.slot_label(SemanticSlotId::WhyRaw),
+            Some("why")
+        );
     }
 }

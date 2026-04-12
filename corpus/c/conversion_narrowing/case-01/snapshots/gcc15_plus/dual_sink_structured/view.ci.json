@@ -20,7 +20,7 @@
       ],
       "family": "conversion_narrowing",
       "first_action": "add an explicit cast or change the variable type to match",
-      "group_id": "sarif-0-0",
+      "group_id": "group-b0a509e73831",
       "matched_conditions": [
         "message_contains=different signedness",
         "phase=semantic"

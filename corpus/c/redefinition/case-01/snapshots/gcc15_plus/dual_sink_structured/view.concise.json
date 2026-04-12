@@ -2,9 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.c:2:5",
-      "child_notes": [
-        "previous definition of 'counter' with type 'int'"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,

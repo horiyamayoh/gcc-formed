@@ -6,11 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
-      "context_lines": [
-        "because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6",
-        "because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6",
-        "omitted 2 other overload candidates"
-      ],
+      "context_lines": [],
       "excerpts": [
         {
           "annotations": [

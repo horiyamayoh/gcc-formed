@@ -2,9 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:10:5",
-      "child_notes": [
-        "declared here"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,

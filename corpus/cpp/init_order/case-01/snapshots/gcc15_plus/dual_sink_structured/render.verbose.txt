@@ -1,26 +1,23 @@
-warning: initialization order or aggregate init issue
---> src/main.cpp:3:9
+warning: [init_order] initialization order or aggregate init issue @ src/main.cpp:3:9
 help: reorder member initializers to match declaration order, or fix the initializer list
-why: 'Example::value' will be initialized after
+raw : 'Example::value' will be initialized after
 | src/main.cpp:3:9
 |     int value;
 |         ^
 debug: rule_id=rule.family.init_order.message_terms
 debug: matched_conditions=message_contains=will be initialized after, phase=semantic
-warning:   'int Example::count'
---> src/main.cpp:2:9
+warning: [unknown]   'int Example::count' @ src/main.cpp:2:9
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why:   'int Example::count'
+raw :   'int Example::count'
 | src/main.cpp:2:9
 |     int count;
 |         ^
 debug: rule_id=rule.family.unknown
 debug: matched_conditions=no_family_rule_matched
 debug: suppression_reason=generic_fallback
-warning:   when initialized here
---> src/main.cpp:5:5
+warning: [unknown]   when initialized here @ src/main.cpp:5:5
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why:   when initialized here
+raw :   when initialized here
 | src/main.cpp:5:5
 |     Example() : value(1), count(2) {}
 |     ^

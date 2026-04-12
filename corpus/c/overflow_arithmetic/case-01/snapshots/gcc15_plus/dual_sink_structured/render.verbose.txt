@@ -1,7 +1,6 @@
-warning: integer arithmetic issue detected
---> src/main.c:2:19
+warning: [overflow_arithmetic] integer arithmetic issue detected @ src/main.c:2:19
 help: check the operand types and value ranges to prevent undefined behavior
-why: division by zero
+raw : division by zero
 | src/main.c:2:19
 |     int value = 1 / 0;
 |                   ^

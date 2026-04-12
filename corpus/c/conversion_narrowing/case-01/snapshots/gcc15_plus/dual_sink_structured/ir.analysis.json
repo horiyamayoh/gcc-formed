@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "conversion_narrowing",
         "first_action_hint": "add an explicit cast or change the variable type to match",
+        "group_ref": "group-b0a509e73831",
         "headline": "implicit or narrowing conversion detected",
         "matched_conditions": [
           "message_contains=different signedness",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "77ed704816941e9915f70a720c692ddd8f5757bd95665ff34ef381bdaffa7b5a",
         "raw": "552eff94543afdb84f3ece3cd90d0efcd0c96f5dda05523e356bf24e76ef53b2",
-        "structural": "b5113223dbdf82ec5affc8869e68f6608fbc30f8e66fab9904eb570d606532ae"
+        "structural": "896f0e1f6de943a9af0d25ec10e24655ba6615102d755d960df53563eefd6d27"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -85,12 +86,55 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-b0c4c0d5ea8f",
+          "family": "conversion_narrowing",
+          "lead_group_ref": "group-b0a509e73831",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-b0a509e73831"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-b0c4c0d5ea8f",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-b0a509e73831",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "625e262c1c223c95d80263c7212b386324b93bec141375e5dcd8011017476eeb",
-    "raw": "84be342d5fc5db8467bfdecb2cc293352f336686ddb05937a64a529ebe15ec92",
-    "structural": "1a70d7e1814338dbdd79beda09322197ffd265f43ed740f60ca06b3ec6309f48"
+    "raw": "505d5a21062c6b4aef742da4a081b71a8a1f999ada1041f656a789fcb4c433b6",
+    "structural": "4abe85037998fe07d844450ceb288688d72e4cdf6f1ece4752ac9a59baa12137"
   },
   "producer": {
     "name": "gcc-formed",

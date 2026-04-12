@@ -1,6 +1,6 @@
-src/main.c:3:5: error: inline assembly constraint error
+src/main.c:3:5: error: [syntax] inline assembly constraint error
 help: check the asm constraint letters and ensure registers/operands match the template
-why: impossible constraint in ‘asm’
+raw : impossible constraint in ‘asm’
 | src/main.c:3:5
 |     __asm__("" : : "i"(value));
 |     ^

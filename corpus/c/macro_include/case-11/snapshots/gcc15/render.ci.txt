@@ -1,12 +1,8 @@
-src/main.c:9:12: error: error surfaced through macro/include context
+src/main.c:9:12: error: [macro_include] error surfaced through macro/include context
 help: inspect the user-owned macro invocation or include edge that reaches the failing line
-why: 'Box' has no member named 'missing_field'
+from: invocation of 'READ_MISSING' @ src/main.c:9:12
+via : include src/wrapper.h:1 <- src/main.c:1
 | src/main.c:9:12
 |     return READ_MISSING(box);
 |            ^
-through macro expansion:
-  - src/main.c:9:12 in expansion of macro 'READ_MISSING'
-from include chain:
-  - In file included from src/wrapper.h:1
-  - src/main.c:1 from src/main.c:1:
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

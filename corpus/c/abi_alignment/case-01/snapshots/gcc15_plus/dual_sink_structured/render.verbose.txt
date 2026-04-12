@@ -1,7 +1,6 @@
-warning: ABI or alignment compatibility issue
---> src/main.c:6:12
+warning: [abi_alignment] ABI or alignment compatibility issue @ src/main.c:6:12
 help: check struct packing, alignment attributes, and target-specific ABI requirements
-why: cast increases required alignment of target type
+raw : cast increases required alignment of target type
 | src/main.c:6:12
 |     return (BigAlign *)(raw + 1);
 |            ^

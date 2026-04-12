@@ -1,6 +1,6 @@
-src/main.cpp:6:18: error: three-way comparison (spaceship) operator error
+src/main.cpp:6:18: error: [three_way_comparison] three-way comparison (spaceship) operator error
 help: ensure all members support <=> or provide a custom comparison operator
-why: no match for 'operator<=>' (operand types are 'Widget' and 'Widget')
+raw : no match for 'operator<=>' (operand types are 'Widget' and 'Widget')
 | src/main.cpp:6:18
 |     return (left <=> right) == 0;
 |                  ^

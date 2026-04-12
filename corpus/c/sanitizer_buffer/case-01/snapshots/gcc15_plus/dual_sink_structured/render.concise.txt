@@ -1,14 +1,13 @@
-warning: potential buffer overflow or memory overlap
---> src/main.c:5:22
+warning: [sanitizer_buffer] potential buffer overflow or memory overlap @ src/main.c:5:22
 help: check buffer sizes and ensure source and destination do not overlap
-why: '%s' directive writing 6 bytes into a region of size 4
+raw : '%s' directive writing 6 bytes into a region of size 4
 | src/main.c:5:22
 |     sprintf(buffer, "%s", "abcdef");
 |                      ^
-note: 'sprintf' output 7 bytes into a destination of size 4
---> src/main.c:5:5
+note: [unknown] 'sprintf' output 7 bytes into a destination of size 4 @ src/main.c:5:5
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why: 'sprintf' output 7 bytes into a destination of size 4
+raw : 'sprintf' output 7 bytes into a destination of size 4
 | src/main.c:5:5
 |     sprintf(buffer, "%s", "abcdef");
-note: omitted additional details; rerun with --formed-profile=verbose
+|     ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

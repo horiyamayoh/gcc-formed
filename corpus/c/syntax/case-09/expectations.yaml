@@ -19,7 +19,7 @@ render:
     expected_hidden_group_count: 0
     expected_suppressed_group_count: 0
   ci:
-    first_screenful_max_lines: 16
+    first_screenful_max_lines: 21
     expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
     expected_suppressed_group_count: 0

@@ -1,9 +1,8 @@
-error: duplicate definition detected
---> src/main.c:2:5
+error: [redefinition] duplicate definition detected @ src/main.c:2:5
 help: add or fix include guards, or remove the duplicate definition
-why: redefinition of 'counter'
+now : src/main.c:2:5 int counter = 1;
+prev: src/main.c:1:5 int counter = 0;
 | src/main.c:2:5
 | int counter = 1;
 |     ^
-note: previous definition of 'counter' with type 'int'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

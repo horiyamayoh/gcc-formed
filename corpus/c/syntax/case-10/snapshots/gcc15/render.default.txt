@@ -1,18 +1,36 @@
-error: syntax error
---> src/main.c:2:26
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: [syntax] syntax error @ src/main.c:2:26
 help: fix the first parser error at the user-owned location
-why: expected '}}' before ';' token
+want: }}
+near: ; token
 | src/main.c:2:26
 |     int values[2] = {1, 2;
 |                          ^
-error: syntax error
---> src/main.c:4:1
+
+error: [syntax] syntax error @ src/main.c:4:1
 help: fix the first parser error at the user-owned location
-why: expected ',' or ';' at end of input
+want: ,
+near: end of input
 | src/main.c:4:1
 | }
 | ^
-other errors:
-  - src/main.c:2:26: error: syntax error
-  - src/main.c:4:1: error: syntax error
+
+error: [syntax] syntax error @ src/main.c:2:26
+help: fix the first parser error at the user-owned location
+want: }
+near: ; token
+| src/main.c:2:26
+|     int values[2] = {1, 2;
+|                          ^
+raw:
+  src/main.c:2:26: error: expected '}' before ';' token
+  src/main.c: In function 'main':
+
+error: [syntax] syntax error @ src/main.c:4:1
+help: fix the first parser error at the user-owned location
+want: declaration or statement
+near: end of input
+| src/main.c:4:1
+| }
+| ^
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

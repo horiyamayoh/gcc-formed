@@ -1,6 +1,6 @@
-src/main.c:2:0: warning: OpenMP directive or clause error
+src/main.c:2:0: warning: [syntax] OpenMP directive or clause error
 help: check the variable data-sharing clause or enable -fopenmp
-why: ignoring ‘#pragma omp for’
+raw : ignoring ‘#pragma omp for’
 | src/main.c:2:0
 | #pragma omp for
 | ^

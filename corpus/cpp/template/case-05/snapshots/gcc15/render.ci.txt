@@ -1,6 +1,6 @@
-src/main.cpp:5:5: error: template instantiation failed
+src/main.cpp:5:5: error: [template] template instantiation failed
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to 'combine(int, const char [2])'
+raw : no matching function for call to 'combine(int, const char [2])'
 | src/main.cpp:5:5
 |     combine(1, "x");
 |     ^

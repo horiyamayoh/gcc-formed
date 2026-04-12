@@ -1,6 +1,6 @@
-src/main.cpp:3:33: error: lambda capture error
+src/main.cpp:3:33: error: [lambda_closure] lambda capture error
 help: add the variable to the capture list or specify a default capture mode [=] or [&]
-why: 'value' is not captured
+raw : 'value' is not captured
 | src/main.cpp:3:33
 |     auto lambda = []() { return value; };
 |                                 ^

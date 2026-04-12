@@ -6,11 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
-      "context_lines": [
-        "because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6",
-        "because: conversion of argument 1 would be ill-formed:",
-        "omitted 5 other overload notes"
-      ],
+      "context_lines": [],
       "excerpts": [
         {
           "annotations": [
@@ -69,31 +65,116 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:6:15",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "    takes_ref(value);"
+          ],
+          "location": "src/main.cpp:6:15"
+        }
+      ],
+      "family": "type_overload",
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "group-1fcef13373e2",
+      "matched_conditions": [
+        "message_contains=invalid conversion",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*",
+      "raw_sub_block": [
+        "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]"
+      ],
+      "rule_id": "rule.family.type_overload.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:6:15",
+      "child_notes": [
+        "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)",
+        "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "    takes_ref(value);"
+          ],
+          "location": "src/main.cpp:6:15"
+        }
+      ],
+      "family": "pointer_reference",
+      "first_action": "provide the full type definition via #include or fix the value category",
+      "group_id": "group-ce50ecc7e81d",
+      "matched_conditions": [
+        "message_contains=cannot bind",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'",
+      "raw_sub_block": [
+        "src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'"
+      ],
+      "rule_id": "rule.family.pointer_reference.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "invalid pointer or reference operation"
+    },
+    {
+      "canonical_location": "src/main.cpp:6:15",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "    takes_ref(value);"
+          ],
+          "location": "src/main.cpp:6:15"
+        }
+      ],
+      "family": "pointer_reference",
+      "first_action": "provide the full type definition via #include or fix the value category",
+      "group_id": "group-2c241b94af21",
+      "matched_conditions": [
+        "message_contains=cannot bind",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'",
+      "raw_sub_block": [
+        "src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'"
+      ],
+      "rule_id": "rule.family.pointer_reference.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "invalid pointer or reference operation"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.cpp:6:15",
-      "group_id": "group-1fcef13373e2",
-      "severity": "error",
-      "title": "type or overload mismatch"
-    },
-    {
-      "canonical_location": "src/main.cpp:6:15",
-      "group_id": "group-ce50ecc7e81d",
-      "severity": "error",
-      "title": "invalid pointer or reference operation"
-    },
-    {
-      "canonical_location": "src/main.cpp:6:15",
-      "group_id": "group-2c241b94af21",
-      "severity": "error",
-      "title": "invalid pointer or reference operation"
-    }
-  ]
+  }
 }

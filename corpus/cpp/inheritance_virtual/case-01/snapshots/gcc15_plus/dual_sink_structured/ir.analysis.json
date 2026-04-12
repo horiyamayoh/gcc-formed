@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "inheritance_virtual",
         "first_action_hint": "implement all pure virtual functions or fix the class hierarchy",
+        "group_ref": "group-775fa7767837",
         "headline": "inheritance or virtual function error",
         "matched_conditions": [
           "message_contains=abstract type",
@@ -157,7 +158,7 @@
       "fingerprints": {
         "family": "28e19acda72977da735bb7f75cd07a4fa8e14691ad7679f4f1ffb988a23f6023",
         "raw": "9e31a760285398b718e92bcb1ea1f757178c101b56424123ad1319297d9f16ad",
-        "structural": "b6353c1d0212f1157c05bbe5bbe6d92217c997763529f8872d4445a5a94adcab"
+        "structural": "d8320e0b0abb1a076199bfc5ed5bdb91cb11bcb4d0ee50e412de98ed0a4f344a"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -199,12 +200,55 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-f39de4bbdbbb",
+          "family": "inheritance_virtual",
+          "lead_group_ref": "group-775fa7767837",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-775fa7767837"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-f39de4bbdbbb",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-775fa7767837",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "4bd40d4e3e0147dcb7eaf104633ad60b1f4dcb6c73c365fb6554472c6b49e42d",
-    "raw": "952d2b6f3bc2a9f1741a820e5c7ac9bf0a2870644965c61f72c38518baf927e1",
-    "structural": "b278908ba7c6569c3be762395024caf8b788fa09da312c15de6f9b452bd568d5"
+    "raw": "5efba945e0eab676076e435e7218461c514054703895f7a4574c9e2fe0404d28",
+    "structural": "2c33c1c0d65f7ecd256d212d1d703d0157228faa7ae6f9eaabaa7d8af3b59364"
   },
   "producer": {
     "name": "gcc-formed",

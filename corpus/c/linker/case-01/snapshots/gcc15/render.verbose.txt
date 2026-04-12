@@ -1,16 +1,17 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: multiple definition of `duplicate`
-help: remove the duplicate definition or make the symbol internal to one translation unit
-why: helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
-linker: symbol `duplicate`
+error: [linker] multiple definition of `duplicate`
+help  : remove the duplicate definition or make the symbol internal to one translation unit
+symbol: duplicate
+from  : helper.c:(.text+0x0)
 raw:
   helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=multiple definition, existing_specific_family=linker.multiple_definition
 debug: suppression_reason=preserved_specific_family_from_ingress
-error: driver reported a linker failure summary
+
+error: [collect2_summary] driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
-why: collect2: error: ld returned 1 exit status
+raw : collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status

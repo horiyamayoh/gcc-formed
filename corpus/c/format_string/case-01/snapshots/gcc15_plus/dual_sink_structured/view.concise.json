@@ -20,7 +20,7 @@
       ],
       "family": "format_string",
       "first_action": "match the format specifier to the argument type, or use type-safe I/O",
-      "group_id": "sarif-0-0",
+      "group_id": "group-8eb909e7713f",
       "matched_conditions": [
         "message_contains=format '%",
         "phase=semantic"

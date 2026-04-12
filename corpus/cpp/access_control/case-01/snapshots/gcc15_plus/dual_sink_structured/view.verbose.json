@@ -2,9 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:8:20",
-      "child_notes": [
-        "declared private here"
-      ],
+      "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
@@ -22,7 +20,7 @@
       ],
       "family": "access_control",
       "first_action": "use a public interface, add a friend declaration, or change access specifier",
-      "group_id": "sarif-0-0",
+      "group_id": "group-ff1c9a416a16",
       "matched_conditions": [
         "message_contains=is private within this context",
         "phase=semantic"

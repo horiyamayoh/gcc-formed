@@ -1,7 +1,7 @@
-error: identifier not found in scope
---> src/main.c:9:12
+error: [missing_name] identifier not found in scope @ src/main.c:9:12
 help: check for typos, missing #include, or missing namespace qualifier
-why: ‘Box’ has no member named ‘missing_field’
+name: Box
+use : return READ_MISSING(box);
 | src/main.c:9:12
 |     return READ_MISSING(box);
 |            ^

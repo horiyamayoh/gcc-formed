@@ -1,14 +1,23 @@
-error: use of a deleted or unavailable function
---> src/main.cpp:10:5
+error: [unavailable_api] use of a deleted or unavailable function @ src/main.cpp:10:5
 help: check whether the type is movable/copyable, or provide the required special member
-why: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'
+name: NoCopy::NoCopy(const NoCopy&)
+use : take(value);
+from: src/main.cpp:3:5 NoCopy(const NoCopy&) = delete;
 | src/main.cpp:10:5
 |     take(value);
 |     ^
-note: declared here
-note: type or overload mismatch
---> src/main.cpp:10:5
+
+note: [type_mismatch] type or overload mismatch @ src/main.cpp:10:5
 help: compare the expected type and actual argument at the call site
-why: use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
+raw : use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
 | src/main.cpp:10:5
-note: omitted additional details; rerun with --formed-profile=verbose
+|     take(value);
+|     ^
+
+note: [unknown] initializing argument 1 of 'void take(NoCopy)' @ src/main.cpp:6:11
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : initializing argument 1 of 'void take(NoCopy)'
+| src/main.cpp:6:11
+| void take(NoCopy value) {}
+|           ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

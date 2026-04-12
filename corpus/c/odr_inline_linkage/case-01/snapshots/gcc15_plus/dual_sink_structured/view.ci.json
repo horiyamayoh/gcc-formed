@@ -2,10 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.c:1:5",
-      "child_notes": [
-        "src/helper.c:1:6: note: return value type mismatch",
-        "src/helper.c:1:6: note: type 'long int' should match type 'int'"
-      ],
+      "child_notes": [],
       "collapsed_notices": [
         "omitted 2 additional note(s)"
       ],

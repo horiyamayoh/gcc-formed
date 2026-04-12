@@ -23,7 +23,7 @@
       ],
       "family": "inheritance_virtual",
       "first_action": "implement all pure virtual functions or fix the class hierarchy",
-      "group_id": "sarif-0-0",
+      "group_id": "group-775fa7767837",
       "matched_conditions": [
         "message_contains=abstract type",
         "phase=semantic"

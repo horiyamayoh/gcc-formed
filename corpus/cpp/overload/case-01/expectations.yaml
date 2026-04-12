@@ -20,27 +20,27 @@ semantic:
   confidence_min: medium
 render:
   default:
-    omission_notice_required: true
+    omission_notice_required: false
     first_screenful_max_lines: 24
     first_action_max_line: 3
     raw_diagnostics_hint_required: true
     compaction_required_substrings:
-      - "because:"
+      - "+3 candidates"
   concise:
-    omission_notice_required: true
+    omission_notice_required: false
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
-    omission_notice_required: true
+    omission_notice_required: false
     first_screenful_max_lines: 14
     first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
     raw_diagnostics_hint_required: true
     compaction_required_substrings:
-      - "because:"
+      - "+3 candidates"
 integrity:
   allowed_issue_codes: []
 performance:

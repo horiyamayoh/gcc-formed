@@ -1,14 +1,11 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-warning: ODR violation or inline linkage mismatch
---> src/main.c:1:5
+warning: [redefinition] ODR violation or inline linkage mismatch @ src/main.c:1:5
 help: ensure the inline function is defined in a header or fix the type mismatch across TUs
-why: src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+now : src/main.c:1:5 int helper(int value);
+prev: src/helper.c:1:6 long helper(long value) {
 | src/main.c:1:5
 | int helper(int value);
 |     ^
-note: src/helper.c:1:6: note: return value type mismatch
-note: src/helper.c:1:6: note: type 'long int' should match type 'int'
-note: src/helper.c:1:6: note: 'helper' was previously declared here
 note: omitted 1 additional note(s)
 raw:
   src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]

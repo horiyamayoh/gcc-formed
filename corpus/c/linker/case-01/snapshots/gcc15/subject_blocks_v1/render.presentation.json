@@ -67,7 +67,7 @@
           "value": "inspect the linker diagnostics immediately above this summary"
         },
         {
-          "label": "why",
+          "label": "raw",
           "slot": "why_raw",
           "value": "collect2: error: ld returned 1 exit status"
         }

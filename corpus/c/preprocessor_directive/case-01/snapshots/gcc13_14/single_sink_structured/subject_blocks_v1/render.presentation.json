@@ -29,7 +29,7 @@
           "value": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics"
         },
         {
-          "label": "why",
+          "label": "raw",
           "slot": "why_raw",
           "value": "#error macro guard missing"
         }

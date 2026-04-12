@@ -20,7 +20,7 @@
       ],
       "family": "coroutine",
       "first_action": "define a valid promise_type or align the coroutine return type with the coroutine body",
-      "group_id": "sarif-0-0",
+      "group_id": "group-afc1b3a86d20",
       "matched_conditions": [
         "message_contains=promise type",
         "message_contains=coroutine",

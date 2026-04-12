@@ -1,7 +1,6 @@
-error: type or overload mismatch
---> src/main.cpp:5:17
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:17
 help: compare the expected type and actual argument at the call site
-why: invalid conversion from 'const char*' to 'short int'
+raw : invalid conversion from 'const char*' to 'short int'
 | src/main.cpp:5:17
 |     takes_short("x");
 |                 ^~
@@ -10,10 +9,10 @@ debug: matched_conditions=message_contains=invalid conversion, phase=semantic
 debug-facts: group_ref=group-f0d86376e771, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-3f02c305e274
 debug-facts: evidence_tags=actionability_short, early_invocation, strong_root_family, user_owned_primary
 debug-raw: provenance_capture_refs=diagnostics.json
-note:   initializing argument 1 of 'void takes_short(short int)'
---> src/main.cpp:1:18
+
+note: [unknown]   initializing argument 1 of 'void takes_short(short int)' @ src/main.cpp:1:18
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why:   initializing argument 1 of 'void takes_short(short int)'
+raw :   initializing argument 1 of 'void takes_short(short int)'
 | src/main.cpp:1:18
 | void takes_short(short);
 |                  ^~~~

@@ -1,7 +1,6 @@
-error: C++20 module import error
---> missing_module:1:1
+error: [syntax] C++20 module import error @ missing_module:1:1
 help: build or export the requested module interface before importing it
-why: failed to read compiled module: No such file or directory
+raw : failed to read compiled module: No such file or directory
 note: compiled module file is 'gcm.cache/missing_module.gcm'
 note: imports must be built before being imported
 note: omitted 1 additional note(s)

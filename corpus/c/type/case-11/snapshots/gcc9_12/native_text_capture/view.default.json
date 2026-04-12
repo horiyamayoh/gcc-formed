@@ -6,9 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "likely",
       "confidence_notice": null,
-      "context_lines": [
-        "because: expected 'int *' but argument is of type 'struct Box *'"
-      ],
+      "context_lines": [],
       "excerpts": [
         {
           "annotations": [

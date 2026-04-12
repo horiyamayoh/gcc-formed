@@ -2,11 +2,7 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:8:12",
-      "child_notes": [
-        "candidate 1: 'template<class T>  requires  HasSize<T> int consume(T)'",
-        "template argument deduction/substitution failed:",
-        "constraints not satisfied"
-      ],
+      "child_notes": [],
       "collapsed_notices": [
         "omitted 2 additional note(s)"
       ],
@@ -30,7 +26,7 @@
       ],
       "family": "concepts_constraints",
       "first_action": "match the required concept or requires-clause against the actual template arguments",
-      "group_id": "sarif-0-0",
+      "group_id": "group-2a81adc6f6a0",
       "matched_conditions": [
         "child_message_contains=constraints not satisfied",
         "child_message_contains=the required expression",

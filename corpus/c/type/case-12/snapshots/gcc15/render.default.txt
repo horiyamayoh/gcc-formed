@@ -1,7 +1,6 @@
-error: type or overload mismatch
---> src/main.c:7:17
+error: [type_mismatch] type or overload mismatch @ src/main.c:7:17
 help: compare the expected type and actual argument at the call site
-why: incompatible types when initializing type 'int' using type 'struct Box'
+raw : incompatible types when initializing type 'int' using type 'struct Box'
 | src/main.c:7:17
 |     int value = box;
 |                 ^

@@ -1,12 +1,13 @@
-src/main.cpp:3:49: error: type or overload mismatch
+src/main.cpp:3:49: error: [type_mismatch] type or overload mismatch
 help: compare the expected type and actual argument at the call site
-why: invalid conversion from 'const char*' to 'int'
+raw : invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
 |                                                 ^
-src/main.cpp:1:16: note: initializing argument 1 of 'void takes_int(int)'
+
+src/main.cpp:1:16: note: [unknown] initializing argument 1 of 'void takes_int(int)'
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why: initializing argument 1 of 'void takes_int(int)'
+raw : initializing argument 1 of 'void takes_int(int)'
 | src/main.cpp:1:16
 | void takes_int(int);
 |                ^

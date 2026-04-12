@@ -9,14 +9,14 @@ from: src/main.cpp:3:5 NoCopy(const NoCopy&) = delete;
 
 note: [type_mismatch] type or overload mismatch @ src/main.cpp:10:5
 help: compare the expected type and actual argument at the call site
-why : use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
+raw : use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
 | src/main.cpp:10:5
 |     take(value);
 |     ^
 
 note: [unknown] initializing argument 1 of 'void take(NoCopy)' @ src/main.cpp:6:11
 note: wrapper confidence is low; verify against the preserved raw diagnostics
-why : initializing argument 1 of 'void take(NoCopy)'
+raw : initializing argument 1 of 'void take(NoCopy)'
 | src/main.cpp:6:11
 | void take(NoCopy value) {}
 |           ^

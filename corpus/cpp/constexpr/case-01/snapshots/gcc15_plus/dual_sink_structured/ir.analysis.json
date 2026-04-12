@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "constexpr",
         "first_action_hint": "ensure all expressions and function calls in the constexpr context are constant-evaluable",
+        "group_ref": "group-a7138dad0c39",
         "headline": "compile-time evaluation failure",
         "matched_conditions": [
           "message_contains=static assertion failed",
@@ -101,7 +102,7 @@
       "fingerprints": {
         "family": "d9df287b9e08a46224234357cbbb4cf49479d86e826950ab8856eba8dec255cb",
         "raw": "7fafd80ec6a7ecd16b70da8f44f7434f8986caa0232b02cb89c946ae4ccd7629",
-        "structural": "d9a6cc6dc3f2b7fc10f3b079a68e745cfd7fc0284ba9118cb89b4e2e0e5dd73d"
+        "structural": "9b6c4c498e2b7e1d3fbfa54856baf562af325a88120101c7ec1aea56cc3d794c"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -143,12 +144,55 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-507b72e7bdc6",
+          "family": "constexpr",
+          "lead_group_ref": "group-a7138dad0c39",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-a7138dad0c39"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-507b72e7bdc6",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-a7138dad0c39",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "1de5dc4ca1d19d818f00b28798efc281f1e1932fa39a61810840a36888156424",
-    "raw": "b311525c458a7642aa743e13073a68156a73d4b453732df63b09cdd7a5dbf2c2",
-    "structural": "1595482986f71a283d52bf2e472241a93a5b5c69c79bccd4d413d56863037ba7"
+    "raw": "59f1c03d1c6e66034e604ccc5776b650e4bccd392b8d632af4a68d8784d11635",
+    "structural": "2cbe7ca301527f7fdfbaa56c1552cab3f794ab29d6e3898257ac22c51942130a"
   },
   "producer": {
     "name": "gcc-formed",

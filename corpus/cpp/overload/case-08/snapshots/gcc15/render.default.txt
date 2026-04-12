@@ -1,27 +1,50 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: type or overload mismatch
---> src/main.cpp:6:5
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:6:5
 help: compare the expected type and actual argument at the call site
-why: no matching function for call to 'takes_ref(const char*&)'
+want: int&
+got : const char*&
+via : void takes_ref(int&) @ src/main.cpp:1:6  +1 candidate
 | src/main.cpp:6:5
 |     takes_ref(value);
 |     ^
-because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6
-because: conversion of argument 1 would be ill-formed:
-because: invalid conversion from 'const char*' to 'int'
-omitted 4 other overload notes
-error: type or overload mismatch
---> src/main.cpp:6:15
+
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:6:15
 help: compare the expected type and actual argument at the call site
-why: src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+raw : src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
 | src/main.cpp:6:15
 |     takes_ref(value);
 |               ^
 raw:
   src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
       6 |     takes_ref(value);
-other errors:
-  - src/main.cpp:6:15: error: type or overload mismatch
-  - src/main.cpp:6:15: error: invalid pointer or reference operation
-  - src/main.cpp:6:15: error: invalid pointer or reference operation
+
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:6:15
+help: compare the expected type and actual argument at the call site
+raw : src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]
+| src/main.cpp:6:15
+|     takes_ref(value);
+|               ^
+raw:
+  src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]
+      6 |     takes_ref(value);
+
+error: [incomplete_type] invalid pointer or reference operation @ src/main.cpp:6:15
+help: provide the full type definition via #include or fix the value category
+raw : src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'
+| src/main.cpp:6:15
+|     takes_ref(value);
+|               ^
+note: src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)
+note: src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:
+raw:
+  src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'
+
+error: [incomplete_type] invalid pointer or reference operation @ src/main.cpp:6:15
+help: provide the full type definition via #include or fix the value category
+raw : src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'
+| src/main.cpp:6:15
+|     takes_ref(value);
+|               ^
+raw:
+  src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

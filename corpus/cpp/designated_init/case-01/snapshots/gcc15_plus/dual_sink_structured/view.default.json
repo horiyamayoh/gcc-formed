@@ -20,7 +20,7 @@
       ],
       "family": "designated_init",
       "first_action": "reorder the designators to match the declaration order or check the member name",
-      "group_id": "sarif-0-0",
+      "group_id": "group-d58b077512ed",
       "matched_conditions": [
         "message_contains=designator order for field",
         "message_contains=does not match declaration order",

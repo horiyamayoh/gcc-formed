@@ -6,9 +6,7 @@
       "collapsed_notices": [],
       "confidence_label": "likely",
       "confidence_notice": null,
-      "context_lines": [
-        "linker: symbol `shared`"
-      ],
+      "context_lines": [],
       "excerpts": [],
       "family": "linker.multiple_definition",
       "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",

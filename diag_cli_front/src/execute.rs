@@ -29,7 +29,8 @@ use diag_public_export::{
     PublicExportContext, PublicExportUnavailableReason, export_from_document,
 };
 use diag_render::{
-    PathPolicy, RenderRequest, SourceExcerptPolicy, TypeDisplayPolicy, WarningVisibility, render,
+    PathPolicy, RenderRequest, SourceExcerptPolicy, TypeDisplayPolicy, WarningVisibility,
+    render_with_presentation_policy,
 };
 use diag_trace::{WrapperPaths, trace_id};
 use std::env;
@@ -105,7 +106,7 @@ fn real_main() -> Result<i32, CliError> {
         backend: &plan.backend,
         mode_decision: &plan.mode_decision,
         profile: plan.profile,
-        cascade_policy: &cascade_policy,
+        cascade_policy: &cascade_policy.policy,
         capabilities: &plan.capabilities,
         total_duration_ms,
     };
@@ -177,7 +178,7 @@ fn real_main() -> Result<i32, CliError> {
         &SafeDocumentAnalyzer,
         &mut document,
         &cascade_context,
-        &cascade_policy,
+        &cascade_policy.policy,
     );
 
     if matches!(plan.mode(), ExecutionMode::Shadow) {
@@ -215,10 +216,18 @@ fn real_main() -> Result<i32, CliError> {
         return Ok(exit_code);
     }
 
+    let presentation_policy = config.resolve_presentation_policy(&parsed);
+    for warning in &cascade_policy.warnings {
+        eprintln!("{warning}");
+    }
+    for warning in &presentation_policy.warnings {
+        eprintln!("{warning}");
+    }
+
     let render_started = Instant::now();
-    let render_result = render(RenderRequest {
+    let render_request = RenderRequest {
         document: document.clone(),
-        cascade_policy: cascade_policy.clone(),
+        cascade_policy: cascade_policy.policy.clone(),
         profile: plan.profile,
         capabilities: plan.capabilities.clone(),
         cwd: Some(cwd),
@@ -230,7 +239,9 @@ fn real_main() -> Result<i32, CliError> {
         debug_refs: plan.debug_refs,
         type_display_policy: TypeDisplayPolicy::CompactSafe,
         source_excerpt_policy: SourceExcerptPolicy::Auto,
-    })?;
+    };
+    let render_result =
+        render_with_presentation_policy(render_request, &presentation_policy.to_render_policy())?;
     let effective_fallback_reason = plan
         .mode_decision
         .fallback_reason

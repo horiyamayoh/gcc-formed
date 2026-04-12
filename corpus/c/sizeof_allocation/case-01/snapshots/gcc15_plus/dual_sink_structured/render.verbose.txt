@@ -1,7 +1,6 @@
-warning: suspicious sizeof usage or allocation size
---> src/main.c:2:18
+warning: [sizeof_allocation] suspicious sizeof usage or allocation size @ src/main.c:2:18
 help: check whether sizeof is applied to the intended type rather than a pointer
-why: 'sizeof' on array function parameter 'values' will return size of 'int *'
+raw : 'sizeof' on array function parameter 'values' will return size of 'int *'
 | src/main.c:2:18
 |     return sizeof(values);
 |                  ^

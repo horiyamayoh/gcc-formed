@@ -76,7 +76,7 @@
           "value": "compare the expected type and actual argument at the call site"
         },
         {
-          "label": "why",
+          "label": "raw",
           "slot": "why_raw",
           "value": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates"
         }
@@ -106,7 +106,7 @@
       "severity": "note",
       "slots": [
         {
-          "label": "why",
+          "label": "raw",
           "slot": "why_raw",
           "value": "initializing argument 1 of 'void take(NoCopy)'"
         }

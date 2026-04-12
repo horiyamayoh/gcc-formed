@@ -1,7 +1,6 @@
-error: preprocessor directive error
---> src/main.c:1:2
+error: [syntax] preprocessor directive error @ src/main.c:1:2
 help: inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics
-why: #error macro guard missing
+raw : #error macro guard missing
 | src/main.c:1:2
 | #error macro guard missing
 |  ^

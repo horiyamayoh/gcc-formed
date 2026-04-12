@@ -1,7 +1,6 @@
-error: structured binding decomposition error
---> src/main.cpp:8:10
+error: [structured_binding] structured binding decomposition error @ src/main.cpp:8:10
 help: ensure the type is decomposable and the number of bindings matches the member count
-why: only 1 name provided for structured binding
+raw : only 1 name provided for structured binding
 | src/main.cpp:8:10
 |     auto [only] = pair;
 |          ^

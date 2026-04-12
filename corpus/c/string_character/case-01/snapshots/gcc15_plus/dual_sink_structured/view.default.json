@@ -20,7 +20,7 @@
       ],
       "family": "string_character",
       "first_action": "check for unintended multi-character constants, trigraphs, or unterminated strings",
-      "group_id": "sarif-0-0",
+      "group_id": "group-0dca8a67ffc5",
       "matched_conditions": [
         "message_contains=multi-character character constant",
         "phase=parse"

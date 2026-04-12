@@ -1,9 +1,10 @@
-error: invalid pointer or reference operation
---> src/main.cpp:5:16
+error: [incomplete_type] invalid pointer or reference operation @ src/main.cpp:5:16
 help: provide the full type definition via #include or fix the value category
-why: invalid use of incomplete type 'struct Node'
+name: struct Node
+use : return node->value;
+need: complete definition of 'struct Node'
+from: src/main.cpp:1:8 struct Node;
 | src/main.cpp:5:16
 |     return node->value;
 |                ^
-note: forward declaration of 'struct Node'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "string_character",
         "first_action_hint": "check for unintended multi-character constants, trigraphs, or unterminated strings",
+        "group_ref": "group-0dca8a67ffc5",
         "headline": "character or string literal issue",
         "matched_conditions": [
           "message_contains=multi-character character constant",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "314bfa95e47806f6eae60351057ddce3b212a6723567c4b468ce97551e3bb4d0",
         "raw": "344677364cfb0a436369a26764702e37d6aa44f709159f8e2db62638c654806c",
-        "structural": "6c085bcab48ebbe588cd919bb8418b18a7d638e7478ae89b026cc1ba24fe644c"
+        "structural": "14348bbf90f323ff0c43f958b9557437fb2ff7a5a6a96cfb3769a0857d752787"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -85,12 +86,55 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-2cb91f8dc75f",
+          "family": "string_character",
+          "lead_group_ref": "group-0dca8a67ffc5",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-0dca8a67ffc5"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-2cb91f8dc75f",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-0dca8a67ffc5",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "a720e39307a2258b09209ad61230deb6c8dba5f3097d9210d22b7c1c0edc796a",
-    "raw": "3c3b42ed3620275bd29c0bb5dc73f4ddb29a7d3008346d914ac364804078ba44",
-    "structural": "a45ec4fbf9875e88b3776dd4bb8f8a0e58725c86bee740f05af0544be778fbe0"
+    "raw": "17bd794b06079a7318c72efa83e2d070b79de342fa227084fb6e76a49e8dd38e",
+    "structural": "5f21532af20acf0e128524ab685dfff8764a9700feeba15e1f7d348741e11393"
   },
   "producer": {
     "name": "gcc-formed",

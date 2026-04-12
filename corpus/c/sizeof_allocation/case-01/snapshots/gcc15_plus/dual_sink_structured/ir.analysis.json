@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "sizeof_allocation",
         "first_action_hint": "check whether sizeof is applied to the intended type rather than a pointer",
+        "group_ref": "group-c58bd4116a27",
         "headline": "suspicious sizeof usage or allocation size",
         "matched_conditions": [
           "message_contains='sizeof' on array function parameter",
@@ -102,7 +103,7 @@
       "fingerprints": {
         "family": "17d5db20588a242642b437d32374364803b306837fd3b70a5b447d06296f5a81",
         "raw": "0878e3a7ad2c9f642c133ae5d512ab52575d00e0a0c8f0ace2dcd4a485d37cf4",
-        "structural": "c3ae50331596f13c1b2d69cbbbabe06ba82a672c9644291d345fd716b4aa3ad1"
+        "structural": "c8124892d0da4daf08405a6cf6227590d2384e5203098367559b39570fd7b760"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -144,12 +145,55 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-11eb50abd901",
+          "family": "sizeof_allocation",
+          "lead_group_ref": "group-c58bd4116a27",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-c58bd4116a27"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-11eb50abd901",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-c58bd4116a27",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "d63509086ba166f0ab432b40f99d0c1f9e973330a0d9aedda23751ebc3c7d1ca",
-    "raw": "0819f2e2c4481f5ac42fc1fb4b7ffc99c501ac9ae8ff9860138a6c14f87fb767",
-    "structural": "45d8dbbb741c4a8f88cb9a872bf09a104c41e1d47588a7afabd63849ef4c0cc6"
+    "raw": "cf5451ca3b3ac00be094b71ad1580cc99f77e4aece4a41ee017d391dea0c07b2",
+    "structural": "48e18facef127bff3582f6188b910e27015e47812400a23b1b960e455254fe07"
   },
   "producer": {
     "name": "gcc-formed",

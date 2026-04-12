@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~\n",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~\n",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 444,
+      "size_bytes": 446,
       "storage": "inline"
     }
   ],
@@ -28,10 +28,67 @@
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "syntax",
+            "first_action_hint": "fix the first parser error at the user-owned location",
+            "headline": "syntax error",
+            "matched_conditions": [
+              "message_contains=expected"
+            ],
+            "rule_id": "rule.family.syntax.phase_or_message"
+          },
+          "fingerprints": {
+            "family": "445109287e97951c315ea00698e62c4a4334444c56a7ddc49d7694daa221ca4f",
+            "raw": "c5ad556772f2e1e1579135462eb72d4772b0890c524ef1929eb525815946ed49",
+            "structural": "bdd381fd929c3fa38c1a62b5db6cd9ccd966974decaeb7e138c8e2892b48f187"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 25,
+                "column_native": 25,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:1:25:1:25",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
       "fingerprints": {
-        "family": "d4fa125e4ab162c54197a305efd471dae016b0c65b2b393f1b01b39aee5f6343",
-        "raw": "6f9d9cf209991e2d5f287b6b16d936e8ef72c4d2ff2437a7fc0621e6b77d537c",
-        "structural": "baf39117a8d87e3d8dff814153b5360d0e4272d57c6e82184e0c6bf14ae45a40"
+        "family": "5415f1987ad6fa83b99701099f3b9ef3a76e8e011a388f452eb1ed39cfc3e484",
+        "raw": "8f056c169ac1ecd462bb0500304bf08e19449258da12b0f9198f152ffa75f7e4",
+        "structural": "a2f5d96779dba8ec7f9e9b0d0eb736d57542f00b83bc8717d9148cc4af74719f"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -58,7 +115,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]"
+        "raw_text": "src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\nsrc/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -70,40 +127,7 @@
         "source": "residual_text"
       },
       "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "linker",
-        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
-        "group_ref": "group-abe91b79ea07",
-        "headline": "linker reported a failure",
-        "matched_conditions": [
-          "phase=link"
-        ],
-        "rule_id": "rule.family.linker.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "b32b4821b941680ef9fe52ba412f45d186b380a618890a3819a9ae35cf663842",
-        "raw": "05d0d194d07b64ae09b6764e51bdd1ab797e965c89a96eb7cdd5bf3e60d72cdd",
-        "structural": "99897079cec4b379f1b34b548beb0a0e32e3d5a7f0300e27f063f9e503178706"
-      },
-      "id": "residual-passthrough",
-      "message": {
-        "raw_text": "src/main.c: In function 'main':\n    9 |     takes_int_ptr(&box);\n      |                   ^~~~\n      |                   |\n      |                   struct Box *\nsrc/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n    1 | void takes_int_ptr(int *value);\n      |                    ~~~~~^~~~~"
-      },
-      "node_completeness": "passthrough",
-      "origin": "external_tool",
-      "phase": "link",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "passthrough",
-      "severity": "error"
+      "severity": "warning"
     }
   ],
   "document_analysis": {
@@ -117,16 +141,6 @@
           "lead_root_score": 0.8999999761581421,
           "member_group_refs": [
             "group-489fab7b076b"
-          ]
-        },
-        {
-          "confidence": 0.43000003695487976,
-          "episode_ref": "episode-effeba5c4f59",
-          "family": "linker",
-          "lead_group_ref": "group-abe91b79ea07",
-          "lead_root_score": 0.43000003695487976,
-          "member_group_refs": [
-            "group-abe91b79ea07"
           ]
         }
       ],
@@ -148,22 +162,6 @@
         "summary_likelihood": 0.3700000047683716,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
-      },
-      {
-        "episode_ref": "episode-effeba5c4f59",
-        "evidence_tags": [
-          "actionability_short",
-          "classified_family",
-          "early_invocation",
-          "no_primary_location"
-        ],
-        "group_ref": "group-abe91b79ea07",
-        "independence_score": 0.4399999976158142,
-        "role": "uncertain",
-        "root_score": 0.43000003695487976,
-        "summary_likelihood": 0.5799999833106995,
-        "suppress_likelihood": 0.25999999046325684,
-        "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
@@ -172,15 +170,15 @@
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
       "independent_root_count": 1,
-      "uncertain_count": 1
+      "uncertain_count": 0
     }
   },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "d3537ece516726c7ce200965236071d7858c1600ae0fa7a52037e07687f1cb23",
-    "raw": "e33951f62a40c4a17d191f09e255cac801e6ba05f4192bfa25a80a77488b144a",
-    "structural": "570121785174750e10059c1717d57f33f3ad8cedacd7e255f23269ac747dd9ec"
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "6c441f3f27d8ae99385a2b6cbf17510eec2026a6ae66f257674f88996a86d161",
+    "structural": "1bfd7cc7537095c282b1edc867d2e1df24ef990bc0ec826922526806a402bbd6"
   },
   "producer": {
     "name": "gcc-formed",

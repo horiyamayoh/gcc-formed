@@ -1,11 +1,9 @@
-error: type or overload mismatch
---> src/main.cpp:5:5
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
 help: compare the expected type and actual argument at the call site
-why: no matching function for call to 'takes(int)'
+want: int, int
+got : int
+via : void takes(int, int) @ src/main.cpp:1:6  +3 candidates
 | src/main.cpp:5:5
 |     takes(1);
 |     ^
-because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6
-because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6
-omitted 2 other overload candidates
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

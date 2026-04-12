@@ -1,16 +1,15 @@
-error: inline assembly constraint error
---> src/main.c:3:5
+error: [syntax] inline assembly constraint error @ src/main.c:3:5
 help: check the asm constraint letters and ensure registers/operands match the template
-why: impossible constraint in ‘asm’
+raw : impossible constraint in ‘asm’
 | src/main.c:3:5
 |     __asm__("" : : "i"(value));
 |     ^
 debug: rule_id=rule.family.asm_inline.message_terms
 debug: matched_conditions=message_contains=impossible constraint in, phase=codegen
-warning: inline assembly constraint error
---> src/main.c:3:5
+
+warning: [syntax] inline assembly constraint error @ src/main.c:3:5
 help: check the asm constraint letters and ensure registers/operands match the template
-why: ‘asm’ operand 0 probably does not match constraints
+raw : ‘asm’ operand 0 probably does not match constraints
 | src/main.c:3:5
 |     __asm__("" : : "i"(value));
 |     ^

@@ -10,10 +10,11 @@ schema_version = 1
 profile = "default"
 path_policy = "relative_to_cwd"
 debug_refs = "none"
-# opt-in Presentation V2 preset under review; current runtime default stays legacy_v1.
-# presentation = "subject_blocks_v1"
+# current beta default is subject_blocks_v1; set legacy_v1 only for rollback / compatibility.
+# presentation = "legacy_v1"
 # compatibility alias accepted by the current loader:
-# presentation_preset = "subject_blocks_v1"
+# presentation_preset = "legacy_v1"
+# use a custom presentation file when you need a non-default session / location policy.
 # presentation_file = "/home/me/.config/cc-formed/presentation.toml"
 
 [trace]
@@ -25,6 +26,8 @@ compression_level = "aggressive"
 suppress_likelihood_threshold = 0.78
 summary_likelihood_threshold = 0.55
 min_parent_margin = 0.12
-max_expanded_independent_roots = 2
+# deprecated compatibility knob: visible-root behavior now belongs to presentation/session policy.
+# prefer render.presentation = "legacy_v1" or a custom presentation_file with session.visible_root_mode.
+# max_expanded_independent_roots = 2
 # true = always, false = never
 show_suppressed_count = true

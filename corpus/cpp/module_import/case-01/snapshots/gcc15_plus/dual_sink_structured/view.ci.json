@@ -15,7 +15,7 @@
       "excerpts": [],
       "family": "module_import",
       "first_action": "build or export the requested module interface before importing it",
-      "group_id": "sarif-0-0",
+      "group_id": "group-dbf9335ebb7f",
       "matched_conditions": [
         "message_contains=failed to read compiled module"
       ],

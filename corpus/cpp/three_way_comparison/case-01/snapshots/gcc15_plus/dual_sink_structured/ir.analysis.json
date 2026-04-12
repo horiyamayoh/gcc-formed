@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "three_way_comparison",
         "first_action_hint": "ensure all members support <=> or provide a custom comparison operator",
+        "group_ref": "group-d0a05bbf354a",
         "headline": "three-way comparison (spaceship) operator error",
         "matched_conditions": [
           "message_contains=operator<=>",
@@ -44,7 +45,7 @@
       "fingerprints": {
         "family": "41efddbcffe98bcfe7625c30016a28083d5c5a780abd5be6fbbdb547d676aa4f",
         "raw": "7cb10bbd68082dc7d1b29a0e3b376e722e782873fb74546220295d970c6cd674",
-        "structural": "e847df8e4c438bc4eaf2875404c436d2245e0b9a332c55a5089fcd466f23fde2"
+        "structural": "a83c572356f81271615dccc06ae16738e5395a66d130798da9f954504d5ef6f7"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -86,12 +87,55 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-6c7771692526",
+          "family": "three_way_comparison",
+          "lead_group_ref": "group-d0a05bbf354a",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-d0a05bbf354a"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-6c7771692526",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-d0a05bbf354a",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "d495fe0dbfe0892244646cf0e3261e27e627aa4a2ad5b3e4d2790a719c03d505",
-    "raw": "1b7a05067468b1b1adee6ead3e10d044220dbcc33a71004a22f932793e5b09fc",
-    "structural": "1bc3679c62bbe3ec0e23264862f10374d130ab1eb5bf452270ac58f2156ad4bc"
+    "raw": "5112aa5ad13137dab70e96c79a01fde9accea79b14ecb8ff5a2c7839ebbfe2cc",
+    "structural": "c40412710ac97ba5d0407b337870de693c2677ad057ca37f2873f2c40067ccd9"
   },
   "producer": {
     "name": "gcc-formed",

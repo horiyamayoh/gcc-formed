@@ -22,9 +22,7 @@
       "collapsed_notices": [],
       "confidence_label": "likely",
       "confidence_notice": null,
-      "context_lines": [
-        "linker: symbol `missing_symbol`"
-      ],
+      "context_lines": [],
       "excerpts": [],
       "family": "linker.undefined_reference",
       "first_action": "define the missing symbol or link the object/library that provides it",

@@ -219,7 +219,7 @@ pub enum RenderError {
 /// Selects the appropriate rendering path based on the request profile and
 /// document completeness, falling back to raw output when necessary.
 pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
-    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    let presentation_policy = ResolvedPresentationPolicy::default();
     render_with_presentation_policy(request, &presentation_policy)
 }
 
@@ -280,7 +280,7 @@ pub fn render_with_presentation_policy(
 /// Returns `None` when the document would trigger a fallback path (raw profile,
 /// passthrough/failed completeness, or empty selection).
 pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
-    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    let presentation_policy = ResolvedPresentationPolicy::default();
     build_view_model_with_presentation_policy(request, &presentation_policy)
 }
 
@@ -311,9 +311,9 @@ pub fn build_view_model_with_presentation_policy(
     }
 }
 
-/// Builds the internal presentation snapshot for the default legacy preset.
+/// Builds the internal presentation snapshot for the default built-in preset.
 pub fn build_presentation_snapshot(request: &RenderRequest) -> Option<RenderPresentationSnapshot> {
-    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    let presentation_policy = ResolvedPresentationPolicy::default();
     build_presentation_snapshot_with_presentation_policy(request, &presentation_policy)
 }
 
@@ -512,6 +512,22 @@ mod tests {
         }
     }
 
+    fn legacy_policy() -> ResolvedPresentationPolicy {
+        ResolvedPresentationPolicy::legacy_v1()
+    }
+
+    fn legacy_select_groups(request: &RenderRequest) -> selector::Selection {
+        select_groups_with_presentation_policy(request, &legacy_policy())
+    }
+
+    fn legacy_build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
+        build_view_model_with_presentation_policy(request, &legacy_policy())
+    }
+
+    fn legacy_render(request: RenderRequest) -> RenderResult {
+        render_with_presentation_policy(request, &legacy_policy()).unwrap()
+    }
+
     fn write_source_file(root: &tempfile::TempDir, relative: &str, contents: &str) {
         let path = root.path().join(relative);
         if let Some(parent) = path.parent() {
@@ -660,7 +676,7 @@ mod tests {
             ]
         );
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(
             output
                 .text
@@ -696,7 +712,7 @@ mod tests {
         );
         assert!(view.cards[0].suggestions[0].inline_patch.is_empty());
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(
             output
                 .text
@@ -730,7 +746,7 @@ mod tests {
         assert_eq!(view.cards[0].suggestions[0].label, "consider");
         assert!(view.cards[0].suggestions[0].inline_patch.is_empty());
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(
             output
                 .text
@@ -749,18 +765,30 @@ mod tests {
     }
 
     #[test]
-    fn explicit_legacy_presentation_policy_matches_default_render() {
+    fn explicit_subject_blocks_presentation_policy_matches_default_render() {
         let request = sample_request();
         let default_output = render(request.clone()).unwrap();
-        let legacy_policy = ResolvedPresentationPolicy::legacy_v1();
+        let subject_blocks_policy = ResolvedPresentationPolicy::subject_blocks_v1();
 
-        let explicit_output = render_with_presentation_policy(request, &legacy_policy).unwrap();
+        let explicit_output =
+            render_with_presentation_policy(request, &subject_blocks_policy).unwrap();
 
         assert_eq!(default_output.text, explicit_output.text);
         assert_eq!(
             default_output.displayed_group_refs,
             explicit_output.displayed_group_refs
         );
+    }
+
+    #[test]
+    fn explicit_legacy_presentation_policy_remains_available() {
+        let request = sample_request();
+        let default_output = render(request.clone()).unwrap();
+        let legacy_policy = ResolvedPresentationPolicy::legacy_v1();
+
+        let legacy_output = render_with_presentation_policy(request, &legacy_policy).unwrap();
+
+        assert_ne!(default_output.text, legacy_output.text);
     }
 
     #[test]
@@ -855,7 +883,7 @@ mod tests {
                 .text
                 .contains("help: fix the first parser error at the user-owned location")
         );
-        assert!(output.text.contains("why : expected ';' before '}' token"));
+        assert!(output.text.contains("raw : expected ';' before '}' token"));
     }
 
     #[test]
@@ -1377,7 +1405,7 @@ mod tests {
                 .contains("implicit or narrowing conversion detected")
         );
         assert!(output.text.contains(
-            "why : comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+            "raw : comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
         ));
         assert!(!output.text.contains("want:"));
     }
@@ -1437,7 +1465,7 @@ mod tests {
     fn raw_fallback_profile_sets_user_opt_out_reason() {
         let mut request = sample_request();
         request.profile = RenderProfile::RawFallback;
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.used_fallback);
         assert_eq!(output.fallback_reason, Some(FallbackReason::UserOptOut));
@@ -1455,7 +1483,7 @@ mod tests {
         request.document.diagnostics[0].message.raw_text =
             "reconstructed diagnostic text should stay hidden".to_string();
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         let header_index = output
             .text
             .find("  In file included from src/wrapper.h:1:")
@@ -1491,7 +1519,7 @@ mod tests {
                 .to_string(),
         );
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.used_fallback);
         assert_eq!(output.fallback_reason, Some(FallbackReason::ResidualOnly));
@@ -1566,7 +1594,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         let first_index = output.text.find("  first reconstructed line").unwrap();
         let second_index = output.text.find("  second reconstructed line").unwrap();
         let third_index = output.text.find("  third reconstructed line").unwrap();
@@ -1593,14 +1621,14 @@ mod tests {
         request.document.diagnostics[0].locations =
             vec![sample_location("src/main.c", 2, 12, Ownership::User)];
 
-        let view = build_view_model(&request).unwrap();
+        let view = legacy_build_view_model(&request).unwrap();
         assert_eq!(view.cards[0].excerpts[0].lines, vec!["    return }"]);
         assert_eq!(
             view.cards[0].excerpts[0].annotations,
             vec![format!("{}^", " ".repeat(11))]
         );
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(output.text.contains("|     return }"));
         assert!(output.text.contains(&format!("| {}^", " ".repeat(11))));
     }
@@ -1623,14 +1651,14 @@ mod tests {
         request.document.diagnostics[0].locations =
             vec![sample_location(&absolute, 2, 12, Ownership::User)];
 
-        let view = build_view_model(&request).unwrap();
+        let view = legacy_build_view_model(&request).unwrap();
         assert_eq!(
             view.cards[0].canonical_location.as_deref(),
             Some("src/main.c:2:12")
         );
         assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(output.text.contains("--> src/main.c:2:12"));
         assert!(output.text.contains("| src/main.c:2:12"));
     }
@@ -1663,7 +1691,7 @@ mod tests {
         );
         assert_eq!(view.cards[0].excerpts[0].location, "src/main.c:2:12");
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(output.text.contains("--> src/main.c:2:12"));
         assert!(output.text.contains("| src/main.c:2:12"));
         assert!(!output.text.contains("raw/build/main.c:2:12"));
@@ -1848,7 +1876,7 @@ mod tests {
         );
         assert_eq!(view.cards[0].excerpts[0].location, expected_location);
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert!(output.text.starts_with(&format!("{absolute}:2:12: error:")));
         assert!(output.text.contains(&format!("| {absolute}:2:12")));
         assert!(!output.text.contains(&format!("--> {absolute}:2:12")));
@@ -2134,7 +2162,7 @@ mod tests {
     fn passthrough_document_sets_residual_only_reason() {
         let mut request = sample_request();
         request.document.document_completeness = DocumentCompleteness::Passthrough;
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.used_fallback);
         assert_eq!(output.fallback_reason, Some(FallbackReason::ResidualOnly));
@@ -2144,7 +2172,7 @@ mod tests {
     fn failed_document_sets_internal_error_reason() {
         let mut request = sample_request();
         request.document.document_completeness = DocumentCompleteness::Failed;
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.used_fallback);
         assert_eq!(output.fallback_reason, Some(FallbackReason::InternalError));
@@ -2154,7 +2182,7 @@ mod tests {
     fn empty_selection_sets_renderer_low_confidence_reason() {
         let mut request = sample_request();
         request.document.diagnostics.clear();
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.used_fallback);
         assert_eq!(
@@ -2211,7 +2239,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
     }
@@ -2264,7 +2292,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
     }
@@ -2289,7 +2317,7 @@ mod tests {
 
         request.document.diagnostics.push(opaque);
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "z-syntax");
     }
@@ -2325,7 +2353,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
         assert_eq!(selection.suppressed_warning_count, 1);
@@ -2402,7 +2430,7 @@ mod tests {
             })
             .collect();
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.suppressed_warning_count, 0);
         assert_eq!(selection.summary_only_cards.len(), 1);
@@ -2455,7 +2483,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.cards[0].id, "root");
         assert_eq!(selection.cards[1].id, "supporting-note");
@@ -2520,7 +2548,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
 
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
@@ -2587,7 +2615,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(!output.used_fallback);
         assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
@@ -2802,7 +2830,7 @@ mod tests {
             ],
         ));
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 2);
         assert_eq!(selection.cards[0].id, "root-a");
         assert_eq!(selection.cards[1].id, "root-b");
@@ -2810,7 +2838,7 @@ mod tests {
         assert_eq!(selection.summary_only_cards[0].id, "root-c");
         assert_eq!(selection.hidden_group_count, 1);
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert_eq!(
             output.displayed_group_refs,
             vec!["group-a".to_string(), "group-b".to_string()]
@@ -2944,7 +2972,7 @@ mod tests {
             ],
         ));
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         let view_model = build_view_model(&request).unwrap();
 
         assert_eq!(selection.cards.len(), 2);
@@ -3009,7 +3037,7 @@ mod tests {
             ],
         ));
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert!(selection.summary_only_cards.is_empty());
         assert_eq!(selection.hidden_group_count, 0);
@@ -3025,7 +3053,7 @@ mod tests {
             ]
         );
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert_eq!(output.displayed_group_refs, vec!["group-root".to_string()]);
         assert_eq!(output.suppressed_group_count, 0);
         assert!(!output.text.contains("other errors:"));
@@ -3102,14 +3130,14 @@ mod tests {
             });
         request.document.document_analysis = Some(DocumentAnalysis::default());
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root");
         assert_eq!(selection.summary_only_cards.len(), 2);
         assert_eq!(selection.summary_only_cards[0].id, "secondary");
         assert_eq!(selection.summary_only_cards[1].id, "tertiary");
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
         assert_eq!(output.suppressed_group_count, 2);
         assert!(output.text.contains("other errors:"));
@@ -3137,7 +3165,7 @@ mod tests {
             ],
         ));
 
-        let selection = select_groups(&request);
+        let selection = legacy_select_groups(&request);
         assert_eq!(selection.cards.len(), 1);
         assert_eq!(selection.cards[0].id, "root-a");
         assert_eq!(selection.summary_only_cards.len(), 2);
@@ -3196,7 +3224,7 @@ mod tests {
         assert_eq!(selection.hidden_group_count, 0);
         assert!(selection.collapsed_notices_by_group_ref.is_empty());
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
         assert_eq!(output.suppressed_group_count, 2);
         assert!(output.text.contains("other errors:"));
         assert!(output.text.contains("follow-on parse failure"));
@@ -3261,12 +3289,12 @@ mod tests {
         summary_request.cascade_policy.suppress_likelihood_threshold = 0.95;
         summary_request.cascade_policy.summary_likelihood_threshold = 0.70;
 
-        let summary_selection = select_groups(&summary_request);
+        let summary_selection = legacy_select_groups(&summary_request);
         assert_eq!(summary_selection.summary_only_cards.len(), 1);
         assert_eq!(summary_selection.summary_only_cards[0].id, "follow-on");
         assert_eq!(summary_selection.hidden_group_count, 0);
 
-        let output = render(summary_request).unwrap();
+        let output = legacy_render(summary_request);
         assert!(output.text.contains("follow-on parse failure"));
         assert!(!output.text.contains("omitted 1 related diagnostic(s)"));
     }
@@ -3444,7 +3472,7 @@ mod tests {
         );
         analysis.set_confidence_bucket(diag_core::Confidence::Low);
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(
             output
@@ -3552,7 +3580,7 @@ mod tests {
             fingerprints: None,
         }];
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.text.contains(
             "note: GCC 9-12 native-text summaries are conservative; verify against the preserved raw diagnostics"
@@ -3579,7 +3607,7 @@ mod tests {
         request.document.diagnostics[0].message.raw_text =
             "src/main.c:2:13: error: expected ';' before '}' token".to_string();
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(!output.used_fallback);
         assert!(output.text.contains(
@@ -3633,7 +3661,7 @@ mod tests {
                 fingerprints: None,
             });
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(!output.used_fallback);
         assert!(!output.text.contains(
@@ -3668,7 +3696,7 @@ mod tests {
             analysis
         });
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(output.text.contains(
             "why: helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here"
@@ -4055,7 +4083,7 @@ mod tests {
             fingerprints: None,
         }];
 
-        let output = render(request).unwrap();
+        let output = legacy_render(request);
 
         assert!(!output.text.contains('\u{001b}'));
         assert!(output.text.contains("\\x1b[31msyntax error"));

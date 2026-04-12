@@ -69,18 +69,34 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "syntax error"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker",
+      "first_action": "check the missing/duplicate symbol and the object or library inputs",
+      "group_id": "group-563da567df7d",
+      "matched_conditions": [
+        "phase=link"
+      ],
+      "raw_message": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *",
+      "raw_sub_block": [
+        "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)"
+      ],
+      "rule_id": "rule.family.linker.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "linker reported a failure"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "group_id": "group-563da567df7d",
-      "severity": "error",
-      "title": "linker reported a failure"
-    }
-  ]
+  }
 }

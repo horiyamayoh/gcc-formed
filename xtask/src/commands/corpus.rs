@@ -2928,10 +2928,11 @@ pub(crate) fn first_rendered_action_line(
 }
 
 pub(crate) fn first_help_line(rendered_text: &str) -> Option<usize> {
-    rendered_text
-        .lines()
-        .enumerate()
-        .find_map(|(index, line)| line.starts_with("help: ").then_some(index + 1))
+    rendered_text.lines().enumerate().find_map(|(index, line)| {
+        let rest = line.strip_prefix("help")?;
+        let rest = rest.trim_start_matches(' ');
+        rest.starts_with(": ").then_some(index + 1)
+    })
 }
 
 pub(crate) fn contains_omission_notice(text: &str) -> bool {
@@ -4188,5 +4189,17 @@ mod tests {
             fixture_processing_path(&fixture),
             ProcessingPath::NativeTextCapture
         );
+    }
+
+    #[test]
+    fn first_help_line_accepts_aligned_help_labels() {
+        let rendered = "error: [syntax] syntax error\nhelp  : fix the parser error\nraw: rerun";
+        assert_eq!(first_help_line(rendered), Some(2));
+    }
+
+    #[test]
+    fn first_help_line_accepts_unaligned_help_labels() {
+        let rendered = "error: [syntax] syntax error\nhelp: fix the parser error\nraw: rerun";
+        assert_eq!(first_help_line(rendered), Some(2));
     }
 }

@@ -22,7 +22,7 @@
       ],
       "family": "structured_binding",
       "first_action": "ensure the type is decomposable and the number of bindings matches the member count",
-      "group_id": "sarif-0-0",
+      "group_id": "group-e2a636de30cb",
       "matched_conditions": [
         "message_contains=name provided for structured binding",
         "phase=semantic"

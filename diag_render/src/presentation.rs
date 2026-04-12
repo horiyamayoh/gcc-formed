@@ -143,12 +143,12 @@ pub struct ResolvedPresentationPolicy {
 
 impl Default for ResolvedPresentationPolicy {
     fn default() -> Self {
-        Self::legacy_v1()
+        Self::subject_blocks_v1()
     }
 }
 
 impl ResolvedPresentationPolicy {
-    /// Built-in legacy-compatible preset used by current render defaults.
+    /// Built-in legacy-compatible preset kept as an explicit rollback option.
     pub fn legacy_v1() -> Self {
         let templates = BTreeMap::from([
             (
@@ -471,7 +471,7 @@ impl ResolvedPresentationPolicy {
                     LocationPlacement::None,
                 ],
             },
-            label_catalog: builtin_label_catalog(),
+            label_catalog: subject_blocks_label_catalog(),
             templates,
             family_mappings: vec![
                 ResolvedFamilyPresentation {
@@ -714,6 +714,7 @@ fn matcher_matches(matcher: &str, family: &str) -> bool {
 
 fn builtin_label_catalog() -> BTreeMap<String, String> {
     BTreeMap::from([
+        ("first_action".to_string(), "help".to_string()),
         ("help".to_string(), "help".to_string()),
         ("want".to_string(), "want".to_string()),
         ("got".to_string(), "got".to_string()),
@@ -731,6 +732,12 @@ fn builtin_label_catalog() -> BTreeMap<String, String> {
         ("raw".to_string(), "raw".to_string()),
         ("omitted".to_string(), "omitted".to_string()),
     ])
+}
+
+fn subject_blocks_label_catalog() -> BTreeMap<String, String> {
+    let mut labels = builtin_label_catalog();
+    labels.insert("why_raw".to_string(), "raw".to_string());
+    labels
 }
 
 #[cfg(test)]
@@ -800,7 +807,8 @@ mod tests {
     fn builtin_labels_cover_core_slot_ids() {
         let policy = ResolvedPresentationPolicy::subject_blocks_v1();
 
-        assert_eq!(policy.slot_label(SemanticSlotId::WhyRaw), Some("why"));
+        assert_eq!(policy.slot_label(SemanticSlotId::WhyRaw), Some("raw"));
+        assert_eq!(policy.slot_label(SemanticSlotId::FirstAction), Some("help"));
         assert_eq!(policy.label("help"), Some("help"));
         assert_eq!(policy.label("raw"), Some("raw"));
     }
