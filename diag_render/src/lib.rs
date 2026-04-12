@@ -749,8 +749,12 @@ mod tests {
             Some("fix the first parser error at the user-owned location")
         );
         assert_eq!(
-            card.semantic_card.slot_text(SemanticSlotId::WhyRaw),
-            Some("expected ';' before '}' token")
+            card.semantic_card.slot_text(SemanticSlotId::Want),
+            Some(";")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Near),
+            Some("} token")
         );
     }
 
@@ -805,7 +809,9 @@ mod tests {
 
         let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
         assert!(!output.text.contains("help:"));
-        assert!(output.text.contains("why: expected ';' before '}' token"));
+        assert!(output.text.contains("want: ;"));
+        assert!(output.text.contains("near: } token"));
+        assert!(!output.text.contains("why:"));
     }
 
     #[test]
@@ -939,6 +945,304 @@ mod tests {
         assert!(output.text.contains("symbol : duplicate"));
         assert!(output.text.contains("from   : lib/helper.o  +2 references"));
         assert!(output.text.contains("archive: libfoo.a"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_parser_render_uses_want_near_and_excerpt() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(&root, "src/main.c", "int broken(void) {\n    if (1 {\n}\n");
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        request.document.diagnostics[0].message.raw_text =
+            "expected ')' before '{' token".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 2, 10, Ownership::User)];
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
+        assert!(output.text.contains("want: )"));
+        assert!(output.text.contains("near: { token"));
+        assert!(output.text.contains("| src/main.c:2:10"));
+        assert!(output.text.contains("|     if (1 {"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_missing_header_render_uses_need_and_from_slots() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(
+            &root,
+            "src/main.c",
+            "#include \"missing.h\"\nint main(void) { return 0; }\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        request.document.diagnostics[0].phase = Phase::Preprocess;
+        request.document.diagnostics[0].message.raw_text =
+            "fatal error: missing.h: No such file or directory".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 1, 10, Ownership::User)];
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "preprocessor_directive",
+            "preprocessor directive error",
+            Some(
+                "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
+            ),
+            diag_core::Confidence::High,
+            "rule.family.preprocessor_directive.message_terms",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(
+            card.semantic_card.presentation.template_id,
+            "missing_header_block"
+        );
+        assert_eq!(
+            card.semantic_card.display_family.as_deref(),
+            Some("missing_header")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Need),
+            Some("\"missing.h\"")
+        );
+        assert!(
+            card.semantic_card
+                .slot_text(SemanticSlotId::From)
+                .is_some_and(|value| value.contains("#include \"missing.h\""))
+        );
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert!(
+            output
+                .text
+                .contains("error: [missing_header] preprocessor directive error @ src/main.c:1:10")
+        );
+        assert!(output.text.contains("need: \"missing.h\""));
+        assert!(
+            output
+                .text
+                .contains("from: src/main.c:1:10 #include \"missing.h\"")
+        );
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_lookup_render_uses_incomplete_type_slots() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(
+            &root,
+            "src/main.cpp",
+            "struct Node;\nint main() { return node->value; }\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        request.document.run.language_mode = Some(diag_core::LanguageMode::Cpp);
+        request.document.run.primary_tool.name = "g++".to_string();
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "invalid use of incomplete type 'struct Node'".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.cpp", 2, 25, Ownership::User)];
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "forward-note".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "forward declaration of 'struct Node'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.cpp", 1, 8, Ownership::User)],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "pointer_reference",
+            "invalid pointer or reference operation",
+            Some("provide the full type definition via #include or fix the value category"),
+            diag_core::Confidence::High,
+            "rule.family.pointer_reference.message_terms",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
+        assert!(output.text.contains(
+            "error: [incomplete_type] invalid pointer or reference operation @ src/main.cpp:2:25"
+        ));
+        assert!(output.text.contains("name: struct Node"));
+        assert!(
+            output
+                .text
+                .contains("use : int main() { return node->value; }")
+        );
+        assert!(
+            output
+                .text
+                .contains("need: complete definition of 'struct Node'")
+        );
+        assert!(output.text.contains("from: src/main.cpp:1:8 struct Node;"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_conflict_render_uses_now_and_prev_slots() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(&root, "src/main.c", "int counter = 0;\nint counter = 1;\n");
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text = "redefinition of 'counter'".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 2, 5, Ownership::User)];
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "previous-note".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "previous definition of 'counter' with type 'int'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.c", 1, 5, Ownership::User)],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "redefinition",
+            "duplicate definition detected",
+            Some("add or fix include guards, or remove the duplicate definition"),
+            diag_core::Confidence::High,
+            "rule.family.redefinition.message_terms",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
+        assert!(
+            output
+                .text
+                .contains("error: [redefinition] duplicate definition detected @ src/main.c:2:5")
+        );
+        assert!(
+            output
+                .text
+                .contains("now : src/main.c:2:5 int counter = 1;")
+        );
+        assert!(
+            output
+                .text
+                .contains("prev: src/main.c:1:5 int counter = 0;")
+        );
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_context_render_compresses_macro_include_context() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "'Counter' has no member named 'count'".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 9, 12, Ownership::User)];
+        request.document.diagnostics[0].context_chains = vec![
+            ContextChain {
+                kind: ContextChainKind::Include,
+                frames: vec![
+                    ContextFrame {
+                        label: "In file included from src/wrapper.h:1,".to_string(),
+                        path: Some("src/wrapper.h".to_string()),
+                        line: Some(1),
+                        column: None,
+                    },
+                    ContextFrame {
+                        label: "from src/main.c:1:".to_string(),
+                        path: Some("src/main.c".to_string()),
+                        line: Some(1),
+                        column: None,
+                    },
+                ],
+            },
+            ContextChain {
+                kind: ContextChainKind::MacroExpansion,
+                frames: vec![
+                    ContextFrame {
+                        label: "src/config.h:2:29: note: in expansion of macro 'INNER_ACCESS'"
+                            .to_string(),
+                        path: Some("src/config.h".to_string()),
+                        line: Some(2),
+                        column: Some(29),
+                    },
+                    ContextFrame {
+                        label: "src/main.c:9:12: note: in expansion of macro 'OUTER_ACCESS'"
+                            .to_string(),
+                        path: Some("src/main.c".to_string()),
+                        line: Some(9),
+                        column: Some(12),
+                    },
+                ],
+            },
+        ];
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "macro_include",
+            "error surfaced through macro/include context",
+            Some(
+                "inspect the user-owned macro invocation or include edge that reaches the failing line",
+            ),
+            diag_core::Confidence::High,
+            "rule.family.macro_include.structured_or_message",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
+        assert!(output.text.contains(
+            "error: [macro_include] error surfaced through macro/include context @ src/main.c:9:12"
+        ));
+        assert!(
+            output
+                .text
+                .contains("from: invocation of 'OUTER_ACCESS' @ src/main.c:9:12")
+        );
+        assert!(
+            output
+                .text
+                .contains("via : src/config.h:2:29 in expansion of macro 'INNER_ACCESS'")
+        );
+        assert!(!output.text.contains("through macro expansion:"));
+        assert!(!output.text.contains("from include chain:"));
         assert!(!output.text.contains("why:"));
     }
 

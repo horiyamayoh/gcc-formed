@@ -46,10 +46,10 @@ pub fn load_excerpt(request: &RenderRequest, node: &DiagnosticNode) -> Vec<Excer
     excerpts
 }
 
-fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<ExcerptBlock> {
+pub(crate) fn source_line_text(request: &RenderRequest, location: &Location) -> Option<String> {
     let (content, snippet_backed) = excerpt_source_text(request, location)?;
     let line_index = usize::try_from(location.line().saturating_sub(1)).ok()?;
-    let source_line = if snippet_backed {
+    let line = if snippet_backed {
         content
             .lines()
             .nth(line_index)
@@ -57,7 +57,12 @@ fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<E
     } else {
         content.lines().nth(line_index)?
     };
-    let (display_line, precise_annotation_possible) = renderable_source_line(source_line);
+    Some(line.to_string())
+}
+
+fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<ExcerptBlock> {
+    let source_line = source_line_text(request, location)?;
+    let (display_line, precise_annotation_possible) = renderable_source_line(&source_line);
 
     Some(ExcerptBlock {
         location: format_location(request, location),

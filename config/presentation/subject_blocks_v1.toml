@@ -65,6 +65,8 @@ core = [
   { slot = "name", label = "name", optional = true },
   { slot = "use", label = "use", optional = true },
   { slot = "need", label = "need", optional = true },
+  { slot = "from", label = "from", optional = true },
+  { slot = "near", label = "near", optional = true },
 ]
 
 [[templates]]
@@ -115,8 +117,18 @@ display_family = "syntax"
 template = "parser_block"
 
 [[family_mappings]]
-match = ["scope_declaration", "pointer_reference", "deleted_function", "access_control"]
+match = ["scope_declaration"]
 display_family = "missing_name"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["pointer_reference"]
+display_family = "incomplete_type"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["deleted_function", "access_control"]
+display_family = "unavailable_api"
 template = "lookup_block"
 
 [[family_mappings]]

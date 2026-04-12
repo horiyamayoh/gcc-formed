@@ -2,8 +2,9 @@ use crate::RenderRequest;
 use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{
-    extract_contrast_slots, extract_linker_slots, is_conservative_useful_subset_card,
-    summarize_supporting_evidence,
+    extract_conflict_slots, extract_context_slots, extract_contrast_slots, extract_linker_slots,
+    extract_lookup_slots, extract_missing_header_slots, extract_parser_slots,
+    is_conservative_useful_subset_card, summarize_supporting_evidence,
 };
 use crate::path::format_location;
 use crate::presentation::{
@@ -342,6 +343,10 @@ fn build_semantic_card(
 ) -> RenderSemanticCard {
     let mut resolved_presentation = presentation_policy.resolve_card_presentation(input.family);
     let mut slots = Vec::new();
+    let fallback_to_generic = |resolved: &mut crate::presentation::ResolvedCardPresentation| {
+        resolved.template_id = presentation_policy.generic_template_id.clone();
+        resolved.fell_back_to_generic_template = true;
+    };
     if let Some(first_action) = input.first_action {
         slots.push(RenderSemanticSlot {
             slot: SemanticSlotId::FirstAction,
@@ -380,9 +385,188 @@ fn build_semantic_card(
                     }
                     extracted_family_slots = true;
                 } else {
-                    resolved_presentation.template_id =
-                        presentation_policy.generic_template_id.clone();
-                    resolved_presentation.fell_back_to_generic_template = true;
+                    fallback_to_generic(&mut resolved_presentation);
+                }
+            }
+            "parser_block" => {
+                if let Some(missing_header) = extract_missing_header_slots(request, node) {
+                    if presentation_policy
+                        .template("missing_header_block")
+                        .is_none()
+                    {
+                        fallback_to_generic(&mut resolved_presentation);
+                    } else {
+                        resolved_presentation.template_id = "missing_header_block".to_string();
+                        resolved_presentation.display_family = Some("missing_header".to_string());
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Need,
+                            value: missing_header.need,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Need)
+                                .map(str::to_string),
+                        });
+                        if let Some(from) = missing_header.from {
+                            slots.push(RenderSemanticSlot {
+                                slot: SemanticSlotId::From,
+                                value: from,
+                                label: presentation_policy
+                                    .slot_label(SemanticSlotId::From)
+                                    .map(str::to_string),
+                            });
+                        }
+                        extracted_family_slots = true;
+                    }
+                } else if let Some(parser) = extract_parser_slots(request, node) {
+                    if let Some(want) = parser.want {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Want,
+                            value: want,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Want)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(near) = parser.near {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Near,
+                            value: near,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Near)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = slots.iter().any(|slot| {
+                        matches!(slot.slot, SemanticSlotId::Want | SemanticSlotId::Near)
+                    });
+                    if !extracted_family_slots {
+                        fallback_to_generic(&mut resolved_presentation);
+                    }
+                } else {
+                    fallback_to_generic(&mut resolved_presentation);
+                }
+            }
+            "lookup_block" => {
+                if let Some(lookup) = extract_lookup_slots(request, node) {
+                    if let Some(name) = lookup.name {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Name,
+                            value: name,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Name)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(use_site) = lookup.use_site {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Use,
+                            value: use_site,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Use)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(need) = lookup.need {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Need,
+                            value: need,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Need)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(from) = lookup.from {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::From,
+                            value: from,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::From)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(near) = lookup.near {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Near,
+                            value: near,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Near)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = slots.iter().any(|slot| {
+                        matches!(
+                            slot.slot,
+                            SemanticSlotId::Name
+                                | SemanticSlotId::Use
+                                | SemanticSlotId::Need
+                                | SemanticSlotId::From
+                                | SemanticSlotId::Near
+                        )
+                    });
+                    if !extracted_family_slots {
+                        fallback_to_generic(&mut resolved_presentation);
+                    }
+                } else {
+                    fallback_to_generic(&mut resolved_presentation);
+                }
+            }
+            "conflict_block" => {
+                if let Some(conflict) = extract_conflict_slots(request, node) {
+                    if let Some(now) = conflict.now {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Now,
+                            value: now,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Now)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(prev) = conflict.prev {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Prev,
+                            value: prev,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Prev)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = slots.iter().any(|slot| {
+                        matches!(slot.slot, SemanticSlotId::Now | SemanticSlotId::Prev)
+                    });
+                    if !extracted_family_slots {
+                        fallback_to_generic(&mut resolved_presentation);
+                    }
+                } else {
+                    fallback_to_generic(&mut resolved_presentation);
+                }
+            }
+            "context_block" => {
+                if let Some(context) = extract_context_slots(request, node) {
+                    if let Some(from) = context.from {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::From,
+                            value: from,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::From)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(via) = context.via {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Via,
+                            value: via,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Via)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = slots.iter().any(|slot| {
+                        matches!(slot.slot, SemanticSlotId::From | SemanticSlotId::Via)
+                    });
+                    if !extracted_family_slots {
+                        fallback_to_generic(&mut resolved_presentation);
+                    }
+                } else {
+                    fallback_to_generic(&mut resolved_presentation);
                 }
             }
             "linker_block" => {
@@ -414,9 +598,7 @@ fn build_semantic_card(
                     }
                     extracted_family_slots = true;
                 } else {
-                    resolved_presentation.template_id =
-                        presentation_policy.generic_template_id.clone();
-                    resolved_presentation.fell_back_to_generic_template = true;
+                    fallback_to_generic(&mut resolved_presentation);
                 }
             }
             _ => {}
@@ -474,6 +656,13 @@ fn adapt_supporting_evidence_for_presentation(
                 !(trimmed.starts_with("linker:")
                     || trimmed.starts_with("omitted ") && trimmed.contains("reference"))
             });
+            child_notes.clear();
+        }
+        "lookup_block" | "missing_header_block" | "conflict_block" => {
+            child_notes.clear();
+        }
+        "context_block" => {
+            context_lines.clear();
             child_notes.clear();
         }
         _ => {}

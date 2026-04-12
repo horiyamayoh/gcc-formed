@@ -362,6 +362,96 @@ impl ResolvedPresentationPolicy {
                             suffix_slot: None,
                             optional: true,
                         },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::From,
+                            label: Some("from".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Near,
+                            label: Some("near".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                    ],
+                },
+            ),
+            (
+                "missing_header_block".to_string(),
+                ResolvedTemplate {
+                    id: "missing_header_block".to_string(),
+                    core: vec![
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::FirstAction,
+                            label: Some("help".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Need,
+                            label: Some("need".to_string()),
+                            suffix_slot: None,
+                            optional: false,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::From,
+                            label: Some("from".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                    ],
+                },
+            ),
+            (
+                "conflict_block".to_string(),
+                ResolvedTemplate {
+                    id: "conflict_block".to_string(),
+                    core: vec![
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::FirstAction,
+                            label: Some("help".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Now,
+                            label: Some("now".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Prev,
+                            label: Some("prev".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                    ],
+                },
+            ),
+            (
+                "context_block".to_string(),
+                ResolvedTemplate {
+                    id: "context_block".to_string(),
+                    core: vec![
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::FirstAction,
+                            label: Some("help".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::From,
+                            label: Some("from".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Via,
+                            label: Some("via".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
                     ],
                 },
             ),
@@ -418,9 +508,74 @@ impl ResolvedPresentationPolicy {
                     template_id: "parser_block".to_string(),
                 },
                 ResolvedFamilyPresentation {
-                    matcher: "lookup".to_string(),
-                    display_family: Some("lookup".to_string()),
+                    matcher: "preprocessor_directive".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "attribute".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "storage_class".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "module_import".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "coroutine".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "asm_inline".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "openmp".to_string(),
+                    display_family: Some("syntax".to_string()),
+                    template_id: "parser_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "scope_declaration".to_string(),
+                    display_family: Some("missing_name".to_string()),
                     template_id: "lookup_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "pointer_reference".to_string(),
+                    display_family: Some("incomplete_type".to_string()),
+                    template_id: "lookup_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "deleted_function".to_string(),
+                    display_family: Some("unavailable_api".to_string()),
+                    template_id: "lookup_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "access_control".to_string(),
+                    display_family: Some("unavailable_api".to_string()),
+                    template_id: "lookup_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "redefinition".to_string(),
+                    display_family: Some("redefinition".to_string()),
+                    template_id: "conflict_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "odr_inline_linkage".to_string(),
+                    display_family: Some("redefinition".to_string()),
+                    template_id: "conflict_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "macro_include".to_string(),
+                    display_family: Some("macro_include".to_string()),
+                    template_id: "context_block".to_string(),
                 },
             ],
             default_template_id: SUBJECT_BLOCKS_DEFAULT_TEMPLATE_ID.to_string(),
@@ -593,6 +748,9 @@ mod tests {
 
         let contrast = policy.resolve_card_presentation(Some("const_qualifier"));
         let linker = policy.resolve_card_presentation(Some("linker.undefined_reference"));
+        let lookup = policy.resolve_card_presentation(Some("pointer_reference"));
+        let conflict = policy.resolve_card_presentation(Some("redefinition"));
+        let context = policy.resolve_card_presentation(Some("macro_include"));
 
         assert_eq!(contrast.template_id, "contrast_block");
         assert_eq!(contrast.display_family.as_deref(), Some("type_mismatch"));
@@ -600,6 +758,12 @@ mod tests {
         assert_eq!(linker.template_id, "linker_block");
         assert_eq!(linker.display_family.as_deref(), Some("linker"));
         assert!(linker.subject_first_header);
+        assert_eq!(lookup.template_id, "lookup_block");
+        assert_eq!(lookup.display_family.as_deref(), Some("incomplete_type"));
+        assert_eq!(conflict.template_id, "conflict_block");
+        assert_eq!(conflict.display_family.as_deref(), Some("redefinition"));
+        assert_eq!(context.template_id, "context_block");
+        assert_eq!(context.display_family.as_deref(), Some("macro_include"));
     }
 
     #[test]

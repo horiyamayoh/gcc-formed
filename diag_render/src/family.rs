@@ -1,4 +1,5 @@
 use crate::budget::budget_for;
+use crate::excerpt::source_line_text;
 use crate::path::format_location;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{
@@ -45,6 +46,57 @@ pub struct LinkerSlotFacts {
     pub now: Option<String>,
     /// The previous conflicting site for multiple-definition style failures.
     pub prev: Option<String>,
+}
+
+/// High-confidence parser facts extracted for Presentation V2 slot filling.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParserSlotFacts {
+    /// The token or construct the parser expected to see.
+    pub want: Option<String>,
+    /// The nearby token or parser boundary that explains the failure.
+    pub near: Option<String>,
+}
+
+/// High-confidence lookup facts extracted for Presentation V2 slot filling.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct LookupSlotFacts {
+    /// The missing or inaccessible symbol/type/member name.
+    pub name: Option<String>,
+    /// The user code use site when it can be reconstructed safely.
+    pub use_site: Option<String>,
+    /// The missing requirement (declaration, definition, header, etc.).
+    pub need: Option<String>,
+    /// The most useful source site supporting the lookup failure.
+    pub from: Option<String>,
+    /// Nearby context that shortens the explanation.
+    pub near: Option<String>,
+}
+
+/// High-confidence conflict facts extracted for Presentation V2 slot filling.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ConflictSlotFacts {
+    /// The current conflicting site.
+    pub now: Option<String>,
+    /// The previous conflicting site.
+    pub prev: Option<String>,
+}
+
+/// High-confidence macro/include context facts extracted for Presentation V2.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ContextSlotFacts {
+    /// The user-visible invocation or include entry point.
+    pub from: Option<String>,
+    /// The nearest macro/include transit point that explains the path.
+    pub via: Option<String>,
+}
+
+/// High-confidence direct include failure facts extracted for missing-header output.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MissingHeaderSlotFacts {
+    /// The header or module-like artifact that could not be loaded.
+    pub need: String,
+    /// The include/import site that requested it.
+    pub from: Option<String>,
 }
 
 fn render_rulepack() -> &'static RenderRulepack {
@@ -390,19 +442,19 @@ pub fn extract_linker_slots(
         return None;
     }
 
-    let message = normalized_message(node);
+    let message = normalized_message_with_request(request, node);
     let symbol = node
         .symbol_context
         .as_ref()
         .and_then(|symbol_context| symbol_context.primary_symbol.clone())
-        .or_else(|| parse_linker_symbol(message))?;
+        .or_else(|| parse_linker_symbol(&message))?;
     let from =
-        preferred_linker_object(request, node).or_else(|| parse_linker_reference_site(message));
+        preferred_linker_object(request, node).or_else(|| parse_linker_reference_site(&message));
     let archive = node
         .symbol_context
         .as_ref()
         .and_then(|symbol_context| symbol_context.archive.clone());
-    let (now, prev) = parse_linker_conflict_sites(message);
+    let (now, prev) = parse_linker_conflict_sites(&message);
 
     Some(LinkerSlotFacts {
         symbol,
@@ -413,16 +465,255 @@ pub fn extract_linker_slots(
     })
 }
 
+/// Extracts Presentation V2 parser slot facts when the diagnostic is a true
+/// parser expectation rather than a recovered follow-on.
+pub fn extract_parser_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<ParserSlotFacts> {
+    let family = analysis_family(node)?;
+    if family != "syntax" {
+        return None;
+    }
+
+    let message = normalized_message_with_request(request, node);
+    if extract_missing_header_slots(request, node).is_some() {
+        return None;
+    }
+
+    let want = parse_parser_want(&message);
+    let near = parse_parser_near(&message);
+    if want.is_none() && near.is_none() {
+        return None;
+    }
+
+    Some(ParserSlotFacts { want, near })
+}
+
+/// Extracts Presentation V2 lookup slot facts for missing-name, incomplete-type,
+/// and unavailable-API style failures.
+pub fn extract_lookup_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupSlotFacts> {
+    let family = analysis_family(node)?;
+    match family {
+        "scope_declaration" => extract_scope_lookup_slots(request, node),
+        "pointer_reference" => extract_incomplete_type_slots(request, node),
+        "deleted_function" => extract_deleted_function_slots(request, node),
+        "access_control" => extract_access_control_slots(request, node),
+        _ => None,
+    }
+}
+
+/// Extracts Presentation V2 conflict slot facts for semantic redefinition style failures.
+pub fn extract_conflict_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<ConflictSlotFacts> {
+    let family = analysis_family(node)?;
+    if !matches!(family, "redefinition" | "odr_inline_linkage") {
+        return None;
+    }
+
+    let message = normalized_message_with_request(request, node);
+    let now = best_location(request, node)
+        .and_then(|location| render_location_source_fact(request, location))
+        .or_else(|| render_location_message_fact(request, node, &message));
+    let prev = first_supporting_site(request, node, |note| {
+        note.contains("previous")
+            || note.contains("original declaration")
+            || note.contains("declared here")
+    });
+
+    if now.is_none() && prev.is_none() {
+        return None;
+    }
+
+    Some(ConflictSlotFacts { now, prev })
+}
+
+/// Extracts Presentation V2 macro/include context slots for subject-first context blocks.
+pub fn extract_context_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<ContextSlotFacts> {
+    let family = analysis_family(node)?;
+    if family != "macro_include" {
+        return None;
+    }
+
+    let macro_chain = node
+        .context_chains
+        .iter()
+        .find(|chain| matches!(chain.kind, ContextChainKind::MacroExpansion));
+    let include_chain = node
+        .context_chains
+        .iter()
+        .find(|chain| matches!(chain.kind, ContextChainKind::Include));
+
+    let from = macro_chain
+        .and_then(|chain| {
+            let unique = dedup_frames(&chain.frames);
+            let index = select_macro_frame_indices(request, node, &unique, 3)
+                .into_iter()
+                .next()?;
+            render_macro_invocation_fact(&unique[index])
+        })
+        .or_else(|| {
+            include_chain.and_then(|chain| compressed_include_summary(request, node, &chain.frames))
+        });
+
+    let via = macro_chain
+        .and_then(|chain| {
+            let unique = dedup_frames(&chain.frames);
+            let mut indices = select_macro_frame_indices(request, node, &unique, 3).into_iter();
+            indices.next()?;
+            let index = indices.next()?;
+            Some(format_frame(&unique[index]))
+        })
+        .or_else(|| {
+            include_chain.and_then(|chain| compressed_include_summary(request, node, &chain.frames))
+        })
+        .or_else(|| {
+            include_chain.and_then(|chain| {
+                let unique = dedup_frames(&chain.frames);
+                unique.first().map(format_frame)
+            })
+        });
+
+    if from.is_none() && via.is_none() {
+        return None;
+    }
+
+    Some(ContextSlotFacts { from, via })
+}
+
+/// Extracts direct include failures so Presentation V2 can render them as a
+/// dedicated missing-header block instead of a generic syntax/preprocess error.
+pub fn extract_missing_header_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<MissingHeaderSlotFacts> {
+    let family = analysis_family(node)?;
+    if !matches!(
+        family,
+        "preprocessor_directive" | "module_import" | "syntax"
+    ) {
+        return None;
+    }
+
+    let message = normalized_message_with_request(request, node);
+    if !message
+        .to_ascii_lowercase()
+        .contains("no such file or directory")
+        || message.contains("compiled module")
+    {
+        return None;
+    }
+
+    let location = best_location(request, node)?;
+    let source_line = source_line_text(request, location)?;
+    let include_operand = parse_include_operand(&source_line)?;
+
+    Some(MissingHeaderSlotFacts {
+        need: include_operand,
+        from: Some(format!(
+            "{} {}",
+            format_location(request, location),
+            collapse_source_line(&source_line)
+        )),
+    })
+}
+
+fn extract_scope_lookup_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupSlotFacts> {
+    let message = normalized_message_with_request(request, node);
+    let name = quoted_value_at_start(&message)?;
+
+    Some(LookupSlotFacts {
+        name: Some(name),
+        use_site: best_location(request, node).and_then(|location| {
+            source_line_text(request, location).map(|line| collapse_source_line(&line))
+        }),
+        need: None,
+        from: None,
+        near: None,
+    })
+}
+
+fn extract_incomplete_type_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupSlotFacts> {
+    let message = normalized_message_with_request(request, node);
+    let name = quoted_value_after(&message, "incomplete type ")?;
+
+    Some(LookupSlotFacts {
+        name: Some(name.clone()),
+        use_site: best_location(request, node).and_then(|location| {
+            source_line_text(request, location).map(|line| collapse_source_line(&line))
+        }),
+        need: Some(format!("complete definition of '{name}'")),
+        from: first_supporting_site(request, node, |note| {
+            note.contains("forward declaration") || note.contains("declaration of")
+        }),
+        near: None,
+    })
+}
+
+fn extract_deleted_function_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupSlotFacts> {
+    let message = normalized_message_with_request(request, node);
+    let name = quoted_value_after(&message, "use of deleted function ")?;
+
+    Some(LookupSlotFacts {
+        name: Some(name),
+        use_site: best_location(request, node).and_then(|location| {
+            source_line_text(request, location).map(|line| collapse_source_line(&line))
+        }),
+        need: None,
+        from: first_supporting_site(request, node, |note| note.contains("declared here")),
+        near: None,
+    })
+}
+
+fn extract_access_control_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupSlotFacts> {
+    let message = normalized_message_with_request(request, node);
+    let name = quoted_value_at_start(&message)?;
+
+    Some(LookupSlotFacts {
+        name: Some(name),
+        use_site: best_location(request, node).and_then(|location| {
+            source_line_text(request, location).map(|line| collapse_source_line(&line))
+        }),
+        need: None,
+        from: first_supporting_site(request, node, |note| {
+            note.contains("declared private here")
+                || note.contains("declared protected here")
+                || note.contains("declared here")
+        }),
+        near: None,
+    })
+}
+
 fn extract_overload_contrast_slots(
     request: &RenderRequest,
     node: &DiagnosticNode,
 ) -> Option<ContrastSlotFacts> {
-    let message = normalized_message(node);
+    let message = normalized_message_with_request(request, node);
     if !message.contains("no matching") && !message.contains("constraints not satisfied") {
         return None;
     }
 
-    let got = parse_call_arguments(message).or_else(|| parse_call_expression(message))?;
+    let got = parse_call_arguments(&message).or_else(|| parse_call_expression(&message))?;
     let candidates = candidate_signature_choices(request, node);
     let best = candidates.first()?.clone();
     let want = if analysis_family(node) == Some("concepts_constraints") {
@@ -449,14 +740,14 @@ fn extract_expected_actual_contrast_slots(
     node: &DiagnosticNode,
     family: &str,
 ) -> Option<ContrastSlotFacts> {
-    let message = normalized_message(node);
+    let message = normalized_message_with_request(request, node);
     let via_hint = match family {
-        "const_qualifier" => parse_const_qualifier_via(message),
-        "type_overload" => parse_call_target(message),
+        "const_qualifier" => parse_const_qualifier_via(&message),
+        "type_overload" => parse_call_target(&message),
         _ => None,
     };
 
-    if let Some(mut facts) = parse_expected_actual_message(message) {
+    if let Some(mut facts) = parse_expected_actual_message(&message) {
         if facts.via.is_none() {
             facts.via = via_hint.clone();
         }
@@ -773,11 +1064,19 @@ fn quoted_value_at_start(text: &str) -> Option<String> {
     let text = text.trim_start();
     let mut chars = text.char_indices();
     let (_, quote) = chars.next()?;
-    if !matches!(quote, '\'' | '`') {
+    let closing_quote = match quote {
+        '\'' => '\'',
+        '`' => '\'',
+        '"' => '"',
+        '‘' => '’',
+        '“' => '”',
+        _ => return None,
+    };
+    if !matches!(quote, '\'' | '`' | '"' | '‘' | '“') {
         return None;
     }
     let body = &text[quote.len_utf8()..];
-    let end = body.find(quote)?;
+    let end = body.find(closing_quote)?;
     Some(body[..end].trim().to_string())
 }
 
@@ -797,6 +1096,177 @@ fn normalized_message(node: &DiagnosticNode) -> &str {
         .next()
         .unwrap_or_default()
         .trim()
+}
+
+fn normalized_message_with_request(request: &RenderRequest, node: &DiagnosticNode) -> String {
+    let mut message = normalized_message(node).to_string();
+    if let Some(location) = best_location(request, node) {
+        for prefix in location_prefixes(request, location) {
+            if let Some(stripped) = message.strip_prefix(&prefix) {
+                message = stripped.trim().to_string();
+                break;
+            }
+        }
+    }
+    for prefix in ["fatal error:", "error:", "warning:", "note:", "remark:"] {
+        if let Some(stripped) = message.strip_prefix(prefix) {
+            message = stripped.trim().to_string();
+            break;
+        }
+    }
+    message
+}
+
+fn parse_parser_want(message: &str) -> Option<String> {
+    let expected = message.strip_prefix("expected ")?;
+    if let Some(value) = quoted_value_at_start(expected) {
+        return Some(value);
+    }
+    for marker in [" before ", " at end of input", " at end of file"] {
+        if let Some((want, _)) = expected.split_once(marker) {
+            let want = want.trim();
+            if !want.is_empty() {
+                return Some(want.to_string());
+            }
+        }
+    }
+    let want = expected.trim();
+    (!want.is_empty()).then(|| want.to_string())
+}
+
+fn parse_parser_near(message: &str) -> Option<String> {
+    if let Some((_, rest)) = message.split_once(" before ") {
+        let rest = rest.trim();
+        if let Some(value) = quoted_value_at_start(rest) {
+            if rest.contains(" token") {
+                return Some(format!("{value} token"));
+            }
+            return Some(value);
+        }
+        if !rest.is_empty() {
+            return Some(rest.to_string());
+        }
+    }
+    if message.ends_with("at end of input") {
+        return Some("end of input".to_string());
+    }
+    if message.ends_with("at end of file") {
+        return Some("end of file".to_string());
+    }
+    None
+}
+
+fn parse_include_operand(source_line: &str) -> Option<String> {
+    let trimmed = source_line.trim();
+    let rest = trimmed
+        .strip_prefix("#include")
+        .or_else(|| trimmed.strip_prefix("#include_next"))?
+        .trim_start();
+    if let Some(rest) = rest.strip_prefix('<') {
+        let end = rest.find('>')?;
+        return Some(format!("<{}>", rest[..end].trim()));
+    }
+    if let Some(rest) = rest.strip_prefix('"') {
+        let end = rest.find('"')?;
+        return Some(format!("\"{}\"", rest[..end].trim()));
+    }
+    None
+}
+
+fn collapse_source_line(source_line: &str) -> String {
+    source_line.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn render_location_source_fact(
+    request: &RenderRequest,
+    location: &diag_core::Location,
+) -> Option<String> {
+    let line = source_line_text(request, location)?;
+    Some(format!(
+        "{} {}",
+        format_location(request, location),
+        collapse_source_line(&line)
+    ))
+}
+
+fn render_location_message_fact(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    message: &str,
+) -> Option<String> {
+    let location = best_location(request, node)?;
+    Some(format!(
+        "{} {}",
+        format_location(request, location),
+        message
+    ))
+}
+
+fn first_supporting_site(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    predicate: fn(&str) -> bool,
+) -> Option<String> {
+    node.children.iter().find_map(|child| {
+        let note = normalized_child_note(request, child);
+        if !predicate(&note) {
+            return None;
+        }
+        best_location(request, child)
+            .and_then(|location| render_location_source_fact(request, location))
+            .or_else(|| {
+                best_location(request, child)
+                    .map(|location| format!("{} {}", format_location(request, location), note))
+            })
+            .or_else(|| (!note.is_empty()).then_some(note))
+    })
+}
+
+fn render_macro_invocation_fact(frame: &ContextFrame) -> Option<String> {
+    let macro_name = frame
+        .label
+        .split_once("macro ")
+        .and_then(|(_, rest)| quoted_value_at_start(rest))?;
+    let location = frame_site(frame);
+    match location {
+        Some(location) => Some(format!("invocation of '{macro_name}' @ {location}")),
+        None => Some(format!("invocation of '{macro_name}'")),
+    }
+}
+
+fn compressed_include_summary(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+) -> Option<String> {
+    let unique = dedup_frames(frames);
+    let first = unique.first()?;
+    let root_index = user_owned_frame_indices(request, node, &unique)
+        .last()
+        .copied()
+        .unwrap_or(unique.len().saturating_sub(1));
+    let root = unique.get(root_index)?;
+    let first_site = frame_site(first)?;
+    let root_site = frame_site(root)?;
+    let omitted = unique.len().saturating_sub(2);
+    let summary = if omitted == 0 {
+        format!("include {first_site} <- {root_site}")
+    } else {
+        format!(
+            "include {first_site} <- {root_site}  +{omitted} include{}",
+            plural_suffix(omitted)
+        )
+    };
+    Some(summary)
+}
+
+fn frame_site(frame: &ContextFrame) -> Option<String> {
+    let path = frame.path.as_deref()?;
+    Some(match (frame.line, frame.column) {
+        (Some(line), Some(column)) => format!("{path}:{line}:{column}"),
+        (Some(line), None) => format!("{path}:{line}"),
+        (None, _) => path.to_string(),
+    })
 }
 
 fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
