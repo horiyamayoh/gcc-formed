@@ -114,6 +114,7 @@ mod tests {
             captures: Vec::new(),
             integrity_issues: Vec::new(),
             diagnostics: vec![node],
+            document_analysis: None,
             fingerprints: None,
         }
     }

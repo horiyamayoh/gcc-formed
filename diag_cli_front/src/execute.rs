@@ -51,6 +51,7 @@ fn real_main() -> Result<i32, CliError> {
         return handle_wrapper_introspection(command, &paths);
     }
 
+    let cascade_policy = config.resolve_cascade_policy(&parsed);
     let mut cache = ProbeCache::default();
     let plan = build_execution_plan(&argv0, &parsed, &config, &mut cache)?;
 
@@ -76,6 +77,7 @@ fn real_main() -> Result<i32, CliError> {
         backend: &plan.backend,
         mode_decision: &plan.mode_decision,
         profile: plan.profile,
+        cascade_policy: &cascade_policy,
         capabilities: &plan.capabilities,
         total_duration_ms,
     };
@@ -281,6 +283,7 @@ mod tests {
                     captures: Vec::new(),
                     integrity_issues: Vec::new(),
                     diagnostics: Vec::new(),
+                    document_analysis: None,
                     fingerprints: None,
                 },
                 source_authority: SourceAuthority::Structured,

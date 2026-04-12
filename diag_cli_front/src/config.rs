@@ -1,9 +1,12 @@
 use crate::args::{
-    parse_debug_refs, parse_mode, parse_processing_path, parse_profile, parse_retention_policy,
+    ParsedArgs, parse_compression_level, parse_debug_refs, parse_mode, parse_probability,
+    parse_processing_path, parse_profile, parse_retention_policy,
+    parse_suppressed_count_visibility,
 };
 use crate::error::CliError;
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
+use diag_core::{CascadePolicySnapshot, CompressionLevel, SuppressedCountVisibility};
 use diag_render::{DebugRefs, PathPolicy, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use serde::Deserialize;
@@ -24,6 +27,8 @@ pub(crate) struct ConfigFile {
     pub(crate) render: RenderSection,
     #[serde(default)]
     pub(crate) trace: TraceSection,
+    #[serde(default)]
+    pub(crate) cascade: CascadeSection,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -56,9 +61,64 @@ pub(crate) struct TraceSection {
     pub(crate) retention_policy: Option<RetentionPolicy>,
 }
 
+#[derive(Debug, Clone, Default, Deserialize)]
+pub(crate) struct CascadeSection {
+    #[serde(default, deserialize_with = "deserialize_optional_compression_level")]
+    pub(crate) compression_level: Option<CompressionLevel>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_optional_suppress_likelihood_threshold"
+    )]
+    pub(crate) suppress_likelihood_threshold: Option<f32>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_optional_summary_likelihood_threshold"
+    )]
+    pub(crate) summary_likelihood_threshold: Option<f32>,
+    #[serde(default, deserialize_with = "deserialize_optional_min_parent_margin")]
+    pub(crate) min_parent_margin: Option<f32>,
+    #[serde(default)]
+    pub(crate) max_expanded_independent_roots: Option<usize>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_optional_suppressed_count_visibility"
+    )]
+    pub(crate) show_suppressed_count: Option<SuppressedCountVisibility>,
+}
+
 impl ConfigFile {
     pub(crate) fn load(paths: &WrapperPaths) -> Result<Self, CliError> {
         Self::load_from_paths(admin_config_paths(), Some(&paths.config_path))
+    }
+
+    pub(crate) fn resolve_cascade_policy(&self, parsed: &ParsedArgs) -> CascadePolicySnapshot {
+        let defaults = CascadePolicySnapshot::default();
+        CascadePolicySnapshot {
+            compression_level: parsed
+                .cascade_compression_level
+                .or(self.cascade.compression_level)
+                .unwrap_or(defaults.compression_level),
+            suppress_likelihood_threshold: parsed
+                .cascade_suppress_likelihood_threshold
+                .or(self.cascade.suppress_likelihood_threshold)
+                .unwrap_or(defaults.suppress_likelihood_threshold),
+            summary_likelihood_threshold: parsed
+                .cascade_summary_likelihood_threshold
+                .or(self.cascade.summary_likelihood_threshold)
+                .unwrap_or(defaults.summary_likelihood_threshold),
+            min_parent_margin: parsed
+                .cascade_min_parent_margin
+                .or(self.cascade.min_parent_margin)
+                .unwrap_or(defaults.min_parent_margin),
+            max_expanded_independent_roots: parsed
+                .cascade_max_expanded_independent_roots
+                .or(self.cascade.max_expanded_independent_roots)
+                .unwrap_or(defaults.max_expanded_independent_roots),
+            show_suppressed_count: parsed
+                .cascade_show_suppressed_count
+                .or(self.cascade.show_suppressed_count)
+                .unwrap_or(defaults.show_suppressed_count),
+        }
     }
 
     fn load_from_paths<I, P>(admin_paths: I, user_path: Option<P>) -> Result<Self, CliError>
@@ -126,6 +186,32 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
                 .trace
                 .retention_policy
                 .or(base.trace.retention_policy),
+        },
+        cascade: CascadeSection {
+            compression_level: overlay
+                .cascade
+                .compression_level
+                .or(base.cascade.compression_level),
+            suppress_likelihood_threshold: overlay
+                .cascade
+                .suppress_likelihood_threshold
+                .or(base.cascade.suppress_likelihood_threshold),
+            summary_likelihood_threshold: overlay
+                .cascade
+                .summary_likelihood_threshold
+                .or(base.cascade.summary_likelihood_threshold),
+            min_parent_margin: overlay
+                .cascade
+                .min_parent_margin
+                .or(base.cascade.min_parent_margin),
+            max_expanded_independent_roots: overlay
+                .cascade
+                .max_expanded_independent_roots
+                .or(base.cascade.max_expanded_independent_roots),
+            show_suppressed_count: overlay
+                .cascade
+                .show_suppressed_count
+                .or(base.cascade.show_suppressed_count),
         },
     }
 }
@@ -200,6 +286,81 @@ where
         .transpose()
 }
 
+fn deserialize_optional_compression_level<'de, D>(
+    deserializer: D,
+) -> Result<Option<CompressionLevel>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    value
+        .map(|value| parse_compression_level(&value).map_err(serde::de::Error::custom))
+        .transpose()
+}
+
+fn deserialize_optional_suppress_likelihood_threshold<'de, D>(
+    deserializer: D,
+) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_optional_probability(deserializer, "cascade suppress threshold")
+}
+
+fn deserialize_optional_summary_likelihood_threshold<'de, D>(
+    deserializer: D,
+) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_optional_probability(deserializer, "cascade summary threshold")
+}
+
+fn deserialize_optional_min_parent_margin<'de, D>(deserializer: D) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_optional_probability(deserializer, "cascade min parent margin")
+}
+
+fn deserialize_optional_probability<'de, D>(
+    deserializer: D,
+    label: &'static str,
+) -> Result<Option<f32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<f32>::deserialize(deserializer)?;
+    value
+        .map(|value| parse_probability(label, &value.to_string()).map_err(serde::de::Error::custom))
+        .transpose()
+}
+
+fn deserialize_optional_suppressed_count_visibility<'de, D>(
+    deserializer: D,
+) -> Result<Option<SuppressedCountVisibility>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum VisibilityWire {
+        Bool(bool),
+        String(String),
+    }
+
+    let value = Option::<VisibilityWire>::deserialize(deserializer)?;
+    value
+        .map(|value| match value {
+            VisibilityWire::Bool(true) => Ok(SuppressedCountVisibility::Always),
+            VisibilityWire::Bool(false) => Ok(SuppressedCountVisibility::Never),
+            VisibilityWire::String(value) => {
+                parse_suppressed_count_visibility(&value).map_err(serde::de::Error::custom)
+            }
+        })
+        .transpose()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -224,6 +385,14 @@ mod tests {
             trace: TraceSection {
                 retention_policy: Some(RetentionPolicy::OnChildError),
             },
+            cascade: CascadeSection {
+                compression_level: Some(CompressionLevel::Conservative),
+                suppress_likelihood_threshold: Some(0.71),
+                summary_likelihood_threshold: Some(0.41),
+                min_parent_margin: Some(0.09),
+                max_expanded_independent_roots: Some(2),
+                show_suppressed_count: Some(SuppressedCountVisibility::Never),
+            },
         };
         let overlay = ConfigFile {
             schema_version: None,
@@ -240,6 +409,14 @@ mod tests {
             trace: TraceSection {
                 retention_policy: Some(RetentionPolicy::Always),
             },
+            cascade: CascadeSection {
+                compression_level: Some(CompressionLevel::Aggressive),
+                suppress_likelihood_threshold: None,
+                summary_likelihood_threshold: Some(0.63),
+                min_parent_margin: None,
+                max_expanded_independent_roots: Some(4),
+                show_suppressed_count: Some(SuppressedCountVisibility::Always),
+            },
         };
 
         let merged = merge_config(base, overlay);
@@ -254,6 +431,18 @@ mod tests {
         assert_eq!(merged.render.path_policy, Some(PathPolicy::RelativeToCwd));
         assert_eq!(merged.render.debug_refs, Some(DebugRefs::CaptureRef));
         assert_eq!(merged.trace.retention_policy, Some(RetentionPolicy::Always));
+        assert_eq!(
+            merged.cascade.compression_level,
+            Some(CompressionLevel::Aggressive)
+        );
+        assert_eq!(merged.cascade.suppress_likelihood_threshold, Some(0.71));
+        assert_eq!(merged.cascade.summary_likelihood_threshold, Some(0.63));
+        assert_eq!(merged.cascade.min_parent_margin, Some(0.09));
+        assert_eq!(merged.cascade.max_expanded_independent_roots, Some(4));
+        assert_eq!(
+            merged.cascade.show_suppressed_count,
+            Some(SuppressedCountVisibility::Always)
+        );
     }
 
     #[test]
@@ -315,6 +504,10 @@ mod tests {
             r#"
                 [runtime]
                 mode = "render"
+
+                [cascade]
+                summary_likelihood_threshold = 0.62
+                show_suppressed_count = true
             "#,
         )
         .unwrap();
@@ -326,6 +519,11 @@ mod tests {
             Some(PathBuf::from("/opt/gcc-from-admin"))
         );
         assert_eq!(loaded.runtime.mode, Some(ExecutionMode::Render));
+        assert_eq!(loaded.cascade.summary_likelihood_threshold, Some(0.62));
+        assert_eq!(
+            loaded.cascade.show_suppressed_count,
+            Some(SuppressedCountVisibility::Always)
+        );
     }
 
     #[test]
@@ -351,5 +549,67 @@ mod tests {
                 PathBuf::from("/opt/xdg-b/cc-formed/config.toml"),
             ]
         );
+    }
+
+    #[test]
+    fn resolve_cascade_policy_respects_cli_then_user_then_admin_then_defaults() {
+        let temp = tempdir().unwrap();
+        let admin = temp
+            .path()
+            .join("etc")
+            .join("cc-formed")
+            .join("config.toml");
+        let user = temp.path().join("user-config.toml");
+        fs::create_dir_all(admin.parent().unwrap()).unwrap();
+        fs::write(
+            &admin,
+            r#"
+                [cascade]
+                compression_level = "conservative"
+                suppress_likelihood_threshold = 0.70
+                summary_likelihood_threshold = 0.40
+                min_parent_margin = 0.08
+                max_expanded_independent_roots = 1
+                show_suppressed_count = false
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &user,
+            r#"
+                [cascade]
+                compression_level = "balanced"
+                suppress_likelihood_threshold = 0.76
+                summary_likelihood_threshold = 0.52
+            "#,
+        )
+        .unwrap();
+        let config = ConfigFile::load_from_paths([admin], Some(&user)).unwrap();
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-cascade-level=off"),
+            OsString::from("--formed-cascade-summary-threshold=0.91"),
+            OsString::from("--formed-cascade-show-suppressed-count=never"),
+        ])
+        .unwrap();
+
+        let resolved = config.resolve_cascade_policy(&parsed);
+
+        assert_eq!(resolved.compression_level, CompressionLevel::Off);
+        assert_eq!(resolved.suppress_likelihood_threshold, 0.76);
+        assert_eq!(resolved.summary_likelihood_threshold, 0.91);
+        assert_eq!(resolved.min_parent_margin, 0.08);
+        assert_eq!(resolved.max_expanded_independent_roots, 1);
+        assert_eq!(
+            resolved.show_suppressed_count,
+            SuppressedCountVisibility::Never
+        );
+    }
+
+    #[test]
+    fn resolve_cascade_policy_uses_built_in_defaults_when_unset() {
+        let resolved = ConfigFile::default().resolve_cascade_policy(&ParsedArgs::default());
+
+        assert_eq!(resolved, CascadePolicySnapshot::default());
     }
 }

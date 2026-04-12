@@ -123,7 +123,64 @@ mod tests {
                 }),
                 fingerprints: None,
             }],
+            document_analysis: None,
             fingerprints: None,
+        }
+    }
+
+    fn sample_document_analysis() -> DocumentAnalysis {
+        DocumentAnalysis {
+            policy_profile: Some("default-aggressive".to_string()),
+            producer_version: Some("0.2.0-beta.1".to_string()),
+            episode_graph: EpisodeGraph {
+                episodes: vec![DiagnosticEpisode {
+                    episode_ref: "episode-1".to_string(),
+                    lead_group_ref: "group-1".to_string(),
+                    member_group_refs: vec!["group-1".to_string(), "group-2".to_string()],
+                    family: Some("syntax".to_string()),
+                    lead_root_score: Some(OrderedFloat(0.91)),
+                    confidence: Some(OrderedFloat(0.88)),
+                }],
+                relations: vec![EpisodeRelation {
+                    from_group_ref: "group-1".to_string(),
+                    to_group_ref: "group-2".to_string(),
+                    kind: EpisodeRelationKind::Cascade,
+                    confidence: OrderedFloat(0.86),
+                    evidence_tags: vec!["shared_primary_file".to_string()],
+                }],
+            },
+            group_analysis: vec![
+                GroupCascadeAnalysis {
+                    group_ref: "group-1".to_string(),
+                    episode_ref: Some("episode-1".to_string()),
+                    role: GroupCascadeRole::LeadRoot,
+                    best_parent_group_ref: None,
+                    root_score: Some(OrderedFloat(0.91)),
+                    independence_score: Some(OrderedFloat(0.88)),
+                    suppress_likelihood: Some(OrderedFloat(0.06)),
+                    summary_likelihood: Some(OrderedFloat(0.24)),
+                    visibility_floor: VisibilityFloor::NeverHidden,
+                    evidence_tags: vec!["user_owned_primary".to_string()],
+                },
+                GroupCascadeAnalysis {
+                    group_ref: "group-2".to_string(),
+                    episode_ref: Some("episode-1".to_string()),
+                    role: GroupCascadeRole::FollowOn,
+                    best_parent_group_ref: Some("group-1".to_string()),
+                    root_score: Some(OrderedFloat(0.22)),
+                    independence_score: Some(OrderedFloat(0.18)),
+                    suppress_likelihood: Some(OrderedFloat(0.84)),
+                    summary_likelihood: Some(OrderedFloat(0.62)),
+                    visibility_floor: VisibilityFloor::SummaryOrExpandedOnly,
+                    evidence_tags: vec!["parser_follow_on".to_string()],
+                },
+            ],
+            stats: CascadeStats {
+                independent_root_count: 1,
+                dependent_follow_on_count: 1,
+                duplicate_count: 0,
+                uncertain_count: 0,
+            },
         }
     }
 
@@ -147,6 +204,7 @@ mod tests {
     #[test]
     fn snapshot_variants_are_deterministic() {
         let mut document = sample_document();
+        document.document_analysis = Some(sample_document_analysis());
         document.refresh_fingerprints();
 
         let facts_left = snapshot_json(&document, SnapshotKind::FactsOnly).unwrap();
@@ -156,7 +214,9 @@ mod tests {
         assert_eq!(facts_left, facts_right);
         assert!(facts_left.contains("<document>"));
         assert!(!facts_left.contains("syntax error"));
+        assert!(!facts_left.contains("episode_graph"));
         assert!(analysis.contains("syntax error"));
+        assert!(analysis.contains("episode_graph"));
     }
 
     #[test]
@@ -209,6 +269,48 @@ mod tests {
                 .errors
                 .iter()
                 .any(|error| error.contains("preferred_primary_location_id"))
+        );
+    }
+
+    #[test]
+    fn round_trips_document_analysis_via_serde() {
+        let mut document = sample_document();
+        document.document_analysis = Some(sample_document_analysis());
+
+        let encoded = serde_json::to_string(&document).unwrap();
+        let decoded: DiagnosticDocument = serde_json::from_str(&encoded).unwrap();
+
+        assert_eq!(decoded.document_analysis, document.document_analysis);
+        assert!(decoded.validate().is_ok());
+    }
+
+    #[test]
+    fn rejects_self_referential_document_analysis_links() {
+        let mut document = sample_document();
+        let mut analysis = sample_document_analysis();
+        analysis.group_analysis[0].best_parent_group_ref = Some("group-1".to_string());
+        analysis.episode_graph.relations.push(EpisodeRelation {
+            from_group_ref: "group-2".to_string(),
+            to_group_ref: "group-2".to_string(),
+            kind: EpisodeRelationKind::Context,
+            confidence: OrderedFloat(0.42),
+            evidence_tags: Vec::new(),
+        });
+        document.document_analysis = Some(analysis);
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("best_parent_group_ref must not reference itself"))
+        );
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("must not self-reference"))
         );
     }
 

@@ -421,6 +421,7 @@ mod tests {
                     }),
                     fingerprints: None,
                 }],
+                document_analysis: None,
                 fingerprints: None,
             },
             profile: RenderProfile::Default,

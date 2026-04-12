@@ -3,9 +3,9 @@ use std::collections::{HashMap, HashSet};
 use semver::Version;
 
 use crate::{
-    ArtifactKind, ArtifactStorage, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
-    IntegrityIssue, Location, NodeCompleteness, Phase, Provenance, ProvenanceSource, SemanticRole,
-    ValidationErrors,
+    ArtifactKind, ArtifactStorage, DiagnosticDocument, DiagnosticNode, DocumentAnalysis,
+    DocumentCompleteness, EpisodeGraph, EpisodeRelation, IntegrityIssue, Location,
+    NodeCompleteness, Phase, Provenance, ProvenanceSource, SemanticRole, ValidationErrors,
 };
 
 impl DiagnosticDocument {
@@ -106,6 +106,9 @@ impl DiagnosticDocument {
                 &mut errors,
                 true,
             );
+        }
+        if let Some(document_analysis) = self.document_analysis.as_ref() {
+            validate_document_analysis(document_analysis, &mut errors);
         }
         if errors.is_empty() {
             Ok(())
@@ -374,5 +377,170 @@ fn collect_descendant_node_ids(node: &DiagnosticNode, ids: &mut HashSet<String>)
     for child in &node.children {
         ids.insert(child.id.clone());
         collect_descendant_node_ids(child, ids);
+    }
+}
+
+fn validate_document_analysis(document_analysis: &DocumentAnalysis, errors: &mut Vec<String>) {
+    let mut group_refs = HashSet::new();
+    for group in &document_analysis.group_analysis {
+        if group.group_ref.trim().is_empty() {
+            errors.push("document_analysis group_ref must be non-empty".to_string());
+        }
+        if !group_refs.insert(group.group_ref.clone()) {
+            errors.push(format!(
+                "document_analysis duplicate group_ref {}",
+                group.group_ref
+            ));
+        }
+        for (label, score) in [
+            ("root_score", group.root_score),
+            ("independence_score", group.independence_score),
+            ("suppress_likelihood", group.suppress_likelihood),
+            ("summary_likelihood", group.summary_likelihood),
+        ] {
+            validate_score(
+                &format!("document_analysis group {} {}", group.group_ref, label),
+                score,
+                errors,
+            );
+        }
+    }
+
+    validate_episode_graph(&document_analysis.episode_graph, &group_refs, errors);
+
+    let episode_refs = document_analysis
+        .episode_graph
+        .episodes
+        .iter()
+        .map(|episode| episode.episode_ref.clone())
+        .collect::<HashSet<_>>();
+    for group in &document_analysis.group_analysis {
+        if let Some(episode_ref) = group.episode_ref.as_deref()
+            && !episode_refs.contains(episode_ref)
+        {
+            errors.push(format!(
+                "document_analysis group {} references missing episode {}",
+                group.group_ref, episode_ref
+            ));
+        }
+        if let Some(parent_ref) = group.best_parent_group_ref.as_deref()
+            && !group_refs.contains(parent_ref)
+        {
+            errors.push(format!(
+                "document_analysis group {} best_parent_group_ref {} does not exist",
+                group.group_ref, parent_ref
+            ));
+        } else if group
+            .best_parent_group_ref
+            .as_deref()
+            .is_some_and(|parent_ref| parent_ref == group.group_ref)
+        {
+            errors.push(format!(
+                "document_analysis group {} best_parent_group_ref must not reference itself",
+                group.group_ref
+            ));
+        }
+    }
+}
+
+fn validate_episode_graph(
+    episode_graph: &EpisodeGraph,
+    group_refs: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
+    let mut episode_refs = HashSet::new();
+    for episode in &episode_graph.episodes {
+        if episode.episode_ref.trim().is_empty() {
+            errors.push("document_analysis episode_ref must be non-empty".to_string());
+        }
+        if !episode_refs.insert(episode.episode_ref.clone()) {
+            errors.push(format!(
+                "document_analysis duplicate episode_ref {}",
+                episode.episode_ref
+            ));
+        }
+        if episode.lead_group_ref.trim().is_empty() {
+            errors.push(format!(
+                "document_analysis episode {} lead_group_ref must be non-empty",
+                episode.episode_ref
+            ));
+        } else if !group_refs.contains(&episode.lead_group_ref) {
+            errors.push(format!(
+                "document_analysis episode {} lead_group_ref {} does not exist",
+                episode.episode_ref, episode.lead_group_ref
+            ));
+        }
+        for member_ref in &episode.member_group_refs {
+            if !group_refs.contains(member_ref) {
+                errors.push(format!(
+                    "document_analysis episode {} member_group_ref {} does not exist",
+                    episode.episode_ref, member_ref
+                ));
+            }
+        }
+        validate_score(
+            &format!(
+                "document_analysis episode {} lead_root_score",
+                episode.episode_ref
+            ),
+            episode.lead_root_score,
+            errors,
+        );
+        validate_score(
+            &format!(
+                "document_analysis episode {} confidence",
+                episode.episode_ref
+            ),
+            episode.confidence,
+            errors,
+        );
+    }
+
+    for relation in &episode_graph.relations {
+        validate_relation(relation, group_refs, errors);
+    }
+}
+
+fn validate_relation(
+    relation: &EpisodeRelation,
+    group_refs: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
+    if relation.from_group_ref.trim().is_empty() {
+        errors.push("document_analysis relation from_group_ref must be non-empty".to_string());
+    } else if !group_refs.contains(&relation.from_group_ref) {
+        errors.push(format!(
+            "document_analysis relation from_group_ref {} does not exist",
+            relation.from_group_ref
+        ));
+    }
+    if relation.to_group_ref.trim().is_empty() {
+        errors.push("document_analysis relation to_group_ref must be non-empty".to_string());
+    } else if !group_refs.contains(&relation.to_group_ref) {
+        errors.push(format!(
+            "document_analysis relation to_group_ref {} does not exist",
+            relation.to_group_ref
+        ));
+    } else if relation.from_group_ref == relation.to_group_ref {
+        errors.push(format!(
+            "document_analysis relation {} -> {} must not self-reference",
+            relation.from_group_ref, relation.to_group_ref
+        ));
+    }
+    validate_score(
+        &format!(
+            "document_analysis relation {} -> {} confidence",
+            relation.from_group_ref, relation.to_group_ref
+        ),
+        Some(relation.confidence),
+        errors,
+    );
+}
+
+fn validate_score(scope: &str, score: Option<crate::Score>, errors: &mut Vec<String>) {
+    if let Some(score) = score
+        && !(0.0..=1.0).contains(&score.into_inner())
+    {
+        errors.push(format!("{scope} must be within 0.0..=1.0"));
     }
 }

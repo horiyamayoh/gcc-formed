@@ -97,6 +97,7 @@ mod tests {
                     captures: Vec::new(),
                     integrity_issues: Vec::new(),
                     diagnostics: Vec::new(),
+                    document_analysis: None,
                     fingerprints: None,
                 },
                 source_authority: SourceAuthority::Structured,

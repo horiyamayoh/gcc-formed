@@ -5,8 +5,8 @@ use crate::mode::{ModeDecision, is_ci, language_mode_from_invocation};
 use diag_adapter_gcc::tool_for_backend;
 use diag_capture_runtime::{CaptureOutcome, ExecutionMode, ExitStatusInfo};
 use diag_core::{
-    DiagnosticDocument, DocumentCompleteness, FallbackGrade, FallbackReason, SnapshotKind,
-    SourceAuthority, WrapperSurface, snapshot_json,
+    CascadePolicySnapshot, DiagnosticDocument, DocumentCompleteness, FallbackGrade, FallbackReason,
+    SnapshotKind, SourceAuthority, WrapperSurface, snapshot_json,
 };
 use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{
@@ -60,6 +60,7 @@ pub(crate) struct CommonTraceContext<'a> {
     pub(crate) backend: &'a diag_backend_probe::ProbeResult,
     pub(crate) mode_decision: &'a ModeDecision,
     pub(crate) profile: RenderProfile,
+    pub(crate) cascade_policy: &'a CascadePolicySnapshot,
     pub(crate) capabilities: &'a RenderCapabilities,
     pub(crate) total_duration_ms: u64,
 }
@@ -91,6 +92,9 @@ pub(crate) fn maybe_write_trace(request: TraceWriteRequest<'_>) -> Result<(), Cl
     }
     let mut decision_log = request.common.mode_decision.decision_log.clone();
     decision_log.extend(request.ingest_trace.decision_log_entries());
+    decision_log.extend(cascade_policy_decision_log_entries(
+        request.common.cascade_policy,
+    ));
     let trace = TraceEnvelope {
         trace_id: request.document.run.invocation_id.clone(),
         selected_mode: format!("{:?}", request.common.mode_decision.mode).to_lowercase(),
@@ -189,7 +193,13 @@ pub(crate) fn maybe_write_passthrough_trace(
             request.common.mode_decision.mode,
             retained_trace_dir.is_some(),
         )),
-        decision_log: request.common.mode_decision.decision_log.clone(),
+        decision_log: {
+            let mut decision_log = request.common.mode_decision.decision_log.clone();
+            decision_log.extend(cascade_policy_decision_log_entries(
+                request.common.cascade_policy,
+            ));
+            decision_log
+        },
         fallback_reason: request.common.mode_decision.fallback_reason,
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(
@@ -318,6 +328,32 @@ fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
+fn cascade_policy_decision_log_entries(policy: &CascadePolicySnapshot) -> [String; 6] {
+    [
+        format!(
+            "cascade_compression_level={}",
+            snake_case_label(&policy.compression_level)
+        ),
+        format!(
+            "cascade_suppress_likelihood_threshold={:.2}",
+            policy.suppress_likelihood_threshold
+        ),
+        format!(
+            "cascade_summary_likelihood_threshold={:.2}",
+            policy.summary_likelihood_threshold
+        ),
+        format!("cascade_min_parent_margin={:.2}", policy.min_parent_margin),
+        format!(
+            "cascade_max_expanded_independent_roots={}",
+            policy.max_expanded_independent_roots
+        ),
+        format!(
+            "cascade_show_suppressed_count={}",
+            snake_case_label(&policy.show_suppressed_count)
+        ),
+    ]
+}
+
 fn trace_child_exit(status: &ExitStatusInfo) -> TraceChildExit {
     TraceChildExit {
         code: status.code,
@@ -427,11 +463,15 @@ fn write_retained_normalized_ir(
 
 #[cfg(test)]
 mod tests {
-    use super::{IngestTraceMetadata, parsed_parser_result_summary, trace_wrapper_verdict};
+    use super::{
+        IngestTraceMetadata, cascade_policy_decision_log_entries, parsed_parser_result_summary,
+        trace_wrapper_verdict,
+    };
     use diag_capture_runtime::ExecutionMode;
     use diag_core::{
-        DiagnosticDocument, DocumentCompleteness, FallbackGrade, FallbackReason, ProducerInfo,
-        RunInfo, SourceAuthority, ToolInfo, WrapperSurface,
+        CascadePolicySnapshot, CompressionLevel, DiagnosticDocument, DocumentCompleteness,
+        FallbackGrade, FallbackReason, ProducerInfo, RunInfo, SourceAuthority,
+        SuppressedCountVisibility, ToolInfo, WrapperSurface,
     };
 
     #[test]
@@ -476,6 +516,25 @@ mod tests {
         );
     }
 
+    #[test]
+    fn cascade_policy_entries_are_written_into_trace_decision_log() {
+        let entries = cascade_policy_decision_log_entries(&CascadePolicySnapshot {
+            compression_level: CompressionLevel::Balanced,
+            suppress_likelihood_threshold: 0.73,
+            summary_likelihood_threshold: 0.58,
+            min_parent_margin: 0.11,
+            max_expanded_independent_roots: 4,
+            show_suppressed_count: SuppressedCountVisibility::Auto,
+        });
+
+        assert_eq!(entries[0], "cascade_compression_level=balanced");
+        assert_eq!(entries[1], "cascade_suppress_likelihood_threshold=0.73");
+        assert_eq!(entries[2], "cascade_summary_likelihood_threshold=0.58");
+        assert_eq!(entries[3], "cascade_min_parent_margin=0.11");
+        assert_eq!(entries[4], "cascade_max_expanded_independent_roots=4");
+        assert_eq!(entries[5], "cascade_show_suppressed_count=auto");
+    }
+
     fn test_document(document_completeness: DocumentCompleteness) -> DiagnosticDocument {
         DiagnosticDocument {
             document_id: "doc-1".to_string(),
@@ -508,6 +567,7 @@ mod tests {
             captures: Vec::new(),
             integrity_issues: Vec::new(),
             diagnostics: Vec::new(),
+            document_analysis: None,
             fingerprints: None,
         }
     }

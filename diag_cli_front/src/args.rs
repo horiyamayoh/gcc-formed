@@ -1,6 +1,7 @@
 use crate::error::CliError;
 use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
+use diag_core::{CompressionLevel, SuppressedCountVisibility};
 use diag_render::{DebugRefs, RenderProfile};
 use diag_trace::RetentionPolicy;
 use std::ffi::OsString;
@@ -14,6 +15,12 @@ pub(crate) struct ParsedArgs {
     pub(crate) backend: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
     pub(crate) debug_refs: Option<DebugRefs>,
+    pub(crate) cascade_compression_level: Option<CompressionLevel>,
+    pub(crate) cascade_suppress_likelihood_threshold: Option<f32>,
+    pub(crate) cascade_summary_likelihood_threshold: Option<f32>,
+    pub(crate) cascade_min_parent_margin: Option<f32>,
+    pub(crate) cascade_max_expanded_independent_roots: Option<usize>,
+    pub(crate) cascade_show_suppressed_count: Option<SuppressedCountVisibility>,
     pub(crate) introspection: Option<WrapperIntrospection>,
     pub(crate) forwarded_args: Vec<OsString>,
 }
@@ -35,6 +42,42 @@ impl ParsedArgs {
                 parsed.trace = Some(parse_retention_policy(policy)?);
             } else if let Some(debug_refs) = value.strip_prefix("--formed-debug-refs=") {
                 parsed.debug_refs = Some(parse_debug_refs(debug_refs)?);
+            } else if let Some(level) = value.strip_prefix("--formed-cascade-level=") {
+                parsed.cascade_compression_level = Some(parse_compression_level(level)?);
+            } else if let Some(threshold) =
+                value.strip_prefix("--formed-cascade-suppress-threshold=")
+            {
+                parsed.cascade_suppress_likelihood_threshold =
+                    Some(parse_probability("cascade suppress threshold", threshold)?);
+            } else if let Some(threshold) =
+                value.strip_prefix("--formed-cascade-summary-threshold=")
+            {
+                parsed.cascade_summary_likelihood_threshold =
+                    Some(parse_probability("cascade summary threshold", threshold)?);
+            } else if let Some(margin) = value.strip_prefix("--formed-cascade-min-parent-margin=") {
+                parsed.cascade_min_parent_margin =
+                    Some(parse_probability("cascade min parent margin", margin)?);
+            } else if let Some(limit) =
+                value.strip_prefix("--formed-cascade-max-expanded-independent-roots=")
+            {
+                parsed.cascade_max_expanded_independent_roots = Some(parse_usize(
+                    "cascade max expanded independent roots",
+                    limit,
+                )?);
+            } else if let Some(limit) =
+                value.strip_prefix("--formed-max-expanded-independent-roots=")
+            {
+                parsed.cascade_max_expanded_independent_roots = Some(parse_usize(
+                    "cascade max expanded independent roots",
+                    limit,
+                )?);
+            } else if let Some(mode) = value.strip_prefix("--formed-cascade-show-suppressed-count=")
+            {
+                parsed.cascade_show_suppressed_count =
+                    Some(parse_suppressed_count_visibility(mode)?);
+            } else if let Some(mode) = value.strip_prefix("--formed-show-suppressed-count=") {
+                parsed.cascade_show_suppressed_count =
+                    Some(parse_suppressed_count_visibility(mode)?);
             } else if value == "--formed-version" {
                 parsed.introspection = Some(WrapperIntrospection::Version);
             } else if value == "--formed-version=verbose" {
@@ -118,6 +161,49 @@ pub(crate) fn parse_debug_refs(value: &str) -> Result<DebugRefs, CliError> {
     }
 }
 
+pub(crate) fn parse_compression_level(value: &str) -> Result<CompressionLevel, CliError> {
+    match value {
+        "off" => Ok(CompressionLevel::Off),
+        "conservative" => Ok(CompressionLevel::Conservative),
+        "balanced" => Ok(CompressionLevel::Balanced),
+        "aggressive" => Ok(CompressionLevel::Aggressive),
+        _ => Err(CliError::Config(format!(
+            "unsupported cascade level: {value}"
+        ))),
+    }
+}
+
+pub(crate) fn parse_suppressed_count_visibility(
+    value: &str,
+) -> Result<SuppressedCountVisibility, CliError> {
+    match value {
+        "auto" => Ok(SuppressedCountVisibility::Auto),
+        "always" => Ok(SuppressedCountVisibility::Always),
+        "never" => Ok(SuppressedCountVisibility::Never),
+        _ => Err(CliError::Config(format!(
+            "unsupported suppressed count visibility: {value}"
+        ))),
+    }
+}
+
+pub(crate) fn parse_probability(label: &str, value: &str) -> Result<f32, CliError> {
+    let parsed = value
+        .parse::<f32>()
+        .map_err(|_| CliError::Config(format!("invalid {label}: {value}")))?;
+    if !parsed.is_finite() || !(0.0..=1.0).contains(&parsed) {
+        return Err(CliError::Config(format!(
+            "{label} must be within 0.0..=1.0: {value}"
+        )));
+    }
+    Ok(parsed)
+}
+
+pub(crate) fn parse_usize(label: &str, value: &str) -> Result<usize, CliError> {
+    value
+        .parse::<usize>()
+        .map_err(|_| CliError::Config(format!("invalid {label}: {value}")))
+}
+
 pub(crate) fn os_to_string(value: &OsString) -> String {
     value.to_string_lossy().into_owned()
 }
@@ -135,6 +221,12 @@ mod tests {
             OsString::from("--formed-profile=ci"),
             OsString::from("--formed-trace=always"),
             OsString::from("--formed-debug-refs=trace_id"),
+            OsString::from("--formed-cascade-level=balanced"),
+            OsString::from("--formed-cascade-suppress-threshold=0.81"),
+            OsString::from("--formed-cascade-summary-threshold=0.61"),
+            OsString::from("--formed-cascade-min-parent-margin=0.14"),
+            OsString::from("--formed-cascade-max-expanded-independent-roots=3"),
+            OsString::from("--formed-cascade-show-suppressed-count=always"),
             OsString::from("-c"),
             OsString::from("main.c"),
         ])
@@ -148,6 +240,18 @@ mod tests {
         assert_eq!(parsed.profile, Some(RenderProfile::Ci));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
         assert_eq!(parsed.debug_refs, Some(DebugRefs::TraceId));
+        assert_eq!(
+            parsed.cascade_compression_level,
+            Some(CompressionLevel::Balanced)
+        );
+        assert_eq!(parsed.cascade_suppress_likelihood_threshold, Some(0.81));
+        assert_eq!(parsed.cascade_summary_likelihood_threshold, Some(0.61));
+        assert_eq!(parsed.cascade_min_parent_margin, Some(0.14));
+        assert_eq!(parsed.cascade_max_expanded_independent_roots, Some(3));
+        assert_eq!(
+            parsed.cascade_show_suppressed_count,
+            Some(SuppressedCountVisibility::Always)
+        );
         assert_eq!(
             parsed.forwarded_args,
             vec![OsString::from("-c"), OsString::from("main.c")]
@@ -181,5 +285,32 @@ mod tests {
 
         assert_eq!(parsed.profile, Some(RenderProfile::Debug));
         assert_eq!(parsed.forwarded_args, vec![OsString::from("main.c")]);
+    }
+
+    #[test]
+    fn accepts_compatibility_aliases_for_long_cascade_flags() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-max-expanded-independent-roots=4"),
+            OsString::from("--formed-show-suppressed-count=never"),
+        ])
+        .expect("parsed args");
+
+        assert_eq!(parsed.cascade_max_expanded_independent_roots, Some(4));
+        assert_eq!(
+            parsed.cascade_show_suppressed_count,
+            Some(SuppressedCountVisibility::Never)
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_cascade_threshold() {
+        let error = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-cascade-summary-threshold=1.2"),
+        ])
+        .unwrap_err();
+
+        assert!(error.to_string().contains("cascade summary threshold"));
     }
 }

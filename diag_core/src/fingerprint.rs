@@ -120,6 +120,7 @@ pub fn normalize_for_snapshot_kind(
         for diagnostic in &mut copy.diagnostics {
             strip_analysis(diagnostic);
         }
+        copy.document_analysis = None;
     }
     copy.refresh_fingerprints();
     copy

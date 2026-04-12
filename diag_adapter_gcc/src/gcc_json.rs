@@ -42,6 +42,7 @@ pub(crate) fn from_gcc_json_payload(
         captures: Vec::new(),
         integrity_issues: Vec::new(),
         diagnostics: Vec::new(),
+        document_analysis: None,
         fingerprints: None,
     };
     let mut has_partial_nodes = false;

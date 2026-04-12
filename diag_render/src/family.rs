@@ -761,6 +761,7 @@ mod tests {
                 }],
                 integrity_issues: Vec::new(),
                 diagnostics: vec![sample_node("syntax")],
+                document_analysis: None,
                 fingerprints: None,
             },
             profile: RenderProfile::Default,

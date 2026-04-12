@@ -240,7 +240,7 @@ build 単位の集約は上位レイヤの責務とする。
 本仕様は 1 つの JSON 直列化内で facts と analysis を共存させてよいが、意味論上は別層である。
 
 - `provenance.source = compiler_native | adapter_structural` → facts 側
-- `analysis.*` → wrapper 解釈側
+- `document_analysis.*` / `analysis.*` → wrapper 解釈側
 
 consumer は analysis を捨てても facts を使えることが望ましい。
 
@@ -254,6 +254,7 @@ DiagnosticDocument
 ├── run
 ├── captures[]
 ├── diagnostics[]            # top-level root diagnostics
+├── document_analysis?
 ├── ingestion_issues[]
 ├── fingerprints?
 └── extensions?
@@ -289,6 +290,7 @@ JSON / YAML / CBOR 等の直列化は後続節で定義する。
 | `run` | `RunInfo` | MUST | invocation 単位の実行文脈 |
 | `captures` | array<`CaptureArtifact`> | SHOULD | raw ingress / 補助 artifact 一覧 |
 | `diagnostics` | array<`DiagnosticNode`> | MUST | top-level root diagnostics |
+| `document_analysis` | `DocumentAnalysis` | MAY | document-wide episode / cascade analysis |
 | `document_completeness` | enum | MUST | `complete | partial | passthrough | failed` |
 | `ingestion_issues` | array<`IntegrityIssue`> | MAY | capture/parse/normalize 失敗や警告 |
 | `fingerprints` | `FingerprintSet` | MAY | 文書単位 fingerprint |
@@ -775,8 +777,90 @@ analysis overlay は、core facts を消さずに次を表現する。
 - family 分類
 - summary / headline
 - default view で何を畳むか
+- document-wide episode / cascade 関係
 
-### 15.2 `AnalysisOverlay`
+### 15.2 `DocumentAnalysis`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `policy_profile` | string | MAY | どの cascade policy profile を使ったか |
+| `producer_version` | string | MAY | document-wide analyzer の版 |
+| `episode_graph` | `EpisodeGraph` | MUST | group 間 relation と episode clustering |
+| `group_analysis` | array<`GroupCascadeAnalysis`> | MUST | group ごとの cascade role / score / visibility floor |
+| `stats` | `CascadeStats` | MUST | independent/follow-on/duplicate/uncertain の集計 |
+
+#### `DocumentAnalysis` の規則
+
+- facts が有効であるために `document_analysis` は必須ではない。
+- `document_analysis` が存在する場合でも、consumer はこれを落として facts を扱えてよい。
+- `group_analysis[*].group_ref` と `episode_graph.*_group_ref` は同一 document 内で解決できなければならない。
+
+### 15.3 `EpisodeGraph`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `episodes` | array<`DiagnosticEpisode`> | MUST | 独立 root episode とその member group 群 |
+| `relations` | array<`EpisodeRelation`> | MUST | group 間の directed relation |
+
+### 15.4 `DiagnosticEpisode`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `episode_ref` | string | MUST | document 内で一意な episode ID |
+| `lead_group_ref` | string | MUST | episode の lead group |
+| `member_group_refs` | array<string> | MUST | episode に属する group 一覧 |
+| `family` | string | MAY | coarse family |
+| `lead_root_score` | number | MAY | lead group の root score |
+| `confidence` | number | MAY | episode clustering の確信度 |
+
+### 15.5 `GroupCascadeAnalysis`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `group_ref` | string | MUST | logical group ID |
+| `episode_ref` | string | MAY | 属する episode |
+| `role` | enum | MUST | `lead_root | independent_root | follow_on | duplicate | uncertain` |
+| `best_parent_group_ref` | string | MAY | 最有力 parent group |
+| `root_score` | number | MAY | root らしさ |
+| `independence_score` | number | MAY | 独立性の強さ |
+| `suppress_likelihood` | number | MAY | hidden suppression の安全性 |
+| `summary_likelihood` | number | MAY | summary compaction の適性 |
+| `visibility_floor` | enum | MUST | `never_hidden | summary_or_expanded_only | hidden_allowed` |
+| `evidence_tags` | array<string> | MAY | 判定根拠タグ |
+
+### 15.6 `EpisodeRelation`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `from_group_ref` | string | MUST | relation の source group |
+| `to_group_ref` | string | MUST | relation の target group |
+| `kind` | enum | MUST | `cascade | duplicate | context` |
+| `confidence` | number | MUST | relation の確信度 |
+| `evidence_tags` | array<string> | MAY | relation の根拠タグ |
+
+### 15.7 `CascadeStats`
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `independent_root_count` | integer | MUST | independent root group 数 |
+| `dependent_follow_on_count` | integer | MUST | follow-on group 数 |
+| `duplicate_count` | integer | MUST | duplicate group 数 |
+| `uncertain_count` | integer | MUST | uncertain group 数 |
+
+### 15.8 `CascadePolicySnapshot`
+
+`CascadePolicySnapshot` は renderer / analyzer 間で共有する resolved external policy surface であり、`DiagnosticDocument` 本体には埋め込まない。
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---:|---|
+| `compression_level` | enum | MUST | `off | conservative | balanced | aggressive` |
+| `suppress_likelihood_threshold` | number | MUST | hidden suppression の最低 score |
+| `summary_likelihood_threshold` | number | MUST | summary compaction の最低 score |
+| `min_parent_margin` | number | MUST | parent 候補採用に必要な最小 margin |
+| `max_expanded_independent_roots` | integer | MUST | default view で expanded にする独立 root 上限 |
+| `show_suppressed_count` | enum | MUST | `auto | always | never`。TOML では `true`=`always`, `false`=`never` の shorthand を許容してよい |
+
+### 15.9 `AnalysisOverlay`
 
 | フィールド | 型 | 必須 | 意味 |
 |---|---|---:|---|

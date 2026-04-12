@@ -850,6 +850,7 @@ fn synthetic_document(
         }],
         integrity_issues: Vec::new(),
         diagnostics: vec![root],
+        document_analysis: None,
         fingerprints: None,
     };
     document.refresh_fingerprints();

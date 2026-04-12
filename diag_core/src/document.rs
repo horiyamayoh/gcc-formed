@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AnalysisOverlay, CaptureArtifact, ContextChain, DocumentCompleteness, FingerprintSet,
-    IntegrityIssue, LanguageMode, Location, LocationRole, NodeCompleteness, Origin, Phase,
-    Provenance, SemanticRole, Severity, Suggestion, SymbolContext, WrapperSurface,
+    AnalysisOverlay, CaptureArtifact, ContextChain, DocumentAnalysis, DocumentCompleteness,
+    FingerprintSet, IntegrityIssue, LanguageMode, Location, LocationRole, NodeCompleteness, Origin,
+    Phase, Provenance, SemanticRole, Severity, Suggestion, SymbolContext, WrapperSurface,
 };
 
 /// Identifies the software that produced this diagnostic document.
@@ -97,6 +97,9 @@ pub struct DiagnosticDocument {
     /// Top-level diagnostic nodes extracted from compiler output.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub diagnostics: Vec<DiagnosticNode>,
+    /// Optional document-wide cascade analysis produced after node-local enrichment.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub document_analysis: Option<DocumentAnalysis>,
     /// Document-level fingerprints for drift detection.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fingerprints: Option<FingerprintSet>,
