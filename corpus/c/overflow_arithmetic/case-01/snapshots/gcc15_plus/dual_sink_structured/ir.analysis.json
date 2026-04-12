@@ -1,0 +1,123 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:19: warning: division by zero [-Wdiv-by-zero]\n    2 |     int value = 1 / 0;\n      |                   ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 150,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3697,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "overflow_arithmetic",
+        "first_action_hint": "check the operand types and value ranges to prevent undefined behavior",
+        "headline": "integer arithmetic issue detected",
+        "matched_conditions": [
+          "message_contains=division by zero",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.overflow_arithmetic.message_terms"
+      },
+      "fingerprints": {
+        "family": "c6e0dfb8218062bcb58b98aed90cea97f41b197f7e169d7fdc6685d2cd7f862f",
+        "raw": "fec1e473020d466e3acf47938cf4a4bf543786bb8c94fe1855a5377c4217da7b",
+        "structural": "eef0b6bb7681cf30833af18481d75aa05d72b7b338b541e4958f32945db70627"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 19,
+            "column_native": 19,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:19:2:19",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "division by zero"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "f31fa357cc05cf7156e7629df4344f228b05a56ed6d757498dd552ac0fe182fa",
+    "raw": "713d7a82bc0eb2e405af4d5cb6dc47098e56cf9e6b7cdacd7233f64e74a950b5",
+    "structural": "80e38addf9504a8d47deb639234553c8ce0275f123144302627aac8347ebf374"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wdiv-by-zero",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

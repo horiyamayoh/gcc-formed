@@ -1,0 +1,40 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:19",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "                  ^"
+          ],
+          "lines": [
+            "    int value = 1 / 0;"
+          ],
+          "location": "src/main.c:2:19"
+        }
+      ],
+      "family": "overflow_arithmetic",
+      "first_action": "check the operand types and value ranges to prevent undefined behavior",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=division by zero",
+        "phase=semantic"
+      ],
+      "raw_message": "division by zero",
+      "rule_id": "rule.family.overflow_arithmetic.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "integer arithmetic issue detected"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

@@ -870,6 +870,23 @@ main.cpp:2:9: note: constraints not satisfied\n";
     }
 
     #[test]
+    fn classifies_sanitizer_buffer_compiler_warning_before_format_string() {
+        let stderr = "main.c:4:12: warning: '%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("sanitizer_buffer")
+        );
+    }
+
+    #[test]
     fn classifies_analyzer_compiler_warning() {
         let stderr =
             "main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n";
@@ -888,6 +905,40 @@ main.cpp:2:9: note: constraints not satisfied\n";
     }
 
     #[test]
+    fn preserves_analyzer_precedence_over_null_pointer() {
+        let stderr = "main.c:6:5: warning: dereference of NULL 'ptr' [CWE-476] [-Wanalyzer-null-dereference]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Analyze);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("analyzer")
+        );
+    }
+
+    #[test]
+    fn classifies_null_pointer_compiler_warning() {
+        let stderr = "main.c:3:9: warning: the address of 'value' will always evaluate as 'true' [-Waddress]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("null_pointer")
+        );
+    }
+
+    #[test]
     fn classifies_uninitialized_compiler_warning() {
         let stderr =
             "main.c:5:12: warning: 'value' may be used uninitialized [-Wmaybe-uninitialized]\n";
@@ -902,6 +953,41 @@ main.cpp:2:9: note: constraints not satisfied\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("uninitialized")
+        );
+    }
+
+    #[test]
+    fn classifies_overflow_arithmetic_compiler_warning() {
+        let stderr = "main.c:2:15: warning: division by zero [-Wdiv-by-zero]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("overflow_arithmetic")
+        );
+    }
+
+    #[test]
+    fn classifies_enum_switch_compiler_warning() {
+        let stderr =
+            "main.cpp:7:5: warning: enumeration value 'Blue' not handled in switch [-Wswitch]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("enum_switch")
         );
     }
 
@@ -936,6 +1022,23 @@ main.cpp:2:9: note: constraints not satisfied\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("const_qualifier")
+        );
+    }
+
+    #[test]
+    fn classifies_move_semantics_compiler_error_before_pointer_reference() {
+        let stderr = "main.cpp:5:16: error: cannot bind rvalue reference of type 'Widget&&' to lvalue of type 'Widget'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("move_semantics")
         );
     }
 
@@ -1119,6 +1222,42 @@ main.cpp:3:24: note: the lambda has no capture-default\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("init_order")
+        );
+    }
+
+    #[test]
+    fn classifies_fallthrough_compiler_warning() {
+        let stderr =
+            "main.c:9:9: warning: this statement may fall through [-Wimplicit-fallthrough=]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("fallthrough")
+        );
+    }
+
+    #[test]
+    fn classifies_pedantic_compliance_compiler_warning() {
+        let stderr =
+            "main.c:3:5: warning: ISO C90 forbids variable length array 'values' [-Wvla]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("pedantic_compliance")
         );
     }
 

@@ -1,0 +1,122 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:12: warning: enumeration value 'Blue' not handled in switch [-Wswitch]\n    5 |     switch (color) {\n      |            ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 176,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3845,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "enum_switch",
+        "first_action_hint": "add missing case labels or a default case to handle all enum values",
+        "headline": "enum or switch coverage issue",
+        "matched_conditions": [
+          "message_contains=not handled in switch",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.enum_switch.message_terms"
+      },
+      "fingerprints": {
+        "family": "53c37f3e22e84e64edd8f0142bacd04276b59f875f54cb2ee22ba9dd49b0e2ce",
+        "raw": "dccfa944585c42f59982711a403cd066d820bde77c8b09bed2bfb090e9a9f0d1",
+        "structural": "2e7bb2d12a33114f59ac3eccb59bfe981f14316abbed367bf9fc033c54690055"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:12:5:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "enumeration value 'Blue' not handled in switch"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "96febb30e1fc90dba949f046ffb628d53806329634435703cb5ae0d1295cec7b",
+    "raw": "aa42a023fc33bab4ac369f50ddbdff40c2b482c9ddde88e0468eb15b15c90b14",
+    "structural": "75aa1c37591ceae2c7796a2e95c16b2e7ea4a937285934b1cddbf0e89c86e9fa"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

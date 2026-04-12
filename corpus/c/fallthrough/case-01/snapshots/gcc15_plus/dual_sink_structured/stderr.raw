@@ -1,0 +1,7 @@
+src/main.c: In function 'main':
+src/main.c:5:15: warning: this statement may fall through [-Wimplicit-fallthrough=]
+    5 |         value = 1;
+      |         ~~~~~~^~~
+src/main.c:6:5: note: here
+    6 |     case 1:
+      |     ^~~~

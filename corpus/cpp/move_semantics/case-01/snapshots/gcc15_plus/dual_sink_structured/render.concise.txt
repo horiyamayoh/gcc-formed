@@ -1,0 +1,9 @@
+warning: unnecessary or incorrect move operation
+--> src/main.cpp:7:12
+help: remove the std::move to allow copy elision, or fix the value category
+why: moving a local object in a return statement prevents copy elision
+| src/main.cpp:7:12
+|     return std::move(value);
+|            ^
+note: remove 'std::move' call
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

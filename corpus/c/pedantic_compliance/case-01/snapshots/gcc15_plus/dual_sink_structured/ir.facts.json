@@ -1,0 +1,158 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:3:5: warning: ISO C90 forbids variable length array 'values' [-Wvla]\n    3 |     int values[size];\n      |     ^~~\nsrc/main.c:4:18: warning: '*values[0]' is used uninitialized [-Wuninitialized]\n    4 |     return values[0];\n      |            ~~~~~~^~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 296,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5200,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "75ff37faf5daf20f79d69ffc6eca4c2a81a4c40ce05b9e8b92cd3cbc9895211b",
+        "raw": "560a4a2af0d60b33b94b8d152ce62e3fcc2cd9aea3ff8e25fb3ca03230cf51f3",
+        "structural": "c676a5a56ba2b1705a41bb65ecdb4ed9bb267e64b8fe3d9236b1b9be9237de15"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:3:5:3:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "ISO C90 forbids variable length array 'values'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "fingerprints": {
+        "family": "f3412c6f77fc3d72142875da0cb8925455583a3cf4bf47ac3174efc49f63a6e9",
+        "raw": "6a508fdc87c488d72b4c3a45f81fa6c8d90e2ca50c6d09c7f483671cdd498661",
+        "structural": "fd3ac41b342e48ad0ffd88a29826448485a19c37d7e503633bbcea86d2e57aeb"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:12:4:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'*values[0]' is used uninitialized"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
+    "raw": "099c2154134cef9c38cf8e7f646cbaf14b0f5a8402beb03629ae249d1b734b71",
+    "structural": "7adcc47a89a201693574462276587bb4f3b8daa57d7698c1088818de3db08511"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c90",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wvla",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

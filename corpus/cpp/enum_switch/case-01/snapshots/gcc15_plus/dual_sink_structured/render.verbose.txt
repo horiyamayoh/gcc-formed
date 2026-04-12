@@ -1,0 +1,10 @@
+warning: enum or switch coverage issue
+--> src/main.cpp:5:12
+help: add missing case labels or a default case to handle all enum values
+why: enumeration value 'Blue' not handled in switch
+| src/main.cpp:5:12
+|     switch (color) {
+|            ^
+debug: rule_id=rule.family.enum_switch.message_terms
+debug: matched_conditions=message_contains=not handled in switch, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

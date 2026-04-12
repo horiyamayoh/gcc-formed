@@ -892,6 +892,14 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("fallthrough")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("sanitizer_buffer")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("format_string")),
             RendererFamilyKind::Syntax
         );
@@ -900,7 +908,19 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("overflow_arithmetic")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("enum_switch")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("analyzer")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("null_pointer")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(
@@ -909,6 +929,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("const_qualifier")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("move_semantics")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(
@@ -949,6 +973,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("deprecated")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("pedantic_compliance")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(

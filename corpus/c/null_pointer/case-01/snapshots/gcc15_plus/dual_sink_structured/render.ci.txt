@@ -1,0 +1,7 @@
+src/main.c:3:9: warning: potential null pointer issue
+help: remove the redundant null check or guard the dereference with a null check
+why: the address of 'value' will always evaluate as 'true'
+| src/main.c:3:9
+|     if (&value) {
+|         ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

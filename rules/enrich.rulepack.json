@@ -424,6 +424,35 @@
       ]
     },
     {
+      "rule_id": "rule.family.sanitizer_buffer.message_terms",
+      "family": "sanitizer_buffer",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "bytes into a region of size",
+            "bytes at offsets",
+            "stringop-overflow",
+            "source argument is the same as destination",
+            "may write a terminating nul past the end",
+            "format-overflow"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.format_string.message_terms",
       "family": "format_string",
       "require_any_of": [
@@ -497,6 +526,125 @@
           "terms": [
             "is used uninitialized",
             "may be used uninitialized"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.overflow_arithmetic.message_terms",
+      "family": "overflow_arithmetic",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "integer overflow",
+            "division by zero",
+            "shift count >= width of type",
+            "shift count is negative",
+            "shift-count-overflow",
+            "shift-negative-value",
+            "is always true due to limited range",
+            "is always false due to limited range",
+            "comparison of unsigned expression"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.enum_switch.message_terms",
+      "family": "enum_switch",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "not handled in switch",
+            "not in enumerated type",
+            "-wswitch",
+            "-wenum-compare",
+            "-wenum-conversion"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.null_pointer.message_terms",
+      "family": "null_pointer",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "null pointer dereference",
+            "will never be null",
+            "will always evaluate as 'true'",
+            "nonnull argument",
+            "compared to null",
+            "-wnull-dereference",
+            "-waddress",
+            "-wnonnull-compare"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.move_semantics.message_terms",
+      "family": "move_semantics",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "pessimizing-move",
+            "redundant-move",
+            "moving a local object in a return",
+            "redundant move in return",
+            "cannot bind rvalue reference"
           ]
         }
       ],
@@ -778,6 +926,32 @@
       ]
     },
     {
+      "rule_id": "rule.family.fallthrough.message_terms",
+      "family": "fallthrough",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "this statement may fall through",
+            "implicit-fallthrough",
+            "may fall through"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.coroutine.message_terms",
       "family": "coroutine",
       "require_any_of": [
@@ -853,6 +1027,45 @@
         }
       ],
       "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.pedantic_compliance.message_terms",
+      "family": "pedantic_compliance",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "iso c++ forbids",
+            "iso c does not",
+            "iso c90 forbids",
+            "iso c90 does not",
+            "variable length array",
+            "is only available with",
+            "forbids zero-size array",
+            "forbids converting a string constant to",
+            "-wpedantic",
+            "-wvla",
+            "-wwrite-strings"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "parse",
+          "condition": "phase=parse",
+          "when": "rule_matched"
+        },
         {
           "phase": "semantic",
           "condition": "phase=semantic",
@@ -1097,9 +1310,22 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.sanitizer_buffer",
+      "family": "sanitizer_buffer",
+      "priority": 51,
+      "terms": [
+        "bytes into a region of size",
+        "bytes at offsets",
+        "stringop-overflow",
+        "source argument is the same as destination",
+        "may write a terminating nul past the end",
+        "format-overflow"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.format_string",
       "family": "format_string",
-      "priority": 51,
+      "priority": 52,
       "terms": [
         "format '%",
         "too many arguments for format",
@@ -1111,16 +1337,71 @@
     {
       "rule_id": "rule.family_seed.uninitialized",
       "family": "uninitialized",
-      "priority": 52,
+      "priority": 53,
       "terms": [
         "is used uninitialized",
         "may be used uninitialized"
       ]
     },
     {
+      "rule_id": "rule.family_seed.overflow_arithmetic",
+      "family": "overflow_arithmetic",
+      "priority": 54,
+      "terms": [
+        "integer overflow",
+        "division by zero",
+        "shift count >= width of type",
+        "shift count is negative",
+        "shift-count-overflow",
+        "shift-negative-value",
+        "is always true due to limited range",
+        "is always false due to limited range",
+        "comparison of unsigned expression"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.enum_switch",
+      "family": "enum_switch",
+      "priority": 55,
+      "terms": [
+        "not handled in switch",
+        "not in enumerated type",
+        "-wswitch",
+        "-wenum-compare",
+        "-wenum-conversion"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.null_pointer",
+      "family": "null_pointer",
+      "priority": 56,
+      "terms": [
+        "null pointer dereference",
+        "will never be null",
+        "will always evaluate as 'true'",
+        "nonnull argument",
+        "compared to null",
+        "-wnull-dereference",
+        "-waddress",
+        "-wnonnull-compare"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.move_semantics",
+      "family": "move_semantics",
+      "priority": 57,
+      "terms": [
+        "pessimizing-move",
+        "redundant-move",
+        "moving a local object in a return",
+        "redundant move in return",
+        "cannot bind rvalue reference"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.conversion_narrowing",
       "family": "conversion_narrowing",
-      "priority": 53,
+      "priority": 60,
       "terms": [
         "narrowing conversion",
         "implicit conversion",
@@ -1132,7 +1413,7 @@
     {
       "rule_id": "rule.family_seed.const_qualifier",
       "family": "const_qualifier",
-      "priority": 54,
+      "priority": 61,
       "terms": [
         "discards qualifiers",
         "discards 'const' qualifier",
@@ -1146,7 +1427,7 @@
     {
       "rule_id": "rule.family_seed.pointer_reference",
       "family": "pointer_reference",
-      "priority": 55,
+      "priority": 62,
       "terms": [
         "incomplete type",
         "invalid use of incomplete type",
@@ -1161,7 +1442,7 @@
     {
       "rule_id": "rule.family_seed.access_control",
       "family": "access_control",
-      "priority": 56,
+      "priority": 63,
       "terms": [
         "is private within this context",
         "is protected within this context",
@@ -1172,7 +1453,7 @@
     {
       "rule_id": "rule.family_seed.inheritance_virtual",
       "family": "inheritance_virtual",
-      "priority": 57,
+      "priority": 64,
       "terms": [
         "abstract type",
         "pure virtual",
@@ -1185,7 +1466,7 @@
     {
       "rule_id": "rule.family_seed.constexpr",
       "family": "constexpr",
-      "priority": 58,
+      "priority": 65,
       "terms": [
         "is not a constant expression",
         "not usable in a constant expression",
@@ -1200,7 +1481,7 @@
     {
       "rule_id": "rule.family_seed.lambda_closure",
       "family": "lambda_closure",
-      "priority": 59,
+      "priority": 66,
       "terms": [
         "cannot be implicitly captured",
         "is not captured",
@@ -1215,7 +1496,7 @@
     {
       "rule_id": "rule.family_seed.lifetime_dangling",
       "family": "lifetime_dangling",
-      "priority": 60,
+      "priority": 67,
       "terms": [
         "returns address of local variable",
         "address of local variable",
@@ -1227,7 +1508,7 @@
     {
       "rule_id": "rule.family_seed.init_order",
       "family": "init_order",
-      "priority": 61,
+      "priority": 68,
       "terms": [
         "will be initialized after",
         "too many initializers",
@@ -1240,7 +1521,7 @@
     {
       "rule_id": "rule.family_seed.coroutine",
       "family": "coroutine",
-      "priority": 62,
+      "priority": 71,
       "terms": [
         "promise type",
         "promise_type",
@@ -1253,7 +1534,7 @@
     {
       "rule_id": "rule.family_seed.module_import",
       "family": "module_import",
-      "priority": 63,
+      "priority": 72,
       "terms": [
         "import of module",
         "import declaration",
@@ -1265,7 +1546,7 @@
     {
       "rule_id": "rule.family_seed.deprecated",
       "family": "deprecated",
-      "priority": 64,
+      "priority": 73,
       "terms": [
         "is deprecated",
         "deprecated-declarations",
@@ -1273,9 +1554,37 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.fallthrough",
+      "family": "fallthrough",
+      "priority": 69,
+      "terms": [
+        "this statement may fall through",
+        "implicit-fallthrough",
+        "may fall through"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.pedantic_compliance",
+      "family": "pedantic_compliance",
+      "priority": 74,
+      "terms": [
+        "iso c++ forbids",
+        "iso c does not",
+        "iso c90 forbids",
+        "iso c90 does not",
+        "variable length array",
+        "is only available with",
+        "forbids zero-size array",
+        "forbids converting a string constant to",
+        "-wpedantic",
+        "-wvla",
+        "-wwrite-strings"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.syntax",
       "family": "syntax",
-      "priority": 70,
+      "priority": 80,
       "terms": [
         "expected",
         "before"
@@ -1533,6 +1842,82 @@
       "default_confidence": "low"
     },
     {
+      "family": "overflow_arithmetic",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "enum_switch",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "null_pointer",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "move_semantics",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "conversion_narrowing",
       "high_when_any": [
         {
@@ -1704,6 +2089,44 @@
       "default_confidence": "low"
     },
     {
+      "family": "fallthrough",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "sanitizer_buffer",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "coroutine",
       "high_when_any": [
         {
@@ -1743,6 +2166,25 @@
     },
     {
       "family": "deprecated",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "pedantic_compliance",
       "high_when_any": [
         {
           "all": [

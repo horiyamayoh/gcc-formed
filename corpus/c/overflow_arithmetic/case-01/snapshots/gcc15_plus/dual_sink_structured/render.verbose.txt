@@ -1,0 +1,10 @@
+warning: integer arithmetic issue detected
+--> src/main.c:2:19
+help: check the operand types and value ranges to prevent undefined behavior
+why: division by zero
+| src/main.c:2:19
+|     int value = 1 / 0;
+|                   ^
+debug: rule_id=rule.family.overflow_arithmetic.message_terms
+debug: matched_conditions=message_contains=division by zero, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,0 +1,5 @@
+src/main.cpp: In function 'Widget make_widget()':
+src/main.cpp:7:21: warning: moving a local object in a return statement prevents copy elision [-Wpessimizing-move]
+    7 |     return std::move(value);
+      |            ~~~~~~~~~^~~~~~~
+src/main.cpp:7:21: note: remove 'std::move' call

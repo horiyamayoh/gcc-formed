@@ -1,0 +1,181 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'Widget make_widget()':\nsrc/main.cpp:7:21: warning: moving a local object in a return statement prevents copy elision [-Wpessimizing-move]\n    7 |     return std::move(value);\n      |            ~~~~~~~~~^~~~~~~\nsrc/main.cpp:7:21: note: remove 'std::move' call\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 287,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4954,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "move_semantics",
+        "first_action_hint": "remove the std::move to allow copy elision, or fix the value category",
+        "headline": "unnecessary or incorrect move operation",
+        "matched_conditions": [
+          "message_contains=moving a local object in a return",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.move_semantics.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "remove 'std::move' call",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "9c45f1303c6ddd9d958b6955bd2115d1e12460853671ef2c733aae5ec86027ac",
+            "raw": "41c6d94ee893d512531d4665eb5fd4463a7db8b90f23b780b90497faf36267bd",
+            "structural": "29759fda90f3a7cb982259225f226a4866b74fac01f98b055c02ee4dcae35d18"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 12,
+                "column_native": 12,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 7
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:7:12:7:12",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "remove 'std::move' call"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "e15edcca1172ffa100fd3368511eb05b1147037f05f79c650668e3c23c7b704a",
+        "raw": "fe4519212517b53bc5a2493f860fe061279f92e81dcbd251f2cf3198e0edfa30",
+        "structural": "9d4ef4e8c99144dc7dd79226bf21b64b9a45876287fb346412e353953334b212"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:7:12:7:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "moving a local object in a return statement prevents copy elision"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "35849408fff6cee1746802d8bbaf5dd8c57eaafbd05a30346de6b2794fd8eef8",
+    "raw": "dd86c78aa30850b7c27c52a5d0a0734b81ad99031f37ddbf6914891d38338790",
+    "structural": "26e0b909e310af17ca8a6bf8ebecd137529175d7d95178e3f76b267645ed5619"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wpessimizing-move",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

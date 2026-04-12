@@ -1,0 +1,4 @@
+src/main.c: In function 'main':
+src/main.c:3:9: warning: the address of 'value' will always evaluate as 'true' [-Waddress]
+    3 |     if (&value) {
+      |         ^

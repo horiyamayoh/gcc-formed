@@ -1,0 +1,4 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:12: warning: enumeration value 'Blue' not handled in switch [-Wswitch]
+    5 |     switch (color) {
+      |            ^

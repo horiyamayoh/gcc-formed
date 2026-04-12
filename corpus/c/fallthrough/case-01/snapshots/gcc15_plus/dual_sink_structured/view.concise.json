@@ -1,0 +1,43 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:5:9",
+      "child_notes": [
+        "here"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "        ^"
+          ],
+          "lines": [
+            "        value = 1;"
+          ],
+          "location": "src/main.c:5:9"
+        }
+      ],
+      "family": "fallthrough",
+      "first_action": "add a break, return, or [[fallthrough]] attribute between cases",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=this statement may fall through",
+        "message_contains=may fall through",
+        "phase=semantic"
+      ],
+      "raw_message": "this statement may fall through",
+      "rule_id": "rule.family.fallthrough.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "implicit fallthrough between switch cases"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

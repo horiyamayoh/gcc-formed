@@ -516,6 +516,31 @@ mod tests {
     }
 
     #[test]
+    fn classifies_overflow_arithmetic_seed_from_rulepack() {
+        let decision = classify_family_seed("division by zero [-Wdiv-by-zero]");
+
+        assert_eq!(decision.family, "overflow_arithmetic");
+        assert_eq!(decision.rule_id, "rule.family_seed.overflow_arithmetic");
+        assert_eq!(
+            decision.first_action_hint,
+            "check the operand types and value ranges to prevent undefined behavior"
+        );
+    }
+
+    #[test]
+    fn classifies_enum_switch_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("enumeration value 'blue' not handled in switch [-Wswitch]");
+
+        assert_eq!(decision.family, "enum_switch");
+        assert_eq!(decision.rule_id, "rule.family_seed.enum_switch");
+        assert_eq!(
+            decision.first_action_hint,
+            "add missing case labels or a default case to handle all enum values"
+        );
+    }
+
+    #[test]
     fn classifies_analyzer_seed_from_rulepack() {
         let decision =
             classify_family_seed("double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]");
@@ -525,6 +550,30 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "follow the analyzer event path and fix the first invalid state transition"
+        );
+    }
+
+    #[test]
+    fn preserves_analyzer_seed_precedence_over_null_pointer() {
+        let decision = classify_family_seed(
+            "dereference of NULL 'ptr' [CWE-476] [-Wanalyzer-null-dereference]",
+        );
+
+        assert_eq!(decision.family, "analyzer");
+        assert_eq!(decision.rule_id, "rule.family_seed.analyzer");
+    }
+
+    #[test]
+    fn classifies_null_pointer_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "the address of 'value' will always evaluate as 'true' [-Waddress]",
+        );
+
+        assert_eq!(decision.family, "null_pointer");
+        assert_eq!(decision.rule_id, "rule.family_seed.null_pointer");
+        assert_eq!(
+            decision.first_action_hint,
+            "remove the redundant null check or guard the dereference with a null check"
         );
     }
 
@@ -539,6 +588,20 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "add an explicit cast or change the variable type to match"
+        );
+    }
+
+    #[test]
+    fn classifies_move_semantics_seed_before_pointer_reference() {
+        let decision = classify_family_seed(
+            "cannot bind rvalue reference of type 'Widget&&' to lvalue of type 'Widget'",
+        );
+
+        assert_eq!(decision.family, "move_semantics");
+        assert_eq!(decision.rule_id, "rule.family_seed.move_semantics");
+        assert_eq!(
+            decision.first_action_hint,
+            "remove the std::move to allow copy elision, or fix the value category"
         );
     }
 
@@ -565,6 +628,19 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "build or export the requested module interface before importing it"
+        );
+    }
+
+    #[test]
+    fn classifies_pedantic_compliance_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("ISO C90 forbids variable length array 'values' [-Wvla]");
+
+        assert_eq!(decision.family, "pedantic_compliance");
+        assert_eq!(decision.rule_id, "rule.family_seed.pedantic_compliance");
+        assert_eq!(
+            decision.first_action_hint,
+            "use the standard-conforming alternative or pass the required -std= flag"
         );
     }
 
@@ -652,6 +728,33 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "reorder member initializers to match declaration order, or fix the initializer list"
+        );
+    }
+
+    #[test]
+    fn classifies_fallthrough_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("this statement may fall through [-Wimplicit-fallthrough=]");
+
+        assert_eq!(decision.family, "fallthrough");
+        assert_eq!(decision.rule_id, "rule.family_seed.fallthrough");
+        assert_eq!(
+            decision.first_action_hint,
+            "add a break, return, or [[fallthrough]] attribute between cases"
+        );
+    }
+
+    #[test]
+    fn classifies_sanitizer_buffer_seed_before_format_string() {
+        let decision = classify_family_seed(
+            "'%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]",
+        );
+
+        assert_eq!(decision.family, "sanitizer_buffer");
+        assert_eq!(decision.rule_id, "rule.family_seed.sanitizer_buffer");
+        assert_eq!(
+            decision.first_action_hint,
+            "check buffer sizes and ensure source and destination do not overlap"
         );
     }
 

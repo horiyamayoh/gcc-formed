@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:7:12",
+      "child_notes": [
+        "remove 'std::move' call"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return std::move(value);"
+          ],
+          "location": "src/main.cpp:7:12"
+        }
+      ],
+      "family": "move_semantics",
+      "first_action": "remove the std::move to allow copy elision, or fix the value category",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=moving a local object in a return",
+        "phase=semantic"
+      ],
+      "raw_message": "moving a local object in a return statement prevents copy elision",
+      "rule_id": "rule.family.move_semantics.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "unnecessary or incorrect move operation"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

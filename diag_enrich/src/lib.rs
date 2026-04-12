@@ -313,6 +313,56 @@ mod tests {
     }
 
     #[test]
+    fn preserves_scope_declaration_precedence_over_enum_switch() {
+        let node = sample_node("'Node' is not a class, namespace, or enumeration");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("scope_declaration"));
+    }
+
+    #[test]
+    fn preserves_analyzer_precedence_over_null_pointer() {
+        let mut node =
+            sample_node("dereference of NULL 'ptr' [CWE-476] [-Wanalyzer-null-dereference]");
+        node.phase = Phase::Analyze;
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("analyzer"));
+    }
+
+    #[test]
+    fn classifies_move_semantics_before_pointer_reference() {
+        let node = sample_node(
+            "cannot bind rvalue reference of type 'Widget&&' to lvalue of type 'Widget'",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("move_semantics"));
+    }
+
+    #[test]
+    fn classifies_sanitizer_buffer_before_format_string() {
+        let node = sample_node(
+            "'%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("sanitizer_buffer"));
+    }
+
+    #[test]
     fn classifies_template_from_context_chain_and_child_notes() {
         let mut node = sample_node("no matching function for call to 'expect_ptr(int&)'");
         node.phase = Phase::Instantiate;

@@ -46,6 +46,18 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "fallthrough",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "sanitizer_buffer",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "format_string",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -58,7 +70,25 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "overflow_arithmetic",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "enum_switch",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "analyzer",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "null_pointer",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },
@@ -71,6 +101,12 @@
     {
       "kind": "syntax",
       "match_exact": "const_qualifier",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "move_semantics",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },
@@ -131,6 +167,12 @@
     {
       "kind": "syntax",
       "match_exact": "deprecated",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "pedantic_compliance",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },

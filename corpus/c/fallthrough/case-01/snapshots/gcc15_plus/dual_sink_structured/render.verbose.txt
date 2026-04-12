@@ -1,0 +1,11 @@
+warning: implicit fallthrough between switch cases
+--> src/main.c:5:9
+help: add a break, return, or [[fallthrough]] attribute between cases
+why: this statement may fall through
+| src/main.c:5:9
+|         value = 1;
+|         ^
+note: here
+debug: rule_id=rule.family.fallthrough.message_terms
+debug: matched_conditions=message_contains=this statement may fall through, message_contains=may fall through, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,0 +1,15 @@
+warning: non-standard or non-portable extension used
+--> src/main.c:3:5
+help: use the standard-conforming alternative or pass the required -std= flag
+why: ISO C90 forbids variable length array 'values'
+| src/main.c:3:5
+|     int values[size];
+|     ^
+warning: variable used without initialization
+--> src/main.c:4:12
+help: initialize the variable at its declaration or before first use
+why: '*values[0]' is used uninitialized
+| src/main.c:4:12
+|     return values[0];
+|            ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

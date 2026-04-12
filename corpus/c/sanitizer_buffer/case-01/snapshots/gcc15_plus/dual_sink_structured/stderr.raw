@@ -1,0 +1,7 @@
+src/main.c: In function 'main':
+src/main.c:5:22: warning: '%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]
+    5 |     sprintf(buffer, "%s", "abcdef");
+      |                      ^~   ~~~~~~~~
+src/main.c:5:5: note: 'sprintf' output 7 bytes into a destination of size 4
+    5 |     sprintf(buffer, "%s", "abcdef");
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

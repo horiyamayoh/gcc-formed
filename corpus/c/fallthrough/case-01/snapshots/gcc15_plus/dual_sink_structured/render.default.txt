@@ -1,0 +1,9 @@
+warning: implicit fallthrough between switch cases
+--> src/main.c:5:9
+help: add a break, return, or [[fallthrough]] attribute between cases
+why: this statement may fall through
+| src/main.c:5:9
+|         value = 1;
+|         ^
+note: here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

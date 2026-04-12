@@ -51,8 +51,20 @@
         "text": "variable used without initialization"
       },
       {
+        "family": "overflow_arithmetic",
+        "text": "integer arithmetic issue detected"
+      },
+      {
+        "family": "enum_switch",
+        "text": "enum or switch coverage issue"
+      },
+      {
         "family": "analyzer",
         "text": "static analysis found a potential defect"
+      },
+      {
+        "family": "null_pointer",
+        "text": "potential null pointer issue"
       },
       {
         "family": "conversion_narrowing",
@@ -61,6 +73,10 @@
       {
         "family": "const_qualifier",
         "text": "const qualification violation"
+      },
+      {
+        "family": "move_semantics",
+        "text": "unnecessary or incorrect move operation"
       },
       {
         "family": "pointer_reference",
@@ -91,6 +107,14 @@
         "text": "initialization order or aggregate init issue"
       },
       {
+        "family": "fallthrough",
+        "text": "implicit fallthrough between switch cases"
+      },
+      {
+        "family": "sanitizer_buffer",
+        "text": "potential buffer overflow or memory overlap"
+      },
+      {
         "family": "coroutine",
         "text": "coroutine promise type error"
       },
@@ -101,6 +125,10 @@
       {
         "family": "deprecated",
         "text": "use of deprecated feature"
+      },
+      {
+        "family": "pedantic_compliance",
+        "text": "non-standard or non-portable extension used"
       },
       {
         "family": "passthrough",
@@ -165,8 +193,20 @@
         "text": "initialize the variable at its declaration or before first use"
       },
       {
+        "family": "overflow_arithmetic",
+        "text": "check the operand types and value ranges to prevent undefined behavior"
+      },
+      {
+        "family": "enum_switch",
+        "text": "add missing case labels or a default case to handle all enum values"
+      },
+      {
         "family": "analyzer",
         "text": "follow the analyzer event path and fix the first invalid state transition"
+      },
+      {
+        "family": "null_pointer",
+        "text": "remove the redundant null check or guard the dereference with a null check"
       },
       {
         "family": "conversion_narrowing",
@@ -175,6 +215,10 @@
       {
         "family": "const_qualifier",
         "text": "make the destination const-correct or remove the const from the source"
+      },
+      {
+        "family": "move_semantics",
+        "text": "remove the std::move to allow copy elision, or fix the value category"
       },
       {
         "family": "pointer_reference",
@@ -205,6 +249,14 @@
         "text": "reorder member initializers to match declaration order, or fix the initializer list"
       },
       {
+        "family": "fallthrough",
+        "text": "add a break, return, or [[fallthrough]] attribute between cases"
+      },
+      {
+        "family": "sanitizer_buffer",
+        "text": "check buffer sizes and ensure source and destination do not overlap"
+      },
+      {
         "family": "coroutine",
         "text": "define a valid promise_type or align the coroutine return type with the coroutine body"
       },
@@ -215,6 +267,10 @@
       {
         "family": "deprecated",
         "text": "replace the deprecated API with the recommended alternative or silence the warning intentionally"
+      },
+      {
+        "family": "pedantic_compliance",
+        "text": "use the standard-conforming alternative or pass the required -std= flag"
       },
       {
         "family": "passthrough",
@@ -299,6 +355,28 @@
           "missing initializer for member",
           "missing field initializers",
           "designated initializers"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "pedantic_compliance",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_pedantic_compliance",
+        "headline_strategy": "fixed_text",
+        "headline": "non-standard or non-portable extension used",
+        "first_action_hint": "use the standard-conforming alternative or pass the required -std= flag",
+        "match_any": [
+          "iso c++ forbids",
+          "iso c does not",
+          "iso c90 forbids",
+          "iso c90 does not",
+          "variable length array",
+          "is only available with",
+          "forbids zero-size array",
+          "forbids converting a string constant to",
+          "-wpedantic",
+          "-wvla",
+          "-wwrite-strings"
         ]
       },
       {
@@ -401,6 +479,37 @@
       },
       {
         "kind": "syntax",
+        "family": "fallthrough",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_fallthrough",
+        "headline_strategy": "fixed_text",
+        "headline": "implicit fallthrough between switch cases",
+        "first_action_hint": "add a break, return, or [[fallthrough]] attribute between cases",
+        "match_any": [
+          "this statement may fall through",
+          "implicit-fallthrough",
+          "may fall through"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "sanitizer_buffer",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_sanitizer_buffer",
+        "headline_strategy": "fixed_text",
+        "headline": "potential buffer overflow or memory overlap",
+        "first_action_hint": "check buffer sizes and ensure source and destination do not overlap",
+        "match_any": [
+          "bytes into a region of size",
+          "bytes at offsets",
+          "stringop-overflow",
+          "source argument is the same as destination",
+          "may write a terminating nul past the end",
+          "format-overflow"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "format_string",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_format_string",
@@ -450,6 +559,61 @@
       },
       {
         "kind": "syntax",
+        "family": "null_pointer",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_null_pointer",
+        "headline_strategy": "fixed_text",
+        "headline": "potential null pointer issue",
+        "first_action_hint": "remove the redundant null check or guard the dereference with a null check",
+        "match_any": [
+          "null pointer dereference",
+          "will never be null",
+          "will always evaluate as 'true'",
+          "nonnull argument",
+          "compared to null",
+          "-wnull-dereference",
+          "-waddress",
+          "-wnonnull-compare"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "overflow_arithmetic",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_overflow_arithmetic",
+        "headline_strategy": "fixed_text",
+        "headline": "integer arithmetic issue detected",
+        "first_action_hint": "check the operand types and value ranges to prevent undefined behavior",
+        "match_any": [
+          "integer overflow",
+          "division by zero",
+          "shift count >= width of type",
+          "shift count is negative",
+          "shift-count-overflow",
+          "shift-negative-value",
+          "is always true due to limited range",
+          "is always false due to limited range",
+          "comparison of unsigned expression"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "enum_switch",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_enum_switch",
+        "headline_strategy": "fixed_text",
+        "headline": "enum or switch coverage issue",
+        "first_action_hint": "add missing case labels or a default case to handle all enum values",
+        "match_any": [
+          "not handled in switch",
+          "not in enumerated type",
+          "-wswitch",
+          "-wenum-compare",
+          "-wenum-conversion"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "conversion_narrowing",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_conversion_narrowing",
@@ -480,6 +644,22 @@
           "read-only object",
           "passing 'const",
           "qualifiers ignored on function return type"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "move_semantics",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_move_semantics",
+        "headline_strategy": "fixed_text",
+        "headline": "unnecessary or incorrect move operation",
+        "first_action_hint": "remove the std::move to allow copy elision, or fix the value category",
+        "match_any": [
+          "pessimizing-move",
+          "redundant-move",
+          "moving a local object in a return",
+          "redundant move in return",
+          "cannot bind rvalue reference"
         ]
       },
       {

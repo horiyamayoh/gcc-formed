@@ -1,0 +1,7 @@
+src/main.c: In function 'main':
+src/main.c:3:5: warning: ISO C90 forbids variable length array 'values' [-Wvla]
+    3 |     int values[size];
+      |     ^~~
+src/main.c:4:18: warning: '*values[0]' is used uninitialized [-Wuninitialized]
+    4 |     return values[0];
+      |            ~~~~~~^~~
