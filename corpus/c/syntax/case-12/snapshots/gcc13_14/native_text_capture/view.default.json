@@ -1,0 +1,86 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:10",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "         ^"
+          ],
+          "lines": [
+            "    if (1 {"
+          ],
+          "location": "src/main.c:2:10"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-10a2335c165b",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token",
+      "raw_sub_block": [
+        "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:6:1",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "^"
+          ],
+          "lines": [
+            "}"
+          ],
+          "location": "src/main.c:6:1"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-169799b2668b",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:6:1: error: expected expression before ‘}’ token",
+      "raw_sub_block": [
+        "src/main.c:6:1: error: expected expression before ‘}’ token"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  },
+  "summary_only_groups": [
+    {
+      "group_id": "group-deedd183b913",
+      "severity": "error",
+      "title": "linker reported a failure"
+    }
+  ]
+}

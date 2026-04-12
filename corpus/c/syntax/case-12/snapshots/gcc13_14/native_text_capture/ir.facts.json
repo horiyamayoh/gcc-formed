@@ -1,0 +1,163 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function ‘broken_if’:\nsrc/main.c:2:10: error: expected ‘)’ before ‘{’ token\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\nsrc/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 489,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "5ad7d829efad218d74ab933ad0b5a14acde855152ce3144256a1e66719919e9a",
+        "raw": "393fc3eda1cb9cc508fc4b2b6f1ed6cbb86f2ad0990fa114b665df5a8b28ea94",
+        "structural": "740da46c69c1980f83925d0a2a2a48d20be4f1c5d94442be10d46d18088ed92a"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 10,
+            "column_native": 10,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:10:2:10",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "81585ce84fbc2f7a31bb715363e7d0374efbae7efbfee9515fa3bbc4a6fd16fe",
+        "raw": "dd5417870a3854912ad4f8e2142f8c7e0cb0990f4fed43349eb52cb64f9c22c6",
+        "structural": "d999fa148470fe433ae6ae2b30373f0ef6c12f072ebc640dd8f52dca10134bfa"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:1:6:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "d8f5fdd745da7ca181fd01f4382983bb1cf9a86c60043469a72731219706f0db",
+        "raw": "cb875843cff9964b10354bcc78beb41c3c3c9aa2e51d6b0ed1696ae28da84be6",
+        "structural": "fb3cd2fc1f19000840d2733bf92b4c9b56d9918263882665633fcf498416e208"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "src/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "9c72e6488ef36e9cdcd35cd2426a1df8bec4a0df25fe037fbb9d7df38e52c9c8",
+    "structural": "5e684454578747d3d47c19e4560a274022361338bf8344a97c9fb154a94dbf87"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

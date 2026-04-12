@@ -2,6 +2,7 @@ tags:
 - syntax
 - phase1
 - representative
+- anti_collision
 ownership: curated
 provenance: generated-from-phase1-plan
 reviewer: codex

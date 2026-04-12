@@ -23,6 +23,9 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 26
+    expected_summary_only_group_count: 1
+    expected_hidden_group_count: 0
+    expected_suppressed_group_count: 1
   concise:
     omission_notice_required: true
     first_screenful_max_lines: 14
@@ -35,6 +38,12 @@ render:
     color_meaning_forbidden: true
     required_substrings:
       - "suggested edit: insert ')' at src/main.c:2:18"
+cascade:
+  expected_independent_episode_count: 3
+  expected_independent_root_count: 3
+  expected_dependent_follow_on_count: 0
+  expected_duplicate_count: 0
+  expected_uncertain_count: 0
 integrity:
   allowed_issue_codes: []
 performance:

@@ -615,6 +615,10 @@ GCC13-14 / GCC9-12 を first-class beta band として扱う場合、curated cor
 
 Band B / Band C fixture を gate に含めるときは、`VersionBand` を A/B だけで潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。`debug` surface を宣言した fixture は explainability signal と suppressed-group visibility の差分を replay で検証できなければならない。
 
+representative replay には、別途 anti-collision corpus slice を持たせなければならない。anti-collision fixture は `anti_collision` tag と scenario tag を持ち、少なくとも `same_file_dual_syntax`, `syntax_flood_plus_type`, `template_frontier_independent` を 1 件以上ずつ含むこと。Band coverage は `gcc15_plus/dual_sink_structured`, `gcc13_14/native_text_capture`, `gcc13_14/single_sink_structured`, `gcc9_12/native_text_capture`, `gcc9_12/single_sink_structured` を必須とする。
+
+anti-collision replay report は、default surface で `false_hidden_suppression_count == 0` と `independent_root_recall_rate == 1.0` を満たさなければならない。ここで recall は independent root が expanded または summary-only として残った割合を指し、hidden は `visibility_floor != hidden_allowed` の group が default output から完全に消えた件数を指す。
+
 ---
 
 ## 12. Fixture モデル

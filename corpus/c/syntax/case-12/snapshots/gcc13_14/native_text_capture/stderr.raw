@@ -1,0 +1,14 @@
+src/main.c: In function ‘broken_if’:
+src/main.c:2:10: error: expected ‘)’ before ‘{’ token
+    2 |     if (1 {
+      |        ~ ^~
+      |          )
+src/main.c:6:1: error: expected expression before ‘}’ token
+    6 | }
+      | ^
+src/main.c: In function ‘broken_type’:
+src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)
+   10 |     return ptr + "x";
+      |                ^
+      |                |
+      |                char *

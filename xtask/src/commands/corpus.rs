@@ -8,8 +8,8 @@ use diag_capture_runtime::{
 use diag_cascade::{CascadeContext, DocumentAnalyzer, SafeDocumentAnalyzer};
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackGrade,
-    FallbackReason, LanguageMode, Ownership, RunInfo, SnapshotKind, SourceAuthority,
-    WrapperSurface, fingerprint_for, snapshot_json,
+    FallbackReason, GroupCascadeRole, LanguageMode, Ownership, RunInfo, SnapshotKind,
+    SourceAuthority, VisibilityFloor, WrapperSurface, fingerprint_for, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -23,7 +23,7 @@ use diag_testkit::{
 };
 use diag_trace::RetentionPolicy;
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
@@ -38,6 +38,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/syntax/case-02",
     "c/syntax/case-05",
     "c/syntax/case-09",
+    "c/syntax/case-12",
     "c/macro_include/case-01",
     "c/macro_include/case-03",
     "c/macro_include/case-10",
@@ -46,6 +47,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "cpp/template/case-05",
     "cpp/template/case-13",
     "cpp/template/case-14",
+    "cpp/template/case-15",
     "cpp/scope_declaration/case-01",
     "cpp/deleted_function/case-01",
     "c/type/case-01",
@@ -61,6 +63,8 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
 
 pub(crate) const MINIMUM_CURATED_CORPUS_SIZE: usize = 80;
 pub(crate) const MAXIMUM_CURATED_CORPUS_SIZE: usize = 129;
+pub(crate) const ANTI_COLLISION_TAG: &str = "anti_collision";
+pub(crate) const ANTI_COLLISION_TAG_PREFIX: &str = "anti_collision:";
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct VerificationFailure {
@@ -118,6 +122,13 @@ pub(crate) struct AcceptanceFixtureSummary {
     pub(crate) default_summary_only_group_count: usize,
     pub(crate) default_hidden_group_count: usize,
     pub(crate) default_suppressed_group_count: usize,
+    pub(crate) anti_collision: bool,
+    pub(crate) anti_collision_scenarios: Vec<String>,
+    pub(crate) anti_collision_independent_root_total_count: usize,
+    pub(crate) anti_collision_independent_root_recalled_count: usize,
+    pub(crate) anti_collision_false_hidden_suppression_count: usize,
+    pub(crate) anti_collision_hidden_independent_root_refs: Vec<String>,
+    pub(crate) anti_collision_hidden_visibility_protected_refs: Vec<String>,
     pub(crate) verified: bool,
 }
 
@@ -183,6 +194,7 @@ pub(crate) struct ReplayReport {
     pub(crate) subset: String,
     pub(crate) metrics: AcceptanceMetrics,
     pub(crate) native_parity: NativeParityReport,
+    pub(crate) anti_collision: AntiCollisionReport,
     pub(crate) fixtures: Vec<AcceptanceFixtureSummary>,
     pub(crate) failures: Vec<VerificationFailure>,
 }
@@ -259,6 +271,38 @@ pub(crate) struct FixtureCoverageReport {
     pub(crate) missing_required_band_path_surfaces: Vec<String>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub(crate) struct AntiCollisionVisibilitySummary {
+    pub(crate) independent_root_total_count: usize,
+    pub(crate) independent_root_recalled_count: usize,
+    pub(crate) hidden_independent_root_group_refs: Vec<String>,
+    pub(crate) hidden_visibility_protected_group_refs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct AntiCollisionFailureSummary {
+    pub(crate) fixture_id: String,
+    pub(crate) scenarios: Vec<String>,
+    pub(crate) hidden_independent_root_group_refs: Vec<String>,
+    pub(crate) hidden_visibility_protected_group_refs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub(crate) struct AntiCollisionReport {
+    pub(crate) fixture_count: usize,
+    pub(crate) counts_by_band_path: BTreeMap<String, usize>,
+    pub(crate) fixture_ids_by_band_path: BTreeMap<String, Vec<String>>,
+    pub(crate) counts_by_scenario: BTreeMap<String, usize>,
+    pub(crate) fixture_ids_by_scenario: BTreeMap<String, Vec<String>>,
+    pub(crate) missing_required_band_paths: Vec<String>,
+    pub(crate) missing_required_scenarios: Vec<String>,
+    pub(crate) independent_root_total_count: usize,
+    pub(crate) independent_root_recalled_count: usize,
+    pub(crate) independent_root_recall_rate: f64,
+    pub(crate) false_hidden_suppression_count: usize,
+    pub(crate) fixtures_with_false_hidden: Vec<AntiCollisionFailureSummary>,
+}
+
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct CascadeCountSummary {
     pub(crate) independent_episode_count: usize,
@@ -307,6 +351,7 @@ pub(crate) fn run_replay(
             "family_counts": report.family_counts,
             "selected_family_counts": report.selected_family_counts,
             "coverage": report.coverage,
+            "anti_collision": report.anti_collision,
             "selected_fixture_count": report.selected_fixture_count,
             "promoted_verified": report.promoted_verified,
             "promoted_fixture_count": report.promoted_fixture_count,
@@ -381,6 +426,63 @@ pub(crate) fn build_replay_report(
             ),
         });
     }
+    let anti_collision =
+        anti_collision_report_for(&selected, &summaries, fixture_filter, family_filter, subset);
+    if fixture_filter.is_none()
+        && family_filter.is_none()
+        && matches!(subset, SnapshotSubset::Representative)
+    {
+        if !anti_collision.missing_required_band_paths.is_empty() {
+            failures.push(VerificationFailure {
+                layer: "anti_collision.coverage.band_path".to_string(),
+                fixture_id: "corpus".to_string(),
+                summary: format!(
+                    "anti-collision coverage missing required band/path combinations: {}",
+                    anti_collision.missing_required_band_paths.join(", ")
+                ),
+            });
+        }
+        if !anti_collision.missing_required_scenarios.is_empty() {
+            failures.push(VerificationFailure {
+                layer: "anti_collision.coverage.scenario".to_string(),
+                fixture_id: "corpus".to_string(),
+                summary: format!(
+                    "anti-collision coverage missing required scenarios: {}",
+                    anti_collision.missing_required_scenarios.join(", ")
+                ),
+            });
+        }
+        if anti_collision.false_hidden_suppression_count > 0 {
+            let affected = anti_collision
+                .fixtures_with_false_hidden
+                .iter()
+                .map(|fixture| fixture.fixture_id.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+            failures.push(VerificationFailure {
+                layer: "anti_collision.false_hidden_suppression".to_string(),
+                fixture_id: "corpus".to_string(),
+                summary: format!(
+                    "anti-collision fixtures hid {} visibility-protected diagnostic(s): {affected}",
+                    anti_collision.false_hidden_suppression_count
+                ),
+            });
+        }
+        if anti_collision.independent_root_total_count == 0
+            || anti_collision.independent_root_recalled_count
+                != anti_collision.independent_root_total_count
+        {
+            failures.push(VerificationFailure {
+                layer: "anti_collision.independent_root_recall".to_string(),
+                fixture_id: "corpus".to_string(),
+                summary: format!(
+                    "anti-collision independent-root recall was {}/{}",
+                    anti_collision.independent_root_recalled_count,
+                    anti_collision.independent_root_total_count
+                ),
+            });
+        }
+    }
 
     let report = ReplayReport {
         family_counts: counts.clone(),
@@ -393,6 +495,7 @@ pub(crate) fn build_replay_report(
         subset: subset_name(subset).to_string(),
         metrics: acceptance_metrics_for(&summaries),
         native_parity: native_parity_report_for(&selected, &failures),
+        anti_collision,
         fixtures: summaries,
         failures: failures.clone(),
     };
@@ -597,6 +700,17 @@ pub(crate) fn collect_acceptance_fixture_summary(
     let default_surface_counts =
         render_surface_counts(default_view_model.as_ref(), &default_render_result);
     let cascade_summary = cascade_count_summary(&replay.document);
+    let anti_collision = fixture_is_anti_collision(fixture);
+    let anti_collision_scenarios = anti_collision_scenarios_for_fixture(fixture);
+    let anti_collision_visibility = if anti_collision {
+        anti_collision_visibility_summary(
+            &replay.document,
+            default_view_model.as_ref(),
+            &default_render_result,
+        )
+    } else {
+        AntiCollisionVisibilitySummary::default()
+    };
     let raw_line_count = text_line_count(
         &fs::read_to_string(fixture.snapshot_root().join("stderr.raw")).map_err(|error| {
             VerificationFailure {
@@ -745,6 +859,19 @@ pub(crate) fn collect_acceptance_fixture_summary(
         default_summary_only_group_count: default_surface_counts.summary_only_group_count,
         default_hidden_group_count: default_surface_counts.hidden_group_count,
         default_suppressed_group_count: default_surface_counts.suppressed_group_count,
+        anti_collision,
+        anti_collision_scenarios,
+        anti_collision_independent_root_total_count: anti_collision_visibility
+            .independent_root_total_count,
+        anti_collision_independent_root_recalled_count: anti_collision_visibility
+            .independent_root_recalled_count,
+        anti_collision_false_hidden_suppression_count: anti_collision_visibility
+            .hidden_visibility_protected_group_refs
+            .len(),
+        anti_collision_hidden_independent_root_refs: anti_collision_visibility
+            .hidden_independent_root_group_refs,
+        anti_collision_hidden_visibility_protected_refs: anti_collision_visibility
+            .hidden_visibility_protected_group_refs,
         verified: false,
     })
 }
@@ -1210,6 +1337,95 @@ pub(crate) fn render_surface_counts(
         summary_only_group_count,
         hidden_group_count,
         suppressed_group_count,
+    }
+}
+
+pub(crate) fn fixture_is_anti_collision(fixture: &Fixture) -> bool {
+    fixture_has_any_tag(fixture, &[ANTI_COLLISION_TAG])
+        || fixture
+            .meta
+            .tags
+            .iter()
+            .any(|tag| tag.starts_with(ANTI_COLLISION_TAG_PREFIX))
+}
+
+pub(crate) fn anti_collision_scenarios_for_fixture(fixture: &Fixture) -> Vec<String> {
+    let mut scenarios = fixture
+        .meta
+        .tags
+        .iter()
+        .filter_map(|tag| tag.strip_prefix(ANTI_COLLISION_TAG_PREFIX))
+        .filter(|scenario| !scenario.is_empty())
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    scenarios.sort();
+    scenarios.dedup();
+    scenarios
+}
+
+pub(crate) fn anti_collision_visibility_summary(
+    document: &DiagnosticDocument,
+    view_model: Option<&diag_render::RenderViewModel>,
+    render_result: &diag_render::RenderResult,
+) -> AntiCollisionVisibilitySummary {
+    let Some(document_analysis) = document.document_analysis.as_ref() else {
+        return AntiCollisionVisibilitySummary::default();
+    };
+
+    let mut visible_group_refs = render_result
+        .displayed_group_refs
+        .iter()
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    visible_group_refs.extend(view_model.into_iter().flat_map(|model| {
+        model
+            .summary_only_groups
+            .iter()
+            .map(|group| group.group_id.clone())
+    }));
+
+    let mut hidden_independent_root_group_refs = document_analysis
+        .group_analysis
+        .iter()
+        .filter(|group| {
+            matches!(
+                group.role,
+                GroupCascadeRole::LeadRoot | GroupCascadeRole::IndependentRoot
+            )
+        })
+        .filter(|group| !visible_group_refs.contains(group.group_ref.as_str()))
+        .map(|group| group.group_ref.clone())
+        .collect::<Vec<_>>();
+    hidden_independent_root_group_refs.sort();
+    hidden_independent_root_group_refs.dedup();
+
+    let mut hidden_visibility_protected_group_refs = document_analysis
+        .group_analysis
+        .iter()
+        .filter(|group| !matches!(group.visibility_floor, VisibilityFloor::HiddenAllowed))
+        .filter(|group| !visible_group_refs.contains(group.group_ref.as_str()))
+        .map(|group| group.group_ref.clone())
+        .collect::<Vec<_>>();
+    hidden_visibility_protected_group_refs.sort();
+    hidden_visibility_protected_group_refs.dedup();
+
+    let independent_root_total_count = document_analysis
+        .group_analysis
+        .iter()
+        .filter(|group| {
+            matches!(
+                group.role,
+                GroupCascadeRole::LeadRoot | GroupCascadeRole::IndependentRoot
+            )
+        })
+        .count();
+
+    AntiCollisionVisibilitySummary {
+        independent_root_total_count,
+        independent_root_recalled_count: independent_root_total_count
+            .saturating_sub(hidden_independent_root_group_refs.len()),
+        hidden_independent_root_group_refs,
+        hidden_visibility_protected_group_refs,
     }
 }
 
@@ -2195,6 +2411,105 @@ pub(crate) fn fixture_has_any_tag(fixture: &Fixture, needles: &[&str]) -> bool {
         .any(|tag| needles.iter().any(|needle| tag == needle))
 }
 
+pub(crate) fn anti_collision_report_for(
+    fixtures: &[&Fixture],
+    summaries: &[AcceptanceFixtureSummary],
+    fixture_filter: Option<&str>,
+    family_filter: Option<&str>,
+    subset: SnapshotSubset,
+) -> AntiCollisionReport {
+    let mut report = AntiCollisionReport::default();
+
+    for fixture in fixtures
+        .iter()
+        .copied()
+        .filter(|fixture| fixture_is_anti_collision(fixture))
+    {
+        report.fixture_count += 1;
+        let band = version_band_label(fixture_support_band(fixture)).to_string();
+        let path = processing_path_label(fixture_processing_path(fixture)).to_string();
+        let band_path = format!("{band}/{path}");
+        *report
+            .counts_by_band_path
+            .entry(band_path.clone())
+            .or_insert(0) += 1;
+        report
+            .fixture_ids_by_band_path
+            .entry(band_path)
+            .or_default()
+            .push(fixture.fixture_id().to_string());
+
+        for scenario in anti_collision_scenarios_for_fixture(fixture) {
+            *report
+                .counts_by_scenario
+                .entry(scenario.clone())
+                .or_insert(0) += 1;
+            report
+                .fixture_ids_by_scenario
+                .entry(scenario)
+                .or_default()
+                .push(fixture.fixture_id().to_string());
+        }
+    }
+
+    for fixture_ids in report.fixture_ids_by_band_path.values_mut() {
+        fixture_ids.sort();
+        fixture_ids.dedup();
+    }
+    for fixture_ids in report.fixture_ids_by_scenario.values_mut() {
+        fixture_ids.sort();
+        fixture_ids.dedup();
+    }
+
+    for summary in summaries.iter().filter(|summary| summary.anti_collision) {
+        report.independent_root_total_count += summary.anti_collision_independent_root_total_count;
+        report.independent_root_recalled_count +=
+            summary.anti_collision_independent_root_recalled_count;
+        report.false_hidden_suppression_count +=
+            summary.anti_collision_false_hidden_suppression_count;
+
+        if !summary
+            .anti_collision_hidden_visibility_protected_refs
+            .is_empty()
+        {
+            report
+                .fixtures_with_false_hidden
+                .push(AntiCollisionFailureSummary {
+                    fixture_id: summary.fixture_id.clone(),
+                    scenarios: summary.anti_collision_scenarios.clone(),
+                    hidden_independent_root_group_refs: summary
+                        .anti_collision_hidden_independent_root_refs
+                        .clone(),
+                    hidden_visibility_protected_group_refs: summary
+                        .anti_collision_hidden_visibility_protected_refs
+                        .clone(),
+                });
+        }
+    }
+
+    report.independent_root_recall_rate = if report.independent_root_total_count > 0 {
+        report.independent_root_recalled_count as f64 / report.independent_root_total_count as f64
+    } else {
+        0.0
+    };
+
+    if fixture_filter.is_none()
+        && family_filter.is_none()
+        && matches!(subset, SnapshotSubset::Representative)
+    {
+        report.missing_required_band_paths = required_anti_collision_band_paths()
+            .into_iter()
+            .filter(|required| !report.counts_by_band_path.contains_key(required))
+            .collect();
+        report.missing_required_scenarios = required_anti_collision_scenarios()
+            .into_iter()
+            .filter(|required| !report.counts_by_scenario.contains_key(required))
+            .collect();
+    }
+
+    report
+}
+
 pub(crate) fn required_representative_band_paths() -> Vec<String> {
     vec![
         "gcc13_14/native_text_capture".to_string(),
@@ -2217,6 +2532,24 @@ pub(crate) fn required_representative_band_path_surfaces() -> Vec<String> {
             .map(move |surface| format!("{band_path}/{}", fixture_surface_label(surface)))
         })
         .collect()
+}
+
+pub(crate) fn required_anti_collision_band_paths() -> Vec<String> {
+    vec![
+        "gcc15_plus/dual_sink_structured".to_string(),
+        "gcc13_14/native_text_capture".to_string(),
+        "gcc13_14/single_sink_structured".to_string(),
+        "gcc9_12/native_text_capture".to_string(),
+        "gcc9_12/single_sink_structured".to_string(),
+    ]
+}
+
+pub(crate) fn required_anti_collision_scenarios() -> Vec<String> {
+    vec![
+        "same_file_dual_syntax".to_string(),
+        "syntax_flood_plus_type".to_string(),
+        "template_frontier_independent".to_string(),
+    ]
 }
 
 pub(crate) fn fixture_surfaces(fixture: &Fixture) -> Vec<FixtureSurface> {
@@ -3097,6 +3430,80 @@ mod tests {
         }
     }
 
+    fn acceptance_summary_for_fixture(
+        fixture: &Fixture,
+        independent_root_total_count: usize,
+        independent_root_recalled_count: usize,
+        hidden_visibility_protected_refs: &[&str],
+    ) -> AcceptanceFixtureSummary {
+        AcceptanceFixtureSummary {
+            fixture_id: fixture.fixture_id().to_string(),
+            family_key: fixture.family_key(),
+            title: fixture.meta.title.clone(),
+            support_band: version_band_label(fixture_support_band(fixture)).to_string(),
+            processing_path: processing_path_label(fixture_processing_path(fixture)).to_string(),
+            fallback_contract: fallback_contract_label(fallback_contract_for_fixture(fixture))
+                .to_string(),
+            expected_family: Some("syntax".to_string()),
+            actual_family: "syntax".to_string(),
+            family_match: true,
+            used_fallback: false,
+            fallback_reason: None,
+            fallback_forbidden: false,
+            unexpected_fallback: false,
+            primary_location_path: Some("src/main.c".to_string()),
+            primary_location_user_owned_required: false,
+            primary_location_user_owned: true,
+            missing_required_primary_location: false,
+            first_action_required: false,
+            first_action_present: true,
+            missing_required_first_action: false,
+            headline_rewritten: true,
+            lead_confidence: "high".to_string(),
+            high_confidence: true,
+            rendered_first_action_line: Some(3),
+            omission_notice_present: false,
+            partial_notice_present: false,
+            raw_diagnostics_hint_present: true,
+            raw_sub_block_present: false,
+            low_confidence_notice_present: false,
+            within_first_screenful_budget: true,
+            first_action_within_budget: None,
+            native_parity_dimensions: Vec::new(),
+            raw_line_count: 12,
+            rendered_line_count: 6,
+            diagnostic_compression_ratio: Some(2.0),
+            parse_time_ms: 10,
+            render_time_ms: 1,
+            cascade_analysis_present: true,
+            cascade_independent_episode_count: independent_root_total_count,
+            cascade_independent_root_count: independent_root_total_count as u32,
+            cascade_dependent_follow_on_count: 0,
+            cascade_duplicate_count: 0,
+            cascade_uncertain_count: 0,
+            default_summary_only_group_count: 0,
+            default_hidden_group_count: 0,
+            default_suppressed_group_count: 0,
+            anti_collision: fixture_is_anti_collision(fixture),
+            anti_collision_scenarios: anti_collision_scenarios_for_fixture(fixture),
+            anti_collision_independent_root_total_count: independent_root_total_count,
+            anti_collision_independent_root_recalled_count: independent_root_recalled_count,
+            anti_collision_false_hidden_suppression_count: hidden_visibility_protected_refs.len(),
+            anti_collision_hidden_independent_root_refs: if independent_root_total_count
+                == independent_root_recalled_count
+            {
+                Vec::new()
+            } else {
+                vec!["root-hidden".to_string()]
+            },
+            anti_collision_hidden_visibility_protected_refs: hidden_visibility_protected_refs
+                .iter()
+                .map(|group_ref| (*group_ref).to_string())
+                .collect(),
+            verified: true,
+        }
+    }
+
     #[test]
     fn explicit_fixture_tags_override_band_b_default_processing_path() {
         let fixture = fixture_with_tags(
@@ -3222,6 +3629,105 @@ mod tests {
                 "gcc9_12/single_sink_structured/ci".to_string(),
                 "gcc9_12/single_sink_structured/debug".to_string(),
             ]
+        );
+    }
+
+    #[test]
+    fn anti_collision_scenarios_are_extracted_from_tags() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "anti_collision",
+                "anti_collision:syntax_flood_plus_type",
+                "anti_collision:syntax_flood_plus_type",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+
+        assert!(fixture_is_anti_collision(&fixture));
+        assert_eq!(
+            anti_collision_scenarios_for_fixture(&fixture),
+            vec!["syntax_flood_plus_type".to_string()]
+        );
+    }
+
+    #[test]
+    fn anti_collision_report_requires_band_paths_and_scenarios() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "anti_collision",
+                "anti_collision:syntax_flood_plus_type",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let summary = acceptance_summary_for_fixture(&fixture, 2, 2, &[]);
+
+        let report = anti_collision_report_for(
+            &[&fixture],
+            &[summary],
+            None,
+            None,
+            SnapshotSubset::Representative,
+        );
+
+        assert_eq!(
+            report.missing_required_band_paths,
+            vec![
+                "gcc15_plus/dual_sink_structured".to_string(),
+                "gcc13_14/single_sink_structured".to_string(),
+                "gcc9_12/native_text_capture".to_string(),
+                "gcc9_12/single_sink_structured".to_string(),
+            ]
+        );
+        assert_eq!(
+            report.missing_required_scenarios,
+            vec![
+                "same_file_dual_syntax".to_string(),
+                "template_frontier_independent".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn anti_collision_report_tracks_hidden_visibility_protected_groups() {
+        let fixture = fixture_with_tags(
+            "c/syntax/case-anti-collision",
+            "15",
+            "render",
+            &[
+                "representative",
+                "anti_collision",
+                "anti_collision:same_file_dual_syntax",
+                "band:gcc15_plus",
+                "processing_path:dual_sink_structured",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let summary = acceptance_summary_for_fixture(&fixture, 2, 1, &["group-hidden"]);
+
+        let report = anti_collision_report_for(
+            &[&fixture],
+            &[summary],
+            None,
+            None,
+            SnapshotSubset::Representative,
+        );
+
+        assert_eq!(report.false_hidden_suppression_count, 1);
+        assert_eq!(report.independent_root_total_count, 2);
+        assert_eq!(report.independent_root_recalled_count, 1);
+        assert_eq!(report.fixtures_with_false_hidden.len(), 1);
+        assert_eq!(
+            report.fixtures_with_false_hidden[0].hidden_visibility_protected_group_refs,
+            vec!["group-hidden".to_string()]
         );
     }
 

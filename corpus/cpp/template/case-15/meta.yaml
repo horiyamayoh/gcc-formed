@@ -1,17 +1,16 @@
-corpus_id: c/syntax/case-09
-title: missing closing parenthesis in if condition
+corpus_id: cpp/template/case-15
+title: GCC13 single-sink template flood with separate independent frontier
 tags:
-- syntax
+- template
 - phase1
 - beta-bar
 - representative
 - anti_collision
-- 'anti_collision:same_file_dual_syntax'
-- 'band:gcc9_12'
-- 'processing_path:native_text_capture'
+- 'anti_collision:template_frontier_independent'
+- 'band:gcc13_14'
+- 'processing_path:single_sink_structured'
 - 'surface:default'
 - 'surface:ci'
-- 'surface:debug'
 - 'fallback_contract:bounded_render'
 ownership: curated
 provenance: hand-authored-minimal-repro

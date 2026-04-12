@@ -1817,8 +1817,8 @@ fn unix_now_seconds() -> u64 {
 mod tests {
     use super::*;
     use crate::commands::corpus::{
-        AcceptanceFixtureSummary, FixtureCoverageReport, NativeParityReport, ReplayReport,
-        VerificationFailure, acceptance_metrics_for,
+        AcceptanceFixtureSummary, AntiCollisionReport, FixtureCoverageReport, NativeParityReport,
+        ReplayReport, VerificationFailure, acceptance_metrics_for,
     };
     use std::collections::BTreeMap;
 
@@ -1875,6 +1875,13 @@ mod tests {
             default_summary_only_group_count: 0,
             default_hidden_group_count: 0,
             default_suppressed_group_count: 0,
+            anti_collision: false,
+            anti_collision_scenarios: Vec::new(),
+            anti_collision_independent_root_total_count: 0,
+            anti_collision_independent_root_recalled_count: 0,
+            anti_collision_false_hidden_suppression_count: 0,
+            anti_collision_hidden_independent_root_refs: Vec::new(),
+            anti_collision_hidden_visibility_protected_refs: Vec::new(),
             verified: true,
         }
     }
@@ -1891,6 +1898,7 @@ mod tests {
             subset: "all".to_string(),
             metrics: acceptance_metrics_for(&fixtures),
             native_parity: NativeParityReport::default(),
+            anti_collision: AntiCollisionReport::default(),
             fixtures,
             failures: Vec::new(),
         }

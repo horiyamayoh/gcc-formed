@@ -1,0 +1,295 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function ‘broken_if’:\nsrc/main.c:2:10: error: expected ‘)’ before ‘{’ token\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\nsrc/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 489,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-10a2335c165b",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "a89021ff1dbdb717c3a5281ab671a7e45cf80ee7245edac71111b06d43bf6bed",
+        "raw": "393fc3eda1cb9cc508fc4b2b6f1ed6cbb86f2ad0990fa114b665df5a8b28ea94",
+        "structural": "c3c2c294d13c4c8004796d1e72082701e816b14c9dd85d14a2f8c53e17005dcc"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 10,
+            "column_native": 10,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:10:2:10",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "syntax",
+        "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-169799b2668b",
+        "headline": "syntax error",
+        "matched_conditions": [
+          "message_contains=expected",
+          "message_contains=before",
+          "phase=parse"
+        ],
+        "rule_id": "rule.family.syntax.phase_or_message"
+      },
+      "fingerprints": {
+        "family": "735a054c62349451209d77142d9418940637d097e49bf29395e1b5cd5cd8ea3b",
+        "raw": "dd5417870a3854912ad4f8e2142f8c7e0cb0990f4fed43349eb52cb64f9c22c6",
+        "structural": "7a62fb9f4663edbee4b69723c35d0f47498f302f06444697c3fd3c4ccacf7164"
+      },
+      "id": "residual-compiler-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:6:1:6:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "parse",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "linker",
+        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+        "group_ref": "group-deedd183b913",
+        "headline": "linker reported a failure",
+        "matched_conditions": [
+          "phase=link"
+        ],
+        "rule_id": "rule.family.linker.structured_or_message"
+      },
+      "fingerprints": {
+        "family": "cc0f31023b6c107f232aa27c5739d767cd4794bb502ce39174d2a362f0d0c1f5",
+        "raw": "cb875843cff9964b10354bcc78beb41c3c3c9aa2e51d6b0ed1696ae28da84be6",
+        "structural": "2ace5dda3ac8733d6f500e0238a240d4593e02d95a62ea39c86f6ea3a34336cc"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "src/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-bd520fdeee1e",
+          "family": "syntax",
+          "lead_group_ref": "group-10a2335c165b",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-10a2335c165b"
+          ]
+        },
+        {
+          "confidence": 0.8700000047683716,
+          "episode_ref": "episode-499327c95b20",
+          "family": "syntax",
+          "lead_group_ref": "group-169799b2668b",
+          "lead_root_score": 0.8700000047683716,
+          "member_group_refs": [
+            "group-169799b2668b"
+          ]
+        },
+        {
+          "confidence": 0.4000000059604645,
+          "episode_ref": "episode-990028edfeeb",
+          "family": "linker",
+          "lead_group_ref": "group-deedd183b913",
+          "lead_root_score": 0.4000000059604645,
+          "member_group_refs": [
+            "group-deedd183b913"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-bd520fdeee1e",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-10a2335c165b",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-499327c95b20",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-169799b2668b",
+        "independence_score": 0.8700000047683716,
+        "role": "independent_root",
+        "root_score": 0.8700000047683716,
+        "summary_likelihood": 0.37300002574920654,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-990028edfeeb",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "no_primary_location"
+        ],
+        "group_ref": "group-deedd183b913",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.4000000059604645,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 2,
+      "uncertain_count": 1
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1239feb9ea4ea7959b58f588afcf032748dd9bab56f5bfe719042f34354e31f3",
+    "raw": "b2ad276b4b9bfa3494e863e097bb10e62763ac45739ab47c51ec06382991db85",
+    "structural": "85b88511c6bda5f48bd52afd94a54057a04a667ee974874336dce164e7d25af0"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

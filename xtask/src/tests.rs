@@ -111,6 +111,13 @@ fn acceptance_summary(
         default_summary_only_group_count: 0,
         default_hidden_group_count: 0,
         default_suppressed_group_count: 0,
+        anti_collision: false,
+        anti_collision_scenarios: Vec::new(),
+        anti_collision_independent_root_total_count: 0,
+        anti_collision_independent_root_recalled_count: 0,
+        anti_collision_false_hidden_suppression_count: 0,
+        anti_collision_hidden_independent_root_refs: Vec::new(),
+        anti_collision_hidden_visibility_protected_refs: Vec::new(),
         verified: true,
     }
 }

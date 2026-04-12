@@ -1,0 +1,912 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5355,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "template",
+        "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "group_ref": "group-ab35fbd41732",
+        "headline": "template instantiation failed",
+        "matched_conditions": [
+          "context=template_instantiation",
+          "message_contains=template",
+          "phase=instantiate"
+        ],
+        "rule_id": "rule.family.template.structured_or_message"
+      },
+      "context_chains": [
+        {
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "04902793a5e1d730f0710d529e694e3ac8a6015380933796d2ff26b05d8d1d20",
+        "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
+        "structural": "b09e996de5dc49df8175b1cc6db9f2c9a6dccc15ef0eff3c8ccf6df385f337be"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 22,
+            "column_native": 22,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 17
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:17:22:17:22",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "class template argument deduction failed:"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "template",
+        "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "group_ref": "group-5ac0d513e068",
+        "headline": "template instantiation failed",
+        "matched_conditions": [
+          "context=template_instantiation",
+          "child_note_kind=template_context",
+          "child_message_contains=template",
+          "child_message_contains=deduction/substitution",
+          "child_message_contains=deduced conflicting",
+          "phase=instantiate"
+        ],
+        "rule_id": "rule.family.template.structured_or_message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "e21b15f854aa88ca02213c378ed2ec17941e2b92a7e168f506cdbdfce044c1da",
+            "raw": "a3dfa7bfb3b7755c4b7f81e29797243ee96b71269d28f92e234e77092128c78f",
+            "structural": "95a6f80610507f9d6c9149039bcd338d490839871c8ae0150f1074b6d94bd387"
+          },
+          "id": "sarif-0-1-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 11
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:11:5:11:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "a627b4372cc66cfe4eaba0d0c7107bdcf19e42109f9662a990c723811d6fcfe5"
+          },
+          "id": "sarif-0-1-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 11
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:11:5:11:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=deduced conflicting",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "ec3e08aa84c0023d80bec6ab9965fd84aa7391647fc15c625b702dad8ae2b5b6",
+            "raw": "9a1a497fca17fa3c9a18107f31df93125cece6ef9cbb1632a2a416d67e529908",
+            "structural": "1f578ba4c9f265fa25af646fe8e74cf1fdc6d5abef570337faec93288af30a32"
+          },
+          "id": "sarif-0-1-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 22,
+                "column_native": 22,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 17
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:17:22:17:22",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "1b6c32d3b1c0d1432a1993452ab990187d0153df1c88b09d4d22a05a77e93453",
+            "raw": "29d35c92859fb25844c354fad8cf3fe910967a4731999c3c916fa819338f40a4",
+            "structural": "8004e3a569daed0380d898ddd527d8f2649b454dec3297f8ff8c6cbdb184837e"
+          },
+          "id": "sarif-0-1-related-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 10
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:10:8:10:8",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "7d5c07d8af207e0cf06d1340f9bfebf5e7ff3139eb656340559a672bdf4a569a"
+          },
+          "id": "sarif-0-1-related-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 10
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:10:8:10:8",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  mismatched types ‘Pair<T>’ and ‘int’",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "c4f290f301c30794440ad55f4bc0d1baa7cf2d8be536b7336ff02d328d5da263",
+            "raw": "d9bfaa9cd844da7f40fbf94969c9ae8810622f7ad8ff29667e4997351c5c88d7",
+            "structural": "2ccd66ee527f77c6fe8034226f7f71a5f5f2081fc472217c88c6c4becd657f72"
+          },
+          "id": "sarif-0-1-related-5",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 22,
+                "column_native": 22,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 17
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:17:22:17:22",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  mismatched types ‘Pair<T>’ and ‘int’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 5,
+              "label": "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’",
+              "line": 11,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 11,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 22,
+              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)",
+              "line": 17,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 8,
+              "label": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
+              "line": 10,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 8,
+              "label": "template argument deduction/substitution failed:",
+              "line": 10,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "41aa60229bf77fc841f93cd6a7c64ad9a401a9fcffdaf5a4bbb8d71cbf06482b",
+        "raw": "92b10ee1450405a7d493e83644ca908eb18ef2fcff1aff545f3d25ceb7a95ec9",
+        "structural": "1611ed5b466506c3a582956d18f2f5b92dc75894ac2972b3ed7d457174288e7c"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 22,
+            "column_native": 22,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 17
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:17:22:17:22",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘Pair(int, const char [2])’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "template",
+        "first_action_hint": "start from the first user-owned template frame and match template arguments",
+        "group_ref": "group-2455ad7ef9f1",
+        "headline": "template instantiation failed",
+        "matched_conditions": [
+          "context=template_instantiation",
+          "child_note_kind=template_context",
+          "child_message_contains=template",
+          "child_message_contains=deduction/substitution",
+          "phase=instantiate"
+        ],
+        "rule_id": "rule.family.template.structured_or_message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "a8f1b41e4e113c255cd14384a0cc8f3a29788611af52d70bbc023413ba19ff19",
+            "raw": "58ab373f6fbf447aac90a8ec4b2e48428abde4ed1a102b62a9d5f67d38218c3c",
+            "structural": "3b22cc5ec17a3ed7cb3ce5635069956912406095a5990c697bc4390f382128cb"
+          },
+          "id": "sarif-0-2-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T> void expect_ptr(T*)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "ed0039f7e01a5353138babd7012ada6354f27681edef68518a4345fea0a7eb85"
+          },
+          "id": "sarif-0-2-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  mismatched types ‘T*’ and ‘int’",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "bcfb48f8f1f5734ccdac0b6f06fabe40790db21c8ae551db111a279adc3d5df3",
+            "raw": "887a0e02834531415caeb1e04610910ba5b261087e7c5d46db51c1f90a33a2ba",
+            "structural": "5e43ea0b5aa2dedeb0ad132e3d90550c6e2f7566932f7ca09d9c13c0c34edd57"
+          },
+          "id": "sarif-0-2-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 6
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:6:5:6:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  mismatched types ‘T*’ and ‘int’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "candidate: ‘template<class T> void expect_ptr(T*)’",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "84242b6d9d199106eed6fcbfc8f123029b2d54e7f8014897bbeecfa86eeec972",
+        "raw": "134bdaf80c03ce8f334b3579e8d0dff9c5cff3824bf113b09920a742706bb756",
+        "structural": "c2e76409792d5faab9cf1718322892243d8bb4e77e1db8a7ad260cdcb49921dd"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:5:6:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘expect_ptr(int&)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "instantiate",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-53ba6116dbd0",
+          "family": "template",
+          "lead_group_ref": "group-ab35fbd41732",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-ab35fbd41732"
+          ]
+        },
+        {
+          "confidence": 0.9300000071525574,
+          "episode_ref": "episode-acbdbf465b9b",
+          "family": "template",
+          "lead_group_ref": "group-5ac0d513e068",
+          "lead_root_score": 0.9300000071525574,
+          "member_group_refs": [
+            "group-5ac0d513e068"
+          ]
+        },
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-66690bb62f2b",
+          "family": "template",
+          "lead_group_ref": "group-2455ad7ef9f1",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-2455ad7ef9f1"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-53ba6116dbd0",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-ab35fbd41732",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-acbdbf465b9b",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-5ac0d513e068",
+        "independence_score": 0.9300000071525574,
+        "role": "independent_root",
+        "root_score": 0.9300000071525574,
+        "summary_likelihood": 0.367000013589859,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-66690bb62f2b",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-2455ad7ef9f1",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 3,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a024813826ec2ea0d75528be931f56a9539ed2ce6346a97237681a81c8785183",
+    "raw": "12b23c527d5403f3b1869efdcef3cc306786e53f1cb9819f4c7f98e7e96bf3d3",
+    "structural": "5e94bd0820711d91c61a79ffc1362343354acbd235a5607ebf1a664156f7ee1e"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

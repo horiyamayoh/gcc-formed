@@ -1,0 +1,16 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+src/main.c:2:10: error: syntax error
+help: fix the first parser error at the user-owned location
+why: src/main.c:2:10: error: expected ‘)’ before ‘{’ token
+| src/main.c:2:10
+|     if (1 {
+|          ^
+raw:
+  src/main.c:2:10: error: expected ‘)’ before ‘{’ token
+src/main.c:6:1: error: syntax error
+help: fix the first parser error at the user-owned location
+why: src/main.c:6:1: error: expected expression before ‘}’ token
+| src/main.c:6:1
+| }
+| ^
+note: omitted additional details; rerun with --formed-profile=verbose

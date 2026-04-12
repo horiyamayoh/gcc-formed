@@ -5,6 +5,7 @@ tags:
 - phase1
 - beta-bar
 - representative
+- anti_collision
 - 'band:gcc9_12'
 - 'processing_path:single_sink_structured'
 - 'surface:default'
