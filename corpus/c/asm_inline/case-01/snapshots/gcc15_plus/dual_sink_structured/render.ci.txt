@@ -1,0 +1,8 @@
+src/main.c:3:5: error: inline assembly constraint error
+help: check the asm constraint letters and ensure registers/operands match the template
+why: impossible constraint in ‘asm’
+| src/main.c:3:5
+|     __asm__("" : : "i"(value));
+|     ^
+note: suppressed 1 warning(s) while focusing on the failing group
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

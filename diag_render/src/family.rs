@@ -868,6 +868,10 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("openmp")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("scope_declaration")),
             RendererFamilyKind::Syntax
         );
@@ -944,7 +948,19 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("asm_inline")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("bit_field_packed")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("abi_alignment")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("thread_safety")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(
@@ -1021,6 +1037,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("three_way_comparison")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("string_character")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(

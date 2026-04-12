@@ -1,0 +1,18 @@
+language: c
+standard: c11
+target_compiler_family: gcc
+version_band: gcc15_plus
+support_level: preview
+major_version_selector: '15'
+argv:
+  - -Wall
+  - -Wextra
+  - -c
+  - src/main.c
+cwd_policy: fixture_root
+env_overrides:
+  LC_MESSAGES: C
+source_readability_expectation: readable
+linker_involvement: false
+expected_mode: render
+canonical_path_policy: relative_to_cwd

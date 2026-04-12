@@ -409,16 +409,62 @@ mod tests {
     }
 
     #[test]
+    fn classifies_asm_inline_from_message_terms() {
+        let node = sample_node("impossible constraint in 'asm'");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("asm_inline"));
+    }
+
+    #[test]
     fn classifies_abi_alignment_from_message_terms() {
-        let node = sample_node(
-            "taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]",
-        );
+        let node = sample_node("cast increases required alignment of target type [-Wcast-align]");
         let mut document = sample_document(node);
 
         enrich_document(&mut document, Path::new("/tmp/project"));
 
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("abi_alignment"));
+    }
+
+    #[test]
+    fn classifies_bit_field_packed_before_abi_alignment() {
+        let node = sample_node(
+            "taking address of packed member of 'struct Packet' may result in an unaligned pointer value [-Waddress-of-packed-member]",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("bit_field_packed"));
+    }
+
+    #[test]
+    fn classifies_openmp_from_message_terms() {
+        let node = sample_node("ignoring '#pragma omp for' [-Wunknown-pragmas]");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("openmp"));
+    }
+
+    #[test]
+    fn classifies_thread_safety_from_message_terms() {
+        let node = sample_node(
+            "operand type 'struct Blob *' is incompatible with argument 1 of '__atomic_store_n'",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("thread_safety"));
     }
 
     #[test]
@@ -526,6 +572,17 @@ mod tests {
 
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("three_way_comparison"));
+    }
+
+    #[test]
+    fn classifies_string_character_before_syntax() {
+        let node = sample_node("missing terminating \" character");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("string_character"));
     }
 
     #[test]

@@ -1,7 +1,7 @@
-src/main.c:7:12: warning: ABI or alignment compatibility issue
+src/main.c:6:12: warning: ABI or alignment compatibility issue
 help: check struct packing, alignment attributes, and target-specific ABI requirements
-why: taking address of packed member of 'struct Packed' may result in an unaligned pointer value
-| src/main.c:7:12
-|     return &packed->value;
+why: cast increases required alignment of target type
+| src/main.c:6:12
+|     return (BigAlign *)(raw + 1);
 |            ^
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

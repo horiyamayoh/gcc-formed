@@ -1,5 +1,5 @@
 corpus_id: c/abi_alignment/case-01
-title: packed member alignment warning
+title: cast alignment warning
 tags:
   - abi_alignment
   - phase1

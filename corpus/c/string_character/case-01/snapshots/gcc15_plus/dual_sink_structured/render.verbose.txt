@@ -1,0 +1,10 @@
+warning: character or string literal issue
+--> src/main.c:2:13
+help: check for unintended multi-character constants, trigraphs, or unterminated strings
+why: multi-character character constant
+| src/main.c:2:13
+|     int c = 'ab';
+|             ^
+debug: rule_id=rule.family.string_character.message_terms
+debug: matched_conditions=message_contains=multi-character character constant, phase=parse
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

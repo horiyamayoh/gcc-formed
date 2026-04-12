@@ -579,7 +579,7 @@ curated corpus は、**この製品が何をサポートしていると言える
 Phase 1 の seed corpus 目標:
 
 - **最低 50 件**
-- 推奨 **80〜124 件**
+- 推奨 **80〜129 件**
 - うち C++ template/macro/linker 系が **40% 以上**
 
 理由:
@@ -1390,7 +1390,7 @@ Done 条件:
 
 Done 条件:
 
-- curated corpus 80〜124 件
+- curated corpus 80〜129 件
 - GCC 13/14 product-path gate 安定
 - unexpected fallback tracking 可能
 - harvested trace promotion pipeline 運用開始

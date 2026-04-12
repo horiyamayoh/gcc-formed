@@ -1,0 +1,122 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1337,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "thread_safety",
+        "first_action_hint": "ensure the type is trivially copyable for atomic operations or fix the thread_local linkage",
+        "headline": "thread safety or atomic operation error",
+        "matched_conditions": [
+          "message_contains=__atomic_",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.thread_safety.message_terms"
+      },
+      "fingerprints": {
+        "family": "a3c76fa05f3975f8a65ac9b1bca059b90a5d0f6d45ebd2db12c61d7c554189a7",
+        "raw": "08f8891c5c5e2ee9bf8870e577f530789f4ba77466f92384feed46cfddeb3db1",
+        "structural": "4ed7d819d14b1168cf201aec4df338bc7bec757d714a0d8e13c88fbcbcc93df0"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:7:5:7:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "operand type ‘struct Blob *’ is incompatible with argument 1 of ‘__atomic_store_n’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "82ed579f622d9606f746e99e2a2cd3aa39c79a0cd83cccfcdb4676c0758a6b5e",
+    "raw": "74cf2c57567ddd6235f0a4a38b7a7dbad6cea98a171387d1eecc65327bd25571",
+    "structural": "a8ae05381d70ce80da1ec3009e99620a696ccd33cb768654e4e2dbccd3f1c263"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

@@ -217,16 +217,25 @@ fn is_assemble_message(message: &str) -> bool {
 }
 
 fn infer_internal_compiler_phase(message: &str) -> Option<Phase> {
+    let is_inline_asm_message = message.contains("impossible constraint in")
+        && message.contains("asm")
+        || message.contains("does not match constraints") && message.contains("asm")
+        || message.contains("'asm' operand") && message.contains("constraint")
+        || message.contains("invalid 'asm'")
+        || message.contains("operand number out of range") && message.contains("asm")
+        || message.contains("invalid register name") && message.contains("asm");
+    let is_codegen_message = is_inline_asm_message
+        || message.contains("during rtl pass")
+        || message.contains("during code generation")
+        || message.contains("during expand");
+
     if message.contains("during gimple pass")
         || message.contains("during ipa pass")
         || message.contains("optimization pass")
         || message.contains("optimizing")
     {
         Some(Phase::Optimize)
-    } else if message.contains("during rtl pass")
-        || message.contains("during code generation")
-        || message.contains("during expand")
-    {
+    } else if is_codegen_message {
         Some(Phase::Codegen)
     } else {
         None
@@ -238,6 +247,13 @@ fn is_parse_message(message: &str) -> bool {
         || message.contains(" at end of input")
         || message.contains("expected declaration or statement")
         || message.contains("expected expression")
+        || message.contains("multi-character character constant")
+        || message.contains("character constant too long")
+        || message.contains("missing terminating")
+        || message.contains("null character(s) preserved")
+        || message.contains("trigraph")
+        || message.contains("multi-line comment")
+        || message.contains("backslash-newline at end of file")
 }
 
 pub(crate) fn infer_related_role(message: &str) -> SemanticRole {
@@ -410,6 +426,14 @@ mod tests {
     }
 
     #[test]
+    fn infers_codegen_from_inline_asm_message() {
+        assert_eq!(
+            infer("error: impossible constraint in 'asm'"),
+            Phase::Codegen
+        );
+    }
+
+    #[test]
     fn preserves_existing_link_instantiate_parse_and_semantic_paths() {
         assert_eq!(
             infer("undefined reference to `missing_symbol`"),
@@ -429,6 +453,10 @@ mod tests {
             Phase::Instantiate
         );
         assert_eq!(infer("expected ';' before '}' token"), Phase::Parse);
+        assert_eq!(
+            infer("warning: multi-character character constant [-Wmultichar]"),
+            Phase::Parse
+        );
         assert_eq!(
             infer(
                 "passing argument 1 of 'takes_int' makes integer from pointer without a cast\nexpected 'int' but argument is of type 'const char *'"
@@ -635,9 +663,8 @@ mod tests {
 
     #[test]
     fn classifies_abi_alignment_seed_from_rulepack() {
-        let decision = classify_family_seed(
-            "taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]",
-        );
+        let decision =
+            classify_family_seed("cast increases required alignment of target type [-Wcast-align]");
 
         assert_eq!(decision.family, "abi_alignment");
         assert_eq!(decision.rule_id, "rule.family_seed.abi_alignment");
@@ -654,6 +681,70 @@ mod tests {
 
         assert_eq!(decision.family, "abi_alignment");
         assert_eq!(decision.rule_id, "rule.family_seed.abi_alignment");
+    }
+
+    #[test]
+    fn classifies_openmp_seed_from_rulepack() {
+        let decision = classify_family_seed("ignoring '#pragma omp for' [-Wunknown-pragmas]");
+
+        assert_eq!(decision.family, "openmp");
+        assert_eq!(decision.rule_id, "rule.family_seed.openmp");
+        assert_eq!(
+            decision.first_action_hint,
+            "check the variable data-sharing clause or enable -fopenmp"
+        );
+    }
+
+    #[test]
+    fn classifies_asm_inline_seed_from_rulepack() {
+        let decision = classify_family_seed("impossible constraint in 'asm'");
+
+        assert_eq!(decision.family, "asm_inline");
+        assert_eq!(decision.rule_id, "rule.family_seed.asm_inline");
+        assert_eq!(
+            decision.first_action_hint,
+            "check the asm constraint letters and ensure registers/operands match the template"
+        );
+    }
+
+    #[test]
+    fn classifies_thread_safety_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "operand type 'struct Blob *' is incompatible with argument 1 of '__atomic_store_n'",
+        );
+
+        assert_eq!(decision.family, "thread_safety");
+        assert_eq!(decision.rule_id, "rule.family_seed.thread_safety");
+        assert_eq!(
+            decision.first_action_hint,
+            "ensure the type is trivially copyable for atomic operations or fix the thread_local linkage"
+        );
+    }
+
+    #[test]
+    fn classifies_bit_field_packed_seed_before_abi_alignment() {
+        let decision = classify_family_seed(
+            "taking address of packed member of 'struct Packet' may result in an unaligned pointer value [-Waddress-of-packed-member]",
+        );
+
+        assert_eq!(decision.family, "bit_field_packed");
+        assert_eq!(decision.rule_id, "rule.family_seed.bit_field_packed");
+        assert_eq!(
+            decision.first_action_hint,
+            "check field width against the declared type or avoid taking address of packed members"
+        );
+    }
+
+    #[test]
+    fn classifies_string_character_seed_from_rulepack() {
+        let decision = classify_family_seed("multi-character character constant [-Wmultichar]");
+
+        assert_eq!(decision.family, "string_character");
+        assert_eq!(decision.rule_id, "rule.family_seed.string_character");
+        assert_eq!(
+            decision.first_action_hint,
+            "check for unintended multi-character constants, trigraphs, or unterminated strings"
+        );
     }
 
     #[test]

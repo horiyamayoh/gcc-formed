@@ -10,6 +10,12 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "openmp",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "scope_declaration",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -124,7 +130,25 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "asm_inline",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "bit_field_packed",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "abi_alignment",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "thread_safety",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },
@@ -239,6 +263,12 @@
     {
       "kind": "syntax",
       "match_exact": "three_way_comparison",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "string_character",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },

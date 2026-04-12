@@ -3,14 +3,14 @@
     {
       "encoding": "utf-8",
       "id": "stderr.raw",
-      "inline_text": "src/main.c: In function 'get_ptr':\nsrc/main.c:7:12: warning: taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]\n    7 |     return &packed->value;\n      |            ^~~~~~~~~~~~~~\n",
+      "inline_text": "",
       "kind": "compiler_stderr_text",
       "media_type": "text/plain",
       "produced_by": {
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 251,
+      "size_bytes": 0,
       "storage": "inline"
     },
     {
@@ -23,7 +23,7 @@
         "name": "gcc",
         "vendor": "GNU"
       },
-      "size_bytes": 3919,
+      "size_bytes": 1410,
       "storage": "external_ref"
     }
   ],
@@ -35,16 +35,16 @@
         "first_action_hint": "check struct packing, alignment attributes, and target-specific ABI requirements",
         "headline": "ABI or alignment compatibility issue",
         "matched_conditions": [
-          "message_contains=taking address of packed member",
-          "message_contains=unaligned pointer value",
+          "message_contains=cast increases required alignment",
+          "message_contains=increases required alignment of target type",
           "phase=semantic"
         ],
         "rule_id": "rule.family.abi_alignment.message_terms"
       },
       "fingerprints": {
-        "family": "f272feb805b338d7519aacc04b4a1622426f4def36131918e23c8da440c2f8f7",
-        "raw": "0c07ac86ede3b474a8063fbc11e94b2cc5395f3ff2a4ae6fc432eaa28b4163b4",
-        "structural": "a2efd54d96a9a192a4ac3526f8afae6d51123fdd7b2ece658970dc8c8f42ffe1"
+        "family": "7aae1d02a66549c81ebcbd3ed17e9b9bbfb50d2a521fe2da07ec3f4e155553fb",
+        "raw": "a34d9798e53dfc4869e109991568f8cccc55b6fb267413d10243e2501e6f71d8",
+        "structural": "70814ca4c5a910324c48eab9ee4d5942d352931b8651ada74602298ded505865"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -54,7 +54,7 @@
             "column_native": 12,
             "column_native_unit": "display",
             "column_origin": 1,
-            "line": 7
+            "line": 6
           },
           "file": {
             "ownership": {
@@ -65,13 +65,13 @@
             "path_raw": "src/main.c",
             "path_style": "posix"
           },
-          "id": "loc:src/main.c:7:12:7:12",
+          "id": "loc:src/main.c:6:12:6:12",
           "role": "primary",
           "source_kind": "caret"
         }
       ],
       "message": {
-        "raw_text": "taking address of packed member of 'struct Packed' may result in an unaligned pointer value"
+        "raw_text": "cast increases required alignment of target type"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -90,8 +90,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "3797d7365c4b092e394c4f600cc79a55fc372a9f553086e4f6744352f5293054",
-    "raw": "64c2aafad43b503dfc5bda02dce0aa1cd158847a9ff3d6b84dec69426499b2bf",
-    "structural": "07c5c681a9d95b86e1d68ff1ced185b7c91d7d4eece8eed59b1328e43d5162d6"
+    "raw": "b29818c570869a7bdc0199635d102442a5c72b54e7a16f671ba611b3d0a70642",
+    "structural": "d1ec40d484a8d1753bddb945d63343989106d167d31323418e56c2e5400b71ef"
   },
   "producer": {
     "name": "gcc-formed",
@@ -104,7 +104,7 @@
       "-std=c11",
       "-Wall",
       "-Wextra",
-      "-Waddress-of-packed-member",
+      "-Wcast-align=strict",
       "-c",
       "src/main.c"
     ],

@@ -1,8 +1,7 @@
-struct __attribute__((packed)) Packed {
-    char c;
+typedef struct __attribute__((aligned(16))) BigAlign {
     int value;
-};
+} BigAlign;
 
-int *get_ptr(struct Packed *packed) {
-    return &packed->value;
+BigAlign *convert(char *raw) {
+    return (BigAlign *)(raw + 1);
 }

@@ -19,6 +19,10 @@
         "text": "preprocessor directive error"
       },
       {
+        "family": "openmp",
+        "text": "OpenMP directive or clause error"
+      },
+      {
         "family": "scope_declaration",
         "text": "identifier not found in scope"
       },
@@ -87,8 +91,20 @@
         "text": "strict aliasing rule violation"
       },
       {
+        "family": "asm_inline",
+        "text": "inline assembly constraint error"
+      },
+      {
+        "family": "bit_field_packed",
+        "text": "bit-field or packed struct issue"
+      },
+      {
         "family": "abi_alignment",
         "text": "ABI or alignment compatibility issue"
+      },
+      {
+        "family": "thread_safety",
+        "text": "thread safety or atomic operation error"
       },
       {
         "family": "storage_class",
@@ -175,6 +191,10 @@
         "text": "three-way comparison (spaceship) operator error"
       },
       {
+        "family": "string_character",
+        "text": "character or string literal issue"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -203,6 +223,10 @@
       {
         "family": "preprocessor_directive",
         "text": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics"
+      },
+      {
+        "family": "openmp",
+        "text": "check the variable data-sharing clause or enable -fopenmp"
       },
       {
         "family": "scope_declaration",
@@ -273,8 +297,20 @@
         "text": "use memcpy or a union for type punning instead of pointer casts"
       },
       {
+        "family": "asm_inline",
+        "text": "check the asm constraint letters and ensure registers/operands match the template"
+      },
+      {
+        "family": "bit_field_packed",
+        "text": "check field width against the declared type or avoid taking address of packed members"
+      },
+      {
         "family": "abi_alignment",
         "text": "check struct packing, alignment attributes, and target-specific ABI requirements"
+      },
+      {
+        "family": "thread_safety",
+        "text": "ensure the type is trivially copyable for atomic operations or fix the thread_local linkage"
       },
       {
         "family": "storage_class",
@@ -359,6 +395,10 @@
       {
         "family": "three_way_comparison",
         "text": "ensure all members support <=> or provide a custom comparison operator"
+      },
+      {
+        "family": "string_character",
+        "text": "check for unintended multi-character constants, trigraphs, or unterminated strings"
       },
       {
         "family": "passthrough",
@@ -477,6 +517,23 @@
       },
       {
         "kind": "syntax",
+        "family": "openmp",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_openmp",
+        "headline_strategy": "fixed_text",
+        "headline": "OpenMP directive or clause error",
+        "first_action_hint": "check the variable data-sharing clause or enable -fopenmp",
+        "match_any": [
+          "#pragma omp",
+          "is predetermined",
+          "is not a variable in",
+          "'collapse' argument needs",
+          "ignoring '#pragma omp",
+          "-wunknown-pragmas"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "pedantic_compliance",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_pedantic_compliance",
@@ -510,6 +567,24 @@
           "follows non-static declaration",
           "follows static declaration",
           "'extern' variable has an initializer"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "string_character",
+        "phase": "parse",
+        "rule_id": "rule.residual.compiler_string_character",
+        "headline_strategy": "fixed_text",
+        "headline": "character or string literal issue",
+        "first_action_hint": "check for unintended multi-character constants, trigraphs, or unterminated strings",
+        "match_any": [
+          "multi-character character constant",
+          "character constant too long",
+          "missing terminating",
+          "null character(s) preserved",
+          "trigraph",
+          "multi-line comment",
+          "backslash-newline at end of file"
         ]
       },
       {
@@ -797,6 +872,23 @@
       },
       {
         "kind": "syntax",
+        "family": "asm_inline",
+        "phase": "codegen",
+        "rule_id": "rule.residual.compiler_asm_inline",
+        "headline_strategy": "fixed_text",
+        "headline": "inline assembly constraint error",
+        "first_action_hint": "check the asm constraint letters and ensure registers/operands match the template",
+        "match_any": [
+          "impossible constraint in",
+          "'asm' operand",
+          "does not match constraints",
+          "invalid 'asm'",
+          "operand number out of range",
+          "invalid register name"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "strict_aliasing",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_strict_aliasing",
@@ -812,6 +904,23 @@
       },
       {
         "kind": "syntax",
+        "family": "bit_field_packed",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_bit_field_packed",
+        "headline_strategy": "fixed_text",
+        "headline": "bit-field or packed struct issue",
+        "first_action_hint": "check field width against the declared type or avoid taking address of packed members",
+        "match_any": [
+          "exceeds its type",
+          "offset of packed struct member",
+          "address-of-packed-member",
+          "taking address of packed member",
+          "packed attribute causes inefficient alignment",
+          "bitfield-width"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "abi_alignment",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_abi_alignment",
@@ -822,10 +931,21 @@
           "the abi of passing",
           "parameter passing for argument",
           "cast increases required alignment",
-          "increases required alignment of target type",
-          "address-of-packed-member",
-          "taking address of packed member",
-          "unaligned pointer value"
+          "increases required alignment of target type"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "thread_safety",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_thread_safety",
+        "headline_strategy": "fixed_text",
+        "headline": "thread safety or atomic operation error",
+        "first_action_hint": "ensure the type is trivially copyable for atomic operations or fix the thread_local linkage",
+        "match_any": [
+          "trivially-copyable type",
+          "__atomic_",
+          "std::atomic"
         ]
       },
       {

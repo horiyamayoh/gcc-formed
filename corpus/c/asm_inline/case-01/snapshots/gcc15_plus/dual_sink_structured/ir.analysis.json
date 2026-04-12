@@ -1,0 +1,178 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1705,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "asm_inline",
+        "first_action_hint": "check the asm constraint letters and ensure registers/operands match the template",
+        "headline": "inline assembly constraint error",
+        "matched_conditions": [
+          "message_contains=does not match constraints",
+          "phase=codegen"
+        ],
+        "rule_id": "rule.family.asm_inline.message_terms"
+      },
+      "fingerprints": {
+        "family": "3e7511d39fa90c51970b0efba4824a164a9af39ad0533029fd780a444e05bcc2",
+        "raw": "99290841231b9c3e9c040641e681845d6fa83013b22a0f3cf51dfc53f20cc861",
+        "structural": "86d1eadcdd8601cc283027dd7c3a878488ee83aff5816972ef7149716c1495bd"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:3:5:3:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "‘asm’ operand 0 probably does not match constraints"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "codegen",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "asm_inline",
+        "first_action_hint": "check the asm constraint letters and ensure registers/operands match the template",
+        "headline": "inline assembly constraint error",
+        "matched_conditions": [
+          "message_contains=impossible constraint in",
+          "phase=codegen"
+        ],
+        "rule_id": "rule.family.asm_inline.message_terms"
+      },
+      "fingerprints": {
+        "family": "7a6ef5fde152cbe7c9d18bca660a9a104d98364b3252cdafdb9855a1fbddabc5",
+        "raw": "cc487f617843881e464c2ef6ceae5d156f32b23333101bb009f49654b1828f6d",
+        "structural": "3f571974ae8217e24b6c91e6eb0a2cbfc6c935c6ffb445d4b399bc2012840338"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:3:5:3:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "impossible constraint in ‘asm’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "codegen",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "481008686c9aa67cd3e6c7938a50ff3cfdc41961e5a406ef9a2f954b070c0dd1",
+    "raw": "7fa497d2cb7dbb24118a7e918641187dbf017c2396a4a481456ab8ccf737044f",
+    "structural": "6564b640e9a28598cdec4378b3a3e536edee5633867dcf45712916a77c48194f"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

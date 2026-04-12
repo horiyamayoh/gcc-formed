@@ -7,7 +7,7 @@ major_version_selector: '15'
 argv:
   - -Wall
   - -Wextra
-  - -Waddress-of-packed-member
+  - -Wcast-align=strict
   - -c
   - src/main.c
 cwd_policy: fixture_root

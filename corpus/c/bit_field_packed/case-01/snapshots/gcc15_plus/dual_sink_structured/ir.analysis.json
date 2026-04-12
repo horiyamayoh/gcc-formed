@@ -1,0 +1,123 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1481,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "bit_field_packed",
+        "first_action_hint": "check field width against the declared type or avoid taking address of packed members",
+        "headline": "bit-field or packed struct issue",
+        "matched_conditions": [
+          "message_contains=taking address of packed member",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.bit_field_packed.message_terms"
+      },
+      "fingerprints": {
+        "family": "f38a1c5ef9d49638cb829538a5eff670bff480e187beb382fa48f4333908e06d",
+        "raw": "bcf46424379e05230e36e3928d231a12e6419283e7068b2c4c7e136d16ddb92e",
+        "structural": "8e8795d29d4c60f1340cfd32f2e384cf8e32ed1179b283bffec06cd69593ff9c"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:7:12:7:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "e7794d1aa4d622f35199a7a77f04b287a00fb71c7cbec7a72c59d366c27fff1a",
+    "raw": "19e54b8021f1622452524611dfaf1d775d1c5e33dec60c7720fdd3664ce45f02",
+    "structural": "6cf02f198391dc5600a2304278c6b4e126b8e0eee52962c0d62aa4666b4aad2f"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Waddress-of-packed-member",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

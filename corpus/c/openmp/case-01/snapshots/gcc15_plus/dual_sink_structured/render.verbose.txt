@@ -1,0 +1,10 @@
+warning: OpenMP directive or clause error
+--> src/main.c:2:0
+help: check the variable data-sharing clause or enable -fopenmp
+why: ignoring ‘#pragma omp for’
+| src/main.c:2:0
+| #pragma omp for
+| ^
+debug: rule_id=rule.family.openmp.message_terms
+debug: matched_conditions=message_contains=#pragma omp, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1060,8 +1060,25 @@ main.cpp:2:9: note: constraints not satisfied\n";
     }
 
     #[test]
+    fn classifies_asm_inline_compiler_error() {
+        let stderr = "main.c:3:5: error: impossible constraint in 'asm'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Codegen);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("asm_inline")
+        );
+    }
+
+    #[test]
     fn classifies_abi_alignment_compiler_warning() {
-        let stderr = "main.c:7:12: warning: taking address of packed member of 'struct Packed' may result in an unaligned pointer value [-Waddress-of-packed-member]\n";
+        let stderr = "main.c:6:12: warning: cast increases required alignment of target type [-Wcast-align]\n";
         let nodes = classify(stderr, true);
 
         assert_eq!(nodes.len(), 1);
@@ -1073,6 +1090,57 @@ main.cpp:2:9: note: constraints not satisfied\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("abi_alignment")
+        );
+    }
+
+    #[test]
+    fn classifies_bit_field_packed_compiler_warning() {
+        let stderr = "main.c:6:12: warning: taking address of packed member of 'struct Packet' may result in an unaligned pointer value [-Waddress-of-packed-member]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("bit_field_packed")
+        );
+    }
+
+    #[test]
+    fn classifies_openmp_compiler_warning() {
+        let stderr = "main.c:2:1: warning: ignoring '#pragma omp for' [-Wunknown-pragmas]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("openmp")
+        );
+    }
+
+    #[test]
+    fn classifies_thread_safety_compiler_error() {
+        let stderr = "main.c:4:5: error: operand type 'struct Blob *' is incompatible with argument 1 of '__atomic_store_n'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("thread_safety")
         );
     }
 
@@ -1150,6 +1218,23 @@ helper.c:1:6: note: return value type mismatch\n";
             Some("odr_inline_linkage")
         );
         assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_string_character_compiler_warning() {
+        let stderr = "main.c:2:13: warning: multi-character character constant [-Wmultichar]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Parse);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("string_character")
+        );
     }
 
     #[test]

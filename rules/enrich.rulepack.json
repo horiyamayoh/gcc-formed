@@ -241,6 +241,35 @@
       ]
     },
     {
+      "rule_id": "rule.family.openmp.message_terms",
+      "family": "openmp",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "#pragma omp",
+            "is predetermined",
+            "is not a variable in",
+            "'collapse' argument needs",
+            "ignoring '#pragma omp",
+            "-wunknown-pragmas"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.preprocessor_directive.message_terms",
       "family": "preprocessor_directive",
       "require_any_of": [
@@ -736,6 +765,35 @@
       ]
     },
     {
+      "rule_id": "rule.family.asm_inline.message_terms",
+      "family": "asm_inline",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "impossible constraint in",
+            "'asm' operand",
+            "does not match constraints",
+            "invalid 'asm'",
+            "operand number out of range",
+            "invalid register name"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "codegen",
+          "condition": "phase=codegen",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.strict_aliasing.message_terms",
       "family": "strict_aliasing",
       "require_any_of": [
@@ -763,6 +821,35 @@
       ]
     },
     {
+      "rule_id": "rule.family.bit_field_packed.message_terms",
+      "family": "bit_field_packed",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "exceeds its type",
+            "offset of packed struct member",
+            "address-of-packed-member",
+            "taking address of packed member",
+            "packed attribute causes inefficient alignment",
+            "bitfield-width"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.abi_alignment.message_terms",
       "family": "abi_alignment",
       "require_any_of": [
@@ -777,10 +864,33 @@
             "the abi of passing",
             "parameter passing for argument",
             "cast increases required alignment",
-            "increases required alignment of target type",
-            "address-of-packed-member",
-            "taking address of packed member",
-            "unaligned pointer value"
+            "increases required alignment of target type"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.thread_safety.message_terms",
+      "family": "thread_safety",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "trivially-copyable type",
+            "__atomic_",
+            "std::atomic"
           ]
         }
       ],
@@ -1450,6 +1560,36 @@
       ]
     },
     {
+      "rule_id": "rule.family.string_character.message_terms",
+      "family": "string_character",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "multi-character character constant",
+            "character constant too long",
+            "missing terminating",
+            "null character(s) preserved",
+            "trigraph",
+            "multi-line comment",
+            "backslash-newline at end of file"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "parse",
+          "condition": "phase=parse",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.syntax.phase_or_message",
       "family": "syntax",
       "require_any_of": [
@@ -1541,6 +1681,19 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.openmp",
+      "family": "openmp",
+      "priority": 34,
+      "terms": [
+        "#pragma omp",
+        "is predetermined",
+        "is not a variable in",
+        "'collapse' argument needs",
+        "ignoring '#pragma omp",
+        "-wunknown-pragmas"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.preprocessor_directive",
       "family": "preprocessor_directive",
       "priority": 35,
@@ -1600,6 +1753,20 @@
         "does not match declaration order",
         "non-trivial designated initializers not supported",
         "has no non-static data member named"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.string_character",
+      "family": "string_character",
+      "priority": 33,
+      "terms": [
+        "multi-character character constant",
+        "character constant too long",
+        "missing terminating",
+        "null character(s) preserved",
+        "trigraph",
+        "multi-line comment",
+        "backslash-newline at end of file"
       ]
     },
     {
@@ -1677,6 +1844,29 @@
         "return-statement with a value, in function returning 'void'",
         "return-statement with no value, in function returning",
         "'return' with a value in function returning void"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.asm_inline",
+      "family": "asm_inline",
+      "priority": 31,
+      "terms": [
+        "impossible constraint in",
+        "'asm' operand",
+        "does not match constraints",
+        "invalid 'asm'",
+        "operand number out of range",
+        "invalid register name"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.thread_safety",
+      "family": "thread_safety",
+      "priority": 32,
+      "terms": [
+        "trivially-copyable type",
+        "__atomic_",
+        "std::atomic"
       ]
     },
     {
@@ -1792,6 +1982,19 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.bit_field_packed",
+      "family": "bit_field_packed",
+      "priority": 36,
+      "terms": [
+        "exceeds its type",
+        "offset of packed struct member",
+        "address-of-packed-member",
+        "taking address of packed member",
+        "packed attribute causes inefficient alignment",
+        "bitfield-width"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.abi_alignment",
       "family": "abi_alignment",
       "priority": 59,
@@ -1799,10 +2002,7 @@
         "the abi of passing",
         "parameter passing for argument",
         "cast increases required alignment",
-        "increases required alignment of target type",
-        "address-of-packed-member",
-        "taking address of packed member",
-        "unaligned pointer value"
+        "increases required alignment of target type"
       ]
     },
     {
@@ -2160,6 +2360,25 @@
       "default_confidence": "low"
     },
     {
+      "family": "openmp",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "preprocessor_directive",
       "high_when_any": [
         {
@@ -2407,6 +2626,25 @@
       "default_confidence": "low"
     },
     {
+      "family": "asm_inline",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "strict_aliasing",
       "high_when_any": [
         {
@@ -2426,7 +2664,45 @@
       "default_confidence": "low"
     },
     {
+      "family": "bit_field_packed",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "abi_alignment",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "thread_safety",
       "high_when_any": [
         {
           "all": [
@@ -2845,6 +3121,25 @@
     },
     {
       "family": "pedantic_compliance",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "string_character",
       "high_when_any": [
         {
           "all": [

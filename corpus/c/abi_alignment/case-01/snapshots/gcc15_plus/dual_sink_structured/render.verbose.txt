@@ -1,10 +1,10 @@
 warning: ABI or alignment compatibility issue
---> src/main.c:7:12
+--> src/main.c:6:12
 help: check struct packing, alignment attributes, and target-specific ABI requirements
-why: taking address of packed member of 'struct Packed' may result in an unaligned pointer value
-| src/main.c:7:12
-|     return &packed->value;
+why: cast increases required alignment of target type
+| src/main.c:6:12
+|     return (BigAlign *)(raw + 1);
 |            ^
 debug: rule_id=rule.family.abi_alignment.message_terms
-debug: matched_conditions=message_contains=taking address of packed member, message_contains=unaligned pointer value, phase=semantic
+debug: matched_conditions=message_contains=cast increases required alignment, message_contains=increases required alignment of target type, phase=semantic
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

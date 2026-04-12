@@ -1,0 +1,122 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 1316,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "openmp",
+        "first_action_hint": "check the variable data-sharing clause or enable -fopenmp",
+        "headline": "OpenMP directive or clause error",
+        "matched_conditions": [
+          "message_contains=#pragma omp",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.openmp.message_terms"
+      },
+      "fingerprints": {
+        "family": "e52a2f8b9f4631bf9d404fb5bc8e90f00c8598f8919f1dea2e7eeb203567554f",
+        "raw": "a4c106f5dee91ee8fd8146ba40052076796745f96a8f1fa06cb36315e1a530ef",
+        "structural": "8ca4b84f8f5940d8473313dd47306b34321ebec9b8dbed73a0f40243c0cc7da4"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 0,
+            "column_native": 0,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:0:2:0",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "ignoring ‘#pragma omp for’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "9781a9785359c8ab5f2f80325e1b64d1a0ce7172e5adac9601eecc42ac336949",
+    "raw": "3a7950b28638fbf8634409912f28d9b2605fab8b9be6adbe5d505788659d7dad",
+    "structural": "77b8a84144490264a1def9a28aaf705b71df0aa6980f14697f98a55ad4270db8"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

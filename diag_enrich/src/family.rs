@@ -656,7 +656,7 @@ mod tests {
     fn loads_checked_in_enrich_rulepack() {
         let rulepack = rulepack();
         assert_eq!(rulepack.rulepack_version, "phase1");
-        assert_eq!(rulepack.rules.len(), 46);
+        assert_eq!(rulepack.rules.len(), 51);
         assert!(std::ptr::eq(rulepack, checked_in_rulepack().enrich()));
         assert_eq!(
             rulepack.rule("syntax").rule_id,
