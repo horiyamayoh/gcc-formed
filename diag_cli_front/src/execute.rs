@@ -13,6 +13,9 @@ use crate::render::{
     maybe_write_trace, wrapper_surface,
 };
 use crate::self_check::handle_wrapper_introspection;
+use crate::trace_bundle::{
+    TraceBundleWriteRequest, emit_trace_bundle_note, maybe_write_trace_bundle,
+};
 use diag_adapter_contract::{DiagnosticAdapter, IngestPolicy, IngestReport};
 use diag_adapter_gcc::{AdapterError, GccAdapter, producer_for_version};
 use diag_backend_probe::ProbeCache;
@@ -124,6 +127,13 @@ fn real_main() -> Result<i32, CliError> {
             PublicExportUnavailableReason::PassthroughMode,
         );
         write_public_json(parsed.public_json.as_ref(), &export)?;
+        emit_trace_bundle_note(&maybe_write_trace_bundle(TraceBundleWriteRequest {
+            sink: parsed.trace_bundle.as_ref(),
+            paths: &paths,
+            capture: &capture,
+            bundle: &capture.bundle,
+            public_export: &export,
+        }));
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -194,6 +204,13 @@ fn real_main() -> Result<i32, CliError> {
                 .or(ingest_trace.fallback_reason),
             render_duration_ms: None,
         })?;
+        emit_trace_bundle_note(&maybe_write_trace_bundle(TraceBundleWriteRequest {
+            sink: parsed.trace_bundle.as_ref(),
+            paths: &paths,
+            capture: &capture,
+            bundle: &capture.bundle,
+            public_export: &export,
+        }));
         cleanup_capture(&capture)?;
         return Ok(exit_code);
     }
@@ -245,6 +262,13 @@ fn real_main() -> Result<i32, CliError> {
         fallback_reason: effective_fallback_reason,
         render_duration_ms: Some(render_duration_ms),
     })?;
+    emit_trace_bundle_note(&maybe_write_trace_bundle(TraceBundleWriteRequest {
+        sink: parsed.trace_bundle.as_ref(),
+        paths: &paths,
+        capture: &capture,
+        bundle: &capture.bundle,
+        public_export: &export,
+    }));
     cleanup_capture(&capture)?;
     Ok(exit_code)
 }

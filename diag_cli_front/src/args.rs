@@ -15,6 +15,7 @@ pub(crate) struct ParsedArgs {
     pub(crate) backend: Option<PathBuf>,
     pub(crate) launcher: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
+    pub(crate) trace_bundle: Option<TraceBundleSink>,
     pub(crate) debug_refs: Option<DebugRefs>,
     pub(crate) public_json: Option<PublicJsonSink>,
     pub(crate) cascade_compression_level: Option<CompressionLevel>,
@@ -44,6 +45,10 @@ impl ParsedArgs {
                 parsed.launcher = Some(PathBuf::from(path));
             } else if let Some(policy) = value.strip_prefix("--formed-trace=") {
                 parsed.trace = Some(parse_retention_policy(policy)?);
+            } else if value == "--formed-trace-bundle" {
+                parsed.trace_bundle = Some(TraceBundleSink::Auto);
+            } else if let Some(path) = value.strip_prefix("--formed-trace-bundle=") {
+                parsed.trace_bundle = Some(parse_trace_bundle_sink(path));
             } else if let Some(debug_refs) = value.strip_prefix("--formed-debug-refs=") {
                 parsed.debug_refs = Some(parse_debug_refs(debug_refs)?);
             } else if let Some(sink) = value.strip_prefix("--formed-public-json=") {
@@ -123,6 +128,12 @@ impl PublicJsonSink {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum TraceBundleSink {
+    Auto,
+    File(PathBuf),
+}
+
 pub(crate) fn parse_mode(value: &str) -> Result<ExecutionMode, CliError> {
     match value {
         "render" => Ok(ExecutionMode::Render),
@@ -187,6 +198,14 @@ pub(crate) fn parse_public_json_sink(value: &str) -> PublicJsonSink {
     }
 }
 
+pub(crate) fn parse_trace_bundle_sink(value: &str) -> TraceBundleSink {
+    if value == "auto" {
+        TraceBundleSink::Auto
+    } else {
+        TraceBundleSink::File(PathBuf::from(value))
+    }
+}
+
 pub(crate) fn parse_compression_level(value: &str) -> Result<CompressionLevel, CliError> {
     match value {
         "off" => Ok(CompressionLevel::Off),
@@ -247,6 +266,7 @@ mod tests {
             OsString::from("--formed-profile=ci"),
             OsString::from("--formed-backend-launcher=/usr/bin/ccache"),
             OsString::from("--formed-trace=always"),
+            OsString::from("--formed-trace-bundle=artifacts/case.trace-bundle.tar.gz"),
             OsString::from("--formed-debug-refs=trace_id"),
             OsString::from("--formed-public-json=out.json"),
             OsString::from("--formed-cascade-level=balanced"),
@@ -268,6 +288,12 @@ mod tests {
         assert_eq!(parsed.profile, Some(RenderProfile::Ci));
         assert_eq!(parsed.launcher, Some(PathBuf::from("/usr/bin/ccache")));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
+        assert_eq!(
+            parsed.trace_bundle,
+            Some(TraceBundleSink::File(PathBuf::from(
+                "artifacts/case.trace-bundle.tar.gz"
+            )))
+        );
         assert_eq!(parsed.debug_refs, Some(DebugRefs::TraceId));
         assert_eq!(
             parsed.public_json,
@@ -333,6 +359,23 @@ mod tests {
         assert_eq!(
             parsed.cascade_show_suppressed_count,
             Some(SuppressedCountVisibility::Never)
+        );
+    }
+
+    #[test]
+    fn parses_auto_trace_bundle_flag() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-trace-bundle"),
+            OsString::from("-c"),
+            OsString::from("main.c"),
+        ])
+        .expect("parsed args");
+
+        assert_eq!(parsed.trace_bundle, Some(TraceBundleSink::Auto));
+        assert_eq!(
+            parsed.forwarded_args,
+            vec![OsString::from("-c"), OsString::from("main.c")]
         );
     }
 

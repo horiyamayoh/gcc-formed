@@ -2,21 +2,32 @@
 //! diagnostic artifacts.
 
 use diag_core::{
-    ADAPTER_SPEC_VERSION, DiagnosticDocument, FallbackReason, GroupCascadeRole,
-    RENDERER_SPEC_VERSION, VisibilityFloor,
+    ADAPTER_SPEC_VERSION, ArtifactKind, DiagnosticDocument, FallbackReason, GroupCascadeRole,
+    IntegrityIssue, RENDERER_SPEC_VERSION, ToolInfo, VisibilityFloor,
 };
+use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::fs::{self, File};
+use std::io::Cursor;
+use std::path::{Component, Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tar::{Archive, Builder, Header};
 
 /// Default product name embedded in build manifests.
 pub const DEFAULT_PRODUCT_NAME: &str = "gcc-formed";
 /// Default maturity label for the current release cycle.
 pub const DEFAULT_MATURITY_LABEL: &str = "v1beta";
+/// Canonical filename for trace-bundle manifests.
+pub const TRACE_BUNDLE_MANIFEST_FILE: &str = "bundle.manifest.json";
+/// Canonical filename for machine-readable replay input.
+pub const TRACE_BUNDLE_REPLAY_INPUT_FILE: &str = "replay.input.json";
+/// Canonical filename for the bundled machine-readable export.
+pub const TRACE_BUNDLE_PUBLIC_EXPORT_FILE: &str = "public.export.json";
+/// Default maximum uncompressed trace-bundle payload size.
+pub const DEFAULT_TRACE_BUNDLE_SIZE_CAP_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 
 /// Policy controlling when trace artifacts are retained on disk.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -244,7 +255,7 @@ pub struct TraceTiming {
 }
 
 /// Exit status of the child compiler process.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TraceChildExit {
     /// Exit code, if the process exited normally.
     pub code: Option<i32>,
@@ -304,6 +315,159 @@ pub struct TraceArtifactRef {
     pub path: Option<PathBuf>,
 }
 
+/// High-level manifest for a shareable trace bundle archive.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceBundleManifest {
+    /// Manifest schema version.
+    pub schema_version: String,
+    /// Stable kind discriminator.
+    pub kind: String,
+    /// Trace identifier associated with the archived run.
+    pub trace_id: String,
+    /// Selected wrapper mode for the archived run.
+    pub selected_mode: String,
+    /// Selected render profile for the archived run.
+    pub selected_profile: String,
+    /// Wrapper verdict recorded for the archived run.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wrapper_verdict: Option<String>,
+    /// Resolved version band for the archived run.
+    pub version_band: String,
+    /// Resolved processing path for the archived run.
+    pub processing_path: String,
+    /// Resolved support level for the archived run.
+    pub support_level: String,
+    /// Whether the archive path was auto-selected or explicitly provided.
+    pub output_path_kind: String,
+    /// Maximum uncompressed payload size accepted by the bundler.
+    pub size_cap_bytes: u64,
+    /// Redaction guidance embedded into the bundle.
+    pub redaction: TraceBundleRedactionSummary,
+    /// Files retained inside the archive.
+    pub artifacts: Vec<TraceBundleManifestArtifact>,
+}
+
+/// Redaction status and sharing guidance for a bundle archive.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceBundleRedactionSummary {
+    /// Redaction class recorded by the wrapper.
+    pub class: String,
+    /// Whether the bundle should be reviewed before leaving the machine.
+    pub review_before_sharing: bool,
+    /// Artifacts whose contents were normalized before bundling.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub normalized_artifacts: Vec<String>,
+    /// Human-readable sharing warnings.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}
+
+/// One archived file described by the bundle manifest.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceBundleManifestArtifact {
+    /// Artifact identifier used inside the wrapper.
+    pub id: String,
+    /// Relative filename stored inside the archive.
+    pub file_name: String,
+    /// Artifact role inside the bundle.
+    pub role: String,
+    /// Whether replay expects the artifact to exist.
+    pub required: bool,
+    /// Whether the artifact may contain sensitive compiler-owned data.
+    pub sensitive: bool,
+    /// Uncompressed size of the archived artifact in bytes.
+    pub size_bytes: u64,
+}
+
+/// Replay input recorded in a shareable trace bundle.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceBundleReplayInput {
+    /// Replay-input schema version.
+    pub schema_version: String,
+    /// Stable kind discriminator.
+    pub kind: String,
+    /// Trace identifier associated with the archived run.
+    pub trace_id: String,
+    /// Selected execution mode label.
+    pub execution_mode: String,
+    /// Selected processing path label.
+    pub processing_path: String,
+    /// Structured-capture policy label.
+    pub structured_capture: String,
+    /// Native-text capture policy label.
+    pub native_text_capture: String,
+    /// Locale-handling policy label.
+    pub locale_handling: String,
+    /// Trace-retention policy label.
+    pub retention_policy: String,
+    /// Whether native color preservation was requested.
+    pub preserve_native_color: bool,
+    /// Basename of the backend tool used by the wrapper.
+    pub backend_tool: String,
+    /// Backend version string recorded in the trace.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backend_version: Option<String>,
+    /// Basename of the launcher tool when present.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launcher_tool: Option<String>,
+    /// Fingerprint of the original argument vector.
+    pub argv_hash: String,
+    /// Captured child exit status.
+    pub child_exit: TraceChildExit,
+    /// Capture-time integrity issues retained for replay.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub integrity_issues: Vec<IntegrityIssue>,
+    /// Raw-text artifacts available to the replay harness.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub raw_text_artifacts: Vec<TraceBundleReplayArtifact>,
+    /// Structured artifacts available to the replay harness.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub structured_artifacts: Vec<TraceBundleReplayArtifact>,
+}
+
+/// One replayable artifact stored in a trace bundle.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceBundleReplayArtifact {
+    /// Wrapper artifact identifier.
+    pub id: String,
+    /// Artifact kind label shared with the core capture model.
+    pub kind: ArtifactKind,
+    /// MIME type recorded for the artifact.
+    pub media_type: String,
+    /// Optional text encoding.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub encoding: Option<String>,
+    /// Artifact size in bytes when known.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
+    /// Tool metadata for the artifact when known.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub produced_by: Option<ToolInfo>,
+    /// Relative filename inside the archive.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_name: Option<String>,
+    /// Whether the artifact payload is available inside the archive.
+    pub available: bool,
+}
+
+/// One file written into or extracted from a trace bundle archive.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraceBundleArchiveEntry {
+    /// Relative filename stored inside the archive.
+    pub file_name: String,
+    /// Payload source for the archived file.
+    pub source: TraceBundleArchiveSource,
+}
+
+/// Payload source for one archived bundle file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TraceBundleArchiveSource {
+    /// Copy the payload from an existing file on disk.
+    File(PathBuf),
+    /// Write the provided bytes directly into the archive.
+    Bytes(Vec<u8>),
+}
+
 /// Trace-visible explainability for cascade-suppressed groups.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TraceCascadeExplainability {
@@ -347,6 +511,12 @@ pub enum TraceError {
     /// A JSON serialization error occurred.
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
+    /// The trace bundle payload exceeded the configured size cap.
+    #[error("trace bundle payload size {actual_bytes} bytes exceeded size cap {max_bytes} bytes")]
+    BundleSizeCapExceeded { actual_bytes: u64, max_bytes: u64 },
+    /// The trace bundle archive used an unsafe path.
+    #[error("invalid trace bundle path: {0}")]
+    InvalidBundlePath(String),
 }
 
 impl WrapperPaths {
@@ -585,6 +755,99 @@ pub fn write_manifest(path: &Path, manifest: &BuildManifest) -> Result<(), Trace
     }
     fs::write(path, serde_json::to_vec_pretty(manifest)?)?;
     secure_private_file(path)?;
+    Ok(())
+}
+
+/// Writes a gzip-compressed tar archive containing trace-bundle files.
+pub fn write_trace_bundle_archive(
+    path: &Path,
+    entries: &[TraceBundleArchiveEntry],
+    max_bytes: u64,
+) -> Result<u64, TraceError> {
+    if let Some(parent) = path.parent() {
+        let parent_existed = parent.exists();
+        fs::create_dir_all(parent)?;
+        if !parent_existed {
+            secure_private_dir(parent)?;
+        }
+    }
+
+    let mut total_bytes = 0_u64;
+    let file = File::create(path)?;
+    let encoder = GzEncoder::new(file, Compression::default());
+    let mut builder = Builder::new(encoder);
+    builder.mode(tar::HeaderMode::Deterministic);
+
+    for entry in entries {
+        validate_trace_bundle_path(&entry.file_name)?;
+        let payload = match &entry.source {
+            TraceBundleArchiveSource::File(source) => fs::read(source)?,
+            TraceBundleArchiveSource::Bytes(bytes) => bytes.clone(),
+        };
+        total_bytes = total_bytes.saturating_add(payload.len() as u64);
+        if total_bytes > max_bytes {
+            let _ = fs::remove_file(path);
+            return Err(TraceError::BundleSizeCapExceeded {
+                actual_bytes: total_bytes,
+                max_bytes,
+            });
+        }
+        let mut header = Header::new_gnu();
+        header.set_size(payload.len() as u64);
+        header.set_mode(0o600);
+        header.set_mtime(0);
+        header.set_cksum();
+        builder.append_data(&mut header, entry.file_name.as_str(), Cursor::new(payload))?;
+    }
+
+    let encoder = builder.into_inner()?;
+    encoder.finish()?;
+    secure_private_file(path)?;
+    Ok(total_bytes)
+}
+
+/// Extracts a gzip-compressed tar trace bundle into `destination`.
+pub fn extract_trace_bundle_archive(
+    bundle_path: &Path,
+    destination: &Path,
+) -> Result<(), TraceError> {
+    fs::create_dir_all(destination)?;
+    secure_private_dir(destination)?;
+
+    let decoder = GzDecoder::new(File::open(bundle_path)?);
+    let mut archive = Archive::new(decoder);
+    for entry in archive.entries()? {
+        let mut entry = entry?;
+        let relative = entry.path()?.into_owned();
+        validate_trace_bundle_path(&relative.display().to_string())?;
+        let output_path = destination.join(&relative);
+        if let Some(parent) = output_path.parent() {
+            fs::create_dir_all(parent)?;
+            secure_private_dir(parent)?;
+        }
+        entry.unpack(&output_path)?;
+        if output_path.is_file() {
+            secure_private_file(&output_path)?;
+        } else if output_path.is_dir() {
+            secure_private_dir(&output_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_trace_bundle_path(path: &str) -> Result<(), TraceError> {
+    let candidate = Path::new(path);
+    if candidate.as_os_str().is_empty() || candidate.is_absolute() {
+        return Err(TraceError::InvalidBundlePath(path.to_string()));
+    }
+    if candidate.components().any(|component| {
+        matches!(
+            component,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) {
+        return Err(TraceError::InvalidBundlePath(path.to_string()));
+    }
     Ok(())
 }
 
@@ -1288,6 +1551,116 @@ mod tests {
             fs::metadata(&manifest_path).unwrap().permissions().mode() & 0o777,
             0o600
         );
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn trace_bundle_archive_round_trips_with_private_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-bundle-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&temp).unwrap();
+        let source = temp.join("stderr.raw");
+        fs::write(&source, "error: broken\n").unwrap();
+        secure_private_file(&source).unwrap();
+        let bundle = temp.join("incident.trace-bundle.tar.gz");
+        let extract_root = temp.join("extract");
+
+        write_trace_bundle_archive(
+            &bundle,
+            &[
+                TraceBundleArchiveEntry {
+                    file_name: "trace.json".to_string(),
+                    source: TraceBundleArchiveSource::Bytes(b"{}".to_vec()),
+                },
+                TraceBundleArchiveEntry {
+                    file_name: "stderr.raw".to_string(),
+                    source: TraceBundleArchiveSource::File(source.clone()),
+                },
+            ],
+            DEFAULT_TRACE_BUNDLE_SIZE_CAP_BYTES,
+        )
+        .unwrap();
+        extract_trace_bundle_archive(&bundle, &extract_root).unwrap();
+
+        assert_eq!(
+            fs::read_to_string(extract_root.join("stderr.raw")).unwrap(),
+            "error: broken\n"
+        );
+        assert_eq!(
+            fs::metadata(&bundle).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(
+            fs::metadata(extract_root.join("stderr.raw"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[test]
+    fn trace_bundle_archive_enforces_size_cap() {
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-bundle-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&temp).unwrap();
+        let bundle = temp.join("incident.trace-bundle.tar.gz");
+
+        let error = write_trace_bundle_archive(
+            &bundle,
+            &[TraceBundleArchiveEntry {
+                file_name: "trace.json".to_string(),
+                source: TraceBundleArchiveSource::Bytes(vec![b'x'; 32]),
+            }],
+            8,
+        )
+        .unwrap_err();
+
+        assert!(matches!(
+            error,
+            TraceError::BundleSizeCapExceeded { max_bytes: 8, .. }
+        ));
+        fs::remove_dir_all(temp).unwrap();
+    }
+
+    #[test]
+    fn trace_bundle_archive_rejects_unsafe_relative_paths() {
+        let temp = std::env::temp_dir().join(format!(
+            "diag-trace-bundle-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&temp).unwrap();
+        let bundle = temp.join("incident.trace-bundle.tar.gz");
+
+        let error = write_trace_bundle_archive(
+            &bundle,
+            &[TraceBundleArchiveEntry {
+                file_name: "../escape".to_string(),
+                source: TraceBundleArchiveSource::Bytes(b"bad".to_vec()),
+            }],
+            DEFAULT_TRACE_BUNDLE_SIZE_CAP_BYTES,
+        )
+        .unwrap_err();
+
+        assert!(matches!(error, TraceError::InvalidBundlePath(_)));
         fs::remove_dir_all(temp).unwrap();
     }
 

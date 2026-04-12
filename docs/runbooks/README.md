@@ -18,4 +18,5 @@ superseded_by: []
 - [agent-handoff.md](agent-handoff.md): session restart contract and GitHub-first handoff format
 - [incident-triage.md](incident-triage.md): maintainer first-response and VersionBand / ProcessingPath routing
 - [trace-bundle-collection.md](trace-bundle-collection.md): how to capture and redact support evidence
+- [trace-bundle-replay.md](trace-bundle-replay.md): maintainer replay of stored trace bundles with explicit degradation disclosure
 - [rollback.md](rollback.md): rollback, uninstall, reinstall, and exact-pin recovery paths

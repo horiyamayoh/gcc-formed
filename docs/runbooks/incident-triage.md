@@ -29,7 +29,7 @@ Also collect:
 
 - the exact failing compiler or wrapper command
 - the reported `VersionBand`, `ProcessingPath`, and user surface
-- the trace bundle, if available
+- the trace bundle, if available, and its capture path if known
 
 If the report is security-sensitive, stop here and switch to [SECURITY.md](../../SECURITY.md).
 
@@ -70,7 +70,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 
 1. Confirm the selected mode, available backend classification, and fallback reason from `trace.json` or `--formed-self-check`.
 2. Compare the output against [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) and [KNOWN-LIMITATIONS.md](../support/KNOWN-LIMITATIONS.md).
-3. If needed, reproduce with `--formed-trace=always` and follow [trace-bundle-collection.md](trace-bundle-collection.md).
+3. If needed, reproduce with `--formed-trace-bundle[=<path>]` and follow [trace-bundle-collection.md](trace-bundle-collection.md). If the bundle already exists, hand it to [trace-bundle-replay.md](trace-bundle-replay.md) instead of re-capturing.
 
 ### Probe / capture / analysis
 
@@ -87,7 +87,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 ## 4. Initial Severity Decision
 
 - `release-blocker`: install/rollback/release integrity failures, signature/checksum bypass, or `GCC15+` regressions that break the primary shipped path
-- `high`: wrong diagnosis ranking on the reference path, raw fallback without documented reason, or broken trace collection/redaction on a supported path
+- `high`: wrong diagnosis ranking on the reference path, raw fallback without documented reason, or broken trace collection/redaction/replay disclosure on a supported path
 - `normal`: `GCC13-14` / `GCC9-12` regressions that preserve fail-open behavior, or documentation gaps
 - `low`: cosmetic wording issues that do not change routing, support boundary, or recovery procedures
 
@@ -97,5 +97,5 @@ Before handing off or fixing:
 
 - point the reporter to the relevant runbook
 - state the confirmed `VersionBand`, `ProcessingPath` if known, and user surface
-- record whether a trace bundle exists
+- record whether a trace bundle exists, where it lives, and whether replay was performed from stored contents only
 - state whether the next step is reproduction, rollback/reinstall guidance, release-path investigation, or work-package creation

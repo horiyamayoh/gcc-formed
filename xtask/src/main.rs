@@ -5,7 +5,7 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*,
+    check::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -149,6 +149,12 @@ enum Commands {
         subset: SnapshotSubset,
         #[arg(long)]
         report_dir: Option<PathBuf>,
+    },
+    ReplayTraceBundle {
+        #[arg(long)]
+        bundle: PathBuf,
+        #[arg(long, default_value = "target/trace-bundle-replay")]
+        report_dir: PathBuf,
     },
     Snapshot {
         #[arg(long, default_value = "corpus")]
@@ -475,6 +481,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             subset,
             report_dir.as_deref(),
         )?,
+        Commands::ReplayTraceBundle { bundle, report_dir } => {
+            let report = run_replay_trace_bundle(&bundle, &report_dir)?;
+            eprintln!("{}", serde_json::to_string_pretty(&report)?);
+        }
         Commands::Snapshot {
             root,
             fixture,

@@ -14,9 +14,12 @@ body:
         - [Execution model](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/process/EXECUTION-MODEL.md)
         - [Incident triage](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/incident-triage.md)
         - [Trace bundle collection](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/trace-bundle-collection.md)
+        - [Trace bundle replay](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/trace-bundle-replay.md)
         - [Rollback / reinstall](https://github.com/horiyamayoh/gcc-formed/blob/main/docs/runbooks/rollback.md)
 
         Please file bugs in terms of **VersionBand** and **ProcessingPath**, not old support-tier wording.
+
+        If you attach a trace bundle, note whether it was captured with `--formed-trace-bundle[=<path>]`, whether it used the default state-root trace location or a user-specified local path, and whether you reviewed/redacted it before sharing.
   - type: dropdown
     id: version_band
     attributes:
@@ -97,6 +100,7 @@ body:
       description: Paste paths, snippets, or filenames for attached evidence.
       placeholder: |
         trace.json:
+        trace bundle path / capture flag / redaction review:
         stderr.raw:
         diagnostics.sarif:
         diagnostics.json:

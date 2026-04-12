@@ -9,6 +9,7 @@ mod mode;
 mod public_json;
 mod render;
 mod self_check;
+mod trace_bundle;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {

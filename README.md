@@ -144,6 +144,8 @@ Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` 
 | GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `Experimental` | in-scope product path。価値の幅はより限定的 |
 | Unknown / other | `Passthrough` | `PassthroughOnly` | fail-open と provenance 保持を優先 |
 
+Trace bundle は support 用の opt-in artifact である。`--formed-trace-bundle[=<path>]` で local file として収集し、`<path>` を省略した場合は state root 配下の wrapper-managed trace root に書く。maintainer replay は stored bundle contents only で `cargo xtask replay-trace-bundle --bundle <path>` を使い、redaction や欠損で fidelity が落ちる場合は明示的にその degradation を disclose する。
+
 ## Public Machine-Readable Export
 
 CI、agent、wrapper integration が診断を機械可読で消費するときは、terminal text や internal trace を scrape せず、`--formed-public-json` を使う。

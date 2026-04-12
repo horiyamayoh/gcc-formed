@@ -1,4 +1,8 @@
 use assert_cmd::Command;
+use diag_trace::{
+    TRACE_BUNDLE_MANIFEST_FILE, TRACE_BUNDLE_PUBLIC_EXPORT_FILE, TRACE_BUNDLE_REPLAY_INPUT_FILE,
+    extract_trace_bundle_archive,
+};
 use predicates::prelude::*;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -1069,6 +1073,173 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
     assert_eq!(
         normalized_ir["captures"][1]["external_ref"].as_str(),
         Some("<capture:diagnostics.sarif>")
+    );
+}
+
+#[test]
+fn trace_bundle_archive_is_written_to_explicit_user_path_with_manifest_and_replay_input() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let bundle_path = temp
+        .path()
+        .join("artifacts")
+        .join("incident.trace-bundle.tar.gz");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg(format!("--formed-trace-bundle={}", bundle_path.display()))
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(format!(
+            "note: trace bundle saved to {}",
+            bundle_path.display()
+        )));
+
+    #[cfg(unix)]
+    assert_private_file(&bundle_path);
+
+    let extract_root = tempfile::tempdir().unwrap();
+    extract_trace_bundle_archive(&bundle_path, extract_root.path()).unwrap();
+    let manifest: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_MANIFEST_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(manifest["kind"], "gcc_formed_trace_bundle_manifest");
+    assert_eq!(manifest["version_band"], "gcc15_plus");
+    assert_eq!(manifest["processing_path"], "dual_sink_structured");
+    assert_eq!(manifest["output_path_kind"], "user_specified");
+    assert_eq!(manifest["redaction"]["class"], "restricted");
+    assert_eq!(
+        manifest["redaction"]["review_before_sharing"].as_bool(),
+        Some(true)
+    );
+    assert!(
+        manifest["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["file_name"].as_str() == Some("trace.json"))
+    );
+    assert!(
+        manifest["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["file_name"].as_str() == Some(TRACE_BUNDLE_REPLAY_INPUT_FILE))
+    );
+    assert!(
+        manifest["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|artifact| artifact["file_name"].as_str() == Some(TRACE_BUNDLE_PUBLIC_EXPORT_FILE))
+    );
+
+    let invocation: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join("invocation.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(invocation["backend_tool"].as_str(), Some("fake-gcc"));
+    assert!(invocation.get("argv").is_none());
+    assert_eq!(invocation["cwd"].as_str(), Some("<redacted>"));
+
+    let replay_input: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_REPLAY_INPUT_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        replay_input["processing_path"].as_str(),
+        Some("dual_sink_structured")
+    );
+    assert_eq!(replay_input["execution_mode"].as_str(), Some("render"));
+    assert_eq!(replay_input["backend_tool"].as_str(), Some("fake-gcc"));
+
+    let bundled_trace: Value =
+        serde_json::from_str(&fs::read_to_string(extract_root.path().join("trace.json")).unwrap())
+            .unwrap();
+    assert_eq!(bundled_trace["redaction_status"]["local_only"], false);
+    assert!(
+        bundled_trace["environment_summary"]["temp_artifact_paths"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+
+    let public_export: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_PUBLIC_EXPORT_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(public_export["status"], "available");
+}
+
+#[test]
+fn auto_trace_bundle_uses_state_root_and_remains_useful_for_passthrough_mode() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let state_root = temp.path().join("state-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_STATE_DIR", &state_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace-bundle")
+        .arg("--formed-mode=passthrough")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("note: trace bundle saved to"))
+        .stderr(predicate::str::contains(
+            "main.c:4:1: error: expected ';' before '}' token",
+        ));
+
+    let bundle_dir = state_root.join("traces").join("bundles");
+    let bundle_path = fs::read_dir(&bundle_dir)
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| path.extension().and_then(|ext| ext.to_str()) == Some("gz"))
+        .unwrap();
+    #[cfg(unix)]
+    assert_private_file(&bundle_path);
+
+    let extract_root = tempfile::tempdir().unwrap();
+    extract_trace_bundle_archive(&bundle_path, extract_root.path()).unwrap();
+    let manifest: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_MANIFEST_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(manifest["output_path_kind"], "state_root");
+    assert_eq!(manifest["processing_path"], "passthrough");
+
+    let bundled_trace: Value =
+        serde_json::from_str(&fs::read_to_string(extract_root.path().join("trace.json")).unwrap())
+            .unwrap();
+    assert_eq!(bundled_trace["selected_mode"], "passthrough");
+    assert_eq!(bundled_trace["wrapper_verdict"], "passthrough_requested");
+
+    let public_export: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_PUBLIC_EXPORT_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(public_export["status"], "unavailable");
+
+    let replay_input: Value = serde_json::from_str(
+        &fs::read_to_string(extract_root.path().join(TRACE_BUNDLE_REPLAY_INPUT_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(replay_input["execution_mode"], "passthrough");
+    assert_eq!(replay_input["processing_path"], "passthrough");
+    assert!(
+        extract_root.path().join("stderr.raw").exists(),
+        "passthrough bundle should retain raw stderr"
     );
 }
 

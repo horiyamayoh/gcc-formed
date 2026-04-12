@@ -14,7 +14,7 @@ superseded_by: []
 
 # Trace Bundle Collection
 
-Trace collection is opt-in. It should be enabled only for debugging or support, and the resulting bundle should be reviewed before sharing.
+Trace collection is opt-in. It should be enabled only for debugging or support, and the resulting bundle should be reviewed before sharing. Use `--formed-trace-bundle[=<path>]` to write a local bundle; when `<path>` is omitted, the wrapper writes under the state root trace directory.
 
 ## 1. Discover Local Paths
 
@@ -32,14 +32,20 @@ Important fields:
 - `paths.install_root`
 - backend classification fields and rollout matrix data
 
-On a default Linux/XDG layout, `trace_root` is typically under `$XDG_STATE_HOME/cc-formed/traces` or `~/.local/state/cc-formed/traces`.
+On a default Linux/XDG layout, `trace_root` is typically under `$XDG_STATE_HOME/cc-formed/traces` or `~/.local/state/cc-formed/traces`. That is the default destination when you omit an explicit bundle path.
 
 ## 2. Capture A Trace
 
 Re-run the failing command with trace retention enabled:
 
 ```bash
-gcc-formed --formed-trace=always ...
+gcc-formed --formed-trace-bundle ...
+```
+
+If you need an explicit local destination, pass it directly:
+
+```bash
+gcc-formed --formed-trace-bundle=/secure/local/path ...
 ```
 
 If you invoke through `g++-formed`, use the same flag there.
@@ -71,6 +77,7 @@ Before sharing the bundle, review it for:
 - project-specific compiler flags
 - private include paths
 - any copied source excerpts that should not leave the environment
+- whether the bundle path itself should remain private
 
 If you must redact, keep these fields intact whenever possible:
 
@@ -93,3 +100,7 @@ If a full trace bundle cannot be shared, include:
 3. the failing command line with any necessary redaction
 4. the observed path notice or compatibility/fallback line, if one was printed
 5. a note describing which trace artifacts were available locally
+
+## 6. Maintainer Replay
+
+If a maintainer needs to inspect the stored bundle later, hand it off to [trace-bundle-replay.md](trace-bundle-replay.md). Replay should operate on stored bundle contents only; it must not silently re-capture from the live host or fill gaps without saying so.

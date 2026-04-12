@@ -61,10 +61,11 @@ You should expect raw fallback when:
 
 ## Bug Reports
 
-When reporting a bug, include the selected `VersionBand`, `ProcessingPath` if known, and a trace bundle when possible. The shortest path is:
+When reporting a bug, include the selected `VersionBand`, `ProcessingPath` if known, and a trace bundle when possible. Prefer the opt-in bundle surface so the bundle stays local by default:
 
 ```bash
-gcc-formed --formed-trace=always ...
+gcc-formed --formed-trace-bundle ...
+gcc-formed --formed-trace-bundle=/secure/local/path ...
 ```
 
-Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory. If runtime output still shows legacy internal classification fields, attach them verbatim as evidence rather than translating them by hand.
+Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory. If runtime output still shows legacy internal classification fields, attach them verbatim as evidence rather than translating them by hand. If you used a user-specified trace path, mention it explicitly and note whether the bundle was redaction-reviewed before sharing.

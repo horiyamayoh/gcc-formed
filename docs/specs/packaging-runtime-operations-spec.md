@@ -853,6 +853,7 @@ self-check は network に依存してはならない。
 - install channel / artifact URL / checksum
 - failing command line（必要に応じて redaction）
 - opt-in trace bundle の有無
+- trace bundle capture surface（`--formed-trace-bundle[=<path>]`）と実際の保存先が state root か user-specified path か
 
 ### 15.5 trace bundle 方針
 
@@ -864,6 +865,23 @@ telemetry は default-off とし、support 用 trace bundle は opt-in で収集
 2. trace bundle は local file として生成する
 3. trace bundle は redaction policy に従う
 4. trace bundle path は state root 配下または user-specified path とする
+5. user-facing capture surface は `--formed-trace-bundle[=<path>]` とする
+6. `<path>` を省略した場合、wrapper は state root 配下の trace root を使う
+7. maintainer replay command は `cargo xtask replay-trace-bundle --bundle <path>` とする
+8. replay は stored bundle contents only で実行し、live stderr や live re-capture に戻してはならない
+9. replay で redaction / missing artifacts / partial bundle により fidelity が落ちる場合は、明示的な degradation disclosure を出す
+
+### 15.6 trace bundle replay
+
+trace bundle replay は support 目的の read-only operation とする。
+
+規則:
+
+1. replay は captured bundle の contents のみを使う
+2. replay は missing data を補完しない
+3. replay は bundle 内の redaction を尊重する
+4. replay は結果が degraded であるとき、その理由を出力に含める
+5. replay は live compiler の再実行を暗黙に行ってはならない
 
 ---
 

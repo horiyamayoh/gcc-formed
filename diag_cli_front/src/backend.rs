@@ -154,10 +154,14 @@ pub(crate) fn build_execution_plan(
         .debug_refs
         .or(config.render.debug_refs)
         .unwrap_or(DebugRefs::None);
-    let retention_policy = parsed
-        .trace
-        .or(config.trace.retention_policy)
-        .unwrap_or(RetentionPolicy::OnWrapperFailure);
+    let retention_policy = if parsed.trace_bundle.is_some() {
+        RetentionPolicy::Always
+    } else {
+        parsed
+            .trace
+            .or(config.trace.retention_policy)
+            .unwrap_or(RetentionPolicy::OnWrapperFailure)
+    };
     let capture_plan = build_capture_plan(
         &compatibility_seam,
         mode_decision.mode,
