@@ -15,7 +15,8 @@ use diag_backend_probe::ProbeCache;
 use diag_capture_runtime::{
     CaptureBundle, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
 };
-use diag_core::RunInfo;
+use diag_cascade::{CascadeContext, CascadeReport, DocumentAnalyzer, NoopDocumentAnalyzer};
+use diag_core::{CascadePolicySnapshot, DiagnosticDocument, RunInfo};
 use diag_enrich::enrich_document;
 use diag_render::{
     PathPolicy, RenderRequest, SourceExcerptPolicy, TypeDisplayPolicy, WarningVisibility, render,
@@ -24,6 +25,7 @@ use diag_trace::{WrapperPaths, trace_id};
 use std::env;
 use std::ffi::OsString;
 use std::io::Write;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 use std::process::{Command, ExitCode};
 use std::time::Instant;
@@ -118,6 +120,19 @@ fn real_main() -> Result<i32, CliError> {
     let mut document = ingest_report.document;
     document.captures = capture.capture_artifacts();
     enrich_document(&mut document, &cwd);
+    let cascade_context = CascadeContext {
+        version_band: plan.backend.version_band(),
+        processing_path: capture.processing_path(),
+        source_authority: ingest_trace.source_authority,
+        fallback_grade: ingest_trace.fallback_grade,
+        cwd: cwd.clone(),
+    };
+    let _ = run_cascade_analysis(
+        &NoopDocumentAnalyzer,
+        &mut document,
+        &cascade_context,
+        &cascade_policy,
+    );
 
     if matches!(plan.mode(), ExecutionMode::Shadow) {
         maybe_write_trace(TraceWriteRequest {
@@ -188,6 +203,23 @@ fn ingest_bundle<A: DiagnosticAdapter<Error = AdapterError>>(
     Ok(invoke_adapter(adapter, bundle, policy)?)
 }
 
+fn run_cascade_analysis<A: DocumentAnalyzer>(
+    analyzer: &A,
+    document: &mut DiagnosticDocument,
+    context: &CascadeContext,
+    policy: &CascadePolicySnapshot,
+) -> Option<CascadeReport> {
+    match catch_unwind(AssertUnwindSafe(|| {
+        analyzer.analyze_document(document, context, policy)
+    })) {
+        Ok(Ok(report)) => Some(report),
+        Ok(Err(_)) | Err(_) => {
+            document.document_analysis = None;
+            None
+        }
+    }
+}
+
 fn passthrough_inherit(
     backend: &Path,
     forwarded_args: &[OsString],
@@ -229,18 +261,26 @@ fn exit_code_from_process_status(status: &std::process::ExitStatus) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diag_backend_probe::ProcessingPath;
+    use diag_backend_probe::{ProcessingPath, VersionBand};
     use diag_capture_runtime::{
         CaptureInvocation, CapturePlan, LocaleHandling, NativeTextCapturePolicy,
         StructuredCapturePolicy,
     };
+    use diag_cascade::{CascadeError, CascadeReport, DocumentAnalyzer};
     use diag_core::{
-        Confidence, DiagnosticDocument, DocumentCompleteness, FallbackGrade, LanguageMode, Origin,
-        ProducerInfo, SourceAuthority, ToolInfo, WrapperSurface,
+        Confidence, DiagnosticDocument, DiagnosticNode, DocumentAnalysis, DocumentCompleteness,
+        FallbackGrade, LanguageMode, Location, LocationRole, MessageText, NodeCompleteness, Origin,
+        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, SemanticRole, Severity,
+        SourceAuthority, ToolInfo, WrapperSurface,
+    };
+    use diag_render::{
+        DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest,
+        SourceExcerptPolicy, StreamKind, TypeDisplayPolicy, WarningVisibility, render,
     };
     use diag_trace::RetentionPolicy;
     use std::error::Error;
     use std::fmt::{Display, Formatter};
+    use std::path::PathBuf;
 
     #[test]
     fn signal_exit_status_uses_conventional_code() {
@@ -358,6 +398,129 @@ mod tests {
         }
     }
 
+    fn sample_document(document_analysis: Option<DocumentAnalysis>) -> DiagnosticDocument {
+        DiagnosticDocument {
+            document_id: "dummy-cli-doc".to_string(),
+            schema_version: diag_core::IR_SPEC_VERSION.to_string(),
+            document_completeness: DocumentCompleteness::Complete,
+            producer: ProducerInfo {
+                name: "gcc-formed".to_string(),
+                version: "0.2.0-beta.1".to_string(),
+                git_revision: None,
+                build_profile: Some("test".to_string()),
+                rulepack_version: Some("phase1".to_string()),
+            },
+            run: sample_policy().run,
+            captures: Vec::new(),
+            integrity_issues: Vec::new(),
+            diagnostics: vec![DiagnosticNode {
+                id: "root".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Parse,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "expected ';' before '}' token".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![
+                    Location::caret("src/main.c", 2, 13, LocationRole::Primary)
+                        .with_ownership(Ownership::User, "user_workspace"),
+                ],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            }],
+            document_analysis,
+            fingerprints: None,
+        }
+    }
+
+    fn sample_cascade_context() -> CascadeContext {
+        CascadeContext {
+            version_band: VersionBand::Gcc15Plus,
+            processing_path: ProcessingPath::DualSinkStructured,
+            source_authority: SourceAuthority::Structured,
+            fallback_grade: FallbackGrade::None,
+            cwd: PathBuf::from("/tmp/project"),
+        }
+    }
+
+    fn sample_render_request(document: DiagnosticDocument) -> RenderRequest {
+        RenderRequest {
+            document,
+            profile: RenderProfile::Default,
+            capabilities: RenderCapabilities {
+                stream_kind: StreamKind::Pipe,
+                width_columns: Some(100),
+                ansi_color: false,
+                unicode: false,
+                hyperlinks: false,
+                interactive: false,
+            },
+            cwd: Some(PathBuf::from("/tmp/project")),
+            path_policy: PathPolicy::RelativeToCwd,
+            warning_visibility: WarningVisibility::Auto,
+            debug_refs: DebugRefs::None,
+            type_display_policy: TypeDisplayPolicy::CompactSafe,
+            source_excerpt_policy: SourceExcerptPolicy::ForceOff,
+        }
+    }
+
+    struct SuccessAnalyzer;
+
+    impl DocumentAnalyzer for SuccessAnalyzer {
+        fn analyze_document(
+            &self,
+            document: &mut DiagnosticDocument,
+            _context: &CascadeContext,
+            _policy: &CascadePolicySnapshot,
+        ) -> Result<CascadeReport, CascadeError> {
+            document.document_analysis = Some(DocumentAnalysis::default());
+            Ok(CascadeReport {
+                document_analysis_present: true,
+            })
+        }
+    }
+
+    struct ErrorAnalyzer;
+
+    impl DocumentAnalyzer for ErrorAnalyzer {
+        fn analyze_document(
+            &self,
+            _document: &mut DiagnosticDocument,
+            _context: &CascadeContext,
+            _policy: &CascadePolicySnapshot,
+        ) -> Result<CascadeReport, CascadeError> {
+            Err(CascadeError::Internal {
+                reason: "synthetic failure".to_string(),
+            })
+        }
+    }
+
+    struct PanicAnalyzer;
+
+    impl DocumentAnalyzer for PanicAnalyzer {
+        fn analyze_document(
+            &self,
+            document: &mut DiagnosticDocument,
+            _context: &CascadeContext,
+            _policy: &CascadePolicySnapshot,
+        ) -> Result<CascadeReport, CascadeError> {
+            document.document_analysis = Some(DocumentAnalysis::default());
+            panic!("synthetic panic")
+        }
+    }
+
     #[test]
     fn generic_adapter_helper_accepts_dummy_adapter() {
         let adapter = DummyAdapter;
@@ -366,5 +529,75 @@ mod tests {
         assert_eq!(adapter.supported_origins(), &[Origin::Clang]);
         assert_eq!(report.document.document_id, "dummy-cli-doc");
         assert_eq!(report.source_authority, SourceAuthority::Structured);
+    }
+
+    #[test]
+    fn run_cascade_analysis_preserves_successful_document_analysis() {
+        let mut document = sample_document(None);
+
+        let report = run_cascade_analysis(
+            &SuccessAnalyzer,
+            &mut document,
+            &sample_cascade_context(),
+            &CascadePolicySnapshot::default(),
+        );
+
+        assert_eq!(
+            report,
+            Some(CascadeReport {
+                document_analysis_present: true,
+            })
+        );
+        assert_eq!(
+            document.document_analysis,
+            Some(DocumentAnalysis::default())
+        );
+    }
+
+    #[test]
+    fn run_cascade_analysis_fails_open_on_error() {
+        let mut document = sample_document(Some(DocumentAnalysis::default()));
+
+        let report = run_cascade_analysis(
+            &ErrorAnalyzer,
+            &mut document,
+            &sample_cascade_context(),
+            &CascadePolicySnapshot::default(),
+        );
+
+        assert!(report.is_none());
+        assert!(document.document_analysis.is_none());
+    }
+
+    #[test]
+    fn run_cascade_analysis_fails_open_on_panic() {
+        let mut document = sample_document(Some(DocumentAnalysis::default()));
+
+        let report = run_cascade_analysis(
+            &PanicAnalyzer,
+            &mut document,
+            &sample_cascade_context(),
+            &CascadePolicySnapshot::default(),
+        );
+
+        assert!(report.is_none());
+        assert!(document.document_analysis.is_none());
+    }
+
+    #[test]
+    fn render_succeeds_when_document_analysis_is_none_after_fail_open() {
+        let mut document = sample_document(Some(DocumentAnalysis::default()));
+
+        let report = run_cascade_analysis(
+            &ErrorAnalyzer,
+            &mut document,
+            &sample_cascade_context(),
+            &CascadePolicySnapshot::default(),
+        );
+        assert!(report.is_none());
+        assert!(document.document_analysis.is_none());
+
+        let render_result = render(sample_render_request(document)).unwrap();
+        assert!(!render_result.text.is_empty());
     }
 }

@@ -4,6 +4,7 @@ members = [
     "diag_adapter_gcc",
     "diag_backend_probe",
     "diag_capture_runtime",
+    "diag_cascade",
     "diag_cli_front",
     "diag_core",
     "diag_enrich",
@@ -58,6 +59,9 @@ path = "diag_backend_probe"
 
 [workspace.dependencies.diag_capture_runtime]
 path = "diag_capture_runtime"
+
+[workspace.dependencies.diag_cascade]
+path = "diag_cascade"
 
 [workspace.dependencies.diag_core]
 path = "diag_core"

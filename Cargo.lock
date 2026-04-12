@@ -397,6 +397,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "diag_cascade"
+version = "0.2.0-beta.1"
+dependencies = [
+ "diag_backend_probe",
+ "diag_core",
+ "thiserror",
+]
+
+[[package]]
 name = "diag_cli_front"
 version = "0.2.0-beta.1"
 dependencies = [
@@ -406,6 +415,7 @@ dependencies = [
  "diag_adapter_gcc",
  "diag_backend_probe",
  "diag_capture_runtime",
+ "diag_cascade",
  "diag_core",
  "diag_enrich",
  "diag_render",
