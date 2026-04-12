@@ -218,8 +218,14 @@ fn ingest_bundle_with_gcc_adapter(
         ),
     };
     materialize_capture_artifacts(&mut document, bundle);
+    if has_authoritative_structured {
+        augment_context_chains_from_stderr(&mut document, stderr_text);
+    }
 
-    let residual_nodes = classify(stderr_text, !has_authoritative_structured);
+    let residual_nodes = dedup_structured_residual_duplicates(
+        &document,
+        classify(stderr_text, !has_authoritative_structured),
+    );
     let has_renderable_residual = residual_nodes.iter().any(|node| {
         !matches!(node.semantic_role, SemanticRole::Passthrough)
             && !matches!(node.node_completeness, NodeCompleteness::Passthrough)
@@ -237,9 +243,6 @@ fn ingest_bundle_with_gcc_adapter(
             document.document_completeness = DocumentCompleteness::Partial;
         }
         document.diagnostics.extend(residual_nodes);
-    }
-    if has_authoritative_structured {
-        augment_context_chains_from_stderr(&mut document, stderr_text);
     }
     document.refresh_fingerprints();
 
@@ -402,6 +405,85 @@ fn residual_outcome_for_contract(
             fallback_reason.or(Some(FallbackReason::ResidualOnly)),
         ),
     }
+}
+
+fn dedup_structured_residual_duplicates(
+    document: &DiagnosticDocument,
+    residual_nodes: Vec<diag_core::DiagnosticNode>,
+) -> Vec<diag_core::DiagnosticNode> {
+    residual_nodes
+        .into_iter()
+        .filter(|node| !duplicates_structured_diagnostic(document, node))
+        .collect()
+}
+
+fn duplicates_structured_diagnostic(
+    document: &DiagnosticDocument,
+    residual_node: &diag_core::DiagnosticNode,
+) -> bool {
+    if residual_node.provenance.source != ProvenanceSource::ResidualText
+        || !matches!(residual_node.semantic_role, SemanticRole::Root)
+    {
+        return false;
+    }
+
+    let Some(core_message) = compiler_residual_core_message(&residual_node.message.raw_text) else {
+        return false;
+    };
+    let Some(residual_location) = residual_node.locations.first() else {
+        return false;
+    };
+
+    document.diagnostics.iter().any(|structured_node| {
+        structured_node.provenance.source != ProvenanceSource::ResidualText
+            && matches!(structured_node.semantic_role, SemanticRole::Root)
+            && structured_node.severity == residual_node.severity
+            && structured_node.message.raw_text == core_message
+            && (shares_primary_line(structured_node, residual_location)
+                || !structured_node.context_chains.is_empty())
+    })
+}
+
+fn compiler_residual_core_message(raw_text: &str) -> Option<&str> {
+    let first_line = raw_text.lines().next()?;
+    for severity in ["fatal error", "error", "warning", "note"] {
+        let marker = format!(": {severity}: ");
+        let Some((prefix, message)) = first_line.split_once(&marker) else {
+            continue;
+        };
+        if looks_like_compiler_location_prefix(prefix) {
+            return Some(message);
+        }
+    }
+    None
+}
+
+fn looks_like_compiler_location_prefix(prefix: &str) -> bool {
+    let mut parts = prefix.rsplitn(3, ':');
+    let Some(column) = parts.next() else {
+        return false;
+    };
+    let Some(line) = parts.next() else {
+        return false;
+    };
+    let Some(path) = parts.next() else {
+        return false;
+    };
+    !path.is_empty()
+        && !line.is_empty()
+        && !column.is_empty()
+        && line.chars().all(|ch| ch.is_ascii_digit())
+        && column.chars().all(|ch| ch.is_ascii_digit())
+}
+
+fn shares_primary_line(
+    structured_node: &diag_core::DiagnosticNode,
+    residual_location: &diag_core::Location,
+) -> bool {
+    structured_node.locations.iter().any(|location| {
+        location.path_raw() == residual_location.path_raw()
+            && location.line() == residual_location.line()
+    })
 }
 
 fn confidence_ceiling_for(

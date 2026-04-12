@@ -1,0 +1,22 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: identifier not found in scope
+--> src/main.cpp:2:12
+help: check for typos, missing #include, or missing namespace qualifier
+why: 'missing_value' was not declared in this scope
+| src/main.cpp:2:12
+|     return missing_value;
+|            ^
+debug: rule_id=rule.family.scope_declaration.message_terms
+debug: matched_conditions=message_contains=was not declared in this scope, phase=semantic
+error: identifier not found in scope
+--> src/main.cpp:2:12
+help: check for typos, missing #include, or missing namespace qualifier
+why: src/main.cpp:2:12: error: 'missing_value' was not declared in this scope
+| src/main.cpp:2:12
+|     return missing_value;
+|            ^
+raw:
+  src/main.cpp:2:12: error: 'missing_value' was not declared in this scope
+debug: rule_id=rule.family.scope_declaration.message_terms
+debug: matched_conditions=message_contains=was not declared in this scope, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

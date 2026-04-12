@@ -2173,6 +2173,72 @@ src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
     }
 
     #[test]
+    fn ingest_bundle_deduplicates_matching_structured_and_residual_compiler_roots() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"use of deleted function 'NoCopy::NoCopy(const NoCopy&)'" },
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":10,"startColumn":5}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let stderr = "\
+src/main.cpp:10:9: error: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'\n\
+src/main.cpp:3:5: note: declared here\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&path), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(
+            report
+                .document
+                .diagnostics
+                .iter()
+                .filter(|node| {
+                    node.provenance.source == ProvenanceSource::Compiler
+                        && node.message.raw_text
+                            == "use of deleted function 'NoCopy::NoCopy(const NoCopy&)'"
+                })
+                .count(),
+            1
+        );
+        assert!(!report.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::ResidualText
+                && node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("deleted_function")
+        }));
+    }
+
+    #[test]
     fn ingest_bundle_reports_structured_authority_for_valid_gcc_json() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("diagnostics.json");

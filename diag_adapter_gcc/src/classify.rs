@@ -470,6 +470,18 @@ mod tests {
     }
 
     #[test]
+    fn classifies_scope_declaration_seed_from_rulepack() {
+        let decision = classify_family_seed("'missing_value' was not declared in this scope");
+
+        assert_eq!(decision.family, "scope_declaration");
+        assert_eq!(decision.rule_id, "rule.family_seed.scope_declaration");
+        assert_eq!(
+            decision.first_action_hint,
+            "check for typos, missing #include, or missing namespace qualifier"
+        );
+    }
+
+    #[test]
     fn falls_back_to_rulepack_unknown_seed() {
         let decision = classify_family_seed("this diagnostic does not match any adapter seed");
 

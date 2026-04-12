@@ -1,16 +1,13 @@
-note: some compiler details were not fully structured; original diagnostics are preserved
 error: template instantiation failed
---> src/main.cpp:5:12
+--> src/main.cpp:5:5
 help: start from the first user-owned template frame and match template arguments
-why: src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'
-| src/main.cpp:5:12
+why: no matching function for call to 'combine(int, const char [2])'
+| src/main.cpp:5:5
 |     combine(1, "x");
-|            ^
+|     ^
 while instantiating:
+  - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
   - src/main.cpp:2:6 template argument deduction/substitution failed:
+  - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
   - src/main.cpp:5:12 deduced conflicting types for parameter 'T' ('int' and 'const char*')
-raw:
-  src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'
-other errors:
-  - src/main.cpp:5:5: error: template instantiation failed
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

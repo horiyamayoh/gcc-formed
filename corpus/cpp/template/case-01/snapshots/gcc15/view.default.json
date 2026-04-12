@@ -1,37 +1,41 @@
 {
   "cards": [
     {
-      "canonical_location": "src/main.cpp:4:24",
+      "canonical_location": "src/main.cpp:4:14",
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
       "context_lines": [
         "while instantiating:",
+        "  - src/main.cpp:2:6 candidate 1: 'template<class T> void takes_same(T, T)'",
         "  - src/main.cpp:2:6 template argument deduction/substitution failed:",
+        "  - src/main.cpp:4:14 deduced conflicting types for parameter 'T' ('int' and 'double')",
         "  - src/main.cpp:4:24 deduced conflicting types for parameter 'T' ('int' and 'double')"
       ],
       "excerpts": [
         {
           "annotations": [
-            "                       ^"
+            "             ^"
           ],
           "lines": [
             "int main() { takes_same(1, 2.0); }"
           ],
-          "location": "src/main.cpp:4:24"
+          "location": "src/main.cpp:4:14"
         }
       ],
       "family": "template",
       "first_action": "start from the first user-owned template frame and match template arguments",
-      "group_id": "residual-compiler-0",
+      "group_id": "sarif-0-0",
       "matched_conditions": [
-        "context=template_instantiation"
+        "context=template_instantiation",
+        "child_note_kind=template_context",
+        "child_message_contains=template",
+        "child_message_contains=deduction/substitution",
+        "child_message_contains=deduced conflicting",
+        "phase=instantiate"
       ],
-      "raw_message": "src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'",
-      "raw_sub_block": [
-        "src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'"
-      ],
+      "raw_message": "no matching function for call to 'takes_same(int, double)'",
       "rule_id": "rule.family.template.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
@@ -40,15 +44,7 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": true,
+    "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.cpp:4:14",
-      "group_id": "sarif-0-0",
-      "severity": "error",
-      "title": "template instantiation failed"
-    }
-  ]
+  }
 }

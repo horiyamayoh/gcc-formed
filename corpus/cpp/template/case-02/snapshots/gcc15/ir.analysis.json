@@ -228,6 +228,12 @@
               "label": "template argument deduction/substitution failed:",
               "line": 2,
               "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "src/main.cpp:2:6: note: template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
             }
           ],
           "kind": "template_instantiation"
@@ -236,7 +242,7 @@
       "fingerprints": {
         "family": "b4422b02581814564cc559bc5b339dc44cbde4c664e4e63985d6efe71d2a7971",
         "raw": "86a96b4fd554b267c32c609ad0818d8bef50e361299fdb19c7318d5a05cdab34",
-        "structural": "b73174f66bb574df5f58d25b9b0a238b30fc20023bbcfe0b52f79d6d04562c98"
+        "structural": "c6377c6c49fbc17f4386034748c16bb78c1f1a45b6bd2208fd8923b6645a163a"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -276,82 +282,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.8999999761581421,
-        "family": "template",
-        "first_action_hint": "start from the first user-owned template frame and match template arguments",
-        "headline": "template instantiation failed",
-        "matched_conditions": [
-          "context=template_instantiation"
-        ],
-        "rule_id": "rule.family.template.structured_or_message"
-      },
-      "context_chains": [
-        {
-          "frames": [
-            {
-              "column": 6,
-              "label": "src/main.cpp:2:6: note: template argument deduction/substitution failed:",
-              "line": 2,
-              "path": "src/main.cpp"
-            }
-          ],
-          "kind": "template_instantiation"
-        }
-      ],
-      "fingerprints": {
-        "family": "f5a9a0f34ca2f121a7e385f4ed40ba8c1b9cfb85994fce6c65c80a0d6fcd9f0e",
-        "raw": "7bc5387ceec530a23ffe57a77a8d2192e2a967315914fa5f4dc1e69d9f6e581c",
-        "structural": "b039ae3d30910f006e6d9de6fc23176e59ceabc4fb483edccb8f891ac1107f23"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 15,
-            "column_native": 15,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 6
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.cpp",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.cpp:6:15:6:15",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "ae45ec062c4b1d86e8f82d5eb8e2d33153638a4981250f7a5a3cccbf68a1b5c7",
-    "raw": "7f0784b23ba5500a54b2415b2a9b2728449761e98f243f3ebb8f6e4a485ca615",
-    "structural": "490aa3d64c47518099dd6ab9b2c9da05adede23537840263632e1c4767ef2686"
+    "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
+    "raw": "001119001bdc55312a35d6b9b5303334d50a1130ab062beaf40d73edfed6b285",
+    "structural": "15e61b5df0bcbecdcebb74875312737a7ea62da095fb87793a71fc4fe5d5fbdd"
   },
   "producer": {
     "name": "gcc-formed",

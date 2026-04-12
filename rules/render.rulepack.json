@@ -4,6 +4,24 @@
   "family_policies": [
     {
       "kind": "syntax",
+      "match_exact": "scope_declaration",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "redefinition",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "deleted_function",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "syntax",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true

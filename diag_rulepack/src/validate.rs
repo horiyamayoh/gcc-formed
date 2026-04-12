@@ -262,21 +262,11 @@ pub(crate) fn validate_render_rulepack(
         ));
     }
 
-    let mut seen_kinds = BTreeSet::new();
     for policy in &rulepack.family_policies {
         if policy.kind == RendererFamilyKind::Unknown {
             return Err(invalid_rulepack(
                 path,
                 "checked-in render rulepack must not define unknown family policies",
-            ));
-        }
-        if !seen_kinds.insert(policy.kind) {
-            return Err(invalid_rulepack(
-                path,
-                format!(
-                    "duplicate renderer family policy in checked-in render rulepack: {:?}",
-                    policy.kind
-                ),
             ));
         }
         if policy.match_exact.is_some() == policy.match_prefix.is_some() {

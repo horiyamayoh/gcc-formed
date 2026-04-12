@@ -36,45 +36,11 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "type or overload mismatch"
-    },
-    {
-      "canonical_location": "src/main.cpp:5:10",
-      "child_notes": [],
-      "collapsed_notices": [],
-      "confidence_label": "likely",
-      "confidence_notice": null,
-      "context_lines": [],
-      "excerpts": [
-        {
-          "annotations": [
-            "         ^"
-          ],
-          "lines": [
-            "    takes(1);"
-          ],
-          "location": "src/main.cpp:5:10"
-        }
-      ],
-      "family": "type_overload",
-      "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "residual-compiler-0",
-      "matched_conditions": [
-        "message_contains=no matching",
-        "phase=semantic"
-      ],
-      "raw_message": "src/main.cpp:5:10: error: no matching function for call to 'takes(int)'",
-      "raw_sub_block": [
-        "src/main.cpp:5:10: error: no matching function for call to 'takes(int)'"
-      ],
-      "rule_id": "rule.family.type_overload.structured_or_message",
-      "severity": "error",
-      "suppression_reason": null,
-      "title": "type or overload mismatch"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": true,
+    "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   }
 }

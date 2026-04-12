@@ -195,26 +195,23 @@ fn ingest_compiler_diagnostic_line(
     }
 
     flush_compiler_block(compiler_nodes, passthrough, current_block);
-    let kind = compiler_residual_kind(&capture["message"]);
+    let seed = compiler_residual_seed(&capture["message"]);
     let raw_lines = vec![line.to_string()];
-    match kind {
-        CompilerResidualKind::Unknown => {
-            *current_block = Some(CompilerResidualBlock {
-                node: None,
-                raw_lines,
-            });
-        }
-        _ => {
-            *current_block = Some(CompilerResidualBlock {
-                node: Some(compiler_diagnostic_node(
-                    compiler_nodes.len(),
-                    line,
-                    capture,
-                    kind,
-                )),
-                raw_lines,
-            });
-        }
+    if seed.kind == CompilerResidualKind::Unknown {
+        *current_block = Some(CompilerResidualBlock {
+            node: None,
+            raw_lines,
+        });
+    } else {
+        *current_block = Some(CompilerResidualBlock {
+            node: Some(compiler_diagnostic_node(
+                compiler_nodes.len(),
+                line,
+                capture,
+                seed,
+            )),
+            raw_lines,
+        });
     }
 }
 
@@ -237,7 +234,7 @@ fn compiler_diagnostic_node(
     index: usize,
     line: &str,
     capture: &regex::Captures<'_>,
-    kind: CompilerResidualKind,
+    seed: &CompilerResidualSeed,
 ) -> DiagnosticNode {
     let message = capture["message"].to_string();
     let severity = match &capture["severity"] {
@@ -246,7 +243,6 @@ fn compiler_diagnostic_node(
         "note" => Severity::Note,
         _ => Severity::Unknown,
     };
-    let seed = residual_rulepack().compiler_seed(kind);
 
     DiagnosticNode {
         id: format!("residual-compiler-{index}"),
@@ -297,7 +293,7 @@ fn compiler_diagnostic_node(
     }
 }
 
-fn compiler_residual_kind(message: &str) -> CompilerResidualKind {
+fn compiler_residual_seed(message: &str) -> &'static CompilerResidualSeed {
     let lowered = message.to_lowercase();
     residual_rulepack()
         .residual
@@ -310,8 +306,7 @@ fn compiler_residual_kind(message: &str) -> CompilerResidualKind {
                     .iter()
                     .any(|needle| lowered.contains(needle.as_str()))
         })
-        .map(|seed| seed.kind)
-        .unwrap_or(CompilerResidualKind::Unknown)
+        .unwrap_or_else(|| residual_rulepack().compiler_seed(CompilerResidualKind::Unknown))
 }
 
 fn compiler_headline(seed: &CompilerResidualSeed, message: &str) -> String {
@@ -704,6 +699,75 @@ mod tests {
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("compiler.preprocess")
+        );
+    }
+
+    #[test]
+    fn classifies_scope_declaration_compiler_error() {
+        let nodes = classify(
+            "main.cpp:2:12: error: 'missing_value' was not declared in this scope\n",
+            true,
+        );
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("scope_declaration")
+        );
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.headline.as_deref()),
+            Some("identifier not found in scope")
+        );
+    }
+
+    #[test]
+    fn classifies_redefinition_compiler_error() {
+        let stderr = "\
+main.c:2:5: error: redefinition of 'counter'\n\
+main.c:1:5: note: previous definition of 'counter' with type 'int'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("redefinition")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_deleted_function_compiler_error() {
+        let stderr = "\
+main.cpp:10:9: error: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'\n\
+main.cpp:3:5: note: declared here\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("deleted_function")
+        );
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.headline.as_deref()),
+            Some("use of a deleted or unavailable function")
         );
     }
 

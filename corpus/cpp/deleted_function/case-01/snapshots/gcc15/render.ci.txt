@@ -1,0 +1,12 @@
+src/main.cpp:10:5: error: use of a deleted or unavailable function
+help: check whether the type is movable/copyable, or provide the required special member
+why: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'
+| src/main.cpp:10:5
+|     take(value);
+|     ^
+note: declared here
+other errors:
+  - src/main.cpp:10:9: error: use of a deleted or unavailable function
+  - src/main.cpp:10:5: note: type or overload mismatch
+  - src/main.cpp:6:11: note: initializing argument 1 of 'void take(NoCopy)'
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

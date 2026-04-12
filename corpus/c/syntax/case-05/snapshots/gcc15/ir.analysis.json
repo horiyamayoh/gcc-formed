@@ -188,63 +188,6 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "e29d5a4523d62305dc2c952f2f5a86f0199b092389502db6d8d49df12f6e5f3c",
-        "raw": "ce171dfa3f67969a7f5211af9754320920840afd408612ae439ab2d591129c4b",
-        "structural": "d35f7088dd625e7c84baa0d2befc0be08e2bf6b5c2f60dd684535c0e869f691c"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 18,
-            "column_native": 18,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 2
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:2:18:2:18",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:2:18: error: expected ')' before ';' token"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "parse",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.8999999761581421,
-        "family": "syntax",
-        "first_action_hint": "fix the first parser error at the user-owned location",
-        "headline": "syntax error",
-        "matched_conditions": [
-          "message_contains=expected",
-          "message_contains=before",
-          "phase=parse"
-        ],
-        "rule_id": "rule.family.syntax.phase_or_message"
-      },
-      "fingerprints": {
         "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
         "raw": "681dc866b644030d3d2e6e3d73f1eb5da1bc08be598cdef8a1008296cffffa9e",
         "structural": "83c5df4a757465661ff50b5f3dbdba8acdc539a1a327ba3b7da5d3cc3ab36525"
@@ -292,9 +235,9 @@
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "f506af7f50b1b9bd7b2fe9fe3da608b38b14be867c29ead5af81aee0f2882f26",
-    "raw": "05f50f4b702a8440ed688dd76509d296529b3b2d88a4df8e84ec886784a96cb3",
-    "structural": "1cbd565ad633b276620da4c012a0229a8c2a92b45595daacdc1153dda81d36a6"
+    "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
+    "raw": "fb9ae99f144db5a444228e91f7ac9a1909f66c9e6574d07fdeea4b099a3609df",
+    "structural": "c5d18f8ae23b656496aec6a6a2217f8ea9b5ffcd9f73629caf45e2b55c310335"
   },
   "producer": {
     "name": "gcc-formed",

@@ -235,6 +235,18 @@
               "label": "deduced conflicting types for parameter 'T' ('int' and 'const char*')",
               "line": 5,
               "path": "src/main.cpp"
+            },
+            {
+              "column": 6,
+              "label": "src/main.cpp:2:6: note: template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 12,
+              "label": "src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+              "line": 5,
+              "path": "src/main.cpp"
             }
           ],
           "kind": "template_instantiation"
@@ -243,7 +255,7 @@
       "fingerprints": {
         "family": "560bbb2c4794a4016c655a33d7be2d1e26db22266bbe878bbce151cdfe1b1c22",
         "raw": "08e3fd173427fb70954791d06bc034af9d09833502e53b2c7403bb9274f766ae",
-        "structural": "606f74d95c08e9e3d6a6c05752b43044a2dd0f00b5d9d0da3dc51b50a7952248"
+        "structural": "e8bd901c2d98a4fdc22e4d02786dd9d9616d472127cd61ca0793dc72486f6907"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -283,88 +295,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.8999999761581421,
-        "family": "template",
-        "first_action_hint": "start from the first user-owned template frame and match template arguments",
-        "headline": "template instantiation failed",
-        "matched_conditions": [
-          "context=template_instantiation"
-        ],
-        "rule_id": "rule.family.template.structured_or_message"
-      },
-      "context_chains": [
-        {
-          "frames": [
-            {
-              "column": 6,
-              "label": "src/main.cpp:2:6: note: template argument deduction/substitution failed:",
-              "line": 2,
-              "path": "src/main.cpp"
-            },
-            {
-              "column": 12,
-              "label": "src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')",
-              "line": 5,
-              "path": "src/main.cpp"
-            }
-          ],
-          "kind": "template_instantiation"
-        }
-      ],
-      "fingerprints": {
-        "family": "0a2a7321f70a6b4c625c809a060fbfd5900f042465b522e9aee8ab365bbf5ccd",
-        "raw": "17f02d9a56fe88c418676291b145e5d9dc589a3a588ee79b65476a8f760cba18",
-        "structural": "25d02bd5f553f7e1eb02787902aeba24a7576656779f2bf8c9fca00b7792401b"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 12,
-            "column_native": 12,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 5
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.cpp",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.cpp:5:12:5:12",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "ae45ec062c4b1d86e8f82d5eb8e2d33153638a4981250f7a5a3cccbf68a1b5c7",
-    "raw": "67705fca79307d8c84b3feb6ca48aed8acbf4e5c90089269069f98aa7d60dcaf",
-    "structural": "6dd676d94bb4193b3f2b694b9f69adb866e658a704438d4fb7df8fe51ea32341"
+    "family": "d2e2cf139bf549170b31d5e2939d2e84730a4a69b735d34c441ce46981412e92",
+    "raw": "df135e7d80b8197afaa8c324f1d42b352464adbef1318671c68a7e017058d9b3",
+    "structural": "bba62b54efa4a1d75457ad534c1b589af7b43a5f8653ce9699dd838a306bca56"
   },
   "producer": {
     "name": "gcc-formed",

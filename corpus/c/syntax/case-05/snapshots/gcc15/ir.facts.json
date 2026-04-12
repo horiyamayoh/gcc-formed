@@ -152,51 +152,6 @@
     },
     {
       "fingerprints": {
-        "family": "8ff3b106f4b31558c87e5b5604b635752f18adecdf18f269107f13c508cab1a0",
-        "raw": "ce171dfa3f67969a7f5211af9754320920840afd408612ae439ab2d591129c4b",
-        "structural": "83715b0dc5d3d55e41d752ecb0c08893ec8b02345a0eced3110359451a7cd178"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 18,
-            "column_native": 18,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 2
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:2:18:2:18",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:2:18: error: expected ')' before ';' token"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "parse",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "fingerprints": {
         "family": "fe177d5a5138fe492657f423880f0706200d12391438d8bf7a59e4698cc75822",
         "raw": "681dc866b644030d3d2e6e3d73f1eb5da1bc08be598cdef8a1008296cffffa9e",
         "structural": "0c79fe60efc59c638a6a5a30299a96eed8fc4589c52f390d38bf1b6c977d6efc"
@@ -244,9 +199,9 @@
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
-    "raw": "624ad959f945887a47753bd23b94d2034f056ce3c1aa06a3c4d80acb5c8e065d",
-    "structural": "eed3f09436029a676b42a184c81ddc2bcd420b09b53a9a5d72a27a72f5fb45e4"
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "c4f278ed7fdecf3e524ee443563a0c8e8f6c3cbf677522ad0affc105f874883f",
+    "structural": "2eb603fd2a5254ae6e07cdc0448abac478e292f4791a8ed2e48cae0ceaf30471"
   },
   "producer": {
     "name": "gcc-formed",

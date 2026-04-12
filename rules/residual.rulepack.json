@@ -15,6 +15,18 @@
         "text": "error surfaced through macro/include context"
       },
       {
+        "family": "scope_declaration",
+        "text": "identifier not found in scope"
+      },
+      {
+        "family": "redefinition",
+        "text": "duplicate definition detected"
+      },
+      {
+        "family": "deleted_function",
+        "text": "use of a deleted or unavailable function"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -39,6 +51,18 @@
       {
         "family": "macro_include",
         "text": "inspect the user-owned macro invocation or include edge that reaches the failing line"
+      },
+      {
+        "family": "scope_declaration",
+        "text": "check for typos, missing #include, or missing namespace qualifier"
+      },
+      {
+        "family": "redefinition",
+        "text": "add or fix include guards, or remove the duplicate definition"
+      },
+      {
+        "family": "deleted_function",
+        "text": "check whether the type is movable/copyable, or provide the required special member"
       },
       {
         "family": "passthrough",
@@ -98,6 +122,55 @@
           "expected ",
           " before ",
           " after "
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "scope_declaration",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_scope_declaration",
+        "headline_strategy": "fixed_text",
+        "headline": "identifier not found in scope",
+        "first_action_hint": "check for typos, missing #include, or missing namespace qualifier",
+        "match_any": [
+          "was not declared in this scope",
+          "has not been declared",
+          "has no member named",
+          "is not a member of",
+          "is not a class, namespace, or enumeration",
+          "does not name a type"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "redefinition",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_redefinition",
+        "headline_strategy": "fixed_text",
+        "headline": "duplicate definition detected",
+        "first_action_hint": "add or fix include guards, or remove the duplicate definition",
+        "match_any": [
+          "redefinition of",
+          "redeclaration of",
+          "conflicting declaration",
+          "conflicting types for",
+          "previous declaration of",
+          "previously defined here"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "deleted_function",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_deleted_function",
+        "headline_strategy": "fixed_text",
+        "headline": "use of a deleted or unavailable function",
+        "first_action_hint": "check whether the type is movable/copyable, or provide the required special member",
+        "match_any": [
+          "use of deleted function",
+          "implicitly-deleted",
+          "is deleted",
+          "has been explicitly marked deleted"
         ]
       },
       {

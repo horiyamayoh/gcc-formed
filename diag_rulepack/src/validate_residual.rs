@@ -98,13 +98,20 @@ pub(crate) fn validate_residual_rulepack(
         }
     }
 
-    let mut compiler_kinds = BTreeSet::new();
+    let mut compiler_families = BTreeSet::new();
+    let mut unknown_seed_count = 0usize;
     for entry in &rulepack.residual.compiler_groups {
-        if !compiler_kinds.insert(entry.kind) {
+        if !compiler_families.insert(entry.family.as_str()) {
             return Err(invalid_rulepack(
                 path,
-                "duplicate compiler residual kind in checked-in residual rulepack",
+                format!(
+                    "duplicate compiler residual family in checked-in residual rulepack: {}",
+                    entry.family
+                ),
             ));
+        }
+        if entry.kind == CompilerResidualKind::Unknown {
+            unknown_seed_count += 1;
         }
         ensure_non_empty(&entry.family, path, "compiler_group.family")?;
         ensure_non_empty(&entry.rule_id, path, "compiler_group.rule_id")?;
@@ -124,10 +131,10 @@ pub(crate) fn validate_residual_rulepack(
             ensure_non_empty(headline, path, "compiler_group.headline")?;
         }
     }
-    if !compiler_kinds.contains(&CompilerResidualKind::Unknown) {
+    if unknown_seed_count != 1 {
         return Err(invalid_rulepack(
             path,
-            "checked-in residual rulepack must include unknown compiler seed",
+            "checked-in residual rulepack must include exactly one unknown compiler seed",
         ));
     }
 

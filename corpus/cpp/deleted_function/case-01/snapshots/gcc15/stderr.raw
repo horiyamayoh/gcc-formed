@@ -1,0 +1,13 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:10:9: error: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'
+   10 |     take(value);
+      |     ~~~~^~~~~~~
+src/main.cpp:3:5: note: declared here
+    3 |     NoCopy(const NoCopy&) = delete;
+      |     ^~~~~~
+src/main.cpp:10:9: note: use '-fdiagnostics-all-candidates' to display considered candidates
+   10 |     take(value);
+      |     ~~~~^~~~~~~
+src/main.cpp:6:18: note: initializing argument 1 of 'void take(NoCopy)'
+    6 | void take(NoCopy value) {}
+      |           ~~~~~~~^~~~~

@@ -946,22 +946,30 @@ raw stderr residual classifier は、structured path の外側にある text を
 
 最低限、以下を対象にする。
 
-1. `driver_fatal`
-2. `linker_undefined_reference`
-3. `linker_multiple_definition`
-4. `linker_cannot_find_library`
-5. `linker_file_format_or_relocation`
-6. `collect2_summary`
-7. `assembler_error`
-8. `internal_compiler_error_banner`
-9. `unclassified_residual_blob`
+1. `compiler.preprocess`
+2. `syntax`
+3. `template`
+4. `type_overload`
+5. `scope_declaration`
+6. `redefinition`
+7. `deleted_function`
+8. `driver_fatal`
+9. `linker.undefined_reference`
+10. `linker.multiple_definition`
+11. `linker.cannot_find_library`
+12. `linker.file_format_or_relocation`
+13. `collect2_summary`
+14. `assembler_error`
+15. `internal_compiler_error_banner`
+16. `passthrough`
 
 ### 20.3 classifier の安全原則
 
-- **MUST** explicit tool prefix または強いアンカーを要求する
-- **MUST NOT** generic GCC text diagnostics を推定で再構成する
+- **MUST** explicit tool prefix、structured context、または強い lexical anchor を要求する
+- **MUST NOT** weak / open-ended な generic GCC text diagnostics を推定で family 化する
 - **MUST NOT** location を捏造する
 - **SHOULD** confidence を family ごとに固定または narrow range で出す
+- **MAY** `scope_declaration` / `redefinition` / `deleted_function` のような high-precision compiler residual family を明示 wording で分類する
 - **MAY** symbol / archive / object file 名を抽出する
 
 ### 20.4 grouping 規則

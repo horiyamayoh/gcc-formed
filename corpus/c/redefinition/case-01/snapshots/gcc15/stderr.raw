@@ -1,0 +1,6 @@
+src/main.c:2:5: error: redefinition of 'counter'
+    2 | int counter = 1;
+      |     ^~~~~~~
+src/main.c:1:5: note: previous definition of 'counter' with type 'int'
+    1 | int counter = 0;
+      |     ^~~~~~~

@@ -195,6 +195,101 @@
       ]
     },
     {
+      "rule_id": "rule.family.scope_declaration.message_terms",
+      "family": "scope_declaration",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "was not declared in this scope",
+            "has not been declared",
+            "has no member named",
+            "is not a member of",
+            "is not a class, namespace, or enumeration",
+            "does not name a type"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        },
+        {
+          "phase": "parse",
+          "condition": "phase=parse",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.redefinition.message_terms",
+      "family": "redefinition",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "redefinition of",
+            "redeclaration of",
+            "conflicting declaration",
+            "conflicting types for",
+            "previous declaration of",
+            "previously defined here"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        },
+        {
+          "phase": "parse",
+          "condition": "phase=parse",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.deleted_function.message_terms",
+      "family": "deleted_function",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "use of deleted function",
+            "implicitly-deleted",
+            "is deleted",
+            "has been explicitly marked deleted"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.type_overload.structured_or_message",
       "family": "type_overload",
       "require_any_of": [
@@ -312,6 +407,43 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.scope_declaration",
+      "family": "scope_declaration",
+      "priority": 45,
+      "terms": [
+        "was not declared in this scope",
+        "has not been declared",
+        "has no member named",
+        "is not a member of",
+        "is not a class, namespace, or enumeration",
+        "does not name a type"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.redefinition",
+      "family": "redefinition",
+      "priority": 46,
+      "terms": [
+        "redefinition of",
+        "redeclaration of",
+        "conflicting declaration",
+        "conflicting types for",
+        "previous declaration of",
+        "previously defined here"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.deleted_function",
+      "family": "deleted_function",
+      "priority": 47,
+      "terms": [
+        "use of deleted function",
+        "implicitly-deleted",
+        "is deleted",
+        "has been explicitly marked deleted"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.type_overload",
       "family": "type_overload",
       "priority": 50,
@@ -387,6 +519,63 @@
         {
           "all": [
             "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "scope_declaration",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "redefinition",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "deleted_function",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
             "lexical_signal"
           ]
         }

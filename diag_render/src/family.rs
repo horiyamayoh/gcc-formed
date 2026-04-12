@@ -864,6 +864,18 @@ mod tests {
             RendererFamilyKind::MacroInclude
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("scope_declaration")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("redefinition")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("deleted_function")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("linker.undefined_reference")),
             RendererFamilyKind::Linker
         );

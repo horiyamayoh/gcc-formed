@@ -8,6 +8,5 @@ why: expected ';' before '}}' token
 suggested edit: insert ';' at src/main.c:2:19
 other errors:
   - src/main.c:2:18: error: syntax error
-  - src/main.c:2:18: error: syntax error
   - src/main.c:2:19: error: syntax error
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

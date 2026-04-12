@@ -84,7 +84,11 @@ pub struct ResidualSection {
     pub passthrough: PassthroughResidualSeed,
 }
 
-/// Kind of residual compiler diagnostic.
+/// Broad grouping for residual compiler diagnostics.
+///
+/// Multiple family-specific seeds may share the same grouping. The grouping is
+/// only used for coarse special handling (for example, template note
+/// attachment), not as a one-to-one family identifier.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum CompilerResidualKind {
@@ -335,13 +339,14 @@ impl EnrichRulepack {
 }
 
 impl ResidualRulepack {
-    /// Returns the compiler residual seed for the given kind.
+    /// Returns the first compiler residual seed for the given kind.
     ///
     /// # Panics
     ///
-    /// Panics if the seed for the requested kind is not found. This is a
-    /// fail-fast configuration invariant: the checked-in residual rulepack
-    /// must contain seeds for every [`CompilerResidualKind`].
+    /// Panics if the seed for the requested kind is not found. This is used by
+    /// coarse special handling paths (for example, template context notes), so
+    /// the checked-in residual rulepack must still contain at least one seed
+    /// for any kind the runtime expects.
     pub fn compiler_seed(&self, kind: CompilerResidualKind) -> &CompilerResidualSeed {
         self.residual
             .compiler_groups

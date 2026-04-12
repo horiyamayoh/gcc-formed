@@ -1,18 +1,3 @@
-note: some compiler details were not fully structured; original diagnostics are preserved
-error: template instantiation failed
---> src/main.cpp:4:24
-help: start from the first user-owned template frame and match template arguments
-why: src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'
-| src/main.cpp:4:24
-| int main() { takes_same(1, 2.0); }
-|                        ^
-while instantiating:
-  - src/main.cpp:2:6 template argument deduction/substitution failed:
-  - src/main.cpp:4:24 deduced conflicting types for parameter 'T' ('int' and 'double')
-raw:
-  src/main.cpp:4:24: error: no matching function for call to 'takes_same(int, double)'
-debug: rule_id=rule.family.template.structured_or_message
-debug: matched_conditions=context=template_instantiation
 error: template instantiation failed
 --> src/main.cpp:4:14
 help: start from the first user-owned template frame and match template arguments
@@ -24,6 +9,7 @@ while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void takes_same(T, T)'
   - src/main.cpp:2:6 template argument deduction/substitution failed:
   - src/main.cpp:4:14 deduced conflicting types for parameter 'T' ('int' and 'double')
+  - src/main.cpp:4:24 deduced conflicting types for parameter 'T' ('int' and 'double')
 debug: rule_id=rule.family.template.structured_or_message
 debug: matched_conditions=context=template_instantiation, child_note_kind=template_context, child_message_contains=template, child_message_contains=deduction/substitution, child_message_contains=deduced conflicting, phase=instantiate
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

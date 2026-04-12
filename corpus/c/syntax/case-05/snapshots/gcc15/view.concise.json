@@ -53,12 +53,6 @@
       "title": "syntax error"
     },
     {
-      "canonical_location": "src/main.c:2:18",
-      "group_id": "residual-compiler-0",
-      "severity": "error",
-      "title": "syntax error"
-    },
-    {
       "canonical_location": "src/main.c:2:19",
       "group_id": "residual-compiler-1",
       "severity": "error",

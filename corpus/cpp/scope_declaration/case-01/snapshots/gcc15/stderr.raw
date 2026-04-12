@@ -1,0 +1,4 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:2:12: error: 'missing_value' was not declared in this scope
+    2 |     return missing_value;
+      |            ^~~~~~~~~~~~~
