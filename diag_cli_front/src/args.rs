@@ -12,6 +12,8 @@ pub(crate) struct ParsedArgs {
     pub(crate) mode: Option<ExecutionMode>,
     pub(crate) processing_path: Option<ProcessingPath>,
     pub(crate) profile: Option<RenderProfile>,
+    pub(crate) presentation: Option<String>,
+    pub(crate) presentation_file: Option<PathBuf>,
     pub(crate) backend: Option<PathBuf>,
     pub(crate) launcher: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
@@ -39,6 +41,12 @@ impl ParsedArgs {
                 parsed.processing_path = Some(parse_processing_path(path)?);
             } else if let Some(profile) = value.strip_prefix("--formed-profile=") {
                 parsed.profile = Some(parse_profile(profile)?);
+            } else if let Some(presentation) = value.strip_prefix("--formed-presentation=") {
+                parsed.presentation = Some(presentation.to_string());
+            } else if let Some(presentation) = value.strip_prefix("--formed-presentation-preset=") {
+                parsed.presentation = Some(presentation.to_string());
+            } else if let Some(path) = value.strip_prefix("--formed-presentation-file=") {
+                parsed.presentation_file = Some(PathBuf::from(path));
             } else if let Some(path) = value.strip_prefix("--formed-backend-gcc=") {
                 parsed.backend = Some(PathBuf::from(path));
             } else if let Some(path) = value.strip_prefix("--formed-backend-launcher=") {
@@ -264,6 +272,8 @@ mod tests {
             OsString::from("--formed-mode=shadow"),
             OsString::from("--formed-processing-path=single_sink_structured"),
             OsString::from("--formed-profile=ci"),
+            OsString::from("--formed-presentation=subject_blocks_v1"),
+            OsString::from("--formed-presentation-file=./presentation.toml"),
             OsString::from("--formed-backend-launcher=/usr/bin/ccache"),
             OsString::from("--formed-trace=always"),
             OsString::from("--formed-trace-bundle=artifacts/case.trace-bundle.tar.gz"),
@@ -286,6 +296,11 @@ mod tests {
             Some(ProcessingPath::SingleSinkStructured)
         );
         assert_eq!(parsed.profile, Some(RenderProfile::Ci));
+        assert_eq!(parsed.presentation.as_deref(), Some("subject_blocks_v1"));
+        assert_eq!(
+            parsed.presentation_file,
+            Some(PathBuf::from("./presentation.toml"))
+        );
         assert_eq!(parsed.launcher, Some(PathBuf::from("/usr/bin/ccache")));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
         assert_eq!(
@@ -399,5 +414,16 @@ mod tests {
         .expect("parsed args");
 
         assert_eq!(parsed.public_json, Some(PublicJsonSink::Stdout));
+    }
+
+    #[test]
+    fn accepts_presentation_preset_compatibility_alias() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation-preset=legacy_v1"),
+        ])
+        .expect("parsed args");
+
+        assert_eq!(parsed.presentation.as_deref(), Some("legacy_v1"));
     }
 }

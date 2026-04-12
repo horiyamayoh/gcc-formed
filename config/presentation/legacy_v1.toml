@@ -1,0 +1,59 @@
+kind = "cc_formed_presentation"
+schema_version = 1
+
+[session]
+visible_root_mode = "lead_plus_summary"
+warning_only_mode = "lead_plus_summary"
+block_separator = "blank_line"
+unknown_template = "generic_block"
+
+[labels]
+help = "help"
+why = "why"
+because = "because"
+from = "from"
+raw = "raw"
+omitted = "omitted"
+symbol = "symbol"
+
+[location]
+default_placement = "dedicated_line"
+fallback_order = ["header", "excerpt_header", "none"]
+width_soft_limit = 100
+label_width = 4
+
+[[templates]]
+id = "generic_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "why_raw", label = "why", optional = true },
+]
+
+[[templates]]
+id = "legacy_primary_block"
+excerpt = "auto"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "why_raw", label = "why", optional = true },
+  { slot = "via", label = "because", optional = true },
+]
+
+[[templates]]
+id = "legacy_linker_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "symbol", label = "symbol", optional = true },
+  { slot = "from", label = "from", optional = true },
+]
+
+[[family_mappings]]
+match = ["prefix:linker."]
+display_family = "linker"
+template = "legacy_linker_block"
+
+[[family_mappings]]
+match = ["type_overload", "syntax", "scope_declaration", "template", "macro_include"]
+display_family = "legacy"
+template = "legacy_primary_block"

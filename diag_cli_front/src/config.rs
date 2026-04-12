@@ -10,10 +10,141 @@ use diag_core::{CascadePolicySnapshot, CompressionLevel, SuppressedCountVisibili
 use diag_render::{DebugRefs, PathPolicy, RenderProfile};
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::env;
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+const DEFAULT_PRESENTATION_PRESET: &str = "legacy_v1";
+const PRESENTATION_SCHEMA_KIND: &str = "cc_formed_presentation";
+const PRESENTATION_SCHEMA_VERSION: u32 = 1;
+const GENERIC_BLOCK_TEMPLATE: &str = "generic_block";
+const SUBJECT_BLOCKS_V1_ASSET: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../config/presentation/subject_blocks_v1.toml"
+));
+const LEGACY_V1_ASSET: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../config/presentation/legacy_v1.toml"
+));
+const KNOWN_SESSION_MODES: &[&str] = &["all_visible_blocks", "lead_plus_summary", "capped_blocks"];
+const KNOWN_BLOCK_SEPARATORS: &[&str] = &["blank_line"];
+const KNOWN_LOCATION_PLACEMENTS: &[&str] = &[
+    "inline_suffix",
+    "header_suffix",
+    "evidence_suffix",
+    "excerpt_header",
+    "dedicated_line",
+    "none",
+];
+const KNOWN_FALLBACK_LOCATIONS: &[&str] = &[
+    "header",
+    "header_suffix",
+    "evidence",
+    "evidence_suffix",
+    "excerpt_header",
+    "dedicated_line",
+    "none",
+];
+const KNOWN_TEMPLATE_EXCERPTS: &[&str] = &["off", "auto", "on"];
+const KNOWN_TEMPLATE_SLOTS: &[&str] = &[
+    "first_action",
+    "expected",
+    "actual",
+    "via",
+    "need",
+    "from",
+    "name",
+    "use",
+    "near",
+    "symbol",
+    "archive",
+    "now",
+    "prev",
+    "why_raw",
+];
+const KNOWN_SUFFIX_SLOTS: &[&str] = &["omitted_notes_suffix", "omitted_refs_suffix"];
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationConfigFile {
+    pub(crate) kind: Option<String>,
+    pub(crate) schema_version: Option<u32>,
+    #[serde(default)]
+    pub(crate) session: PresentationSessionSection,
+    #[serde(default)]
+    pub(crate) labels: BTreeMap<String, String>,
+    #[serde(default)]
+    pub(crate) location: PresentationLocationSection,
+    #[serde(default)]
+    pub(crate) templates: Vec<PresentationTemplate>,
+    #[serde(default)]
+    pub(crate) family_mappings: Vec<PresentationFamilyMapping>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationSessionSection {
+    #[serde(default)]
+    pub(crate) visible_root_mode: Option<String>,
+    #[serde(default)]
+    pub(crate) warning_only_mode: Option<String>,
+    #[serde(default)]
+    pub(crate) block_separator: Option<String>,
+    #[serde(default)]
+    pub(crate) unknown_template: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationLocationSection {
+    #[serde(default)]
+    pub(crate) default_placement: Option<String>,
+    #[serde(default)]
+    pub(crate) fallback_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub(crate) width_soft_limit: Option<usize>,
+    #[serde(default)]
+    pub(crate) label_width: Option<usize>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationTemplate {
+    pub(crate) id: String,
+    #[serde(default)]
+    pub(crate) excerpt: Option<String>,
+    #[serde(default)]
+    pub(crate) core: Vec<PresentationTemplateLine>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationTemplateLine {
+    pub(crate) slot: String,
+    #[serde(default)]
+    pub(crate) label: Option<String>,
+    #[serde(default)]
+    pub(crate) suffix_slot: Option<String>,
+    #[serde(default)]
+    pub(crate) optional: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationFamilyMapping {
+    #[serde(default, rename = "match")]
+    pub(crate) matchers: Vec<String>,
+    #[serde(default)]
+    pub(crate) display_family: Option<String>,
+    #[serde(default)]
+    pub(crate) template: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(crate) struct ResolvedPresentationPolicy {
+    pub(crate) preset_id: String,
+    pub(crate) presentation_file: Option<PathBuf>,
+    pub(crate) policy: PresentationConfigFile,
+    pub(crate) warnings: Vec<String>,
+    pub(crate) fell_back_to_default: bool,
+}
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub(crate) struct ConfigFile {
@@ -55,6 +186,10 @@ pub(crate) struct RenderSection {
     pub(crate) path_policy: Option<PathPolicy>,
     #[serde(default, deserialize_with = "deserialize_optional_debug_refs")]
     pub(crate) debug_refs: Option<DebugRefs>,
+    #[serde(default, alias = "presentation_preset")]
+    pub(crate) presentation: Option<String>,
+    #[serde(default)]
+    pub(crate) presentation_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -123,6 +258,66 @@ impl ConfigFile {
         }
     }
 
+    #[allow(dead_code)]
+    pub(crate) fn resolve_presentation_policy(
+        &self,
+        parsed: &ParsedArgs,
+    ) -> ResolvedPresentationPolicy {
+        let default_policy = load_builtin_presentation_asset(DEFAULT_PRESENTATION_PRESET)
+            .expect("valid default preset");
+        let requested_preset = parsed
+            .presentation
+            .as_deref()
+            .or(self.render.presentation.as_deref())
+            .unwrap_or(DEFAULT_PRESENTATION_PRESET);
+        let presentation_file = parsed
+            .presentation_file
+            .clone()
+            .or_else(|| self.render.presentation_file.clone());
+
+        let mut warnings = Vec::new();
+        let mut fell_back_to_default = false;
+        let mut preset_id = requested_preset.to_string();
+        let mut policy = match load_builtin_presentation_asset(requested_preset) {
+            Ok(policy) => policy,
+            Err(error) => {
+                fell_back_to_default = true;
+                warnings.push(format!(
+                    "note: presentation preset '{requested_preset}' is unavailable; using built-in default '{DEFAULT_PRESENTATION_PRESET}' ({error})"
+                ));
+                preset_id = DEFAULT_PRESENTATION_PRESET.to_string();
+                default_policy.clone()
+            }
+        };
+
+        if let Some(path) = presentation_file.as_ref() {
+            match load_presentation_file(path) {
+                Ok(overlay) => {
+                    policy = merge_presentation_config(policy, overlay);
+                }
+                Err(error) => {
+                    fell_back_to_default = true;
+                    warnings.push(format!(
+                        "note: failed to load presentation file {}; using built-in default '{DEFAULT_PRESENTATION_PRESET}' ({error})",
+                        path.display()
+                    ));
+                    preset_id = DEFAULT_PRESENTATION_PRESET.to_string();
+                    policy = default_policy.clone();
+                }
+            }
+        }
+
+        normalize_presentation_config(&mut policy, &default_policy, &mut warnings);
+
+        ResolvedPresentationPolicy {
+            preset_id,
+            presentation_file,
+            policy,
+            warnings,
+            fell_back_to_default,
+        }
+    }
+
     fn load_from_paths<I, P>(admin_paths: I, user_path: Option<P>) -> Result<Self, CliError>
     where
         I: IntoIterator<Item = PathBuf>,
@@ -162,7 +357,15 @@ fn admin_config_paths_from(raw_xdg_config_dirs: Option<OsString>) -> Vec<PathBuf
 }
 
 fn load_config_file(path: &Path) -> Result<ConfigFile, CliError> {
-    toml::from_str(&fs::read_to_string(path)?).map_err(|e| CliError::Config(e.to_string()))
+    let mut config: ConfigFile =
+        toml::from_str(&fs::read_to_string(path)?).map_err(|e| CliError::Config(e.to_string()))?;
+    if let Some(presentation_file) = config.render.presentation_file.as_mut()
+        && presentation_file.is_relative()
+        && let Some(parent) = path.parent()
+    {
+        *presentation_file = parent.join(&*presentation_file);
+    }
+    Ok(config)
 }
 
 fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
@@ -183,6 +386,11 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
             profile: overlay.render.profile.or(base.render.profile),
             path_policy: overlay.render.path_policy.or(base.render.path_policy),
             debug_refs: overlay.render.debug_refs.or(base.render.debug_refs),
+            presentation: overlay.render.presentation.or(base.render.presentation),
+            presentation_file: overlay
+                .render
+                .presentation_file
+                .or(base.render.presentation_file),
         },
         trace: TraceSection {
             retention_policy: overlay
@@ -216,6 +424,376 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
                 .show_suppressed_count
                 .or(base.cascade.show_suppressed_count),
         },
+    }
+}
+
+fn load_builtin_presentation_asset(preset_id: &str) -> Result<PresentationConfigFile, String> {
+    let source = match preset_id {
+        "subject_blocks_v1" => SUBJECT_BLOCKS_V1_ASSET,
+        "legacy_v1" => LEGACY_V1_ASSET,
+        other => return Err(format!("unknown preset id: {other}")),
+    };
+    parse_presentation_config(source, &format!("built-in preset '{preset_id}'"))
+}
+
+fn load_presentation_file(path: &Path) -> Result<PresentationConfigFile, String> {
+    parse_presentation_config(
+        &fs::read_to_string(path).map_err(|e| e.to_string())?,
+        &path.display().to_string(),
+    )
+}
+
+fn parse_presentation_config(
+    contents: &str,
+    source: &str,
+) -> Result<PresentationConfigFile, String> {
+    let config: PresentationConfigFile =
+        toml::from_str(contents).map_err(|e| format!("failed to parse {source}: {e}"))?;
+    match config.kind.as_deref() {
+        Some(PRESENTATION_SCHEMA_KIND) => {}
+        Some(other) => {
+            return Err(format!(
+                "expected kind = \"{PRESENTATION_SCHEMA_KIND}\" in {source}, found \"{other}\""
+            ));
+        }
+        None => return Err(format!("missing kind in {source}")),
+    }
+    match config.schema_version {
+        Some(PRESENTATION_SCHEMA_VERSION) => {}
+        Some(other) => {
+            return Err(format!(
+                "unsupported presentation schema_version in {source}: {other}"
+            ));
+        }
+        None => return Err(format!("missing schema_version in {source}")),
+    }
+    Ok(config)
+}
+
+fn merge_presentation_config(
+    mut base: PresentationConfigFile,
+    overlay: PresentationConfigFile,
+) -> PresentationConfigFile {
+    base.kind = overlay.kind.or(base.kind);
+    base.schema_version = overlay.schema_version.or(base.schema_version);
+    base.session.visible_root_mode = overlay
+        .session
+        .visible_root_mode
+        .or(base.session.visible_root_mode);
+    base.session.warning_only_mode = overlay
+        .session
+        .warning_only_mode
+        .or(base.session.warning_only_mode);
+    base.session.block_separator = overlay
+        .session
+        .block_separator
+        .or(base.session.block_separator);
+    base.session.unknown_template = overlay
+        .session
+        .unknown_template
+        .or(base.session.unknown_template);
+    for (key, value) in overlay.labels {
+        base.labels.insert(key, value);
+    }
+    base.location.default_placement = overlay
+        .location
+        .default_placement
+        .or(base.location.default_placement);
+    base.location.fallback_order = overlay
+        .location
+        .fallback_order
+        .or(base.location.fallback_order);
+    base.location.width_soft_limit = overlay
+        .location
+        .width_soft_limit
+        .or(base.location.width_soft_limit);
+    base.location.label_width = overlay.location.label_width.or(base.location.label_width);
+    base.templates = merge_templates(base.templates, overlay.templates);
+    base.family_mappings = merge_family_mappings(base.family_mappings, overlay.family_mappings);
+    base
+}
+
+fn merge_templates(
+    mut base: Vec<PresentationTemplate>,
+    overlay: Vec<PresentationTemplate>,
+) -> Vec<PresentationTemplate> {
+    for template in overlay {
+        if let Some(index) = base
+            .iter()
+            .position(|candidate| candidate.id == template.id)
+        {
+            base[index] = template;
+        } else {
+            base.push(template);
+        }
+    }
+    base
+}
+
+fn merge_family_mappings(
+    mut base: Vec<PresentationFamilyMapping>,
+    overlay: Vec<PresentationFamilyMapping>,
+) -> Vec<PresentationFamilyMapping> {
+    for mapping in overlay {
+        if let Some(index) = base
+            .iter()
+            .position(|candidate| candidate.matchers == mapping.matchers)
+        {
+            base[index] = mapping;
+        } else {
+            base.push(mapping);
+        }
+    }
+    base
+}
+
+fn normalize_presentation_config(
+    policy: &mut PresentationConfigFile,
+    defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    policy.kind = Some(PRESENTATION_SCHEMA_KIND.to_string());
+    policy.schema_version = Some(PRESENTATION_SCHEMA_VERSION);
+    normalize_session(policy, defaults, warnings);
+    normalize_location(policy, defaults, warnings);
+    normalize_templates(policy, defaults, warnings);
+    normalize_family_mappings(policy, defaults, warnings);
+}
+
+fn normalize_session(
+    policy: &mut PresentationConfigFile,
+    defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    normalize_enum_field(
+        &mut policy.session.visible_root_mode,
+        defaults.session.visible_root_mode.as_deref(),
+        KNOWN_SESSION_MODES,
+        "session.visible_root_mode",
+        warnings,
+    );
+    normalize_enum_field(
+        &mut policy.session.warning_only_mode,
+        defaults.session.warning_only_mode.as_deref(),
+        KNOWN_SESSION_MODES,
+        "session.warning_only_mode",
+        warnings,
+    );
+    normalize_enum_field(
+        &mut policy.session.block_separator,
+        defaults.session.block_separator.as_deref(),
+        KNOWN_BLOCK_SEPARATORS,
+        "session.block_separator",
+        warnings,
+    );
+
+    let generic_template = if policy
+        .templates
+        .iter()
+        .any(|template| template.id == GENERIC_BLOCK_TEMPLATE)
+    {
+        GENERIC_BLOCK_TEMPLATE.to_string()
+    } else {
+        defaults
+            .session
+            .unknown_template
+            .clone()
+            .unwrap_or_else(|| GENERIC_BLOCK_TEMPLATE.to_string())
+    };
+    match policy.session.unknown_template.as_deref() {
+        Some(value) if policy.templates.iter().any(|template| template.id == value) => {}
+        Some(value) => {
+            warnings.push(format!(
+                "note: unknown session.unknown_template '{value}'; using '{generic_template}'"
+            ));
+            policy.session.unknown_template = Some(generic_template);
+        }
+        None => {
+            policy.session.unknown_template = Some(generic_template);
+        }
+    }
+}
+
+fn normalize_location(
+    policy: &mut PresentationConfigFile,
+    defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    normalize_enum_field(
+        &mut policy.location.default_placement,
+        defaults.location.default_placement.as_deref(),
+        KNOWN_LOCATION_PLACEMENTS,
+        "location.default_placement",
+        warnings,
+    );
+
+    let default_fallback = defaults.location.fallback_order.clone().unwrap_or_else(|| {
+        vec![
+            "header".to_string(),
+            "evidence".to_string(),
+            "excerpt_header".to_string(),
+            "none".to_string(),
+        ]
+    });
+    let mut fallback = policy
+        .location
+        .fallback_order
+        .clone()
+        .unwrap_or(default_fallback.clone());
+    let original_len = fallback.len();
+    fallback.retain(|value| KNOWN_FALLBACK_LOCATIONS.contains(&value.as_str()));
+    if fallback.is_empty() {
+        warnings.push(
+            "note: location.fallback_order was empty or invalid; using built-in default order"
+                .to_string(),
+        );
+        fallback = default_fallback;
+    } else if fallback.len() != original_len {
+        warnings.push(
+            "note: location.fallback_order contained unknown entries; they were ignored"
+                .to_string(),
+        );
+    }
+    policy.location.fallback_order = Some(fallback);
+
+    if policy.location.width_soft_limit.unwrap_or(0) == 0 {
+        policy.location.width_soft_limit = defaults.location.width_soft_limit.or(Some(100));
+    }
+    if policy.location.label_width.unwrap_or(0) == 0 {
+        policy.location.label_width = defaults.location.label_width.or(Some(4));
+    }
+}
+
+fn normalize_templates(
+    policy: &mut PresentationConfigFile,
+    defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    for template in &mut policy.templates {
+        normalize_enum_field(
+            &mut template.excerpt,
+            template_default_excerpt(defaults, &template.id),
+            KNOWN_TEMPLATE_EXCERPTS,
+            &format!("template '{}'.excerpt", template.id),
+            warnings,
+        );
+        template.core.retain(|line| {
+            if KNOWN_TEMPLATE_SLOTS.contains(&line.slot.as_str()) {
+                true
+            } else {
+                warnings.push(format!(
+                    "note: template '{}' references unknown slot '{}'; skipping line",
+                    template.id, line.slot
+                ));
+                false
+            }
+        });
+        for line in &mut template.core {
+            if let Some(suffix_slot) = line.suffix_slot.as_deref()
+                && !KNOWN_SUFFIX_SLOTS.contains(&suffix_slot)
+            {
+                warnings.push(format!(
+                    "note: template '{}' references unknown suffix slot '{}'; dropping suffix",
+                    template.id, suffix_slot
+                ));
+                line.suffix_slot = None;
+            }
+        }
+    }
+
+    if !policy
+        .templates
+        .iter()
+        .any(|template| template.id == GENERIC_BLOCK_TEMPLATE)
+        && let Some(generic) = defaults
+            .templates
+            .iter()
+            .find(|template| template.id == GENERIC_BLOCK_TEMPLATE)
+    {
+        warnings.push(
+            "note: generic_block template was missing; restoring built-in default".to_string(),
+        );
+        policy.templates.push(generic.clone());
+    }
+}
+
+fn normalize_family_mappings(
+    policy: &mut PresentationConfigFile,
+    _defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    let generic_template = policy
+        .session
+        .unknown_template
+        .clone()
+        .unwrap_or_else(|| GENERIC_BLOCK_TEMPLATE.to_string());
+    policy.family_mappings.retain_mut(|mapping| {
+        if mapping.matchers.is_empty() {
+            warnings.push("note: family mapping without any match entries was ignored".to_string());
+            return false;
+        }
+        if mapping
+            .display_family
+            .as_deref()
+            .is_none_or(|value| value.trim().is_empty())
+        {
+            warnings.push(format!(
+                "note: family mapping {:?} is missing display_family and was ignored",
+                mapping.matchers
+            ));
+            return false;
+        }
+        match mapping.template.as_deref() {
+            Some(template_id)
+                if policy
+                    .templates
+                    .iter()
+                    .any(|template| template.id == template_id) => {}
+            Some(template_id) => {
+                warnings.push(format!(
+                    "note: family mapping {:?} references unknown template '{}'; using '{}'",
+                    mapping.matchers, template_id, generic_template
+                ));
+                mapping.template = Some(generic_template.clone());
+            }
+            None => {
+                mapping.template = Some(generic_template.clone());
+            }
+        }
+        true
+    });
+}
+
+fn template_default_excerpt<'a>(
+    defaults: &'a PresentationConfigFile,
+    template_id: &str,
+) -> Option<&'a str> {
+    defaults
+        .templates
+        .iter()
+        .find(|template| template.id == template_id)
+        .and_then(|template| template.excerpt.as_deref())
+        .or(Some("off"))
+}
+
+fn normalize_enum_field(
+    field: &mut Option<String>,
+    default: Option<&str>,
+    allowed: &[&str],
+    label: &str,
+    warnings: &mut Vec<String>,
+) {
+    match field.as_deref() {
+        Some(value) if allowed.contains(&value) => {}
+        Some(value) => {
+            warnings.push(format!(
+                "note: unsupported {label} '{value}'; using built-in default"
+            ));
+            *field = default.map(ToOwned::to_owned);
+        }
+        None => {
+            *field = default.map(ToOwned::to_owned);
+        }
     }
 }
 
@@ -385,6 +963,8 @@ mod tests {
                 profile: Some(RenderProfile::Verbose),
                 path_policy: Some(PathPolicy::Absolute),
                 debug_refs: Some(DebugRefs::CaptureRef),
+                presentation: Some("legacy_v1".to_string()),
+                presentation_file: Some(PathBuf::from("/etc/cc-formed/presentation.toml")),
             },
             trace: TraceSection {
                 retention_policy: Some(RetentionPolicy::OnChildError),
@@ -412,6 +992,8 @@ mod tests {
                 profile: None,
                 path_policy: Some(PathPolicy::RelativeToCwd),
                 debug_refs: None,
+                presentation: Some("subject_blocks_v1".to_string()),
+                presentation_file: None,
             },
             trace: TraceSection {
                 retention_policy: Some(RetentionPolicy::Always),
@@ -441,6 +1023,14 @@ mod tests {
         assert_eq!(merged.render.profile, Some(RenderProfile::Verbose));
         assert_eq!(merged.render.path_policy, Some(PathPolicy::RelativeToCwd));
         assert_eq!(merged.render.debug_refs, Some(DebugRefs::CaptureRef));
+        assert_eq!(
+            merged.render.presentation.as_deref(),
+            Some("subject_blocks_v1")
+        );
+        assert_eq!(
+            merged.render.presentation_file,
+            Some(PathBuf::from("/etc/cc-formed/presentation.toml"))
+        );
         assert_eq!(merged.trace.retention_policy, Some(RetentionPolicy::Always));
         assert_eq!(
             merged.cascade.compression_level,
@@ -522,6 +1112,9 @@ mod tests {
                 [runtime]
                 mode = "render"
 
+                [render]
+                presentation = "subject_blocks_v1"
+
                 [cascade]
                 summary_likelihood_threshold = 0.62
                 show_suppressed_count = true
@@ -540,6 +1133,10 @@ mod tests {
             Some(PathBuf::from("/opt/ccache-from-admin"))
         );
         assert_eq!(loaded.runtime.mode, Some(ExecutionMode::Render));
+        assert_eq!(
+            loaded.render.presentation.as_deref(),
+            Some("subject_blocks_v1")
+        );
         assert_eq!(loaded.cascade.summary_likelihood_threshold, Some(0.62));
         assert_eq!(
             loaded.cascade.show_suppressed_count,
@@ -632,5 +1229,218 @@ mod tests {
         let resolved = ConfigFile::default().resolve_cascade_policy(&ParsedArgs::default());
 
         assert_eq!(resolved, CascadePolicySnapshot::default());
+    }
+
+    #[test]
+    fn resolve_presentation_policy_respects_cli_then_user_then_admin_then_defaults() {
+        let temp = tempdir().unwrap();
+        let admin = temp
+            .path()
+            .join("etc")
+            .join("cc-formed")
+            .join("config.toml");
+        let user = temp.path().join("user-config.toml");
+        let admin_overlay = temp
+            .path()
+            .join("etc")
+            .join("cc-formed")
+            .join("admin-presentation.toml");
+        let user_overlay = temp.path().join("user-presentation.toml");
+        fs::create_dir_all(admin.parent().unwrap()).unwrap();
+        fs::write(
+            &admin,
+            r#"
+                [render]
+                presentation = "legacy_v1"
+                presentation_file = "admin-presentation.toml"
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &user,
+            r#"
+                [render]
+                presentation = "subject_blocks_v1"
+                presentation_file = "user-presentation.toml"
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &admin_overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 1
+
+                [labels]
+                help = "admin-help"
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &user_overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 1
+
+                [labels]
+                help = "user-help"
+            "#,
+        )
+        .unwrap();
+
+        let config = ConfigFile::load_from_paths([admin], Some(&user)).unwrap();
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation=legacy_v1"),
+        ])
+        .unwrap();
+
+        let resolved = config.resolve_presentation_policy(&parsed);
+
+        assert_eq!(resolved.preset_id, "legacy_v1");
+        assert_eq!(resolved.presentation_file, Some(user_overlay));
+        assert_eq!(
+            resolved.policy.labels.get("help").map(String::as_str),
+            Some("user-help")
+        );
+        assert!(!resolved.fell_back_to_default);
+        assert!(resolved.warnings.is_empty());
+    }
+
+    #[test]
+    fn relative_presentation_file_paths_are_resolved_from_config_location() {
+        let temp = tempdir().unwrap();
+        let user = temp.path().join("nested").join("config.toml");
+        let overlay = temp.path().join("nested").join("presentation.toml");
+        fs::create_dir_all(user.parent().unwrap()).unwrap();
+        fs::write(
+            &user,
+            r#"
+                [render]
+                presentation_file = "presentation.toml"
+            "#,
+        )
+        .unwrap();
+        fs::write(
+            &overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 1
+            "#,
+        )
+        .unwrap();
+
+        let config = ConfigFile::load_from_paths([], Some(&user)).unwrap();
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+
+        assert_eq!(resolved.presentation_file, Some(overlay));
+    }
+
+    #[test]
+    fn invalid_external_presentation_file_falls_back_to_default_preset() {
+        let temp = tempdir().unwrap();
+        let user = temp.path().join("config.toml");
+        let overlay = temp.path().join("broken-presentation.toml");
+        fs::write(
+            &user,
+            r#"
+                [render]
+                presentation = "subject_blocks_v1"
+                presentation_file = "broken-presentation.toml"
+            "#,
+        )
+        .unwrap();
+        fs::write(&overlay, "not = [valid").unwrap();
+
+        let config = ConfigFile::load_from_paths([], Some(&user)).unwrap();
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+
+        assert_eq!(resolved.preset_id, "legacy_v1");
+        assert!(resolved.fell_back_to_default);
+        assert!(
+            resolved
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("failed to load presentation file"))
+        );
+        assert_eq!(
+            resolved.policy.session.visible_root_mode.as_deref(),
+            Some("lead_plus_summary")
+        );
+    }
+
+    #[test]
+    fn unknown_template_and_slot_degrade_with_warnings() {
+        let temp = tempdir().unwrap();
+        let overlay = temp.path().join("presentation.toml");
+        fs::write(
+            &overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 1
+
+                [[templates]]
+                id = "contrast_block"
+                excerpt = "off"
+                core = [
+                  { slot = "unknown_slot", label = "help" },
+                  { slot = "expected", label = "want", suffix_slot = "unknown_suffix" },
+                ]
+
+                [[family_mappings]]
+                match = ["type_overload"]
+                display_family = "type_mismatch"
+                template = "missing_block"
+            "#,
+        )
+        .unwrap();
+
+        let config = ConfigFile {
+            render: RenderSection {
+                presentation_file: Some(overlay),
+                ..RenderSection::default()
+            },
+            ..ConfigFile::default()
+        };
+
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+        let contrast_block = resolved
+            .policy
+            .templates
+            .iter()
+            .find(|template| template.id == "contrast_block")
+            .unwrap();
+        let mapping = resolved
+            .policy
+            .family_mappings
+            .iter()
+            .find(|mapping| mapping.matchers == vec!["type_overload".to_string()])
+            .unwrap();
+
+        assert_eq!(contrast_block.core.len(), 1);
+        assert_eq!(contrast_block.core[0].slot, "expected");
+        assert_eq!(contrast_block.core[0].suffix_slot, None);
+        assert_eq!(mapping.template.as_deref(), Some("generic_block"));
+        assert!(
+            resolved
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("unknown slot"))
+        );
+        assert!(
+            resolved
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("unknown template"))
+        );
+    }
+
+    #[test]
+    fn existing_config_without_presentation_keys_keeps_legacy_default() {
+        let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
+
+        assert_eq!(resolved.preset_id, "legacy_v1");
+        assert!(!resolved.fell_back_to_default);
+        assert!(resolved.warnings.is_empty());
     }
 }

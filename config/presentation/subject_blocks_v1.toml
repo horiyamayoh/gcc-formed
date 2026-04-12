@@ -1,0 +1,135 @@
+kind = "cc_formed_presentation"
+schema_version = 1
+
+[session]
+visible_root_mode = "all_visible_blocks"
+warning_only_mode = "lead_plus_summary"
+block_separator = "blank_line"
+unknown_template = "generic_block"
+
+[labels]
+help = "help"
+want = "want"
+got = "got"
+via = "via"
+need = "need"
+from = "from"
+name = "name"
+use = "use"
+near = "near"
+symbol = "symbol"
+archive = "archive"
+now = "now"
+prev = "prev"
+raw = "raw"
+omitted = "omitted"
+
+[location]
+default_placement = "inline_suffix"
+fallback_order = ["header", "evidence", "excerpt_header", "none"]
+width_soft_limit = 100
+label_width = 4
+
+[[templates]]
+id = "generic_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "why_raw", label = "raw", optional = true },
+]
+
+[[templates]]
+id = "contrast_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "expected", label = "want", optional = true },
+  { slot = "actual", label = "got", optional = true },
+  { slot = "via", label = "via", suffix_slot = "omitted_notes_suffix", optional = true },
+]
+
+[[templates]]
+id = "parser_block"
+excerpt = "auto"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "expected", label = "want", optional = true },
+  { slot = "near", label = "near", optional = true },
+]
+
+[[templates]]
+id = "lookup_block"
+excerpt = "auto"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "name", label = "name", optional = true },
+  { slot = "use", label = "use", optional = true },
+  { slot = "need", label = "need", optional = true },
+]
+
+[[templates]]
+id = "missing_header_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "need", label = "need", optional = true },
+  { slot = "from", label = "from", optional = true },
+]
+
+[[templates]]
+id = "conflict_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "now", label = "now", optional = true },
+  { slot = "prev", label = "prev", optional = true },
+]
+
+[[templates]]
+id = "context_block"
+excerpt = "auto"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "from", label = "from", optional = true },
+  { slot = "via", label = "via", optional = true },
+]
+
+[[templates]]
+id = "linker_block"
+excerpt = "off"
+core = [
+  { slot = "first_action", label = "help", optional = true },
+  { slot = "symbol", label = "symbol", optional = true },
+  { slot = "from", label = "from", suffix_slot = "omitted_refs_suffix", optional = true },
+  { slot = "archive", label = "archive", optional = true },
+]
+
+[[family_mappings]]
+match = ["type_overload", "concepts_constraints", "format_string", "conversion_narrowing", "const_qualifier"]
+display_family = "type_mismatch"
+template = "contrast_block"
+
+[[family_mappings]]
+match = ["syntax", "preprocessor_directive", "attribute", "storage_class", "module_import", "coroutine", "asm_inline", "openmp"]
+display_family = "syntax"
+template = "parser_block"
+
+[[family_mappings]]
+match = ["scope_declaration", "pointer_reference", "deleted_function", "access_control"]
+display_family = "missing_name"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["redefinition", "odr_inline_linkage"]
+display_family = "redefinition"
+template = "conflict_block"
+
+[[family_mappings]]
+match = ["macro_include"]
+display_family = "macro_include"
+template = "context_block"
+
+[[family_mappings]]
+match = ["prefix:linker."]
+display_family = "linker"
+template = "linker_block"
