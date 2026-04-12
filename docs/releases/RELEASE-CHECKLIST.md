@@ -73,13 +73,14 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - README states the current beta-baseline scope in one screen.
 - README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
 - `SUPPORT-BOUNDARY.md` exists and remains the canonical wording source for README summary text, release notes, limitations, security, and contributing docs.
+- `PUBLIC-SURFACE.md` exists and remains the canonical source for repo landing metadata, README top copy, and generated GitHub Release body inputs.
 - README links to [VERSIONING.md](../policies/VERSIONING.md) and distinguishes maturity labels from artifact semver.
 - README links [GOVERNANCE.md](../policies/GOVERNANCE.md), and the governance freeze wording is consistent with `ADR-0020`, contributing guidance, and the PR template.
 - `RELEASE-NOTES.md` calls out current `VersionBand` posture and raw fallback semantics.
 - `KNOWN-LIMITATIONS.md` is linked from README and release notes.
 - `STABLE-RELEASE.md` exists and matches the workflow/xtask stable cut contract.
 - `SUPPORT.md` and the runbooks under `docs/runbooks/` exist, and the public bug template links to them.
-- The GitHub Release body links `SUPPORT-BOUNDARY.md`, `KNOWN-LIMITATIONS.md`, and `PUBLIC-BETA-RELEASE.md`.
+- The GitHub Release body is generated from `ci/public_surface.py` and links `SUPPORT-BOUNDARY.md`, `KNOWN-LIMITATIONS.md`, and the current release runbook.
 
 ## Artifact Retention
 

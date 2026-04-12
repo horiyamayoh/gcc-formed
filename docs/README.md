@@ -21,6 +21,7 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 ## Current Authority
 
 - [support/SUPPORT-BOUNDARY.md](support/SUPPORT-BOUNDARY.md): public wording と support posture の正本
+- [support/PUBLIC-SURFACE.md](support/PUBLIC-SURFACE.md): repo landing / release body / GitHub About metadata の正本
 - [process/EXECUTION-MODEL.md](process/EXECUTION-MODEL.md): vNext delivery system の正本
 - [process/implementation-bootstrap-sequence.md](process/implementation-bootstrap-sequence.md): 実装順序の正本
 - [policies/VERSIONING.md](policies/VERSIONING.md): maturity label / artifact semver policy

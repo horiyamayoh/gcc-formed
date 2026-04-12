@@ -37,6 +37,8 @@ Stable release automation must prove all of the following in one run:
 
 The canonical automation entrypoint is `cargo xtask stable-release`.
 
+The GitHub Release body for a stable cut is generated from [PUBLIC-SURFACE.md](../support/PUBLIC-SURFACE.md) plus the canonical support wording in [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) via `python3 ci/public_surface.py render-release-body --kind stable ...`. Do not hand-edit workflow-local release-note prose.
+
 ## Local Dry Run
 
 ```bash

@@ -25,6 +25,7 @@ DOCS_WITH_CANONICAL_COPY = [
     "docs/releases/RELEASE-NOTES.md",
     "docs/releases/RELEASE-CHECKLIST.md",
     "SECURITY.md",
+    "SUPPORT.md",
     "CONTRIBUTING.md",
 ]
 
@@ -85,6 +86,10 @@ class SupportBoundaryDocsTest(unittest.TestCase):
         self.assertIn("| VersionBand |", text)
         self.assertIn("| GCC 15+ |", text)
         self.assertIn("SupportLevel / ProcessingPath / RawPreservationLevel", text)
+        self.assertIn(
+            "GCC diagnostic UX wrapper for GCC 9-15 that keeps terminal output shorter, root-cause-first, and fail-open.",
+            text,
+        )
 
     def test_pr_template_matches_required_sections(self) -> None:
         text = (REPO_ROOT / ".github" / "pull_request_template.md").read_text(

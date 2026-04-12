@@ -118,11 +118,14 @@ A beta or release-candidate build must be held if any of the following are true 
 The following files must stay aligned with this document:
 
 - `README.md`
+- `docs/support/PUBLIC-SURFACE.md`
 - release notes
+- generated GitHub Release body
 - bug report template
 - pull request template
 - support runbooks
 - contribution docs
+- GitHub repo landing description / website / topics / README top copy
 - any user-facing “current support” wording
 
 If wording changes here, update those surfaces in the same change.

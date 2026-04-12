@@ -14,6 +14,8 @@ superseded_by: []
 
 # gcc-formed
 
+> GCC diagnostic UX wrapper for GCC 9-15 that keeps terminal output shorter, root-cause-first, and fail-open.
+
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
 > After: `error: template instantiation failed` と `help:` / `why:` から読める
@@ -190,6 +192,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 ### 契約文書
 
 - [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md): public wording と support posture の正本
+- [docs/support/PUBLIC-SURFACE.md](docs/support/PUBLIC-SURFACE.md): repo landing / release body / GitHub About metadata の正本
 - [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md): delivery system の正本
 - [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md): IR 契約
 - [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md): capture / ingest 契約

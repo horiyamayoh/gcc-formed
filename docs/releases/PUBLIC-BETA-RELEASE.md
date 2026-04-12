@@ -35,6 +35,8 @@ Each public beta GitHub Release must publish these assets for the primary `x86_6
 
 The GitHub Release body must also link the current [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md), [KNOWN-LIMITATIONS.md](../support/KNOWN-LIMITATIONS.md), and this document, and must call out the signing key id plus trusted signing public key SHA-256 for the shipped `SHA256SUMS.sig`.
 
+The GitHub Release body is generated from [PUBLIC-SURFACE.md](../support/PUBLIC-SURFACE.md) plus the canonical support wording in [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) via `python3 ci/public_surface.py render-release-body --kind beta ...`. Do not hand-maintain workflow heredocs for release-note text.
+
 ## Promote Story
 
 Public beta artifacts follow one build and one sign step:

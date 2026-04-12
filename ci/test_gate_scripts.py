@@ -651,12 +651,14 @@ class CheckedInWorkflowTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("Representative reference-path snapshot check", workflow)
         self.assertIn("Path-aware replay stop-ship contract", workflow)
+        self.assertIn("ci/public_surface.py render-release-body", workflow)
         self.assertIn("ci/gate_replay_contract.py", workflow)
         self.assertIn('--replay-report "$REPORT_ROOT/replay/replay-report.json"', workflow)
         self.assertIn('--output "$REPORT_ROOT/release/replay-stop-ship.json"', workflow)
         self.assertIn("--maturity-label", workflow)
         self.assertNotIn("--support-tier", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
+        self.assertNotIn('cat > "$RELEASE_NOTES_PATH" <<EOF', workflow)
         self.assertNotIn("Representative GCC 15 snapshot check", workflow)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
@@ -672,6 +674,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
             REPO_ROOT / ".github" / "workflows" / "release-stable.yml"
         ).read_text(encoding="utf-8")
         self.assertIn("Path-aware replay stop-ship contract", workflow)
+        self.assertIn("ci/public_surface.py render-release-body", workflow)
         self.assertIn('--replay-report "$REPORT_ROOT/rc-gate/replay-report.json"', workflow)
         self.assertIn('--output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"', workflow)
         self.assertIn("--maturity-label", workflow)
@@ -679,6 +682,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIn("rollout-matrix-report.json", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
         self.assertIn("release-provenance.json", workflow)
+        self.assertNotIn('cat > "$RELEASE_NOTES_PATH" <<EOF', workflow)
         self.assertIn("stable-release", workflow)
 
     def test_release_stable_workflow_orders_release_provenance_after_rc_gate_evidence(self) -> None:

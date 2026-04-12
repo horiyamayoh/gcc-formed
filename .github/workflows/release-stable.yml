@@ -168,68 +168,15 @@ jobs:
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes
         run: |
-          cat > "$RELEASE_NOTES_PATH" <<EOF
-          # gcc-formed ${PACKAGE_VERSION}
-
-          This GitHub Release publishes stable artifact \`${PACKAGE_VERSION}\` from a single signed build and promotes the same published bits through \`canary\`, \`beta\`, and \`stable\` without rebuilding.
-
-          ## Stable Cut Evidence
-
-          - rollback baseline version: \`${ROLLBACK_BASELINE_VERSION}\`
-          - signing key id: \`${RELEASE_SIGNING_KEY_ID}\`
-          - trusted signing public key sha256: \`${RELEASE_SIGNING_PUBLIC_KEY_SHA256}\`
-          - stable release report: \`stable-release-report.json\`
-          - promotion evidence: \`promotion-evidence.json\`
-          - rollback drill: \`rollback-drill.json\`
-          - provenance bundle: \`release-provenance.json\`
-          - rollout matrix report: \`rollout-matrix-report.json\`
-          - path-aware replay stop-ship report: \`replay-stop-ship.json\`
-          - rc gate report: \`rc-gate-report.json\`
-
-          ## Support Boundary
-
-          - Linux first.
-          - \`x86_64-unknown-linux-musl\` is the primary production artifact.
-          - The terminal renderer is the primary user-facing surface.
-          - \`GCC15+\`, \`GCC13-14\`, and \`GCC9-12\` are all in-scope product bands.
-          - \`GCC15+\` is the primary fidelity reference path.
-          - \`GCC13-14\` and \`GCC9-12\` are product paths with narrower guarantees and different capture constraints.
-          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
-
-          ## Release Gate Scope
-
-          - \`GCC15+\` remains the primary fidelity reference path for shipped release quality.
-          - Stable promotion is blocked by strict \`rc-gate\`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off.
-          - \`rollout-matrix-report.json\` records the expected current \`VersionBand\` / \`ProcessingPath\` cases.
-          - \`replay-stop-ship.json\` records missing required \`VersionBand × ProcessingPath × Surface\` cells and path-aware quality regressions from representative replay.
-
-          ## Install and Rollback Paths
-
-          - Stable cut runbook: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/STABLE-RELEASE.md
-          - Support boundary: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/SUPPORT-BOUNDARY.md
-          - Known limitations: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/KNOWN-LIMITATIONS.md
-          - Release checklist: https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/RELEASE-CHECKLIST.md
-
-          ## Included Assets
-
-          - primary archive
-          - debug archive
-          - source archive
-          - control-dir bundle
-          - immutable release-repo bundle
-          - \`manifest.json\`
-          - \`build-info.txt\`
-          - \`SHA256SUMS\`
-          - \`SHA256SUMS.sig\`
-          - \`stable-release-report.json\`
-          - \`stable-release-summary.md\`
-          - \`promotion-evidence.json\`
-          - \`rollback-drill.json\`
-          - \`rc-gate-report.json\`
-          - \`rollout-matrix-report.json\`
-          - \`replay-stop-ship.json\`
-          - \`release-provenance.json\`
-          EOF
+          python3 ci/public_surface.py render-release-body \
+            --kind stable \
+            --version "$PACKAGE_VERSION" \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit "$GITHUB_SHA" \
+            --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
+            --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
+            > "$RELEASE_NOTES_PATH"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

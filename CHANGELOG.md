@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Added `docs/support/PUBLIC-SURFACE.md` plus `ci/public_surface.py`, so repo About metadata, README top copy, and beta/stable GitHub Release bodies are now generated from one versioned current-authority contract instead of workflow-local heredocs.
 - Hardened the release provenance and workflow contract tests so they now check workflow ordering, workflow-specific evidence routing, `maturity_label` manifest/release-metadata vocabulary, and legacy vocabulary regressions for public-beta and stable release paths.
 - Aligned `docs/releases/RELEASE-CHECKLIST.md` with the current multi-band gate semantics, removing stale GCC15-only blocker wording and adding CI regression coverage so current-authority docs now pin `nightly-gate` and representative snapshot blockers in path-aware terms.
 - Added regression coverage and release-doc wording for the beta/stable release evidence slice so release provenance now carries path-aware replay-stop-ship and rollout-matrix artifacts alongside the current `VersionBand`-aware release metadata.

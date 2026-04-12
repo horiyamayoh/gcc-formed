@@ -189,61 +189,14 @@ jobs:
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes
         run: |
-          cat > "$RELEASE_NOTES_PATH" <<EOF
-          # gcc-formed ${PACKAGE_VERSION}
-
-          This GitHub prerelease ships artifact \`${PACKAGE_VERSION}\` in the \`v1beta\` maturity line.
-
-          ## Support Boundary
-
-          - Linux first.
-          - \`x86_64-unknown-linux-musl\` is the primary production artifact.
-          - The terminal renderer is the primary user-facing surface.
-          - \`GCC15+\`, \`GCC13-14\`, and \`GCC9-12\` are all in-scope product bands.
-          - \`GCC15+\` is the primary fidelity reference path.
-          - \`GCC13-14\` and \`GCC9-12\` are product paths with narrower guarantees and different capture constraints.
-          - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
-
-          ## Release Gate Scope
-
-          - \`GCC15+ / DualSinkStructured\` remains the blocking reference-path snapshot smoke in this workflow.
-          - \`gcc13_14\` and \`gcc9_12\` product-path blockers are classified by \`replay-stop-ship.json\`.
-          - \`replay-stop-ship.json\` preserves missing required \`VersionBand × ProcessingPath × Surface\` cells and path-aware quality regressions from representative replay.
-
-          ## Install Paths
-
-          - Direct install / rollback path: see \`docs/releases/PUBLIC-BETA-RELEASE.md\` and use the \`.control.tar.gz\` bundle.
-          - Exact-pin release-repository path: use the \`.release-repo.tar.gz\` bundle together with \`cargo xtask install-release\`.
-          - Current docs:
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/releases/PUBLIC-BETA-RELEASE.md
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/SUPPORT-BOUNDARY.md
-            - https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_SHA}/docs/support/KNOWN-LIMITATIONS.md
-
-          ## Signing
-
-          - signing key id: \`${RELEASE_SIGNING_KEY_ID}\`
-          - trusted signing public key sha256: \`${RELEASE_SIGNING_PUBLIC_KEY_SHA256}\`
-
-          ## Included Assets
-
-          - primary archive
-          - debug archive
-          - source archive
-          - control-dir bundle
-          - immutable release-repo bundle
-          - \`manifest.json\`
-          - \`build-info.txt\`
-          - \`SHA256SUMS\`
-          - \`SHA256SUMS.sig\`
-          - \`replay-stop-ship.json\`
-          - \`release-provenance.json\`
-
-          ## Known Limits
-
-          - \`${PACKAGE_VERSION}\` remains a public-beta artifact, not a release candidate or stable release.
-          - Current beta artifacts do not claim identical guarantees across all \`VersionBand\` values.
-          - Raw fallback remains part of the shipped contract.
-          EOF
+          python3 ci/public_surface.py render-release-body \
+            --kind beta \
+            --version "$PACKAGE_VERSION" \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit "$GITHUB_SHA" \
+            --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
+            --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
+            > "$RELEASE_NOTES_PATH"
       - name: Publish GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
