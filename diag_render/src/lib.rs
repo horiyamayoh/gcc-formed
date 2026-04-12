@@ -316,7 +316,8 @@ mod tests {
         DocumentAnalysis, DocumentCompleteness, EpisodeGraph, GroupCascadeAnalysis,
         GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
         ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
-        SuggestionApplicability, SuppressedCountVisibility, TextEdit, ToolInfo, VisibilityFloor,
+        SuggestionApplicability, SuppressedCountVisibility, SymbolContext, TextEdit, ToolInfo,
+        VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -805,6 +806,185 @@ mod tests {
         let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
         assert!(!output.text.contains("help:"));
         assert!(output.text.contains("why: expected ';' before '}' token"));
+    }
+
+    #[test]
+    fn subject_blocks_contrast_render_uses_want_got_via_slots() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "passing argument 1 of 'takes_int' makes integer from pointer without a cast"
+                .to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 5, 22, Ownership::User)];
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "expected-note".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "expected 'int' but argument is of type 'const char *'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.c", 1, 19, Ownership::User)],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("type_overload".into());
+        analysis.headline = Some("type or overload mismatch".into());
+        analysis.first_action_hint =
+            Some("compare the expected type and actual argument at the call site".into());
+        analysis.rule_id = Some("rule.family.type_overload.structured_or_message".into());
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(
+            card.semantic_card.presentation.template_id,
+            "contrast_block"
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Want),
+            Some("int")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Got),
+            Some("const char *")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Via),
+            Some("takes_int")
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::WhyRaw), None);
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert!(
+            output
+                .text
+                .contains("error: [type_mismatch] type or overload mismatch @ src/main.c:5:22")
+        );
+        assert!(output.text.contains("want: int"));
+        assert!(output.text.contains("got : const char *"));
+        assert!(output.text.contains("via : takes_int"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_linker_render_uses_symbol_and_from_slots() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].origin = Origin::Linker;
+        request.document.diagnostics[0].phase = Phase::Link;
+        request.document.diagnostics[0].locations.clear();
+        request.document.diagnostics[0].node_completeness = NodeCompleteness::Partial;
+        request.document.diagnostics[0].message.raw_text =
+            "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/ccnwX900.o:main.c:(.text+0x0): first defined here"
+                .to_string();
+        request.document.diagnostics[0].symbol_context = Some(SymbolContext {
+            primary_symbol: Some("duplicate".to_string()),
+            related_objects: vec![
+                "obj/vendor.o".to_string(),
+                "src/main.o".to_string(),
+                "lib/helper.o".to_string(),
+            ],
+            archive: Some("libfoo.a".to_string()),
+        });
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "linker.multiple_definition",
+            "multiple definition of `duplicate`",
+            Some(
+                "remove the duplicate definition or make the symbol internal to one translation unit",
+            ),
+            diag_core::Confidence::High,
+            "rule.family.linker.multiple_definition",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(card.semantic_card.presentation.template_id, "linker_block");
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Symbol),
+            Some("duplicate")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::From),
+            Some("lib/helper.o  +2 references")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Archive),
+            Some("libfoo.a")
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::WhyRaw), None);
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert!(
+            output
+                .text
+                .contains("error: [linker] multiple definition of `duplicate`")
+        );
+        assert!(output.text.contains("symbol : duplicate"));
+        assert!(output.text.contains("from   : lib/helper.o  +2 references"));
+        assert!(output.text.contains("archive: libfoo.a"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_contrast_extraction_failure_falls_back_to_generic_block() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].severity = Severity::Warning;
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+                .to_string();
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("conversion_narrowing".into());
+        analysis.headline = Some("implicit or narrowing conversion detected".into());
+        analysis.first_action_hint =
+            Some("add an explicit cast or change the variable type to match".into());
+        analysis.rule_id = Some("rule.family.conversion_narrowing.message_terms".into());
+        request.document.diagnostics[0].children.clear();
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(card.semantic_card.presentation.template_id, "generic_block");
+        assert!(
+            card.semantic_card
+                .presentation
+                .fell_back_to_generic_template
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::WhyRaw),
+            Some(
+                "comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+            )
+        );
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert!(
+            output
+                .text
+                .contains("implicit or narrowing conversion detected")
+        );
+        assert!(output.text.contains(
+            "why: comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+        ));
+        assert!(!output.text.contains("want:"));
     }
 
     #[test]
@@ -2043,8 +2223,16 @@ mod tests {
             ]
         );
         assert!(!output.text.contains("other errors:"));
-        assert!(output.text.contains("\n\nerror: secondary failure"));
-        assert!(output.text.contains("error: tertiary failure"));
+        assert!(
+            output
+                .text
+                .contains("\n\nerror: [unknown] secondary failure @ src/other.c:9:4")
+        );
+        assert!(
+            output
+                .text
+                .contains("error: [unknown] tertiary failure @ src/third.c:12:7")
+        );
     }
 
     #[test]

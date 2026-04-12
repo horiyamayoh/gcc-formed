@@ -36,6 +36,37 @@ impl LayoutProfile {
     }
 
     fn primary_line(&self, theme: &ThemePolicy, card: &RenderGroupCard) -> String {
+        if card.semantic_card.presentation.subject_first_header {
+            let family = card
+                .semantic_card
+                .display_family
+                .as_deref()
+                .or(card.family.as_deref())
+                .unwrap_or("unknown");
+            let subject = format!("[{family}] {}", theme.inline(&card.title));
+            if self.path_first_primary_line {
+                return card
+                    .canonical_location
+                    .as_ref()
+                    .map(|location| {
+                        format!("{}: {}: {}", theme.inline(location), card.severity, subject)
+                    })
+                    .unwrap_or_else(|| format!("{}: {}", card.severity, subject));
+            }
+            return card
+                .canonical_location
+                .as_ref()
+                .map(|location| {
+                    format!(
+                        "{}: {} @ {}",
+                        card.severity,
+                        subject,
+                        theme.inline(location)
+                    )
+                })
+                .unwrap_or_else(|| format!("{}: {}", card.severity, subject));
+        }
+
         if self.path_first_primary_line {
             return card
                 .canonical_location
@@ -86,6 +117,7 @@ impl<'a> LegacyPresentationAdapter<'a> {
     fn render(&self, lines: &mut Vec<String>) {
         lines.push(self.layout.primary_line(self.theme, self.card));
         if self.layout.show_location_line
+            && !self.card.semantic_card.presentation.subject_first_header
             && let Some(location) = self.card.canonical_location.as_ref()
         {
             lines.push(format!("--> {}", self.theme.inline(location)));
@@ -101,17 +133,17 @@ impl<'a> LegacyPresentationAdapter<'a> {
         {
             lines.push(format!("help: {}", self.theme.inline(first_action)));
         }
-        let why_label = self
-            .card
-            .semantic_card
-            .slot_label(SemanticSlotId::WhyRaw)
-            .unwrap_or("why");
-        let why_text = self
-            .card
-            .semantic_card
-            .slot_text(SemanticSlotId::WhyRaw)
-            .unwrap_or(&self.card.raw_message);
-        lines.push(format!("{why_label}: {}", self.theme.raw(why_text)));
+        self.render_semantic_evidence(lines);
+        if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::WhyRaw) {
+            let why_label = self
+                .card
+                .semantic_card
+                .slot_label(SemanticSlotId::WhyRaw)
+                .unwrap_or("why");
+            lines.push(format!("{why_label}: {}", self.theme.raw(why_text)));
+        } else if !self.card.semantic_card.presentation.subject_first_header {
+            lines.push(format!("why: {}", self.theme.raw(&self.card.raw_message)));
+        }
         for excerpt in &self.card.excerpts {
             lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
             for source in &excerpt.lines {
@@ -149,6 +181,38 @@ impl<'a> LegacyPresentationAdapter<'a> {
                     self.theme.raw(raw_line)
                 ));
             }
+        }
+    }
+
+    fn render_semantic_evidence(&self, lines: &mut Vec<String>) {
+        let mut rendered_slots = self
+            .card
+            .semantic_card
+            .slots
+            .iter()
+            .filter(|slot| {
+                slot.slot != SemanticSlotId::FirstAction && slot.slot != SemanticSlotId::WhyRaw
+            })
+            .collect::<Vec<_>>();
+        if rendered_slots.is_empty() {
+            return;
+        }
+        let label_width = rendered_slots
+            .iter()
+            .filter_map(|slot| slot.label.as_deref())
+            .map(str::len)
+            .max()
+            .unwrap_or(0);
+        for slot in rendered_slots.drain(..) {
+            let label = slot
+                .label
+                .as_deref()
+                .unwrap_or_else(|| slot.slot.stable_id());
+            lines.push(format!(
+                "{label:width$}: {}",
+                self.theme.inline(&slot.value),
+                width = label_width
+            ));
         }
     }
 }

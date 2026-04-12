@@ -112,6 +112,8 @@ pub struct ResolvedCardPresentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_family: Option<String>,
     #[serde(default)]
+    pub subject_first_header: bool,
+    #[serde(default)]
     pub fell_back_to_generic_template: bool,
 }
 
@@ -300,6 +302,38 @@ impl ResolvedPresentationPolicy {
                 },
             ),
             (
+                "linker_block".to_string(),
+                ResolvedTemplate {
+                    id: "linker_block".to_string(),
+                    core: vec![
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::FirstAction,
+                            label: Some("help".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Symbol,
+                            label: Some("symbol".to_string()),
+                            suffix_slot: None,
+                            optional: false,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::From,
+                            label: Some("from".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                        ResolvedTemplateLine {
+                            slot: SemanticSlotId::Archive,
+                            label: Some("archive".to_string()),
+                            suffix_slot: None,
+                            optional: true,
+                        },
+                    ],
+                },
+            ),
+            (
                 "lookup_block".to_string(),
                 ResolvedTemplate {
                     id: "lookup_block".to_string(),
@@ -352,6 +386,31 @@ impl ResolvedPresentationPolicy {
                     matcher: "type_overload".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "concepts_constraints".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    template_id: "contrast_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "format_string".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    template_id: "contrast_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "conversion_narrowing".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    template_id: "contrast_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "const_qualifier".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    template_id: "contrast_block".to_string(),
+                },
+                ResolvedFamilyPresentation {
+                    matcher: "prefix:linker.".to_string(),
+                    display_family: Some("linker".to_string()),
+                    template_id: "linker_block".to_string(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "syntax".to_string(),
@@ -409,6 +468,7 @@ impl ResolvedPresentationPolicy {
                 requested_template_id.to_string()
             },
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
+            subject_first_header: self.preset_id == "subject_blocks_v1",
             fell_back_to_generic_template,
         }
     }
@@ -444,6 +504,7 @@ impl Default for ResolvedCardPresentation {
         Self {
             template_id: GENERIC_TEMPLATE_ID.to_string(),
             display_family: None,
+            subject_first_header: false,
             fell_back_to_generic_template: false,
         }
     }
@@ -524,6 +585,21 @@ mod tests {
 
         assert_eq!(resolved.template_id, "legacy_linker_block");
         assert_eq!(resolved.display_family.as_deref(), Some("linker"));
+    }
+
+    #[test]
+    fn subject_blocks_maps_contrast_and_linker_families() {
+        let policy = ResolvedPresentationPolicy::subject_blocks_v1();
+
+        let contrast = policy.resolve_card_presentation(Some("const_qualifier"));
+        let linker = policy.resolve_card_presentation(Some("linker.undefined_reference"));
+
+        assert_eq!(contrast.template_id, "contrast_block");
+        assert_eq!(contrast.display_family.as_deref(), Some("type_mismatch"));
+        assert!(contrast.subject_first_header);
+        assert_eq!(linker.template_id, "linker_block");
+        assert_eq!(linker.display_family.as_deref(), Some("linker"));
+        assert!(linker.subject_first_header);
     }
 
     #[test]

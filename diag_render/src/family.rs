@@ -3,7 +3,7 @@ use crate::path::format_location;
 use crate::{RenderProfile, RenderRequest};
 use diag_core::{
     ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness, NodeCompleteness,
-    Ownership, ProvenanceSource,
+    Ownership, ProvenanceSource, SemanticRole,
 };
 use diag_rulepack::{
     RenderRulepack, RendererFamilyKind, RendererFamilyPolicy, checked_in_rulepack,
@@ -19,6 +19,32 @@ pub struct SupportingEvidence {
     pub child_notes: Vec<String>,
     /// Notices about omitted content (e.g. "omitted N additional note(s)").
     pub collapsed_notices: Vec<String>,
+}
+
+/// High-confidence contrast facts extracted for Presentation V2 slot filling.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContrastSlotFacts {
+    /// The expected or desired value.
+    pub want: String,
+    /// The actual or observed value.
+    pub got: String,
+    /// The best matching site or declaration for the contrast.
+    pub via: Option<String>,
+}
+
+/// High-confidence linker facts extracted for Presentation V2 slot filling.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LinkerSlotFacts {
+    /// The linker symbol in play.
+    pub symbol: String,
+    /// The most useful object or reference site.
+    pub from: Option<String>,
+    /// The archive containing the symbol, if known.
+    pub archive: Option<String>,
+    /// The current conflicting site for multiple-definition style failures.
+    pub now: Option<String>,
+    /// The previous conflicting site for multiple-definition style failures.
+    pub prev: Option<String>,
 }
 
 fn render_rulepack() -> &'static RenderRulepack {
@@ -329,6 +355,448 @@ fn summarize_linker(
     }
 
     evidence
+}
+
+/// Extracts Presentation V2 contrast slot facts when the diagnostic shape is reliable.
+///
+/// Returns `None` for unsupported families, ambiguous candidate selection, or
+/// messages that do not provide a stable expected/actual pair.
+pub fn extract_contrast_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<ContrastSlotFacts> {
+    let family = analysis_family(node)?;
+    match family {
+        "type_overload" => extract_expected_actual_contrast_slots(request, node, family)
+            .or_else(|| extract_overload_contrast_slots(request, node)),
+        "concepts_constraints" => extract_overload_contrast_slots(request, node),
+        "format_string" | "const_qualifier" => {
+            extract_expected_actual_contrast_slots(request, node, family)
+        }
+        _ => None,
+    }
+}
+
+/// Extracts Presentation V2 linker slot facts when the diagnostic shape is reliable.
+///
+/// Returns `None` when the node is not linker-related or when the symbol cannot
+/// be recovered with high confidence.
+pub fn extract_linker_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LinkerSlotFacts> {
+    let family = analysis_family(node)?;
+    if !family.starts_with("linker.") {
+        return None;
+    }
+
+    let message = normalized_message(node);
+    let symbol = node
+        .symbol_context
+        .as_ref()
+        .and_then(|symbol_context| symbol_context.primary_symbol.clone())
+        .or_else(|| parse_linker_symbol(message))?;
+    let from =
+        preferred_linker_object(request, node).or_else(|| parse_linker_reference_site(message));
+    let archive = node
+        .symbol_context
+        .as_ref()
+        .and_then(|symbol_context| symbol_context.archive.clone());
+    let (now, prev) = parse_linker_conflict_sites(message);
+
+    Some(LinkerSlotFacts {
+        symbol,
+        from,
+        archive,
+        now,
+        prev,
+    })
+}
+
+fn extract_overload_contrast_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<ContrastSlotFacts> {
+    let message = normalized_message(node);
+    if !message.contains("no matching") && !message.contains("constraints not satisfied") {
+        return None;
+    }
+
+    let got = parse_call_arguments(message).or_else(|| parse_call_expression(message))?;
+    let candidates = candidate_signature_choices(request, node);
+    let best = candidates.first()?.clone();
+    let want = if analysis_family(node) == Some("concepts_constraints") {
+        extract_required_expression(request, node)
+            .or_else(|| extract_requires_clause(&best.signature))
+            .or_else(|| parse_signature_parameters(&best.signature))?
+    } else {
+        parse_signature_parameters(&best.signature)?
+    };
+    let via = match best.location {
+        Some(location) => format!("{} @ {location}", best.signature),
+        None => best.signature,
+    };
+    let via = Some(format_with_suffix(
+        via,
+        contrast_suffix(request, node, &[best.index]),
+    ));
+
+    Some(ContrastSlotFacts { want, got, via })
+}
+
+fn extract_expected_actual_contrast_slots(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    family: &str,
+) -> Option<ContrastSlotFacts> {
+    let message = normalized_message(node);
+    let via_hint = match family {
+        "const_qualifier" => parse_const_qualifier_via(message),
+        "type_overload" => parse_call_target(message),
+        _ => None,
+    };
+
+    if let Some(mut facts) = parse_expected_actual_message(message) {
+        if facts.via.is_none() {
+            facts.via = via_hint.clone();
+        }
+        return Some(facts);
+    }
+
+    let mut child_facts = node
+        .children
+        .iter()
+        .enumerate()
+        .filter_map(|(index, child)| {
+            let note = normalized_child_note(request, child);
+            parse_expected_actual_message(&note)
+                .map(|facts| (child_rank(request, child), index, facts))
+        })
+        .collect::<Vec<_>>();
+    child_facts.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| left.1.cmp(&right.1)));
+
+    let (_, index, mut facts) = child_facts.into_iter().next()?;
+    if facts.via.is_none() {
+        facts.via = via_hint;
+    }
+    if facts.via.is_some() {
+        facts.via = facts
+            .via
+            .map(|via| format_with_suffix(via, contrast_suffix(request, node, &[index])));
+    }
+    Some(facts)
+}
+
+#[derive(Debug, Clone)]
+struct RankedCandidateSignature {
+    index: usize,
+    signature: String,
+    location: Option<String>,
+}
+
+fn candidate_signature_choices(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Vec<RankedCandidateSignature> {
+    let mut candidates = node
+        .children
+        .iter()
+        .enumerate()
+        .filter_map(|(index, child)| {
+            let note = normalized_child_note(request, child);
+            if !is_candidate_signature_note(child, &note) {
+                return None;
+            }
+            let signature = parse_candidate_signature(&note)?;
+            let location =
+                best_location(request, child).map(|location| format_location(request, location));
+            Some((
+                child_rank(request, child),
+                index,
+                RankedCandidateSignature {
+                    index,
+                    signature,
+                    location,
+                },
+            ))
+        })
+        .collect::<Vec<_>>();
+    candidates.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| left.1.cmp(&right.1)));
+    candidates
+        .into_iter()
+        .map(|(_, _, candidate)| candidate)
+        .collect()
+}
+
+fn is_candidate_signature_note(child: &DiagnosticNode, note: &str) -> bool {
+    child.semantic_role == SemanticRole::Candidate
+        || note.starts_with("candidate ")
+        || note.starts_with("candidate:")
+}
+
+fn parse_candidate_signature(note: &str) -> Option<String> {
+    let after_colon = note.split_once(':')?.1.trim_start();
+    quoted_value_at_start(after_colon)
+}
+
+fn parse_signature_parameters(signature: &str) -> Option<String> {
+    let open = signature.rfind('(')?;
+    let close = signature.rfind(')')?;
+    if close < open {
+        return None;
+    }
+    let parameters = signature[open + 1..close].trim();
+    if parameters.is_empty() {
+        Some("()".to_string())
+    } else {
+        Some(parameters.to_string())
+    }
+}
+
+fn parse_call_expression(message: &str) -> Option<String> {
+    quoted_value_after(message, "call to ")
+        .or_else(|| quoted_value_after(message, "call of overloaded "))
+}
+
+fn parse_call_target(message: &str) -> Option<String> {
+    quoted_value_after(message, "of ").or_else(|| parse_call_expression(message))
+}
+
+fn parse_call_arguments(message: &str) -> Option<String> {
+    let call = parse_call_expression(message)?;
+    let (_, arguments) = call.split_once('(')?;
+    let arguments = arguments.strip_suffix(')')?;
+    Some(arguments.to_string())
+}
+
+fn parse_expected_actual_message(text: &str) -> Option<ContrastSlotFacts> {
+    if let Some(facts) = parse_format_string_message(text) {
+        return Some(facts);
+    }
+
+    let want = quoted_value_after(text, "expected ")?;
+    let got = quoted_value_after(text, "argument is of type ")
+        .or_else(|| quoted_value_after(text, "argument has type "))?;
+    Some(ContrastSlotFacts {
+        want,
+        got,
+        via: None,
+    })
+}
+
+fn parse_format_string_message(text: &str) -> Option<ContrastSlotFacts> {
+    let format_spec = quoted_value_after(text, "format ")?;
+    let want = quoted_value_after(text, "expects argument of type ")?;
+    let got = quoted_value_after(text, "has type ")
+        .or_else(|| quoted_value_after(text, "is of type "))?;
+    Some(ContrastSlotFacts {
+        want,
+        got,
+        via: Some(format!("format '{format_spec}'")),
+    })
+}
+
+fn extract_required_expression(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
+    node.children.iter().find_map(|child| {
+        let note = normalized_child_note(request, child);
+        let remainder = note.strip_prefix("the required expression '")?;
+        let (expression, _) = remainder.split_once("' is invalid")?;
+        Some(expression.to_string())
+    })
+}
+
+fn extract_requires_clause(signature: &str) -> Option<String> {
+    let (_, remainder) = signature.split_once("requires ")?;
+    Some(remainder.split_whitespace().next()?.to_string())
+}
+
+fn parse_const_qualifier_via(text: &str) -> Option<String> {
+    if !text.contains("discards 'const' qualifier") {
+        return None;
+    }
+    let argument = text
+        .strip_prefix("passing argument ")
+        .and_then(|rest| rest.split_once(" of '"))
+        .map(|(argument, _)| argument.trim())
+        .unwrap_or_default();
+    let function = quoted_value_after(text, "of ")?;
+    if argument.is_empty() {
+        Some(function)
+    } else {
+        Some(format!("argument {argument} of '{function}'"))
+    }
+}
+
+fn parse_linker_symbol(message: &str) -> Option<String> {
+    let message = normalized_linker_message(message);
+    quoted_value_after(message, "multiple definition of ")
+        .or_else(|| quoted_value_after(message, "undefined reference to "))
+}
+
+fn parse_linker_reference_site(message: &str) -> Option<String> {
+    let message = normalized_linker_message(message);
+    if let Some((prefix, _)) = message.split_once(": multiple definition of ") {
+        let prefix = prefix.trim();
+        if !prefix.is_empty() {
+            return Some(prefix.to_string());
+        }
+    }
+    if let Some((prefix, _)) = message.split_once(": undefined reference to ") {
+        let prefix = prefix.trim();
+        if !prefix.is_empty() {
+            return Some(prefix.to_string());
+        }
+    }
+    None
+}
+
+fn preferred_linker_object(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
+    let mut related_objects = node
+        .symbol_context
+        .as_ref()
+        .map(|symbol_context| symbol_context.related_objects.clone())
+        .unwrap_or_default();
+    related_objects.sort_by(|left, right| {
+        linker_object_rank(request, right)
+            .cmp(&linker_object_rank(request, left))
+            .then_with(|| left.cmp(right))
+    });
+    if let Some(best) = related_objects.first().cloned() {
+        return Some(format_with_suffix(
+            best,
+            related_objects
+                .len()
+                .checked_sub(1)
+                .filter(|count| *count > 0)
+                .map(|count| format!("{} reference{}", count, plural_suffix(count))),
+        ));
+    }
+
+    let reference_sites = linker_reference_sites(&node.message.raw_text);
+    let best = reference_sites.first()?.clone();
+    Some(format_with_suffix(
+        best,
+        reference_sites
+            .len()
+            .checked_sub(1)
+            .filter(|count| *count > 0)
+            .map(|count| format!("{} reference{}", count, plural_suffix(count))),
+    ))
+}
+
+fn linker_reference_sites(message: &str) -> Vec<String> {
+    normalized_linker_message(message)
+        .split(';')
+        .filter_map(|segment| parse_linker_reference_site(segment.trim()))
+        .fold(Vec::new(), |mut sites, site| {
+            if !sites.iter().any(|existing| existing == &site) {
+                sites.push(site);
+            }
+            sites
+        })
+}
+
+fn contrast_suffix(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    used_indices: &[usize],
+) -> Option<String> {
+    let mut omitted_candidates = 0usize;
+    let mut omitted_notes = 0usize;
+    for (index, child) in node.children.iter().enumerate() {
+        if used_indices.contains(&index) {
+            continue;
+        }
+        let note = normalized_child_note(request, child);
+        if note.is_empty() {
+            continue;
+        }
+        if is_candidate_signature_note(child, &note) {
+            omitted_candidates += 1;
+        } else {
+            omitted_notes += 1;
+        }
+    }
+
+    if omitted_candidates > 0 {
+        Some(format!(
+            "{} candidate{}",
+            omitted_candidates,
+            plural_suffix(omitted_candidates)
+        ))
+    } else if omitted_notes > 0 {
+        Some(format!(
+            "{} note{}",
+            omitted_notes,
+            plural_suffix(omitted_notes)
+        ))
+    } else {
+        None
+    }
+}
+
+fn format_with_suffix(value: String, suffix: Option<String>) -> String {
+    match suffix {
+        Some(suffix) => format!("{value}  +{suffix}"),
+        None => value,
+    }
+}
+
+fn plural_suffix(count: usize) -> &'static str {
+    if count == 1 { "" } else { "s" }
+}
+
+fn parse_linker_conflict_sites(message: &str) -> (Option<String>, Option<String>) {
+    let message = normalized_linker_message(message);
+    let Some((current, rest)) = message.split_once(": multiple definition of ") else {
+        return (None, None);
+    };
+    let current = current.trim();
+    if current.is_empty() {
+        return (None, None);
+    }
+    let prev = rest
+        .split_once(';')
+        .map(|(_, tail)| tail.trim())
+        .and_then(|tail| tail.strip_suffix(": first defined here"))
+        .unwrap_or("")
+        .trim();
+    let prev = (!prev.is_empty()).then(|| prev.to_string());
+    (Some(current.to_string()), prev)
+}
+
+fn normalized_linker_message(message: &str) -> &str {
+    message.strip_prefix("/usr/bin/ld: ").unwrap_or(message)
+}
+
+fn quoted_value_at_start(text: &str) -> Option<String> {
+    let text = text.trim_start();
+    let mut chars = text.char_indices();
+    let (_, quote) = chars.next()?;
+    if !matches!(quote, '\'' | '`') {
+        return None;
+    }
+    let body = &text[quote.len_utf8()..];
+    let end = body.find(quote)?;
+    Some(body[..end].trim().to_string())
+}
+
+fn quoted_value_after(text: &str, marker: &str) -> Option<String> {
+    let start = text.find(marker)? + marker.len();
+    quoted_value_at_start(&text[start..])
+}
+
+fn analysis_family(node: &DiagnosticNode) -> Option<&str> {
+    node.analysis.as_ref()?.family.as_deref()
+}
+
+fn normalized_message(node: &DiagnosticNode) -> &str {
+    node.message
+        .raw_text
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim()
 }
 
 fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
@@ -1100,6 +1568,39 @@ mod tests {
         node
     }
 
+    fn sample_candidate_child(
+        family: &str,
+        signature: &str,
+        path: &str,
+        line: u32,
+    ) -> DiagnosticNode {
+        let mut child = sample_node(family);
+        child.semantic_role = SemanticRole::Candidate;
+        child.locations = vec![
+            Location::caret(path, line, 6, diag_core::LocationRole::Primary)
+                .with_ownership(Ownership::User, "user_workspace"),
+        ];
+        child.message.raw_text = format!("candidate 1: '{signature}'");
+        child
+    }
+
+    fn sample_expected_actual_child(
+        family: &str,
+        want: &str,
+        got: &str,
+        path: &str,
+        line: u32,
+    ) -> DiagnosticNode {
+        let mut child = sample_node(family);
+        child.semantic_role = SemanticRole::Supporting;
+        child.locations = vec![
+            Location::caret(path, line, 8, diag_core::LocationRole::Primary)
+                .with_ownership(Ownership::User, "user_workspace"),
+        ];
+        child.message.raw_text = format!("expected '{want}' but argument is of type '{got}'");
+        child
+    }
+
     #[test]
     fn loads_checked_in_render_rulepack() {
         let rulepack = render_rulepack();
@@ -1351,6 +1852,99 @@ mod tests {
         assert_eq!(constrained_template_frames(&request, 30, true), 6);
         assert_eq!(constrained_candidate_notes(&request, 20, true), 3);
         assert_eq!(linker_object_limit(&request, true), 2);
+    }
+
+    #[test]
+    fn extract_contrast_slots_uses_candidate_signature_for_overload() {
+        let request = sample_request();
+        let mut node = sample_node("type_overload");
+        node.message.raw_text = "no matching function for call to 'takes(int)'".to_string();
+        node.children = vec![
+            sample_candidate_child("type_overload", "void takes(int, int)", "src/main.cpp", 1),
+            sample_candidate_child(
+                "type_overload",
+                "void takes(double, double)",
+                "src/main.cpp",
+                2,
+            ),
+        ];
+
+        let facts = extract_contrast_slots(&request, &node).expect("expected contrast facts");
+
+        assert_eq!(facts.want, "int, int");
+        assert_eq!(facts.got, "int");
+        assert_eq!(
+            facts.via.as_deref(),
+            Some("void takes(int, int) @ src/main.cpp:1:6  +1 candidate")
+        );
+    }
+
+    #[test]
+    fn extract_contrast_slots_uses_format_string_expected_actual_message() {
+        let request = sample_request();
+        let mut node = sample_node("format_string");
+        node.message.raw_text =
+            "format '%d' expects argument of type 'int', but argument 2 has type 'char *'"
+                .to_string();
+
+        let facts = extract_contrast_slots(&request, &node).expect("expected contrast facts");
+
+        assert_eq!(facts.want, "int");
+        assert_eq!(facts.got, "char *");
+        assert_eq!(facts.via.as_deref(), Some("format '%d'"));
+    }
+
+    #[test]
+    fn extract_contrast_slots_uses_const_qualifier_child_expected_actual_message() {
+        let request = sample_request();
+        let mut node = sample_node("const_qualifier");
+        node.message.raw_text =
+            "passing argument 1 of 'takes' discards 'const' qualifier from pointer target type"
+                .to_string();
+        node.children = vec![sample_expected_actual_child(
+            "const_qualifier",
+            "int *",
+            "const int *",
+            "src/main.c",
+            7,
+        )];
+
+        let facts = extract_contrast_slots(&request, &node).expect("expected contrast facts");
+
+        assert_eq!(facts.want, "int *");
+        assert_eq!(facts.got, "const int *");
+        assert_eq!(facts.via.as_deref(), Some("argument 1 of 'takes'"));
+    }
+
+    #[test]
+    fn extract_linker_slots_uses_symbol_context_and_message_sites() {
+        let request = sample_request();
+        let mut node = sample_linker_node("linker.multiple_definition");
+        node.symbol_context.as_mut().unwrap().primary_symbol = Some("shared".to_string());
+        node.message.raw_text =
+            "helper.c:(.text+0x0): multiple definition of `shared`; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here"
+                .to_string();
+
+        let facts = extract_linker_slots(&request, &node).expect("expected linker facts");
+
+        assert_eq!(facts.symbol, "shared");
+        assert_eq!(facts.from.as_deref(), Some("lib/helper.o  +2 references"));
+        assert_eq!(facts.archive.as_deref(), Some("libfoo.a"));
+        assert_eq!(facts.now.as_deref(), Some("helper.c:(.text+0x0)"));
+        assert_eq!(
+            facts.prev.as_deref(),
+            Some("/tmp/cczB1U1i.o:main.c:(.text+0x0)")
+        );
+    }
+
+    #[test]
+    fn extract_linker_slots_returns_none_without_symbol_hint() {
+        let request = sample_request();
+        let mut node = sample_node("linker.cannot_find_library");
+        node.symbol_context = None;
+        node.message.raw_text = "collect2: error: ld returned 1 exit status".to_string();
+
+        assert!(extract_linker_slots(&request, &node).is_none());
     }
 
     #[test]

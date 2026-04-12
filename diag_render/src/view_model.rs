@@ -1,7 +1,10 @@
 use crate::RenderRequest;
 use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
-use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
+use crate::family::{
+    extract_contrast_slots, extract_linker_slots, is_conservative_useful_subset_card,
+    summarize_supporting_evidence,
+};
 use crate::path::format_location;
 use crate::presentation::{
     RenderSemanticCard, RenderSemanticSlot, ResolvedPresentationPolicy, SemanticSlotId, SessionMode,
@@ -157,6 +160,14 @@ pub struct RenderViewModel {
     pub summary_only_groups: Vec<SummaryOnlyGroup>,
 }
 
+struct SemanticCardInput<'a> {
+    family: Option<&'a str>,
+    title: &'a str,
+    first_action: Option<&'a str>,
+    canonical_location: Option<&'a str>,
+    conservative_useful_subset: bool,
+}
+
 /// Builds a [`RenderViewModel`] from the selected diagnostic groups.
 pub fn build(
     request: &RenderRequest,
@@ -236,9 +247,20 @@ fn build_card(
     let canonical_location = canonical_location(request, node);
     let excerpts = load_excerpt(request, node);
     let supporting_evidence = summarize_supporting_evidence(request, node);
-    let context_lines = supporting_evidence.context_lines;
-    let child_notes = supporting_evidence.child_notes;
-    let mut collapsed_notices = supporting_evidence.collapsed_notices;
+    let semantic_card = build_semantic_card(
+        request,
+        node,
+        presentation_policy,
+        SemanticCardInput {
+            family: family.as_deref(),
+            title: &title,
+            first_action: first_action.as_deref(),
+            canonical_location: canonical_location.as_deref(),
+            conservative_useful_subset,
+        },
+    );
+    let (context_lines, child_notes, mut collapsed_notices) =
+        adapt_supporting_evidence_for_presentation(supporting_evidence, &semantic_card);
     if let Some(selector_notices) = collapsed_notices_by_group_ref.get(&render_group_ref(node)) {
         collapsed_notices.extend(selector_notices.iter().cloned());
     }
@@ -251,15 +273,6 @@ fn build_card(
             .then_some(policy.disclosure.low_confidence_notice.to_string())
     };
     let raw_sub_block = raw_sub_block(request, node);
-    let semantic_card = build_semantic_card(
-        presentation_policy,
-        family.as_deref(),
-        &title,
-        first_action.as_deref(),
-        canonical_location.as_deref(),
-        &node.message.raw_text,
-    );
-
     RenderGroupCard {
         group_id: render_group_ref(node),
         severity: severity_label(&node.severity).to_string(),
@@ -322,39 +335,151 @@ fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> S
 }
 
 fn build_semantic_card(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
     presentation_policy: &ResolvedPresentationPolicy,
-    family: Option<&str>,
-    title: &str,
-    first_action: Option<&str>,
-    canonical_location: Option<&str>,
-    raw_message: &str,
+    input: SemanticCardInput<'_>,
 ) -> RenderSemanticCard {
-    let resolved_presentation = presentation_policy.resolve_card_presentation(family);
+    let mut resolved_presentation = presentation_policy.resolve_card_presentation(input.family);
     let mut slots = Vec::new();
-    if let Some(first_action) = first_action {
+    if let Some(first_action) = input.first_action {
         slots.push(RenderSemanticSlot {
             slot: SemanticSlotId::FirstAction,
             value: first_action.to_string(),
             label: presentation_policy.label("help").map(str::to_string),
         });
     }
-    slots.push(RenderSemanticSlot {
-        slot: SemanticSlotId::WhyRaw,
-        value: raw_message.to_string(),
-        label: presentation_policy
-            .slot_label(SemanticSlotId::WhyRaw)
-            .map(str::to_string),
-    });
+
+    let mut extracted_family_slots = false;
+    if resolved_presentation.subject_first_header && !input.conservative_useful_subset {
+        match resolved_presentation.template_id.as_str() {
+            "contrast_block" => {
+                if let Some(contrast) = extract_contrast_slots(request, node) {
+                    slots.push(RenderSemanticSlot {
+                        slot: SemanticSlotId::Want,
+                        value: contrast.want,
+                        label: presentation_policy
+                            .slot_label(SemanticSlotId::Want)
+                            .map(str::to_string),
+                    });
+                    slots.push(RenderSemanticSlot {
+                        slot: SemanticSlotId::Got,
+                        value: contrast.got,
+                        label: presentation_policy
+                            .slot_label(SemanticSlotId::Got)
+                            .map(str::to_string),
+                    });
+                    if let Some(via) = contrast.via {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Via,
+                            value: via,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Via)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = true;
+                } else {
+                    resolved_presentation.template_id =
+                        presentation_policy.generic_template_id.clone();
+                    resolved_presentation.fell_back_to_generic_template = true;
+                }
+            }
+            "linker_block" => {
+                if let Some(linker) = extract_linker_slots(request, node) {
+                    slots.push(RenderSemanticSlot {
+                        slot: SemanticSlotId::Symbol,
+                        value: linker.symbol,
+                        label: presentation_policy
+                            .slot_label(SemanticSlotId::Symbol)
+                            .map(str::to_string),
+                    });
+                    if let Some(from) = linker.from {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::From,
+                            value: from,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::From)
+                                .map(str::to_string),
+                        });
+                    }
+                    if let Some(archive) = linker.archive {
+                        slots.push(RenderSemanticSlot {
+                            slot: SemanticSlotId::Archive,
+                            value: archive,
+                            label: presentation_policy
+                                .slot_label(SemanticSlotId::Archive)
+                                .map(str::to_string),
+                        });
+                    }
+                    extracted_family_slots = true;
+                } else {
+                    resolved_presentation.template_id =
+                        presentation_policy.generic_template_id.clone();
+                    resolved_presentation.fell_back_to_generic_template = true;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if !extracted_family_slots
+        || resolved_presentation.template_id == presentation_policy.generic_template_id
+        || resolved_presentation.template_id.starts_with("legacy_")
+    {
+        slots.push(RenderSemanticSlot {
+            slot: SemanticSlotId::WhyRaw,
+            value: node.message.raw_text.clone(),
+            label: presentation_policy
+                .slot_label(SemanticSlotId::WhyRaw)
+                .map(str::to_string),
+        });
+    }
 
     RenderSemanticCard {
-        internal_family: family.map(ToString::to_string),
+        internal_family: input.family.map(ToString::to_string),
         display_family: resolved_presentation.display_family.clone(),
-        subject: title.to_string(),
+        subject: input.title.to_string(),
         presentation: resolved_presentation,
         slots,
-        canonical_location: canonical_location.map(ToString::to_string),
-        raw_message: raw_message.to_string(),
+        canonical_location: input.canonical_location.map(ToString::to_string),
+        raw_message: node.message.raw_text.clone(),
     }
+}
+
+fn adapt_supporting_evidence_for_presentation(
+    supporting_evidence: crate::family::SupportingEvidence,
+    semantic_card: &RenderSemanticCard,
+) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut context_lines = supporting_evidence.context_lines;
+    let mut child_notes = supporting_evidence.child_notes;
+    let collapsed_notices = supporting_evidence.collapsed_notices;
+
+    match semantic_card.presentation.template_id.as_str() {
+        "contrast_block" => {
+            context_lines.retain(|line| {
+                let trimmed = line.trim_start();
+                !trimmed.starts_with("because:")
+                    && !trimmed.starts_with("candidate ")
+                    && !(trimmed.starts_with("omitted ")
+                        && (trimmed.contains("overload")
+                            || trimmed.contains("candidate")
+                            || trimmed.contains("note")))
+            });
+            child_notes.clear();
+        }
+        "linker_block" => {
+            context_lines.retain(|line| {
+                let trimmed = line.trim_start();
+                !(trimmed.starts_with("linker:")
+                    || trimmed.starts_with("omitted ") && trimmed.contains("reference"))
+            });
+            child_notes.clear();
+        }
+        _ => {}
+    }
+
+    (context_lines, child_notes, collapsed_notices)
 }
 
 fn canonical_location(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
