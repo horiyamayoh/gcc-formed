@@ -1153,6 +1153,7 @@ fn trace_escape_envelope() -> TraceEnvelope {
             normalized_artifacts: vec!["ir.analysis.json".to_string()],
         }),
         decision_log: vec!["rendered escape-heavy trace".to_string()],
+        cascade_explainability: None,
         fallback_reason: None,
         warning_messages: vec!["saw raw escape \u{001b}[0m in child stderr".to_string()],
         artifacts: vec![TraceArtifactRef {

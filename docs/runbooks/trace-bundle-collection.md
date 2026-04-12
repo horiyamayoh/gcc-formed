@@ -53,6 +53,13 @@ Collect at least:
 - normalized IR such as `ir.analysis.json` when present
 - any structured diagnostics artifact such as `diagnostics.sarif` or `diagnostics.json`
 
+When cascade suppression is part of the report, inspect these first:
+
+- `trace.json.cascade_explainability.suppressed_groups[]`
+- `ir.analysis.json.document_analysis.group_analysis[]`
+
+Those surfaces are the authority for suppressed-group `best_parent_group_ref`, `evidence_tags`, and `provenance_capture_refs`. Keep the fact/policy split intact when copying them into a ticket or review.
+
 The quickest way is to attach the whole trace directory after review, not only `trace.json`.
 
 ## 4. Redaction Checklist

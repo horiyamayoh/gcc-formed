@@ -8,6 +8,9 @@ raw:
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=undefined reference, existing_specific_family=linker.undefined_reference
 debug: suppression_reason=preserved_specific_family_from_ingress
+debug-facts: group_ref=group-5a2b7fabe834, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-18fb65ae404a
+debug-facts: evidence_tags=actionability_short, early_invocation, no_primary_location, specific_symbol_or_frontier, strong_root_family
+debug-raw: provenance_capture_refs=stderr.raw
 error: linker reported a failure
 help: check the missing/duplicate symbol and the object or library inputs
 why: /usr/bin/ld: <temp-object>: in function `main':
@@ -15,6 +18,9 @@ raw:
   /usr/bin/ld: <temp-object>: in function `main':
 debug: rule_id=rule.family.linker.structured_or_message
 debug: matched_conditions=phase=link
+debug-facts: group_ref=group-42afde19f5a0, role=uncertain, visibility_floor=never_hidden, episode_ref=episode-a14e9330eff1
+debug-facts: evidence_tags=actionability_short, classified_family, early_invocation, no_primary_location
+debug-raw: provenance_capture_refs=stderr.raw
 error: driver reported a linker failure summary
 help: inspect the linker diagnostics immediately above this summary
 why: collect2: error: ld returned 1 exit status
@@ -24,4 +30,7 @@ raw:
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, existing_specific_family=collect2_summary
 debug: suppression_reason=preserved_specific_family_from_ingress
+debug-facts: group_ref=group-ac2f5a684011, role=uncertain, visibility_floor=never_hidden, episode_ref=episode-da5205a3f6d2
+debug-facts: evidence_tags=actionability_short, classified_family, early_invocation, generic_follow_on, generic_linker_wrapper, no_primary_location
+debug-raw: provenance_capture_refs=stderr.raw
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

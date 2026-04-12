@@ -2,6 +2,21 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:5:17",
+      "cascade_debug": {
+        "cascade_role": "independent_root",
+        "episode_ref": "episode-3f02c305e274",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f0d86376e771",
+        "provenance_capture_refs": [
+          "diagnostics.json"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
@@ -33,6 +48,21 @@
     },
     {
       "canonical_location": "src/main.cpp:1:18",
+      "cascade_debug": {
+        "cascade_role": "uncertain",
+        "episode_ref": "episode-1e3c4b005005",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f44638368e33",
+        "provenance_capture_refs": [
+          "diagnostics.json"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "possible",

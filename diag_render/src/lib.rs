@@ -2206,6 +2206,105 @@ mod tests {
                 .text
                 .contains("note: omitted 1 related diagnostic(s) already covered by visible roots")
         );
+        assert!(
+            debug_output
+                .text
+                .contains("debug-facts: group_ref=group-follow, role=follow_on, visibility_floor=hidden_allowed, episode_ref=episode-root")
+        );
+        assert!(
+            debug_output
+                .text
+                .contains("debug-facts: best_parent_group_ref=group-root")
+        );
+        assert!(
+            debug_output
+                .text
+                .contains("debug-facts: evidence_tags=cascade")
+        );
+        assert!(
+            debug_output
+                .text
+                .contains("debug-policy: debug keeps this member visible; default profiles may hide it because suppress_likelihood=0.89 meets the current aggressive threshold")
+        );
+        assert!(
+            debug_output
+                .text
+                .contains("debug-raw: provenance_capture_refs=stderr.raw")
+        );
+    }
+
+    #[test]
+    fn debug_view_model_keeps_cascade_explainability_separate_from_summary_only_facts() {
+        let diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "follow-on",
+                "group-follow",
+                "src/main.c",
+                3,
+                "follow-on parse failure",
+            ),
+        ];
+        let document_analysis = document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-follow"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-follow",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        );
+
+        let mut request = sample_request();
+        request.profile = RenderProfile::Debug;
+        request.document.diagnostics = diagnostics;
+        request.document.document_analysis = Some(document_analysis);
+        request.cascade_policy.compression_level = CompressionLevel::Aggressive;
+
+        let view_model = build_view_model(&request).unwrap();
+        assert_eq!(view_model.cards.len(), 1);
+        assert_eq!(view_model.summary_only_groups.len(), 1);
+
+        let lead_debug = view_model.cards[0].cascade_debug.as_ref().unwrap();
+        assert_eq!(lead_debug.group_ref, "group-root");
+        assert_eq!(lead_debug.cascade_role, "lead_root");
+        assert_eq!(
+            lead_debug.provenance_capture_refs,
+            vec!["stderr.raw".to_string()]
+        );
+        assert!(lead_debug.suppression_policy.is_none());
+
+        let summary_debug = view_model.summary_only_groups[0]
+            .cascade_debug
+            .as_ref()
+            .unwrap();
+        assert_eq!(summary_debug.group_ref, "group-follow");
+        assert_eq!(summary_debug.episode_ref.as_deref(), Some("episode-root"));
+        assert_eq!(summary_debug.cascade_role, "follow_on");
+        assert_eq!(summary_debug.visibility_floor, "hidden_allowed");
+        assert_eq!(
+            summary_debug.best_parent_group_ref.as_deref(),
+            Some("group-root")
+        );
+        assert_eq!(summary_debug.evidence_tags, vec!["cascade".to_string()]);
+        assert_eq!(
+            summary_debug.provenance_capture_refs,
+            vec!["stderr.raw".to_string()]
+        );
+        assert!(
+            summary_debug
+                .suppression_policy
+                .as_deref()
+                .is_some_and(|policy| policy.contains("default profiles may hide it"))
+        );
     }
 
     #[test]

@@ -2,9 +2,9 @@ use crate::budget::{WarningFailureMode, budget_for};
 use crate::family::renderer_specificity_rank;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
-    CompressionLevel, DiagnosticDocument, DiagnosticNode, DisclosureConfidence, DocumentAnalysis,
-    GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Ownership, Phase, SemanticRole,
-    Severity, VisibilityFloor,
+    CascadePolicySnapshot, CompressionLevel, DiagnosticDocument, DiagnosticNode,
+    DisclosureConfidence, DocumentAnalysis, GroupCascadeAnalysis, GroupCascadeRole,
+    NodeCompleteness, Ownership, Phase, SemanticRole, Severity, VisibilityFloor,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -356,13 +356,22 @@ fn should_materialize_episode_member_as_summary(
     request: &RenderRequest,
     group: &GroupCascadeAnalysis,
 ) -> bool {
-    if matches!(
+    should_materialize_episode_member_as_summary_for_profile(
         request.profile,
-        RenderProfile::Verbose | RenderProfile::Debug
-    ) {
+        &request.cascade_policy,
+        group,
+    )
+}
+
+pub(crate) fn should_materialize_episode_member_as_summary_for_profile(
+    profile: RenderProfile,
+    policy: &CascadePolicySnapshot,
+    group: &GroupCascadeAnalysis,
+) -> bool {
+    if matches!(profile, RenderProfile::Verbose | RenderProfile::Debug) {
         return true;
     }
-    if request.cascade_policy.compression_level == CompressionLevel::Off {
+    if policy.compression_level == CompressionLevel::Off {
         return true;
     }
     if matches!(
@@ -375,12 +384,20 @@ fn should_materialize_episode_member_as_summary(
         .summary_likelihood
         .map(|score| score.into_inner())
         .unwrap_or_default()
-        >= request.cascade_policy.summary_likelihood_threshold
+        >= policy.summary_likelihood_threshold
 }
 
 fn should_hide_episode_member(request: &RenderRequest, group: &GroupCascadeAnalysis) -> bool {
+    should_hide_episode_member_for_profile(request.profile, &request.cascade_policy, group)
+}
+
+pub(crate) fn should_hide_episode_member_for_profile(
+    profile: RenderProfile,
+    policy: &CascadePolicySnapshot,
+    group: &GroupCascadeAnalysis,
+) -> bool {
     if matches!(
-        request.profile,
+        profile,
         RenderProfile::Verbose | RenderProfile::Debug | RenderProfile::RawFallback
     ) {
         return false;
@@ -392,19 +409,17 @@ fn should_hide_episode_member(request: &RenderRequest, group: &GroupCascadeAnaly
         .suppress_likelihood
         .map(|score| score.into_inner())
         .unwrap_or_default();
-    let minimum_threshold = match request.cascade_policy.compression_level {
+    let minimum_threshold = match policy.compression_level {
         CompressionLevel::Off => return false,
         CompressionLevel::Conservative => {
             if group.role != GroupCascadeRole::Duplicate {
                 return false;
             }
-            request.cascade_policy.suppress_likelihood_threshold
+            policy.suppress_likelihood_threshold
         }
         CompressionLevel::Balanced => match group.role {
-            GroupCascadeRole::Duplicate => request.cascade_policy.suppress_likelihood_threshold,
-            GroupCascadeRole::FollowOn => {
-                (request.cascade_policy.suppress_likelihood_threshold + 0.10).min(0.95)
-            }
+            GroupCascadeRole::Duplicate => policy.suppress_likelihood_threshold,
+            GroupCascadeRole::FollowOn => (policy.suppress_likelihood_threshold + 0.10).min(0.95),
             _ => return false,
         },
         CompressionLevel::Aggressive => {
@@ -414,7 +429,7 @@ fn should_hide_episode_member(request: &RenderRequest, group: &GroupCascadeAnaly
             ) {
                 return false;
             }
-            request.cascade_policy.suppress_likelihood_threshold
+            policy.suppress_likelihood_threshold
         }
     };
     suppress_score >= minimum_threshold

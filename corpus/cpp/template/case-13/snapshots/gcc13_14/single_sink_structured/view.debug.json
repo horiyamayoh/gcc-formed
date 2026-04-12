@@ -2,6 +2,22 @@
   "cards": [
     {
       "canonical_location": "src/main.cpp:6:5",
+      "cascade_debug": {
+        "cascade_role": "independent_root",
+        "episode_ref": "episode-971133a6ed24",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-419d6d5d1efa",
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",

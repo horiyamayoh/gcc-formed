@@ -12,8 +12,8 @@ use diag_render::{DebugRefs, RenderCapabilities, RenderProfile};
 use diag_trace::{
     TraceArtifactRef, TraceCapabilities, TraceChildExit, TraceEnvelope, TraceEnvironmentSummary,
     TraceFingerprintSummary, TraceParserResultSummary, TraceRedactionStatus, TraceTiming,
-    TraceVersionSummary, WrapperPaths, build_target_triple, secure_private_file, trace_id,
-    write_trace, write_trace_at,
+    TraceVersionSummary, WrapperPaths, build_target_triple, secure_private_file,
+    trace_cascade_explainability_from_document, trace_id, write_trace, write_trace_at,
 };
 use std::env;
 use std::fs;
@@ -126,6 +126,10 @@ pub(crate) fn maybe_write_trace(request: TraceWriteRequest<'_>) -> Result<(), Cl
             retained_trace_dir.is_some(),
         )),
         decision_log,
+        cascade_explainability: trace_cascade_explainability_from_document(
+            request.document,
+            retained_trace_dir.is_some().then_some("ir.analysis.json"),
+        ),
         fallback_reason: request.fallback_reason,
         warning_messages: request
             .document
@@ -200,6 +204,7 @@ pub(crate) fn maybe_write_passthrough_trace(
             ));
             decision_log
         },
+        cascade_explainability: None,
         fallback_reason: request.common.mode_decision.fallback_reason,
         warning_messages: Vec::new(),
         artifacts: build_trace_artifact_refs_for_captures(

@@ -1,7 +1,7 @@
 use crate::budget::{WarningFailureMode, render_policy};
 use crate::layout::LayoutProfile;
 use crate::theme::ThemePolicy;
-use crate::view_model::{RenderViewModel, SummaryOnlyGroup};
+use crate::view_model::{CascadeDebugInfo, RenderViewModel, SummaryOnlyGroup};
 use crate::{DebugRefs, RenderRequest, RenderResult};
 use diag_core::SuppressedCountVisibility;
 
@@ -39,12 +39,18 @@ pub fn emit(
             if let Some(suppression_reason) = card.suppression_reason.as_ref() {
                 lines.push(format!("debug: suppression_reason={suppression_reason}"));
             }
+            if matches!(request.profile, crate::RenderProfile::Debug) {
+                append_cascade_debug_lines(&mut lines, "", card.cascade_debug.as_ref());
+            }
         }
     }
     if !view_model.summary_only_groups.is_empty() {
         lines.push(summary_only_heading(&view_model.summary_only_groups));
         for group in &view_model.summary_only_groups {
             lines.push(format!("  - {}", render_summary_only_group(&theme, group)));
+            if matches!(request.profile, crate::RenderProfile::Debug) {
+                append_cascade_debug_lines(&mut lines, "    ", group.cascade_debug.as_ref());
+            }
         }
     }
     if should_emit_hidden_group_notice(request, hidden_group_count) {
@@ -146,5 +152,46 @@ fn render_summary_only_group(theme: &ThemePolicy, group: &SummaryOnlyGroup) -> S
             theme.inline(&group.title)
         ),
         None => format!("{}: {}", group.severity, theme.inline(&group.title)),
+    }
+}
+
+fn append_cascade_debug_lines(
+    lines: &mut Vec<String>,
+    indent: &str,
+    cascade_debug: Option<&CascadeDebugInfo>,
+) {
+    let Some(cascade_debug) = cascade_debug else {
+        return;
+    };
+
+    let mut facts = vec![
+        format!("group_ref={}", cascade_debug.group_ref),
+        format!("role={}", cascade_debug.cascade_role),
+        format!("visibility_floor={}", cascade_debug.visibility_floor),
+    ];
+    if let Some(episode_ref) = cascade_debug.episode_ref.as_ref() {
+        facts.push(format!("episode_ref={episode_ref}"));
+    }
+    lines.push(format!("{indent}debug-facts: {}", facts.join(", ")));
+
+    if let Some(best_parent_group_ref) = cascade_debug.best_parent_group_ref.as_ref() {
+        lines.push(format!(
+            "{indent}debug-facts: best_parent_group_ref={best_parent_group_ref}"
+        ));
+    }
+    if !cascade_debug.evidence_tags.is_empty() {
+        lines.push(format!(
+            "{indent}debug-facts: evidence_tags={}",
+            cascade_debug.evidence_tags.join(", ")
+        ));
+    }
+    if let Some(suppression_policy) = cascade_debug.suppression_policy.as_ref() {
+        lines.push(format!("{indent}debug-policy: {suppression_policy}"));
+    }
+    if !cascade_debug.provenance_capture_refs.is_empty() {
+        lines.push(format!(
+            "{indent}debug-raw: provenance_capture_refs={}",
+            cascade_debug.provenance_capture_refs.join(", ")
+        ));
     }
 }

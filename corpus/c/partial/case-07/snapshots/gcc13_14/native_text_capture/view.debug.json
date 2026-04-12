@@ -2,6 +2,22 @@
   "cards": [
     {
       "canonical_location": null,
+      "cascade_debug": {
+        "cascade_role": "independent_root",
+        "episode_ref": "episode-18fb65ae404a",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "no_primary_location",
+          "specific_symbol_or_frontier",
+          "strong_root_family"
+        ],
+        "group_ref": "group-5a2b7fabe834",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
@@ -31,6 +47,21 @@
     },
     {
       "canonical_location": null,
+      "cascade_debug": {
+        "cascade_role": "uncertain",
+        "episode_ref": "episode-a14e9330eff1",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "no_primary_location"
+        ],
+        "group_ref": "group-42afde19f5a0",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",
@@ -54,6 +85,23 @@
     },
     {
       "canonical_location": null,
+      "cascade_debug": {
+        "cascade_role": "uncertain",
+        "episode_ref": "episode-da5205a3f6d2",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "generic_follow_on",
+          "generic_linker_wrapper",
+          "no_primary_location"
+        ],
+        "group_ref": "group-ac2f5a684011",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "visibility_floor": "never_hidden"
+      },
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "likely",

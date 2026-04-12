@@ -3,14 +3,18 @@ use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::path::format_location;
-use crate::selector::render_group_ref;
+use crate::selector::{
+    render_group_ref, should_hide_episode_member_for_profile,
+    should_materialize_episode_member_as_summary_for_profile,
+};
 use crate::suggestion::build_action_items;
 use diag_core::{
-    DiagnosticNode, DisclosureConfidence, DocumentCompleteness, NodeCompleteness, Severity,
-    SuggestionApplicability,
+    CompressionLevel, DiagnosticNode, DisclosureConfidence, DocumentCompleteness,
+    GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Severity, SuggestionApplicability,
+    VisibilityFloor,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Top-level session summary included in the view model.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,6 +39,9 @@ pub struct SummaryOnlyGroup {
     /// Formatted canonical location, if available.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub canonical_location: Option<String>,
+    /// Debug-only cascade explainability for this summary-only group.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cascade_debug: Option<CascadeDebugInfo>,
 }
 
 /// A fully expanded diagnostic group card in the view model.
@@ -84,6 +91,35 @@ pub struct RenderGroupCard {
     pub matched_conditions: Vec<String>,
     /// Reason this group was suppressed, if applicable.
     pub suppression_reason: Option<String>,
+    /// Debug-only cascade explainability for this group.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cascade_debug: Option<CascadeDebugInfo>,
+}
+
+/// Debug-only cascade explainability attached to rendered groups.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CascadeDebugInfo {
+    /// Group reference used by cascade analysis.
+    pub group_ref: String,
+    /// Episode reference when this group belongs to an episode.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub episode_ref: Option<String>,
+    /// Cascade role assigned by document analysis.
+    pub cascade_role: String,
+    /// Visibility floor assigned by document analysis.
+    pub visibility_floor: String,
+    /// Best candidate parent, when one exists.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_parent_group_ref: Option<String>,
+    /// Evidence tags supporting the cascade decision.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub evidence_tags: Vec<String>,
+    /// Raw provenance capture refs that can be opened for this group.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub provenance_capture_refs: Vec<String>,
+    /// Debug-only policy explanation kept separate from the facts above.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suppression_policy: Option<String>,
 }
 
 /// A render-ready suggestion or fix-it item.
@@ -237,6 +273,7 @@ fn build_card(
             .analysis
             .as_ref()
             .and_then(|analysis| analysis.suppression_reason.clone()),
+        cascade_debug: cascade_debug_info(request, node, false),
     }
 }
 
@@ -252,12 +289,126 @@ fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> S
                 .unwrap_or(DisclosureConfidence::Hidden),
         ),
         canonical_location: canonical_location(request, node),
+        cascade_debug: cascade_debug_info(request, node, true),
     }
 }
 
 fn canonical_location(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
     node.primary_location()
         .map(|location| format_location(request, location))
+}
+
+fn cascade_debug_info(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    summary_only: bool,
+) -> Option<CascadeDebugInfo> {
+    if !matches!(request.profile, crate::RenderProfile::Debug) {
+        return None;
+    }
+    let group_ref = render_group_ref(node);
+    let group = request
+        .document
+        .document_analysis
+        .as_ref()?
+        .group_analysis
+        .iter()
+        .find(|group| group.group_ref == group_ref)?;
+
+    Some(CascadeDebugInfo {
+        group_ref,
+        episode_ref: group.episode_ref.clone(),
+        cascade_role: cascade_role_label(group.role).to_string(),
+        visibility_floor: visibility_floor_label(group.visibility_floor).to_string(),
+        best_parent_group_ref: group.best_parent_group_ref.clone(),
+        evidence_tags: group.evidence_tags.clone(),
+        provenance_capture_refs: provenance_capture_refs(node),
+        suppression_policy: summary_only.then(|| suppression_policy_for_debug(request, group)),
+    })
+}
+
+fn provenance_capture_refs(node: &DiagnosticNode) -> Vec<String> {
+    let mut refs = BTreeSet::new();
+    refs.extend(node.provenance.capture_refs.iter().cloned());
+    for location in &node.locations {
+        if let Some(provenance) = location.provenance_override.as_ref() {
+            refs.extend(provenance.capture_refs.iter().cloned());
+        }
+    }
+    refs.into_iter().collect()
+}
+
+fn suppression_policy_for_debug(request: &RenderRequest, group: &GroupCascadeAnalysis) -> String {
+    if group.visibility_floor != VisibilityFloor::HiddenAllowed {
+        return format!(
+            "debug keeps this member visible; visibility_floor={} prevents full hiding",
+            visibility_floor_label(group.visibility_floor)
+        );
+    }
+
+    if request.cascade_policy.compression_level == CompressionLevel::Off {
+        return "debug keeps this member visible; compression_level=off disables hidden suppression"
+            .to_string();
+    }
+
+    if should_hide_episode_member_for_profile(
+        crate::RenderProfile::Default,
+        &request.cascade_policy,
+        group,
+    ) {
+        let suppress_likelihood = format_optional_score(group.suppress_likelihood);
+        return format!(
+            "debug keeps this member visible; default profiles may hide it because suppress_likelihood={suppress_likelihood} meets the current {} threshold",
+            compression_level_label(request.cascade_policy.compression_level)
+        );
+    }
+
+    if should_materialize_episode_member_as_summary_for_profile(
+        crate::RenderProfile::Default,
+        &request.cascade_policy,
+        group,
+    ) {
+        let summary_likelihood = format_optional_score(group.summary_likelihood);
+        return format!(
+            "debug keeps this member visible; default profiles keep it summary-only because summary_likelihood={summary_likelihood} meets the current threshold"
+        );
+    }
+
+    "debug keeps this member visible; default profiles may collapse it into the lead group's omission notice"
+        .to_string()
+}
+
+fn format_optional_score(score: Option<diag_core::Score>) -> String {
+    score
+        .map(|score| format!("{:.2}", score.into_inner()))
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
+fn cascade_role_label(role: GroupCascadeRole) -> &'static str {
+    match role {
+        GroupCascadeRole::LeadRoot => "lead_root",
+        GroupCascadeRole::IndependentRoot => "independent_root",
+        GroupCascadeRole::FollowOn => "follow_on",
+        GroupCascadeRole::Duplicate => "duplicate",
+        GroupCascadeRole::Uncertain => "uncertain",
+    }
+}
+
+fn visibility_floor_label(visibility_floor: VisibilityFloor) -> &'static str {
+    match visibility_floor {
+        VisibilityFloor::NeverHidden => "never_hidden",
+        VisibilityFloor::SummaryOrExpandedOnly => "summary_or_expanded_only",
+        VisibilityFloor::HiddenAllowed => "hidden_allowed",
+    }
+}
+
+fn compression_level_label(compression_level: CompressionLevel) -> &'static str {
+    match compression_level {
+        CompressionLevel::Off => "off",
+        CompressionLevel::Conservative => "conservative",
+        CompressionLevel::Balanced => "balanced",
+        CompressionLevel::Aggressive => "aggressive",
+    }
 }
 
 fn severity_label(severity: &Severity) -> &'static str {

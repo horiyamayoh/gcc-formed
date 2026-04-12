@@ -1,8 +1,12 @@
 //! Trace envelope generation, build manifests, and secure file operations for
 //! diagnostic artifacts.
 
-use diag_core::{ADAPTER_SPEC_VERSION, FallbackReason, RENDERER_SPEC_VERSION};
+use diag_core::{
+    ADAPTER_SPEC_VERSION, DiagnosticDocument, FallbackReason, GroupCascadeRole,
+    RENDERER_SPEC_VERSION, VisibilityFloor,
+};
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -153,6 +157,9 @@ pub struct TraceEnvelope {
     /// Ordered log of internal decision points.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub decision_log: Vec<String>,
+    /// Suppressed-group explainability copied into the trace for review/debug.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cascade_explainability: Option<TraceCascadeExplainability>,
     /// Reason the wrapper fell back to passthrough, if applicable.
     pub fallback_reason: Option<FallbackReason>,
     /// Non-fatal warning messages emitted during the run.
@@ -288,6 +295,40 @@ pub struct TraceArtifactRef {
     pub id: String,
     /// Filesystem path where the artifact was written.
     pub path: Option<PathBuf>,
+}
+
+/// Trace-visible explainability for cascade-suppressed groups.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceCascadeExplainability {
+    /// Retained normalized analysis artifact, when it exists.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub analysis_artifact_id: Option<String>,
+    /// Suppressed groups that should remain explainable in trace review.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub suppressed_groups: Vec<TraceSuppressedGroupExplainability>,
+}
+
+/// Trace-visible explainability for one suppressed cascade group.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TraceSuppressedGroupExplainability {
+    /// Group reference used by cascade analysis.
+    pub group_ref: String,
+    /// Episode reference when present.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub episode_ref: Option<String>,
+    /// Cascade role assigned by document analysis.
+    pub role: GroupCascadeRole,
+    /// Visibility floor assigned by document analysis.
+    pub visibility_floor: VisibilityFloor,
+    /// Best parent, when one exists.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub best_parent_group_ref: Option<String>,
+    /// Evidence tags supporting the suppression decision.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence_tags: Vec<String>,
+    /// Capture refs that let reviewers reach raw provenance.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub provenance_capture_refs: Vec<String>,
 }
 
 /// Errors that can occur when writing traces or manifests.
@@ -461,6 +502,69 @@ pub fn write_trace_at(path: &Path, trace: &TraceEnvelope) -> Result<(), TraceErr
     fs::write(path, serde_json::to_vec_pretty(trace)?)?;
     secure_private_file(path)?;
     Ok(())
+}
+
+/// Builds trace-visible explainability for suppressed cascade groups.
+pub fn trace_cascade_explainability_from_document(
+    document: &DiagnosticDocument,
+    analysis_artifact_id: Option<&str>,
+) -> Option<TraceCascadeExplainability> {
+    let document_analysis = document.document_analysis.as_ref()?;
+    let provenance_capture_refs = provenance_capture_refs_by_group(document);
+    let suppressed_groups = document_analysis
+        .group_analysis
+        .iter()
+        .filter(|group| {
+            matches!(
+                group.role,
+                GroupCascadeRole::FollowOn | GroupCascadeRole::Duplicate
+            )
+        })
+        .map(|group| TraceSuppressedGroupExplainability {
+            group_ref: group.group_ref.clone(),
+            episode_ref: group.episode_ref.clone(),
+            role: group.role,
+            visibility_floor: group.visibility_floor,
+            best_parent_group_ref: group.best_parent_group_ref.clone(),
+            evidence_tags: group.evidence_tags.clone(),
+            provenance_capture_refs: provenance_capture_refs
+                .get(group.group_ref.as_str())
+                .map(|refs| refs.iter().cloned().collect())
+                .unwrap_or_default(),
+        })
+        .collect::<Vec<_>>();
+
+    if suppressed_groups.is_empty() && analysis_artifact_id.is_none() {
+        return None;
+    }
+
+    Some(TraceCascadeExplainability {
+        analysis_artifact_id: analysis_artifact_id.map(ToOwned::to_owned),
+        suppressed_groups,
+    })
+}
+
+fn provenance_capture_refs_by_group(
+    document: &DiagnosticDocument,
+) -> BTreeMap<&str, BTreeSet<String>> {
+    let mut by_group_ref = BTreeMap::new();
+    for node in &document.diagnostics {
+        let group_ref = node
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.group_ref.as_deref())
+            .map(str::trim)
+            .filter(|group_ref| !group_ref.is_empty())
+            .unwrap_or(node.id.as_str());
+        let entry = by_group_ref.entry(group_ref).or_insert_with(BTreeSet::new);
+        entry.extend(node.provenance.capture_refs.iter().cloned());
+        for location in &node.locations {
+            if let Some(provenance) = location.provenance_override.as_ref() {
+                entry.extend(provenance.capture_refs.iter().cloned());
+            }
+        }
+    }
+    by_group_ref
 }
 
 /// Writes a build manifest as pretty-printed JSON and secures the file.
@@ -671,6 +775,18 @@ mod tests {
                 normalized_artifacts: vec!["stderr.raw".to_string()],
             }),
             decision_log: vec!["selected_dual_sink".to_string()],
+            cascade_explainability: Some(TraceCascadeExplainability {
+                analysis_artifact_id: Some("ir.analysis.json".to_string()),
+                suppressed_groups: vec![TraceSuppressedGroupExplainability {
+                    group_ref: "group-follow".to_string(),
+                    episode_ref: Some("episode-1".to_string()),
+                    role: GroupCascadeRole::FollowOn,
+                    visibility_floor: VisibilityFloor::HiddenAllowed,
+                    best_parent_group_ref: Some("group-root".to_string()),
+                    evidence_tags: vec!["cascade".to_string()],
+                    provenance_capture_refs: vec!["stderr.raw".to_string()],
+                }],
+            }),
             fallback_reason: Some(FallbackReason::ResidualOnly),
             warning_messages: vec!["kept raw stderr".to_string()],
             artifacts: vec![TraceArtifactRef {
@@ -683,6 +799,222 @@ mod tests {
         let decoded: TraceEnvelope = serde_json::from_value(encoded.clone()).unwrap();
 
         assert_eq!(serde_json::to_value(&decoded).unwrap(), encoded);
+    }
+
+    #[test]
+    fn trace_cascade_explainability_tracks_suppressed_groups_and_raw_provenance() {
+        let document = diag_core::DiagnosticDocument {
+            document_id: "doc-1".to_string(),
+            schema_version: diag_core::IR_SPEC_VERSION.to_string(),
+            document_completeness: diag_core::DocumentCompleteness::Complete,
+            producer: diag_core::ProducerInfo {
+                name: "gcc-formed".to_string(),
+                version: "0.0.0-test".to_string(),
+                git_revision: None,
+                build_profile: None,
+                rulepack_version: None,
+            },
+            run: diag_core::RunInfo {
+                invocation_id: "trace-1".to_string(),
+                invoked_as: Some("gcc-formed".to_string()),
+                argv_redacted: Vec::new(),
+                cwd_display: None,
+                exit_status: 1,
+                primary_tool: diag_core::ToolInfo {
+                    name: "gcc".to_string(),
+                    version: Some("15.2.0".to_string()),
+                    component: None,
+                    vendor: None,
+                },
+                secondary_tools: Vec::new(),
+                language_mode: None,
+                target_triple: None,
+                wrapper_mode: Some(diag_core::WrapperSurface::Terminal),
+            },
+            captures: Vec::new(),
+            integrity_issues: Vec::new(),
+            diagnostics: vec![
+                diag_core::DiagnosticNode {
+                    id: "root".to_string(),
+                    origin: diag_core::Origin::Gcc,
+                    phase: diag_core::Phase::Parse,
+                    severity: diag_core::Severity::Error,
+                    semantic_role: diag_core::SemanticRole::Root,
+                    message: diag_core::MessageText {
+                        raw_text: "primary failure".to_string(),
+                        normalized_text: None,
+                        locale: None,
+                    },
+                    locations: vec![diag_core::Location::caret(
+                        "src/main.c",
+                        2,
+                        1,
+                        diag_core::LocationRole::Primary,
+                    )],
+                    children: Vec::new(),
+                    suggestions: Vec::new(),
+                    context_chains: Vec::new(),
+                    symbol_context: None,
+                    node_completeness: diag_core::NodeCompleteness::Complete,
+                    provenance: diag_core::Provenance {
+                        source: diag_core::ProvenanceSource::Compiler,
+                        capture_refs: vec!["stderr.raw".to_string()],
+                    },
+                    analysis: Some(diag_core::AnalysisOverlay {
+                        family: Some("syntax".into()),
+                        family_version: None,
+                        family_confidence: None,
+                        root_cause_score: None,
+                        actionability_score: None,
+                        user_code_priority: None,
+                        headline: Some("syntax error".into()),
+                        first_action_hint: None,
+                        confidence: None,
+                        preferred_primary_location_id: None,
+                        rule_id: None,
+                        matched_conditions: Vec::new(),
+                        suppression_reason: None,
+                        collapsed_child_ids: Vec::new(),
+                        collapsed_chain_ids: Vec::new(),
+                        group_ref: Some("group-root".to_string()),
+                        reasons: Vec::new(),
+                        policy_profile: None,
+                        producer_version: None,
+                    }),
+                    fingerprints: None,
+                },
+                diag_core::DiagnosticNode {
+                    id: "follow".to_string(),
+                    origin: diag_core::Origin::Gcc,
+                    phase: diag_core::Phase::Parse,
+                    severity: diag_core::Severity::Error,
+                    semantic_role: diag_core::SemanticRole::Supporting,
+                    message: diag_core::MessageText {
+                        raw_text: "follow-on failure".to_string(),
+                        normalized_text: None,
+                        locale: None,
+                    },
+                    locations: vec![diag_core::Location::caret(
+                        "src/main.c",
+                        3,
+                        1,
+                        diag_core::LocationRole::Primary,
+                    )],
+                    children: Vec::new(),
+                    suggestions: Vec::new(),
+                    context_chains: Vec::new(),
+                    symbol_context: None,
+                    node_completeness: diag_core::NodeCompleteness::Complete,
+                    provenance: diag_core::Provenance {
+                        source: diag_core::ProvenanceSource::ResidualText,
+                        capture_refs: vec![
+                            "stderr.raw".to_string(),
+                            "diagnostics.sarif".to_string(),
+                        ],
+                    },
+                    analysis: Some(diag_core::AnalysisOverlay {
+                        family: Some("syntax".into()),
+                        family_version: None,
+                        family_confidence: None,
+                        root_cause_score: None,
+                        actionability_score: None,
+                        user_code_priority: None,
+                        headline: Some("follow-on failure".into()),
+                        first_action_hint: None,
+                        confidence: None,
+                        preferred_primary_location_id: None,
+                        rule_id: None,
+                        matched_conditions: Vec::new(),
+                        suppression_reason: None,
+                        collapsed_child_ids: Vec::new(),
+                        collapsed_chain_ids: Vec::new(),
+                        group_ref: Some("group-follow".to_string()),
+                        reasons: Vec::new(),
+                        policy_profile: None,
+                        producer_version: None,
+                    }),
+                    fingerprints: None,
+                },
+            ],
+            document_analysis: Some(diag_core::DocumentAnalysis {
+                policy_profile: Some("default-aggressive".to_string()),
+                producer_version: Some("test".to_string()),
+                episode_graph: diag_core::EpisodeGraph {
+                    episodes: vec![diag_core::DiagnosticEpisode {
+                        episode_ref: "episode-1".to_string(),
+                        lead_group_ref: "group-root".to_string(),
+                        member_group_refs: vec![
+                            "group-root".to_string(),
+                            "group-follow".to_string(),
+                        ],
+                        family: Some("syntax".to_string()),
+                        lead_root_score: Some(0.97.into()),
+                        confidence: Some(0.91.into()),
+                    }],
+                    relations: Vec::new(),
+                },
+                group_analysis: vec![
+                    diag_core::GroupCascadeAnalysis {
+                        group_ref: "group-root".to_string(),
+                        episode_ref: Some("episode-1".to_string()),
+                        role: GroupCascadeRole::LeadRoot,
+                        best_parent_group_ref: None,
+                        root_score: Some(0.97.into()),
+                        independence_score: Some(0.94.into()),
+                        suppress_likelihood: Some(0.08.into()),
+                        summary_likelihood: Some(0.12.into()),
+                        visibility_floor: VisibilityFloor::NeverHidden,
+                        evidence_tags: vec!["user_owned_primary".to_string()],
+                    },
+                    diag_core::GroupCascadeAnalysis {
+                        group_ref: "group-follow".to_string(),
+                        episode_ref: Some("episode-1".to_string()),
+                        role: GroupCascadeRole::FollowOn,
+                        best_parent_group_ref: Some("group-root".to_string()),
+                        root_score: Some(0.18.into()),
+                        independence_score: Some(0.12.into()),
+                        suppress_likelihood: Some(0.89.into()),
+                        summary_likelihood: Some(0.76.into()),
+                        visibility_floor: VisibilityFloor::HiddenAllowed,
+                        evidence_tags: vec![
+                            "cascade".to_string(),
+                            "shared_primary_file".to_string(),
+                        ],
+                    },
+                ],
+                stats: diag_core::CascadeStats {
+                    independent_root_count: 1,
+                    dependent_follow_on_count: 1,
+                    duplicate_count: 0,
+                    uncertain_count: 0,
+                },
+            }),
+            fingerprints: None,
+        };
+
+        let explainability =
+            trace_cascade_explainability_from_document(&document, Some("ir.analysis.json"))
+                .unwrap();
+        assert_eq!(
+            explainability.analysis_artifact_id.as_deref(),
+            Some("ir.analysis.json")
+        );
+        assert_eq!(explainability.suppressed_groups.len(), 1);
+        assert_eq!(
+            explainability.suppressed_groups[0],
+            TraceSuppressedGroupExplainability {
+                group_ref: "group-follow".to_string(),
+                episode_ref: Some("episode-1".to_string()),
+                role: GroupCascadeRole::FollowOn,
+                visibility_floor: VisibilityFloor::HiddenAllowed,
+                best_parent_group_ref: Some("group-root".to_string()),
+                evidence_tags: vec!["cascade".to_string(), "shared_primary_file".to_string()],
+                provenance_capture_refs: vec![
+                    "diagnostics.sarif".to_string(),
+                    "stderr.raw".to_string()
+                ],
+            }
+        );
     }
 
     #[test]
@@ -842,6 +1174,7 @@ mod tests {
             fingerprint_summary: None,
             redaction_status: None,
             decision_log: Vec::new(),
+            cascade_explainability: None,
             fallback_reason: None,
             warning_messages: Vec::new(),
             artifacts: Vec::new(),
@@ -896,6 +1229,7 @@ mod tests {
             fingerprint_summary: None,
             redaction_status: None,
             decision_log: Vec::new(),
+            cascade_explainability: None,
             fallback_reason: None,
             warning_messages: Vec::new(),
             artifacts: Vec::new(),
