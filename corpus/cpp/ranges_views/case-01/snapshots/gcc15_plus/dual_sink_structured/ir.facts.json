@@ -1,0 +1,526 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:4:22: error: no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')\n    4 |     auto result = 42 | std::views::take(2);\n      |                   ~~ ^ ~~~~~~~~~~~~~~~~~~~\n      |                   |                    |\n      |                   int                  std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>\nsrc/main.cpp:4:22: note: there are 2 candidates\n    4 |     auto result = 42 | std::views::take(2);\n      |                   ~~~^~~~~~~~~~~~~~~~~~~~~\nIn file included from src/main.cpp:1:\n/usr/local/include/c++/15.2.0/ranges:981:5: note: candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'\n  981 |     operator|(_Lhs&& __lhs, _Rhs&& __rhs)\n      |     ^~~~~~~~\n/usr/local/include/c++/15.2.0/ranges:981:5: note: template argument deduction/substitution failed:\n/usr/local/include/c++/15.2.0/ranges:981:5: note: constraints not satisfied\n/usr/local/include/c++/15.2.0/ranges: In substitution of 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&) [with _Lhs = int; _Rhs = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>]':\nsrc/main.cpp:4:42:   required from here\n    4 |     auto result = 42 | std::views::take(2);\n      |                                          ^\n/usr/local/include/c++/15.2.0/ranges:962:13:   required for the satisfaction of '__is_range_adaptor_closure<_Lhs>' [with _Lhs = int]\n/usr/local/include/c++/15.2.0/ranges:963:9:   in requirements with '_Tp __t' [with _Tp = int]\n/usr/local/include/c++/15.2.0/ranges:963:70: note: the required expression 'std::ranges::views::__adaptor::__is_range_adaptor_closure_fn(__t, __t)' is invalid\n  963 |       = requires (_Tp __t) { __adaptor::__is_range_adaptor_closure_fn(__t, __t); };\n      |                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~\ncc1plus: note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail\n/usr/local/include/c++/15.2.0/ranges:972:5: note: candidate 2: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'\n  972 |     operator|(_Range&& __r, _Self&& __self)\n      |     ^~~~~~~~\n/usr/local/include/c++/15.2.0/ranges:972:5: note: template argument deduction/substitution failed:\n/usr/local/include/c++/15.2.0/ranges:972:5: note: constraints not satisfied\n/usr/local/include/c++/15.2.0/ranges: In substitution of 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&) [with _Self = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Range = int]':\nsrc/main.cpp:4:42:   required from here\n    4 |     auto result = 42 | std::views::take(2);\n      |                                          ^\n/usr/local/include/c++/15.2.0/ranges:932:13:   required for the satisfaction of '__adaptor_invocable<_Self, _Range>' [with _Self = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Range = int]\n/usr/local/include/c++/15.2.0/ranges:933:9:   in requirements  [with _Adaptor = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Args = {int}]\n/usr/local/include/c++/15.2.0/ranges:933:44: note: the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid\n  933 |       = requires { std::declval<_Adaptor>()(declval<_Args>()...); };\n      |                    ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3968,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 339623,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "a393001e1f68fb154abe453487ef8df84efb7d0261c09d719886ed80d32d40d9",
+            "raw": "cd65b23d9d4ed67af962e426eb3f0455053e96bd3e0b02bfc5fd8bac17cf22a3",
+            "structural": "b899a478fe6aacdecde4af90601398bb25f40727c3a4d9cbe6c73c2f29326165"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 981
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:981:5:981:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "c59974962494cf768690dade44b3b77bef4ddaf9ebe76aeb4aae7468d562b13f",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "57e73fb6d12c434099e0646c64e8a875e8e390b63e8c773f3b96d28cdd641e86"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 981
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:981:5:981:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "561760846c9181d969f4dfe299e4b94b017d9d021101b80721cc54b5c1a9ae39",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "d35389d0c63773cc46a6071e7c3e1ece87dd231214c57cb1c33d674269bfb457"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 981
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:981:5:981:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "b549f89c11f7912498048574559e960c7a2ba8ea341a779747fcf339a742e5e9",
+            "raw": "062627cf58dbda183422523448a8643fc375785770e873d1fba4037a25ecf1a4",
+            "structural": "69b807a35b9f47bf668aa83c7b03a95b1173693cbad18887268608eb24113a7f"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 30,
+                "column_native": 30,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 963
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:963:30:963:30",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the required expression 'std::ranges::views::__adaptor::__is_range_adaptor_closure_fn(__t, __t)' is invalid"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "54e785f3d15035a6bfdb9de67b201e255189937bea76ea5176976658dcd560d8",
+            "raw": "799c1c4557c58f8d2ab7a6363dfee6849da062514cc63ee2d658f08444003e29",
+            "structural": "d589e4a9fe6816ff56b90cef78b321e23db3fcf97c9c7b3295b005891dafbfce"
+          },
+          "id": "sarif-0-0-related-5",
+          "message": {
+            "raw_text": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "2a33447af3dfb13a5fb362a52aa1398fcc0f820ddddf159806c71e474e376872",
+            "raw": "3df3b6164b7f7e85157dfa0eeb8844bd52bbd42ecf511c3f13569c6847ceb132",
+            "structural": "22c9b2618f2a59f2e8ee96fb931a0f0891b9c72e27dd9ec923c76995f4768ab2"
+          },
+          "id": "sarif-0-0-related-6",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 972
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:972:5:972:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 2: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "c59974962494cf768690dade44b3b77bef4ddaf9ebe76aeb4aae7468d562b13f",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "7070939a2ccf6842d1dad200a5af1f175a4015903cc573bf8e3fe1e8a76e5df6"
+          },
+          "id": "sarif-0-0-related-7",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 972
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:972:5:972:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "561760846c9181d969f4dfe299e4b94b017d9d021101b80721cc54b5c1a9ae39",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "66541568c63278cddc2bcd2c6675b18e6caf2f49db6e1b7047cde14ebdacc7e5"
+          },
+          "id": "sarif-0-0-related-8",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 972
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:972:5:972:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "91539e2329a8161dea1479a472d96ebb63596253a9e60cf2e8e599c7f39741d5",
+            "raw": "941ce967e137230d8004aa4c4b8746fc3cb660780325c5951730bd22684ace30",
+            "structural": "f9861c77835dc7982b0783e93dc21097b0763620638b628aeb57ad4c2de1f8c1"
+          },
+          "id": "sarif-0-0-related-9",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 933
+              },
+              "file": {
+                "ownership": {
+                  "owner": "unknown",
+                  "reason": "unknown"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/local/include/c++/15.2.0/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/local/include/c++/15.2.0/ranges:933:20:933:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 5,
+              "label": "candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'",
+              "line": 981,
+              "path": "/usr/local/include/c++/15.2.0/ranges"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 981,
+              "path": "/usr/local/include/c++/15.2.0/ranges"
+            },
+            {
+              "column": 5,
+              "label": "candidate 2: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+              "line": 972,
+              "path": "/usr/local/include/c++/15.2.0/ranges"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 972,
+              "path": "/usr/local/include/c++/15.2.0/ranges"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "5dd43d4d88940a20a32645a8f0a10c1b7ddc53165ec93b2f0bf694d72d23c118",
+        "raw": "1dda075658fe70b259962df6489b00e1fc405aea7010fd6cb30173a6a04ea77c",
+        "structural": "609a98efb7e165b9460d945c2872d97a0085ab656520a31fc3dafef045d23375"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 22,
+            "column_native": 22,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:4:22:4:22",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "constraints",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "f99672527bc1fa2169ddef2edbb65ad3dbba5009f90b664a62f882f8b1a31ecb",
+    "structural": "6e74b929efc995edc17f6ad1d94d71c79ea38424e3d4cc0265d289e626c6a159"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

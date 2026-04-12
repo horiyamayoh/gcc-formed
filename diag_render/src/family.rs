@@ -884,6 +884,10 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("ranges_views")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("unused")),
             RendererFamilyKind::Syntax
         );
@@ -968,6 +972,10 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("structured_binding")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("access_control")),
             RendererFamilyKind::Syntax
         );
@@ -992,6 +1000,10 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("designated_init")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("coroutine")),
             RendererFamilyKind::Syntax
         );
@@ -1005,6 +1017,10 @@ mod tests {
         );
         assert_eq!(
             renderer_family_kind(&sample_node("pedantic_compliance")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("three_way_comparison")),
             RendererFamilyKind::Syntax
         );
         assert_eq!(

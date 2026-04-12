@@ -1245,6 +1245,23 @@ access.cpp:3:9: note: declared private here\n";
     }
 
     #[test]
+    fn classifies_ranges_views_compiler_error() {
+        let stderr = "main.cpp:4:21: error: no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("ranges_views")
+        );
+    }
+
+    #[test]
     fn classifies_deprecated_compiler_warning() {
         let stderr = "main.cpp:4:19: warning: 'int old_api()' is deprecated: use new_api [-Wdeprecated-declarations]\n";
         let nodes = classify(stderr, true);
@@ -1336,6 +1353,23 @@ main.cpp:3:24: note: the lambda has no capture-default\n";
     }
 
     #[test]
+    fn classifies_structured_binding_compiler_error() {
+        let stderr = "main.cpp:5:10: error: only 1 name provided for structured binding\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("structured_binding")
+        );
+    }
+
+    #[test]
     fn classifies_init_order_compiler_warning() {
         let stderr = "main.cpp:4:5: warning: 'Example::value' will be initialized after 'int Example::count' [-Wreorder]\n";
         let nodes = classify(stderr, true);
@@ -1349,6 +1383,23 @@ main.cpp:3:24: note: the lambda has no capture-default\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("init_order")
+        );
+    }
+
+    #[test]
+    fn classifies_designated_init_compiler_error() {
+        let stderr = "main.cpp:4:34: error: designator order for field 'Config::port' does not match declaration order in 'Config'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("designated_init")
         );
     }
 
@@ -1385,6 +1436,23 @@ main.cpp:3:24: note: the lambda has no capture-default\n";
                 .as_ref()
                 .and_then(|analysis| analysis.family.as_deref()),
             Some("pedantic_compliance")
+        );
+    }
+
+    #[test]
+    fn classifies_three_way_comparison_compiler_error() {
+        let stderr = "main.cpp:6:18: error: no match for 'operator<=>' (operand types are 'Widget' and 'Widget')\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("three_way_comparison")
         );
     }
 

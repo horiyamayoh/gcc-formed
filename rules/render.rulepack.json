@@ -34,6 +34,12 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "ranges_views",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "unused",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -160,6 +166,12 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "structured_binding",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "access_control",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -196,6 +208,12 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "designated_init",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "coroutine",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
@@ -215,6 +233,12 @@
     {
       "kind": "syntax",
       "match_exact": "pedantic_compliance",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "three_way_comparison",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true
     },

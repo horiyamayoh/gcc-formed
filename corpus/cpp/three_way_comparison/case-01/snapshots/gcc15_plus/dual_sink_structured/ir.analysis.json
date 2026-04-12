@@ -1,0 +1,123 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:6:18: error: no match for 'operator<=>' (operand types are 'Widget' and 'Widget')\n    6 |     return (left <=> right) == 0;\n      |             ~~~~ ^~~ ~~~~~\n      |             |        |\n      |             Widget   Widget\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 279,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4277,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "three_way_comparison",
+        "first_action_hint": "ensure all members support <=> or provide a custom comparison operator",
+        "headline": "three-way comparison (spaceship) operator error",
+        "matched_conditions": [
+          "message_contains=operator<=>",
+          "message_contains=no match for 'operator<=>'",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.three_way_comparison.message_terms"
+      },
+      "fingerprints": {
+        "family": "41efddbcffe98bcfe7625c30016a28083d5c5a780abd5be6fbbdb547d676aa4f",
+        "raw": "7cb10bbd68082dc7d1b29a0e3b376e722e782873fb74546220295d970c6cd674",
+        "structural": "e847df8e4c438bc4eaf2875404c436d2245e0b9a332c55a5089fcd466f23fde2"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 18,
+            "column_native": 18,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:18:6:18",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "d495fe0dbfe0892244646cf0e3261e27e627aa4a2ad5b3e4d2790a719c03d505",
+    "raw": "1b7a05067468b1b1adee6ead3e10d044220dbcc33a71004a22f932793e5b09fc",
+    "structural": "1bc3679c62bbe3ec0e23264862f10374d130ab1eb5bf452270ac58f2156ad4bc"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

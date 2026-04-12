@@ -1,0 +1,5 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:8:10: error: only 1 name provided for structured binding
+    8 |     auto [only] = pair;
+      |          ^~~~~~
+src/main.cpp:8:10: note: while 'Pair' decomposes into 2 elements

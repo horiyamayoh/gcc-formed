@@ -313,6 +313,52 @@ mod tests {
     }
 
     #[test]
+    fn classifies_ranges_views_before_concepts_constraints_and_template() {
+        let mut node = sample_node(
+            "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')",
+        );
+        node.phase = Phase::Instantiate;
+        node.context_chains = vec![sample_context_chain(
+            ContextChainKind::TemplateInstantiation,
+            "required from here",
+        )];
+        node.children.push(DiagnosticNode {
+            id: "constraints".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Constraints,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "constraints not satisfied".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.cpp")],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Complete,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        });
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("ranges_views"));
+        assert_eq!(
+            analysis.rule_id.as_deref(),
+            Some("rule.family.ranges_views.structured_or_message")
+        );
+    }
+
+    #[test]
     fn preserves_scope_declaration_precedence_over_enum_switch() {
         let node = sample_node("'Node' is not a class, namespace, or enumeration");
         let mut document = sample_document(node);
@@ -434,6 +480,17 @@ mod tests {
     }
 
     #[test]
+    fn classifies_structured_binding_before_pointer_reference() {
+        let node = sample_node("structured binding refers to incomplete type 'Node'");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("structured_binding"));
+    }
+
+    #[test]
     fn classifies_sanitizer_buffer_before_format_string() {
         let node = sample_node(
             "'%s' directive writing 6 bytes into a region of size 4 [-Wformat-overflow=]",
@@ -444,6 +501,31 @@ mod tests {
 
         let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
         assert_eq!(analysis.family.as_deref(), Some("sanitizer_buffer"));
+    }
+
+    #[test]
+    fn classifies_designated_init_before_init_order() {
+        let node = sample_node(
+            "designator order for field 'Config::port' does not match declaration order in 'Config'",
+        );
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("designated_init"));
+    }
+
+    #[test]
+    fn classifies_three_way_comparison_from_message_terms() {
+        let node =
+            sample_node("no match for 'operator<=>' (operand types are 'Widget' and 'Widget')");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("three_way_comparison"));
     }
 
     #[test]

@@ -496,6 +496,20 @@ mod tests {
     }
 
     #[test]
+    fn classifies_ranges_views_seed_before_concepts_constraints_and_template() {
+        let decision = classify_family_seed(
+            "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')\nconstraints not satisfied\ntemplate argument deduction/substitution failed:",
+        );
+
+        assert_eq!(decision.family, "ranges_views");
+        assert_eq!(decision.rule_id, "rule.family_seed.ranges_views");
+        assert_eq!(
+            decision.first_action_hint,
+            "check that the range/iterator models the required concept (input_range, forward_range, etc.)"
+        );
+    }
+
+    #[test]
     fn classifies_preprocessor_directive_seed_before_macro_terms() {
         let decision = classify_family_seed("#error macro guard missing");
 
@@ -710,6 +724,19 @@ mod tests {
     }
 
     #[test]
+    fn classifies_structured_binding_seed_before_pointer_reference() {
+        let decision =
+            classify_family_seed("structured binding refers to incomplete type 'struct Node'");
+
+        assert_eq!(decision.family, "structured_binding");
+        assert_eq!(decision.rule_id, "rule.family_seed.structured_binding");
+        assert_eq!(
+            decision.first_action_hint,
+            "ensure the type is decomposable and the number of bindings matches the member count"
+        );
+    }
+
+    #[test]
     fn classifies_coroutine_seed_from_rulepack() {
         let decision = classify_family_seed("unable to find the promise type for this coroutine");
 
@@ -759,6 +786,34 @@ mod tests {
         assert_eq!(
             decision.first_action_hint,
             "replace the deprecated API with the recommended alternative or silence the warning intentionally"
+        );
+    }
+
+    #[test]
+    fn classifies_designated_init_seed_before_init_order() {
+        let decision = classify_family_seed(
+            "designator order for field 'Config::port' does not match declaration order in 'Config'",
+        );
+
+        assert_eq!(decision.family, "designated_init");
+        assert_eq!(decision.rule_id, "rule.family_seed.designated_init");
+        assert_eq!(
+            decision.first_action_hint,
+            "reorder the designators to match the declaration order or check the member name"
+        );
+    }
+
+    #[test]
+    fn classifies_three_way_comparison_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')",
+        );
+
+        assert_eq!(decision.family, "three_way_comparison");
+        assert_eq!(decision.rule_id, "rule.family_seed.three_way_comparison");
+        assert_eq!(
+            decision.first_action_hint,
+            "ensure all members support <=> or provide a custom comparison operator"
         );
     }
 

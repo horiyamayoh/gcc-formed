@@ -54,7 +54,7 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
 ];
 
 pub(crate) const MINIMUM_CURATED_CORPUS_SIZE: usize = 80;
-pub(crate) const MAXIMUM_CURATED_CORPUS_SIZE: usize = 120;
+pub(crate) const MAXIMUM_CURATED_CORPUS_SIZE: usize = 124;
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct VerificationFailure {

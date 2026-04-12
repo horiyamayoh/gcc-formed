@@ -1,0 +1,15 @@
+corpus_id: cpp/ranges_views/case-01
+title: piping a non-range into std::views
+tags:
+  - ranges_views
+  - phase1
+ownership: curated
+provenance: hand-authored
+reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-12'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

@@ -1,0 +1,10 @@
+error: designated initializer error
+--> src/main.cpp:7:41
+help: reorder the designators to match the declaration order or check the member name
+why: designator order for field 'Config::port' does not match declaration order in 'Config'
+| src/main.cpp:7:41
+|     Config cfg{.timeout = 30, .port = 10};
+|                                         ^
+debug: rule_id=rule.family.designated_init.message_terms
+debug: matched_conditions=message_contains=designator order for field, message_contains=does not match declaration order, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

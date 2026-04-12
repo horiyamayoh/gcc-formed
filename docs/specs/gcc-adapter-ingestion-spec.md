@@ -994,6 +994,10 @@ raw stderr residual classifier は、structured path の外側にある text を
 46. `assembler_error`
 47. `internal_compiler_error_banner`
 48. `passthrough`
+49. `ranges_views`
+50. `structured_binding`
+51. `designated_init`
+52. `three_way_comparison`
 
 ### 20.3 classifier の安全原則
 
@@ -1001,7 +1005,7 @@ raw stderr residual classifier は、structured path の外側にある text を
 - **MUST NOT** weak / open-ended な generic GCC text diagnostics を推定で family 化する
 - **MUST NOT** location を捏造する
 - **SHOULD** confidence を family ごとに固定または narrow range で出す
-- **MAY** `preprocessor_directive` / `scope_declaration` / `redefinition` / `deleted_function` / `concepts_constraints` / `unused` / `return_type` / `fallthrough` / `sanitizer_buffer` / `format_string` / `uninitialized` / `overflow_arithmetic` / `enum_switch` / `analyzer` / `null_pointer` / `move_semantics` / `strict_aliasing` / `abi_alignment` / `storage_class` / `exception_handling` / `attribute` / `odr_inline_linkage` / `sizeof_allocation` / `conversion_narrowing` / `const_qualifier` / `pointer_reference` / `access_control` / `inheritance_virtual` / `constexpr` / `lambda_closure` / `lifetime_dangling` / `init_order` / `coroutine` / `module_import` / `deprecated` / `pedantic_compliance` のような high-precision compiler residual family を明示 wording で分類する
+- **MAY** `preprocessor_directive` / `scope_declaration` / `redefinition` / `deleted_function` / `concepts_constraints` / `unused` / `return_type` / `fallthrough` / `sanitizer_buffer` / `format_string` / `uninitialized` / `overflow_arithmetic` / `enum_switch` / `analyzer` / `null_pointer` / `move_semantics` / `strict_aliasing` / `abi_alignment` / `storage_class` / `exception_handling` / `attribute` / `odr_inline_linkage` / `sizeof_allocation` / `conversion_narrowing` / `const_qualifier` / `pointer_reference` / `access_control` / `inheritance_virtual` / `constexpr` / `lambda_closure` / `lifetime_dangling` / `init_order` / `coroutine` / `module_import` / `deprecated` / `pedantic_compliance` / `ranges_views` / `structured_binding` / `designated_init` / `three_way_comparison` のような high-precision compiler residual family を明示 wording で分類する
 - **MAY** symbol / archive / object file 名を抽出する
 
 ### 20.4 grouping 規則

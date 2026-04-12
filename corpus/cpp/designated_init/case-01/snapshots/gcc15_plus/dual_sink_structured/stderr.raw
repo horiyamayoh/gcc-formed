@@ -1,0 +1,4 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:7:41: error: designator order for field 'Config::port' does not match declaration order in 'Config'
+    7 |     Config cfg{.timeout = 30, .port = 10};
+      |                                         ^

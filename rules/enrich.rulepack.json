@@ -91,6 +91,52 @@
       "phase_annotations": []
     },
     {
+      "rule_id": "rule.family.ranges_views.structured_or_message",
+      "family": "ranges_views",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        },
+        {
+          "kind": "child_message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "std::views::",
+            "std::ranges::",
+            "range_value",
+            "the iterator must be"
+          ]
+        }
+      ],
+      "child_message_groups": [
+        {
+          "prefix": "child_message_contains",
+          "terms": [
+            "std::views::",
+            "std::ranges::",
+            "range_value",
+            "the iterator must be"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        },
+        {
+          "phase": "instantiate",
+          "condition": "phase=instantiate",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.concepts_constraints.structured_or_message",
       "family": "concepts_constraints",
       "require_any_of": [
@@ -920,6 +966,35 @@
       ]
     },
     {
+      "rule_id": "rule.family.structured_binding.message_terms",
+      "family": "structured_binding",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "cannot decompose",
+            "name provided for structured binding",
+            "names provided for structured binding",
+            "has no accessible 'get<",
+            "structured binding refers to incomplete type",
+            "both it and its base class"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.pointer_reference.message_terms",
       "family": "pointer_reference",
       "require_any_of": [
@@ -1090,6 +1165,33 @@
             "dangling pointer",
             "return-local-addr",
             "storing the address of local variable"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.designated_init.message_terms",
+      "family": "designated_init",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "designator order for field",
+            "does not match declaration order",
+            "non-trivial designated initializers not supported",
+            "has no non-static data member named"
           ]
         }
       ],
@@ -1279,6 +1381,34 @@
       ]
     },
     {
+      "rule_id": "rule.family.three_way_comparison.message_terms",
+      "family": "three_way_comparison",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "operator<=>",
+            "spaceship",
+            "no match for 'operator<=>'",
+            "is defaulted but the type",
+            "is not a literal type"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.type_overload.structured_or_message",
       "family": "type_overload",
       "require_any_of": [
@@ -1375,6 +1505,17 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.ranges_views",
+      "family": "ranges_views",
+      "priority": 28,
+      "terms": [
+        "std::views::",
+        "std::ranges::",
+        "range_value",
+        "the iterator must be"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.concepts_constraints",
       "family": "concepts_constraints",
       "priority": 29,
@@ -1435,6 +1576,42 @@
         "use-after-close",
         "infinite loop",
         "-wanalyzer-"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.structured_binding",
+      "family": "structured_binding",
+      "priority": 42,
+      "terms": [
+        "cannot decompose",
+        "name provided for structured binding",
+        "names provided for structured binding",
+        "has no accessible 'get<",
+        "structured binding refers to incomplete type",
+        "both it and its base class"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.designated_init",
+      "family": "designated_init",
+      "priority": 43,
+      "terms": [
+        "designator order for field",
+        "does not match declaration order",
+        "non-trivial designated initializers not supported",
+        "has no non-static data member named"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.three_way_comparison",
+      "family": "three_way_comparison",
+      "priority": 44,
+      "terms": [
+        "operator<=>",
+        "spaceship",
+        "no match for 'operator<=>'",
+        "is defaulted but the type",
+        "is not a literal type"
       ]
     },
     {
@@ -1945,6 +2122,25 @@
       "default_confidence": "low"
     },
     {
+      "family": "ranges_views",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "concepts_constraints",
       "high_when_any": [
         {
@@ -2382,6 +2578,25 @@
       "default_confidence": "low"
     },
     {
+      "family": "structured_binding",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
       "family": "pointer_reference",
       "high_when_any": [
         {
@@ -2478,6 +2693,25 @@
     },
     {
       "family": "lifetime_dangling",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "designated_init",
       "high_when_any": [
         {
           "all": [
@@ -2611,6 +2845,25 @@
     },
     {
       "family": "pedantic_compliance",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "three_way_comparison",
       "high_when_any": [
         {
           "all": [

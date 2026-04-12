@@ -1,0 +1,16 @@
+error: C++20 ranges or views error
+--> src/main.cpp:4:22
+help: check that the range/iterator models the required concept (input_range, forward_range, etc.)
+why: no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')
+| src/main.cpp:4:22
+|     auto result = 42 | std::views::take(2);
+|                      ^
+template: /usr/local/include/c++/15.2.0/ranges:981:5 candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'
+template: /usr/local/include/c++/15.2.0/ranges:981:5 template argument deduction/substitution failed:
+template: /usr/local/include/c++/15.2.0/ranges:972:5 template argument deduction/substitution failed:
+omitted 1 template frames
+note: candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'
+note: template argument deduction/substitution failed:
+note: constraints not satisfied
+note: omitted 6 additional note(s)
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

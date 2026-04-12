@@ -35,6 +35,10 @@
         "text": "template constraint not satisfied"
       },
       {
+        "family": "ranges_views",
+        "text": "C++20 ranges or views error"
+      },
+      {
         "family": "unused",
         "text": "unused declaration detected"
       },
@@ -111,6 +115,10 @@
         "text": "invalid pointer or reference operation"
       },
       {
+        "family": "structured_binding",
+        "text": "structured binding decomposition error"
+      },
+      {
         "family": "access_control",
         "text": "access to private or protected member"
       },
@@ -135,6 +143,10 @@
         "text": "initialization order or aggregate init issue"
       },
       {
+        "family": "designated_init",
+        "text": "designated initializer error"
+      },
+      {
         "family": "fallthrough",
         "text": "implicit fallthrough between switch cases"
       },
@@ -157,6 +169,10 @@
       {
         "family": "pedantic_compliance",
         "text": "non-standard or non-portable extension used"
+      },
+      {
+        "family": "three_way_comparison",
+        "text": "three-way comparison (spaceship) operator error"
       },
       {
         "family": "passthrough",
@@ -203,6 +219,10 @@
       {
         "family": "concepts_constraints",
         "text": "match the required concept or requires-clause against the actual template arguments"
+      },
+      {
+        "family": "ranges_views",
+        "text": "check that the range/iterator models the required concept (input_range, forward_range, etc.)"
       },
       {
         "family": "unused",
@@ -281,6 +301,10 @@
         "text": "provide the full type definition via #include or fix the value category"
       },
       {
+        "family": "structured_binding",
+        "text": "ensure the type is decomposable and the number of bindings matches the member count"
+      },
+      {
         "family": "access_control",
         "text": "use a public interface, add a friend declaration, or change access specifier"
       },
@@ -305,6 +329,10 @@
         "text": "reorder member initializers to match declaration order, or fix the initializer list"
       },
       {
+        "family": "designated_init",
+        "text": "reorder the designators to match the declaration order or check the member name"
+      },
+      {
         "family": "fallthrough",
         "text": "add a break, return, or [[fallthrough]] attribute between cases"
       },
@@ -327,6 +355,10 @@
       {
         "family": "pedantic_compliance",
         "text": "use the standard-conforming alternative or pass the required -std= flag"
+      },
+      {
+        "family": "three_way_comparison",
+        "text": "ensure all members support <=> or provide a custom comparison operator"
       },
       {
         "family": "passthrough",
@@ -380,6 +412,21 @@
         ]
       },
       {
+        "kind": "syntax",
+        "family": "ranges_views",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_ranges_views",
+        "headline_strategy": "fixed_text",
+        "headline": "C++20 ranges or views error",
+        "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+        "match_any": [
+          "std::views::",
+          "std::ranges::",
+          "range_value",
+          "the iterator must be"
+        ]
+      },
+      {
         "kind": "type_overload",
         "family": "concepts_constraints",
         "phase": "constraints",
@@ -394,6 +441,21 @@
           "the required expression",
           "the required type",
           "required for the satisfaction of"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "designated_init",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_designated_init",
+        "headline_strategy": "fixed_text",
+        "headline": "designated initializer error",
+        "first_action_hint": "reorder the designators to match the declaration order or check the member name",
+        "match_any": [
+          "designator order for field",
+          "does not match declaration order",
+          "non-trivial designated initializers not supported",
+          "has no non-static data member named"
         ]
       },
       {
@@ -836,6 +898,23 @@
       },
       {
         "kind": "syntax",
+        "family": "structured_binding",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_structured_binding",
+        "headline_strategy": "fixed_text",
+        "headline": "structured binding decomposition error",
+        "first_action_hint": "ensure the type is decomposable and the number of bindings matches the member count",
+        "match_any": [
+          "cannot decompose",
+          "name provided for structured binding",
+          "names provided for structured binding",
+          "has no accessible 'get<",
+          "structured binding refers to incomplete type",
+          "both it and its base class"
+        ]
+      },
+      {
+        "kind": "syntax",
         "family": "pointer_reference",
         "phase": "semantic",
         "rule_id": "rule.residual.compiler_pointer_reference",
@@ -998,6 +1077,22 @@
           "template",
           "deduction/substitution",
           "deduced conflicting"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "three_way_comparison",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_three_way_comparison",
+        "headline_strategy": "fixed_text",
+        "headline": "three-way comparison (spaceship) operator error",
+        "first_action_hint": "ensure all members support <=> or provide a custom comparison operator",
+        "match_any": [
+          "operator<=>",
+          "spaceship",
+          "no match for 'operator<=>'",
+          "is defaulted but the type",
+          "is not a literal type"
         ]
       },
       {

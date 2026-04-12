@@ -913,7 +913,7 @@ fn curated_corpus_shape_rejects_fixture_count_above_beta_bar() {
         ("path".to_string(), 10),
     ]);
 
-    let error = enforce_minimum_corpus_shape(121, &counts).unwrap_err();
+    let error = enforce_minimum_corpus_shape(125, &counts).unwrap_err();
     assert!(
         error
             .to_string()

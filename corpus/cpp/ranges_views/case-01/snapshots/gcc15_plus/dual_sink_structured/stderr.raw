@@ -1,0 +1,39 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:4:22: error: no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')
+    4 |     auto result = 42 | std::views::take(2);
+      |                   ~~ ^ ~~~~~~~~~~~~~~~~~~~
+      |                   |                    |
+      |                   int                  std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>
+src/main.cpp:4:22: note: there are 2 candidates
+    4 |     auto result = 42 | std::views::take(2);
+      |                   ~~~^~~~~~~~~~~~~~~~~~~~~
+In file included from src/main.cpp:1:
+/usr/local/include/c++/15.2.0/ranges:981:5: note: candidate 1: 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&)'
+  981 |     operator|(_Lhs&& __lhs, _Rhs&& __rhs)
+      |     ^~~~~~~~
+/usr/local/include/c++/15.2.0/ranges:981:5: note: template argument deduction/substitution failed:
+/usr/local/include/c++/15.2.0/ranges:981:5: note: constraints not satisfied
+/usr/local/include/c++/15.2.0/ranges: In substitution of 'template<class _Lhs, class _Rhs>  requires (__is_range_adaptor_closure<_Lhs>) && (__is_range_adaptor_closure<_Rhs>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs&&, _Rhs&&) [with _Lhs = int; _Rhs = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>]':
+src/main.cpp:4:42:   required from here
+    4 |     auto result = 42 | std::views::take(2);
+      |                                          ^
+/usr/local/include/c++/15.2.0/ranges:962:13:   required for the satisfaction of '__is_range_adaptor_closure<_Lhs>' [with _Lhs = int]
+/usr/local/include/c++/15.2.0/ranges:963:9:   in requirements with '_Tp __t' [with _Tp = int]
+/usr/local/include/c++/15.2.0/ranges:963:70: note: the required expression 'std::ranges::views::__adaptor::__is_range_adaptor_closure_fn(__t, __t)' is invalid
+  963 |       = requires (_Tp __t) { __adaptor::__is_range_adaptor_closure_fn(__t, __t); };
+      |                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+cc1plus: note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail
+/usr/local/include/c++/15.2.0/ranges:972:5: note: candidate 2: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'
+  972 |     operator|(_Range&& __r, _Self&& __self)
+      |     ^~~~~~~~
+/usr/local/include/c++/15.2.0/ranges:972:5: note: template argument deduction/substitution failed:
+/usr/local/include/c++/15.2.0/ranges:972:5: note: constraints not satisfied
+/usr/local/include/c++/15.2.0/ranges: In substitution of 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&) [with _Self = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Range = int]':
+src/main.cpp:4:42:   required from here
+    4 |     auto result = 42 | std::views::take(2);
+      |                                          ^
+/usr/local/include/c++/15.2.0/ranges:932:13:   required for the satisfaction of '__adaptor_invocable<_Self, _Range>' [with _Self = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Range = int]
+/usr/local/include/c++/15.2.0/ranges:933:9:   in requirements  [with _Adaptor = std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>; _Args = {int}]
+/usr/local/include/c++/15.2.0/ranges:933:44: note: the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid
+  933 |       = requires { std::declval<_Adaptor>()(declval<_Args>()...); };
+      |                    ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~

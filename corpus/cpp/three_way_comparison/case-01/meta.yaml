@@ -1,0 +1,15 @@
+corpus_id: cpp/three_way_comparison/case-01
+title: missing spaceship operator support
+tags:
+  - three_way_comparison
+  - phase1
+ownership: curated
+provenance: hand-authored
+reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-12'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

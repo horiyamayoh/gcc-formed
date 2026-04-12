@@ -1,0 +1,6 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:6:18: error: no match for 'operator<=>' (operand types are 'Widget' and 'Widget')
+    6 |     return (left <=> right) == 0;
+      |             ~~~~ ^~~ ~~~~~
+      |             |        |
+      |             Widget   Widget

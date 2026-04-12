@@ -1,0 +1,124 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:7:41: error: designator order for field 'Config::port' does not match declaration order in 'Config'\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 254,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3793,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "designated_init",
+        "first_action_hint": "reorder the designators to match the declaration order or check the member name",
+        "headline": "designated initializer error",
+        "matched_conditions": [
+          "message_contains=designator order for field",
+          "message_contains=does not match declaration order",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.designated_init.message_terms"
+      },
+      "fingerprints": {
+        "family": "b850cf55fd490f9b52b3d58dc73d2bddcc6adca75e0a474ee8866d816e7ecdcd",
+        "raw": "9ad8b6a50faca9a8045a2d3b9ed049c42f5e99294cebf62294245eb3b1178096",
+        "structural": "8286773686f699259cee7644561e3477a1d8b1e55940fe18221e485625f7041b"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 41,
+            "column_native": 41,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:7:41:7:41",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "designator order for field 'Config::port' does not match declaration order in 'Config'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b7039ecd1b145b668d7e678b322165a6455fce002ac40fcf22dd7ed562fea685",
+    "raw": "b9e7368adce76916f7f6cb3272d90b84b57829a712f0e6e560467f532bb520c4",
+    "structural": "fbae5d105ab16ad7e242d2529697f41e665acd1187e5acb43db0850e3d5b3825"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-Wno-missing-field-initializers",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

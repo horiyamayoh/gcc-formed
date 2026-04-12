@@ -1,0 +1,10 @@
+error: three-way comparison (spaceship) operator error
+--> src/main.cpp:6:18
+help: ensure all members support <=> or provide a custom comparison operator
+why: no match for 'operator<=>' (operand types are 'Widget' and 'Widget')
+| src/main.cpp:6:18
+|     return (left <=> right) == 0;
+|                  ^
+debug: rule_id=rule.family.three_way_comparison.message_terms
+debug: matched_conditions=message_contains=operator<=>, message_contains=no match for 'operator<=>', phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
