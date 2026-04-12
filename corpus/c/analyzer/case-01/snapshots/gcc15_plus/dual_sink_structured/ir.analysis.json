@@ -33,6 +33,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-eae4c78bfc51",
         "headline": "pointer 'ptr' used after 'free'",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -101,7 +102,7 @@
       "fingerprints": {
         "family": "ae1fa046ff8e5fa1e8513e71016409ed18091bddfe6a664c894bb65bf4545517",
         "raw": "47390f4becbd7e07d4645ebf7ece91fa244a9f8a974f9249d544cc455f9484fa",
-        "structural": "56082d94ac42b5e037c187d041e8b72c815eacd2081dbe14118ca522c70339fb"
+        "structural": "ea60da065f22573e1dd0c591a4b954758636e8d5918ca00ba33c9984f45ace03"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -147,6 +148,7 @@
         "confidence": 0.8999999761581421,
         "family": "analyzer",
         "first_action_hint": "follow the analyzer event path and fix the first invalid state transition",
+        "group_ref": "group-45db1889640a",
         "headline": "static analysis found a potential defect",
         "matched_conditions": [
           "message_contains=double-'free'",
@@ -182,7 +184,7 @@
       "fingerprints": {
         "family": "79101378ae8a5fcd3da7be9cb250a18a0018212b346b3960fd2dd73328ef6995",
         "raw": "1606bbb8fa799ee24993f22d94654d81b4f2fe0eb1429a574457dc45424c8a90",
-        "structural": "64d49a63567768e2f52d4f4a2c68758b99a7a31ddbc8c96908db83d340dbed9d"
+        "structural": "9ee3fb10031bacfb8ddf1f4c64966bb562a028e119bfcc208ece10495e300afc"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -228,6 +230,7 @@
         "confidence": 0.8999999761581421,
         "family": "analyzer",
         "first_action_hint": "follow the analyzer event path and fix the first invalid state transition",
+        "group_ref": "group-89b7e9e8cfaf",
         "headline": "static analysis found a potential defect",
         "matched_conditions": [
           "message_contains=double-'free'",
@@ -239,7 +242,7 @@
       "fingerprints": {
         "family": "0cdb1094af8ae85944225a90524fe09705d12c48f1e95a953970c6ee65133388",
         "raw": "6cebde077d4e0a77180ea3e88fc513eb7b8fd402fb9208aa3b05eb261d2f77d8",
-        "structural": "c1ceb404d7ef57c7d5a5be06addd6c62f60ded1ff4b7fa10fed5ebe2bebe108f"
+        "structural": "23a60f9f75838c580611a7347b5900c997e2c098fb1e551d589d194c2a8eaa7b"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -281,12 +284,106 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-cdcaef265026",
+          "family": "unknown",
+          "lead_group_ref": "group-eae4c78bfc51",
+          "lead_root_score": 0.6799999475479126,
+          "member_group_refs": [
+            "group-eae4c78bfc51"
+          ]
+        },
+        {
+          "confidence": 0.7100000381469727,
+          "episode_ref": "episode-69a0fbc41e58",
+          "family": "analyzer",
+          "lead_group_ref": "group-45db1889640a",
+          "lead_root_score": 0.7100000381469727,
+          "member_group_refs": [
+            "group-45db1889640a"
+          ]
+        },
+        {
+          "confidence": 0.6800000071525574,
+          "episode_ref": "episode-a022e831c4a3",
+          "family": "analyzer",
+          "lead_group_ref": "group-89b7e9e8cfaf",
+          "lead_root_score": 0.6800000071525574,
+          "member_group_refs": [
+            "group-89b7e9e8cfaf"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-cdcaef265026",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-eae4c78bfc51",
+        "independence_score": 0.6799999475479126,
+        "role": "independent_root",
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-69a0fbc41e58",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-45db1889640a",
+        "independence_score": 0.7100000381469727,
+        "role": "independent_root",
+        "root_score": 0.7100000381469727,
+        "summary_likelihood": 0.3889999985694885,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-a022e831c4a3",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-89b7e9e8cfaf",
+        "independence_score": 0.6800000071525574,
+        "role": "independent_root",
+        "root_score": 0.6800000071525574,
+        "summary_likelihood": 0.3920000195503235,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 3,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "1d2185b9fcec3223308146cbdce24acc4f681d2097c67ae67709ad2afb4b0818",
-    "raw": "d02328ffed69e3784264e3db250c69c4279e687ce56178a954fb4e451e2b59f1",
-    "structural": "611690f81aaba15ff13aaa5f51385d5fbd8cbb68249b8494fd0b7d642ed2ed09"
+    "raw": "abef9001d28e2a8d7b21010c2a73d46a4d516f3ba44e466522f9b1b74ff2cae0",
+    "structural": "d30a31a2cc2927d6c4dd19024e12f71ff583511614958a092455ae978a7a7957"
   },
   "producer": {
     "name": "gcc-formed",

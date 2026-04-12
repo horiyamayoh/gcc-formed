@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "sanitizer_buffer",
         "first_action_hint": "check buffer sizes and ensure source and destination do not overlap",
+        "group_ref": "group-2dfd3eb0126f",
         "headline": "potential buffer overflow or memory overlap",
         "matched_conditions": [
           "message_contains=bytes into a region of size",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "6b985cc47e9cd5a39c2a284080e9f9aa665c5458dc6afa790041bc7bfaa73a21",
         "raw": "cc07184955c38272d613dd87ecf6f1927e9361a1d44658488385eb8c3cb16234",
-        "structural": "357e96239ba59279fe4653a611cbb0b247981c7c3a604b0e70bc5076a808e742"
+        "structural": "5ed5a4731c22bf86a23587e7c425725deaf607de4f15d776be282c83f9fd02e1"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -89,6 +90,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-b9d5d7b03a58",
         "headline": "'sprintf' output 7 bytes into a destination of size 4",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -99,7 +101,7 @@
       "fingerprints": {
         "family": "23aede8260cc20337e123375a6403b5a8cc4f49c641c68fb4f97107d34501171",
         "raw": "28bf8cf557f58dc6bf33276985e0bf229ce0a8c2a0020de81f5a94ada60db03c",
-        "structural": "00e4c84111bdb206342691f8d1a2a5507b6ce089723dca932fa44c2d69d8b9c6"
+        "structural": "f8a04ab78d4efcfd4b7ca32f6a8058b975bc556ecd06b552cc581a2901061d45"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -141,12 +143,81 @@
       "severity": "note"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-831691143c69",
+          "family": "sanitizer_buffer",
+          "lead_group_ref": "group-2dfd3eb0126f",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-2dfd3eb0126f"
+          ]
+        },
+        {
+          "confidence": 0.38999998569488525,
+          "episode_ref": "episode-9e8de7120e40",
+          "family": "unknown",
+          "lead_group_ref": "group-b9d5d7b03a58",
+          "lead_root_score": 0.38999998569488525,
+          "member_group_refs": [
+            "group-b9d5d7b03a58"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-831691143c69",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-2dfd3eb0126f",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-9e8de7120e40",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "generic_follow_on",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-b9d5d7b03a58",
+        "independence_score": 0.4399999976158142,
+        "role": "uncertain",
+        "root_score": 0.38999998569488525,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 1
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "701011d16a301565a3f56f46b5279f4a4849f50b4fa3541405b5fd2693d46e90",
-    "raw": "debd7e2de5634045710656ea31e49123269bd31d81e63dd9820b3765b99f7af5",
-    "structural": "b2e3171652309ee206bf0bbfa6630772a0465ae9416029a923657f682ff4f6e1"
+    "raw": "a8cfe3970f2311a47adc076fc6a9929700019eec05cce5ff0d921e51f0600c50",
+    "structural": "2d7879cf12815cc49035f7b35b68e2594df5276ab31f06a6e4d5d36d08bf625c"
   },
   "producer": {
     "name": "gcc-formed",

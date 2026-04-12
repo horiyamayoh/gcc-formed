@@ -20,7 +20,7 @@
       ],
       "family": "sanitizer_buffer",
       "first_action": "check buffer sizes and ensure source and destination do not overlap",
-      "group_id": "sarif-0-0",
+      "group_id": "group-2dfd3eb0126f",
       "matched_conditions": [
         "message_contains=bytes into a region of size",
         "phase=semantic"
@@ -30,19 +30,41 @@
       "severity": "warning",
       "suppression_reason": null,
       "title": "potential buffer overflow or memory overlap"
+    },
+    {
+      "canonical_location": "src/main.c:5:5",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "possible",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    sprintf(buffer, \"%s\", \"abcdef\");"
+          ],
+          "location": "src/main.c:5:5"
+        }
+      ],
+      "family": "unknown",
+      "first_action": null,
+      "group_id": "group-b9d5d7b03a58",
+      "matched_conditions": [
+        "no_family_rule_matched"
+      ],
+      "raw_message": "'sprintf' output 7 bytes into a destination of size 4",
+      "rule_id": "rule.family.unknown",
+      "severity": "note",
+      "suppression_reason": "generic_fallback",
+      "title": "'sprintf' output 7 bytes into a destination of size 4"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.c:5:5",
-      "group_id": "sarif-0-1",
-      "severity": "note",
-      "title": "'sprintf' output 7 bytes into a destination of size 4"
-    }
-  ]
+  }
 }

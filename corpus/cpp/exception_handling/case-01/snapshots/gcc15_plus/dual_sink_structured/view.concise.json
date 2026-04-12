@@ -20,7 +20,7 @@
       ],
       "family": "exception_handling",
       "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
-      "group_id": "sarif-0-0",
+      "group_id": "group-f8f7907d4f37",
       "matched_conditions": [
         "message_contains=exception handling disabled",
         "phase=semantic"
@@ -30,19 +30,46 @@
       "severity": "error",
       "suppression_reason": null,
       "title": "exception handling configuration or usage error"
+    },
+    {
+      "canonical_location": "src/main.cpp:2:11",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "          ^"
+          ],
+          "lines": [
+            "    throw 1;"
+          ],
+          "location": "src/main.cpp:2:11"
+        }
+      ],
+      "family": "exception_handling",
+      "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
+      "group_id": "group-d5434686d596",
+      "matched_conditions": [
+        "message_contains=exception handling disabled",
+        "message_contains=use '-fexceptions' to enable",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable",
+      "raw_sub_block": [
+        "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable"
+      ],
+      "rule_id": "rule.family.exception_handling.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "exception handling configuration or usage error"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false,
+    "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.cpp:2:11",
-      "group_id": "residual-compiler-0",
-      "severity": "error",
-      "title": "exception handling configuration or usage error"
-    }
-  ]
+  }
 }

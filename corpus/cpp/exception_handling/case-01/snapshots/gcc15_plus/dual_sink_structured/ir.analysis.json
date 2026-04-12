@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "exception_handling",
         "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
+        "group_ref": "group-f8f7907d4f37",
         "headline": "exception handling configuration or usage error",
         "matched_conditions": [
           "message_contains=exception handling disabled",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "efacc6557db4e7655e9a302106276f9a77588ac2cd88cdf3a54a65d60a83ca52",
         "raw": "2bb0dbe4dadf26347f9f8bc05c990d55d861ec71fa87bfcc293141d90025634b",
-        "structural": "76c2e72ecbfad9f3ee9a20430313e5256f5f33929ce487bcdc468ab3817ad4cb"
+        "structural": "f55bbeab1edf18586b1c78c8c3408ca313a4363134d0ba6ebb830bd21bd1a946"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -89,6 +90,7 @@
         "confidence": 0.8999999761581421,
         "family": "exception_handling",
         "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
+        "group_ref": "group-d5434686d596",
         "headline": "exception handling configuration or usage error",
         "matched_conditions": [
           "message_contains=exception handling disabled",
@@ -100,7 +102,7 @@
       "fingerprints": {
         "family": "a8ab64141dea058bc8b4d88677d94290e41147b3a2aaccab14508be9637c396a",
         "raw": "8e17a96b89c0699f3dc3532d00080da918c3d6b283abebb8d89afb3520513882",
-        "structural": "d7ba8a4d4a25c60d127f5f9c9d5fd5d20f63b47a9958eacb9146bacb467e9c8c"
+        "structural": "94728b8da5c867856c56160df5fcfab78855d7b9bebda1f7582fff3f0e5e0da7"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -142,12 +144,81 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-27af6d542e6e",
+          "family": "exception_handling",
+          "lead_group_ref": "group-f8f7907d4f37",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-f8f7907d4f37"
+          ]
+        },
+        {
+          "confidence": 0.7100000381469727,
+          "episode_ref": "episode-6ead607c5a92",
+          "family": "exception_handling",
+          "lead_group_ref": "group-d5434686d596",
+          "lead_root_score": 0.7100000381469727,
+          "member_group_refs": [
+            "group-d5434686d596"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-27af6d542e6e",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f8f7907d4f37",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-6ead607c5a92",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-d5434686d596",
+        "independence_score": 0.7100000381469727,
+        "role": "independent_root",
+        "root_score": 0.7100000381469727,
+        "summary_likelihood": 0.3889999985694885,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 2,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "b60e439f34400a5057db80fa2712aa30ed430e3201171322ae0fad7698a6c311",
-    "raw": "0e4444b4e0806fd2abac5202b4757c128c7125cd5ac3367c811b9090c23316eb",
-    "structural": "997771bdd942c8d4ed38d8443eed987a165f0be5dfe917788eccfe6eab7118b0"
+    "raw": "12a99a5fba32ec54d08d9c35ea246a30b6f570a8082c70264b7e726221ebcf9d",
+    "structural": "a1df92d988bc0dccf34c10b91d48d23f84c44a705fbaa9a8dff57e8651d4ff75"
   },
   "producer": {
     "name": "gcc-formed",

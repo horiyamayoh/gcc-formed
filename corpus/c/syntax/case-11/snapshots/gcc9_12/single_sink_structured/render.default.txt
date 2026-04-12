@@ -9,6 +9,4 @@ suggested edit: insert ';' at src/main.c:2:13
   patch: src/main.c
   2 -     return 0
   2 +     return 0;
-other errors:
-  - src/main.c:2:13: error: syntax error
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

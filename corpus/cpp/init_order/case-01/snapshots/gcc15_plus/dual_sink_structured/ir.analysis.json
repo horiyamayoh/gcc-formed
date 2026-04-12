@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "init_order",
         "first_action_hint": "reorder member initializers to match declaration order, or fix the initializer list",
+        "group_ref": "group-4fe83b216034",
         "headline": "initialization order or aggregate init issue",
         "matched_conditions": [
           "message_contains=will be initialized after",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "0db8205630d17b9975b16407299dc8709a014b5048db14b70b8582ffd37e55e9",
         "raw": "cbf2796e39e7d4a0a2dec862c9c4a70438f1f2337956f0836bb44ddf7325d91e",
-        "structural": "c7d470c58f7a6fdaea3f0fcbfcca01720da37063422efe242460e23cc3c84d33"
+        "structural": "9f4923c76f9ca178411dd22c5ef0424bdf59b7d94ac17bbe9d20ebc140da36ca"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -89,6 +90,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-47fde0da878b",
         "headline": "  'int Example::count'",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -99,7 +101,7 @@
       "fingerprints": {
         "family": "a294d440cdd1a8aa70f619040a55e1759d400a8781a3fb05bb6a9ebf193cfacb",
         "raw": "e151f83392fc8ff5362f29b9d9c12d8c22cfad397dd0acec05c8758bd9ad2c97",
-        "structural": "f3a5571ab5e0fcef3fde633189c923d9c458eb9c764fa135b2b1dd3d64c53494"
+        "structural": "11817c9a2ef4c2bd9ca04921ee13d8044771628731b93523a8e7c6ca7754d9ea"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -145,6 +147,7 @@
         "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "group_ref": "group-59815819bad1",
         "headline": "  when initialized here",
         "matched_conditions": [
           "no_family_rule_matched"
@@ -155,7 +158,7 @@
       "fingerprints": {
         "family": "c5c17f4a004ac2f639dceb645cc0ba5af758c11ebc3f8008ad43d8465f136af1",
         "raw": "066f9e2b2a66e67f8376b41490fe39f66f828fe731fa20df189c67b32e7a66bb",
-        "structural": "5457279f73ed0a252f6774dce9994a5e220f3ebc8a23cc722a204da9854f1acc"
+        "structural": "2c18691a44af4c12fadf1397f0f5697ecd3cc3d024014a8aa91a7f0218c0d075"
       },
       "id": "sarif-0-2",
       "locations": [
@@ -197,12 +200,105 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-3176b55d2700",
+          "family": "init_order",
+          "lead_group_ref": "group-4fe83b216034",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-4fe83b216034"
+          ]
+        },
+        {
+          "confidence": 0.6499999761581421,
+          "episode_ref": "episode-9fe23d8fa25e",
+          "family": "unknown",
+          "lead_group_ref": "group-47fde0da878b",
+          "lead_root_score": 0.6499999761581421,
+          "member_group_refs": [
+            "group-47fde0da878b"
+          ]
+        },
+        {
+          "confidence": 0.6199999451637268,
+          "episode_ref": "episode-45cf04786231",
+          "family": "unknown",
+          "lead_group_ref": "group-59815819bad1",
+          "lead_root_score": 0.6199999451637268,
+          "member_group_refs": [
+            "group-59815819bad1"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-3176b55d2700",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-4fe83b216034",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-9fe23d8fa25e",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-47fde0da878b",
+        "independence_score": 0.6499999761581421,
+        "role": "independent_root",
+        "root_score": 0.6499999761581421,
+        "summary_likelihood": 0.39500001072883606,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-45cf04786231",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-59815819bad1",
+        "independence_score": 0.6200000047683716,
+        "role": "independent_root",
+        "root_score": 0.6199999451637268,
+        "summary_likelihood": 0.398000031709671,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 3,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "377a53e215fb4005698df19d93505cfb299a035c89574b0221e6d8f121ea7622",
-    "raw": "44badbb4da73a4ebabc31dd88f3604775ce38f916a608ea4f604ed68253eaa66",
-    "structural": "9be199e1db5690730a58ef66d727e401ab473aa1342d686326125f02cfc28bfe"
+    "raw": "7aec9699119cdacee4851df472472bfaba338b45b5c6b52799c65d5cf0012b06",
+    "structural": "3ab6b0989dc9bb74ec1489921c94f43c11f886ed26244f3ad56ec299a51ddc3c"
   },
   "producer": {
     "name": "gcc-formed",

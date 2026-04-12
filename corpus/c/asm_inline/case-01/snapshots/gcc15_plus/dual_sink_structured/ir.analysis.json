@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "asm_inline",
         "first_action_hint": "check the asm constraint letters and ensure registers/operands match the template",
+        "group_ref": "group-d48624c5088d",
         "headline": "inline assembly constraint error",
         "matched_conditions": [
           "message_contains=does not match constraints",
@@ -43,7 +44,7 @@
       "fingerprints": {
         "family": "3e7511d39fa90c51970b0efba4824a164a9af39ad0533029fd780a444e05bcc2",
         "raw": "99290841231b9c3e9c040641e681845d6fa83013b22a0f3cf51dfc53f20cc861",
-        "structural": "86d1eadcdd8601cc283027dd7c3a878488ee83aff5816972ef7149716c1495bd"
+        "structural": "3b55a6c0e8930a2eced17850cbef43d36e27085a14d9a26cd4d90c440aaca942"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -89,6 +90,7 @@
         "confidence": 0.8999999761581421,
         "family": "asm_inline",
         "first_action_hint": "check the asm constraint letters and ensure registers/operands match the template",
+        "group_ref": "group-8de1e6e83fb3",
         "headline": "inline assembly constraint error",
         "matched_conditions": [
           "message_contains=impossible constraint in",
@@ -99,7 +101,7 @@
       "fingerprints": {
         "family": "7a6ef5fde152cbe7c9d18bca660a9a104d98364b3252cdafdb9855a1fbddabc5",
         "raw": "cc487f617843881e464c2ef6ceae5d156f32b23333101bb009f49654b1828f6d",
-        "structural": "3f571974ae8217e24b6c91e6eb0a2cbfc6c935c6ffb445d4b399bc2012840338"
+        "structural": "3f19589a0eb8f02740075fcebdc49c467cb2867a96e003dffc8a21057861e29d"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -141,12 +143,81 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-f82ad3b9e58b",
+          "family": "asm_inline",
+          "lead_group_ref": "group-d48624c5088d",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-d48624c5088d"
+          ]
+        },
+        {
+          "confidence": 0.7100000381469727,
+          "episode_ref": "episode-57790d208820",
+          "family": "asm_inline",
+          "lead_group_ref": "group-8de1e6e83fb3",
+          "lead_root_score": 0.7100000381469727,
+          "member_group_refs": [
+            "group-8de1e6e83fb3"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-f82ad3b9e58b",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-d48624c5088d",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-57790d208820",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-8de1e6e83fb3",
+        "independence_score": 0.7100000381469727,
+        "role": "independent_root",
+        "root_score": 0.7100000381469727,
+        "summary_likelihood": 0.3889999985694885,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 2,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "481008686c9aa67cd3e6c7938a50ff3cfdc41961e5a406ef9a2f954b070c0dd1",
-    "raw": "7fa497d2cb7dbb24118a7e918641187dbf017c2396a4a481456ab8ccf737044f",
-    "structural": "6564b640e9a28598cdec4378b3a3e536edee5633867dcf45712916a77c48194f"
+    "raw": "7cb306b333e1ced624e1bd6cac0d8082dd381c00d2b01c9f6ac71e9b8a6ddb56",
+    "structural": "7ab9c19af862a172e438567d3c97cca9be79b5b455e0a39be7e53aef74af602e"
   },
   "producer": {
     "name": "gcc-formed",

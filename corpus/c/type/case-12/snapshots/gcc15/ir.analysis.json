@@ -33,17 +33,18 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-f9da1f8faee1",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=incompatible type"
+          "message_contains=incompatible type",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "ecb61fca63c3eaf86369996505e1f796d0917a1a8ac1686f3133b7f824707091",
         "raw": "179a3603f44ad1d06707037c018765067095674ac892a84c8971d39bc284bab0",
-        "structural": "20d92038b526a459946238532c861fc5aeecec545198b1e3cf522aa89887535f"
+        "structural": "934e3b984955a82fef3745370106e8d3de105f56098beefc76b086ab3bb8dc1b"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -83,70 +84,57 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "type_overload",
-        "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch",
-        "matched_conditions": [
-          "phase=semantic",
-          "message_contains=incompatible type"
-        ],
-        "rule_id": "rule.family.type_overload.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "fd9cacc5a5cfe3dfbe6eb68795fab3f7fdf517d17e726be269dc96a42faf7535",
-        "raw": "7df40093e7f52dcdad8274348887c5fa4d5dd676157163e5d9ab97ce32fa0da9",
-        "structural": "e0d3cb43d1dc7bc2a3b1e2453c34875d8c0c55b5a0bf9e8b1f45d330c937bdf4"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 17,
-            "column_native": 17,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 7
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:7:17:7:17",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:7:17: error: incompatible types when initializing type 'int' using type 'struct Box'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-731275fd07a1",
+          "family": "type_overload",
+          "lead_group_ref": "group-f9da1f8faee1",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-f9da1f8faee1"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-731275fd07a1",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f9da1f8faee1",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "e1e8c1da326ac07097e192dc25198dd785c5c1f57e87b030591d17027448963d",
-    "raw": "72c6d84ff899d3e5dfe08d2503e63d22e00b2bfb025919777bb7c538e4b45b46",
-    "structural": "9d0c9b20c61dd53cef27b25ac21327bb07ee3b85e99ce3138b5f14ff0b3006b3"
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "b18ac2d270eca08fdd3012494a57292d80edfc0c819689995c486d492b74381b",
+    "structural": "4d4421f33f976e526c1f2169ba357fe7513128986b7240d1c283aba21fe99c7c"
   },
   "producer": {
     "name": "gcc-formed",

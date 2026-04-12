@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "pedantic_compliance",
         "first_action_hint": "use the standard-conforming alternative or pass the required -std= flag",
+        "group_ref": "group-f45c2089a6a6",
         "headline": "non-standard or non-portable extension used",
         "matched_conditions": [
           "message_contains=iso c90 forbids",
@@ -44,7 +45,7 @@
       "fingerprints": {
         "family": "603e45e45f0e625f957b424af0f77b2d404f77cc5b7e4397287f07b414a1872d",
         "raw": "560a4a2af0d60b33b94b8d152ce62e3fcc2cd9aea3ff8e25fb3ca03230cf51f3",
-        "structural": "8d0c12c431eaed54e7817962bc655c46a2ff91d167d61a8cbfd4d90b26188321"
+        "structural": "30775b348acdaadc08f633cc5fe5ad3cba01b3a868e626187e622171c0150fa6"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -90,6 +91,7 @@
         "confidence": 0.8999999761581421,
         "family": "uninitialized",
         "first_action_hint": "initialize the variable at its declaration or before first use",
+        "group_ref": "group-26423017510a",
         "headline": "variable used without initialization",
         "matched_conditions": [
           "message_contains=is used uninitialized",
@@ -100,7 +102,7 @@
       "fingerprints": {
         "family": "682bcf867e0bb823408ed54616faf852bdc674fd7da40314f9a2d7a778b3a672",
         "raw": "6a508fdc87c488d72b4c3a45f81fa6c8d90e2ca50c6d09c7f483671cdd498661",
-        "structural": "ae8263dc6e69de88af95df5407c4c8cf3aa67ab5985cfa098de3ff73e0301ed5"
+        "structural": "d3d2e08c80a351a953b76ea21839acf5a73163f09956867b492b458ce9159b14"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -142,12 +144,81 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-25ac98324367",
+          "family": "pedantic_compliance",
+          "lead_group_ref": "group-f45c2089a6a6",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-f45c2089a6a6"
+          ]
+        },
+        {
+          "confidence": 0.7100000381469727,
+          "episode_ref": "episode-c8d317ed2ec5",
+          "family": "uninitialized",
+          "lead_group_ref": "group-26423017510a",
+          "lead_root_score": 0.7100000381469727,
+          "member_group_refs": [
+            "group-26423017510a"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-25ac98324367",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f45c2089a6a6",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-c8d317ed2ec5",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-26423017510a",
+        "independence_score": 0.7100000381469727,
+        "role": "independent_root",
+        "root_score": 0.7100000381469727,
+        "summary_likelihood": 0.3889999985694885,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 2,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "c355a0ee72879eb8346c985b0314a525b2afd2e62c53c17b9f4007e79ed2faba",
-    "raw": "2a1b9376110c178984363ba7263e0147cdefabdfd21c0227881ca6adbadf9a32",
-    "structural": "09305d6d7939de798aa1dc35c583a0fe0d5ef291251166b1877839a82b45fd14"
+    "raw": "84a1c8e98186d87a1668e25c1ae536c0b7dc79f4bdd4f8d2e47036016563c94d",
+    "structural": "cb96b3d03ce1d9b3748d08dc96f0d9e433cb423937767f905b689ea0e85c48a5"
   },
   "producer": {
     "name": "gcc-formed",

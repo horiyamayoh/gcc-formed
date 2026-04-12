@@ -20,7 +20,7 @@
       ],
       "family": "sanitizer_buffer",
       "first_action": "check buffer sizes and ensure source and destination do not overlap",
-      "group_id": "sarif-0-0",
+      "group_id": "group-2dfd3eb0126f",
       "matched_conditions": [
         "message_contains=bytes into a region of size",
         "phase=semantic"
@@ -51,7 +51,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "sarif-0-1",
+      "group_id": "group-b9d5d7b03a58",
       "matched_conditions": [
         "no_family_rule_matched"
       ],

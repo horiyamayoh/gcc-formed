@@ -1,3 +1,4 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 src/main.cpp:6:5: error: type or overload mismatch
 help: compare the expected type and actual argument at the call site
 why: no matching function for call to 'takes_ref(const char*&)'
@@ -7,8 +8,9 @@ why: no matching function for call to 'takes_ref(const char*&)'
 because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6
 because: conversion of argument 1 would be ill-formed:
 omitted 5 other overload notes
-other errors:
-  - src/main.cpp:6:15: error: type or overload mismatch
-  - src/main.cpp:6:15: error: type or overload mismatch
-  - src/main.cpp:6:14: error: type or overload mismatch
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+src/main.cpp:6:15: error: type or overload mismatch
+help: compare the expected type and actual argument at the call site
+why: src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+| src/main.cpp:6:15
+|     takes_ref(value);
+note: omitted additional details; rerun with --formed-profile=verbose

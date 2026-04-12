@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "macro_include",
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "group_ref": "group-07e16785ea3f",
         "headline": "error surfaced through macro/include context",
         "matched_conditions": [
           "context=macro_expansion",
@@ -47,6 +48,11 @@
               "label": "In file included from src/wrapper.h:1,",
               "line": 1,
               "path": "src/wrapper.h"
+            },
+            {
+              "label": "from src/main.c:1:",
+              "line": 1,
+              "path": "src/main.c"
             }
           ],
           "kind": "include"
@@ -72,7 +78,7 @@
       "fingerprints": {
         "family": "fd7ef7326df8ac818fc71397a829fcd8c3162983dcf4e173270534ba6ae81b70",
         "raw": "7837484658def323d49ec677857a7e0720c09ada0397b0ff9203885bd6abf0a6",
-        "structural": "d354443d8eb1a6ebd04849ebf1a5014e95544df4988890809ee1b146fb70cecc"
+        "structural": "22bbc8bd51ca698528594547aa08f365532068fe65ae46243332ab295a1b52d1"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -114,12 +120,56 @@
       "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.9599999785423279,
+          "episode_ref": "episode-fc1a432ec909",
+          "family": "macro_include",
+          "lead_group_ref": "group-07e16785ea3f",
+          "lead_root_score": 0.9599999785423279,
+          "member_group_refs": [
+            "group-07e16785ea3f"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-fc1a432ec909",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-07e16785ea3f",
+        "independence_score": 0.9599999785423279,
+        "role": "independent_root",
+        "root_score": 0.9599999785423279,
+        "summary_likelihood": 0.36400002241134644,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "1b6a4cc0d3a51261d5c18fb2d43535162a765e98be426d350dbfdc909f93c59a",
-    "structural": "7598ee88541d1a61a9331c3f73b64afef1628bb571b2bd1a058ff16e53dfdbfc"
+    "raw": "5da49051baff20509506a4751ea0da28f6fc688d5578401765378b657f08b71c",
+    "structural": "6eb51a32a531a1d9f33bb92d97a6151a555d96567fca6cacf5ec11ef0188a0a9"
   },
   "producer": {
     "name": "gcc-formed",

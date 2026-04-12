@@ -72,59 +72,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "fingerprints": {
-        "family": "c04691055bec606d7251939b14b09c0f2f6fc54e667b47437ecf7a1841dd02d6",
-        "raw": "7df40093e7f52dcdad8274348887c5fa4d5dd676157163e5d9ab97ce32fa0da9",
-        "structural": "d19a460bcb5d5d5b99f61ca3d943c5211ac01f5f03aaa258f3b90894ed21f1e8"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 17,
-            "column_native": 17,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 7
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:7:17:7:17",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:7:17: error: incompatible types when initializing type 'int' using type 'struct Box'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "4d3b024ac5169c8aed645083b4fecdb197f69d3a32ca0e039b007b2c48924bb8",
-    "structural": "8365bf90b31e8b30ec4ddfccc92d70edf357f582d46b884088ba5da409494ca4"
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "5daf83bffeb7c13030fa349f63a78d3bd0af8171e80cdd2c9d942c797b30b5ee",
+    "structural": "9f981501f5ddad469f34f637e2170773e79c2506f0f14e83fd06c38db49397dd"
   },
   "producer": {
     "name": "gcc-formed",

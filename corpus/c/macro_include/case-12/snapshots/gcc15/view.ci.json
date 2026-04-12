@@ -8,10 +8,11 @@
       "confidence_notice": null,
       "context_lines": [
         "through macro expansion:",
-        "  - src/config.h:2:29 in expansion of macro 'INNER_ACCESS'",
         "  - src/main.c:9:12 in expansion of macro 'OUTER_ACCESS'",
+        "  - src/config.h:2:29 in expansion of macro 'INNER_ACCESS'",
         "from include chain:",
-        "  - In file included from src/wrapper.h:1"
+        "  - In file included from src/wrapper.h:1",
+        "  - src/main.c:1 from src/main.c:1:"
       ],
       "excerpts": [
         {
@@ -26,7 +27,7 @@
       ],
       "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "sarif-0-0",
+      "group_id": "group-07e16785ea3f",
       "matched_conditions": [
         "context=macro_expansion",
         "context=include"

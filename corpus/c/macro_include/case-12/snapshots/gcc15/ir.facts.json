@@ -36,6 +36,11 @@
               "label": "In file included from src/wrapper.h:1,",
               "line": 1,
               "path": "src/wrapper.h"
+            },
+            {
+              "label": "from src/main.c:1:",
+              "line": 1,
+              "path": "src/main.c"
             }
           ],
           "kind": "include"
@@ -61,7 +66,7 @@
       "fingerprints": {
         "family": "91b254a09582495e7da9fa0e493667b6de8fb3f0b779e0a61e1a4485c3024fc0",
         "raw": "7837484658def323d49ec677857a7e0720c09ada0397b0ff9203885bd6abf0a6",
-        "structural": "84fcdbf7ee9ac8fedb22921fcdbaec0f80823e02e1a52d1272d475849b29fb30"
+        "structural": "4bec615cc537965fb34b10f4f5b8e9dcd7db89537554ff4dd14576f8336471ab"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -107,8 +112,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "28da46cdba943b07caa01d19274625901b262ea61aca1fa41105ca09d6453303",
-    "structural": "64e03781dc9bf064edb26efd5d199beb9e320243ee6805135cb3afbead4823f3"
+    "raw": "0026170357194f88524b6817773b53d99705314cbf9deec782d79ed78f352e74",
+    "structural": "328bcfd005e64eb48b5e251e961eb11b1ec03014772d51ada74f4b177d283659"
   },
   "producer": {
     "name": "gcc-formed",

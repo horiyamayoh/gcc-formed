@@ -207,104 +207,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "fingerprints": {
-        "family": "93679532cbba6f2112a10360168e9e7cf7f1139d91e1b0d265a9b9dea3720afc",
-        "raw": "1487626dd64b8582935b7348bfca1e51df3a6ac1437d334899bf3aa6a7716e42",
-        "structural": "01aca5306643421d25c2c245245d1e8b3c1d0198373ce19727777015f218eaa4"
-      },
-      "id": "residual-compiler-1",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 1,
-            "column_native": 1,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 4
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:4:1:4:1",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:4:1: error: expected ',' or ';' at end of input"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "parse",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "fingerprints": {
-        "family": "3782b9693432264a3b848fbd637f5eb7579569f3b2bd149d8cc797bf67eb7fe0",
-        "raw": "e5e1abe8aa8f332da7290025e8feb1ab47604b7461ac490937943c8c0154a629",
-        "structural": "554a91983cd8518537aa14a4804f85d881441eaaf67d57ada23e99fc0223f247"
-      },
-      "id": "residual-compiler-2",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 1,
-            "column_native": 1,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 4
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:4:1:4:1",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:4:1: error: expected declaration or statement at end of input"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "parse",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "02ba024715853df7417bbd7e6935f834038a6d1e2c1385c9e24378903ccf2c9d",
-    "raw": "14d34e0c6931b4ba9dc5aa01bd16fc5e62359cdf5fec06235595bbca054fe5d9",
-    "structural": "94d01db4a1c860fa9acb963eb76a2aea80d8a5449c7abadc4a37f267eddea936"
+    "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
+    "raw": "446c61d2c2d0fe7449c38d0d438eafff19800dbf2b403f954e08f11d72d753dc",
+    "structural": "25d6f79cf196874dd9c71dd1d3cfb7506c5b35e9ad200ebd6254b246823df61b"
   },
   "producer": {
     "name": "gcc-formed",

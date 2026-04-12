@@ -5,6 +5,10 @@ why: ISO C90 forbids variable length array 'values'
 | src/main.c:3:5
 |     int values[size];
 |     ^
-other warnings:
-  - src/main.c:4:12: warning: variable used without initialization
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+warning: variable used without initialization
+--> src/main.c:4:12
+help: initialize the variable at its declaration or before first use
+why: '*values[0]' is used uninitialized
+| src/main.c:4:12
+|     return values[0];
+note: omitted additional details; rerun with --formed-profile=verbose

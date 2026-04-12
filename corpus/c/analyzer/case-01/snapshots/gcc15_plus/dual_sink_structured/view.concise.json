@@ -24,7 +24,7 @@
       ],
       "family": "analyzer",
       "first_action": "follow the analyzer event path and fix the first invalid state transition",
-      "group_id": "sarif-0-1",
+      "group_id": "group-45db1889640a",
       "matched_conditions": [
         "message_contains=double-'free'",
         "phase=analyze"
@@ -34,23 +34,52 @@
       "severity": "warning",
       "suppression_reason": null,
       "title": "static analysis found a potential defect"
+    },
+    {
+      "canonical_location": "src/main.c:6:5",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    free(ptr);"
+          ],
+          "location": "src/main.c:6:5"
+        }
+      ],
+      "family": "analyzer",
+      "first_action": "follow the analyzer event path and fix the first invalid state transition",
+      "group_id": "group-89b7e9e8cfaf",
+      "matched_conditions": [
+        "message_contains=double-'free'",
+        "message_contains=-wanalyzer-",
+        "phase=analyze"
+      ],
+      "raw_message": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]",
+      "raw_sub_block": [
+        "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]"
+      ],
+      "rule_id": "rule.family.analyzer.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "static analysis found a potential defect"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
-    "partial_notice": false,
+    "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   },
   "summary_only_groups": [
     {
       "canonical_location": "src/main.c:6:5",
-      "group_id": "residual-compiler-1",
-      "severity": "warning",
-      "title": "static analysis found a potential defect"
-    },
-    {
-      "canonical_location": "src/main.c:6:5",
-      "group_id": "sarif-0-0",
+      "group_id": "group-eae4c78bfc51",
       "severity": "warning",
       "title": "pointer 'ptr' used after 'free'"
     }

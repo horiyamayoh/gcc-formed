@@ -1,3 +1,4 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 error: type or overload mismatch
 --> src/main.cpp:6:5
 help: compare the expected type and actual argument at the call site
@@ -9,8 +10,17 @@ because: candidate 1: 'void takes_ref(int&)' (near match) at src/main.cpp:1:6
 because: conversion of argument 1 would be ill-formed:
 because: invalid conversion from 'const char*' to 'int'
 omitted 4 other overload notes
+error: type or overload mismatch
+--> src/main.cpp:6:15
+help: compare the expected type and actual argument at the call site
+why: src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+| src/main.cpp:6:15
+|     takes_ref(value);
+|               ^
+raw:
+  src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
 other errors:
   - src/main.cpp:6:15: error: type or overload mismatch
-  - src/main.cpp:6:15: error: type or overload mismatch
-  - src/main.cpp:6:14: error: type or overload mismatch
+  - src/main.cpp:6:15: error: invalid pointer or reference operation
+  - src/main.cpp:6:15: error: invalid pointer or reference operation
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

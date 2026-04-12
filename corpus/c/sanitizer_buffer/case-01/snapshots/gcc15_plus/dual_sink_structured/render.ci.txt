@@ -4,6 +4,10 @@ why: '%s' directive writing 6 bytes into a region of size 4
 | src/main.c:5:22
 |     sprintf(buffer, "%s", "abcdef");
 |                      ^
-other diagnostics:
-  - src/main.c:5:5: note: 'sprintf' output 7 bytes into a destination of size 4
+src/main.c:5:5: note: 'sprintf' output 7 bytes into a destination of size 4
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+why: 'sprintf' output 7 bytes into a destination of size 4
+| src/main.c:5:5
+|     sprintf(buffer, "%s", "abcdef");
+|     ^
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

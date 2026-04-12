@@ -10,7 +10,8 @@
         "through macro expansion:",
         "  - src/main.c:9:12 in expansion of macro 'READ_MISSING'",
         "from include chain:",
-        "  - In file included from src/wrapper.h:1"
+        "  - In file included from src/wrapper.h:1",
+        "  - src/main.c:1 from src/main.c:1:"
       ],
       "excerpts": [
         {
@@ -25,7 +26,7 @@
       ],
       "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "sarif-0-0",
+      "group_id": "group-6284fdd54911",
       "matched_conditions": [
         "context=macro_expansion",
         "context=include"

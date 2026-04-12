@@ -20,7 +20,7 @@
       ],
       "family": "syntax",
       "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "json-0",
+      "group_id": "group-114ea2e0d577",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -49,13 +49,5 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.c:2:13",
-      "group_id": "residual-compiler-0",
-      "severity": "error",
-      "title": "syntax error"
-    }
-  ]
+  }
 }

@@ -25,13 +25,47 @@
       ],
       "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "sarif-0-0",
+      "group_id": "group-910491983009",
       "matched_conditions": [
         "child_role=candidate",
-        "phase=semantic",
-        "message_contains=no matching"
+        "message_contains=no matching",
+        "phase=semantic"
       ],
       "raw_message": "no matching function for call to 'takes_ref(const char*&)'",
+      "rule_id": "rule.family.type_overload.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:6:15",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "    takes_ref(value);"
+          ],
+          "location": "src/main.cpp:6:15"
+        }
+      ],
+      "family": "type_overload",
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "group-987c1b15f911",
+      "matched_conditions": [
+        "message_contains=invalid conversion",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]",
+      "raw_sub_block": [
+        "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+      ],
       "rule_id": "rule.family.type_overload.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
@@ -40,27 +74,27 @@
   ],
   "summary": {
     "failure_kind": "compile_failure",
-    "partial_notice": false,
+    "partial_notice": true,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
   },
   "summary_only_groups": [
     {
       "canonical_location": "src/main.cpp:6:15",
-      "group_id": "residual-compiler-2",
+      "group_id": "group-1fcef13373e2",
       "severity": "error",
       "title": "type or overload mismatch"
     },
     {
       "canonical_location": "src/main.cpp:6:15",
-      "group_id": "residual-compiler-1",
+      "group_id": "group-ce50ecc7e81d",
       "severity": "error",
-      "title": "type or overload mismatch"
+      "title": "invalid pointer or reference operation"
     },
     {
-      "canonical_location": "src/main.cpp:6:14",
-      "group_id": "residual-compiler-0",
+      "canonical_location": "src/main.cpp:6:15",
+      "group_id": "group-2c241b94af21",
       "severity": "error",
-      "title": "type or overload mismatch"
+      "title": "invalid pointer or reference operation"
     }
   ]
 }

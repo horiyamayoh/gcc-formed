@@ -33,11 +33,12 @@
         "confidence": 0.8999999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-910491983009",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "child_role=candidate",
-          "phase=semantic",
-          "message_contains=no matching"
+          "message_contains=no matching",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
@@ -49,15 +50,15 @@
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
-              "phase=semantic",
-              "message_contains=candidate"
+              "message_contains=candidate",
+              "phase=semantic"
             ],
             "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "a6a8093e9730dfd23fd0aaf076302b34b9c238f541650cca15709441c46f64fc",
             "raw": "846c6239c3f4f1a0875c6216a86209cca13169760312c3362da67c37bd34c45b",
-            "structural": "4c2ecb96ed87f06fbe02e230057e5c43443e763daa92dc4f277de613f5dbc5b2"
+            "structural": "08b0a77dc5a62623af49c31b07cc399c9ea8ca9b0161e4d6c5b979c38bd82612"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
@@ -161,15 +162,15 @@
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
-              "phase=semantic",
-              "message_contains=invalid conversion"
+              "message_contains=invalid conversion",
+              "phase=semantic"
             ],
             "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
             "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-            "structural": "2eae95970883ca256111873a26809cd880baa5f3a597f50fbe9f54e6e1d9de8d"
+            "structural": "e900b334817e065b852a41f2a1c70eef50a047c638195d86925481ecb78998ca"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -212,20 +213,20 @@
         },
         {
           "analysis": {
-            "confidence": 0.3499999940395355,
-            "family": "unknown",
-            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "cannot bind rvalue '(int)value' to 'int&'",
+            "confidence": 0.8999999761581421,
+            "family": "pointer_reference",
+            "first_action_hint": "provide the full type definition via #include or fix the value category",
+            "headline": "invalid pointer or reference operation",
             "matched_conditions": [
-              "no_family_rule_matched"
+              "message_contains=cannot bind",
+              "phase=semantic"
             ],
-            "rule_id": "rule.family.unknown",
-            "suppression_reason": "generic_fallback"
+            "rule_id": "rule.family.pointer_reference.message_terms"
           },
           "fingerprints": {
-            "family": "4a48fd23e0b2907f206f81a49108ab0a3e3da35aefb692a92dc62a341a5b8f59",
+            "family": "e9a557e1f5ecab73e340c6acfa16d7c5cfefa11ac8094f3429da01d2719ac85d",
             "raw": "3f46fa02fdb4d3ce87692d3acfdb008113021e426612ec939df434e40c445fce",
-            "structural": "ccc1c4d57b141d4bdbb25dbc997ec83188eede97a6a170de091ee0d19e8a9df1"
+            "structural": "2eb747dba2ad4a8db92f61148782d4a83038b45915bf344446b4cda28a2722c7"
           },
           "id": "sarif-0-0-related-4",
           "locations": [
@@ -273,15 +274,15 @@
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
-              "phase=semantic",
-              "message_contains=candidate"
+              "message_contains=candidate",
+              "phase=semantic"
             ],
             "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "cfdaf730b0afd1f2553293ce3a5ddc1e133638848606ca98be5a014c1011beba",
             "raw": "aeead032b9e45607e06e6557537835b0dcc43c6ce40c0247b9182b3f58c13241",
-            "structural": "bda30179b59aed436904acdb13e41e8685a85526bc367083267a918075de48cc"
+            "structural": "f7eba941b95df41bd56258e5e359de825dc767c0d4000083f8ac2e3dc426f532"
           },
           "id": "sarif-0-0-related-5",
           "locations": [
@@ -385,15 +386,15 @@
             "first_action_hint": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
             "matched_conditions": [
-              "phase=semantic",
-              "message_contains=invalid conversion"
+              "message_contains=invalid conversion",
+              "phase=semantic"
             ],
             "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
             "family": "fff3321b2d8c701ef142339d8eee359a99c34c2d5d9cc972c3479be43164a734",
             "raw": "dda2415f5a8b50911539da02f5603cf1616293ae5ede2648549b9b205b5f3806",
-            "structural": "db1c2874e50ce3123e7c3bf986bf0796000fc67c398c606c501eb97dc8db7569"
+            "structural": "dd7354ff5211386d0bc46dca0e89255a466651f7fbd3d9961a43e02d4e1e10c6"
           },
           "id": "sarif-0-0-related-7",
           "locations": [
@@ -436,20 +437,20 @@
         },
         {
           "analysis": {
-            "confidence": 0.3499999940395355,
-            "family": "unknown",
-            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "cannot bind rvalue '(long int)value' to 'long int&'",
+            "confidence": 0.8999999761581421,
+            "family": "pointer_reference",
+            "first_action_hint": "provide the full type definition via #include or fix the value category",
+            "headline": "invalid pointer or reference operation",
             "matched_conditions": [
-              "no_family_rule_matched"
+              "message_contains=cannot bind",
+              "phase=semantic"
             ],
-            "rule_id": "rule.family.unknown",
-            "suppression_reason": "generic_fallback"
+            "rule_id": "rule.family.pointer_reference.message_terms"
           },
           "fingerprints": {
-            "family": "ff8f2511a3e3ce7d22a38bee35824b2b00412d4d74c8b93c9c586b24d0a751dc",
+            "family": "819f13b4e0bc77763520bcde7e5a78d3b2ce2d1d5be027cecd53f882ab45b8c3",
             "raw": "99acf3dd425e542772622c50bce1c4855b5ebb8ee701ebf8a66b0adc61b0eea0",
-            "structural": "9e0a1aea4414dd1557bb00570c7791eeb5561452f00e21ddfb7578999d219727"
+            "structural": "bb7fb72f738c71d37a153a27ff64f2f498f97ebfa370b0775224cb40d428f566"
           },
           "id": "sarif-0-0-related-8",
           "locations": [
@@ -494,7 +495,7 @@
       "fingerprints": {
         "family": "c27aaced0b9e5541c8fa546e86f31f2cee31851c688875a65347f78d48358fb8",
         "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
-        "structural": "89c7b79ce19775f27ce59a0a9c19a38ed9cb509bc4e48a745449f8e8b86cd1ab"
+        "structural": "4cb094aa751264a65c1f35ca2a4df850546d6e22f8fb705422733a15d3f94782"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -540,73 +541,18 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-987c1b15f911",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=no matching"
-        ],
-        "rule_id": "rule.family.type_overload.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "2d271c858c34e36ca45cb7d8fcd218c2e45d04730302aef438ff564782964698",
-        "raw": "402722442b0dd044417e4507a40d8bd24c97664451a5fc77dba4663694d8caff",
-        "structural": "bf1089084be5042e3655e10c4e3710c4d2dcd399f2e6894938f7770eccfede38"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 14,
-            "column_native": 14,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 6
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.cpp",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.cpp:6:14:6:14",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "type_overload",
-        "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch",
-        "matched_conditions": [
-          "phase=semantic",
-          "message_contains=invalid conversion"
+          "message_contains=invalid conversion",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "0d8d9e840cc87770efd6493aa5cdd063c46102397053b101611e8de49ea00c82",
         "raw": "5729a83676b3483e4108df8f836e1005c8c0168edce91814a4ace2650b7bf394",
-        "structural": "3ab31ac6a44e529bbcc405332da394b7c7d58097ad8a7fd78f9b99e780f23768"
+        "structural": "88f1de13ccb7cabe6250a03be2c2b651ed54672829e54787402b9482d7b772b0"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -649,22 +595,138 @@
     },
     {
       "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "pointer_reference",
+        "first_action_hint": "provide the full type definition via #include or fix the value category",
+        "group_ref": "group-ce50ecc7e81d",
+        "headline": "invalid pointer or reference operation",
+        "matched_conditions": [
+          "message_contains=cannot bind",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.pointer_reference.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "matched_conditions": [
+              "message_contains=candidate",
+              "phase=semantic"
+            ],
+            "rule_id": "rule.family.type_overload.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "33a016f222d39239d4b94e55166186b3771fe2a256bff268de94bc749556c489",
+            "raw": "b3c867cfb4fc93b9f276bc7624ca910e33a5a8d75048917ee35eff32001a29e9",
+            "structural": "9431a1ce61ddcb2438ab03e2206bf1dbb115cc05ef74a767c51a3b6bf2c1ad2e"
+          },
+          "id": "residual-compiler-2-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "b02b8edfdbd1d539766b365f0bfb494d4962bee0e91b7e15dbe764913295a6c7",
+        "raw": "9ca9277e96c5d25161cd9dab4ab560bc894e13cbd4ee8654503c93ace77f2301",
+        "structural": "b05e8cd33830ab1b1fe8fdc74c85085c5883b4208abfe0322797d6ef77da1fdb"
+      },
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "analysis": {
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
+        "group_ref": "group-1fcef13373e2",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=invalid conversion"
+          "message_contains=invalid conversion",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "87f808c441091be03fa6a4856205558074c2982d1909158eb790088cda7ee8f8",
         "raw": "a02ec7e2a9ebda436b0f6b226f990ea507d685213c60f5ae2cc927279ff10b6a",
-        "structural": "7a37604928fc92860d711868f0e9971f4c6e71bd51b48248b9b4df9efc80f7bb"
+        "structural": "c81829d0b2981e50a52003e2abbc49099e21a45f4e200ac85e24df98c72a2860"
       },
-      "id": "residual-compiler-2",
+      "id": "residual-compiler-3",
       "locations": [
         {
           "anchor": {
@@ -702,14 +764,216 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "pointer_reference",
+        "first_action_hint": "provide the full type definition via #include or fix the value category",
+        "group_ref": "group-2c241b94af21",
+        "headline": "invalid pointer or reference operation",
+        "matched_conditions": [
+          "message_contains=cannot bind",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.pointer_reference.message_terms"
+      },
+      "fingerprints": {
+        "family": "c52b6e8043f3ef6f32816ca64484c87aac312c157107c08b68e44e57a8ad45f1",
+        "raw": "d5429e48a3afd96224675646c0a32ff6e63017300c943b9503afa27168039adb",
+        "structural": "af79ccae9c8c4745389b025f03296f1c4dd5d59764ebbdad895fbee1ff142bf0"
+      },
+      "id": "residual-compiler-4",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-c463e6d6dbbb",
+          "family": "type_overload",
+          "lead_group_ref": "group-910491983009",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-910491983009"
+          ]
+        },
+        {
+          "confidence": 0.8700000047683716,
+          "episode_ref": "episode-60b26c4dd110",
+          "family": "type_overload",
+          "lead_group_ref": "group-987c1b15f911",
+          "lead_root_score": 0.8700000047683716,
+          "member_group_refs": [
+            "group-987c1b15f911"
+          ]
+        },
+        {
+          "confidence": 0.6800000071525574,
+          "episode_ref": "episode-f30e8088ef27",
+          "family": "pointer_reference",
+          "lead_group_ref": "group-ce50ecc7e81d",
+          "lead_root_score": 0.6800000071525574,
+          "member_group_refs": [
+            "group-ce50ecc7e81d"
+          ]
+        },
+        {
+          "confidence": 0.8199999928474426,
+          "episode_ref": "episode-0a7c79b35961",
+          "family": "type_overload",
+          "lead_group_ref": "group-1fcef13373e2",
+          "lead_root_score": 0.8199999928474426,
+          "member_group_refs": [
+            "group-1fcef13373e2"
+          ]
+        },
+        {
+          "confidence": 0.6600000262260437,
+          "episode_ref": "episode-3b22c5c66140",
+          "family": "pointer_reference",
+          "lead_group_ref": "group-2c241b94af21",
+          "lead_root_score": 0.6600000262260437,
+          "member_group_refs": [
+            "group-2c241b94af21"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-c463e6d6dbbb",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-910491983009",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-60b26c4dd110",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-987c1b15f911",
+        "independence_score": 0.8700000047683716,
+        "role": "independent_root",
+        "root_score": 0.8700000047683716,
+        "summary_likelihood": 0.37300002574920654,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-f30e8088ef27",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-ce50ecc7e81d",
+        "independence_score": 0.6800000071525574,
+        "role": "independent_root",
+        "root_score": 0.6800000071525574,
+        "summary_likelihood": 0.3920000195503235,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-0a7c79b35961",
+        "evidence_tags": [
+          "actionability_short",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-1fcef13373e2",
+        "independence_score": 0.8199999928474426,
+        "role": "independent_root",
+        "root_score": 0.8199999928474426,
+        "summary_likelihood": 0.37800002098083496,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-3b22c5c66140",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-2c241b94af21",
+        "independence_score": 0.6600000262260437,
+        "role": "independent_root",
+        "root_score": 0.6600000262260437,
+        "summary_likelihood": 0.39400002360343933,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 5,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "8e3ed805ae5479952d4811604b4a157f717ea3046bb2be966b34cf5e5ccdac88",
-    "raw": "353adc66e99fba85768ec42d3b75e9ee569156090092f37c26b4cb9d0577ff62",
-    "structural": "b1afd9432cb3b934b53d86747da59c3f95c4413dba622393693841f01024e613"
+    "family": "5b7deb6bc05f63e07f7da55cf267ad7281b8106da695cf603d6f3f8ad3f29855",
+    "raw": "d217e68a17bff7cf05b91331e69b765defe63236f5497a95de43649cf80b5c39",
+    "structural": "563e212e63dd7cafce75b8992e133aa84e75c1e69ce72e53681e545e2c7b1701"
   },
   "producer": {
     "name": "gcc-formed",

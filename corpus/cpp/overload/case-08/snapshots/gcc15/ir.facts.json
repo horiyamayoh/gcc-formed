@@ -437,51 +437,6 @@
     },
     {
       "fingerprints": {
-        "family": "ca61048a1ef3913c6619abb2cd3fda72ee4c6a8e5af352a96b1babecb81d7a1b",
-        "raw": "402722442b0dd044417e4507a40d8bd24c97664451a5fc77dba4663694d8caff",
-        "structural": "4b06cfde5ca1802313cdb735c7b47804d32f0119fe9d68453deeec82eacc5e53"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 14,
-            "column_native": 14,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 6
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.cpp",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.cpp:6:14:6:14",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.cpp:6:14: error: no matching function for call to 'takes_ref(const char*&)'"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "fingerprints": {
         "family": "7a64b86e8d2eb2f41bfadaa185a7bc37f0534fbef2a1c3c95d9874096a13d3de",
         "raw": "5729a83676b3483e4108df8f836e1005c8c0168edce91814a4ace2650b7bf394",
         "structural": "d781e41ec110ff801ce0e3868b0a2622333334df7d0d9f5c5c5fe1d8f45d110d"
@@ -526,12 +481,104 @@
       "severity": "error"
     },
     {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "306a7005dbd8bbb184d49cffc7973de096f885a11a653c0a1dad4988fe26494f",
+            "raw": "b3c867cfb4fc93b9f276bc7624ca910e33a5a8d75048917ee35eff32001a29e9",
+            "structural": "fd71725c951ad956da242c5e0221a47eae97b3c034b3cdcb7fda9670b0314a03"
+          },
+          "id": "residual-compiler-2-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "bb225fc2c50609a44acd5272cd253284ae7b5ea5d5a20c13244206f09a5f3942",
+        "raw": "9ca9277e96c5d25161cd9dab4ab560bc894e13cbd4ee8654503c93ace77f2301",
+        "structural": "88ef3cfa8eadca059231a726f12a55f374c375a7708b08653114bbdca7a766e6"
+      },
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: cannot bind rvalue '(int)value' to 'int&'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
       "fingerprints": {
         "family": "feb91457a95577746b8ead65ffcca62b52ba53889801394eaa2273a93ee75f69",
         "raw": "a02ec7e2a9ebda436b0f6b226f990ea507d685213c60f5ae2cc927279ff10b6a",
-        "structural": "8c8ab658bfa7d31b9b47e630973014981177f35963d25579ec11a4bb1b89fadb"
+        "structural": "f44d3c8e16f8691274a7022ae2895c6ec04cdcbbeada24152b00dd843c8c5fed"
       },
-      "id": "residual-compiler-2",
+      "id": "residual-compiler-3",
       "locations": [
         {
           "anchor": {
@@ -569,14 +616,59 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "ec37502409f92d29c3998f5bea8956fa3c26f8a177c8bb74b9b31ecc942370e0",
+        "raw": "d5429e48a3afd96224675646c0a32ff6e63017300c943b9503afa27168039adb",
+        "structural": "e4ba0cff08387de5eb90d7443ba0db7b3c216be00feac9b2bd235747f99f9c3c"
+      },
+      "id": "residual-compiler-4",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 15,
+            "column_native": 15,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:15:6:15",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:6:15: error: cannot bind rvalue '(long int)value' to 'long int&'"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
-    "raw": "b16b1005a3bf3b23ac02f288d15cdd57e7f743de2c9f05a7306c458d6c9e87d9",
-    "structural": "6e6a273cecfcd783a4f90cc5a6f9f4c334d2c8e761ab1a00c1b6ff1886327638"
+    "family": "65b39b3d297db1590e13ee958ca081e7bcacc9fdc13be6423c1035e1fc0f977f",
+    "raw": "263d4070297e5f250ec9ae7af2f99a9ee06ed9673d7dddf1ffd628599b96536b",
+    "structural": "3bbd565c1f75e26249925021193ff2c386ab29f1fe373701632eb3899b41d8ce"
   },
   "producer": {
     "name": "gcc-formed",

@@ -20,10 +20,10 @@
       ],
       "family": "type_overload",
       "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "sarif-0-0",
+      "group_id": "group-f9da1f8faee1",
       "matched_conditions": [
-        "phase=semantic",
-        "message_contains=incompatible type"
+        "message_contains=incompatible type",
+        "phase=semantic"
       ],
       "raw_message": "incompatible types when initializing type 'int' using type 'struct Box'",
       "rule_id": "rule.family.type_overload.structured_or_message",
@@ -36,13 +36,5 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.c:7:17",
-      "group_id": "residual-compiler-0",
-      "severity": "error",
-      "title": "type or overload mismatch"
-    }
-  ]
+  }
 }

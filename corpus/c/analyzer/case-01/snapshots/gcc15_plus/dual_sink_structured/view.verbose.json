@@ -24,7 +24,7 @@
       ],
       "family": "analyzer",
       "first_action": "follow the analyzer event path and fix the first invalid state transition",
-      "group_id": "sarif-0-1",
+      "group_id": "group-45db1889640a",
       "matched_conditions": [
         "message_contains=double-'free'",
         "phase=analyze"
@@ -55,7 +55,7 @@
       ],
       "family": "analyzer",
       "first_action": "follow the analyzer event path and fix the first invalid state transition",
-      "group_id": "residual-compiler-1",
+      "group_id": "group-89b7e9e8cfaf",
       "matched_conditions": [
         "message_contains=double-'free'",
         "message_contains=-wanalyzer-",
@@ -92,7 +92,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "sarif-0-0",
+      "group_id": "group-eae4c78bfc51",
       "matched_conditions": [
         "no_family_rule_matched"
       ],

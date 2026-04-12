@@ -1,3 +1,4 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
 error: exception handling configuration or usage error
 --> src/main.cpp:2:11
 help: enable -fexceptions/-frtti or adjust the exception specification
@@ -5,6 +6,9 @@ why: exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/online
 | src/main.cpp:2:11
 |     throw 1;
 |           ^
-other errors:
-  - src/main.cpp:2:11: error: exception handling configuration or usage error
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+error: exception handling configuration or usage error
+--> src/main.cpp:2:11
+help: enable -fexceptions/-frtti or adjust the exception specification
+why: src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable
+| src/main.cpp:2:11
+note: omitted additional details; rerun with --formed-profile=verbose

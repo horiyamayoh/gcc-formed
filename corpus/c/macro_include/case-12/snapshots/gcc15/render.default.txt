@@ -6,8 +6,9 @@ why: 'Counter' has no member named 'count'
 |     return OUTER_ACCESS(counter);
 |            ^
 through macro expansion:
-  - src/config.h:2:29 in expansion of macro 'INNER_ACCESS'
   - src/main.c:9:12 in expansion of macro 'OUTER_ACCESS'
+  - src/config.h:2:29 in expansion of macro 'INNER_ACCESS'
 from include chain:
   - In file included from src/wrapper.h:1
+  - src/main.c:1 from src/main.c:1:
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
+        "group_ref": "group-114ea2e0d577",
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
@@ -44,7 +45,7 @@
       "fingerprints": {
         "family": "c3cc41a9f04fc34c799ce7c0e6d9b501bff74f9f458cff5238f57fca8d85fa8d",
         "raw": "f7f61f654ae8f7b1d31ee984f605a7f126997670adcb3c2ed9bb2ab78e62455d",
-        "structural": "d69915f2f80f4910d2b875754c95df47499c6d77770bf28e35bf1078b4831f83"
+        "structural": "efc32db002a386fd3d40413f580432e9e9db2e7c3ba371457e410af3babbbe6c"
       },
       "id": "json-0",
       "locations": [
@@ -100,71 +101,57 @@
           "label": "insert ';'"
         }
       ]
-    },
-    {
-      "analysis": {
-        "confidence": 0.8999999761581421,
-        "family": "syntax",
-        "first_action_hint": "fix the first parser error at the user-owned location",
-        "headline": "syntax error",
-        "matched_conditions": [
-          "message_contains=expected",
-          "message_contains=before",
-          "phase=parse"
-        ],
-        "rule_id": "rule.family.syntax.phase_or_message"
-      },
-      "fingerprints": {
-        "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
-        "raw": "fb04e0a0f06dbe16aa11fa7eb446ba806fefd92aadabe901fa4488d7bbc4c328",
-        "structural": "1146d397fa9c2a78e6a02c96fa739cae3a7d96619f8252922732f1e912818193"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 13,
-            "column_native": 13,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 2
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:2:13:2:13",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:2:13: error: expected ';' before '}' token"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "parse",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.8999999761581421,
+          "episode_ref": "episode-1fbbc6249733",
+          "family": "syntax",
+          "lead_group_ref": "group-114ea2e0d577",
+          "lead_root_score": 0.8999999761581421,
+          "member_group_refs": [
+            "group-114ea2e0d577"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-1fbbc6249733",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "strong_root_family",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-114ea2e0d577",
+        "independence_score": 0.8999999761581421,
+        "role": "independent_root",
+        "root_score": 0.8999999761581421,
+        "summary_likelihood": 0.3700000047683716,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "4ceb0133216b237cbed6e7b17aca5f1a7e65412d7fe2ee9556d3e4c8b111767a",
-    "structural": "89075e4584e0939f72051ec5bb2cb9b80dac0778f98b4f3671935073f75c6a34"
+    "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
+    "raw": "e943327ba794d3af0a05506e3ed8a4b6a9eeebb374346b83e82e7816b200695b",
+    "structural": "db2f13554b3df8bb826d624215143e1504f0b1adcd807ac70c93d5a583218c44"
   },
   "producer": {
     "name": "gcc-formed",

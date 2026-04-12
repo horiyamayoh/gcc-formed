@@ -23,14 +23,14 @@ render:
     omission_notice_required: false
     first_screenful_max_lines: 20
   concise:
-    omission_notice_required: false
+    omission_notice_required: true
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
-    first_screenful_max_lines: 14
-    path_first_required: true
+    first_screenful_max_lines: 16
+    path_first_required: false
     color_meaning_forbidden: true
 integrity:
   allowed_issue_codes: []

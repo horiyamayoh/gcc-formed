@@ -20,7 +20,7 @@
       ],
       "family": "asm_inline",
       "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "sarif-0-1",
+      "group_id": "group-8de1e6e83fb3",
       "matched_conditions": [
         "message_contains=impossible constraint in",
         "phase=codegen"
