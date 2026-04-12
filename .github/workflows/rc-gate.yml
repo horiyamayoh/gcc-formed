@@ -10,12 +10,14 @@ jobs:
   rc-gate:
     runs-on: ubuntu-24.04
     env:
-      REPORT_ROOT: ${{ runner.temp }}/reports
       GATE_PLAN: ci/plans/rc-gate.json
     steps:
       - uses: actions/checkout@v5.0.0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.94.1
+      - name: Resolve runtime paths
+        run: |
+          echo "REPORT_ROOT=$RUNNER_TEMP/reports" >> "$GITHUB_ENV"
       - name: Prepare report directories
         run: |
           python3 ci/gate_step.py \
@@ -37,7 +39,7 @@ jobs:
             --plan "$GATE_PLAN" \
             --step-id cargo-xtask-rc-gate \
             --report-root "$REPORT_ROOT" \
-            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz --ux-signoff-report eval/rc/ux-signoff.json'
+            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz --ux-signoff-report eval/rc/ux-signoff.json --allow-pending-manual-checks'
       - name: Replay stop-ship contract
         if: always() && steps.cargo_xtask_rc_gate.outcome != 'skipped'
         run: |

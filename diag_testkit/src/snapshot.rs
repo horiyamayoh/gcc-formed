@@ -1,5 +1,6 @@
 use diag_core::{ArtifactKind, CaptureArtifact, DiagnosticDocument, RunInfo};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 // Canonical snapshot comparison lives in the test harness so volatile-field
@@ -78,12 +79,19 @@ pub fn compare_snapshot_contents(
 /// Normalizes snapshot `contents` based on the artifact filename in `path`.
 pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     match path.file_name().and_then(|value| value.to_str()) {
+        Some(file_name) if is_view_snapshot_name(file_name) => {
+            normalize_view_snapshot_contents(path, contents)
+        }
         Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),
         Some("ir.facts.json") | Some("ir.analysis.json") => {
             normalize_ir_snapshot_contents(path, contents)
         }
         _ => Ok(normalize_snapshot_text(contents)),
     }
+}
+
+fn is_view_snapshot_name(file_name: &str) -> bool {
+    file_name.starts_with("view.") && file_name.ends_with(".json")
 }
 
 fn normalize_sarif_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
@@ -104,6 +112,76 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
     normalize_diagnostic_document_for_snapshot_compare(&mut document);
     diag_core::canonical_json(&normalized_ir_snapshot_value(&document))
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_view_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
+    let mut value: serde_json::Value = serde_json::from_str(contents)
+        .map_err(|error| format!("failed to parse {} as view JSON: {error}", path.display()))?;
+    let mut refs = SnapshotRefNormalizer::default();
+    normalize_view_snapshot_value(&mut value, &mut refs);
+    diag_core::canonical_json(&value)
+        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+#[derive(Debug, Default)]
+struct SnapshotRefNormalizer {
+    group_refs: BTreeMap<String, String>,
+    next_group_ref: usize,
+    episode_refs: BTreeMap<String, String>,
+    next_episode_ref: usize,
+}
+
+fn normalize_view_snapshot_value(value: &mut serde_json::Value, refs: &mut SnapshotRefNormalizer) {
+    match value {
+        serde_json::Value::Object(object) => {
+            for (key, nested) in object.iter_mut() {
+                match key.as_str() {
+                    "group_id" | "group_ref" | "best_parent_group_ref" => {
+                        normalize_named_ref_value(
+                            nested,
+                            "group",
+                            &mut refs.group_refs,
+                            &mut refs.next_group_ref,
+                        );
+                    }
+                    "episode_ref" => {
+                        normalize_named_ref_value(
+                            nested,
+                            "episode",
+                            &mut refs.episode_refs,
+                            &mut refs.next_episode_ref,
+                        );
+                    }
+                    _ => normalize_view_snapshot_value(nested, refs),
+                }
+            }
+        }
+        serde_json::Value::Array(items) => {
+            for item in items {
+                normalize_view_snapshot_value(item, refs);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn normalize_named_ref_value(
+    value: &mut serde_json::Value,
+    normalized_prefix: &str,
+    mapping: &mut BTreeMap<String, String>,
+    next_index: &mut usize,
+) {
+    let serde_json::Value::String(raw) = value else {
+        return;
+    };
+    let normalized = mapping
+        .entry(raw.clone())
+        .or_insert_with(|| {
+            *next_index += 1;
+            format!("{normalized_prefix}-{}", *next_index)
+        })
+        .clone();
+    *raw = normalized;
 }
 
 fn normalize_snapshot_text(contents: &str) -> String {
@@ -1357,5 +1435,95 @@ mod tests {
 
         assert_eq!(comparison.diff_kind, SnapshotDiffKind::Semantic);
         assert!(!comparison.matches_after_normalization());
+    }
+
+    #[test]
+    fn normalizes_view_snapshot_internal_group_refs_before_compare() {
+        let expected = r#"{
+  "cards": [
+    {
+      "group_id": "sarif-0-1",
+      "severity": "error",
+      "title": "primary failure",
+      "cascade_debug": {
+        "group_ref": "sarif-0-1",
+        "episode_ref": "episode-7",
+        "cascade_role": "lead_root",
+        "visibility_floor": "never_hidden",
+        "best_parent_group_ref": null
+      }
+    },
+    {
+      "group_id": "residual-compiler-0",
+      "severity": "note",
+      "title": "follow-on note",
+      "cascade_debug": {
+        "group_ref": "residual-compiler-0",
+        "episode_ref": "episode-7",
+        "cascade_role": "follow_on",
+        "visibility_floor": "summary_or_expanded_only",
+        "best_parent_group_ref": "sarif-0-1"
+      }
+    }
+  ],
+  "summary_only_groups": [
+    {
+      "group_id": "sarif-0-0",
+      "severity": "warning",
+      "title": "secondary"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": null
+  }
+}"#;
+        let actual = r#"{
+  "cards": [
+    {
+      "group_id": "group-13412f9430a0",
+      "severity": "error",
+      "title": "primary failure",
+      "cascade_debug": {
+        "group_ref": "group-13412f9430a0",
+        "episode_ref": "episode-1",
+        "cascade_role": "lead_root",
+        "visibility_floor": "never_hidden",
+        "best_parent_group_ref": null
+      }
+    },
+    {
+      "group_id": "group-45db1889640a",
+      "severity": "note",
+      "title": "follow-on note",
+      "cascade_debug": {
+        "group_ref": "group-45db1889640a",
+        "episode_ref": "episode-1",
+        "cascade_role": "follow_on",
+        "visibility_floor": "summary_or_expanded_only",
+        "best_parent_group_ref": "group-13412f9430a0"
+      }
+    }
+  ],
+  "summary_only_groups": [
+    {
+      "group_id": "group-8de1e6e83fb3",
+      "severity": "warning",
+      "title": "secondary"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": null
+  }
+}"#;
+
+        let comparison =
+            compare_snapshot_contents(Path::new("view.default.json"), expected, actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+        assert_eq!(comparison.normalized_expected, comparison.normalized_actual);
     }
 }

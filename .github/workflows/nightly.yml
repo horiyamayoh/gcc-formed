@@ -25,8 +25,6 @@ jobs:
             gcc_label: gcc15
             release_blocker: true
     env:
-      REPORT_ROOT: ${{ runner.temp }}/reports
-      TARGET_DIR: ${{ runner.temp }}/gcc-formed-target
       GATE_PLAN: ci/plans/nightly-gate.json
       MATRIX_GCC_VERSION: ${{ matrix.gcc_image }}
       MATRIX_VERSION_BAND: ${{ matrix.gcc_label == 'gcc13' && 'gcc13_14' || matrix.gcc_label == 'gcc14' && 'gcc13_14' || 'gcc15_plus' }}
@@ -38,6 +36,10 @@ jobs:
         with:
           components: rustfmt
           targets: x86_64-unknown-linux-musl
+      - name: Resolve runtime paths
+        run: |
+          echo "REPORT_ROOT=$RUNNER_TEMP/reports" >> "$GITHUB_ENV"
+          echo "TARGET_DIR=$RUNNER_TEMP/gcc-formed-target" >> "$GITHUB_ENV"
       - name: Resolve package version
         run: |
           package_version="$(python3 - <<'PY'
