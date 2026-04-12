@@ -136,6 +136,11 @@ fn normalize_public_export_snapshot_contents(
         )
     })?;
     normalize_export_for_snapshot_compare(&mut export);
+    if let Some(result) = export.result.as_mut() {
+        for diagnostic in &mut result.diagnostics {
+            diagnostic.message = normalize_snapshot_text(&diagnostic.message);
+        }
+    }
     diag_core::canonical_json(&export)
         .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
 }
@@ -177,6 +182,9 @@ fn normalize_view_snapshot_value(value: &mut serde_json::Value, refs: &mut Snaps
             for item in items {
                 normalize_view_snapshot_value(item, refs);
             }
+        }
+        serde_json::Value::String(text) => {
+            *text = normalize_snapshot_text(text);
         }
         _ => {}
     }
@@ -1645,6 +1653,139 @@ mod tests {
         "provenance_capture_refs": [
           "stderr.raw"
         ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "diagnostic_count": 1,
+      "error_count": 1,
+      "note_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}"#;
+
+        let comparison =
+            compare_snapshot_contents(Path::new("public.export.json"), expected, actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+        assert_eq!(comparison.normalized_expected, comparison.normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_transient_object_paths_in_view_snapshots() {
+        let expected = r#"{
+  "cards": [
+    {
+      "group_id": "residual-1",
+      "severity": "error",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
+      "raw_sub_block": [
+        "/usr/bin/ld: /tmp/ccLjS5gK.o: in function 'duplicate':\nhelper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here"
+      ]
+    }
+  ]
+}"#;
+        let actual = r#"{
+  "cards": [
+    {
+      "group_id": "residual-1",
+      "severity": "error",
+      "raw_message": "helper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/ccDSoXWu.o:main.c:(.text+0x0): first defined here",
+      "raw_sub_block": [
+        "/usr/bin/ld: /tmp/ccAB12cd.o: in function 'duplicate':\nhelper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/ccDSoXWu.o:main.c:(.text+0x0): first defined here"
+      ]
+    }
+  ]
+}"#;
+
+        let comparison =
+            compare_snapshot_contents(Path::new("view.ci.json"), expected, actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+        assert_eq!(comparison.normalized_expected, comparison.normalized_actual);
+    }
+
+    #[test]
+    fn normalizes_transient_object_paths_in_public_export_messages() {
+        let expected = r#"{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "native",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "compiler",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "primary_tool": {
+      "name": "gcc"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "<normalized>"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "linker.multiple_definition",
+        "message": "helper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
+        "phase": "link",
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "diagnostic_count": 1,
+      "error_count": 1,
+      "note_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}"#;
+        let actual = r#"{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "native",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "compiler",
+    "support_level": "preview",
+    "version_band": "gcc15_plus"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "inv-99",
+    "invoked_as": "gcc-formed",
+    "primary_tool": {
+      "name": "gcc",
+      "version": "15.1.0"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "0.2.0-beta.1"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "linker.multiple_definition",
+        "message": "helper.c:(.text+0x0): multiple definition of 'duplicate'; /tmp/ccDSoXWu.o:main.c:(.text+0x0): first defined here",
+        "phase": "link",
         "semantic_role": "root",
         "severity": "error"
       }

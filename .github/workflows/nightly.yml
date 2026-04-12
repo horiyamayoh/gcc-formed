@@ -193,7 +193,7 @@ jobs:
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
             --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER" \
-            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image "$MATRIX_GCC_VERSION" --report-dir "$REPORT_ROOT/snapshot"'
+            --command 'cargo xtask snapshot --root corpus --subset representative --check --docker-image "$MATRIX_GCC_VERSION" --version-band "$MATRIX_VERSION_BAND" --report-dir "$REPORT_ROOT/snapshot"'
       - name: Vendor dependency tree
         if: matrix.release_blocker
         run: |

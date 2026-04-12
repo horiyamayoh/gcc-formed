@@ -516,6 +516,7 @@ pub(crate) fn run_snapshot(
     subset: SnapshotSubset,
     check: bool,
     docker_image: &str,
+    version_band: Option<&str>,
     report_dir: Option<&Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let fixtures = discover(root)?;
@@ -524,10 +525,18 @@ pub(crate) fn run_snapshot(
         return Err("no fixtures matched snapshot selection".into());
     }
 
+    let runtime_band = version_band.and_then(parse_version_band_label);
+
     let promoted = selected
         .iter()
         .copied()
         .filter(|fixture| fixture.is_promoted())
+        .filter(|fixture| {
+            let Some(band) = runtime_band else {
+                return true;
+            };
+            fixture_compatible_with_version_band(fixture, band)
+        })
         .collect::<Vec<_>>();
     if promoted.is_empty() {
         return Err("snapshot selection did not include any promoted fixtures".into());
@@ -2336,6 +2345,20 @@ fn parse_version_band_label(label: &str) -> Option<VersionBand> {
         "gcc9_12" => Some(VersionBand::Gcc9_12),
         "unknown" => Some(VersionBand::Unknown),
         _ => None,
+    }
+}
+
+/// Returns `true` if a fixture's declared version band is compatible with the
+/// runtime version band (i.e. the GCC version actually available in the Docker
+/// image).  A fixture requires *at least* its declared band — for example a
+/// `gcc15_plus` fixture cannot run on a `gcc13_14` runtime.
+fn fixture_compatible_with_version_band(fixture: &Fixture, runtime_band: VersionBand) -> bool {
+    let fixture_band = fixture_support_band(fixture);
+    match fixture_band {
+        VersionBand::Gcc15Plus => matches!(runtime_band, VersionBand::Gcc15Plus),
+        VersionBand::Gcc13_14 => matches!(runtime_band, VersionBand::Gcc13_14 | VersionBand::Gcc15Plus),
+        VersionBand::Gcc9_12 => matches!(runtime_band, VersionBand::Gcc9_12 | VersionBand::Gcc13_14 | VersionBand::Gcc15Plus),
+        VersionBand::Unknown => true,
     }
 }
 

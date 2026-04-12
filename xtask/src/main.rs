@@ -170,6 +170,8 @@ enum Commands {
         #[arg(long, default_value = "gcc:15")]
         docker_image: String,
         #[arg(long)]
+        version_band: Option<String>,
+        #[arg(long)]
         report_dir: Option<PathBuf>,
     },
     BenchSmoke {
@@ -492,6 +494,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             subset,
             check,
             docker_image,
+            version_band,
             report_dir,
         } => run_snapshot(
             &root,
@@ -500,6 +503,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             subset,
             check,
             &docker_image,
+            version_band.as_deref(),
             report_dir.as_deref(),
         )?,
         Commands::BenchSmoke {
