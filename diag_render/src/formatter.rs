@@ -8,6 +8,7 @@ use crate::{DebugRefs, RenderRequest, RenderResult};
 pub fn emit(
     request: &RenderRequest,
     view_model: RenderViewModel,
+    hidden_group_count: usize,
     suppressed_warning_count: usize,
 ) -> RenderResult {
     let policy = render_policy(request.profile);
@@ -44,6 +45,11 @@ pub fn emit(
         for group in &view_model.summary_only_groups {
             lines.push(format!("  - {}", render_summary_only_group(&theme, group)));
         }
+    }
+    if hidden_group_count > 0 {
+        lines.push(format!(
+            "note: omitted {hidden_group_count} related diagnostic(s) already covered by visible roots"
+        ));
     }
 
     if suppressed_warning_count > 0
@@ -94,7 +100,7 @@ pub fn emit(
             .iter()
             .map(|card| card.group_id.clone())
             .collect(),
-        suppressed_group_count: view_model.summary_only_groups.len(),
+        suppressed_group_count: view_model.summary_only_groups.len() + hidden_group_count,
         suppressed_warning_count,
         truncation_occurred,
         render_issues: Vec::new(),

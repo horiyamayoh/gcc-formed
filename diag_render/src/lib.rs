@@ -234,10 +234,16 @@ pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
             FallbackReason::RendererLowConfidence,
         ));
     }
-    let view_model = view_model::build(&request, selected.cards, selected.summary_only_cards);
+    let view_model = view_model::build(
+        &request,
+        selected.cards,
+        selected.summary_only_cards,
+        selected.collapsed_notices_by_group_ref,
+    );
     Ok(formatter::emit(
         &request,
         view_model,
+        selected.hidden_group_count,
         selected.suppressed_warning_count,
     ))
 }
@@ -263,6 +269,7 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
             request,
             selected.cards,
             selected.summary_only_cards,
+            selected.collapsed_notices_by_group_ref,
         ))
     }
 }
@@ -274,10 +281,11 @@ mod tests {
     use crate::selector::select_groups;
     use diag_core::{
         AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
-        ContextChainKind, ContextFrame, DiagnosticDocument, DocumentCompleteness, Location,
+        ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticEpisode, DocumentAnalysis,
+        DocumentCompleteness, EpisodeGraph, GroupCascadeAnalysis, GroupCascadeRole, Location,
         MessageText, NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance,
         ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability,
-        TextEdit, ToolInfo,
+        TextEdit, ToolInfo, VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -448,6 +456,106 @@ mod tests {
             fs::create_dir_all(parent).unwrap();
         }
         fs::write(path, contents).unwrap();
+    }
+
+    fn score(value: f32) -> diag_core::Score {
+        value.into()
+    }
+
+    fn grouped_error_node(
+        id: &str,
+        group_ref: &str,
+        path: &str,
+        line: u32,
+        message: &str,
+    ) -> diag_core::DiagnosticNode {
+        let mut node = sample_request().document.diagnostics[0].clone();
+        node.id = id.to_string();
+        node.message.raw_text = message.to_string();
+        node.locations = vec![sample_location(path, line, 1, Ownership::User)];
+        let analysis = node.analysis.as_mut().unwrap();
+        analysis.family = Some("syntax".into());
+        analysis.headline = Some(message.to_string().into());
+        analysis.first_action_hint = Some("fix the user-owned source location first".into());
+        analysis.rule_id = Some(format!("rule.{id}").into());
+        analysis.group_ref = Some(group_ref.to_string());
+        analysis.set_confidence_bucket(diag_core::Confidence::High);
+        node
+    }
+
+    fn episode(
+        episode_ref: &str,
+        lead_group_ref: &str,
+        member_group_refs: Vec<&str>,
+        lead_root_score: f32,
+    ) -> DiagnosticEpisode {
+        DiagnosticEpisode {
+            episode_ref: episode_ref.to_string(),
+            lead_group_ref: lead_group_ref.to_string(),
+            member_group_refs: member_group_refs
+                .into_iter()
+                .map(ToString::to_string)
+                .collect(),
+            family: Some("syntax".to_string()),
+            lead_root_score: Some(score(lead_root_score)),
+            confidence: Some(score(0.9)),
+        }
+    }
+
+    fn lead_root_group(
+        group_ref: &str,
+        episode_ref: &str,
+        root_score: f32,
+        independence_score: f32,
+    ) -> GroupCascadeAnalysis {
+        GroupCascadeAnalysis {
+            group_ref: group_ref.to_string(),
+            episode_ref: Some(episode_ref.to_string()),
+            role: GroupCascadeRole::LeadRoot,
+            best_parent_group_ref: None,
+            root_score: Some(score(root_score)),
+            independence_score: Some(score(independence_score)),
+            suppress_likelihood: Some(score(0.08)),
+            summary_likelihood: Some(score(0.14)),
+            visibility_floor: VisibilityFloor::NeverHidden,
+            evidence_tags: vec!["user_owned_primary".to_string()],
+        }
+    }
+
+    fn dependent_group(
+        group_ref: &str,
+        episode_ref: &str,
+        parent_group_ref: &str,
+        role: GroupCascadeRole,
+    ) -> GroupCascadeAnalysis {
+        GroupCascadeAnalysis {
+            group_ref: group_ref.to_string(),
+            episode_ref: Some(episode_ref.to_string()),
+            role,
+            best_parent_group_ref: Some(parent_group_ref.to_string()),
+            root_score: Some(score(0.18)),
+            independence_score: Some(score(0.12)),
+            suppress_likelihood: Some(score(0.89)),
+            summary_likelihood: Some(score(0.76)),
+            visibility_floor: VisibilityFloor::HiddenAllowed,
+            evidence_tags: vec!["cascade".to_string()],
+        }
+    }
+
+    fn document_analysis(
+        episodes: Vec<DiagnosticEpisode>,
+        group_analysis: Vec<GroupCascadeAnalysis>,
+    ) -> DocumentAnalysis {
+        DocumentAnalysis {
+            policy_profile: Some("default-aggressive".to_string()),
+            producer_version: Some("test".to_string()),
+            episode_graph: EpisodeGraph {
+                episodes,
+                relations: Vec::new(),
+            },
+            group_analysis,
+            stats: Default::default(),
+        }
     }
 
     #[test]
@@ -1659,6 +1767,223 @@ mod tests {
                 .text
                 .contains("  - src/third.c:12:7: error: tertiary failure")
         );
+    }
+
+    #[test]
+    fn episode_first_selection_keeps_overflow_roots_visible_and_counts_hidden_dependents() {
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node("root-a", "group-a", "src/main.c", 2, "primary failure"),
+            grouped_error_node("root-b", "group-b", "src/other.c", 5, "secondary failure"),
+            grouped_error_node("root-c", "group-c", "src/third.c", 9, "tertiary failure"),
+            grouped_error_node(
+                "tail-c",
+                "group-c-tail",
+                "src/third.c",
+                10,
+                "parser tail failure",
+            ),
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![
+                episode("episode-a", "group-a", vec!["group-a"], 0.96),
+                episode("episode-b", "group-b", vec!["group-b"], 0.93),
+                episode(
+                    "episode-c",
+                    "group-c",
+                    vec!["group-c", "group-c-tail"],
+                    0.88,
+                ),
+            ],
+            vec![
+                lead_root_group("group-a", "episode-a", 0.96, 0.91),
+                lead_root_group("group-b", "episode-b", 0.93, 0.88),
+                lead_root_group("group-c", "episode-c", 0.88, 0.83),
+                dependent_group(
+                    "group-c-tail",
+                    "episode-c",
+                    "group-c",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.cards[0].id, "root-a");
+        assert_eq!(selection.cards[1].id, "root-b");
+        assert_eq!(selection.summary_only_cards.len(), 1);
+        assert_eq!(selection.summary_only_cards[0].id, "root-c");
+        assert_eq!(selection.hidden_group_count, 1);
+
+        let output = render(request).unwrap();
+        assert_eq!(
+            output.displayed_group_refs,
+            vec!["group-a".to_string(), "group-b".to_string()]
+        );
+        assert_eq!(output.suppressed_group_count, 2);
+        assert!(output.text.contains("other errors:"));
+        assert!(
+            output
+                .text
+                .contains("  - src/third.c:9:1: error: tertiary failure")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 related diagnostic(s) already covered by visible roots")
+        );
+        assert!(!output.text.contains("parser tail failure"));
+    }
+
+    #[test]
+    fn episode_first_render_collapses_follow_on_and_duplicates_into_lead_notice() {
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "follow-on",
+                "group-follow",
+                "src/main.c",
+                3,
+                "follow-on parse failure",
+            ),
+            grouped_error_node(
+                "duplicate",
+                "group-duplicate",
+                "src/main.c",
+                4,
+                "duplicate parse failure",
+            ),
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-follow", "group-duplicate"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-follow",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+                dependent_group(
+                    "group-duplicate",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::Duplicate,
+                ),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert!(selection.summary_only_cards.is_empty());
+        assert_eq!(selection.hidden_group_count, 0);
+        assert_eq!(
+            selection
+                .collapsed_notices_by_group_ref
+                .get("group-root")
+                .cloned()
+                .unwrap(),
+            vec![
+                "omitted 1 follow-on diagnostic(s)".to_string(),
+                "omitted 1 duplicate diagnostic(s)".to_string(),
+            ]
+        );
+
+        let output = render(request).unwrap();
+        assert_eq!(output.displayed_group_refs, vec!["group-root".to_string()]);
+        assert_eq!(output.suppressed_group_count, 0);
+        assert!(!output.text.contains("other errors:"));
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 follow-on diagnostic(s)")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 duplicate diagnostic(s)")
+        );
+        assert!(!output.text.contains("follow-on parse failure"));
+        assert!(!output.text.contains("duplicate parse failure"));
+    }
+
+    #[test]
+    fn renderer_fail_opens_to_legacy_selection_when_episode_graph_is_absent() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "secondary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "tertiary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "tertiary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/third.c", 12, 7, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request.document.document_analysis = Some(DocumentAnalysis::default());
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root");
+        assert_eq!(selection.summary_only_cards.len(), 2);
+        assert_eq!(selection.summary_only_cards[0].id, "secondary");
+        assert_eq!(selection.summary_only_cards[1].id, "tertiary");
+
+        let output = render(request).unwrap();
+        assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
+        assert_eq!(output.suppressed_group_count, 2);
+        assert!(output.text.contains("other errors:"));
     }
 
     #[test]

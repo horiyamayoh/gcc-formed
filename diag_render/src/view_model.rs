@@ -3,12 +3,14 @@ use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::path::format_location;
+use crate::selector::render_group_ref;
 use crate::suggestion::build_action_items;
 use diag_core::{
     DiagnosticNode, DisclosureConfidence, DocumentCompleteness, NodeCompleteness, Severity,
     SuggestionApplicability,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 /// Top-level session summary included in the view model.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,6 +117,7 @@ pub fn build(
     request: &RenderRequest,
     cards: Vec<DiagnosticNode>,
     summary_only_cards: Vec<DiagnosticNode>,
+    collapsed_notices_by_group_ref: BTreeMap<String, Vec<String>>,
 ) -> RenderViewModel {
     let policy = render_policy(request.profile);
     let selected_cards_include_incomplete = cards.iter().any(|node| {
@@ -125,7 +128,7 @@ pub fn build(
     });
     let rendered_cards = cards
         .into_iter()
-        .map(|node| build_card(request, &node))
+        .map(|node| build_card(request, &node, &collapsed_notices_by_group_ref))
         .collect::<Vec<_>>();
     let has_failure = rendered_cards
         .iter()
@@ -156,7 +159,11 @@ pub fn build(
     }
 }
 
-fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard {
+fn build_card(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    collapsed_notices_by_group_ref: &BTreeMap<String, Vec<String>>,
+) -> RenderGroupCard {
     let policy = render_policy(request.profile);
     let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
     let confidence = node
@@ -176,7 +183,10 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let supporting_evidence = summarize_supporting_evidence(request, node);
     let context_lines = supporting_evidence.context_lines;
     let child_notes = supporting_evidence.child_notes;
-    let collapsed_notices = supporting_evidence.collapsed_notices;
+    let mut collapsed_notices = supporting_evidence.collapsed_notices;
+    if let Some(selector_notices) = collapsed_notices_by_group_ref.get(&render_group_ref(node)) {
+        collapsed_notices.extend(selector_notices.iter().cloned());
+    }
     let suggestions = build_action_items(request, node);
     let confidence_notice = if conservative_useful_subset {
         Some(conservative_band_c_notice().to_string())
@@ -188,7 +198,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
     let raw_sub_block = raw_sub_block(request, node);
 
     RenderGroupCard {
-        group_id: node.id.clone(),
+        group_id: render_group_ref(node),
         severity: severity_label(&node.severity).to_string(),
         family,
         title,
@@ -232,7 +242,7 @@ fn build_card(request: &RenderRequest, node: &DiagnosticNode) -> RenderGroupCard
 
 fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> SummaryOnlyGroup {
     SummaryOnlyGroup {
-        group_id: node.id.clone(),
+        group_id: render_group_ref(node),
         severity: severity_label(&node.severity).to_string(),
         title: select_title(
             node,

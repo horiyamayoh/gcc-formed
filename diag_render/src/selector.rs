@@ -2,12 +2,27 @@ use crate::budget::{WarningFailureMode, budget_for};
 use crate::family::renderer_specificity_rank;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
-    DiagnosticNode, DisclosureConfidence, NodeCompleteness, Ownership, Phase, SemanticRole,
-    Severity,
+    CascadePolicySnapshot, DiagnosticDocument, DiagnosticNode, DisclosureConfidence,
+    DocumentAnalysis, GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Ownership, Phase,
+    SemanticRole, Severity,
 };
+use std::collections::{BTreeMap, BTreeSet};
+
+type VisibleGroupSortKey = (
+    u8,
+    Option<diag_core::Score>,
+    Option<diag_core::Score>,
+    u8,
+    u8,
+    u8,
+    u8,
+    u8,
+    u8,
+    usize,
+);
 
 /// The result of group selection: expanded cards, summary-only cards, and suppression counts.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Selection {
     /// Diagnostic nodes selected for full rendering.
     pub cards: Vec<DiagnosticNode>,
@@ -15,12 +30,16 @@ pub struct Selection {
     pub summary_only_cards: Vec<DiagnosticNode>,
     /// Number of warnings suppressed because a failure was present.
     pub suppressed_warning_count: usize,
+    /// Number of groups omitted without their own summary-only entry.
+    pub hidden_group_count: usize,
+    /// Additional collapsed notices synthesized during episode-first selection.
+    pub collapsed_notices_by_group_ref: BTreeMap<String, Vec<String>>,
 }
 
 /// Selects, ranks, and partitions diagnostic groups from the request document.
 pub fn select_groups(request: &RenderRequest) -> Selection {
-    let budget = budget_for(request.profile);
     let mut diagnostics = request.document.diagnostics.clone();
+    let budget = budget_for(request.profile);
     diagnostics.sort_by(|left, right| {
         sort_key(right)
             .cmp(&sort_key(left))
@@ -44,6 +63,26 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
         });
     }
 
+    if let Some(selection) = select_episode_groups(
+        request,
+        &request.document,
+        &diagnostics,
+        has_failure,
+        suppressed_warning_count,
+    ) {
+        return selection;
+    }
+
+    legacy_select_groups(request, diagnostics, has_failure, suppressed_warning_count)
+}
+
+fn legacy_select_groups(
+    request: &RenderRequest,
+    diagnostics: Vec<DiagnosticNode>,
+    has_failure: bool,
+    suppressed_warning_count: usize,
+) -> Selection {
+    let budget = budget_for(request.profile);
     let mut expanded_groups = match request.profile {
         RenderProfile::Default if !has_failure => 2,
         _ => budget.expanded_groups,
@@ -66,7 +105,251 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
         cards: expanded,
         summary_only_cards,
         suppressed_warning_count,
+        hidden_group_count: 0,
+        collapsed_notices_by_group_ref: BTreeMap::new(),
     }
+}
+
+fn select_episode_groups(
+    request: &RenderRequest,
+    document: &DiagnosticDocument,
+    diagnostics: &[DiagnosticNode],
+    has_failure: bool,
+    suppressed_warning_count: usize,
+) -> Option<Selection> {
+    let document_analysis = document.document_analysis.as_ref()?;
+    if document_analysis.episode_graph.episodes.is_empty()
+        || document_analysis.group_analysis.is_empty()
+    {
+        return None;
+    }
+
+    let representatives = build_group_representatives(diagnostics);
+    let group_analysis_by_ref = build_group_analysis_index(document_analysis)?;
+    if representatives.is_empty()
+        || representatives
+            .keys()
+            .any(|group_ref| !group_analysis_by_ref.contains_key(group_ref.as_str()))
+    {
+        return None;
+    }
+
+    if document_analysis
+        .episode_graph
+        .episodes
+        .iter()
+        .any(|episode| {
+            !group_analysis_by_ref.contains_key(episode.lead_group_ref.as_str())
+                || !representatives.contains_key(episode.lead_group_ref.as_str())
+                || episode.member_group_refs.iter().any(|member_ref| {
+                    !group_analysis_by_ref.contains_key(member_ref.as_str())
+                        || !representatives.contains_key(member_ref.as_str())
+                })
+        })
+    {
+        return None;
+    }
+
+    let mut visible_group_refs = group_analysis_by_ref
+        .values()
+        .filter(|group| should_keep_group_visible(group))
+        .map(|group| group.group_ref.as_str())
+        .collect::<Vec<_>>();
+    if visible_group_refs.is_empty() {
+        return None;
+    }
+    visible_group_refs.sort_by(|left, right| {
+        visible_group_sort_key(
+            representatives
+                .get(*right)
+                .expect("visible group representative"),
+            group_analysis_by_ref
+                .get(*right)
+                .expect("visible group analysis"),
+        )
+        .cmp(&visible_group_sort_key(
+            representatives
+                .get(*left)
+                .expect("visible group representative"),
+            group_analysis_by_ref
+                .get(*left)
+                .expect("visible group analysis"),
+        ))
+        .then_with(|| left.cmp(right))
+    });
+
+    let expanded_limit = expanded_independent_root_limit(request.profile, has_failure);
+    let expanded_group_refs = visible_group_refs
+        .iter()
+        .take(expanded_limit)
+        .copied()
+        .collect::<BTreeSet<_>>();
+    let visible_group_ref_set = visible_group_refs.iter().copied().collect::<BTreeSet<_>>();
+
+    let cards = visible_group_refs
+        .iter()
+        .take(expanded_limit)
+        .map(|group_ref| {
+            representatives
+                .get(*group_ref)
+                .expect("expanded representative")
+                .clone()
+        })
+        .collect::<Vec<_>>();
+    let summary_only_cards = visible_group_refs
+        .iter()
+        .skip(expanded_limit)
+        .map(|group_ref| {
+            representatives
+                .get(*group_ref)
+                .expect("summary-only representative")
+                .clone()
+        })
+        .collect::<Vec<_>>();
+
+    let mut collapsed_notices_by_group_ref = BTreeMap::new();
+    let mut hidden_group_count = 0usize;
+    let mut groups_in_episodes = BTreeSet::new();
+    for episode in &document_analysis.episode_graph.episodes {
+        let lead_group_ref = episode.lead_group_ref.as_str();
+        let lead_expanded = expanded_group_refs.contains(lead_group_ref);
+        let mut follow_on_count = 0usize;
+        let mut duplicate_count = 0usize;
+        let mut related_count = 0usize;
+
+        for member_ref in &episode.member_group_refs {
+            groups_in_episodes.insert(member_ref.as_str());
+            if member_ref == &episode.lead_group_ref
+                || visible_group_ref_set.contains(member_ref.as_str())
+            {
+                continue;
+            }
+            let group = group_analysis_by_ref
+                .get(member_ref.as_str())
+                .expect("episode member analysis");
+            match group.role {
+                GroupCascadeRole::FollowOn if lead_expanded => follow_on_count += 1,
+                GroupCascadeRole::Duplicate if lead_expanded => duplicate_count += 1,
+                _ if lead_expanded => related_count += 1,
+                _ => hidden_group_count += 1,
+            }
+        }
+
+        if lead_expanded {
+            let notices = collapsed_notices_by_group_ref
+                .entry(lead_group_ref.to_string())
+                .or_insert_with(Vec::new);
+            if follow_on_count > 0 {
+                notices.push(format!("omitted {follow_on_count} follow-on diagnostic(s)"));
+            }
+            if duplicate_count > 0 {
+                notices.push(format!("omitted {duplicate_count} duplicate diagnostic(s)"));
+            }
+            if related_count > 0 {
+                notices.push(format!("omitted {related_count} related diagnostic(s)"));
+            }
+        }
+    }
+
+    for group in group_analysis_by_ref.values() {
+        let group_ref = group.group_ref.as_str();
+        if visible_group_ref_set.contains(group_ref) || groups_in_episodes.contains(group_ref) {
+            continue;
+        }
+        hidden_group_count += 1;
+    }
+
+    Some(Selection {
+        cards,
+        summary_only_cards,
+        suppressed_warning_count,
+        hidden_group_count,
+        collapsed_notices_by_group_ref,
+    })
+}
+
+fn build_group_representatives(diagnostics: &[DiagnosticNode]) -> BTreeMap<String, DiagnosticNode> {
+    let mut representatives = BTreeMap::new();
+    for node in diagnostics {
+        let group_ref = render_group_ref(node);
+        match representatives.get(group_ref.as_str()) {
+            Some(current) if sort_key(node) <= sort_key(current) => {}
+            _ => {
+                representatives.insert(group_ref, node.clone());
+            }
+        }
+    }
+    representatives
+}
+
+fn build_group_analysis_index(
+    document_analysis: &DocumentAnalysis,
+) -> Option<BTreeMap<&str, &GroupCascadeAnalysis>> {
+    let mut index = BTreeMap::new();
+    for group in &document_analysis.group_analysis {
+        if group.group_ref.trim().is_empty()
+            || index.insert(group.group_ref.as_str(), group).is_some()
+        {
+            return None;
+        }
+    }
+    Some(index)
+}
+
+fn should_keep_group_visible(group: &GroupCascadeAnalysis) -> bool {
+    matches!(
+        group.role,
+        GroupCascadeRole::LeadRoot | GroupCascadeRole::IndependentRoot
+    ) || group.visibility_floor == diag_core::VisibilityFloor::NeverHidden
+}
+
+fn visible_group_sort_key(
+    node: &DiagnosticNode,
+    group: &GroupCascadeAnalysis,
+) -> VisibleGroupSortKey {
+    (
+        cascade_role_rank(group.role),
+        group.root_score,
+        group.independence_score,
+        severity_rank(&node.severity),
+        ownership_rank(best_ownership(node)),
+        confidence_rank(disclosure_confidence(node)),
+        phase_rank(&node.phase),
+        semantic_role_rank(&node.semantic_role),
+        specificity_rank(node),
+        std::cmp::Reverse(node.message.raw_text.len()).0,
+    )
+}
+
+fn cascade_role_rank(role: GroupCascadeRole) -> u8 {
+    match role {
+        GroupCascadeRole::LeadRoot => 3,
+        GroupCascadeRole::IndependentRoot => 2,
+        GroupCascadeRole::Uncertain => 1,
+        GroupCascadeRole::FollowOn | GroupCascadeRole::Duplicate => 0,
+    }
+}
+
+fn expanded_independent_root_limit(profile: RenderProfile, has_failure: bool) -> usize {
+    match profile {
+        RenderProfile::Verbose | RenderProfile::Debug => usize::MAX,
+        RenderProfile::RawFallback => 0,
+        RenderProfile::Default if !has_failure => 2,
+        RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci => {
+            CascadePolicySnapshot::default()
+                .max_expanded_independent_roots
+                .max(1)
+        }
+    }
+}
+
+pub(crate) fn render_group_ref(node: &DiagnosticNode) -> String {
+    node.analysis
+        .as_ref()
+        .and_then(|analysis| analysis.group_ref.as_ref().map(|value| value.trim()))
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
+        .unwrap_or_else(|| node.id.clone())
 }
 
 fn should_filter_warnings(
