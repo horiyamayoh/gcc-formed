@@ -315,6 +315,56 @@ mod tests {
     }
 
     #[test]
+    fn rejects_cyclic_document_analysis_relations() {
+        let mut document = sample_document();
+        let mut analysis = sample_document_analysis();
+        analysis.episode_graph.relations.push(EpisodeRelation {
+            from_group_ref: "group-2".to_string(),
+            to_group_ref: "group-1".to_string(),
+            kind: EpisodeRelationKind::Cascade,
+            confidence: OrderedFloat(0.41),
+            evidence_tags: vec!["reverse_edge".to_string()],
+        });
+        document.document_analysis = Some(analysis);
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors
+                .errors
+                .iter()
+                .any(|error| error.contains("episode_graph must be acyclic"))
+        );
+    }
+
+    #[test]
+    fn rejects_incoherent_document_analysis_materialization() {
+        let mut document = sample_document();
+        let mut analysis = sample_document_analysis();
+        analysis.group_analysis[0].best_parent_group_ref = Some("group-2".to_string());
+        analysis.group_analysis[0].visibility_floor = VisibilityFloor::HiddenAllowed;
+        analysis.episode_graph.episodes[0].member_group_refs = vec!["group-2".to_string()];
+        document.document_analysis = Some(analysis);
+
+        let errors = document.validate().unwrap_err();
+
+        assert!(
+            errors.errors.iter().any(|error| {
+                error.contains("role lead_root must not have best_parent_group_ref")
+            })
+        );
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("role lead_root must use visibility_floor never_hidden")
+        }));
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("lead_group_ref group-1 must be included in member_group_refs")
+        }));
+        assert!(errors.errors.iter().any(|error| {
+            error.contains("episode_ref episode-1 does not include the group in member_group_refs")
+        }));
+    }
+
+    #[test]
     fn rejects_unparseable_schema_version() {
         let mut document = sample_document();
         document.schema_version = "v1alpha".to_string();

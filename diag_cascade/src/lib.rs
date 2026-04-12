@@ -2,12 +2,14 @@
 //!
 //! This crate owns the analysis-stage boundary between node-local enrichment and
 //! renderer consumption. The current work package adds deterministic logical
-//! groups, canonical anchor/key derivation, and candidate prefiltering without
-//! changing renderer output yet.
+//! groups, safe relation scoring, and episode materialization without changing
+//! renderer output yet.
 
+mod analysis;
 mod logical_group;
 mod prefilter;
 
+pub use analysis::SafeDocumentAnalyzer;
 pub use logical_group::{
     AnchorSource, CanonicalAnchor, GroupKeySet, LogicalGroup, PRIMARY_LINE_BUCKET_WIDTH,
     canonical_group_ref, derive_canonical_anchor, derive_group_keys, extract_logical_groups,
@@ -84,23 +86,24 @@ impl DocumentAnalyzer for NoopDocumentAnalyzer {
     }
 }
 
-/// Analyze the document using the default no-op analyzer.
+/// Analyze the document using the default safe analyzer.
 pub fn analyze_document(
     document: &mut DiagnosticDocument,
     context: &CascadeContext,
     policy: &CascadePolicySnapshot,
 ) -> Result<CascadeReport, CascadeError> {
-    NoopDocumentAnalyzer.analyze_document(document, context, policy)
+    SafeDocumentAnalyzer.analyze_document(document, context, policy)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use diag_core::{
-        AnalysisOverlay, ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument,
-        DiagnosticNode, DocumentCompleteness, LanguageMode, Location, LocationRole, MessageText,
-        NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource,
-        RunInfo, SemanticRole, Severity, SymbolContext, ToolInfo, WrapperSurface,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
+        ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
+        LanguageMode, Location, LocationRole, MessageText, NodeCompleteness, Origin, Ownership,
+        Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity,
+        SymbolContext, ToolInfo, WrapperSurface,
     };
 
     fn sample_document(diagnostics: Vec<DiagnosticNode>) -> DiagnosticDocument {
@@ -132,7 +135,18 @@ mod tests {
                 target_triple: None,
                 wrapper_mode: Some(WrapperSurface::Terminal),
             },
-            captures: Vec::new(),
+            captures: vec![CaptureArtifact {
+                id: "stderr.raw".to_string(),
+                kind: ArtifactKind::CompilerStderrText,
+                media_type: "text/plain".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: Some("deadbeef".to_string()),
+                size_bytes: Some(12),
+                storage: ArtifactStorage::Inline,
+                inline_text: Some("main.c:1:1".to_string()),
+                external_ref: None,
+                produced_by: None,
+            }],
             integrity_issues: Vec::new(),
             diagnostics,
             document_analysis: None,
@@ -146,6 +160,16 @@ mod tests {
             processing_path: ProcessingPath::DualSinkStructured,
             source_authority: SourceAuthority::Structured,
             fallback_grade: FallbackGrade::None,
+            cwd: PathBuf::from("/tmp/project"),
+        }
+    }
+
+    fn conservative_context() -> CascadeContext {
+        CascadeContext {
+            version_band: VersionBand::Gcc9_12,
+            processing_path: ProcessingPath::NativeTextCapture,
+            source_authority: SourceAuthority::ResidualText,
+            fallback_grade: FallbackGrade::FailOpen,
             cwd: PathBuf::from("/tmp/project"),
         }
     }
@@ -231,16 +255,29 @@ mod tests {
         }
     }
 
+    fn run_safe_analysis(
+        diagnostics: Vec<DiagnosticNode>,
+        context: &CascadeContext,
+    ) -> diag_core::DocumentAnalysis {
+        let mut document = sample_document(diagnostics);
+        let report =
+            analyze_document(&mut document, context, &CascadePolicySnapshot::default()).unwrap();
+        assert!(report.document_analysis_present);
+        document.validate().unwrap();
+        document.document_analysis.unwrap()
+    }
+
     #[test]
     fn noop_analyzer_clears_document_analysis_without_failing() {
         let mut document = sample_document(Vec::new());
         document.document_analysis = Some(diag_core::DocumentAnalysis::default());
-        let report = analyze_document(
-            &mut document,
-            &sample_context(),
-            &CascadePolicySnapshot::default(),
-        )
-        .unwrap();
+        let report = NoopDocumentAnalyzer
+            .analyze_document(
+                &mut document,
+                &sample_context(),
+                &CascadePolicySnapshot::default(),
+            )
+            .unwrap();
 
         assert!(!report.document_analysis_present);
         assert!(document.document_analysis.is_none());
@@ -674,5 +711,211 @@ mod tests {
                 && pair.right_group_ref == groups[3].group_ref
                 && pair.reasons.contains(&CandidateReason::FamilyPhaseWindow)
         }));
+    }
+
+    #[test]
+    fn safe_analyzer_materializes_roles_visibility_and_episodes() {
+        let mut lead = sample_node(
+            "node-lead",
+            "undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(8),
+            Ownership::User,
+        );
+        lead.symbol_context = Some(SymbolContext {
+            primary_symbol: Some("foo".to_string()),
+            related_objects: vec!["src/main.o".to_string()],
+            archive: None,
+        });
+        let duplicate = sample_node(
+            "node-dup",
+            "src/main.c:(.text+0x15): undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(9),
+            Ownership::User,
+        );
+
+        let analysis = run_safe_analysis(vec![lead, duplicate], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 1);
+        assert_eq!(analysis.group_analysis.len(), 2);
+        assert_eq!(
+            analysis.group_analysis[0].role,
+            diag_core::GroupCascadeRole::LeadRoot
+        );
+        assert_eq!(
+            analysis.group_analysis[0].visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+        assert_eq!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::Duplicate
+        );
+        assert_eq!(
+            analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::HiddenAllowed
+        );
+        assert_eq!(
+            analysis.group_analysis[1].best_parent_group_ref.as_deref(),
+            Some(analysis.group_analysis[0].group_ref.as_str())
+        );
+        assert_eq!(analysis.stats.independent_root_count, 1);
+        assert_eq!(analysis.stats.duplicate_count, 1);
+    }
+
+    #[test]
+    fn ambiguous_best_parent_margin_keeps_child_uncertain() {
+        let mut first = sample_node(
+            "node-first",
+            "undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(8),
+            Ownership::User,
+        );
+        first.symbol_context = Some(SymbolContext {
+            primary_symbol: Some("foo".to_string()),
+            related_objects: vec!["src/main.o".to_string()],
+            archive: None,
+        });
+        let second = sample_node(
+            "node-second",
+            "src/main.c:(.text+0x15): undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(9),
+            Ownership::User,
+        );
+        let mut third = sample_node(
+            "node-third",
+            "src/main.c:(.text+0x20): undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(10),
+            Ownership::User,
+        );
+        third.severity = Severity::Note;
+
+        let analysis = run_safe_analysis(vec![first, second, third], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 2);
+        assert_eq!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::Duplicate
+        );
+        assert_eq!(
+            analysis.group_analysis[2].role,
+            diag_core::GroupCascadeRole::Uncertain
+        );
+        assert_eq!(
+            analysis.group_analysis[2].visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+        assert!(analysis.group_analysis[2].best_parent_group_ref.is_some());
+        assert_eq!(analysis.episode_graph.relations.len(), 1);
+    }
+
+    #[test]
+    fn weak_evidence_does_not_open_hidden_suppression() {
+        let mut root = sample_node(
+            "node-root",
+            "template argument deduction/substitution failed",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        root.context_chains = vec![template_chain("src/main.cpp", 12)];
+
+        let mut follow_on = sample_node(
+            "node-follow-on",
+            "required from here",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            None,
+            None,
+            Ownership::Unknown,
+        );
+        follow_on.severity = Severity::Note;
+        follow_on.node_completeness = NodeCompleteness::Partial;
+        follow_on.context_chains = vec![template_chain("src/main.cpp", 12)];
+
+        let analysis = run_safe_analysis(vec![root, follow_on], &conservative_context());
+
+        assert_eq!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::FollowOn
+        );
+        assert_eq!(
+            analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::SummaryOrExpandedOnly
+        );
+        assert!(
+            analysis.group_analysis[1]
+                .suppress_likelihood
+                .unwrap()
+                .into_inner()
+                < CascadePolicySnapshot::default().suppress_likelihood_threshold
+        );
+    }
+
+    #[test]
+    fn same_file_independent_roots_remain_separate_episodes_after_analysis() {
+        let left = sample_node(
+            "node-left",
+            "expected ';' before '}' token",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(5),
+            Ownership::User,
+        );
+        let right = sample_node(
+            "node-right",
+            "expected ')' before ';' token",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(40),
+            Ownership::User,
+        );
+
+        let analysis = run_safe_analysis(vec![left, right], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 2);
+        assert_eq!(
+            analysis
+                .group_analysis
+                .iter()
+                .map(|group| group.role)
+                .collect::<Vec<_>>(),
+            vec![
+                diag_core::GroupCascadeRole::IndependentRoot,
+                diag_core::GroupCascadeRole::IndependentRoot,
+            ]
+        );
+        assert!(
+            analysis
+                .group_analysis
+                .iter()
+                .all(|group| group.best_parent_group_ref.is_none())
+        );
     }
 }

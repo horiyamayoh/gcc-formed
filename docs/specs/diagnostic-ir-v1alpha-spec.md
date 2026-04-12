@@ -794,6 +794,9 @@ analysis overlay は、core facts を消さずに次を表現する。
 - facts が有効であるために `document_analysis` は必須ではない。
 - `document_analysis` が存在する場合でも、consumer はこれを落として facts を扱えてよい。
 - `group_analysis[*].group_ref` と `episode_graph.*_group_ref` は同一 document 内で解決できなければならない。
+- `episode_graph.relations` は循環してはならない。
+- `episode_graph.episodes[*].lead_group_ref` は同一 episode の `member_group_refs` に含まれていなければならない。
+- `group_analysis[*].episode_ref` がある場合、その episode は当該 group を `member_group_refs` に含めていなければならない。
 
 ### 15.3 `EpisodeGraph`
 
@@ -827,6 +830,11 @@ analysis overlay は、core facts を消さずに次を表現する。
 | `summary_likelihood` | number | MAY | summary compaction の適性 |
 | `visibility_floor` | enum | MUST | `never_hidden | summary_or_expanded_only | hidden_allowed` |
 | `evidence_tags` | array<string> | MAY | 判定根拠タグ |
+
+#### `GroupCascadeAnalysis` の規則
+
+- `lead_root` / `independent_root` / `uncertain` は `visibility_floor = never_hidden` でなければならない。
+- `lead_root` / `independent_root` は `best_parent_group_ref` を持ってはならない。
 
 ### 15.6 `EpisodeRelation`
 
