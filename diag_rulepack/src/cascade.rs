@@ -230,6 +230,7 @@ const CHECKED_IN_CASCADE_RULEPACK: CascadeRulepack = CascadeRulepack {
     family_policies: &[
         COLLECT2_SUMMARY_POLICY,
         LINKER_ROOT_POLICY,
+        MACRO_INCLUDE_POLICY,
         TEMPLATE_POLICY,
         TYPE_OVERLOAD_POLICY,
         SYNTAX_POLICY,
@@ -344,6 +345,34 @@ const TEMPLATE_POLICY: CascadeFamilyPolicy = CascadeFamilyPolicy {
     generic_wrapper_cascade_bonus: 0.0,
 };
 
+const MACRO_INCLUDE_POLICY: CascadeFamilyPolicy = CascadeFamilyPolicy {
+    family: "macro_include",
+    exact_families: &["macro_include"],
+    prefix_families: &[],
+    strong_root: true,
+    root_terms: &[
+        "in expansion of macro",
+        "included from",
+        "undeclared",
+        "has no member named",
+    ],
+    follow_on_terms: &[
+        "in expansion of macro",
+        "expanded from macro",
+        "included from",
+        "from ",
+    ],
+    candidate_repeat_terms: &[
+        "in expansion of macro",
+        "expanded from macro",
+        "included from",
+    ],
+    generic_wrapper_terms: &[],
+    follow_on_cascade_bonus: 0.24,
+    candidate_duplicate_bonus: 0.14,
+    generic_wrapper_cascade_bonus: 0.0,
+};
+
 const LINKER_ROOT_POLICY: CascadeFamilyPolicy = CascadeFamilyPolicy {
     family: "linker_root",
     exact_families: &[],
@@ -455,6 +484,23 @@ mod tests {
             "syntax",
             "expected declaration or statement at end of input"
         ));
+    }
+
+    #[test]
+    fn macro_include_policy_marks_macro_and_include_context_as_repeatable_follow_on() {
+        let rulepack = checked_in_cascade_rulepack();
+
+        assert_eq!(
+            rulepack.family_policy("macro_include").family,
+            "macro_include"
+        );
+        assert!(
+            rulepack
+                .is_generic_follow_on("macro_include", "note: in expansion of macro 'FETCH_VALUE'")
+        );
+        assert!(
+            rulepack.is_candidate_repeat("macro_include", "in file included from src/wrapper.h:1")
+        );
     }
 
     #[test]

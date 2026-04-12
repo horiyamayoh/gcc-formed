@@ -9,7 +9,7 @@
       "context_lines": [
         "while instantiating:",
         "  - src/main.cpp:2:6 candidate 1: 'template<class T> void expect_ptr(T*)'",
-        "  - src/main.cpp:2:6 template argument deduction/substitution failed:"
+        "omitted 1 internal template frames"
       ],
       "excerpts": [
         {

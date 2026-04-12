@@ -127,11 +127,11 @@ fn summarize_template(
         &mut evidence.context_lines,
         "while instantiating:".to_string(),
     );
-    let visible = summarize_frames(request, node, &chain.frames, frame_limit);
+    let unique_count = dedup_frames(&chain.frames).len();
+    let visible = summarize_template_frames(request, node, &chain.frames, frame_limit);
     for frame in &visible {
         push_unique(&mut evidence.context_lines, format!("  - {frame}"));
     }
-    let unique_count = dedup_frames(&chain.frames).len();
     if unique_count > visible.len() {
         push_unique(
             &mut evidence.context_lines,
@@ -165,11 +165,11 @@ fn summarize_macro_include(
             &mut evidence.context_lines,
             "through macro expansion:".to_string(),
         );
-        let visible = summarize_frames(request, node, &chain.frames, frame_limit);
+        let unique_count = dedup_frames(&chain.frames).len();
+        let visible = summarize_macro_frames(request, node, &chain.frames, frame_limit);
         for frame in &visible {
             push_unique(&mut evidence.context_lines, format!("  - {frame}"));
         }
-        let unique_count = dedup_frames(&chain.frames).len();
         if unique_count > visible.len() {
             push_unique(
                 &mut evidence.context_lines,
@@ -186,11 +186,11 @@ fn summarize_macro_include(
             &mut evidence.context_lines,
             "from include chain:".to_string(),
         );
-        let visible = summarize_frames(request, node, &chain.frames, frame_limit);
+        let unique_count = dedup_frames(&chain.frames).len();
+        let visible = summarize_include_frames(request, node, &chain.frames, frame_limit);
         for frame in &visible {
             push_unique(&mut evidence.context_lines, format!("  - {frame}"));
         }
-        let unique_count = dedup_frames(&chain.frames).len();
         if unique_count > visible.len() {
             push_unique(
                 &mut evidence.context_lines,
@@ -231,6 +231,7 @@ fn summarize_overload(
             let location = best_location(request, child)
                 .map(|location| format!(" at {}", format_location(request, location)))
                 .unwrap_or_default();
+            let candidate_like = note_is_candidate_like(&note);
             let rendered = if conservative && note.starts_with("candidate ") {
                 format!("{note}{location}")
             } else if conservative {
@@ -240,31 +241,41 @@ fn summarize_overload(
             } else {
                 format!("because: {note}")
             };
-            Some((child_rank(request, child), index, rendered))
+            Some((child_rank(request, child), index, rendered, candidate_like))
         })
         .collect::<Vec<_>>();
     rendered.sort_by(|left, right| right.0.cmp(&left.0).then_with(|| left.1.cmp(&right.1)));
 
     let mut unique_rendered = Vec::new();
-    for (_, _, line) in rendered {
-        push_unique(&mut unique_rendered, line);
+    for (_, _, line, candidate_like) in rendered {
+        if !unique_rendered
+            .iter()
+            .any(|(existing, _)| existing == &line)
+        {
+            unique_rendered.push((line, candidate_like));
+        }
     }
 
     let visible = unique_rendered
         .iter()
         .take(note_limit)
-        .cloned()
+        .map(|(line, _)| line.clone())
         .collect::<Vec<_>>();
     for line in &visible {
         push_unique(&mut evidence.context_lines, line.clone());
     }
     if unique_rendered.len() > visible.len() {
+        let omitted = unique_rendered.len() - visible.len();
+        let candidate_only = unique_rendered
+            .iter()
+            .all(|(_, candidate_like)| *candidate_like);
         push_unique(
             &mut evidence.context_lines,
-            format!(
-                "omitted {} other overload notes",
-                unique_rendered.len() - visible.len()
-            ),
+            if candidate_only {
+                format!("omitted {omitted} other overload candidates")
+            } else {
+                format!("omitted {omitted} other overload notes")
+            },
         );
     }
 
@@ -388,6 +399,92 @@ fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> Supporti
     evidence
 }
 
+fn summarize_template_frames(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<String> {
+    let unique = if matches!(
+        request.profile,
+        RenderProfile::Verbose | RenderProfile::Debug
+    ) {
+        dedup_frames(frames)
+    } else {
+        compress_template_frames(dedup_frames(frames))
+    };
+    if unique.is_empty() || frame_limit == 0 {
+        return Vec::new();
+    }
+    select_template_frame_indices(request, node, &unique, frame_limit)
+        .into_iter()
+        .map(|index| format_frame(&unique[index]))
+        .collect()
+}
+
+fn summarize_macro_frames(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<String> {
+    summarize_family_frames(
+        request,
+        node,
+        &dedup_frames(frames),
+        frame_limit,
+        select_macro_frame_indices,
+    )
+}
+
+fn summarize_include_frames(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<String> {
+    summarize_family_frames(
+        request,
+        node,
+        &dedup_frames(frames),
+        frame_limit,
+        select_include_frame_indices,
+    )
+}
+
+fn summarize_family_frames(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+    selector: fn(&RenderRequest, &DiagnosticNode, &[ContextFrame], usize) -> Vec<usize>,
+) -> Vec<String> {
+    if frames.is_empty() || frame_limit == 0 {
+        return Vec::new();
+    }
+    selector(request, node, frames, frame_limit)
+        .into_iter()
+        .map(|index| format_frame(&frames[index]))
+        .collect()
+}
+
+fn compress_template_frames(frames: Vec<ContextFrame>) -> Vec<ContextFrame> {
+    let mut compressed: Vec<ContextFrame> = Vec::new();
+    for frame in frames {
+        let slot = compressed.iter().position(|existing| {
+            existing.path == frame.path && existing.line == frame.line && existing.line.is_some()
+        });
+        if let Some(slot) = slot {
+            if template_frame_priority(&frame) > template_frame_priority(&compressed[slot]) {
+                compressed[slot] = frame;
+            }
+        } else {
+            compressed.push(frame);
+        }
+    }
+    compressed
+}
+
 fn summarize_frames(
     request: &RenderRequest,
     node: &DiagnosticNode,
@@ -482,6 +579,162 @@ fn format_frame(frame: &ContextFrame) -> String {
     }
     rendered.push_str(&label);
     rendered
+}
+
+fn select_template_frame_indices(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<usize> {
+    if frames.is_empty() || frame_limit == 0 {
+        return Vec::new();
+    }
+    let user_indices = user_owned_frame_indices(request, node, frames);
+    let frontier = user_indices.first().copied().unwrap_or(0);
+    let mut selected = Vec::new();
+
+    push_index(&mut selected, frontier);
+    for index in user_indices.iter().copied().skip(1) {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    if frontier > 0 {
+        push_index(&mut selected, frontier - 1);
+    }
+    push_index(&mut selected, 0);
+    push_index(&mut selected, frames.len().saturating_sub(1));
+    for index in frontier + 1..frames.len() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    for index in (0..frontier).rev() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    selected.truncate(frame_limit);
+    selected
+}
+
+fn select_macro_frame_indices(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<usize> {
+    if frames.is_empty() || frame_limit == 0 {
+        return Vec::new();
+    }
+    let user_indices = user_owned_frame_indices(request, node, frames);
+    let boundary = user_indices
+        .last()
+        .copied()
+        .unwrap_or(frames.len().saturating_sub(1));
+    let mut selected = Vec::new();
+
+    push_index(&mut selected, boundary);
+    if boundary > 0 {
+        push_index(&mut selected, boundary - 1);
+    }
+    push_index(&mut selected, 0);
+    for index in (0..boundary).rev() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    for index in boundary + 1..frames.len() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    selected.truncate(frame_limit);
+    selected
+}
+
+fn select_include_frame_indices(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+    frame_limit: usize,
+) -> Vec<usize> {
+    if frames.is_empty() || frame_limit == 0 {
+        return Vec::new();
+    }
+    let user_indices = user_owned_frame_indices(request, node, frames);
+    let boundary = user_indices
+        .last()
+        .copied()
+        .unwrap_or(frames.len().saturating_sub(1));
+    let mut selected = Vec::new();
+
+    push_index(&mut selected, 0);
+    push_index(&mut selected, boundary);
+    if boundary > 0 {
+        push_index(&mut selected, boundary - 1);
+    }
+    push_index(&mut selected, frames.len().saturating_sub(1));
+    for index in 0..frames.len() {
+        push_index(&mut selected, index);
+        if selected.len() == frame_limit {
+            return selected;
+        }
+    }
+    selected.truncate(frame_limit);
+    selected
+}
+
+fn user_owned_frame_indices(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+    frames: &[ContextFrame],
+) -> Vec<usize> {
+    frames
+        .iter()
+        .enumerate()
+        .filter_map(|(index, frame)| {
+            frame
+                .path
+                .as_deref()
+                .filter(|path| is_user_owned_path(request, node, path))
+                .map(|_| index)
+        })
+        .collect()
+}
+
+fn template_frame_priority(frame: &ContextFrame) -> u8 {
+    let label = frame.label.to_ascii_lowercase();
+    if label.contains("deduced conflicting")
+        || label.contains("mismatched types")
+        || label.contains("no known conversion")
+        || label.contains("cannot convert")
+        || label.contains("invalid conversion")
+    {
+        4
+    } else if label.contains("candidate ") {
+        3
+    } else if label.contains("required from here") || label.contains("instantiated from here") {
+        2
+    } else if label.contains("deduction/substitution failed") {
+        1
+    } else {
+        2
+    }
+}
+
+fn note_is_candidate_like(note: &str) -> bool {
+    let note = note.trim_start();
+    note.starts_with("candidate ")
+        || note.starts_with("candidate:")
+        || note.contains("candidate expects")
+        || note.contains("conversion candidate")
 }
 
 fn child_rank(request: &RenderRequest, node: &DiagnosticNode) -> u8 {
@@ -1098,6 +1351,195 @@ mod tests {
         assert_eq!(constrained_template_frames(&request, 30, true), 6);
         assert_eq!(constrained_candidate_notes(&request, 20, true), 3);
         assert_eq!(linker_object_limit(&request, true), 2);
+    }
+
+    #[test]
+    fn template_frontier_compaction_leads_with_first_user_owned_frame() {
+        let request = sample_request();
+        let mut node = sample_node("template");
+        node.context_chains = vec![ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: vec![
+                ContextFrame {
+                    label: "candidate 1: 'template<class T> Widget(T)'".to_string(),
+                    path: Some("/usr/include/c++/15/widget".to_string()),
+                    line: Some(18),
+                    column: Some(5),
+                },
+                ContextFrame {
+                    label: "candidate 2: 'template<class U> Widget(U)'".to_string(),
+                    path: Some("/usr/include/c++/15/widget".to_string()),
+                    line: Some(18),
+                    column: Some(9),
+                },
+                ContextFrame {
+                    label: "template argument deduction/substitution failed:".to_string(),
+                    path: Some("/usr/include/c++/15/widget".to_string()),
+                    line: Some(18),
+                    column: Some(11),
+                },
+                ContextFrame {
+                    label: "deduced conflicting types for parameter 'T' ('int' and 'const char*')"
+                        .to_string(),
+                    path: Some("src/main.cpp".to_string()),
+                    line: Some(25),
+                    column: Some(13),
+                },
+                ContextFrame {
+                    label: "required from here".to_string(),
+                    path: Some("src/app.cpp".to_string()),
+                    line: Some(9),
+                    column: Some(7),
+                },
+            ],
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert_eq!(evidence.context_lines[0], "while instantiating:");
+        assert_eq!(
+            evidence.context_lines[1],
+            "  - src/main.cpp:25:13 deduced conflicting types for parameter 'T' ('int' and 'const char*')"
+        );
+        assert_eq!(
+            evidence.context_lines[2],
+            "  - src/app.cpp:9:7 required from here"
+        );
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line.contains("omitted 2 internal template frames"))
+        );
+        assert!(
+            !evidence
+                .context_lines
+                .iter()
+                .any(|line| line.contains("candidate 2"))
+        );
+    }
+
+    #[test]
+    fn macro_frontier_compaction_shows_user_invocation_before_inner_expansion() {
+        let request = sample_request();
+        let mut node = sample_node("macro_include");
+        node.context_chains = vec![ContextChain {
+            kind: ContextChainKind::MacroExpansion,
+            frames: vec![
+                ContextFrame {
+                    label: "in expansion of macro 'INNER_ACCESS'".to_string(),
+                    path: Some("src/config.h".to_string()),
+                    line: Some(2),
+                    column: Some(29),
+                },
+                ContextFrame {
+                    label: "in expansion of macro 'OUTER_ACCESS'".to_string(),
+                    path: Some("src/wrapper.h".to_string()),
+                    line: Some(7),
+                    column: Some(11),
+                },
+                ContextFrame {
+                    label: "in expansion of macro 'FETCH_VALUE'".to_string(),
+                    path: Some("src/main.c".to_string()),
+                    line: Some(9),
+                    column: Some(12),
+                },
+            ],
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert_eq!(evidence.context_lines[0], "through macro expansion:");
+        assert_eq!(
+            evidence.context_lines[1],
+            "  - src/main.c:9:12 in expansion of macro 'FETCH_VALUE'"
+        );
+        assert_eq!(
+            evidence.context_lines[2],
+            "  - src/wrapper.h:7:11 in expansion of macro 'OUTER_ACCESS'"
+        );
+    }
+
+    #[test]
+    fn include_frontier_compaction_keeps_user_boundary_visible() {
+        let request = sample_request();
+        let mut node = sample_node("macro_include");
+        node.context_chains = vec![ContextChain {
+            kind: ContextChainKind::Include,
+            frames: vec![
+                ContextFrame {
+                    label: "In file included from /usr/include/project/detail.hpp:1,".to_string(),
+                    path: Some("/usr/include/project/detail.hpp".to_string()),
+                    line: Some(1),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "from src/wrapper.h:1:".to_string(),
+                    path: Some("src/wrapper.h".to_string()),
+                    line: Some(1),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "from src/main.c:2:".to_string(),
+                    path: Some("src/main.c".to_string()),
+                    line: Some(2),
+                    column: Some(1),
+                },
+            ],
+        }];
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert_eq!(evidence.context_lines[0], "from include chain:");
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| { line.contains("/usr/include/project/detail.hpp") })
+        );
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line.contains("src/main.c:2:1"))
+        );
+    }
+
+    #[test]
+    fn overload_candidate_flood_uses_candidate_specific_omission_notice() {
+        let request = sample_request();
+        let mut node = sample_node("type_overload");
+        node.children = (1..=5)
+            .map(|index| {
+                let mut child = sample_node("type_overload");
+                child.id = format!("candidate-{index}");
+                child.severity = Severity::Note;
+                child.semantic_role = SemanticRole::Candidate;
+                child.locations = vec![
+                    Location::caret(
+                        format!("src/candidate_{index}.hpp"),
+                        index,
+                        3,
+                        diag_core::LocationRole::Primary,
+                    )
+                    .with_ownership(Ownership::User, "user_workspace"),
+                ];
+                child.message.raw_text = format!("candidate {index}: 'void set_limit(value_type)'");
+                child.children = Vec::new();
+                child.context_chains = Vec::new();
+                child.analysis = None;
+                child
+            })
+            .collect();
+
+        let evidence = summarize_supporting_evidence(&request, &node);
+
+        assert!(
+            evidence
+                .context_lines
+                .iter()
+                .any(|line| line == "omitted 2 other overload candidates")
+        );
     }
 
     #[test]

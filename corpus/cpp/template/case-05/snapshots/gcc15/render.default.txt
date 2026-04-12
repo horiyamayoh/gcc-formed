@@ -7,7 +7,6 @@ why: no matching function for call to 'combine(int, const char [2])'
 |     ^
 while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
-  - src/main.cpp:2:6 template argument deduction/substitution failed:
   - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
-  - src/main.cpp:5:12 deduced conflicting types for parameter 'T' ('int' and 'const char*')
+omitted 3 internal template frames
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

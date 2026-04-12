@@ -7,7 +7,6 @@ why: no matching function for call to 'takes_same(int, double)'
 |              ^
 while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void takes_same(T, T)'
-  - src/main.cpp:2:6 template argument deduction/substitution failed:
   - src/main.cpp:4:14 deduced conflicting types for parameter 'T' ('int' and 'double')
-  - src/main.cpp:4:24 deduced conflicting types for parameter 'T' ('int' and 'double')
+omitted 3 internal template frames
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

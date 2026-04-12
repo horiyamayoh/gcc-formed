@@ -7,7 +7,7 @@ why: class template argument deduction failed:
 |                      ^
 while instantiating:
   - src/main.cpp:3:5 candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'
-  - src/main.cpp:3:5 template argument deduction/substitution failed:
   - src/main.cpp:7:22 deduced conflicting types for parameter 'T' ('int' and 'const char*')
   - src/main.cpp:2:8 candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'
+omitted 1 internal template frames
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

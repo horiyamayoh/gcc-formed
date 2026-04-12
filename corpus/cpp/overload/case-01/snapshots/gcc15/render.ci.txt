@@ -6,5 +6,5 @@ why: no matching function for call to 'takes(int)'
 |     ^
 because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6
 because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6
-omitted 2 other overload notes
+omitted 2 other overload candidates
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

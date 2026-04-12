@@ -10,7 +10,7 @@
         "because: candidate 1: 'void takes(int, int)' at src/main.cpp:1:6",
         "because: candidate expects 2 arguments, 1 provided at src/main.cpp:1:6",
         "because: candidate 2: 'void takes(double, double)' at src/main.cpp:2:6",
-        "omitted 1 other overload notes"
+        "omitted 1 other overload candidates"
       ],
       "excerpts": [
         {

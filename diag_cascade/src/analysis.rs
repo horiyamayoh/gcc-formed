@@ -650,24 +650,25 @@ fn lead_index_for_component(
         .iter()
         .copied()
         .filter(|index| selection[*index].accepted.is_none())
-        .max_by(|left, right| {
-            roots[*left]
-                .score
-                .total_cmp(&roots[*right].score)
-                .then_with(|| right.cmp(left))
-        })
+        .max_by(|left, right| compare_lead_candidate(*left, *right, roots))
         .unwrap_or_else(|| {
             component
                 .iter()
                 .copied()
-                .max_by(|left, right| {
-                    roots[*left]
-                        .score
-                        .total_cmp(&roots[*right].score)
-                        .then_with(|| right.cmp(left))
-                })
+                .max_by(|left, right| compare_lead_candidate(*left, *right, roots))
                 .unwrap_or(0)
         })
+}
+
+fn compare_lead_candidate(
+    left: usize,
+    right: usize,
+    roots: &[RootAssessment],
+) -> std::cmp::Ordering {
+    roots[left]
+        .score
+        .total_cmp(&roots[right].score)
+        .then_with(|| right.cmp(&left))
 }
 
 fn component_for_index(components: &[Vec<usize>], index: usize) -> &[usize] {
@@ -1023,4 +1024,70 @@ fn clamp01(score: f32) -> f32 {
 
 fn score(value: f32) -> Score {
     clamp01(value).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lead_index_prefers_earlier_group_when_scores_tie() {
+        let component = vec![1, 4, 9];
+        let selection = vec![
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+            ParentSelection::default(),
+        ];
+        let roots = vec![
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.84,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.84,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.10,
+                evidence_tags: BTreeSet::new(),
+            },
+            RootAssessment {
+                score: 0.84,
+                evidence_tags: BTreeSet::new(),
+            },
+        ];
+
+        assert_eq!(lead_index_for_component(&component, &selection, &roots), 1);
+    }
 }

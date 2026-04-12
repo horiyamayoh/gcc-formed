@@ -153,13 +153,7 @@ pub fn derive_canonical_anchor(node: &DiagnosticNode, keys: &GroupKeySet) -> Can
             column: Some(location.column()),
         };
     }
-    if let Some(anchor) = frontier_anchor(node, ContextChainKind::TemplateInstantiation) {
-        return anchor;
-    }
-    if let Some(anchor) = frontier_anchor(node, ContextChainKind::MacroExpansion) {
-        return anchor;
-    }
-    if let Some(anchor) = frontier_anchor(node, ContextChainKind::Include) {
+    if let Some(anchor) = preferred_frontier_anchor(node) {
         return anchor;
     }
     if keys.symbol_key.is_some() {
@@ -346,6 +340,9 @@ fn frontier_key(node: &DiagnosticNode, kind: ContextChainKind) -> Option<String>
 }
 
 fn first_frontier_path_key(node: &DiagnosticNode) -> Option<String> {
+    if let Some((path, _, _, _)) = preferred_frontier_frame(node) {
+        return Some(path);
+    }
     for kind in [
         ContextChainKind::TemplateInstantiation,
         ContextChainKind::MacroExpansion,
@@ -358,8 +355,8 @@ fn first_frontier_path_key(node: &DiagnosticNode) -> Option<String> {
     None
 }
 
-fn frontier_anchor(node: &DiagnosticNode, kind: ContextChainKind) -> Option<CanonicalAnchor> {
-    let (path, line, column) = first_frontier_frame(node, kind.clone())?;
+fn preferred_frontier_anchor(node: &DiagnosticNode) -> Option<CanonicalAnchor> {
+    let (path, line, column, kind) = preferred_frontier_frame(node)?;
     Some(CanonicalAnchor {
         source: match kind {
             ContextChainKind::TemplateInstantiation => AnchorSource::TemplateFrontier,
@@ -371,6 +368,29 @@ fn frontier_anchor(node: &DiagnosticNode, kind: ContextChainKind) -> Option<Cano
         line,
         column,
     })
+}
+
+fn preferred_frontier_frame(
+    node: &DiagnosticNode,
+) -> Option<(String, Option<u32>, Option<u32>, ContextChainKind)> {
+    let frontier_kinds = [
+        ContextChainKind::TemplateInstantiation,
+        ContextChainKind::MacroExpansion,
+        ContextChainKind::Include,
+    ];
+    frontier_kinds
+        .iter()
+        .find_map(|kind| {
+            first_frontier_frame(node, kind.clone()).and_then(|(path, line, column)| {
+                is_probably_user_path_key(&path).then_some((path, line, column, kind.clone()))
+            })
+        })
+        .or_else(|| {
+            frontier_kinds.iter().find_map(|kind| {
+                first_frontier_frame(node, kind.clone())
+                    .map(|(path, line, column)| (path, line, column, kind.clone()))
+            })
+        })
 }
 
 fn first_frontier_frame(
@@ -398,6 +418,17 @@ fn frontier_key_from_parts(path: &str, line: Option<u32>) -> String {
         Some(line) => format!("{path}:{line}"),
         None => path.to_string(),
     }
+}
+
+fn is_probably_user_path_key(path: &str) -> bool {
+    let path = path.trim();
+    !path.is_empty()
+        && !path.starts_with("/usr/")
+        && !path.starts_with("/opt/")
+        && !path.starts_with('<')
+        && !path.contains("/include/c++/")
+        && !path.contains("/lib/gcc/")
+        && (path.starts_with("./") || path.starts_with("../") || !path.starts_with('/'))
 }
 
 fn related_object_translation_unit_key(node: &DiagnosticNode) -> Option<String> {
