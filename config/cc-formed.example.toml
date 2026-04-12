@@ -10,6 +10,7 @@ schema_version = 1
 profile = "default"
 path_policy = "relative_to_cwd"
 debug_refs = "none"
+# opt-in Presentation V2 preset under review; current runtime default stays legacy_v1.
 # presentation = "subject_blocks_v1"
 # compatibility alias accepted by the current loader:
 # presentation_preset = "subject_blocks_v1"

@@ -3,6 +3,7 @@ title: duplicate global definition in one translation unit
 tags:
   - redefinition
   - phase1
+  - 'presentation:subject_blocks_v1'
 ownership: curated
 provenance: hand-authored
 reviewer: codex

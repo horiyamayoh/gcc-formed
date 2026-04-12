@@ -1,0 +1,88 @@
+{
+  "cards": [
+    {
+      "display_family": "linker",
+      "group_id": "group-c37207e6ba9e",
+      "internal_family": "linker.multiple_definition",
+      "presentation": {
+        "display_family": "linker",
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "linker_block"
+      },
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "remove the duplicate definition or make the symbol internal to one translation unit"
+        },
+        {
+          "label": "symbol",
+          "slot": "symbol",
+          "value": "duplicate"
+        },
+        {
+          "label": "from",
+          "slot": "from",
+          "value": "helper.c:(.text+0x0)"
+        }
+      ],
+      "subject": "multiple definition of `duplicate`",
+      "title": "multiple definition of `duplicate`"
+    },
+    {
+      "group_id": "group-ac2f5a684011",
+      "internal_family": "collect2_summary",
+      "presentation": {
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "generic_block"
+      },
+      "raw_message": "collect2: error: ld returned 1 exit status",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "inspect the linker diagnostics immediately above this summary"
+        },
+        {
+          "label": "why",
+          "slot": "why_raw",
+          "value": "collect2: error: ld returned 1 exit status"
+        }
+      ],
+      "subject": "driver reported a linker failure summary",
+      "title": "driver reported a linker failure summary"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

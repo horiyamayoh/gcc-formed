@@ -17,6 +17,7 @@ mod formatter;
 mod layout;
 mod path;
 mod presentation;
+mod presentation_snapshot;
 mod selector;
 mod suggestion;
 mod theme;
@@ -34,6 +35,11 @@ pub use presentation::{
     LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation,
     ResolvedLocationPolicy, ResolvedPresentationPolicy, ResolvedTemplate, ResolvedTemplateLine,
     SemanticSlotId, SessionMode,
+};
+/// Re-exported internal presentation snapshot types for corpus/debug artifacts.
+pub use presentation_snapshot::{
+    RenderPresentationCard, RenderPresentationSessionSummary, RenderPresentationSlot,
+    RenderPresentationSnapshot, RenderPresentationSummaryOnlyGroup,
 };
 /// Selects and ranks diagnostic groups for rendering.
 pub use selector::{select_groups, select_groups_with_presentation_policy};
@@ -303,6 +309,29 @@ pub fn build_view_model_with_presentation_policy(
             presentation_policy,
         ))
     }
+}
+
+/// Builds the internal presentation snapshot for the default legacy preset.
+pub fn build_presentation_snapshot(request: &RenderRequest) -> Option<RenderPresentationSnapshot> {
+    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    build_presentation_snapshot_with_presentation_policy(request, &presentation_policy)
+}
+
+/// Builds an internal presentation snapshot using an explicit resolved presentation policy.
+pub fn build_presentation_snapshot_with_presentation_policy(
+    request: &RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
+) -> Option<RenderPresentationSnapshot> {
+    build_view_model_with_presentation_policy(request, presentation_policy)
+        .map(|view_model| presentation_snapshot_from_view_model(&view_model, presentation_policy))
+}
+
+/// Converts an existing view model into the internal presentation snapshot artifact.
+pub fn presentation_snapshot_from_view_model(
+    view_model: &RenderViewModel,
+    presentation_policy: &ResolvedPresentationPolicy,
+) -> RenderPresentationSnapshot {
+    presentation_snapshot::from_view_model(view_model, presentation_policy)
 }
 
 #[cfg(test)]
@@ -731,6 +760,46 @@ mod tests {
         assert_eq!(
             default_output.displayed_group_refs,
             explicit_output.displayed_group_refs
+        );
+    }
+
+    #[test]
+    fn subject_blocks_presentation_snapshot_records_template_and_slots() {
+        let request = sample_request();
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+
+        let snapshot =
+            build_presentation_snapshot_with_presentation_policy(&request, &subject_blocks)
+                .unwrap();
+
+        assert_eq!(snapshot.preset_id, "subject_blocks_v1");
+        assert_eq!(
+            snapshot.summary.policy_session_mode,
+            SessionMode::AllVisibleBlocks
+        );
+        assert_eq!(
+            snapshot.summary.resolved_session_mode,
+            SessionMode::AllVisibleBlocks
+        );
+        assert_eq!(snapshot.cards.len(), 1);
+        assert_eq!(snapshot.cards[0].presentation.template_id, "parser_block");
+        assert_eq!(snapshot.cards[0].subject, "syntax error");
+        assert_eq!(snapshot.cards[0].display_family.as_deref(), Some("syntax"));
+        assert_eq!(
+            snapshot.cards[0]
+                .slots
+                .iter()
+                .find(|slot| slot.slot == SemanticSlotId::Want)
+                .map(|slot| slot.value.as_str()),
+            Some(";")
+        );
+        assert_eq!(
+            snapshot.cards[0]
+                .slots
+                .iter()
+                .find(|slot| slot.slot == SemanticSlotId::Near)
+                .map(|slot| slot.value.as_str()),
+            Some("} token")
         );
     }
 

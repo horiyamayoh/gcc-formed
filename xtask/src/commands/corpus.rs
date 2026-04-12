@@ -14,8 +14,10 @@ use diag_core::{
 use diag_enrich::enrich_document;
 use diag_public_export::{PublicExportContext, export_from_document};
 use diag_render::{
-    DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest, SourceExcerptPolicy,
-    StreamKind, TypeDisplayPolicy, WarningVisibility, build_view_model, render,
+    DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest,
+    ResolvedPresentationPolicy, SourceExcerptPolicy, StreamKind, TypeDisplayPolicy,
+    WarningVisibility, build_view_model, build_view_model_with_presentation_policy,
+    presentation_snapshot_from_view_model, render, render_with_presentation_policy,
 };
 use diag_testkit::{
     ExpectedFallback, Fixture, RenderProfileExpectations, SnapshotDiffKind,
@@ -33,6 +35,7 @@ use std::time::Instant;
 
 pub(crate) const PUBLIC_EXPORT_SCHEMA_FINGERPRINT_ARTIFACT: &str =
     "public.export.schema-shape-fingerprint.txt";
+pub(crate) const SUBJECT_BLOCKS_V1_PRESET_ID: &str = "subject_blocks_v1";
 
 pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/partial/case-01",
@@ -1047,6 +1050,14 @@ pub(crate) fn verify_promoted_fixture(fixture: &Fixture) -> Result<(), Verificat
                 .map(|location| location.path_raw()),
         )?;
     }
+    for (relative, contents) in presentation_snapshot_artifacts_for_fixture(fixture, &replay)? {
+        verify_snapshot_file(
+            fixture,
+            &relative.replace('/', "."),
+            &fixture.snapshot_root().join(&relative),
+            &contents,
+        )?;
+    }
 
     if let Some(perf) = fixture.expectations.performance.parse_time_ms_max
         && replay.parse_time_ms > perf
@@ -1217,6 +1228,9 @@ pub(crate) fn materialize_fixture_snapshots(
         );
         artifacts.insert(format!("render.{profile_name}.txt"), render_result.text);
     }
+    artifacts.extend(presentation_snapshot_artifacts_for_fixture(
+        fixture, &replay,
+    )?);
 
     let mut artifact_diffs = Vec::new();
     let mut pending_failure = None;
@@ -1248,6 +1262,13 @@ pub(crate) fn materialize_fixture_snapshots(
             continue;
         }
         let path = snapshot_root.join(relative);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|error| VerificationFailure {
+                layer: "snapshot_write".to_string(),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: format!("{}: {error}", parent.display()),
+            })?;
+        }
         if !check {
             fs::write(&path, contents).map_err(|error| VerificationFailure {
                 layer: "snapshot_write".to_string(),
@@ -1665,6 +1686,92 @@ pub(crate) fn render_request_for_fixture(
         type_display_policy: TypeDisplayPolicy::CompactSafe,
         source_excerpt_policy: SourceExcerptPolicy::Auto,
     }
+}
+
+pub(crate) fn presentation_snapshot_artifacts_for_fixture(
+    fixture: &Fixture,
+    replay: &ReplayOutcomeAndDocument,
+) -> Result<BTreeMap<String, String>, VerificationFailure> {
+    let mut artifacts = BTreeMap::new();
+    for preset_id in fixture.presentation_snapshot_presets() {
+        match preset_id.as_str() {
+            SUBJECT_BLOCKS_V1_PRESET_ID => artifacts.extend(subject_blocks_v1_snapshot_artifacts(
+                fixture,
+                &replay.document,
+            )?),
+            _ => {
+                return Err(VerificationFailure {
+                    layer: "presentation".to_string(),
+                    fixture_id: fixture.fixture_id().to_string(),
+                    summary: format!("unsupported presentation snapshot preset `{preset_id}`"),
+                });
+            }
+        }
+    }
+    Ok(artifacts)
+}
+
+pub(crate) fn subject_blocks_v1_snapshot_artifacts(
+    fixture: &Fixture,
+    document: &DiagnosticDocument,
+) -> Result<BTreeMap<String, String>, VerificationFailure> {
+    let policy = ResolvedPresentationPolicy::subject_blocks_v1();
+    let request = render_request_for_fixture(fixture, document, RenderProfile::Default);
+    let view_model =
+        build_view_model_with_presentation_policy(&request, &policy).ok_or_else(|| {
+            VerificationFailure {
+                layer: format!("presentation.{SUBJECT_BLOCKS_V1_PRESET_ID}"),
+                fixture_id: fixture.fixture_id().to_string(),
+                summary: "subject_blocks_v1 produced no renderable view model".to_string(),
+            }
+        })?;
+    let render_result =
+        render_with_presentation_policy(request, &policy).map_err(|error| VerificationFailure {
+            layer: format!("render.{SUBJECT_BLOCKS_V1_PRESET_ID}.default"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.to_string(),
+        })?;
+    if render_result.used_fallback {
+        return Err(VerificationFailure {
+            layer: format!("render.{SUBJECT_BLOCKS_V1_PRESET_ID}.default"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "subject_blocks_v1 unexpectedly fell back{}",
+                render_result
+                    .fallback_reason
+                    .map(|reason| format!(" ({reason})"))
+                    .unwrap_or_default()
+            ),
+        });
+    }
+
+    let presentation_snapshot = presentation_snapshot_from_view_model(&view_model, &policy);
+    let cluster_root = fixture.presentation_snapshot_root(SUBJECT_BLOCKS_V1_PRESET_ID);
+    let mut artifacts = BTreeMap::new();
+    artifacts.insert(
+        format!("{SUBJECT_BLOCKS_V1_PRESET_ID}/view.default.json"),
+        canonical_json_for_view_model(Some(&view_model)).map_err(|error| VerificationFailure {
+            layer: format!("view.{SUBJECT_BLOCKS_V1_PRESET_ID}.default"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error.to_string(),
+        })?,
+    );
+    artifacts.insert(
+        format!("{SUBJECT_BLOCKS_V1_PRESET_ID}/render.default.txt"),
+        render_result.text,
+    );
+    artifacts.insert(
+        format!("{SUBJECT_BLOCKS_V1_PRESET_ID}/render.presentation.json"),
+        diag_core::canonical_json(&presentation_snapshot).map_err(|error| VerificationFailure {
+            layer: format!("presentation.{SUBJECT_BLOCKS_V1_PRESET_ID}"),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!(
+                "{}: {error}",
+                cluster_root.join("render.presentation.json").display()
+            ),
+        })?,
+    );
+    Ok(artifacts)
 }
 
 pub(crate) fn verify_semantic_expectations(

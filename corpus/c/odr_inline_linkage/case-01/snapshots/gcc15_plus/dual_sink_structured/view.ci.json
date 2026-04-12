@@ -2,8 +2,13 @@
   "cards": [
     {
       "canonical_location": "src/main.c:1:5",
-      "child_notes": [],
-      "collapsed_notices": [],
+      "child_notes": [
+        "src/helper.c:1:6: note: return value type mismatch",
+        "src/helper.c:1:6: note: type 'long int' should match type 'int'"
+      ],
+      "collapsed_notices": [
+        "omitted 2 additional note(s)"
+      ],
       "confidence_label": "certain",
       "confidence_notice": null,
       "context_lines": [],
@@ -20,13 +25,13 @@
       ],
       "family": "odr_inline_linkage",
       "first_action": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
-      "group_id": "residual-compiler-0",
+      "group_id": "group-a5fdd288eb9b",
       "matched_conditions": [
         "message_contains=does not match original declaration",
         "message_contains=lto-type-mismatch",
         "phase=link"
       ],
-      "raw_message": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]",
+      "raw_message": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^",
       "raw_sub_block": [
         "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]"
       ],

@@ -19,6 +19,7 @@ why: src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-
 |               ^
 raw:
   src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]
+      6 |     takes_ref(value);
 other errors:
   - src/main.cpp:6:15: error: type or overload mismatch
   - src/main.cpp:6:15: error: invalid pointer or reference operation

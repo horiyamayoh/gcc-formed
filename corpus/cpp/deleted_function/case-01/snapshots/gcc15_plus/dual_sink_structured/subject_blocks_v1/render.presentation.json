@@ -1,0 +1,127 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:10:5",
+      "display_family": "unavailable_api",
+      "group_id": "group-c2ba4f91897a",
+      "internal_family": "deleted_function",
+      "presentation": {
+        "display_family": "unavailable_api",
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "lookup_block"
+      },
+      "raw_message": "use of deleted function 'NoCopy::NoCopy(const NoCopy&)'",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "check whether the type is movable/copyable, or provide the required special member"
+        },
+        {
+          "label": "name",
+          "slot": "name",
+          "value": "NoCopy::NoCopy(const NoCopy&)"
+        },
+        {
+          "label": "use",
+          "slot": "use",
+          "value": "take(value);"
+        },
+        {
+          "label": "from",
+          "slot": "from",
+          "value": "src/main.cpp:3:5 NoCopy(const NoCopy&) = delete;"
+        }
+      ],
+      "subject": "use of a deleted or unavailable function",
+      "title": "use of a deleted or unavailable function"
+    },
+    {
+      "canonical_location": "src/main.cpp:10:5",
+      "display_family": "type_mismatch",
+      "group_id": "group-bf691203aed4",
+      "internal_family": "type_overload",
+      "presentation": {
+        "display_family": "type_mismatch",
+        "fell_back_to_generic_template": true,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "generic_block"
+      },
+      "raw_message": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates",
+      "severity": "note",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "compare the expected type and actual argument at the call site"
+        },
+        {
+          "label": "why",
+          "slot": "why_raw",
+          "value": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates"
+        }
+      ],
+      "subject": "type or overload mismatch",
+      "title": "type or overload mismatch"
+    },
+    {
+      "canonical_location": "src/main.cpp:6:11",
+      "group_id": "group-d84feff7273f",
+      "internal_family": "unknown",
+      "presentation": {
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "generic_block"
+      },
+      "raw_message": "initializing argument 1 of 'void take(NoCopy)'",
+      "severity": "note",
+      "slots": [
+        {
+          "label": "why",
+          "slot": "why_raw",
+          "value": "initializing argument 1 of 'void take(NoCopy)'"
+        }
+      ],
+      "subject": "initializing argument 1 of 'void take(NoCopy)'",
+      "title": "initializing argument 1 of 'void take(NoCopy)'"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "cards": [
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker.multiple_definition",
+      "first_action": "remove the duplicate definition or make the symbol internal to one translation unit",
+      "group_id": "group-c37207e6ba9e",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "symbol_context=present",
+        "message_contains=multiple definition",
+        "existing_specific_family=linker.multiple_definition"
+      ],
+      "raw_message": "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here",
+      "raw_sub_block": [
+        "helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "multiple definition of `duplicate`"
+    },
+    {
+      "canonical_location": null,
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "family": "collect2_summary",
+      "first_action": "inspect the linker diagnostics immediately above this summary",
+      "group_id": "group-ac2f5a684011",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "existing_specific_family=collect2_summary"
+      ],
+      "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "driver reported a linker failure summary"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

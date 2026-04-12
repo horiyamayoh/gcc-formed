@@ -18,6 +18,7 @@ why: src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-doubl
 |     ^
 raw:
   src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]
+      6 |     free(ptr);
 other warnings:
   - src/main.c:6:5: warning: pointer 'ptr' used after 'free'
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -100,9 +100,9 @@
         "rule_id": "rule.family.exception_handling.message_terms"
       },
       "fingerprints": {
-        "family": "a8ab64141dea058bc8b4d88677d94290e41147b3a2aaccab14508be9637c396a",
-        "raw": "8e17a96b89c0699f3dc3532d00080da918c3d6b283abebb8d89afb3520513882",
-        "structural": "94728b8da5c867856c56160df5fcfab78855d7b9bebda1f7582fff3f0e5e0da7"
+        "family": "670f7ad14d9a2b21399d202caf961916bdeac46b0e2819fd90df46d0d3e1938a",
+        "raw": "47ca9094f3029091cb6484d955d52847d3ffb39ce69b5f582b30f5804634630f",
+        "structural": "f3c4aef798075d6e59bb314af6eab71ec87617fc2eccccb4d40b650e0399f627"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -129,7 +129,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable"
+        "raw_text": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\nsrc/main.cpp: In function 'void f()':\n    2 |     throw 1;\n      |           ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -217,8 +217,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b60e439f34400a5057db80fa2712aa30ed430e3201171322ae0fad7698a6c311",
-    "raw": "12a99a5fba32ec54d08d9c35ea246a30b6f570a8082c70264b7e726221ebcf9d",
-    "structural": "a1df92d988bc0dccf34c10b91d48d23f84c44a705fbaa9a8dff57e8651d4ff75"
+    "raw": "da1150a494282f8ef02410793eaeac50f2fc294a01572efcaa63116e587cec86",
+    "structural": "9306bdcd526e1e531758b88f82c59d87716a5fad9491ae67e4028a00d6dc45c1"
   },
   "producer": {
     "name": "gcc-formed",

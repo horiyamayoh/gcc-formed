@@ -437,9 +437,9 @@
     },
     {
       "fingerprints": {
-        "family": "7a64b86e8d2eb2f41bfadaa185a7bc37f0534fbef2a1c3c95d9874096a13d3de",
-        "raw": "5729a83676b3483e4108df8f836e1005c8c0168edce91814a4ace2650b7bf394",
-        "structural": "d781e41ec110ff801ce0e3868b0a2622333334df7d0d9f5c5c5fe1d8f45d110d"
+        "family": "5cb459ec1c5b0bffb8b9763a32bd000939daba60648d8f4cc8825e163c5f77a2",
+        "raw": "53b7fbbd6c92c8e867be535471bb63f503f1f511576aeaf351f777f969e62898",
+        "structural": "c84af1d01c050b95c7972a5a6184d3a6707d9d9dcd51bdbf82ebb84574dd6ed0"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -466,7 +466,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -484,9 +484,9 @@
       "children": [
         {
           "fingerprints": {
-            "family": "306a7005dbd8bbb184d49cffc7973de096f885a11a653c0a1dad4988fe26494f",
-            "raw": "b3c867cfb4fc93b9f276bc7624ca910e33a5a8d75048917ee35eff32001a29e9",
-            "structural": "fd71725c951ad956da242c5e0221a47eae97b3c034b3cdcb7fda9670b0314a03"
+            "family": "3940156e3fbb5c85cf4225784c0f26e5addebab99e7e239b2ef1602f5a932445",
+            "raw": "50f596bb05124b61e835dc39ad92160424342146b8817e260c10193e85287b46",
+            "structural": "3f92ac5cc0378fbf30a54300e31a8a24190abd0cd52d5d2015053a5bbcf34f9a"
           },
           "id": "residual-compiler-2-child-1",
           "locations": [
@@ -513,7 +513,7 @@
             }
           ],
           "message": {
-            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)"
+            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)\n    2 | void takes_ref(long&);\n      |      ^~~~~~~~~"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -526,12 +526,57 @@
           },
           "semantic_role": "candidate",
           "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "ceb5c5e7ee770e8d26141419f2531f0d5e0cfa0d6f5ab57e4672d3b14b29c672",
+            "raw": "a062e0fc362821e44da41bfe9fe8b4b054bd132c8d07dd0241717a85f2cb3dc9",
+            "structural": "21c0644c48d79c6452c6fe9f5e502c0311664bbd80b13e150f67c10ea1fea757"
+          },
+          "id": "residual-compiler-2-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
         }
       ],
       "fingerprints": {
         "family": "bb225fc2c50609a44acd5272cd253284ae7b5ea5d5a20c13244206f09a5f3942",
         "raw": "9ca9277e96c5d25161cd9dab4ab560bc894e13cbd4ee8654503c93ace77f2301",
-        "structural": "88ef3cfa8eadca059231a726f12a55f374c375a7708b08653114bbdca7a766e6"
+        "structural": "b1161423c5a2f3445f5e5a191b0913f7f446d7214b927535eb1acdb4fcbd7388"
       },
       "id": "residual-compiler-2",
       "locations": [
@@ -574,9 +619,9 @@
     },
     {
       "fingerprints": {
-        "family": "feb91457a95577746b8ead65ffcca62b52ba53889801394eaa2273a93ee75f69",
-        "raw": "a02ec7e2a9ebda436b0f6b226f990ea507d685213c60f5ae2cc927279ff10b6a",
-        "structural": "f44d3c8e16f8691274a7022ae2895c6ec04cdcbbeada24152b00dd843c8c5fed"
+        "family": "255e1c67b63fbc15963bb0e1e73e7b0c9717686dc9e6699861ce7bc0590c7e22",
+        "raw": "0548fa6a2283d78010ac9121a1bc7fd9ee44afb25844563aba72db0f4b6285ad",
+        "structural": "7cec1caa2ac496810ec598f4761cdca1727f09a0932dc68f04d55601c603c00d"
       },
       "id": "residual-compiler-3",
       "locations": [
@@ -603,7 +648,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]"
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -667,8 +712,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "65b39b3d297db1590e13ee958ca081e7bcacc9fdc13be6423c1035e1fc0f977f",
-    "raw": "263d4070297e5f250ec9ae7af2f99a9ee06ed9673d7dddf1ffd628599b96536b",
-    "structural": "3bbd565c1f75e26249925021193ff2c386ab29f1fe373701632eb3899b41d8ce"
+    "raw": "c40ccba2b3f74d623b18538e8b4f7c7e4c13cd60fbe565eb86a5c3590054e0f9",
+    "structural": "9702ec2622b1094a784d5d134b1455ed89a98b24d798c1b9949a4225a703c965"
   },
   "producer": {
     "name": "gcc-formed",

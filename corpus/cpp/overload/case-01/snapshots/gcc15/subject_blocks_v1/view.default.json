@@ -1,0 +1,41 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:5:5",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    takes(1);"
+          ],
+          "location": "src/main.cpp:5:5"
+        }
+      ],
+      "family": "type_overload",
+      "first_action": "compare the expected type and actual argument at the call site",
+      "group_id": "group-fb462edc9599",
+      "matched_conditions": [
+        "child_role=candidate",
+        "message_contains=no matching",
+        "phase=semantic"
+      ],
+      "raw_message": "no matching function for call to 'takes(int)'",
+      "rule_id": "rule.family.type_overload.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "type or overload mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

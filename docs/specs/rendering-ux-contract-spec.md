@@ -1351,6 +1351,9 @@ Presentation V2 の rollout は次の順で進める。
 
 interactive default と CI preset は同一のタイミングで promote しなくてもよい。
 
+現時点の beta runtime default は `legacy_v1` であり、`subject_blocks_v1` は opt-in preset のままとする。  
+corpus replay / snapshot review のために `subject_blocks_v1/render.presentation.json` のような internal artifact を持ってよいが、それは public machine contract ではない。
+
 ---
 
 ## 24. 受け入れ基準（renderer 単体）

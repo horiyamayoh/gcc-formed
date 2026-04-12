@@ -62,9 +62,10 @@
         "message_contains=invalid conversion",
         "phase=semantic"
       ],
-      "raw_message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]",
+      "raw_message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*",
       "raw_sub_block": [
-        "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+        "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]",
+        "    6 |     takes_ref(value);"
       ],
       "rule_id": "rule.family.type_overload.structured_or_message",
       "severity": "error",

@@ -18,7 +18,7 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After (Presentation V2 contract shape): `error: [type_mismatch] arguments do not match` と `want:` / `got:` / `via:` から読める
+> After (opt-in `subject_blocks_v1`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
 - **状態**: Public Beta
@@ -43,54 +43,55 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
-Presentation V2 の header / evidence grammar は current-authority contract として先に固定し、runtime rollout は `opt-in preset -> default promotion` で進める。  
-この issue の変更は docs / ADR の rewrite であり、現在の code behavior は変えない。
+Presentation V2 の `subject_blocks_v1` は **opt-in preset** であり、runtime default はまだ `legacy_v1` のままである。  
+rollout は `opt-in preset -> corpus / snapshot / review -> default promotion` の順で進める。  
+representative corpus は `snapshots/.../subject_blocks_v1/` に review 用 cluster を持てるが、`render.presentation.json` は internal artifact であり public contract ではない。
 
 ### 1. テンプレートエラー（C++）
 
-出典: [GCC raw](corpus/cpp/template/case-05/snapshots/gcc15/stderr.raw) / [gcc-formed render](corpus/cpp/template/case-05/snapshots/gcc15/render.default.txt)
+出典: [GCC raw](corpus/cpp/overload/case-01/snapshots/gcc15/stderr.raw) / [subject_blocks_v1 render](corpus/cpp/overload/case-01/snapshots/gcc15/subject_blocks_v1/render.default.txt)
 
 **Before (GCC raw)**
 
 ```text
 src/main.cpp: In function 'int main()':
-src/main.cpp:5:12: error: no matching function for call to 'combine(int, const char [2])'
-    5 |     combine(1, "x");
-      |     ~~~~~~~^~~~~~~~
-src/main.cpp:2:6: note: candidate 1: 'template<class T> void combine(T, T)'
-src/main.cpp:2:6: note: template argument deduction/substitution failed:
-src/main.cpp:5:12: note:   deduced conflicting types for parameter 'T' ('int' and 'const char*')
+src/main.cpp:5:10: error: too few arguments to function 'void takes(int, int)'
+    5 |     takes(1);
+      |     ~~~~~^~~
+src/main.cpp:1:6: note: declared here
+    1 | void takes(int, int) {}
+      |      ^~~~~
 ```
 
-**After (Presentation V2 contract example)**
+**After (opt-in `subject_blocks_v1`)**
 
 ```text
-error: [type_mismatch] arguments do not match @ src/main.cpp:5:12
-help: make both arguments the same type
-want: T, T
-got : int, const char*
-via : combine(T, T)  +2 notes
+error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
+help: compare the expected type and actual argument at the call site
+want: int, int
+got : int
+via : void takes(int, int) @ src/main.cpp:1:6  +3 candidates
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
 ```
 
 ### 2. リンカーエラー（C）
 
-出典: [GCC raw](corpus/c/linker/case-02/snapshots/gcc15/stderr.raw) / [gcc-formed render](corpus/c/linker/case-02/snapshots/gcc15/render.default.txt)
+出典: [GCC raw](corpus/c/linker/case-01/snapshots/gcc15/stderr.raw) / [subject_blocks_v1 render](corpus/c/linker/case-01/snapshots/gcc15/subject_blocks_v1/render.default.txt)
 
 **Before (GCC raw)**
 
 ```text
-main.c:(.text+0x5): undefined reference to `missing_symbol'
+helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here
 collect2: error: ld returned 1 exit status
 ```
 
-**After (Presentation V2 contract example)**
+**After (opt-in `subject_blocks_v1`)**
 
 ```text
-error: [linker] symbol could not be resolved
-help: define the symbol or link the object/library that provides it
-symbol: missing_symbol
-from  : main.o  +1 reference
+error: [linker] multiple definition of `duplicate`
+help  : remove the duplicate definition or make the symbol internal to one translation unit
+symbol: duplicate
+from  : helper.c:(.text+0x0)
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
 ```
 

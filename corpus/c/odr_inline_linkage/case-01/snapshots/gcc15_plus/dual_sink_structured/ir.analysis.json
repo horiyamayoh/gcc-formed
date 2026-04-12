@@ -33,6 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "odr_inline_linkage",
         "first_action_hint": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
+        "group_ref": "group-a5fdd288eb9b",
         "headline": "ODR violation or inline linkage mismatch",
         "matched_conditions": [
           "message_contains=does not match original declaration",
@@ -41,10 +42,232 @@
         ],
         "rule_id": "rule.family.odr_inline_linkage.message_terms"
       },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "linker",
+            "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "matched_conditions": [
+              "phase=link"
+            ],
+            "rule_id": "rule.family.linker.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "95801cbb1561b8ba202b1e35a866942c66c51ab5ead77ede4673cde73863d725",
+            "raw": "68e1997f7cee14d444f21e4eede72a338c773c6cb03ae3913ac11879672499c2",
+            "structural": "9d67cb8ae4a56ecdcbb9075fe0619a91de341132e40987d9a86d8d978bd0751c"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: return value type mismatch\n    1 | long helper(long value) {\n      |      ^"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "linker",
+            "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "matched_conditions": [
+              "phase=link"
+            ],
+            "rule_id": "rule.family.linker.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "11b6006ae8da02de5022b0230a181c037a23df1ebae2a01f2c84d333bc6f2cc7",
+            "raw": "5553f1d6c72c59b1f6004b2faafa61552b4d90ba9a714f7f27c13473d9354a44",
+            "structural": "addf6f94636b187d6b5dbd3d8535eb2a70ac33fc5b29d49ffe0ea6aad09c9b06"
+          },
+          "id": "residual-compiler-0-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: type 'long int' should match type 'int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "linker",
+            "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "matched_conditions": [
+              "phase=link"
+            ],
+            "rule_id": "rule.family.linker.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "78053b2823f47e3a0a142d5033e4d495df3e0830e3767837fb1198ab7192d5ba",
+            "raw": "72c8fca89d6a7fca6c44f071569ed0333bacea0d4e234cc61d2cfc93095fdbbd",
+            "structural": "f3f2d3b337c3b335edbfb0a3cf749957b8f9b690f595c7f0b6f26243c508e86b"
+          },
+          "id": "residual-compiler-0-child-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: 'helper' was previously declared here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "linker",
+            "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "matched_conditions": [
+              "phase=link"
+            ],
+            "rule_id": "rule.family.linker.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "cf1528b0af3f00579e183e33c664b905ca690f902f04ec5ccfd48693b0df201d",
+            "raw": "7070794705e1d9e1d3f5eef093967d9d881d5fe71a0c7ec8393967e56dc66bac",
+            "structural": "5a5775e772661cbfee3cdc68cd1e323f77ef263a9f3af8a9b9e376f12e209c84"
+          },
+          "id": "residual-compiler-0-child-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
       "fingerprints": {
-        "family": "7ff077599d34bee284e2ffe8e88f04b8cb4ff7411078148a0efb6d71c3a2e3cd",
-        "raw": "4ec7c92bfb3d6f4f2668df5e98c947eb2134f941b031fd2261873ed20580cdf9",
-        "structural": "c0475b40ed5f92557c0a5acd5773f010e1f3e5180e637e91dab60522ac035519"
+        "family": "90feb22b7f6c1c565ddad526a35b70728062e7ce30517948da0ca5eaa2fc4905",
+        "raw": "fcc00be86462d4b33e939eb10b11a11555b81912dc3bc532f2af16ed1de2a43c",
+        "structural": "3b93fac1230f9ed114cd1427e71eaefe4e2b9e3b7f0f972e56b0de3d5ee2bdc8"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -71,7 +294,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]"
+        "raw_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -86,12 +309,55 @@
       "severity": "warning"
     }
   ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-b8dc8a30f05a",
+          "family": "odr_inline_linkage",
+          "lead_group_ref": "group-a5fdd288eb9b",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-a5fdd288eb9b"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-b8dc8a30f05a",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-a5fdd288eb9b",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "b7b71de73b60c4dc5487b287e852aa402b1b818208c78ef3de6e883faa439110",
-    "raw": "e739707e0cf2d3285565e27ec028a9c94a79877a2e9842d9e170e04bed146998",
-    "structural": "33d58ac7897a22c45efbad60ec56e3e04773b13bc3fbcb943537879fc0d52556"
+    "raw": "a55a5702ddad0b4203b987fa7b8c429f0f362e4e6d5bdaa8241863bcc7b45fe5",
+    "structural": "d62b31d6e8a631631f37d3ef0be46ab62b9af2af1b2ad30a97238e99641171b0"
   },
   "integrity_issues": [
     {

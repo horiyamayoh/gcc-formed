@@ -68,6 +68,8 @@ How much native / raw compiler output is preserved in the same run.
 - `GCC13-14` is a first-class beta product band inside that narrower contract.
 - They are part of the product surface, not merely incidental fallback behavior.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `subject_blocks_v1` remains an opt-in presentation preset during beta evaluation; the default terminal preset is still `legacy_v1` until a separate promotion decision lands.
+- Representative corpus may carry review-only `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - The wrapper must not knowingly ship a default TTY experience that is less legible than native GCC without either correcting the output or conservatively falling back / explicitly disclosing the limitation.
 

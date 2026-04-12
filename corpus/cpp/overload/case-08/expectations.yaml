@@ -14,7 +14,7 @@ semantic:
   confidence_min: medium
 render:
   default:
-    first_screenful_max_lines: 26
+    first_screenful_max_lines: 27
   ci:
     first_screenful_max_lines: 16
     path_first_required: false

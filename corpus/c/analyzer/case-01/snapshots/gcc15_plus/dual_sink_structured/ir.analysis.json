@@ -240,9 +240,9 @@
         "rule_id": "rule.family.analyzer.message_terms"
       },
       "fingerprints": {
-        "family": "0cdb1094af8ae85944225a90524fe09705d12c48f1e95a953970c6ee65133388",
-        "raw": "6cebde077d4e0a77180ea3e88fc513eb7b8fd402fb9208aa3b05eb261d2f77d8",
-        "structural": "23a60f9f75838c580611a7347b5900c997e2c098fb1e551d589d194c2a8eaa7b"
+        "family": "e493477e053475c8366cb7368bb3c6cb20d79b4c4fc4d3064d26d57050a53a7c",
+        "raw": "13dc3d520d858489c637cf8ec68e49324b12a94778db972935b6b9b4163081d8",
+        "structural": "ae401cf91351f524adebcc295ed9d149f18f7a080ba87be51130a369a0a07aa7"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -269,7 +269,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]"
+        "raw_text": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\n  'main': events 1-3\n    4 |     int *ptr = malloc(sizeof(int));\n      |                ^~~~~~~~~~~~~~~~~~~\n      |                |\n      |                (1) allocated here\n    5 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (2) first 'free' here\n      |     (3) ⚠️  second 'free' here; first 'free' was at (2)"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -382,8 +382,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "1d2185b9fcec3223308146cbdce24acc4f681d2097c67ae67709ad2afb4b0818",
-    "raw": "abef9001d28e2a8d7b21010c2a73d46a4d516f3ba44e466522f9b1b74ff2cae0",
-    "structural": "d30a31a2cc2927d6c4dd19024e12f71ff583511614958a092455ae978a7a7957"
+    "raw": "bb418a723955a2e349c43ed94d01205e848fd9aae703e6347b32b2cf242bca56",
+    "structural": "e4fdb9475bbbc3941f4175d9db391b4ee5d2cf0e9dbffb69928e3304a312cc9f"
   },
   "producer": {
     "name": "gcc-formed",

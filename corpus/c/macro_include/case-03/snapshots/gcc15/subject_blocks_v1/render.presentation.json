@@ -1,0 +1,55 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:3:25",
+      "display_family": "macro_include",
+      "group_id": "group-d890bfb119c0",
+      "internal_family": "macro_include",
+      "presentation": {
+        "display_family": "macro_include",
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "context_block"
+      },
+      "raw_message": "'missing_symbol' undeclared (first use in this function)",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "inspect the user-owned macro invocation or include edge that reaches the failing line"
+        },
+        {
+          "label": "from",
+          "slot": "from",
+          "value": "invocation of 'FETCH_VALUE' @ src/main.c:3:25"
+        },
+        {
+          "label": "via",
+          "slot": "via",
+          "value": "include src/wrapper.h:1 <- src/main.c:1"
+        }
+      ],
+      "subject": "error surfaced through macro/include context",
+      "title": "error surfaced through macro/include context"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

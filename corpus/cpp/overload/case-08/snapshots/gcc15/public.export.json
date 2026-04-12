@@ -213,7 +213,7 @@
         "family": "type_overload",
         "first_action": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
-        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]",
+        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*",
         "phase": "semantic",
         "primary_location": {
           "column": 15,
@@ -251,7 +251,7 @@
             "family": "type_overload",
             "first_action": "compare the expected type and actual argument at the call site",
             "headline": "type or overload mismatch",
-            "message": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)",
+            "message": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)\n    2 | void takes_ref(long&);\n      |      ^~~~~~~~~",
             "phase": "semantic",
             "primary_location": {
               "column": 6,
@@ -265,6 +265,26 @@
             ],
             "semantic_role": "candidate",
             "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:",
+            "message": "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 6,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
           }
         ],
         "semantic_role": "root",
@@ -275,7 +295,7 @@
         "family": "type_overload",
         "first_action": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
-        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]",
+        "message": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*",
         "phase": "semantic",
         "primary_location": {
           "column": 15,
@@ -313,11 +333,11 @@
     ],
     "summary": {
       "dependent_follow_on_count": 0,
-      "diagnostic_count": 14,
+      "diagnostic_count": 15,
       "duplicate_count": 0,
       "error_count": 5,
       "independent_root_count": 5,
-      "note_count": 9,
+      "note_count": 10,
       "uncertain_count": 0,
       "warning_count": 0
     }

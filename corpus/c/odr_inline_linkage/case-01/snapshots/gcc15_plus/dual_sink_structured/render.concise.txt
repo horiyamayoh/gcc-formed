@@ -6,6 +6,9 @@ why: src/main.c:1:5: warning: type of 'helper' does not match original declarati
 | src/main.c:1:5
 | int helper(int value);
 |     ^
+note: src/helper.c:1:6: note: return value type mismatch
+note: src/helper.c:1:6: note: type 'long int' should match type 'int'
+note: omitted 2 additional note(s)
 raw:
   src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,0 +1,55 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:5",
+      "display_family": "redefinition",
+      "group_id": "group-d75c44345eaf",
+      "internal_family": "redefinition",
+      "presentation": {
+        "display_family": "redefinition",
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "conflict_block"
+      },
+      "raw_message": "redefinition of 'counter'",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "add or fix include guards, or remove the duplicate definition"
+        },
+        {
+          "label": "now",
+          "slot": "now",
+          "value": "src/main.c:2:5 int counter = 1;"
+        },
+        {
+          "label": "prev",
+          "slot": "prev",
+          "value": "src/main.c:1:5 int counter = 0;"
+        }
+      ],
+      "subject": "duplicate definition detected",
+      "title": "duplicate definition detected"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

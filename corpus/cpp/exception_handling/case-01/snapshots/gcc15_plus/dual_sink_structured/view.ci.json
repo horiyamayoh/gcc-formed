@@ -57,7 +57,7 @@
         "message_contains=use '-fexceptions' to enable",
         "phase=semantic"
       ],
-      "raw_message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable",
+      "raw_message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\nsrc/main.cpp: In function 'void f()':\n    2 |     throw 1;\n      |           ^",
       "raw_sub_block": [
         "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable"
       ],

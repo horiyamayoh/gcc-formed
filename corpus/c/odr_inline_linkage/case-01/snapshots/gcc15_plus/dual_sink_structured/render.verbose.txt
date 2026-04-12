@@ -6,8 +6,14 @@ why: src/main.c:1:5: warning: type of 'helper' does not match original declarati
 | src/main.c:1:5
 | int helper(int value);
 |     ^
+note: src/helper.c:1:6: note: return value type mismatch
+note: src/helper.c:1:6: note: type 'long int' should match type 'int'
+note: src/helper.c:1:6: note: 'helper' was previously declared here
+note: src/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used
 raw:
   src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+      1 | int helper(int value);
+        |     ^
 debug: rule_id=rule.family.odr_inline_linkage.message_terms
 debug: matched_conditions=message_contains=does not match original declaration, message_contains=lto-type-mismatch, phase=link
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

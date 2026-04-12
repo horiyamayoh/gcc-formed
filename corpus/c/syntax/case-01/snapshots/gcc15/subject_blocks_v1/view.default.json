@@ -1,0 +1,89 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:13",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "            ^"
+          ],
+          "lines": [
+            "    return 0"
+          ],
+          "location": "src/main.c:2:13"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-7359321864f4",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "expected ';' before '}}' token",
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "inline_patch": [
+            "patch: src/main.c",
+            "2 -     return 0",
+            "2 +     return 0;"
+          ],
+          "label": "suggested edit",
+          "text": "insert ';' at src/main.c:2:13"
+        }
+      ],
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/main.c:2:13",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "            ^"
+          ],
+          "lines": [
+            "    return 0"
+          ],
+          "location": "src/main.c:2:13"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "group-114ea2e0d577",
+      "matched_conditions": [
+        "message_contains=expected",
+        "message_contains=before",
+        "phase=parse"
+      ],
+      "raw_message": "src/main.c:2:13: error: expected ';' before '}' token\nsrc/main.c: In function 'main':\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            ",
+      "raw_sub_block": [
+        "src/main.c:2:13: error: expected ';' before '}' token",
+        "src/main.c: In function 'main':"
+      ],
+      "rule_id": "rule.family.syntax.phase_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

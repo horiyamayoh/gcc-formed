@@ -29,10 +29,192 @@
   ],
   "diagnostics": [
     {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "1ca2454b3fade443eac72fcacfdab140cbd2bb5e8efbec2b7def79288a89fe5f",
+            "raw": "68e1997f7cee14d444f21e4eede72a338c773c6cb03ae3913ac11879672499c2",
+            "structural": "fe8c85157b4413c796bb4cb3eb8f9b22c8cc6b1db4fc30bcfd557aaf6608cb25"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: return value type mismatch\n    1 | long helper(long value) {\n      |      ^"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "0b8844477550541fc363082300dc6c17e0e364ec8592dc19089f57fba561d7a4",
+            "raw": "5553f1d6c72c59b1f6004b2faafa61552b4d90ba9a714f7f27c13473d9354a44",
+            "structural": "641482c858c099448280aae5618467a7170311f4231efe8fa59ba445d3c8480e"
+          },
+          "id": "residual-compiler-0-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: type 'long int' should match type 'int'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "3ab16c6c99e456ed165598d4bf4a03c83976e82c26f42dcdb1a23fb09ab73043",
+            "raw": "72c8fca89d6a7fca6c44f071569ed0333bacea0d4e234cc61d2cfc93095fdbbd",
+            "structural": "e5bf77e6cfbb5d707cbc9067d55a70e51a20a908a5a68c2ff5c59f080912e10e"
+          },
+          "id": "residual-compiler-0-child-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: 'helper' was previously declared here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "f28daad0faf690387646be190acde5bd718e72643368c363b3172859e6c7c1bf",
+            "raw": "7070794705e1d9e1d3f5eef093967d9d881d5fe71a0c7ec8393967e56dc66bac",
+            "structural": "a6f391737e778ad91daf843a76cb55343aec00b1ca100d3c84ad35712c853174"
+          },
+          "id": "residual-compiler-0-child-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/helper.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/helper.c:1:6:1:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "link",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
       "fingerprints": {
-        "family": "ef68757d6678ae2d39b3e4bb3f42a5f53c59078814554b8ae167e36266aa2ff2",
-        "raw": "4ec7c92bfb3d6f4f2668df5e98c947eb2134f941b031fd2261873ed20580cdf9",
-        "structural": "f8014d3a6573e938d37964eb571e9f9afc61953cb32f97266946f7a012dd40e9"
+        "family": "65b07ffe8c47ee3fa628e45b14c12ad07a0fb905147b3e4e108f9a80acbe7f53",
+        "raw": "fcc00be86462d4b33e939eb10b11a11555b81912dc3bc532f2af16ed1de2a43c",
+        "structural": "06b4a0d6cdedda1a07b05c231b56278ec67b0cf01c6470acdeb5f78e33678f2c"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -59,7 +241,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]"
+        "raw_text": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -78,8 +260,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "9934747cd7c2926943956390b84da87ee814f2b1f880bccd525e7f8017c807d3",
-    "structural": "da143a89b4a7c152ad014fda5670696c56ff7419c6c77999f32b85d72bc6cb35"
+    "raw": "d92446be6da991d7e33b867f0defecb6788ea6c040f12b12f674de0e6ec1c43c",
+    "structural": "0e4f20fd93c94b2d31b139fcc1eb5c5e6b2ceaca50573a89ebc12105163cd2e7"
   },
   "integrity_issues": [
     {

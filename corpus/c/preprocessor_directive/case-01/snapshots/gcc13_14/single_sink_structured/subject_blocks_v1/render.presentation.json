@@ -1,0 +1,50 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:1:2",
+      "display_family": "syntax",
+      "group_id": "group-3689c3635616",
+      "internal_family": "preprocessor_directive",
+      "presentation": {
+        "display_family": "syntax",
+        "fell_back_to_generic_template": true,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "generic_block"
+      },
+      "raw_message": "#error macro guard missing",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics"
+        },
+        {
+          "label": "why",
+          "slot": "why_raw",
+          "value": "#error macro guard missing"
+        }
+      ],
+      "subject": "preprocessor directive error",
+      "title": "preprocessor directive error"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

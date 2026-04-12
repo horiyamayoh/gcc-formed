@@ -84,6 +84,9 @@ pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String
         Some(file_name) if is_view_snapshot_name(file_name) => {
             normalize_view_snapshot_contents(path, contents)
         }
+        Some("render.presentation.json") => {
+            normalize_render_presentation_snapshot_contents(path, contents)
+        }
         Some("diagnostics.sarif") => normalize_sarif_snapshot_contents(path, contents),
         Some("public.export.json") => normalize_public_export_snapshot_contents(path, contents),
         Some("ir.facts.json") | Some("ir.analysis.json") => {
@@ -120,6 +123,22 @@ fn normalize_ir_snapshot_contents(path: &Path, contents: &str) -> Result<String,
 fn normalize_view_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     let mut value: serde_json::Value = serde_json::from_str(contents)
         .map_err(|error| format!("failed to parse {} as view JSON: {error}", path.display()))?;
+    let mut refs = SnapshotRefNormalizer::default();
+    normalize_view_snapshot_value(&mut value, &mut refs);
+    diag_core::canonical_json(&value)
+        .map_err(|error| format!("failed to canonicalize {}: {error}", path.display()))
+}
+
+fn normalize_render_presentation_snapshot_contents(
+    path: &Path,
+    contents: &str,
+) -> Result<String, String> {
+    let mut value: serde_json::Value = serde_json::from_str(contents).map_err(|error| {
+        format!(
+            "failed to parse {} as presentation JSON: {error}",
+            path.display()
+        )
+    })?;
     let mut refs = SnapshotRefNormalizer::default();
     normalize_view_snapshot_value(&mut value, &mut refs);
     diag_core::canonical_json(&value)

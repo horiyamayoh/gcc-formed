@@ -1,0 +1,60 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:5:5",
+      "display_family": "type_mismatch",
+      "group_id": "group-fb462edc9599",
+      "internal_family": "type_overload",
+      "presentation": {
+        "display_family": "type_mismatch",
+        "fell_back_to_generic_template": false,
+        "location_policy": {
+          "default_placement": "inline_suffix",
+          "fallback_order": [
+            "header_suffix",
+            "evidence_suffix",
+            "excerpt_header",
+            "none"
+          ]
+        },
+        "subject_first_header": true,
+        "template_id": "contrast_block"
+      },
+      "raw_message": "no matching function for call to 'takes(int)'",
+      "severity": "error",
+      "slots": [
+        {
+          "label": "help",
+          "slot": "first_action",
+          "value": "compare the expected type and actual argument at the call site"
+        },
+        {
+          "label": "want",
+          "slot": "want",
+          "value": "int, int"
+        },
+        {
+          "label": "got",
+          "slot": "got",
+          "value": "int"
+        },
+        {
+          "label": "via",
+          "slot": "via",
+          "value": "void takes(int, int) @ src/main.cpp:1:6  +3 candidates"
+        }
+      ],
+      "subject": "type or overload mismatch",
+      "title": "type or overload mismatch"
+    }
+  ],
+  "fell_back_to_default": false,
+  "preset_id": "subject_blocks_v1",
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "policy_session_mode": "all_visible_blocks",
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "resolved_session_mode": "all_visible_blocks"
+  }
+}

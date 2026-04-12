@@ -165,9 +165,9 @@
     },
     {
       "fingerprints": {
-        "family": "1b48276a89b369234e241c25939d6962cd4bd6b8085a0e166346ff25f2381528",
-        "raw": "f886942aa7346babccc9887a2ed8af96d51eeb057dcdeb011bebfee070310fac",
-        "structural": "2884175cf564e9df4e9c43832f46bf111e763e7266bdaddbf729f9c87a365e76"
+        "family": "0d8596602f780cc20a87e7e2fbeccf0dc171aa230970eb50aa898071b713b791",
+        "raw": "021701e5739ff24134e17df5687980712966b0c9ccea0ef59406bbc7fcd518c4",
+        "structural": "74d2be1961c4ee907ff0c2271a9d34aa3333209a4312f96754b1fb551e9ca732"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -194,7 +194,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:2:26: error: expected '}' before ';' token"
+        "raw_text": "src/main.c:2:26: error: expected '}' before ';' token\nsrc/main.c: In function 'main':\n    2 |     int values[2] = {1, 2;\n      |                     ~    ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -213,8 +213,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
-    "raw": "446c61d2c2d0fe7449c38d0d438eafff19800dbf2b403f954e08f11d72d753dc",
-    "structural": "25d6f79cf196874dd9c71dd1d3cfb7506c5b35e9ad200ebd6254b246823df61b"
+    "raw": "99d194a3be833f3af781f1150e9d249f67fcff8efce527e9c723297b881bfef9",
+    "structural": "c302008532708b122dd2f700c7253b37ab52f1656abf4288b56cff0b617cfc9a"
   },
   "producer": {
     "name": "gcc-formed",

@@ -468,6 +468,22 @@ impl Fixture {
     pub fn has_snapshot_artifacts(&self) -> bool {
         self.snapshot_root().join("ir.facts.json").exists()
     }
+
+    /// Returns the opt-in presentation snapshot preset IDs declared on this fixture.
+    pub fn presentation_snapshot_presets(&self) -> Vec<String> {
+        self.meta
+            .tags
+            .iter()
+            .filter_map(|tag| tag.strip_prefix("presentation:"))
+            .filter(|preset| !preset.trim().is_empty())
+            .map(str::to_string)
+            .collect()
+    }
+
+    /// Returns the snapshot cluster root for an opt-in presentation preset.
+    pub fn presentation_snapshot_root(&self, preset_id: &str) -> PathBuf {
+        self.snapshot_root().join(preset_id)
+    }
 }
 
 /// Errors that can occur when loading or validating fixtures.
@@ -565,6 +581,29 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
                     fixture.fixture_id(),
                     render.display()
                 )));
+            }
+        }
+        for preset_id in fixture.presentation_snapshot_presets() {
+            if preset_id != "subject_blocks_v1" {
+                return Err(FixtureError::Invalid(format!(
+                    "fixture {} declares unsupported presentation snapshot preset `{preset_id}`",
+                    fixture.fixture_id()
+                )));
+            }
+            let presentation_root = fixture.presentation_snapshot_root(&preset_id);
+            for relative in [
+                "view.default.json",
+                "render.default.txt",
+                "render.presentation.json",
+            ] {
+                let path = presentation_root.join(relative);
+                if !path.exists() {
+                    return Err(FixtureError::Invalid(format!(
+                        "promoted fixture {} missing {}",
+                        fixture.fixture_id(),
+                        path.display()
+                    )));
+                }
             }
         }
     }
@@ -887,6 +926,18 @@ tags: [syntax]
         }
     }
 
+    fn write_required_subject_blocks_artifacts(snapshot_root: &Path) {
+        for relative in [
+            "view.default.json",
+            "render.default.txt",
+            "render.presentation.json",
+        ] {
+            let path = snapshot_root.join("subject_blocks_v1").join(relative);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, "{}\n").unwrap();
+        }
+    }
+
     #[test]
     fn counts_fixture_families_from_path() {
         let fixtures = vec![
@@ -1168,6 +1219,48 @@ tags: [syntax]
                 .and_then(|profile| profile.expected_summary_only_group_count),
             Some(0)
         );
+        validate_fixture(&fixture).unwrap();
+    }
+
+    #[test]
+    fn promoted_fixture_with_subject_blocks_snapshot_requires_cluster() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/c/syntax/case-01",
+                language: "c",
+                source_name: "main.c",
+                version_band: "gcc15_plus",
+                support_level: "preview",
+                major_version_selector: "15",
+                processing_path: "dual_sink_structured",
+                snapshot_layout: "snapshots/gcc15_plus/dual_sink_structured",
+            },
+        );
+        let snapshot_root = root.join("snapshots/gcc15_plus/dual_sink_structured");
+        write_required_promoted_artifacts(&snapshot_root);
+        fs::write(snapshot_root.join("diagnostics.sarif"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
+        let meta_path = root.join("meta.yaml");
+        fs::write(
+            &meta_path,
+            r#"
+corpus_id: c/syntax/case-01
+title: promoted fixture
+tags:
+  - syntax
+  - presentation:subject_blocks_v1
+"#,
+        )
+        .unwrap();
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        let error = validate_fixture(&fixture).unwrap_err().to_string();
+        assert!(error.contains("missing"));
+
+        write_required_subject_blocks_artifacts(&snapshot_root);
         validate_fixture(&fixture).unwrap();
     }
 }

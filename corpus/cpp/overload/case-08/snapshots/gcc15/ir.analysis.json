@@ -550,9 +550,9 @@
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
-        "family": "0d8d9e840cc87770efd6493aa5cdd063c46102397053b101611e8de49ea00c82",
-        "raw": "5729a83676b3483e4108df8f836e1005c8c0168edce91814a4ace2650b7bf394",
-        "structural": "88f1de13ccb7cabe6250a03be2c2b651ed54672829e54787402b9482d7b772b0"
+        "family": "35dec7a0c731f910a6863ac146c741bc6332a2d6ebcceb80a773cbcef30ee46d",
+        "raw": "53b7fbbd6c92c8e867be535471bb63f503f1f511576aeaf351f777f969e62898",
+        "structural": "053344445cc95cdd653968a8e733da4ce2f2051122815730d7d9e2d667fcbea2"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -579,7 +579,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -620,9 +620,9 @@
             "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
-            "family": "33a016f222d39239d4b94e55166186b3771fe2a256bff268de94bc749556c489",
-            "raw": "b3c867cfb4fc93b9f276bc7624ca910e33a5a8d75048917ee35eff32001a29e9",
-            "structural": "9431a1ce61ddcb2438ab03e2206bf1dbb115cc05ef74a767c51a3b6bf2c1ad2e"
+            "family": "2c31ecdc74dfcf57dab6242849d95d97153ed307dcb6ac295ae9c784d3f635c8",
+            "raw": "50f596bb05124b61e835dc39ad92160424342146b8817e260c10193e85287b46",
+            "structural": "f46b8cf3c1c1831cad1112f784ed93b574dbe4d8d5fa49fa28dc72d3c170c383"
           },
           "id": "residual-compiler-2-child-1",
           "locations": [
@@ -649,7 +649,7 @@
             }
           ],
           "message": {
-            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)"
+            "raw_text": "src/main.cpp:2:6: note: candidate 2: 'void takes_ref(long int&)' (near match)\n    2 | void takes_ref(long&);\n      |      ^~~~~~~~~"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -662,12 +662,68 @@
           },
           "semantic_role": "candidate",
           "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "ceb5c5e7ee770e8d26141419f2531f0d5e0cfa0d6f5ab57e4672d3b14b29c672",
+            "raw": "a062e0fc362821e44da41bfe9fe8b4b054bd132c8d07dd0241717a85f2cb3dc9",
+            "structural": "9ac20109137aed89fccfbdbcc40ffb77471d51c79f089c861476fe7133f3758c"
+          },
+          "id": "residual-compiler-2-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 6,
+                "column_native": 6,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:6:2:6",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:6: note: conversion of argument 1 would be ill-formed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
         }
       ],
       "fingerprints": {
         "family": "b02b8edfdbd1d539766b365f0bfb494d4962bee0e91b7e15dbe764913295a6c7",
         "raw": "9ca9277e96c5d25161cd9dab4ab560bc894e13cbd4ee8654503c93ace77f2301",
-        "structural": "b05e8cd33830ab1b1fe8fdc74c85085c5883b4208abfe0322797d6ef77da1fdb"
+        "structural": "dd8c138b885b66020923a5f138a08433633b290e71859633e134c59c932e69e1"
       },
       "id": "residual-compiler-2",
       "locations": [
@@ -722,9 +778,9 @@
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
-        "family": "87f808c441091be03fa6a4856205558074c2982d1909158eb790088cda7ee8f8",
-        "raw": "a02ec7e2a9ebda436b0f6b226f990ea507d685213c60f5ae2cc927279ff10b6a",
-        "structural": "c81829d0b2981e50a52003e2abbc49099e21a45f4e200ac85e24df98c72a2860"
+        "family": "c86e534f4e9c1707b9b4a84acaadd0989ed0211c2dbd3cdfb81f5587573dd8d4",
+        "raw": "0548fa6a2283d78010ac9121a1bc7fd9ee44afb25844563aba72db0f4b6285ad",
+        "structural": "933feff96f88c01324dc28f3b62c8abd074fa1938718ef31ddaa4b3480835154"
       },
       "id": "residual-compiler-3",
       "locations": [
@@ -751,7 +807,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]"
+        "raw_text": "src/main.cpp:6:15: error: invalid conversion from 'const char*' to 'long int' [-fpermissive]\n    6 |     takes_ref(value);\n      |               ^~~~~\n      |               |\n      |               const char*"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -972,8 +1028,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "5b7deb6bc05f63e07f7da55cf267ad7281b8106da695cf603d6f3f8ad3f29855",
-    "raw": "d217e68a17bff7cf05b91331e69b765defe63236f5497a95de43649cf80b5c39",
-    "structural": "563e212e63dd7cafce75b8992e133aa84e75c1e69ce72e53681e545e2c7b1701"
+    "raw": "d805deefc4ed3254d63dbc85b40343c9e2e094e848490b8e74112450a81bd6e9",
+    "structural": "ac7fd5d92eb428ee57e62772084dfb34854f2a64af382d1cc4c98da1fcb25a8c"
   },
   "producer": {
     "name": "gcc-formed",

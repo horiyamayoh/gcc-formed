@@ -51,7 +51,7 @@
         "family": "exception_handling",
         "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
         "headline": "exception handling configuration or usage error",
-        "message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable",
+        "message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\nsrc/main.cpp: In function 'void f()':\n    2 |     throw 1;\n      |           ^",
         "phase": "semantic",
         "primary_location": {
           "column": 11,
