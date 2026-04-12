@@ -46,7 +46,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         None
     };
 
-    let mut command = Command::new(&request.backend.resolved_path);
+    let mut command = Command::new(request.backend.spawn_path());
     command.current_dir(&request.cwd);
     command.stdin(Stdio::inherit());
     command.stdout(Stdio::inherit());
@@ -72,17 +72,19 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
         }
     }
     let invocation_path = temp_dir_path.join("invocation.json");
+    let spawn_args = request.backend.spawn_args(&final_args);
     write_invocation_record(
         &invocation_path,
         &build_invocation_record(
             request,
             &plan,
             &final_args,
+            &spawn_args,
             injected_sarif_path.as_deref(),
             env_policy,
         ),
     )?;
-    command.args(&final_args);
+    command.args(&spawn_args);
 
     let stderr_mode = match plan.native_text_capture {
         NativeTextCapturePolicy::Passthrough => Stdio::inherit(),
@@ -177,6 +179,7 @@ pub fn run_capture(request: &CaptureRequest) -> Result<CaptureOutcome, CaptureEr
     let bundle = build_capture_bundle(
         request,
         &final_args,
+        &spawn_args,
         &plan,
         &exit_status,
         &artifacts,

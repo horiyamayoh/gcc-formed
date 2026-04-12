@@ -24,8 +24,15 @@ pub struct ExitStatusInfo {
 pub struct CaptureInvocation {
     /// Filesystem path to the backend binary.
     pub backend_path: String,
+    /// Filesystem path to the launcher binary, if one was used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launcher_path: Option<String>,
+    /// Filesystem path of the spawned program.
+    pub spawn_path: String,
     /// Full argument vector passed to the backend.
     pub argv: Vec<String>,
+    /// Full argument vector passed to the spawned program.
+    pub spawn_argv: Vec<String>,
     /// Fingerprint hash of the argument vector.
     pub argv_hash: String,
     /// Working directory used for the invocation.

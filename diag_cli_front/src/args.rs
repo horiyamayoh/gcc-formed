@@ -13,6 +13,7 @@ pub(crate) struct ParsedArgs {
     pub(crate) processing_path: Option<ProcessingPath>,
     pub(crate) profile: Option<RenderProfile>,
     pub(crate) backend: Option<PathBuf>,
+    pub(crate) launcher: Option<PathBuf>,
     pub(crate) trace: Option<RetentionPolicy>,
     pub(crate) debug_refs: Option<DebugRefs>,
     pub(crate) cascade_compression_level: Option<CompressionLevel>,
@@ -38,6 +39,8 @@ impl ParsedArgs {
                 parsed.profile = Some(parse_profile(profile)?);
             } else if let Some(path) = value.strip_prefix("--formed-backend-gcc=") {
                 parsed.backend = Some(PathBuf::from(path));
+            } else if let Some(path) = value.strip_prefix("--formed-backend-launcher=") {
+                parsed.launcher = Some(PathBuf::from(path));
             } else if let Some(policy) = value.strip_prefix("--formed-trace=") {
                 parsed.trace = Some(parse_retention_policy(policy)?);
             } else if let Some(debug_refs) = value.strip_prefix("--formed-debug-refs=") {
@@ -219,6 +222,7 @@ mod tests {
             OsString::from("--formed-mode=shadow"),
             OsString::from("--formed-processing-path=single_sink_structured"),
             OsString::from("--formed-profile=ci"),
+            OsString::from("--formed-backend-launcher=/usr/bin/ccache"),
             OsString::from("--formed-trace=always"),
             OsString::from("--formed-debug-refs=trace_id"),
             OsString::from("--formed-cascade-level=balanced"),
@@ -238,6 +242,7 @@ mod tests {
             Some(ProcessingPath::SingleSinkStructured)
         );
         assert_eq!(parsed.profile, Some(RenderProfile::Ci));
+        assert_eq!(parsed.launcher, Some(PathBuf::from("/usr/bin/ccache")));
         assert_eq!(parsed.trace, Some(RetentionPolicy::Always));
         assert_eq!(parsed.debug_refs, Some(DebugRefs::TraceId));
         assert_eq!(

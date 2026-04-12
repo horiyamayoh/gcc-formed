@@ -83,6 +83,42 @@ If you want detached-signature verification during install, read `signing_key_id
 --expected-signing-public-key-sha256 "<release-notes trusted public key sha256>"
 ```
 
+## Operator Quickstart for Make / CMake
+
+This beta is intended to slot into existing GCC build systems. The current interop lab proves direct wrapper insertion and one wrapper-owned backend launcher behind the wrapper.
+
+### Make
+
+```bash
+export CC=gcc-formed
+export CXX=g++-formed
+export FORMED_BACKEND_GCC="$(command -v gcc)"
+make -j
+```
+
+Optional single backend launcher behind the wrapper:
+
+```bash
+export CC=gcc-formed
+export CXX=g++-formed
+export FORMED_BACKEND_GCC="$(command -v gcc)"
+export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
+make -j
+```
+
+### CMake
+
+```bash
+cmake -S . -B build -G "Unix Makefiles" \
+  -DCMAKE_C_COMPILER=gcc-formed \
+  -DCMAKE_CXX_COMPILER=g++-formed
+cmake --build build -j
+```
+
+If a build is not yet proven, switch that build back to raw `gcc` / `g++` or use `--formed-mode=passthrough` on a direct invocation. Do not use ccache / distcc / sccache-style launcher stacks in front of the wrapper, and do not configure multi-launcher chains.
+
+The current topology policy is documented in [OPERATOR-INTEROP.md](../support/OPERATOR-INTEROP.md).
+
 ## Rollback and Uninstall
 
 Rollback remains a `current` symlink switch. If multiple versions are installed under the same install root, you can move back to a prior version immediately.

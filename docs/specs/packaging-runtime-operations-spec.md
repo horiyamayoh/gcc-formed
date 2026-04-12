@@ -568,6 +568,7 @@ v1alpha で予約する wrapper-owned environment variable 名は以下。
 - `FORMED_TRACE_DIR`
 - `FORMED_INSTALL_ROOT`
 - `FORMED_BACKEND_GCC`
+- `FORMED_BACKEND_LAUNCHER`
 
 これらは将来の public surface になりうるため、互換性境界として扱う。
 

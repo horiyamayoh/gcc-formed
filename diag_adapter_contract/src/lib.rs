@@ -134,7 +134,10 @@ mod tests {
             },
             invocation: CaptureInvocation {
                 backend_path: "/usr/bin/clang".to_string(),
+                launcher_path: None,
+                spawn_path: "/usr/bin/clang".to_string(),
                 argv: vec!["clang".to_string(), "-c".to_string(), "main.c".to_string()],
+                spawn_argv: vec!["clang".to_string(), "-c".to_string(), "main.c".to_string()],
                 argv_hash: "hash".to_string(),
                 cwd: "/tmp/project".to_string(),
                 selected_mode: ExecutionMode::Render,

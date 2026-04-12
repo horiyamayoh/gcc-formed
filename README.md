@@ -250,6 +250,42 @@ Path-aware の実装が進んだら、band ごとの replay / snapshot / quality
 
 公開 beta artifact の install / rollback / exact-pin は [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md) を参照。
 
+## Operator Quickstart for Make / CMake
+
+The current lab-proven build-system insertion path is direct `CC` / `CXX` replacement. Start there, and if you need one cache / remote-exec launcher, place it behind the wrapper with `FORMED_BACKEND_LAUNCHER`.
+
+### Make
+
+```bash
+export CC=gcc-formed
+export CXX=g++-formed
+export FORMED_BACKEND_GCC="$(command -v gcc)"
+make -j
+```
+
+Optional single backend launcher:
+
+```bash
+export CC=gcc-formed
+export CXX=g++-formed
+export FORMED_BACKEND_GCC="$(command -v gcc)"
+export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
+make -j
+```
+
+### CMake
+
+```bash
+cmake -S . -B build -G "Unix Makefiles" \
+  -DCMAKE_C_COMPILER=gcc-formed \
+  -DCMAKE_CXX_COMPILER=g++-formed
+cmake --build build -j
+```
+
+If the wrapper is not yet proven for a build, fall back to raw `gcc` / `g++` for that build or use `--formed-mode=passthrough` on a direct invocation. Do not put ccache / distcc / sccache-style launchers in front of the wrapper, and do not build a multi-launcher chain.
+
+The full topology policy is in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md); rollback and raw-fallback instructions remain in [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md).
+
 ---
 
 ## いま README に書かないもの

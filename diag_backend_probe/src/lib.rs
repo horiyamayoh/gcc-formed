@@ -3,10 +3,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::env;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+/// Versioned policy identifier for supported backend launcher/compiler topologies.
+pub const BACKEND_TOPOLOGY_POLICY_VERSION: &str = "v1beta-topology-2026-04-12";
 
 /// Kind of compiler driver being invoked.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -70,6 +73,53 @@ pub enum ProcessingPath {
     Passthrough,
 }
 
+/// Concrete execution shape used to reach the compiler backend.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BackendTopologyKind {
+    /// The wrapper executes the compiler directly.
+    Direct,
+    /// The wrapper executes one launcher, which then invokes the compiler.
+    SingleBackendLauncher,
+}
+
+/// Public classification for a known backend topology class.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BackendTopologyDisposition {
+    /// The topology is supported in the current beta contract.
+    Supported,
+    /// The topology is intentionally unsupported in the current beta contract.
+    Unsupported,
+    /// The topology may be explored later but is not part of the current beta contract.
+    NotYetSupported,
+}
+
+/// Machine-readable entry in the current backend-topology policy.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BackendTopologyPolicyEntry {
+    /// Stable identifier for the topology class.
+    pub topology: String,
+    /// Current disposition for the topology class.
+    pub disposition: BackendTopologyDisposition,
+    /// Short user-facing explanation.
+    pub note: String,
+}
+
+/// Active backend topology for one resolved invocation path.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ActiveBackendTopology {
+    /// Versioned policy identifier that governs this topology.
+    pub policy_version: String,
+    /// Kind of topology selected for this invocation.
+    pub kind: BackendTopologyKind,
+    /// Canonical launcher path when `kind=single_backend_launcher`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launcher_path: Option<PathBuf>,
+    /// Current policy disposition for this active topology.
+    pub disposition: BackendTopologyDisposition,
+}
+
 /// Describes the diagnostic capabilities of a specific backend version.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CapabilityProfile {
@@ -119,6 +169,8 @@ pub struct ProbeResult {
     pub requested_backend: String,
     /// Canonical filesystem path to the resolved backend binary.
     pub resolved_path: PathBuf,
+    /// Active launcher/compiler topology for this invocation.
+    pub execution_topology: ActiveBackendTopology,
     /// Raw version string returned by the backend.
     pub version_string: String,
     /// Parsed major version number.
@@ -136,6 +188,26 @@ pub struct ProbeResult {
 }
 
 impl ProbeResult {
+    /// Returns the path that should be executed for child invocations.
+    pub fn spawn_path(&self) -> &Path {
+        self.execution_topology
+            .launcher_path
+            .as_deref()
+            .unwrap_or(&self.resolved_path)
+    }
+
+    /// Returns the compiler-facing argument vector for the spawned child.
+    pub fn spawn_args(&self, compiler_args: &[OsString]) -> Vec<OsString> {
+        let mut argv = Vec::with_capacity(
+            compiler_args.len() + usize::from(self.execution_topology.launcher_path.is_some()),
+        );
+        if self.execution_topology.launcher_path.is_some() {
+            argv.push(self.resolved_path.as_os_str().to_os_string());
+        }
+        argv.extend(compiler_args.iter().cloned());
+        argv
+    }
+
     /// Returns the version band for this probe's major version.
     pub fn version_band(&self) -> VersionBand {
         version_band_for_major(self.major)
@@ -160,12 +232,22 @@ impl ProbeResult {
 /// Parameters for resolving a backend compiler path.
 #[derive(Debug, Clone)]
 pub struct ResolveRequest {
-    /// Explicitly configured backend path, if any.
-    pub explicit_backend: Option<PathBuf>,
+    /// Backend path from wrapper-owned CLI flags, if any.
+    pub cli_backend: Option<PathBuf>,
     /// Backend path from an environment variable, if any.
     pub env_backend: Option<PathBuf>,
+    /// Backend path from config files, if any.
+    pub config_backend: Option<PathBuf>,
+    /// Launcher path from wrapper-owned CLI flags, if any.
+    pub cli_launcher: Option<PathBuf>,
+    /// Launcher path from an environment variable, if any.
+    pub env_launcher: Option<PathBuf>,
+    /// Launcher path from config files, if any.
+    pub config_launcher: Option<PathBuf>,
     /// Name the wrapper was invoked as (e.g. `gcc-formed`).
     pub invoked_as: String,
+    /// Wrapper binary path for recursion detection, if available.
+    pub wrapper_path: Option<PathBuf>,
 }
 
 /// In-memory cache of probe results keyed by filesystem identity.
@@ -180,6 +262,9 @@ pub enum ProbeError {
     /// The requested backend binary could not be found on disk or in PATH.
     #[error("backend compiler was not found: {0}")]
     NotFound(String),
+    /// The requested launcher executable could not be found.
+    #[error("backend launcher was not found or is not a single executable path: {0}")]
+    LauncherNotFound(String),
     /// Filesystem metadata for the backend binary could not be read.
     #[error("failed to inspect backend metadata for {path}: {source}")]
     Metadata {
@@ -201,32 +286,72 @@ pub enum ProbeError {
     /// The version string could not be parsed into major/minor components.
     #[error("backend version output was not parseable: {0}")]
     UnparseableVersion(String),
+    /// The requested launcher/compiler topology is outside the current beta contract.
+    #[error("unsupported backend topology: {0}")]
+    UnsupportedTopology(String),
+    /// The requested launcher/compiler topology would recurse back into the wrapper.
+    #[error("recursive backend topology is not allowed: {0}")]
+    RecursiveTopology(String),
 }
 
 impl ProbeCache {
     /// Returns a cached probe result or performs a fresh probe.
     pub fn get_or_probe(&mut self, request: ResolveRequest) -> Result<ProbeResult, ProbeError> {
-        let path = resolve_backend(&request)?;
-        let key = probe_key(&path)?;
+        let resolved = resolve_backend(&request)?;
+        let key = probe_key(&resolved.compiler_path)?;
         if let Some(cached) = self.entries.get(&key) {
-            return Ok(cached.clone());
+            let mut cached = cached.clone();
+            cached.requested_backend = request.invoked_as;
+            cached.execution_topology = resolved.execution_topology;
+            return Ok(cached);
         }
-        let result = probe_backend(&path, request.invoked_as)?;
+        let mut result = probe_backend(&resolved.compiler_path, request.invoked_as)?;
         self.entries.insert(key, result.clone());
+        result.execution_topology = resolved.execution_topology;
         Ok(result)
     }
 }
 
 /// Resolves the backend compiler path from explicit, env, or PATH lookup.
-pub fn resolve_backend(request: &ResolveRequest) -> Result<PathBuf, ProbeError> {
-    if let Some(explicit) = request.explicit_backend.as_ref() {
-        return canonicalize_candidate(explicit);
-    }
-    if let Some(from_env) = request.env_backend.as_ref() {
-        return canonicalize_candidate(from_env);
-    }
-    let default = default_backend_name(&request.invoked_as);
-    find_in_path(default).ok_or_else(|| ProbeError::NotFound(default.to_string()))
+pub fn resolve_backend(request: &ResolveRequest) -> Result<ResolvedBackend, ProbeError> {
+    let compiler_path = if let Some(candidate) = request
+        .cli_backend
+        .as_ref()
+        .or(request.env_backend.as_ref())
+        .or(request.config_backend.as_ref())
+    {
+        canonicalize_candidate(candidate)?
+    } else {
+        let default = default_backend_name(&request.invoked_as);
+        find_in_path(default).ok_or_else(|| ProbeError::NotFound(default.to_string()))?
+    };
+    let launcher_path = request
+        .cli_launcher
+        .as_ref()
+        .or(request.env_launcher.as_ref())
+        .or(request.config_launcher.as_ref())
+        .map(|candidate| canonicalize_launcher_candidate(candidate))
+        .transpose()?;
+
+    validate_backend_topology(
+        &compiler_path,
+        launcher_path.as_deref(),
+        request.wrapper_path.as_deref(),
+    )?;
+
+    Ok(ResolvedBackend {
+        compiler_path: compiler_path.clone(),
+        execution_topology: ActiveBackendTopology {
+            policy_version: BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+            kind: if launcher_path.is_some() {
+                BackendTopologyKind::SingleBackendLauncher
+            } else {
+                BackendTopologyKind::Direct
+            },
+            launcher_path,
+            disposition: BackendTopologyDisposition::Supported,
+        },
+    })
 }
 
 /// Returns the default backend binary name based on how the wrapper was invoked.
@@ -264,6 +389,12 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
     Ok(ProbeResult {
         requested_backend: invoked_as,
         resolved_path: path.to_path_buf(),
+        execution_topology: ActiveBackendTopology {
+            policy_version: BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+            kind: BackendTopologyKind::Direct,
+            launcher_path: None,
+            disposition: BackendTopologyDisposition::Supported,
+        },
         version_string,
         major,
         minor,
@@ -272,6 +403,42 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
         add_output_sarif_supported: major >= 15,
         version_probe_key: key,
     })
+}
+
+/// One row from the current backend-topology support policy.
+pub fn backend_topology_policy() -> Vec<BackendTopologyPolicyEntry> {
+    vec![
+        BackendTopologyPolicyEntry {
+            topology: "direct_compiler".to_string(),
+            disposition: BackendTopologyDisposition::Supported,
+            note: "wrapper executes a concrete GCC/G++ binary directly".to_string(),
+        },
+        BackendTopologyPolicyEntry {
+            topology: "single_backend_launcher".to_string(),
+            disposition: BackendTopologyDisposition::Supported,
+            note: "wrapper executes one launcher and passes one concrete compiler path as argv[1]".to_string(),
+        },
+        BackendTopologyPolicyEntry {
+            topology: "launcher_before_wrapper".to_string(),
+            disposition: BackendTopologyDisposition::Unsupported,
+            note: "build-system-managed compiler launchers before gcc-formed are outside the current beta contract".to_string(),
+        },
+        BackendTopologyPolicyEntry {
+            topology: "multi_launcher_chain".to_string(),
+            disposition: BackendTopologyDisposition::Unsupported,
+            note: "stacked launchers are not supported; configure at most one launcher executable".to_string(),
+        },
+        BackendTopologyPolicyEntry {
+            topology: "shell_command_launcher".to_string(),
+            disposition: BackendTopologyDisposition::Unsupported,
+            note: "launcher configuration must be one executable path, not a shell string".to_string(),
+        },
+        BackendTopologyPolicyEntry {
+            topology: "launcher_alias_backend".to_string(),
+            disposition: BackendTopologyDisposition::Unsupported,
+            note: "backend compiler must resolve to a concrete GCC/G++ binary, not a launcher alias directory entry".to_string(),
+        },
+    ]
 }
 
 /// Maps a GCC major version to its support tier.
@@ -514,11 +681,64 @@ fn canonicalize_candidate(path: &Path) -> Result<PathBuf, ProbeError> {
     fs::canonicalize(path).map_err(|_| ProbeError::NotFound(path.display().to_string()))
 }
 
+fn canonicalize_launcher_candidate(path: &Path) -> Result<PathBuf, ProbeError> {
+    fs::canonicalize(path).map_err(|_| ProbeError::LauncherNotFound(path.display().to_string()))
+}
+
+fn validate_backend_topology(
+    compiler_path: &Path,
+    launcher_path: Option<&Path>,
+    wrapper_path: Option<&Path>,
+) -> Result<(), ProbeError> {
+    let wrapper_path = wrapper_path
+        .map(fs::canonicalize)
+        .transpose()
+        .map_err(|_| {
+            ProbeError::RecursiveTopology("failed to canonicalize wrapper path".to_string())
+        })?;
+    if let Some(wrapper_path) = wrapper_path.as_deref() {
+        if compiler_path == wrapper_path {
+            return Err(ProbeError::RecursiveTopology(
+                "backend compiler resolves to the wrapper binary".to_string(),
+            ));
+        }
+        if launcher_path.is_some_and(|launcher| launcher == wrapper_path) {
+            return Err(ProbeError::RecursiveTopology(
+                "backend launcher resolves to the wrapper binary".to_string(),
+            ));
+        }
+    }
+    if launcher_path.is_some_and(|launcher| launcher == compiler_path) {
+        return Err(ProbeError::UnsupportedTopology(
+            "launcher and backend compiler resolve to the same executable".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// Resolved launcher/compiler paths for one invocation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedBackend {
+    /// Canonical path to the resolved compiler binary.
+    pub compiler_path: PathBuf,
+    /// Active launcher/compiler topology for this invocation.
+    pub execution_topology: ActiveBackendTopology,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
     use std::path::Path;
+
+    fn direct_topology() -> ActiveBackendTopology {
+        ActiveBackendTopology {
+            policy_version: BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+            kind: BackendTopologyKind::Direct,
+            launcher_path: None,
+            disposition: BackendTopologyDisposition::Supported,
+        }
+    }
 
     #[test]
     fn picks_cplusplus_driver_from_invocation_name() {
@@ -663,6 +883,7 @@ mod tests {
         let probe = ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: PathBuf::from("/usr/bin/gcc"),
+            execution_topology: direct_topology(),
             version_string: "gcc (GCC) 15.1.0".to_string(),
             major: 15,
             minor: 1,
@@ -693,6 +914,7 @@ mod tests {
         let probe = ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: PathBuf::from("/usr/bin/gcc-12"),
+            execution_topology: direct_topology(),
             version_string: "gcc (GCC) 12.3.0".to_string(),
             major: 12,
             minor: 3,
@@ -728,6 +950,7 @@ mod tests {
         let probe = ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: PathBuf::from("/usr/bin/gcc-13"),
+            execution_topology: direct_topology(),
             version_string: "gcc (GCC) 13.3.0".to_string(),
             major: 13,
             minor: 3,
@@ -833,6 +1056,41 @@ exit 0
                 assert!(source.to_string().contains("exit"));
             }
             other => panic!("expected version probe failure, got {other:?}"),
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn resolve_backend_rejects_symlink_loop_for_launcher_topology_cycles() {
+        use std::os::unix::fs::symlink;
+
+        let temp = tempfile::tempdir().unwrap();
+        let launcher = temp.path().join("gcc-launcher");
+        let loopback = temp.path().join("gcc-launcher.loop");
+        let compiler = temp.path().join("real-gcc");
+
+        fs::write(&compiler, "#!/bin/sh\nexit 0\n").unwrap();
+        make_executable(&compiler);
+        symlink(&loopback, &launcher).unwrap();
+        symlink(&launcher, &loopback).unwrap();
+
+        let request = ResolveRequest {
+            cli_backend: Some(compiler),
+            env_backend: None,
+            config_backend: None,
+            cli_launcher: Some(launcher.clone()),
+            env_launcher: None,
+            config_launcher: None,
+            invoked_as: "gcc-formed".to_string(),
+            wrapper_path: None,
+        };
+
+        let error = resolve_backend(&request).unwrap_err();
+        match error {
+            ProbeError::LauncherNotFound(path) => {
+                assert!(path.contains("gcc-launcher"));
+            }
+            other => panic!("expected loop rejection, got {other:?}"),
         }
     }
 

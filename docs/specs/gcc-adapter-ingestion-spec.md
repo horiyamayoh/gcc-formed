@@ -345,16 +345,27 @@ adapter は少なくとも以下の mode を持つ。
 
 wrapper は以下の順で backend compiler を決める。
 
-1. explicit CLI / config 指定
-2. 呼び出し名に基づく既定
+1. explicit CLI 指定
+2. wrapper-owned environment variable
+3. config 指定
+4. 呼び出し名に基づく既定
    - `gcc-formed` → `gcc`
    - `g++-formed` → `g++`
-3. PATH 探索
+5. PATH 探索
+
+wrapper は backend compiler に加えて、**1 本だけ** backend launcher を持ってよい。
+
+- CLI: `--formed-backend-launcher=/absolute/path/to/launcher`
+- environment: `FORMED_BACKEND_LAUNCHER`
+- config: `[backend].launcher`
 
 解決時の規則:
 
 - **MUST** shell を介さず `execve` 相当で起動する
 - **MUST** `realpath` を取得し、trace には実パスを記録する
+- **MUST** launcher を使う場合も shell string ではなく 1 executable path として扱う
+- **MUST NOT** multi-launcher chain を構成しない
+- **MUST** wrapper 自身へ再帰する backend / launcher topology を拒否する
 - **SHOULD** inode / mtime / file size を probe cache key に使う
 - **MUST NOT** `@response-file` を wrapper 側で展開する
 - **MUST** 作業ディレクトリは caller のものをそのまま使う
@@ -461,6 +472,7 @@ if path == C:
 ### 11.1 引数 forwarding
 
 - **MUST** semantic compile options をそのまま渡す
+- **MUST** backend launcher が有効な場合、launcher argv の先頭に concrete compiler path を 1 つだけ付与する
 - **MUST NOT** response file を展開しない
 - **MUST NOT** shell quoting を再解釈しない
 - **MUST** wrapper 所有の injected options は argv 末尾に付与する

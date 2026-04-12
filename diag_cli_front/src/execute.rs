@@ -58,11 +58,7 @@ fn real_main() -> Result<i32, CliError> {
     let plan = build_execution_plan(&argv0, &parsed, &config, &mut cache)?;
 
     if is_compiler_introspection(&parsed.forwarded_args) {
-        return passthrough_inherit(
-            &plan.backend.resolved_path,
-            &parsed.forwarded_args,
-            &env::current_dir()?,
-        );
+        return passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?);
     }
 
     if let Some(note) = plan.scope_notice {
@@ -222,13 +218,13 @@ fn run_cascade_analysis<A: DocumentAnalyzer>(
 }
 
 fn passthrough_inherit(
-    backend: &Path,
+    backend: &diag_backend_probe::ProbeResult,
     forwarded_args: &[OsString],
     cwd: &Path,
 ) -> Result<i32, CliError> {
-    let status = Command::new(backend)
+    let status = Command::new(backend.spawn_path())
         .current_dir(cwd)
-        .args(forwarded_args)
+        .args(backend.spawn_args(forwarded_args))
         .stdin(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
@@ -353,7 +349,10 @@ mod tests {
             },
             invocation: CaptureInvocation {
                 backend_path: "/usr/bin/clang".to_string(),
+                launcher_path: None,
+                spawn_path: "/usr/bin/clang".to_string(),
                 argv: vec!["clang".to_string(), "-c".to_string(), "main.c".to_string()],
+                spawn_argv: vec!["clang".to_string(), "-c".to_string(), "main.c".to_string()],
                 argv_hash: "hash".to_string(),
                 cwd: "/tmp/project".to_string(),
                 selected_mode: ExecutionMode::Render,

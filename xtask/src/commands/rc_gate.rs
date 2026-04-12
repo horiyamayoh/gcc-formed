@@ -556,9 +556,14 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
 
     let mut probe_cache = ProbeCache::default();
     let backend = probe_cache.get_or_probe(ResolveRequest {
-        explicit_backend: None,
+        cli_backend: None,
         env_backend: None,
+        config_backend: None,
+        cli_launcher: None,
+        env_launcher: None,
+        config_launcher: None,
         invoked_as: "gcc-formed".to_string(),
+        wrapper_path: None,
     })?;
 
     let args = vec![

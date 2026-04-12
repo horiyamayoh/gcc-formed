@@ -26,6 +26,8 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - `GCC15+` is the primary fidelity reference path.
 - `GCC13-14` and `GCC9-12` are in-scope product bands, but with narrower guarantees and path-dependent capture constraints.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
+- The currently recommended build-system insertion pattern is direct `CC` / `CXX` replacement, optionally with one wrapper-owned backend launcher via `FORMED_BACKEND_LAUNCHER`, `--formed-backend-launcher`, or `[backend].launcher`.
+- The checked-in interop lab is the source of truth for Make / CMake topology guidance. When the lab does not prove a chain, prefer raw `gcc` / `g++` or `--formed-mode=passthrough` rather than adding another launcher layer in front of the wrapper.
 
 ## Known Constraints
 
@@ -35,6 +37,7 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - Older or unknown compiler variants may still resolve conservatively to passthrough behavior.
 - Current runtime and self-check output still expose some legacy tier-oriented fields and notices. Treat those as implementation detail and use `VersionBand` / `ProcessingPath` / `SupportLevel` as the canonical public vocabulary in new issues.
 - Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
+- The checked-in interop lab covers `make -j`, `cmake --build`, one wrapper-owned backend launcher, depfile generation, response-file pass-through, and stdout-sensitive compiler probes under `eval/interop/`, but that coverage is intentionally narrow and does not prove launcher stacks in front of the wrapper or multi-launcher chains.
 
 ## Raw Fallback
 

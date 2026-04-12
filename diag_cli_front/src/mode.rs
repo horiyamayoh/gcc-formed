@@ -674,6 +674,12 @@ mod tests {
         let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: "/tmp/fake-gcc".into(),
+            execution_topology: diag_backend_probe::ActiveBackendTopology {
+                policy_version: diag_backend_probe::BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                kind: diag_backend_probe::BackendTopologyKind::Direct,
+                launcher_path: None,
+                disposition: diag_backend_probe::BackendTopologyDisposition::Supported,
+            },
             version_string: "gcc (Fake) 15.2.0".to_string(),
             major: 15,
             minor: 2,
@@ -711,6 +717,12 @@ mod tests {
         let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: "/tmp/fake-gcc".into(),
+            execution_topology: diag_backend_probe::ActiveBackendTopology {
+                policy_version: diag_backend_probe::BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                kind: diag_backend_probe::BackendTopologyKind::Direct,
+                launcher_path: None,
+                disposition: diag_backend_probe::BackendTopologyDisposition::Supported,
+            },
             version_string: "gcc (Fake) 13.3.0".to_string(),
             major: 13,
             minor: 3,

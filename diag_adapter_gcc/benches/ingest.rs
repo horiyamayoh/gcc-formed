@@ -41,7 +41,10 @@ fn build_residual_bundle(stderr_text: &str) -> CaptureBundle {
         },
         invocation: CaptureInvocation {
             backend_path: run.primary_tool.name.clone(),
+            launcher_path: None,
+            spawn_path: run.primary_tool.name.clone(),
             argv: run.argv_redacted.clone(),
+            spawn_argv: run.argv_redacted.clone(),
             argv_hash: diag_core::fingerprint_for(&run.argv_redacted),
             cwd: String::new(),
             selected_mode: ExecutionMode::Passthrough,

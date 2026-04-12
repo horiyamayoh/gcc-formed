@@ -738,6 +738,7 @@ fn synthetic_sarif_capture_bundle(
 ) -> Result<CaptureBundle, String> {
     let run = synthetic_run("sarif_ingest");
     let argv = run.argv_redacted.clone();
+    let spawn_argv = argv.clone();
     let tool = run.primary_tool.clone();
 
     Ok(CaptureBundle {
@@ -752,8 +753,11 @@ fn synthetic_sarif_capture_bundle(
         },
         invocation: CaptureInvocation {
             backend_path: tool.name.clone(),
+            launcher_path: None,
+            spawn_path: tool.name.clone(),
             argv_hash: fingerprint_for(&argv),
             argv,
+            spawn_argv,
             cwd: run.cwd_display.unwrap_or_else(|| ".".to_string()),
             selected_mode: ExecutionMode::Render,
             processing_path: ProcessingPath::DualSinkStructured,

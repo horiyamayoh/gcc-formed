@@ -1501,12 +1501,16 @@ pub(crate) fn capture_bundle_for_fixture(
     })
     .into_iter()
     .collect::<Vec<_>>();
+    let spawn_argv = argv.clone();
     Ok(CaptureBundle {
         plan: fixture_capture_plan.plan,
         invocation: CaptureInvocation {
             backend_path: compiler_binary_for_fixture(fixture).to_string(),
+            launcher_path: None,
+            spawn_path: compiler_binary_for_fixture(fixture).to_string(),
             argv_hash: fingerprint_for(&argv),
             argv,
+            spawn_argv,
             cwd: fixture.root.display().to_string(),
             selected_mode: fixture_capture_plan.plan.execution_mode,
             processing_path: fixture_capture_plan.plan.processing_path,

@@ -24,7 +24,10 @@ mod tests {
         await_stderr_capture, capture_stderr_stream, path_is_safe_for_gcc_output,
     };
     use crate::policy::{child_env_policy, child_env_policy_for_mode, child_env_policy_is_empty};
-    use diag_backend_probe::{DriverKind, ProbeKey, SupportTier};
+    use diag_backend_probe::{
+        ActiveBackendTopology, BACKEND_TOPOLOGY_POLICY_VERSION, BackendTopologyDisposition,
+        BackendTopologyKind, DriverKind, ProbeKey, SupportTier,
+    };
     use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, fingerprint_for};
     use std::io::Cursor;
     use std::path::PathBuf;
@@ -34,6 +37,12 @@ mod tests {
         diag_backend_probe::ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: PathBuf::from("/usr/bin/gcc"),
+            execution_topology: ActiveBackendTopology {
+                policy_version: BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                kind: BackendTopologyKind::Direct,
+                launcher_path: None,
+                disposition: BackendTopologyDisposition::Supported,
+            },
             version_string: "gcc (GCC) 15.1.0".to_string(),
             major: 15,
             minor: 1,
@@ -57,6 +66,20 @@ mod tests {
             runtime_root: PathBuf::from("/tmp/runtime"),
             trace_root: PathBuf::from("/tmp/traces"),
             install_root: PathBuf::from("/tmp/install"),
+        }
+    }
+
+    fn empty_invocation(processing_path: diag_backend_probe::ProcessingPath) -> CaptureInvocation {
+        CaptureInvocation {
+            backend_path: "/usr/bin/gcc".to_string(),
+            launcher_path: None,
+            spawn_path: "/usr/bin/gcc".to_string(),
+            argv: Vec::new(),
+            spawn_argv: Vec::new(),
+            argv_hash: "hash".to_string(),
+            cwd: "/tmp/project".to_string(),
+            selected_mode: ExecutionMode::Render,
+            processing_path,
         }
     }
 
@@ -131,6 +154,12 @@ exit 1
         let request = CaptureRequest {
             backend: diag_backend_probe::ProbeResult {
                 resolved_path: backend.clone(),
+                execution_topology: ActiveBackendTopology {
+                    policy_version: BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                    kind: BackendTopologyKind::Direct,
+                    launcher_path: None,
+                    disposition: BackendTopologyDisposition::Supported,
+                },
                 version_string: "gcc (Fake) 15.2.0".to_string(),
                 ..fake_probe()
             },
@@ -218,6 +247,13 @@ exit 1
                     "-fdiagnostics-add-output=sarif:version=2.1,file=/tmp/runtime/diagnostics.sarif",
                 ),
             ],
+            &[
+                std::ffi::OsString::from("-c"),
+                std::ffi::OsString::from("src/main.c"),
+                std::ffi::OsString::from(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file=/tmp/runtime/diagnostics.sarif",
+                ),
+            ],
             Some(std::path::Path::new("/tmp/runtime/diagnostics.sarif")),
             child_env_policy(&request.capture_plan()),
         );
@@ -225,6 +261,7 @@ exit 1
         assert!(request.capture_plan().preserve_native_color);
         assert_eq!(record.selected_mode, ExecutionMode::Render);
         assert_eq!(record.backend_path, "/usr/bin/gcc");
+        assert_eq!(record.spawn_path, "/usr/bin/gcc");
         assert_eq!(record.argv_hash, fingerprint_for(&record.argv));
         assert_eq!(record.redaction_class, "restricted");
         assert_eq!(record.cwd, "/tmp/project");
@@ -422,14 +459,7 @@ exit 1
                 locale_handling: LocaleHandling::ForceMessagesC,
                 retention_policy: diag_trace::RetentionPolicy::Always,
             },
-            invocation: CaptureInvocation {
-                backend_path: "/usr/bin/gcc".to_string(),
-                argv: Vec::new(),
-                argv_hash: "hash".to_string(),
-                cwd: "/tmp/project".to_string(),
-                selected_mode: ExecutionMode::Render,
-                processing_path: diag_backend_probe::ProcessingPath::NativeTextCapture,
-            },
+            invocation: empty_invocation(diag_backend_probe::ProcessingPath::NativeTextCapture),
             raw_text_artifacts: Vec::new(),
             structured_artifacts: Vec::new(),
             exit_status: ExitStatusInfo {
@@ -471,14 +501,7 @@ exit 1
         );
         let bundle = CaptureBundle {
             plan,
-            invocation: CaptureInvocation {
-                backend_path: "/usr/bin/gcc".to_string(),
-                argv: Vec::new(),
-                argv_hash: "hash".to_string(),
-                cwd: "/tmp/project".to_string(),
-                selected_mode: ExecutionMode::Render,
-                processing_path: diag_backend_probe::ProcessingPath::SingleSinkStructured,
-            },
+            invocation: empty_invocation(diag_backend_probe::ProcessingPath::SingleSinkStructured),
             raw_text_artifacts: Vec::new(),
             structured_artifacts: Vec::new(),
             exit_status: ExitStatusInfo {
@@ -519,14 +542,7 @@ exit 1
         );
         let bundle = CaptureBundle {
             plan,
-            invocation: CaptureInvocation {
-                backend_path: "/usr/bin/gcc".to_string(),
-                argv: Vec::new(),
-                argv_hash: "hash".to_string(),
-                cwd: "/tmp/project".to_string(),
-                selected_mode: ExecutionMode::Render,
-                processing_path: diag_backend_probe::ProcessingPath::SingleSinkStructured,
-            },
+            invocation: empty_invocation(diag_backend_probe::ProcessingPath::SingleSinkStructured),
             raw_text_artifacts: Vec::new(),
             structured_artifacts: Vec::new(),
             exit_status: ExitStatusInfo {
@@ -581,6 +597,13 @@ exit 1
 
         let bundle = build_capture_bundle(
             &request,
+            &[
+                std::ffi::OsString::from("-c"),
+                std::ffi::OsString::from("main.c"),
+                std::ffi::OsString::from(
+                    "-fdiagnostics-add-output=sarif:version=2.1,file=/tmp/runtime/diagnostics.sarif",
+                ),
+            ],
             &[
                 std::ffi::OsString::from("-c"),
                 std::ffi::OsString::from("main.c"),
@@ -644,6 +667,11 @@ exit 1
                 std::ffi::OsString::from("main.c"),
                 std::ffi::OsString::from("-fdiagnostics-format=json-file"),
             ],
+            &[
+                std::ffi::OsString::from("-c"),
+                std::ffi::OsString::from("main.c"),
+                std::ffi::OsString::from("-fdiagnostics-format=json-file"),
+            ],
             &plan,
             &exit_status,
             &artifacts,
@@ -695,6 +723,10 @@ exit 1
 
         let bundle = build_capture_bundle(
             &request,
+            &[
+                std::ffi::OsString::from("-c"),
+                std::ffi::OsString::from("main.c"),
+            ],
             &[
                 std::ffi::OsString::from("-c"),
                 std::ffi::OsString::from("main.c"),
@@ -812,7 +844,10 @@ exit 1
             },
             invocation: CaptureInvocation {
                 backend_path: "/usr/bin/gcc".to_string(),
+                launcher_path: None,
+                spawn_path: "/usr/bin/gcc".to_string(),
                 argv: vec!["-c".to_string(), "main.c".to_string()],
+                spawn_argv: vec!["-c".to_string(), "main.c".to_string()],
                 argv_hash: "hash".to_string(),
                 cwd: "/tmp/project".to_string(),
                 selected_mode: ExecutionMode::Render,
@@ -891,7 +926,10 @@ exit 1
             },
             invocation: CaptureInvocation {
                 backend_path: "/usr/bin/gcc".to_string(),
+                launcher_path: None,
+                spawn_path: "/usr/bin/gcc".to_string(),
                 argv: vec!["-c".to_string(), "main.c".to_string()],
+                spawn_argv: vec!["-c".to_string(), "main.c".to_string()],
                 argv_hash: "hash".to_string(),
                 cwd: "/tmp/project".to_string(),
                 selected_mode: ExecutionMode::Render,
@@ -967,8 +1005,14 @@ exit 1
         let plan = request.capture_plan();
         let final_args = request.args.clone();
 
-        let record =
-            build_invocation_record(&request, &plan, &final_args, None, child_env_policy(&plan));
+        let record = build_invocation_record(
+            &request,
+            &plan,
+            &final_args,
+            &final_args,
+            None,
+            child_env_policy(&plan),
+        );
 
         assert_eq!(record.selected_mode, ExecutionMode::Passthrough);
         assert_eq!(record.sarif_path, None);
@@ -1041,6 +1085,53 @@ exit 1
         assert_eq!(normalized.include_path_count, 1);
         assert_eq!(normalized.define_count, 1);
         assert!(normalized.compile_only);
+    }
+
+    #[test]
+    fn invocation_record_preserves_response_file_tokens_and_depfile_options_verbatim() {
+        let request = CaptureRequest {
+            backend: fake_probe(),
+            args: vec![
+                std::ffi::OsString::from("@build.rsp"),
+                std::ffi::OsString::from("-E"),
+                std::ffi::OsString::from("-MF"),
+                std::ffi::OsString::from("deps.d"),
+                std::ffi::OsString::from("main.c"),
+            ],
+            cwd: PathBuf::from("/tmp/project"),
+            mode: ExecutionMode::Passthrough,
+            capture_passthrough_stderr: false,
+            retention: diag_trace::RetentionPolicy::Never,
+            paths: fake_paths(),
+            structured_capture: StructuredCapturePolicy::Disabled,
+            preserve_native_color: false,
+        };
+        let plan = request.capture_plan();
+        let final_args = request.args.clone();
+
+        let record = build_invocation_record(
+            &request,
+            &plan,
+            &final_args,
+            &final_args,
+            None,
+            child_env_policy(&plan),
+        );
+
+        assert_eq!(
+            record.argv,
+            vec![
+                "@build.rsp".to_string(),
+                "-E".to_string(),
+                "-MF".to_string(),
+                "deps.d".to_string(),
+                "main.c".to_string(),
+            ]
+        );
+        assert_eq!(record.normalized_invocation.arg_count, 5);
+        assert!(record.normalized_invocation.preprocess_only);
+        assert_eq!(record.normalized_invocation.input_count, 2);
+        assert_eq!(record.normalized_invocation.diagnostics_flag_count, 0);
     }
 
     #[test]

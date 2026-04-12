@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
+use std::path::PathBuf;
 use tempfile::TempDir;
 
 #[test]
@@ -1062,6 +1063,235 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
             && case["fallback_reason"] == "shadow_mode"
     }));
     assert!(report["warnings"].as_array().unwrap().is_empty());
+    assert_optional_launcher_topology(&report["backend"], &expected_backend_path);
+}
+
+#[cfg(unix)]
+#[test]
+fn launcher_chain_executes_through_wrapper_and_keeps_child_argv_raw() {
+    let fixture = launcher_chain_fixture("15.2.0");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg("-c")
+        .arg("main.c")
+        .assert()
+        .success();
+
+    assert_eq!(
+        read_log_lines(&fixture.launcher_run_log),
+        vec!["-c".to_string(), "main.c".to_string()]
+    );
+    assert_eq!(
+        read_log_lines(&fixture.compiler_run_log),
+        vec!["-c".to_string(), "main.c".to_string()]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn response_file_is_forwarded_as_a_single_argument_through_launcher_chain() {
+    let fixture = launcher_chain_fixture("15.2.0");
+    fs::write(&fixture.response_file, "-c\nmain.c\n").unwrap();
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg(format!("@{}", fixture.response_file.display()))
+        .assert()
+        .success();
+
+    assert_eq!(
+        read_log_lines(&fixture.launcher_run_log),
+        vec![format!("@{}", fixture.response_file.display())]
+    );
+    assert_eq!(
+        read_log_lines(&fixture.compiler_run_log),
+        vec![format!("@{}", fixture.response_file.display())]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn depfile_generation_survives_launcher_chain() {
+    let fixture = launcher_chain_fixture("15.2.0");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg("-c")
+        .arg("main.c")
+        .arg("-MMD")
+        .arg("-MF")
+        .arg(&fixture.depfile)
+        .assert()
+        .success();
+
+    assert!(fixture.depfile.exists());
+    assert_eq!(
+        fs::read_to_string(&fixture.depfile).unwrap().trim(),
+        "main.o: main.c"
+    );
+    assert_eq!(
+        read_log_lines(&fixture.launcher_run_log),
+        vec![
+            "-c".to_string(),
+            "main.c".to_string(),
+            "-MMD".to_string(),
+            "-MF".to_string(),
+            fixture.depfile.display().to_string(),
+        ]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn preprocess_stdout_is_not_intercepted_by_launcher_chain() {
+    let fixture = launcher_chain_fixture("15.2.0");
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg("-E")
+        .arg("main.c")
+        .assert()
+        .success();
+
+    assert_stdout_lines(&assert, &["# 1 \"main.c\"", "int main(void) { return 0; }"]);
+    assert_eq!(
+        read_log_lines(&fixture.launcher_run_log),
+        vec!["-E".to_string(), "main.c".to_string()]
+    );
+    assert_eq!(
+        read_log_lines(&fixture.compiler_run_log),
+        vec!["-E".to_string(), "main.c".to_string()]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn print_search_dirs_stdout_is_not_intercepted_by_launcher_chain() {
+    let fixture = launcher_chain_fixture("15.2.0");
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg("-print-search-dirs")
+        .assert()
+        .success();
+
+    assert_stdout_lines(
+        &assert,
+        &[
+            "install: /opt/gcc",
+            "programs: =/opt/gcc/bin",
+            "libraries: =/opt/gcc/lib",
+        ],
+    );
+    assert_eq!(
+        read_log_lines(&fixture.launcher_run_log),
+        vec!["-print-search-dirs".to_string()]
+    );
+    assert_eq!(
+        read_log_lines(&fixture.compiler_run_log),
+        vec!["-print-search-dirs".to_string()]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn launcher_topology_is_disclosed_in_self_check_when_configured() {
+    let fixture = launcher_chain_fixture("15.2.0");
+    let expected_launcher_path = fs::canonicalize(&fixture.launcher)
+        .unwrap()
+        .display()
+        .to_string();
+    let expected_backend_path = fs::canonicalize(&fixture.compiler)
+        .unwrap()
+        .display()
+        .to_string();
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &fixture.launcher)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-self-check")
+        .assert()
+        .success();
+
+    let report: Value = serde_json::from_slice(&assert.get_output().stdout).unwrap();
+    assert_eq!(
+        report["backend"]["path"].as_str(),
+        Some(expected_backend_path.as_str())
+    );
+    assert_eq!(
+        report["backend"]["launcher_path"].as_str(),
+        Some(expected_launcher_path.as_str())
+    );
+    assert_eq!(
+        report["backend"]["topology_kind"].as_str(),
+        Some("single_backend_launcher")
+    );
+    assert_eq!(
+        report["backend"]["topology_disposition"].as_str(),
+        Some("supported")
+    );
+    assert!(
+        report["backend"]["topology_policy_version"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
+    assert!(
+        report["backend"]["topology_policy"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| {
+                entry["topology"].as_str() == Some("single_backend_launcher")
+                    && entry["disposition"].as_str() == Some("supported")
+            })
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn recursive_launcher_topology_is_rejected_before_spawn() {
+    use std::os::unix::fs::symlink;
+
+    let fixture = launcher_chain_fixture("15.2.0");
+    let loop_a = fixture.temp.path().join("launcher-loop-a");
+    let loop_b = fixture.temp.path().join("launcher-loop-b");
+    symlink(&loop_b, &loop_a).unwrap();
+    symlink(&loop_a, &loop_b).unwrap();
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.compiler)
+        .env("FORMED_BACKEND_LAUNCHER", &loop_a)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=passthrough")
+        .arg("-c")
+        .arg("main.c")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("backend launcher was not found"));
 }
 
 fn expected_non_tty_stream_kind() -> &'static str {
@@ -1575,4 +1805,149 @@ if [[ -n "${{FORMED_TEST_ENV_DUMP:-}}" ]]; then
     fs::set_permissions(&backend_tmp, permissions).unwrap();
     fs::rename(&backend_tmp, &backend).unwrap();
     temp
+}
+
+#[cfg(unix)]
+struct LauncherChainFixture {
+    temp: TempDir,
+    compiler: PathBuf,
+    launcher: PathBuf,
+    launcher_run_log: PathBuf,
+    compiler_run_log: PathBuf,
+    response_file: PathBuf,
+    depfile: PathBuf,
+}
+
+#[cfg(unix)]
+fn launcher_chain_fixture(version: &str) -> LauncherChainFixture {
+    let temp = tempfile::tempdir().unwrap();
+    let launcher = temp.path().join("gcc-launcher");
+    let compiler = temp.path().join("fake-gcc");
+    let launcher_version_log = temp.path().join("launcher-version.log");
+    let launcher_run_log = temp.path().join("launcher-run.log");
+    let compiler_version_log = temp.path().join("compiler-version.log");
+    let compiler_run_log = temp.path().join("compiler-run.log");
+    let response_file = temp.path().join("build.rsp");
+    let depfile = temp.path().join("deps.d");
+    let compiler_script = format!(
+        r#"#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${{1:-}}" == "--version" ]]; then
+  printf '%s\n' "$@" > "{compiler_version_log}"
+  echo "gcc (Fake) {version}"
+  exit 0
+fi
+printf '%s\n' "$@" > "{compiler_run_log}"
+emit_preprocess=0
+emit_search_dirs=0
+depfile=""
+while (($#)); do
+  case "$1" in
+    -E)
+      emit_preprocess=1
+      ;;
+    -print-search-dirs)
+      emit_search_dirs=1
+      ;;
+    -MF)
+      depfile="${{2:-}}"
+      shift 2
+      continue
+      ;;
+    -MF*)
+      depfile="${{1#-MF}}"
+      ;;
+  esac
+  shift
+done
+if [[ -n "$depfile" ]]; then
+  printf '%s\n' 'main.o: main.c' > "$depfile"
+fi
+if [[ "$emit_preprocess" -eq 1 ]]; then
+  printf '%s\n' '# 1 "main.c"' 'int main(void) {{ return 0; }}'
+fi
+if [[ "$emit_search_dirs" -eq 1 ]]; then
+  printf '%s\n' 'install: /opt/gcc' 'programs: =/opt/gcc/bin' 'libraries: =/opt/gcc/lib'
+fi
+exit 0
+"#,
+        compiler_version_log = compiler_version_log.display(),
+        compiler_run_log = compiler_run_log.display(),
+        version = version,
+    );
+    let launcher_script = format!(
+        r#"#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${{1:-}}" == "--version" ]]; then
+  compiler="$1"
+  shift
+  printf '%s\n' "$@" > "{launcher_version_log}"
+  exec "$compiler" "$@"
+fi
+compiler="$1"
+shift
+printf '%s\n' "$@" > "{launcher_run_log}"
+exec "$compiler" "$@"
+"#,
+        launcher_version_log = launcher_version_log.display(),
+        launcher_run_log = launcher_run_log.display(),
+    );
+
+    write_executable_script(&compiler, &compiler_script);
+    write_executable_script(&launcher, &launcher_script);
+    fs::write(temp.path().join("main.c"), "int main(void) { return 0; }\n").unwrap();
+
+    LauncherChainFixture {
+        temp,
+        compiler,
+        launcher,
+        launcher_run_log,
+        compiler_run_log,
+        response_file,
+        depfile,
+    }
+}
+
+#[cfg(unix)]
+fn write_executable_script(path: &std::path::Path, script: &str) {
+    fs::write(path, script).unwrap();
+    let mut permissions = fs::metadata(path).unwrap().permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(path, permissions).unwrap();
+}
+
+fn read_log_lines(path: &std::path::Path) -> Vec<String> {
+    fs::read_to_string(path)
+        .unwrap()
+        .lines()
+        .map(|line| line.to_string())
+        .collect()
+}
+
+fn assert_stdout_lines(assert: &assert_cmd::assert::Assert, expected: &[&str]) {
+    let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
+    let actual = stdout.lines().collect::<Vec<_>>();
+    assert_eq!(actual, expected);
+}
+
+fn assert_optional_launcher_topology(backend: &Value, expected_backend_path: &str) {
+    assert_eq!(backend["path"].as_str(), Some(expected_backend_path));
+    assert_eq!(backend["topology_kind"].as_str(), Some("direct"));
+    assert!(backend["launcher_path"].is_null());
+    assert_eq!(backend["topology_disposition"].as_str(), Some("supported"));
+    assert!(
+        backend["topology_policy_version"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
+    assert!(
+        backend["topology_policy"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|entry| {
+                entry["topology"].as_str() == Some("single_backend_launcher")
+                    && entry["disposition"].as_str() == Some("supported")
+            })
+    );
 }

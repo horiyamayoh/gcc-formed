@@ -35,6 +35,8 @@ pub(crate) struct ConfigFile {
 pub(crate) struct BackendSection {
     #[serde(default)]
     pub(crate) gcc: Option<PathBuf>,
+    #[serde(default)]
+    pub(crate) launcher: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -168,6 +170,7 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
         schema_version: overlay.schema_version.or(base.schema_version),
         backend: BackendSection {
             gcc: overlay.backend.gcc.or(base.backend.gcc),
+            launcher: overlay.backend.launcher.or(base.backend.launcher),
         },
         runtime: RuntimeSection {
             mode: overlay.runtime.mode.or(base.runtime.mode),
@@ -372,6 +375,7 @@ mod tests {
             schema_version: Some(1),
             backend: BackendSection {
                 gcc: Some(PathBuf::from("/usr/bin/gcc")),
+                launcher: Some(PathBuf::from("/usr/bin/ccache")),
             },
             runtime: RuntimeSection {
                 mode: Some(ExecutionMode::Shadow),
@@ -396,7 +400,10 @@ mod tests {
         };
         let overlay = ConfigFile {
             schema_version: None,
-            backend: BackendSection { gcc: None },
+            backend: BackendSection {
+                gcc: None,
+                launcher: Some(PathBuf::from("/usr/bin/distcc")),
+            },
             runtime: RuntimeSection {
                 mode: Some(ExecutionMode::Render),
                 processing_path: Some(ProcessingPath::SingleSinkStructured),
@@ -422,6 +429,10 @@ mod tests {
         let merged = merge_config(base, overlay);
         assert_eq!(merged.schema_version, Some(1));
         assert_eq!(merged.backend.gcc, Some(PathBuf::from("/usr/bin/gcc")));
+        assert_eq!(
+            merged.backend.launcher,
+            Some(PathBuf::from("/usr/bin/distcc"))
+        );
         assert_eq!(merged.runtime.mode, Some(ExecutionMode::Render));
         assert_eq!(
             merged.runtime.processing_path,
@@ -464,6 +475,7 @@ mod tests {
             r#"
                 [backend]
                 gcc = "/opt/gcc-from-second"
+                launcher = "/opt/ccache-from-second"
             "#,
         )
         .unwrap();
@@ -475,6 +487,10 @@ mod tests {
         assert_eq!(
             loaded.backend.gcc,
             Some(PathBuf::from("/opt/gcc-from-second"))
+        );
+        assert_eq!(
+            loaded.backend.launcher,
+            Some(PathBuf::from("/opt/ccache-from-second"))
         );
     }
 
@@ -493,6 +509,7 @@ mod tests {
             r#"
                 [backend]
                 gcc = "/opt/gcc-from-admin"
+                launcher = "/opt/ccache-from-admin"
 
                 [runtime]
                 mode = "shadow"
@@ -517,6 +534,10 @@ mod tests {
         assert_eq!(
             loaded.backend.gcc,
             Some(PathBuf::from("/opt/gcc-from-admin"))
+        );
+        assert_eq!(
+            loaded.backend.launcher,
+            Some(PathBuf::from("/opt/ccache-from-admin"))
         );
         assert_eq!(loaded.runtime.mode, Some(ExecutionMode::Render));
         assert_eq!(loaded.cascade.summary_likelihood_threshold, Some(0.62));

@@ -1,12 +1,13 @@
 use crate::args::WrapperIntrospection;
-use crate::backend::env_backend_override;
+use crate::backend::{env_backend_override, env_launcher_override};
 use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
     fallback_reason_label, select_mode_for_seam, select_processing_path_for_seam,
 };
 use diag_backend_probe::{
-    ProbeCache, ProcessingPath, ResolveRequest, VersionBand, capability_profile_for_major,
+    ProbeCache, ProcessingPath, ResolveRequest, VersionBand, backend_topology_policy,
+    capability_profile_for_major,
 };
 use diag_capture_runtime::ExecutionMode;
 use diag_trace::{
@@ -77,9 +78,14 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
     let mut cache = ProbeCache::default();
     let backend = cache
         .get_or_probe(ResolveRequest {
-            explicit_backend: None,
+            cli_backend: None,
             env_backend: env_backend_override(),
+            config_backend: None,
+            cli_launcher: None,
+            env_launcher: env_launcher_override(),
+            config_launcher: None,
             invoked_as: "gcc-formed".to_string(),
+            wrapper_path: env::current_exe().ok(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
 
@@ -135,6 +141,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
         },
         "backend": {
             "path": backend.resolved_path,
+            "launcher_path": backend.execution_topology.launcher_path,
             "version": backend.version_string,
             "version_band": snake_case_label(&backend.version_band()),
             "processing_path": snake_case_label(&backend.default_processing_path()),
@@ -145,6 +152,10 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
                 .map(snake_case_label)
                 .collect::<Vec<_>>(),
             "support_level": snake_case_label(&backend.support_level()),
+            "topology_kind": snake_case_label(&backend.execution_topology.kind),
+            "topology_policy_version": backend.execution_topology.policy_version,
+            "topology_disposition": snake_case_label(&backend.execution_topology.disposition),
+            "topology_policy": backend_topology_policy(),
         },
         "rollout_matrix": {
             "schema_version": 2,

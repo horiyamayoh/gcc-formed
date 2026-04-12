@@ -316,10 +316,13 @@ fn trace_environment_summary(
 ) -> TraceEnvironmentSummary {
     TraceEnvironmentSummary {
         backend_path: backend.resolved_path.clone(),
+        backend_launcher_path: backend.execution_topology.launcher_path.clone(),
         backend_version: backend.version_string.clone(),
         version_band: snake_case_label(&backend.version_band()),
         processing_path: snake_case_label(&capture.processing_path()),
         support_level: snake_case_label(&backend.support_level()),
+        backend_topology_kind: snake_case_label(&backend.execution_topology.kind),
+        backend_topology_policy_version: backend.execution_topology.policy_version.clone(),
         injected_flags: capture.injected_flags(),
         sanitized_env_keys: capture.sanitized_env_keys(),
         temp_artifact_paths: capture.temp_artifact_paths(),

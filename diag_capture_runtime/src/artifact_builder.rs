@@ -20,7 +20,11 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub(crate) struct InvocationRecord {
     pub(crate) backend_path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) launcher_path: Option<String>,
+    pub(crate) spawn_path: String,
     pub(crate) argv: Vec<String>,
+    pub(crate) spawn_argv: Vec<String>,
     pub(crate) argv_hash: String,
     pub(crate) normalized_invocation: NormalizedInvocation,
     pub(crate) redaction_class: String,
@@ -271,6 +275,7 @@ pub(crate) fn preserve_discovered_artifact(
 pub(crate) fn build_capture_bundle(
     request: &CaptureRequest,
     final_args: &[OsString],
+    spawn_args: &[OsString],
     plan: &CapturePlan,
     exit_status: &ExitStatusInfo,
     artifacts: &[CaptureArtifact],
@@ -278,7 +283,7 @@ pub(crate) fn build_capture_bundle(
 ) -> CaptureBundle {
     CaptureBundle {
         plan: *plan,
-        invocation: build_capture_invocation(request, final_args, plan),
+        invocation: build_capture_invocation(request, final_args, spawn_args, plan),
         raw_text_artifacts: artifacts
             .iter()
             .filter(|artifact| {
@@ -309,16 +314,29 @@ pub(crate) fn build_capture_bundle(
 pub(crate) fn build_capture_invocation(
     request: &CaptureRequest,
     final_args: &[OsString],
+    spawn_args: &[OsString],
     plan: &CapturePlan,
 ) -> CaptureInvocation {
     let argv = final_args
         .iter()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
+    let spawn_argv = spawn_args
+        .iter()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
     CaptureInvocation {
         backend_path: request.backend.resolved_path.display().to_string(),
+        launcher_path: request
+            .backend
+            .execution_topology
+            .launcher_path
+            .as_ref()
+            .map(|path| path.display().to_string()),
+        spawn_path: request.backend.spawn_path().display().to_string(),
         argv_hash: fingerprint_for(&argv),
         argv,
+        spawn_argv,
         cwd: request.cwd.display().to_string(),
         selected_mode: plan.execution_mode,
         processing_path: plan.processing_path,
@@ -343,6 +361,7 @@ pub(crate) fn build_invocation_record(
     request: &CaptureRequest,
     plan: &CapturePlan,
     final_args: &[OsString],
+    spawn_args: &[OsString],
     sarif_path: Option<&Path>,
     child_env_policy: ChildEnvPolicy,
 ) -> InvocationRecord {
@@ -350,12 +369,24 @@ pub(crate) fn build_invocation_record(
         .iter()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
+    let spawn_argv = spawn_args
+        .iter()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
     InvocationRecord {
         backend_path: request.backend.resolved_path.display().to_string(),
+        launcher_path: request
+            .backend
+            .execution_topology
+            .launcher_path
+            .as_ref()
+            .map(|path| path.display().to_string()),
+        spawn_path: request.backend.spawn_path().display().to_string(),
         argv_hash: fingerprint_for(&argv),
         normalized_invocation: normalize_invocation(&argv, request.args.len()),
         redaction_class: "restricted".to_string(),
         argv,
+        spawn_argv,
         selected_mode: plan.execution_mode,
         cwd: request.cwd.display().to_string(),
         sarif_path: sarif_path.map(|path| path.display().to_string()),

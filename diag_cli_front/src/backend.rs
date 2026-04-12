@@ -58,6 +58,10 @@ pub(crate) fn env_backend_override() -> Option<PathBuf> {
     normalized_backend_override(env::var_os("FORMED_BACKEND_GCC"))
 }
 
+pub(crate) fn env_launcher_override() -> Option<PathBuf> {
+    normalized_backend_override(env::var_os("FORMED_BACKEND_LAUNCHER"))
+}
+
 fn build_capture_plan(
     compatibility_seam: &CliCompatibilitySeam,
     mode: ExecutionMode,
@@ -117,9 +121,14 @@ pub(crate) fn build_execution_plan(
 ) -> Result<ExecutionPlan, CliError> {
     let backend = cache
         .get_or_probe(ResolveRequest {
-            explicit_backend: parsed.backend.clone().or(config.backend.gcc.clone()),
+            cli_backend: parsed.backend.clone(),
             env_backend: env_backend_override(),
+            config_backend: config.backend.gcc.clone(),
+            cli_launcher: parsed.launcher.clone(),
+            env_launcher: env_launcher_override(),
+            config_launcher: config.backend.launcher.clone(),
             invoked_as: argv0.to_string(),
+            wrapper_path: env::current_exe().ok(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
     let capabilities = detect_capabilities();

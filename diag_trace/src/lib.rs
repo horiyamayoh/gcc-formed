@@ -188,6 +188,9 @@ pub struct TraceVersionSummary {
 pub struct TraceEnvironmentSummary {
     /// Path to the compiler backend binary.
     pub backend_path: PathBuf,
+    /// Path to the configured launcher binary, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backend_launcher_path: Option<PathBuf>,
     /// Version string reported by the backend.
     pub backend_version: String,
     /// Detected GCC version band.
@@ -196,6 +199,10 @@ pub struct TraceEnvironmentSummary {
     pub processing_path: String,
     /// Computed support level.
     pub support_level: String,
+    /// Active backend topology kind.
+    pub backend_topology_kind: String,
+    /// Versioned topology policy identifier.
+    pub backend_topology_policy_version: String,
     /// Extra flags injected by the wrapper.
     #[serde(default)]
     pub injected_flags: Vec<String>,
@@ -731,10 +738,13 @@ mod tests {
             }),
             environment_summary: Some(TraceEnvironmentSummary {
                 backend_path: PathBuf::from("/usr/bin/gcc"),
+                backend_launcher_path: Some(PathBuf::from("/usr/bin/ccache")),
                 backend_version: "gcc (GCC) 15.2.0".to_string(),
                 version_band: "GCC15+".to_string(),
                 processing_path: "DualSinkStructured".to_string(),
                 support_level: "Preview".to_string(),
+                backend_topology_kind: "single_backend_launcher".to_string(),
+                backend_topology_policy_version: "v1beta-topology-2026-04-12".to_string(),
                 injected_flags: vec!["-fdiagnostics-add-output=sarif".to_string()],
                 sanitized_env_keys: vec!["HOME".to_string()],
                 temp_artifact_paths: vec![PathBuf::from("/tmp/diag.sarif")],
