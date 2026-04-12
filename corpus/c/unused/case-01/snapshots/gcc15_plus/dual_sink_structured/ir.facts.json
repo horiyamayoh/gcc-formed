@@ -1,0 +1,111 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:2:9: warning: unused variable 'temporary' [-Wunused-variable]\n    2 |     int temporary = 0;\n      |         ^~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 162,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3659,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "d7330fda92dfbe13f5294f125136a71aa50dae534173564f73f1b7bc4e46d59d",
+        "raw": "e3b88147d3bd0fb438a8b29b83bfe1bc06762464771cbcde1959a360541b20f1",
+        "structural": "913b9688fa85d3bf99b2bfaceec8e6fcf1198a2f84773410f6e7fc3fac07763a"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 9,
+            "column_native": 9,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:9:2:9",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "unused variable 'temporary'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "ec9fbbb1f8cd7348adb44fd865f42033bc85d2c29de8e23fec52aa3ecac50190",
+    "structural": "0eb914a79d9e853a10764798aac978038c27656e3b89705741f76c4876ca1558"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

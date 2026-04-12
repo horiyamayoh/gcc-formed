@@ -1,0 +1,138 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:4:14: warning: format '%d' expects argument of type 'int', but argument 2 has type 'char *' [-Wformat=]\n    4 |     printf(\"%d\\n\", \"x\");\n      |             ~^     ~~~\n      |              |     |\n      |              int   char *\n      |             %s\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 297,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4971,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "format_string",
+        "first_action_hint": "match the format specifier to the argument type, or use type-safe I/O",
+        "headline": "format string type mismatch",
+        "matched_conditions": [
+          "message_contains=format '%",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.format_string.message_terms"
+      },
+      "fingerprints": {
+        "family": "97c0052a782d6d12bd50768c376bedb4b581650b775b521a7ed4f672b88d4dd7",
+        "raw": "35011d30b9271623293745d569b071e077dc3878e8aad67c9ecd3d4c41774381",
+        "structural": "21c15c7664d1495821b5240624423cb1caf2167863ac0bd0bae4549b9f0f6559"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:13:4:13",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "format '%d' expects argument of type 'int', but argument 2 has type 'char *'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 15,
+              "end_line": 4,
+              "path": "src/main.c",
+              "replacement": "%s",
+              "start_column": 13,
+              "start_line": 4
+            }
+          ],
+          "label": "replace text with '%s'"
+        }
+      ]
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b8b3fe188df7629d73f61d7b04b740517945d4ee947c74aa37e2d78900f006eb",
+    "raw": "dbf9372ce035726df92fcd237ae1ff3c1dbc69c51f259bda0b70c83f6a28febc",
+    "structural": "b380dadb30d485776de1bb3e0fb8b9f68be2767d3db1ef40a169cb2704adc8ff"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

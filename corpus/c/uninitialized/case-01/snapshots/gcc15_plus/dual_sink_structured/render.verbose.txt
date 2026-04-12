@@ -1,0 +1,11 @@
+warning: variable used without initialization
+--> src/main.c:9:5
+help: initialize the variable at its declaration or before first use
+why: 'value' may be used uninitialized
+| src/main.c:9:5
+|     consume(value);
+|     ^
+note: 'value' was declared here
+debug: rule_id=rule.family.uninitialized.message_terms
+debug: matched_conditions=message_contains=may be used uninitialized, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

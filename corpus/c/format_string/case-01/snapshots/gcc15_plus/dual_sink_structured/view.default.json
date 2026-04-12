@@ -1,0 +1,52 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:4:13",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "            ^"
+          ],
+          "lines": [
+            "    printf(\"%d\\n\", \"x\");"
+          ],
+          "location": "src/main.c:4:13"
+        }
+      ],
+      "family": "format_string",
+      "first_action": "match the format specifier to the argument type, or use type-safe I/O",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=format '%",
+        "phase=semantic"
+      ],
+      "raw_message": "format '%d' expects argument of type 'int', but argument 2 has type 'char *'",
+      "rule_id": "rule.family.format_string.message_terms",
+      "severity": "warning",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "inline_patch": [
+            "patch: src/main.c",
+            "4 -     printf(\"%d\\n\", \"x\");",
+            "4 +     printf(\"%s\\n\", \"x\");"
+          ],
+          "label": "suggested edit",
+          "text": "replace text with '%s' at src/main.c:4:13-15"
+        }
+      ],
+      "suppression_reason": null,
+      "title": "format string type mismatch"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

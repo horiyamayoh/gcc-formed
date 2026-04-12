@@ -39,12 +39,6 @@
   },
   "summary_only_groups": [
     {
-      "canonical_location": "src/main.cpp:3:49",
-      "group_id": "residual-compiler-0",
-      "severity": "error",
-      "title": "type or overload mismatch"
-    },
-    {
       "canonical_location": "src/main.cpp:1:16",
       "group_id": "sarif-0-1",
       "severity": "note",

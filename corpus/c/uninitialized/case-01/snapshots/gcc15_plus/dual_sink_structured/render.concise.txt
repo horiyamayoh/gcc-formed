@@ -1,0 +1,9 @@
+warning: variable used without initialization
+--> src/main.c:9:5
+help: initialize the variable at its declaration or before first use
+why: 'value' may be used uninitialized
+| src/main.c:9:5
+|     consume(value);
+|     ^
+note: 'value' was declared here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

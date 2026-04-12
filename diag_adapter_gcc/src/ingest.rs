@@ -438,7 +438,7 @@ fn duplicates_structured_diagnostic(
         structured_node.provenance.source != ProvenanceSource::ResidualText
             && matches!(structured_node.semantic_role, SemanticRole::Root)
             && structured_node.severity == residual_node.severity
-            && structured_node.message.raw_text == core_message
+            && normalized_compiler_message(&structured_node.message.raw_text) == core_message
             && (shares_primary_line(structured_node, residual_location)
                 || !structured_node.context_chains.is_empty())
     })
@@ -452,10 +452,29 @@ fn compiler_residual_core_message(raw_text: &str) -> Option<&str> {
             continue;
         };
         if looks_like_compiler_location_prefix(prefix) {
-            return Some(message);
+            return Some(normalized_compiler_message(message));
         }
     }
     None
+}
+
+fn normalized_compiler_message(message: &str) -> &str {
+    let trimmed = message.trim();
+    strip_trailing_warning_option(trimmed)
+}
+
+fn strip_trailing_warning_option(message: &str) -> &str {
+    let Some(without_bracket) = message.strip_suffix(']') else {
+        return message;
+    };
+    let Some((prefix, suffix)) = without_bracket.rsplit_once(" [") else {
+        return message;
+    };
+    if suffix.starts_with("-W") || suffix.starts_with("-f") {
+        prefix
+    } else {
+        message
+    }
 }
 
 fn looks_like_compiler_location_prefix(prefix: &str) -> bool {

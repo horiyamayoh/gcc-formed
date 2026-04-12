@@ -1,0 +1,39 @@
+schema_version: 1
+fixture_id: c/return_type/case-01
+version_band: gcc15_plus
+processing_path: dual_sink_structured
+support_level: preview
+expected_mode: render
+semantic:
+  family: return_type
+  severity: warning
+  lead_group_any_of:
+    - sarif-0-0
+  primary_locations:
+    - path: src/main.c
+      line: 2
+      column: 1
+  primary_location_user_owned_required: true
+  first_action_required: true
+  raw_provenance_required: true
+  fallback: forbidden
+  confidence_min: medium
+render:
+  default:
+    omission_notice_required: false
+    first_screenful_max_lines: 20
+  concise:
+    omission_notice_required: false
+    first_screenful_max_lines: 14
+  verbose:
+    omission_notice_required: false
+    first_screenful_max_lines: 40
+  ci:
+    first_screenful_max_lines: 14
+    path_first_required: true
+    color_meaning_forbidden: true
+integrity:
+  allowed_issue_codes: []
+performance:
+  parse_time_ms_max: 50
+  render_time_ms_max: 40

@@ -140,70 +140,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "type_overload",
-        "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch",
-        "matched_conditions": [
-          "message_contains=passing argument",
-          "phase=semantic"
-        ],
-        "rule_id": "rule.family.type_overload.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "fcfe15f106a463fbff4d5a9c754b183ea8c3da4e016ef21d6a2909a6e53f4ba0",
-        "raw": "3fb6503ccf3cd9e9b9870fbca103116bb45ca6747a45e6aff22ab018ef62df77",
-        "structural": "d5bc8db5dacec605e45cb6b2d92728d34dc5770b98f12ba87e133d79c301bafe"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 22,
-            "column_native": 22,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 5
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.c",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.c:5:22:5:22",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.c:5:22: error: passing argument 1 of 'takes_int' makes integer from pointer without a cast [-Wint-conversion]"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "e1e8c1da326ac07097e192dc25198dd785c5c1f57e87b030591d17027448963d",
-    "raw": "6744b7c795388d839e1faca48ce5a367abac18b221a76b6af913e8f48d82c5e4",
-    "structural": "e9a3514c14a6c8745d606c0f353edb87a505a8d47486d75145857021888672da"
+    "family": "b474d8671f1b64b104dbdbd33bb0f6d186417831ec0d047d56d737b02482dc2d",
+    "raw": "964c72d6b07fa0e32308c5cdc1ed2cfe013db50c1a71297231dd091f2a72fd4c",
+    "structural": "c3608021780a8125744180d74aed63cfb170f8b7bce43836941720b02acf82bd"
   },
   "producer": {
     "name": "gcc-formed",

@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:9:5",
+      "child_notes": [
+        "'value' was declared here"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    consume(value);"
+          ],
+          "location": "src/main.c:9:5"
+        }
+      ],
+      "family": "uninitialized",
+      "first_action": "initialize the variable at its declaration or before first use",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=may be used uninitialized",
+        "phase=semantic"
+      ],
+      "raw_message": "'value' may be used uninitialized",
+      "rule_id": "rule.family.uninitialized.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "variable used without initialization"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

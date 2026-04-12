@@ -1,0 +1,11 @@
+src/main.c:4:13: warning: format string type mismatch
+help: match the format specifier to the argument type, or use type-safe I/O
+why: format '%d' expects argument of type 'int', but argument 2 has type 'char *'
+| src/main.c:4:13
+|     printf("%d\n", "x");
+|             ^
+suggested edit: replace text with '%s' at src/main.c:4:13-15
+  patch: src/main.c
+  4 -     printf("%d\n", "x");
+  4 +     printf("%s\n", "x");
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

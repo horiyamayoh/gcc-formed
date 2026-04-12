@@ -290,6 +290,119 @@
       ]
     },
     {
+      "rule_id": "rule.family.unused.message_terms",
+      "family": "unused",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "unused variable",
+            "unused parameter",
+            "unused function",
+            "unused value",
+            "unused-but-set-variable",
+            "set but not used",
+            "ignoring return value",
+            "defined but not used",
+            "shadows a"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.return_type.message_terms",
+      "family": "return_type",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "no return statement in function returning non-void",
+            "control reaches end of non-void function",
+            "return-statement with a value, in function returning 'void'",
+            "return-statement with no value, in function returning",
+            "'return' with a value in function returning void"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.format_string.message_terms",
+      "family": "format_string",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "format '%",
+            "too many arguments for format",
+            "too few arguments for format",
+            "format not a string literal",
+            "format string is not a string literal"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
+      "rule_id": "rule.family.uninitialized.message_terms",
+      "family": "uninitialized",
+      "require_any_of": [
+        {
+          "kind": "message_terms"
+        }
+      ],
+      "message_groups": [
+        {
+          "prefix": "message_contains",
+          "terms": [
+            "is used uninitialized",
+            "may be used uninitialized"
+          ]
+        }
+      ],
+      "phase_annotations": [
+        {
+          "phase": "semantic",
+          "condition": "phase=semantic",
+          "when": "rule_matched"
+        }
+      ]
+    },
+    {
       "rule_id": "rule.family.type_overload.structured_or_message",
       "family": "type_overload",
       "require_any_of": [
@@ -444,6 +557,34 @@
       ]
     },
     {
+      "rule_id": "rule.family_seed.unused",
+      "family": "unused",
+      "priority": 48,
+      "terms": [
+        "unused variable",
+        "unused parameter",
+        "unused function",
+        "unused value",
+        "unused-but-set-variable",
+        "set but not used",
+        "ignoring return value",
+        "defined but not used",
+        "shadows a"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.return_type",
+      "family": "return_type",
+      "priority": 49,
+      "terms": [
+        "no return statement in function returning non-void",
+        "control reaches end of non-void function",
+        "return-statement with a value, in function returning 'void'",
+        "return-statement with no value, in function returning",
+        "'return' with a value in function returning void"
+      ]
+    },
+    {
       "rule_id": "rule.family_seed.type_overload",
       "family": "type_overload",
       "priority": 50,
@@ -453,6 +594,27 @@
         "invalid conversion",
         "incompatible type",
         "passing argument"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.format_string",
+      "family": "format_string",
+      "priority": 51,
+      "terms": [
+        "format '%",
+        "too many arguments for format",
+        "too few arguments for format",
+        "format not a string literal",
+        "format string is not a string literal"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.uninitialized",
+      "family": "uninitialized",
+      "priority": 52,
+      "terms": [
+        "is used uninitialized",
+        "may be used uninitialized"
       ]
     },
     {
@@ -565,6 +727,82 @@
     },
     {
       "family": "deleted_function",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "unused",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "return_type",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "format_string",
+      "high_when_any": [
+        {
+          "all": [
+            "user_owned_location",
+            "lexical_signal"
+          ]
+        }
+      ],
+      "medium_when_any": [
+        {
+          "all": [
+            "lexical_signal"
+          ]
+        }
+      ],
+      "default_confidence": "low"
+    },
+    {
+      "family": "uninitialized",
       "high_when_any": [
         {
           "all": [

@@ -22,6 +22,30 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "unused",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "return_type",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "format_string",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "uninitialized",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "syntax",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true

@@ -772,6 +772,83 @@ main.cpp:3:5: note: declared here\n";
     }
 
     #[test]
+    fn classifies_unused_compiler_warning() {
+        let stderr = "main.c:2:9: warning: unused variable 'temporary' [-Wunused-variable]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("unused")
+        );
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.headline.as_deref()),
+            Some("unused declaration detected")
+        );
+    }
+
+    #[test]
+    fn classifies_return_type_compiler_warning() {
+        let stderr =
+            "main.c:3:1: warning: control reaches end of non-void function [-Wreturn-type]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("return_type")
+        );
+    }
+
+    #[test]
+    fn classifies_format_string_compiler_warning() {
+        let stderr = "main.c:4:12: warning: format '%d' expects argument of type 'int', but argument 2 has type 'char *' [-Wformat=]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("format_string")
+        );
+    }
+
+    #[test]
+    fn classifies_uninitialized_compiler_warning() {
+        let stderr =
+            "main.c:5:12: warning: 'value' may be used uninitialized [-Wmaybe-uninitialized]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("uninitialized")
+        );
+    }
+
+    #[test]
     fn keeps_structured_compiler_residuals_when_passthrough_is_disabled() {
         let stderr = "\
 main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\

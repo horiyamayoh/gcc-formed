@@ -1,0 +1,10 @@
+warning: missing or incorrect return statement
+--> src/main.c:2:1
+help: add a return statement to all control-flow paths of the non-void function
+why: control reaches end of non-void function
+| src/main.c:2:1
+| }
+| ^
+debug: rule_id=rule.family.return_type.message_terms
+debug: matched_conditions=message_contains=control reaches end of non-void function, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

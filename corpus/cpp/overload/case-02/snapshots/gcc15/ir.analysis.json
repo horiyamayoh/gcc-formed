@@ -139,70 +139,14 @@
       },
       "semantic_role": "root",
       "severity": "note"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "type_overload",
-        "first_action_hint": "compare the expected type and actual argument at the call site",
-        "headline": "type or overload mismatch",
-        "matched_conditions": [
-          "message_contains=invalid conversion",
-          "phase=semantic"
-        ],
-        "rule_id": "rule.family.type_overload.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "0d8d9e840cc87770efd6493aa5cdd063c46102397053b101611e8de49ea00c82",
-        "raw": "783ccc6bd7ca068cadddb02a181d4618d829f80486a5458699020a8f348e5ff4",
-        "structural": "6248e54a1409d002940f4ed7f69f1153a9547cdd307e3dae169af6d1ea0f80e4"
-      },
-      "id": "residual-compiler-0",
-      "locations": [
-        {
-          "anchor": {
-            "column_display": 49,
-            "column_native": 49,
-            "column_native_unit": "display",
-            "column_origin": 1,
-            "line": 3
-          },
-          "file": {
-            "ownership": {
-              "owner": "user",
-              "reason": "user_workspace"
-            },
-            "path_kind": "relative",
-            "path_raw": "src/main.cpp",
-            "path_style": "posix"
-          },
-          "id": "loc:src/main.cpp:3:49:3:49",
-          "role": "primary",
-          "source_kind": "caret"
-        }
-      ],
-      "message": {
-        "raw_text": "src/main.cpp:3:49: error: invalid conversion from 'const char*' to 'int' [-fpermissive]"
-      },
-      "node_completeness": "partial",
-      "origin": "gcc",
-      "phase": "semantic",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "root",
-      "severity": "error"
     }
   ],
-  "document_completeness": "partial",
+  "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "54984fedec065264a5f8ebcd54240158caa971e223dc2df3860ef81764e9ea1c",
-    "raw": "11c2f6d4a0c56ab5cf8914d7056bfddca8793dfe88612029d40938f8758ca39b",
-    "structural": "37607e25de60c3261e714558ea439526ca8c58af1d4fcceb28c243e4907f35fa"
+    "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
+    "raw": "b1149d875a5a361d67394467dfe88fd064d0f14259ae286f0aa311023aacff94",
+    "structural": "1b3cbc419194b10b1c952e83c2b3805a29446b071355d00a8509d99426281228"
   },
   "producer": {
     "name": "gcc-formed",

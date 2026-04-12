@@ -94,7 +94,7 @@ mod tests {
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
         DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
-        Origin, Phase, ProvenanceSource, RunInfo, SemanticRole, SourceAuthority,
+        Origin, Phase, ProvenanceSource, RunInfo, SemanticRole, Severity, SourceAuthority,
         SuggestionApplicability, WrapperSurface,
     };
     use diag_rulepack::checked_in_rulepack_version;
@@ -2235,6 +2235,138 @@ src/main.cpp:3:5: note: declared here\n";
                     .as_ref()
                     .and_then(|analysis| analysis.family.as_deref())
                     == Some("deleted_function")
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_deduplicates_matching_structured_and_residual_warning_roots() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"warning",
+                      "message":{"text":"unused variable 'temporary' [-Wunused-variable]"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":2,"startColumn":9}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let stderr = "src/main.c:2:9: warning: unused variable 'temporary' [-Wunused-variable]\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&path), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(
+            report
+                .document
+                .diagnostics
+                .iter()
+                .filter(|node| {
+                    node.provenance.source == ProvenanceSource::Compiler
+                        && node.severity == Severity::Warning
+                        && node.message.raw_text
+                            == "unused variable 'temporary' [-Wunused-variable]"
+                })
+                .count(),
+            1
+        );
+        assert!(!report.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::ResidualText
+                && node.severity == Severity::Warning
+                && node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("unused")
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_deduplicates_warning_residuals_with_trailing_option_suffix() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"warning",
+                      "message":{"text":"control reaches end of non-void function"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.c"},
+                            "region":{"startLine":2,"startColumn":1}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+        let run = base_run_info();
+        let stderr =
+            "src/main.c:2:1: warning: control reaches end of non-void function [-Wreturn-type]\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&path), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::Structured);
+        assert_eq!(
+            report
+                .document
+                .diagnostics
+                .iter()
+                .filter(|node| {
+                    node.provenance.source == ProvenanceSource::Compiler
+                        && node.severity == Severity::Warning
+                        && node.message.raw_text == "control reaches end of non-void function"
+                })
+                .count(),
+            1
+        );
+        assert!(!report.document.diagnostics.iter().any(|node| {
+            node.provenance.source == ProvenanceSource::ResidualText
+                && node.severity == Severity::Warning
+                && node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("return_type")
         }));
     }
 

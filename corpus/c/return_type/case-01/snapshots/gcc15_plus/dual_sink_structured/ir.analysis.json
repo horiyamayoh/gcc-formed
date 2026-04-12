@@ -1,0 +1,122 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'compute':\nsrc/main.c:2:1: warning: control reaches end of non-void function [-Wreturn-type]\n    2 | }\n      | ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 137,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3611,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "return_type",
+        "first_action_hint": "add a return statement to all control-flow paths of the non-void function",
+        "headline": "missing or incorrect return statement",
+        "matched_conditions": [
+          "message_contains=control reaches end of non-void function",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.return_type.message_terms"
+      },
+      "fingerprints": {
+        "family": "a4cf56c547fa992477bf57215e601b253d35aefc7f7cdbfe494e34cfdbf51d74",
+        "raw": "6febe51259495b857c0aa6fc99648a6d0498f89f2ab6de876fe3d27e1a1a25cd",
+        "structural": "d79e65dd25fbc5226ae9a5a77c53102894e896c138c90a9d85500d9aa0361942"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 1,
+            "column_native": 1,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:1:2:1",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "control reaches end of non-void function"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "f55ade9c3e07bbaa73bbe8634afb3d9c570296403354eedc2d1cc4e88736205a",
+    "raw": "6b242cc3eb096f65b7f74f9fe08e219f6e9fef866cd93841dc417ca7b2925656",
+    "structural": "f8ebe7706cfb5b176b4f3fcb490e6126d8e4bba958ef3b5cbbd0b827802f3e1a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

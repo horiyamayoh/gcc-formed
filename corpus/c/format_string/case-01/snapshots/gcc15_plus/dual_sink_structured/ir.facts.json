@@ -1,0 +1,127 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:4:14: warning: format '%d' expects argument of type 'int', but argument 2 has type 'char *' [-Wformat=]\n    4 |     printf(\"%d\\n\", \"x\");\n      |             ~^     ~~~\n      |              |     |\n      |              int   char *\n      |             %s\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 297,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4971,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "60e167cc781c39737ac47a035a899e577929ff4de0e63e68998d841dece39bd9",
+        "raw": "35011d30b9271623293745d569b071e077dc3878e8aad67c9ecd3d4c41774381",
+        "structural": "be3e8218c40faa981336b745b041d3bf0f4834d653ab74f9c86a1050a3a7f8c4"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:4:13:4:13",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "format '%d' expects argument of type 'int', but argument 2 has type 'char *'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "end_column": 15,
+              "end_line": 4,
+              "path": "src/main.c",
+              "replacement": "%s",
+              "start_column": 13,
+              "start_line": 4
+            }
+          ],
+          "label": "replace text with '%s'"
+        }
+      ]
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "94ce5c063565e9d0391a02680a9454ad6e7f70cad3bbdcf97b714fade1293854",
+    "structural": "98dba21c4adbf04a6662a99322f5537f467623c440e2b31f35a6bc8a551c740d"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

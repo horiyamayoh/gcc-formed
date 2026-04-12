@@ -1,0 +1,10 @@
+warning: unused declaration detected
+--> src/main.c:2:9
+help: remove the unused declaration or prefix with underscore if intentional
+why: unused variable 'temporary'
+| src/main.c:2:9
+|     int temporary = 0;
+|         ^
+debug: rule_id=rule.family.unused.message_terms
+debug: matched_conditions=message_contains=unused variable, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

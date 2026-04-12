@@ -482,6 +482,18 @@ mod tests {
     }
 
     #[test]
+    fn classifies_unused_seed_from_rulepack() {
+        let decision = classify_family_seed("unused variable 'temporary' [-Wunused-variable]");
+
+        assert_eq!(decision.family, "unused");
+        assert_eq!(decision.rule_id, "rule.family_seed.unused");
+        assert_eq!(
+            decision.first_action_hint,
+            "remove the unused declaration or prefix with underscore if intentional"
+        );
+    }
+
+    #[test]
     fn falls_back_to_rulepack_unknown_seed() {
         let decision = classify_family_seed("this diagnostic does not match any adapter seed");
 

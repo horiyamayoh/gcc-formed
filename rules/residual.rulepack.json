@@ -27,6 +27,22 @@
         "text": "use of a deleted or unavailable function"
       },
       {
+        "family": "unused",
+        "text": "unused declaration detected"
+      },
+      {
+        "family": "return_type",
+        "text": "missing or incorrect return statement"
+      },
+      {
+        "family": "format_string",
+        "text": "format string type mismatch"
+      },
+      {
+        "family": "uninitialized",
+        "text": "variable used without initialization"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -63,6 +79,22 @@
       {
         "family": "deleted_function",
         "text": "check whether the type is movable/copyable, or provide the required special member"
+      },
+      {
+        "family": "unused",
+        "text": "remove the unused declaration or prefix with underscore if intentional"
+      },
+      {
+        "family": "return_type",
+        "text": "add a return statement to all control-flow paths of the non-void function"
+      },
+      {
+        "family": "format_string",
+        "text": "match the format specifier to the argument type, or use type-safe I/O"
+      },
+      {
+        "family": "uninitialized",
+        "text": "initialize the variable at its declaration or before first use"
       },
       {
         "family": "passthrough",
@@ -171,6 +203,71 @@
           "implicitly-deleted",
           "is deleted",
           "has been explicitly marked deleted"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "unused",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_unused",
+        "headline_strategy": "fixed_text",
+        "headline": "unused declaration detected",
+        "first_action_hint": "remove the unused declaration or prefix with underscore if intentional",
+        "match_any": [
+          "unused variable",
+          "unused parameter",
+          "unused function",
+          "unused value",
+          "unused-but-set-variable",
+          "set but not used",
+          "ignoring return value",
+          "defined but not used",
+          "shadows a"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "return_type",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_return_type",
+        "headline_strategy": "fixed_text",
+        "headline": "missing or incorrect return statement",
+        "first_action_hint": "add a return statement to all control-flow paths of the non-void function",
+        "match_any": [
+          "no return statement in function returning non-void",
+          "control reaches end of non-void function",
+          "return-statement with a value, in function returning 'void'",
+          "return-statement with no value, in function returning",
+          "'return' with a value in function returning void"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "format_string",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_format_string",
+        "headline_strategy": "fixed_text",
+        "headline": "format string type mismatch",
+        "first_action_hint": "match the format specifier to the argument type, or use type-safe I/O",
+        "match_any": [
+          "format '%",
+          "too many arguments for format",
+          "too few arguments for format",
+          "format not a string literal",
+          "format string is not a string literal"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "uninitialized",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_uninitialized",
+        "headline_strategy": "fixed_text",
+        "headline": "variable used without initialization",
+        "first_action_hint": "initialize the variable at its declaration or before first use",
+        "match_any": [
+          "is used uninitialized",
+          "may be used uninitialized"
         ]
       },
       {

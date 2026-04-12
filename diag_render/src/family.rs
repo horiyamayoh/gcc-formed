@@ -876,6 +876,22 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("unused")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("return_type")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("format_string")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("uninitialized")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("linker.undefined_reference")),
             RendererFamilyKind::Linker
         );
