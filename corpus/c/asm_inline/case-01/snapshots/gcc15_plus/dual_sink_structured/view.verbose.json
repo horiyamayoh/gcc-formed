@@ -20,14 +20,14 @@
       ],
       "family": "asm_inline",
       "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "group-d48624c5088d",
+      "group_id": "group-8de1e6e83fb3",
       "matched_conditions": [
-        "message_contains=does not match constraints",
+        "message_contains=impossible constraint in",
         "phase=codegen"
       ],
-      "raw_message": "‘asm’ operand 0 probably does not match constraints",
+      "raw_message": "impossible constraint in ‘asm’",
       "rule_id": "rule.family.asm_inline.message_terms",
-      "severity": "warning",
+      "severity": "error",
       "suppression_reason": null,
       "title": "inline assembly constraint error"
     },
@@ -51,14 +51,14 @@
       ],
       "family": "asm_inline",
       "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "group-8de1e6e83fb3",
+      "group_id": "group-d48624c5088d",
       "matched_conditions": [
-        "message_contains=impossible constraint in",
+        "message_contains=does not match constraints",
         "phase=codegen"
       ],
-      "raw_message": "impossible constraint in ‘asm’",
+      "raw_message": "‘asm’ operand 0 probably does not match constraints",
       "rule_id": "rule.family.asm_inline.message_terms",
-      "severity": "error",
+      "severity": "warning",
       "suppression_reason": null,
       "title": "inline assembly constraint error"
     }

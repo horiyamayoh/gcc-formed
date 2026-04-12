@@ -734,6 +734,105 @@ fn replay_fixture_keeps_collect2_as_driver_summary_without_changing_lead_family(
 }
 
 #[test]
+fn asm_inline_case_01_prefers_the_failing_error_in_verbose_view() {
+    let fixture = corpus_fixture("c/asm_inline/case-01");
+    let replay = replay_fixture_document(&fixture).unwrap();
+    let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Verbose);
+    let view = build_view_model(&request).unwrap();
+
+    assert_eq!(view.cards.len(), 2);
+    assert_eq!(view.cards[0].severity, "error");
+    assert_eq!(view.cards[0].raw_message, "impossible constraint in ‘asm’");
+    assert_eq!(view.cards[1].severity, "warning");
+    assert_eq!(
+        view.cards[1].raw_message,
+        "‘asm’ operand 0 probably does not match constraints"
+    );
+
+    let render_result = render(request).unwrap();
+    assert_eq!(
+        render_result.displayed_group_refs,
+        vec![
+            "group-8de1e6e83fb3".to_string(),
+            "group-d48624c5088d".to_string()
+        ]
+    );
+}
+
+#[test]
+fn init_order_case_01_keeps_declaration_order_evidence_expanded_and_initializer_site_summary_only()
+{
+    let fixture = corpus_fixture("cpp/init_order/case-01");
+    let replay = replay_fixture_document(&fixture).unwrap();
+    let visible_group_refs = vec![
+        "group-4fe83b216034".to_string(),
+        "group-47fde0da878b".to_string(),
+    ];
+    let summary_only_group_refs = vec!["group-59815819bad1".to_string()];
+
+    for profile in [
+        RenderProfile::Default,
+        RenderProfile::Concise,
+        RenderProfile::Ci,
+    ] {
+        let request = render_request_for_fixture(&fixture, &replay.document, profile);
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(
+            view.cards
+                .iter()
+                .map(|card| card.group_id.clone())
+                .collect::<Vec<_>>(),
+            visible_group_refs,
+            "profile {:?} should keep declaration-order evidence expanded",
+            profile
+        );
+        assert_eq!(
+            view.summary_only_groups
+                .iter()
+                .map(|group| group.group_id.clone())
+                .collect::<Vec<_>>(),
+            summary_only_group_refs,
+            "profile {:?} should keep `when initialized here` summary-only",
+            profile
+        );
+        assert_eq!(view.summary_only_groups[0].title, "  when initialized here");
+
+        let render_result = render(request).unwrap();
+        assert_eq!(
+            render_result.displayed_group_refs, visible_group_refs,
+            "profile {:?} should render the same expanded card order",
+            profile
+        );
+        assert_eq!(
+            render_result.suppressed_group_count, 1,
+            "profile {:?} should count exactly one suppressed summary-only group",
+            profile
+        );
+    }
+
+    let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Verbose);
+    let view = build_view_model(&request).unwrap();
+    let verbose_group_refs = vec![
+        "group-4fe83b216034".to_string(),
+        "group-47fde0da878b".to_string(),
+        "group-59815819bad1".to_string(),
+    ];
+    assert_eq!(
+        view.cards
+            .iter()
+            .map(|card| card.group_id.clone())
+            .collect::<Vec<_>>(),
+        verbose_group_refs,
+        "verbose should expand the initializer site as well"
+    );
+    assert!(view.summary_only_groups.is_empty());
+
+    let render_result = render(request).unwrap();
+    assert_eq!(render_result.displayed_group_refs, verbose_group_refs);
+    assert_eq!(render_result.suppressed_group_count, 0);
+}
+
+#[test]
 fn replay_fixture_preserves_lead_family_across_structured_and_residual_root_seams() {
     for fixture_id in ["c/syntax/case-10", "c/type/case-12", "cpp/overload/case-08"] {
         let fixture = corpus_fixture(fixture_id);

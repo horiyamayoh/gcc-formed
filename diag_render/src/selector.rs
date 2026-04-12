@@ -159,7 +159,13 @@ fn select_episode_groups(
         return None;
     }
     visible_group_refs.sort_by(|left, right| {
-        visible_group_sort_key(
+        compare_visible_groups(
+            representatives
+                .get(*left)
+                .expect("visible group representative"),
+            group_analysis_by_ref
+                .get(*left)
+                .expect("visible group analysis"),
             representatives
                 .get(*right)
                 .expect("visible group representative"),
@@ -167,14 +173,6 @@ fn select_episode_groups(
                 .get(*right)
                 .expect("visible group analysis"),
         )
-        .cmp(&visible_group_sort_key(
-            representatives
-                .get(*left)
-                .expect("visible group representative"),
-            group_analysis_by_ref
-                .get(*left)
-                .expect("visible group analysis"),
-        ))
         .then_with(|| left.cmp(right))
     });
 
@@ -312,6 +310,49 @@ fn should_keep_group_visible(group: &GroupCascadeAnalysis) -> bool {
         group.role,
         GroupCascadeRole::LeadRoot | GroupCascadeRole::IndependentRoot
     ) || group.visibility_floor == VisibilityFloor::NeverHidden
+}
+
+fn compare_visible_groups(
+    left_node: &DiagnosticNode,
+    left_group: &GroupCascadeAnalysis,
+    right_node: &DiagnosticNode,
+    right_group: &GroupCascadeAnalysis,
+) -> std::cmp::Ordering {
+    if share_visible_problem_signature(left_node, right_node) {
+        return severity_rank(&right_node.severity)
+            .cmp(&severity_rank(&left_node.severity))
+            .then_with(|| {
+                visible_group_sort_key(right_node, right_group)
+                    .cmp(&visible_group_sort_key(left_node, left_group))
+            });
+    }
+
+    visible_group_sort_key(right_node, right_group)
+        .cmp(&visible_group_sort_key(left_node, left_group))
+}
+
+fn share_visible_problem_signature(left: &DiagnosticNode, right: &DiagnosticNode) -> bool {
+    let left_family = left
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref());
+    let right_family = right
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref());
+    if left_family.is_none() || left_family != right_family {
+        return false;
+    }
+
+    let (Some(left_location), Some(right_location)) =
+        (left.primary_location(), right.primary_location())
+    else {
+        return false;
+    };
+
+    left_location.path_raw() == right_location.path_raw()
+        && left_location.line() == right_location.line()
+        && left_location.column() == right_location.column()
 }
 
 fn visible_group_sort_key(

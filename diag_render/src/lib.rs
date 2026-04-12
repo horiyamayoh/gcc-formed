@@ -1842,6 +1842,74 @@ mod tests {
     }
 
     #[test]
+    fn episode_first_selection_prefers_higher_severity_for_same_family_same_anchor() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Verbose;
+
+        let mut warning = grouped_error_node(
+            "shared-warning",
+            "group-warning",
+            "src/main.c",
+            3,
+            "asm operand probably does not match constraints",
+        );
+        warning.severity = Severity::Warning;
+        warning.locations = vec![sample_location("src/main.c", 3, 5, Ownership::User)];
+        let warning_analysis = warning.analysis.as_mut().unwrap();
+        warning_analysis.family = Some("asm_inline".into());
+        warning_analysis.headline = Some("inline assembly constraint warning".into());
+
+        let mut error = grouped_error_node(
+            "shared-error",
+            "group-error",
+            "src/main.c",
+            3,
+            "impossible constraint in 'asm'",
+        );
+        error.locations = vec![sample_location("src/main.c", 3, 5, Ownership::User)];
+        let error_analysis = error.analysis.as_mut().unwrap();
+        error_analysis.family = Some("asm_inline".into());
+        error_analysis.headline = Some("inline assembly constraint error".into());
+
+        request.document.diagnostics = vec![warning, error];
+        request.document.document_analysis = Some(document_analysis(
+            vec![
+                episode(
+                    "episode-warning",
+                    "group-warning",
+                    vec!["group-warning"],
+                    0.96,
+                ),
+                episode("episode-error", "group-error", vec!["group-error"], 0.91),
+            ],
+            vec![
+                lead_root_group("group-warning", "episode-warning", 0.96, 0.88),
+                lead_root_group("group-error", "episode-error", 0.91, 0.84),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        let view_model = build_view_model(&request).unwrap();
+
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.cards[0].id, "shared-error");
+        assert_eq!(selection.cards[1].id, "shared-warning");
+        assert_eq!(view_model.cards.len(), 2);
+        assert_eq!(view_model.cards[0].group_id, "group-error");
+        assert_eq!(view_model.cards[0].severity, "error");
+        assert_eq!(
+            view_model.cards[0].canonical_location.as_deref(),
+            Some("src/main.c:3:5")
+        );
+        assert_eq!(view_model.cards[1].group_id, "group-warning");
+        assert_eq!(view_model.cards[1].severity, "warning");
+        assert_eq!(
+            view_model.cards[1].canonical_location.as_deref(),
+            Some("src/main.c:3:5")
+        );
+    }
+
+    #[test]
     fn episode_first_render_collapses_follow_on_and_duplicates_into_lead_notice() {
         let mut request = sample_request();
         request.document.diagnostics = vec![
