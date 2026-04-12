@@ -8,6 +8,7 @@ why: src/main.c:2:10: error: expected ‘)’ before ‘{’ token
 |          ^
 raw:
   src/main.c:2:10: error: expected ‘)’ before ‘{’ token
+  src/main.c: In function ‘broken_if’:
 error: syntax error
 --> src/main.c:6:1
 help: fix the first parser error at the user-owned location
@@ -17,6 +18,7 @@ why: src/main.c:6:1: error: expected expression before ‘}’ token
 | ^
 raw:
   src/main.c:6:1: error: expected expression before ‘}’ token
+      6 | }
 other errors:
   - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

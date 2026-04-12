@@ -146,34 +146,14 @@
           },
           {
             "confidence": "medium",
-            "family": "template",
-            "first_action": "start from the first user-owned template frame and match template arguments",
-            "headline": "template instantiation failed",
-            "message": "  template argument deduction/substitution failed:",
-            "phase": "instantiate",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "  candidate expects 1 argument, 2 provided",
+            "phase": "semantic",
             "primary_location": {
               "column": 8,
               "line": 10,
-              "ownership": "user",
-              "path": "src/main.cpp",
-              "role": "primary"
-            },
-            "provenance_capture_refs": [
-              "diagnostics.sarif"
-            ],
-            "semantic_role": "supporting",
-            "severity": "note"
-          },
-          {
-            "confidence": "low",
-            "family": "unknown",
-            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "  mismatched types ‘Pair<T>’ and ‘int’",
-            "message": "  mismatched types ‘Pair<T>’ and ‘int’",
-            "phase": "semantic",
-            "primary_location": {
-              "column": 22,
-              "line": 17,
               "ownership": "user",
               "path": "src/main.cpp",
               "role": "primary"
@@ -273,11 +253,11 @@
     ],
     "summary": {
       "dependent_follow_on_count": 0,
-      "diagnostic_count": 12,
+      "diagnostic_count": 11,
       "duplicate_count": 0,
       "error_count": 3,
       "independent_root_count": 3,
-      "note_count": 9,
+      "note_count": 8,
       "uncertain_count": 0,
       "warning_count": 0
     }

@@ -31,7 +31,7 @@
         "family": "syntax",
         "first_action": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
-        "message": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token",
+        "message": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token\nsrc/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )",
         "phase": "parse",
         "primary_location": {
           "column": 10,
@@ -51,7 +51,7 @@
         "family": "syntax",
         "first_action": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
-        "message": "src/main.c:6:1: error: expected expression before ‘}’ token",
+        "message": "src/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^",
         "phase": "parse",
         "primary_location": {
           "column": 1,
@@ -71,7 +71,7 @@
         "family": "linker",
         "first_action": "check the missing/duplicate symbol and the object or library inputs",
         "headline": "linker reported a failure",
-        "message": "src/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *",
+        "message": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *",
         "phase": "link",
         "provenance_capture_refs": [
           "stderr.raw"

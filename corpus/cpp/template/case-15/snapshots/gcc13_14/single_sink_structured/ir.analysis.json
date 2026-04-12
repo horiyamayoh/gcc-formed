@@ -337,20 +337,19 @@
         {
           "analysis": {
             "confidence": 0.6499999761581421,
-            "family": "template",
-            "first_action_hint": "start from the first user-owned template frame and match template arguments",
-            "headline": "template instantiation failed",
+            "family": "type_overload",
+            "first_action_hint": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
             "matched_conditions": [
-              "message_contains=template",
-              "message_contains=deduction/substitution",
-              "phase=instantiate"
+              "message_contains=candidate",
+              "phase=semantic"
             ],
-            "rule_id": "rule.family.template.structured_or_message"
+            "rule_id": "rule.family.type_overload.structured_or_message"
           },
           "fingerprints": {
-            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "7d5c07d8af207e0cf06d1340f9bfebf5e7ff3139eb656340559a672bdf4a569a"
+            "family": "de90b074f5fd0717a05523ea895c449cfc756274eef28b77cfe7b6e197c83f3c",
+            "raw": "bb66eda27926f62b3e477cfd8007d28f1bdce645ab7a3682d34283536708d205",
+            "structural": "6c69525e37525c1199bd6018c1163867e585ca6312264518fc6792b659f55088"
           },
           "id": "sarif-0-1-related-4",
           "locations": [
@@ -377,63 +376,7 @@
             }
           ],
           "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
-          },
-          "node_completeness": "partial",
-          "origin": "gcc",
-          "phase": "instantiate",
-          "provenance": {
-            "capture_refs": [
-              "diagnostics.sarif"
-            ],
-            "source": "compiler"
-          },
-          "semantic_role": "supporting",
-          "severity": "note"
-        },
-        {
-          "analysis": {
-            "confidence": 0.3499999940395355,
-            "family": "unknown",
-            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "  mismatched types ‘Pair<T>’ and ‘int’",
-            "matched_conditions": [
-              "no_family_rule_matched"
-            ],
-            "rule_id": "rule.family.unknown",
-            "suppression_reason": "generic_fallback"
-          },
-          "fingerprints": {
-            "family": "c4f290f301c30794440ad55f4bc0d1baa7cf2d8be536b7336ff02d328d5da263",
-            "raw": "d9bfaa9cd844da7f40fbf94969c9ae8810622f7ad8ff29667e4997351c5c88d7",
-            "structural": "2ccd66ee527f77c6fe8034226f7f71a5f5f2081fc472217c88c6c4becd657f72"
-          },
-          "id": "sarif-0-1-related-5",
-          "locations": [
-            {
-              "anchor": {
-                "column_display": 22,
-                "column_native": 22,
-                "column_native_unit": "display",
-                "column_origin": 1,
-                "line": 17
-              },
-              "file": {
-                "ownership": {
-                  "owner": "user",
-                  "reason": "user_workspace"
-                },
-                "path_kind": "relative",
-                "path_raw": "src/main.cpp",
-                "path_style": "posix"
-              },
-              "id": "loc:src/main.cpp:17:22:17:22",
-              "role": "primary",
-              "source_kind": "caret"
-            }
-          ],
-          "message": {
-            "raw_text": "  mismatched types ‘Pair<T>’ and ‘int’"
+            "raw_text": "  candidate expects 1 argument, 2 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -474,12 +417,6 @@
               "label": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
               "line": 10,
               "path": "src/main.cpp"
-            },
-            {
-              "column": 8,
-              "label": "template argument deduction/substitution failed:",
-              "line": 10,
-              "path": "src/main.cpp"
             }
           ],
           "kind": "template_instantiation"
@@ -488,7 +425,7 @@
       "fingerprints": {
         "family": "41aa60229bf77fc841f93cd6a7c64ad9a401a9fcffdaf5a4bbb8d71cbf06482b",
         "raw": "92b10ee1450405a7d493e83644ca908eb18ef2fcff1aff545f3d25ceb7a95ec9",
-        "structural": "1611ed5b466506c3a582956d18f2f5b92dc75894ac2972b3ed7d457174288e7c"
+        "structural": "54be11ee995d3c5cdae3b3db312e5050bc4a7daf2287d1a1f19edced7f3a5377"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -881,8 +818,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a024813826ec2ea0d75528be931f56a9539ed2ce6346a97237681a81c8785183",
-    "raw": "12b23c527d5403f3b1869efdcef3cc306786e53f1cb9819f4c7f98e7e96bf3d3",
-    "structural": "5e94bd0820711d91c61a79ffc1362343354acbd235a5607ebf1a664156f7ee1e"
+    "raw": "967d89f3178a9b08952c6e29502f41b68b4c65aa8a9eae91f2255fe4a2c4efd1",
+    "structural": "f4a8a63d831c55cd5c3f76b204e98c83ca43d0c4b677ada384252912fe1f9c58"
   },
   "producer": {
     "name": "gcc-formed",

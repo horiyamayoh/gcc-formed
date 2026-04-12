@@ -26,7 +26,7 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token",
+      "raw_message": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token\nsrc/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )",
       "raw_sub_block": [
         "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
       ],
@@ -61,7 +61,7 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:6:1: error: expected expression before ‘}’ token",
+      "raw_message": "src/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^",
       "raw_sub_block": [
         "src/main.c:6:1: error: expected expression before ‘}’ token"
       ],
@@ -78,7 +78,7 @@
   },
   "summary_only_groups": [
     {
-      "group_id": "group-deedd183b913",
+      "group_id": "group-563da567df7d",
       "severity": "error",
       "title": "linker reported a failure"
     }

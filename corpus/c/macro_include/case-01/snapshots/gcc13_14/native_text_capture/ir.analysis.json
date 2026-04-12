@@ -28,13 +28,13 @@
         "rule_id": "rule.family.linker.structured_or_message"
       },
       "fingerprints": {
-        "family": "60b9d75cddf0ab3659f32889911eab58fe966cf398304dae11e25d246b63f6fe",
-        "raw": "db58e1d00e6149d5d6aec75e4c28cb1ec6eae731e8fdc2fade940d5396d825ec",
-        "structural": "2bb65363a226c612f3010447f36cf4c8a9d6f47ae68a429c0d0a9dc0e781fe7b"
+        "family": "f6fd23308b327bfe2d85fae1263cf0691862c6f58c574e167ba37d179f94cb3a",
+        "raw": "543eb67cc20b759187567c3a43ee83f7ddddf884a398571d5958258f2f8e969d",
+        "structural": "0cf1cff6634e26da48e73352e3f3459f8cfd973205886cd52f658a11ce663cfd"
       },
       "id": "residual-passthrough",
       "message": {
-        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -97,8 +97,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "df8fb10d3ff096d2c82b917394d7b006986631e83c040a4bd3a64952efed09d5",
-    "raw": "8451457100ff403803c446ecaf83793584e03b343b78c2a1678bcd338c8d0157",
-    "structural": "a5db3ce1756cc24b7f28939643732912f5548d47b29209ddd35923f419f50a53"
+    "raw": "4090a992b3d3983b1d9d95477c794f643a32349b3688d23b003134e8d031587b",
+    "structural": "3578a24ec9ff5c044cc53afd3804f86b6ae2bd4687c27776fd28be6be9add8a2"
   },
   "producer": {
     "name": "gcc-formed",

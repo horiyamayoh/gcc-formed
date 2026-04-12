@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1404,
+      "size_bytes": 879,
       "storage": "external_ref"
     }
   ],
@@ -92,9 +92,9 @@
     },
     {
       "fingerprints": {
-        "family": "e1f81f2eeec82216cd3e5caaac1d91b70a9a055d5c73aa656a7db763cc350a17",
-        "raw": "aa73c4d7a4d40bdc6a0f07d075267e76fec3eed699e62de0c306715349ee6fa6",
-        "structural": "cc55b5594578f73a84c7286c786f48ec4c06b7d63dc7880313946b9992bfeb40"
+        "family": "b689b522ced533d85c6bcda6003ba543c7090401df441fadb15551d07ecb8761",
+        "raw": "1ebcc326ec25020d022a04295ef8fa66665d09307dc9e0cfdae7e6bad29d7200",
+        "structural": "ff7a7c9268f5d070fef1f3204d45828fba2543abff5944fc9a52adfc7402de5b"
       },
       "id": "json-1",
       "locations": [
@@ -138,7 +138,7 @@
         }
       ],
       "message": {
-        "raw_text": "initializing argument 1 of 'void takes_short(short int)'"
+        "raw_text": "  initializing argument 1 of 'void takes_short(short int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -157,8 +157,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "6d3c932a92403fab1d6815612bfa42e4548c599bd15ab77062180db667b92719",
-    "structural": "83ed7b3a6aa58fbfd6a3bddeba18d7a8b7dff5ab97e03f91d81245da60ee5105"
+    "raw": "2b6dbdad927576d2c222d4c6702bfa4d25608e650a4926f0cf037c1a490639c4",
+    "structural": "808a6d2ea9ff16551a5c3a8edaee79ececc4cf35701527959d1b0ddff0ed4fc1"
   },
   "producer": {
     "name": "gcc-formed",

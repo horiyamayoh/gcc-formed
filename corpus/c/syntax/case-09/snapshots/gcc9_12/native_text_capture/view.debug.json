@@ -41,9 +41,13 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:2:10: error: expected ')' before '{' token",
+      "raw_message": "src/main.c:2:10: error: expected ')' before '{' token\nsrc/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )",
       "raw_sub_block": [
-        "src/main.c:2:10: error: expected ')' before '{' token"
+        "src/main.c:2:10: error: expected ')' before '{' token",
+        "src/main.c: In function 'main':",
+        "    2 |     if (1 {",
+        "      |        ~ ^~",
+        "      |          )"
       ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
@@ -91,57 +95,16 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:5:1: error: expected expression before '}' token",
+      "raw_message": "src/main.c:5:1: error: expected expression before '}' token\n    5 | }\n      | ^",
       "raw_sub_block": [
-        "src/main.c:5:1: error: expected expression before '}' token"
+        "src/main.c:5:1: error: expected expression before '}' token",
+        "    5 | }",
+        "      | ^"
       ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
       "title": "syntax error"
-    },
-    {
-      "canonical_location": null,
-      "cascade_debug": {
-        "cascade_role": "uncertain",
-        "episode_ref": "episode-effeba5c4f59",
-        "evidence_tags": [
-          "actionability_short",
-          "classified_family",
-          "early_invocation",
-          "no_primary_location"
-        ],
-        "group_ref": "group-abe91b79ea07",
-        "provenance_capture_refs": [
-          "stderr.raw"
-        ],
-        "visibility_floor": "never_hidden"
-      },
-      "child_notes": [],
-      "collapsed_notices": [],
-      "confidence_label": "likely",
-      "confidence_notice": null,
-      "context_lines": [],
-      "excerpts": [],
-      "family": "linker",
-      "first_action": "check the missing/duplicate symbol and the object or library inputs",
-      "group_id": "group-abe91b79ea07",
-      "matched_conditions": [
-        "phase=link"
-      ],
-      "raw_message": "src/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    5 | }\n      | ^",
-      "raw_sub_block": [
-        "src/main.c: In function 'main':",
-        "    2 |     if (1 {",
-        "      |        ~ ^~",
-        "      |          )",
-        "    5 | }",
-        "      | ^"
-      ],
-      "rule_id": "rule.family.linker.structured_or_message",
-      "severity": "error",
-      "suppression_reason": null,
-      "title": "linker reported a failure"
     }
   ],
   "summary": {

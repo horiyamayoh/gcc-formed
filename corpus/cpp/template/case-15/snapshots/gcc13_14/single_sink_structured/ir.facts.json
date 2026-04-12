@@ -262,9 +262,9 @@
         },
         {
           "fingerprints": {
-            "family": "c61185edf58cc068a231944e999438047e8caad001e074fd166a71344543acb3",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "66376d1e48f37a283bf7df722db5f1de3cd8c9086d8f9126f57af88148e98236"
+            "family": "a0da91dd1a0781a862cd0725f4418a38967e9c305af9b21f4e3ffdfe07a959c3",
+            "raw": "bb66eda27926f62b3e477cfd8007d28f1bdce645ab7a3682d34283536708d205",
+            "structural": "d3e866d81a9e0e8679e5a1b70e53b44950349f16f3755439aae5dd87b54c0ef3"
           },
           "id": "sarif-0-1-related-4",
           "locations": [
@@ -291,52 +291,7 @@
             }
           ],
           "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
-          },
-          "node_completeness": "partial",
-          "origin": "gcc",
-          "phase": "instantiate",
-          "provenance": {
-            "capture_refs": [
-              "diagnostics.sarif"
-            ],
-            "source": "compiler"
-          },
-          "semantic_role": "supporting",
-          "severity": "note"
-        },
-        {
-          "fingerprints": {
-            "family": "c4f290f301c30794440ad55f4bc0d1baa7cf2d8be536b7336ff02d328d5da263",
-            "raw": "d9bfaa9cd844da7f40fbf94969c9ae8810622f7ad8ff29667e4997351c5c88d7",
-            "structural": "2b88464ac112e58074a2f8b75060d33ed9ae97f11a0a6b650509000618785378"
-          },
-          "id": "sarif-0-1-related-5",
-          "locations": [
-            {
-              "anchor": {
-                "column_display": 22,
-                "column_native": 22,
-                "column_native_unit": "display",
-                "column_origin": 1,
-                "line": 17
-              },
-              "file": {
-                "ownership": {
-                  "owner": "user",
-                  "reason": "user_workspace"
-                },
-                "path_kind": "relative",
-                "path_raw": "src/main.cpp",
-                "path_style": "posix"
-              },
-              "id": "loc:src/main.cpp:17:22:17:22",
-              "role": "primary",
-              "source_kind": "caret"
-            }
-          ],
-          "message": {
-            "raw_text": "  mismatched types ‘Pair<T>’ and ‘int’"
+            "raw_text": "  candidate expects 1 argument, 2 provided"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -377,12 +332,6 @@
               "label": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
               "line": 10,
               "path": "src/main.cpp"
-            },
-            {
-              "column": 8,
-              "label": "template argument deduction/substitution failed:",
-              "line": 10,
-              "path": "src/main.cpp"
             }
           ],
           "kind": "template_instantiation"
@@ -391,7 +340,7 @@
       "fingerprints": {
         "family": "32b7e08de7d34af7122fdf14533290056a4768416e857fd5fc8ef3b759b45ad9",
         "raw": "92b10ee1450405a7d493e83644ca908eb18ef2fcff1aff545f3d25ceb7a95ec9",
-        "structural": "26e6cce31692cb6f343038766ebe5f2aac142c22956242433ac77698b6387da9"
+        "structural": "65515aa172bdd6cdb7e4002b793bbf820ed0c6202674c5d040405da31f89431f"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -638,8 +587,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "57d57bf1ea2bf9becdee99f4e5d50cdb0ea6197c921c93dead0e5951aa4b816a",
-    "structural": "7beff4de23124b64f39d0553a1c4e8a18ce7dd02e59d61ea9ca60c414eb7952d"
+    "raw": "ae1eb87999937a9f28634f5c0f506bd12e36023a05f989ebe5f1dab1fa8edd06",
+    "structural": "fa4217fe33a7456d3a7058df91e2358e31f32d479c5785e5c835f5138d153a64"
   },
   "producer": {
     "name": "gcc-formed",

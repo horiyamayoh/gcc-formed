@@ -28,6 +28,9 @@ why: src/main.c:2:19: error: expected ';' before '}' token
 |                   ^
 raw:
   src/main.c:2:19: error: expected ';' before '}' token
+      2 |     return (1 + 2;
+        |                   ^
+        |                   ;
 debug: rule_id=rule.family.syntax.phase_or_message
 debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

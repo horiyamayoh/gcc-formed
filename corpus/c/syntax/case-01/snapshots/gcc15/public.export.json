@@ -67,7 +67,7 @@
         "family": "syntax",
         "first_action": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
-        "message": "src/main.c:2:13: error: expected ';' before '}' token",
+        "message": "src/main.c:2:13: error: expected ';' before '}' token\nsrc/main.c: In function 'main':\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            ",
         "phase": "parse",
         "primary_location": {
           "column": 13,

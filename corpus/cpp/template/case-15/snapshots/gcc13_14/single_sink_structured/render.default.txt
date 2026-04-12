@@ -9,7 +9,7 @@ while instantiating:
   - src/main.cpp:11:5 candidate: ‘template<class T> Pair(T, T)-> Pair<T>’
   - src/main.cpp:17:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)
   - src/main.cpp:10:8 candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’
-omitted 2 internal template frames
+omitted 1 internal template frames
 error: template instantiation failed
 --> src/main.cpp:6:5
 help: start from the first user-owned template frame and match template arguments

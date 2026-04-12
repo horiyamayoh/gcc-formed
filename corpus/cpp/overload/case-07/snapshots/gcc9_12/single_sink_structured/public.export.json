@@ -50,8 +50,8 @@
         "confidence": "low",
         "family": "unknown",
         "first_action": "inspect the preserved raw diagnostics for the first corrective action",
-        "headline": "initializing argument 1 of 'void takes_short(short int)'",
-        "message": "initializing argument 1 of 'void takes_short(short int)'",
+        "headline": "  initializing argument 1 of 'void takes_short(short int)'",
+        "message": "  initializing argument 1 of 'void takes_short(short int)'",
         "phase": "semantic",
         "primary_location": {
           "column": 18,

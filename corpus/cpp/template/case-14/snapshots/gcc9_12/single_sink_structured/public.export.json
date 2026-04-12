@@ -1,0 +1,185 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "single_sink_structured",
+    "source_authority": "structured",
+    "support_level": "experimental",
+    "version_band": "gcc9_12"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-template-case-14",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "12.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "class template argument deduction failed:",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 22,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.json"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "template",
+        "first_action": "start from the first user-owned template frame and match template arguments",
+        "headline": "template instantiation failed",
+        "message": "no matching function for call to 'Pair(int, const char [2])'",
+        "phase": "instantiate",
+        "primary_location": {
+          "column": 22,
+          "line": 7,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.json"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "high",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.json"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "high",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  template argument deduction/substitution failed:",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 5,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.json"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "high",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "  deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 22,
+              "line": 7,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.json"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "high",
+            "family": "template",
+            "first_action": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "message": "candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
+            "phase": "instantiate",
+            "primary_location": {
+              "column": 8,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.json"
+            ],
+            "semantic_role": "candidate",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "type_overload",
+            "first_action": "compare the expected type and actual argument at the call site",
+            "headline": "type or overload mismatch",
+            "message": "  candidate expects 1 argument, 2 provided",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 8,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "diagnostics.json"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 7,
+      "duplicate_count": 0,
+      "error_count": 2,
+      "independent_root_count": 2,
+      "note_count": 5,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

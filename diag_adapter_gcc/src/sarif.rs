@@ -1,5 +1,6 @@
 //! SARIF diagnostic parsing.
 
+use crate::canonicalize::canonicalize_sarif_result;
 use crate::classify::{
     PhaseInferenceSignals, classify_family_seed, combined_message_seed, infer_phase,
     infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
@@ -187,22 +188,23 @@ fn result_to_node(
     capture_ref: &str,
     tool_component: Option<&str>,
 ) -> DiagnosticNode {
+    let result = canonicalize_sarif_result(result);
     let raw_text = structured_message_text(result.get("message"))
         .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
-    let related = related_messages(result);
+    let related = related_messages(&result);
     let family_seed = combined_message_seed(&raw_text, &related);
     let family_decision = classify_family_seed(&family_seed);
-    let severity = match json_str(result, "level") {
+    let severity = match json_str(&result, "level") {
         "error" => Severity::Error,
         "warning" => Severity::Warning,
         "note" => Severity::Note,
         "none" => Severity::Info,
         _ => Severity::Error,
     };
-    let locations = parse_locations(result);
-    let suggestions = parse_suggestions(result);
-    let context_chains = parse_context_chains(result);
-    let children = parse_related_locations(run_index, result_index, result, capture_ref);
+    let locations = parse_locations(&result);
+    let suggestions = parse_suggestions(&result);
+    let context_chains = parse_context_chains(&result);
+    let children = parse_related_locations(run_index, result_index, &result, capture_ref);
     let completeness = if locations.is_empty() {
         NodeCompleteness::Partial
     } else {
@@ -215,7 +217,7 @@ fn result_to_node(
         phase: infer_phase(PhaseInferenceSignals {
             message: &family_seed,
             context_chains: &context_chains,
-            option: sarif_warning_option(result),
+            option: sarif_warning_option(&result),
             rule_id: result.get("ruleId").and_then(Value::as_str),
             tool_component,
         }),

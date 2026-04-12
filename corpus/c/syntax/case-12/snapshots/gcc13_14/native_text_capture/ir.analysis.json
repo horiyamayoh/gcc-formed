@@ -30,9 +30,9 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "a89021ff1dbdb717c3a5281ab671a7e45cf80ee7245edac71111b06d43bf6bed",
-        "raw": "393fc3eda1cb9cc508fc4b2b6f1ed6cbb86f2ad0990fa114b665df5a8b28ea94",
-        "structural": "c3c2c294d13c4c8004796d1e72082701e816b14c9dd85d14a2f8c53e17005dcc"
+        "family": "e9a8c9fd6debe0d064dbc9b2b63d29a278bf620e3b2f34ce4d86cc1e70763e0b",
+        "raw": "5ceb2e20ddd28712c1a8bed506b4357fd6c556ac4aef1e1e2d7ec7ec307a8a24",
+        "structural": "8316c5c0890cde31a8f162bb015831987c95c4a8c52e1c1fb9a1690091b8edda"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -59,7 +59,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
+        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token\nsrc/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -88,9 +88,9 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "735a054c62349451209d77142d9418940637d097e49bf29395e1b5cd5cd8ea3b",
-        "raw": "dd5417870a3854912ad4f8e2142f8c7e0cb0990f4fed43349eb52cb64f9c22c6",
-        "structural": "7a62fb9f4663edbee4b69723c35d0f47498f302f06444697c3fd3c4ccacf7164"
+        "family": "d0e61aed3f351ccbd637551c909c62e81e3d9dea1a7b212407267ba61465851d",
+        "raw": "fcb0ab05f95bb6b75d939fe7fce84d8c1032824814f80851d8183e94d225b5c6",
+        "structural": "fd2fdfc8edc207be245d42d4fe42fa84848f5c857ae88774ca0e9931b6fb045f"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -117,7 +117,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token"
+        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -136,7 +136,7 @@
         "confidence": 0.6499999761581421,
         "family": "linker",
         "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
-        "group_ref": "group-deedd183b913",
+        "group_ref": "group-563da567df7d",
         "headline": "linker reported a failure",
         "matched_conditions": [
           "phase=link"
@@ -144,13 +144,13 @@
         "rule_id": "rule.family.linker.structured_or_message"
       },
       "fingerprints": {
-        "family": "cc0f31023b6c107f232aa27c5739d767cd4794bb502ce39174d2a362f0d0c1f5",
-        "raw": "cb875843cff9964b10354bcc78beb41c3c3c9aa2e51d6b0ed1696ae28da84be6",
-        "structural": "2ace5dda3ac8733d6f500e0238a240d4593e02d95a62ea39c86f6ea3a34336cc"
+        "family": "8ff91dda63fde55e257d62a53dc4435e91508e7d6a027d28cb20494c2d4927f5",
+        "raw": "32563a825120eda8e15665eefd97dad2804c975062073cce75913d1049e236c7",
+        "structural": "f525587ce5040ee75c2ae2e4e72e50898a94763356a44bf2f5020a5c7fb15391"
       },
       "id": "residual-passthrough",
       "message": {
-        "raw_text": "src/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
+        "raw_text": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -190,12 +190,12 @@
         },
         {
           "confidence": 0.4000000059604645,
-          "episode_ref": "episode-990028edfeeb",
+          "episode_ref": "episode-22506aa3af5a",
           "family": "linker",
-          "lead_group_ref": "group-deedd183b913",
+          "lead_group_ref": "group-563da567df7d",
           "lead_root_score": 0.4000000059604645,
           "member_group_refs": [
-            "group-deedd183b913"
+            "group-563da567df7d"
           ]
         }
       ],
@@ -235,14 +235,14 @@
         "visibility_floor": "never_hidden"
       },
       {
-        "episode_ref": "episode-990028edfeeb",
+        "episode_ref": "episode-22506aa3af5a",
         "evidence_tags": [
           "actionability_short",
           "classified_family",
           "early_invocation",
           "no_primary_location"
         ],
-        "group_ref": "group-deedd183b913",
+        "group_ref": "group-563da567df7d",
         "independence_score": 0.4399999976158142,
         "role": "uncertain",
         "root_score": 0.4000000059604645,
@@ -264,8 +264,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "1239feb9ea4ea7959b58f588afcf032748dd9bab56f5bfe719042f34354e31f3",
-    "raw": "b2ad276b4b9bfa3494e863e097bb10e62763ac45739ab47c51ec06382991db85",
-    "structural": "85b88511c6bda5f48bd52afd94a54057a04a667ee974874336dce164e7d25af0"
+    "raw": "0d3940f3fa3bfec658ce1ac6081aee3bb81f0e9819c2c0a081056805df30f155",
+    "structural": "a22faec57c3f2e869c493e24586367837e6fe2da2c3f69df9c524cc7278b84b9"
   },
   "producer": {
     "name": "gcc-formed",

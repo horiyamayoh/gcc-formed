@@ -17,9 +17,9 @@
   "diagnostics": [
     {
       "fingerprints": {
-        "family": "5ad7d829efad218d74ab933ad0b5a14acde855152ce3144256a1e66719919e9a",
-        "raw": "393fc3eda1cb9cc508fc4b2b6f1ed6cbb86f2ad0990fa114b665df5a8b28ea94",
-        "structural": "740da46c69c1980f83925d0a2a2a48d20be4f1c5d94442be10d46d18088ed92a"
+        "family": "7983007507d977ce1f4200b23ef68bc8d70bb3d70a2b61c9f35ddfe0cc4d145f",
+        "raw": "5ceb2e20ddd28712c1a8bed506b4357fd6c556ac4aef1e1e2d7ec7ec307a8a24",
+        "structural": "47026dcd92276948045964180d14a34dc25c3bcec7895cf56289e9f443efcd79"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -46,7 +46,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token"
+        "raw_text": "src/main.c:2:10: error: expected ‘)’ before ‘{’ token\nsrc/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -62,9 +62,9 @@
     },
     {
       "fingerprints": {
-        "family": "81585ce84fbc2f7a31bb715363e7d0374efbae7efbfee9515fa3bbc4a6fd16fe",
-        "raw": "dd5417870a3854912ad4f8e2142f8c7e0cb0990f4fed43349eb52cb64f9c22c6",
-        "structural": "d999fa148470fe433ae6ae2b30373f0ef6c12f072ebc640dd8f52dca10134bfa"
+        "family": "09d8d451f436fb341b76d0f754decc90f40372a53d1b171091a1e5f4d82fc373",
+        "raw": "fcb0ab05f95bb6b75d939fe7fce84d8c1032824814f80851d8183e94d225b5c6",
+        "structural": "d23376c6aaf1ee8fb0c195c6c2f7f72867f814989159843905641733291a6b2d"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -91,7 +91,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token"
+        "raw_text": "src/main.c:6:1: error: expected expression before ‘}’ token\n    6 | }\n      | ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -107,13 +107,13 @@
     },
     {
       "fingerprints": {
-        "family": "d8f5fdd745da7ca181fd01f4382983bb1cf9a86c60043469a72731219706f0db",
-        "raw": "cb875843cff9964b10354bcc78beb41c3c3c9aa2e51d6b0ed1696ae28da84be6",
-        "structural": "fb3cd2fc1f19000840d2733bf92b4c9b56d9918263882665633fcf498416e208"
+        "family": "bcdd4c42c9c39c1a7d3ff75a684273a6893529567133103d107c58e9c6563ce4",
+        "raw": "32563a825120eda8e15665eefd97dad2804c975062073cce75913d1049e236c7",
+        "structural": "0b9d01f07ed3440c47892bcdfb0a2446ced1304e49b62b6c4b4498b78e88a0c0"
       },
       "id": "residual-passthrough",
       "message": {
-        "raw_text": "src/main.c: In function ‘broken_if’:\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    6 | }\n      | ^\nsrc/main.c: In function ‘broken_type’:\nsrc/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
+        "raw_text": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -132,8 +132,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "9c72e6488ef36e9cdcd35cd2426a1df8bec4a0df25fe037fbb9d7df38e52c9c8",
-    "structural": "5e684454578747d3d47c19e4560a274022361338bf8344a97c9fb154a94dbf87"
+    "raw": "d3e97b11e03537d70d568461f62ecb2ec3149c7014c95d41034acfcd83c8bf8f",
+    "structural": "283202bbf5c29fa0bc0be976223ffae64e9a2e1d326546f999f9d2090f699c28"
   },
   "producer": {
     "name": "gcc-formed",

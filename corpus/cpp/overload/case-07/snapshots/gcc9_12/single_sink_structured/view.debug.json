@@ -85,11 +85,11 @@
       "matched_conditions": [
         "no_family_rule_matched"
       ],
-      "raw_message": "initializing argument 1 of 'void takes_short(short int)'",
+      "raw_message": "  initializing argument 1 of 'void takes_short(short int)'",
       "rule_id": "rule.family.unknown",
       "severity": "note",
       "suppression_reason": "generic_fallback",
-      "title": "initializing argument 1 of 'void takes_short(short int)'"
+      "title": "  initializing argument 1 of 'void takes_short(short int)'"
     }
   ],
   "summary": {

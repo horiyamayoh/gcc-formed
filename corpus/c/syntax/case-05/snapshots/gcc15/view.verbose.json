@@ -104,9 +104,12 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:2:19: error: expected ';' before '}' token",
+      "raw_message": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  ",
       "raw_sub_block": [
-        "src/main.c:2:19: error: expected ';' before '}' token"
+        "src/main.c:2:19: error: expected ';' before '}' token",
+        "    2 |     return (1 + 2;",
+        "      |                   ^",
+        "      |                   ;"
       ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",

@@ -70,7 +70,7 @@
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "src/main.c:2:13: error: expected ';' before '}' token",
+      "raw_message": "src/main.c:2:13: error: expected ';' before '}' token\nsrc/main.c: In function 'main':\n    2 |     return 0\n      |             ^\n      |             ;\n    3 | }\n      | ~            ",
       "raw_sub_block": [
         "src/main.c:2:13: error: expected ';' before '}' token"
       ],

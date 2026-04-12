@@ -1,5 +1,6 @@
 //! GCC JSON diagnostic parsing.
 
+use crate::canonicalize::canonicalize_gcc_json_diagnostic;
 use crate::classify::{
     PhaseInferenceSignals, classify_family_seed, combined_message_seed, infer_phase,
     infer_related_phase, infer_related_role, structured_message_text,
@@ -99,21 +100,22 @@ fn gcc_json_diagnostic_to_node(
     is_root: bool,
     tool_component: Option<&str>,
 ) -> DiagnosticNode {
+    let diagnostic = canonicalize_gcc_json_diagnostic(diagnostic);
     let raw_text = json_message_text(diagnostic.get("message"))
         .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
-    let child_messages = json_child_messages(diagnostic);
+    let child_messages = json_child_messages(&diagnostic);
     let family_seed = combined_message_seed(&raw_text, &child_messages);
     let family_decision = classify_family_seed(&family_seed);
-    let locations = parse_gcc_json_locations(diagnostic);
-    let children = parse_gcc_json_children(&id, diagnostic, capture_ref);
-    let context_chains = parse_gcc_json_context_chains(diagnostic, &raw_text);
-    let suggestions = parse_fixit_suggestions(diagnostic);
+    let locations = parse_gcc_json_locations(&diagnostic);
+    let children = parse_gcc_json_children(&id, &diagnostic, capture_ref);
+    let context_chains = parse_gcc_json_context_chains(&diagnostic, &raw_text);
+    let suggestions = parse_fixit_suggestions(&diagnostic);
     let completeness = if locations.is_empty() {
         NodeCompleteness::Partial
     } else {
         NodeCompleteness::Complete
     };
-    let severity = gcc_json_severity(json_str(diagnostic, "kind"));
+    let severity = gcc_json_severity(json_str(&diagnostic, "kind"));
     let semantic_role = if is_root {
         SemanticRole::Root
     } else {
@@ -123,7 +125,7 @@ fn gcc_json_diagnostic_to_node(
         infer_phase(PhaseInferenceSignals {
             message: &family_seed,
             context_chains: &context_chains,
-            option: gcc_json_option(diagnostic),
+            option: gcc_json_option(&diagnostic),
             rule_id: None,
             tool_component,
         })
@@ -186,7 +188,7 @@ fn gcc_json_diagnostic_to_node(
         }),
         fingerprints: is_root.then_some(FingerprintSet {
             raw: diag_core::fingerprint_for(&raw_text),
-            structural: diag_core::fingerprint_for(diagnostic),
+            structural: diag_core::fingerprint_for(&diagnostic),
             family: diag_core::fingerprint_for(&family_decision.family),
         }),
     }

@@ -8,6 +8,7 @@
 //! - [`ingest_bundle`] -- full-fidelity ingestion from a [`diag_capture_runtime::CaptureBundle`].
 //! - [`from_sarif`] -- parse a standalone SARIF file on disk.
 
+mod canonicalize;
 mod classify;
 mod context;
 mod fallback;
@@ -92,11 +93,12 @@ mod tests {
     use crate::gcc_json::from_gcc_json_payload;
     use crate::ingest::compatibility_bundle_from_legacy_inputs;
     use crate::sarif::MAX_STRUCTURED_ARTIFACT_BYTES;
+    use diag_core::WrapperSurface;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
         DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
         Origin, Phase, ProvenanceSource, RunInfo, SemanticRole, Severity, SourceAuthority,
-        SuggestionApplicability, WrapperSurface,
+        SuggestionApplicability,
     };
     use diag_rulepack::checked_in_rulepack_version;
     use std::fs;
@@ -209,6 +211,207 @@ mod tests {
         assert_eq!(
             document.diagnostics[0].provenance.capture_refs,
             vec!["diagnostics.json".to_string()]
+        );
+    }
+
+    #[test]
+    fn canonicalizes_sarif_candidate_arity_mismatch_cluster() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "results":[
+                    {
+                      "level":"error",
+                      "message":{"text":"no matching function for call to 'Pair(int, const char [2])'"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":7,"startColumn":22}
+                          }
+                        }
+                      ],
+                      "relatedLocations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":3,"startColumn":5}
+                          },
+                          "message":{"text":"candidate: 'template<class T> Pair(T, T)-> Pair<T>'"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":3,"startColumn":5}
+                          },
+                          "message":{"text":"  template argument deduction/substitution failed:"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":7,"startColumn":22}
+                          },
+                          "message":{"text":"  deduced conflicting types for parameter 'T' ('int' and 'const char*')"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":2,"startColumn":8}
+                          },
+                          "message":{"text":"candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":2,"startColumn":8}
+                          },
+                          "message":{"text":"  template argument deduction/substitution failed:"}
+                        },
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":7,"startColumn":22}
+                          },
+                          "message":{"text":"  mismatched types 'Pair<T>' and 'int'"}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let document = from_sarif(&path, producer_for_version("0.1.0"), base_run_info()).unwrap();
+        let root = &document.diagnostics[0];
+        let child_messages = root
+            .children
+            .iter()
+            .map(|child| child.message.raw_text.as_str())
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            child_messages,
+            vec![
+                "candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
+                "  template argument deduction/substitution failed:",
+                "  deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+                "candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
+                "  candidate expects 1 argument, 2 provided",
+            ]
+        );
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
+        );
+    }
+
+    #[test]
+    fn canonicalizes_gcc_json_candidate_arity_mismatch_cluster() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"error",
+                "message":"no matching function for call to 'Pair(int, const char [2])'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.cpp","line":7,"column":22}
+                  }
+                ],
+                "children":[
+                  {
+                    "kind":"note",
+                    "message":"candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":3,"column":5}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"  template argument deduction/substitution failed:",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":3,"column":5}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"  deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":7,"column":22}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":2,"column":8}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"  template argument deduction/substitution failed:",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":2,"column":8}
+                      }
+                    ]
+                  },
+                  {
+                    "kind":"note",
+                    "message":"  mismatched types 'Pair<T>' and 'int'",
+                    "locations":[
+                      {
+                        "caret":{"file":"src/main.cpp","line":7,"column":22}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &base_run_info(),
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        let child_messages = root
+            .children
+            .iter()
+            .map(|child| child.message.raw_text.as_str())
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            child_messages,
+            vec![
+                "candidate: 'template<class T> Pair(T, T)-> Pair<T>'",
+                "  template argument deduction/substitution failed:",
+                "  deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+                "candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'",
+                "  candidate expects 1 argument, 2 provided",
+            ]
+        );
+        assert_eq!(
+            root.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("template")
         );
     }
 

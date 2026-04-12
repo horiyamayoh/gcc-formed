@@ -1966,10 +1966,19 @@ mod tests {
         let expected = include_str!(
             "../../corpus/cpp/overload/case-07/snapshots/gcc9_12/single_sink_structured/diagnostics.json"
         );
-        let actual = expected.replace(
-            "https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Warning-Options.html#index-fpermissive",
-            "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive",
-        );
+        let actual = if expected
+            .contains("https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive")
+        {
+            expected.replace(
+                "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive",
+                "https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Warning-Options.html#index-fpermissive",
+            )
+        } else {
+            expected.replace(
+                "https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Warning-Options.html#index-fpermissive",
+                "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive",
+            )
+        };
 
         let comparison =
             compare_snapshot_contents(Path::new("diagnostics.json"), expected, &actual).unwrap();

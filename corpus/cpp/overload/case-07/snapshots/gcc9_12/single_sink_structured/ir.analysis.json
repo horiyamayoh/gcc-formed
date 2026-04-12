@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1404,
+      "size_bytes": 879,
       "storage": "external_ref"
     }
   ],
@@ -108,7 +108,7 @@
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
         "group_ref": "group-f44638368e33",
-        "headline": "initializing argument 1 of 'void takes_short(short int)'",
+        "headline": "  initializing argument 1 of 'void takes_short(short int)'",
         "matched_conditions": [
           "no_family_rule_matched"
         ],
@@ -116,9 +116,9 @@
         "suppression_reason": "generic_fallback"
       },
       "fingerprints": {
-        "family": "e1f81f2eeec82216cd3e5caaac1d91b70a9a055d5c73aa656a7db763cc350a17",
-        "raw": "aa73c4d7a4d40bdc6a0f07d075267e76fec3eed699e62de0c306715349ee6fa6",
-        "structural": "680336e1f84f027967552d5f04bbcdc2ea60998607c26b3d4b1bc229aae09ab1"
+        "family": "b689b522ced533d85c6bcda6003ba543c7090401df441fadb15551d07ecb8761",
+        "raw": "1ebcc326ec25020d022a04295ef8fa66665d09307dc9e0cfdae7e6bad29d7200",
+        "structural": "605cf1f4d4f33d3124535e476c11523873593d07b9340f728e92a316f7ae4614"
       },
       "id": "json-1",
       "locations": [
@@ -162,7 +162,7 @@
         }
       ],
       "message": {
-        "raw_text": "initializing argument 1 of 'void takes_short(short int)'"
+        "raw_text": "  initializing argument 1 of 'void takes_short(short int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -250,8 +250,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "adceae6c3fff77c998c4ab19845c4db2c5075829ea9da3ddf73a9b60b26e5316",
-    "structural": "5d0c3901fa017835b3310ebef38cec313aeed154f1c2ab52c49b6b91a9df0e41"
+    "raw": "909aaa03d7eab26def6896f7ee4ce259a5ec18011260ca812cdac71b713e5573",
+    "structural": "cce677c6af5f6c89cf9ba5fc5cb865b854d58891cacce85388dd3d1132621461"
   },
   "producer": {
     "name": "gcc-formed",

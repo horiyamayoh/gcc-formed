@@ -191,9 +191,9 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "81cfd54a2743e435196e750da29974a183b62aae2e5e85bc48efb5bfb8c95c93",
-        "raw": "681dc866b644030d3d2e6e3d73f1eb5da1bc08be598cdef8a1008296cffffa9e",
-        "structural": "cc67cb5216453ee16a8aefc35d136b86826ac1b285a973a1c7e884520d860ead"
+        "family": "de0dc366aa7ecd04957c06a6b1e5df06a71e4a4a0d05641a08214f2a8c666216",
+        "raw": "c654ac1e0a31e71bea1a1011ff94a0674592b95a029271a64af31bf4d3ab713c",
+        "structural": "450eb7ba9ce348a917632780532b6e1a734f6799c0a1fa4a2ddaa81c8c8569a0"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -220,7 +220,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:2:19: error: expected ';' before '}' token"
+        "raw_text": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  "
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -334,8 +334,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
-    "raw": "b6a6d5ea23980426cb05a0ea5798821176dd5c9aa6bd40c8df4144ee14df416c",
-    "structural": "7b620106be9944a8ddd1c0551716fdc48b36a5a5a7b2a88b81416533c165667c"
+    "raw": "47b3cad64709b7e784fa4c6027db05482d10156e348602e46130f75d039f28e4",
+    "structural": "69d7713522578cf1dd61df1c3cc9186c9ca535147be6b4d812db99a97b6504af"
   },
   "producer": {
     "name": "gcc-formed",

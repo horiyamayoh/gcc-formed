@@ -19,4 +19,5 @@ why: src/main.c:2:13: error: expected ';' before '}' token
 |             ^
 raw:
   src/main.c:2:13: error: expected ';' before '}' token
+  src/main.c: In function 'main':
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

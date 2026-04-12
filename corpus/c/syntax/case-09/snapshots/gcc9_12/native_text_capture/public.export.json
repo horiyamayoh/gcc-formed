@@ -31,7 +31,7 @@
         "family": "syntax",
         "first_action": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
-        "message": "src/main.c:2:10: error: expected ')' before '{' token",
+        "message": "src/main.c:2:10: error: expected ')' before '{' token\nsrc/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )",
         "phase": "parse",
         "primary_location": {
           "column": 10,
@@ -51,7 +51,7 @@
         "family": "syntax",
         "first_action": "fix the first parser error at the user-owned location",
         "headline": "syntax error",
-        "message": "src/main.c:5:1: error: expected expression before '}' token",
+        "message": "src/main.c:5:1: error: expected expression before '}' token\n    5 | }\n      | ^",
         "phase": "parse",
         "primary_location": {
           "column": 1,
@@ -65,29 +65,16 @@
         ],
         "semantic_role": "root",
         "severity": "error"
-      },
-      {
-        "confidence": "medium",
-        "family": "linker",
-        "first_action": "check the missing/duplicate symbol and the object or library inputs",
-        "headline": "linker reported a failure",
-        "message": "src/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    5 | }\n      | ^",
-        "phase": "link",
-        "provenance_capture_refs": [
-          "stderr.raw"
-        ],
-        "semantic_role": "passthrough",
-        "severity": "error"
       }
     ],
     "summary": {
       "dependent_follow_on_count": 0,
-      "diagnostic_count": 3,
+      "diagnostic_count": 2,
       "duplicate_count": 0,
-      "error_count": 3,
+      "error_count": 2,
       "independent_root_count": 2,
       "note_count": 0,
-      "uncertain_count": 1,
+      "uncertain_count": 0,
       "warning_count": 0
     }
   },

@@ -6,7 +6,7 @@ support_level: experimental
 expected_mode: render
 semantic:
   family: type_overload
-  severity: error
+  severity: warning
   primary_location_user_owned_required: true
   first_action_required: true
   raw_provenance_required: true

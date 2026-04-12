@@ -48,10 +48,14 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     let mut compiler_nodes = Vec::new();
     let mut passthrough = Vec::new();
     let mut compiler_block = None::<CompilerResidualBlock>;
+    let mut compiler_preamble = Vec::<String>::new();
     let compiler_diagnostic = Regex::new(
         r"^(?P<path>[[:alnum:]_./+-]+):(?P<line>\d+):(?P<column>\d+): (?P<severity>fatal error|error|warning|note): (?P<message>.+)$",
     )
     .expect("regex");
+    let compiler_preamble_line =
+        Regex::new(r"^(?P<path>[[:alnum:]_./+-]+): (?P<message>In .+|At global scope:)$")
+            .expect("regex");
     let linker_matchers = compiled_linker_seeds();
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
@@ -63,9 +67,26 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
                 line,
                 &capture,
             );
+            attach_pending_compiler_preamble(&mut compiler_block, &mut compiler_preamble);
             continue;
         }
 
+        if compiler_preamble_line.is_match(line) {
+            compiler_preamble.push(line.to_string());
+            continue;
+        }
+
+        if let Some(block) = compiler_block.as_mut()
+            && is_compiler_continuation_line(line)
+        {
+            block.raw_lines.push(line.to_string());
+            if let Some(node) = block.node.as_mut() {
+                attach_compiler_continuation_line(node, line);
+            }
+            continue;
+        }
+
+        flush_pending_compiler_preamble(&mut passthrough, &mut compiler_preamble);
         flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
         if let Some(linker_match) = match_linker_group(line, &linker_matchers) {
@@ -86,6 +107,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
 
         passthrough.push(line.to_string());
     }
+    flush_pending_compiler_preamble(&mut passthrough, &mut compiler_preamble);
     flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
     let mut nodes = compiler_nodes;
@@ -396,6 +418,53 @@ fn attach_compiler_note(node: &mut DiagnosticNode, line: &str, capture: &regex::
         analysis: None,
         fingerprints: None,
     });
+}
+
+fn attach_compiler_continuation_line(node: &mut DiagnosticNode, line: &str) {
+    if let Some(child) = node.children.last_mut() {
+        append_message_line(&mut child.message.raw_text, line);
+    } else {
+        append_message_line(&mut node.message.raw_text, line);
+    }
+}
+
+fn append_message_line(message: &mut String, line: &str) {
+    if !message.lines().any(|existing| existing == line) {
+        message.push('\n');
+        message.push_str(line);
+    }
+}
+
+fn is_compiler_continuation_line(line: &str) -> bool {
+    line.starts_with(' ') || line.starts_with('\t')
+}
+
+fn attach_pending_compiler_preamble(
+    current_block: &mut Option<CompilerResidualBlock>,
+    pending_preamble: &mut Vec<String>,
+) {
+    if pending_preamble.is_empty() {
+        return;
+    }
+    let Some(block) = current_block.as_mut() else {
+        return;
+    };
+
+    for line in pending_preamble.drain(..) {
+        block.raw_lines.push(line.clone());
+        if let Some(node) = block.node.as_mut() {
+            append_message_line(&mut node.message.raw_text, &line);
+        }
+    }
+}
+
+fn flush_pending_compiler_preamble(
+    passthrough: &mut Vec<String>,
+    pending_preamble: &mut Vec<String>,
+) {
+    if !pending_preamble.is_empty() {
+        passthrough.append(pending_preamble);
+    }
 }
 
 fn push_context_chain(node: &mut DiagnosticNode, line: &str, capture: &regex::Captures<'_>) {
@@ -1643,6 +1712,45 @@ main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
         );
         assert_eq!(nodes[0].children.len(), 1);
         assert_eq!(nodes[0].children[0].semantic_role, SemanticRole::Candidate);
+    }
+
+    #[test]
+    fn keeps_excerpt_continuations_inside_compiler_warning_block() {
+        let stderr = concat!(
+            "src/main.c: In function 'main':\n",
+            "src/main.c:9:19: warning: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]\n",
+            "    9 |     takes_int_ptr(&box);\n",
+            "      |                   ^~~~\n",
+            "      |                   |\n",
+            "      |                   struct Box *\n",
+            "src/main.c:1:25: note: expected 'int *' but argument is of type 'struct Box *'\n",
+            "    1 | void takes_int_ptr(int *value);\n",
+            "      |                    ~~~~~^~~~~\n",
+        );
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("type_overload")
+        );
+        assert!(nodes[0].message.raw_text.contains("In function 'main':"));
+        assert!(nodes[0].message.raw_text.contains("takes_int_ptr(&box);"));
+        assert_eq!(nodes[0].children.len(), 1);
+        assert!(
+            nodes[0].children[0]
+                .message
+                .raw_text
+                .contains("void takes_int_ptr(int *value);")
+        );
+        assert!(
+            !nodes
+                .iter()
+                .any(|node| matches!(node.semantic_role, SemanticRole::Passthrough))
+        );
     }
 
     #[test]

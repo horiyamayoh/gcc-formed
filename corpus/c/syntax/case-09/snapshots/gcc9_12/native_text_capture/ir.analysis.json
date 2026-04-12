@@ -30,9 +30,9 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "153a348ee4c483082fa7e639451295887e08e71038985aaeb0d572cccd68f702",
-        "raw": "ae89a61ebe068a845d514be79177a38f39ddd6dac94e8e7c1ab088f5b3930a4a",
-        "structural": "5e8bbc9a5057d62dfd14e9ebda9e4723248890e8b001a0e21d0e6d8e86d7c8eb"
+        "family": "a6136cc4912f9a01812df2217046e2ab38b3a9402bc93effbff24ca2d673d065",
+        "raw": "28c42a32c0124b3fdb8584513d5c01917a2ce8fd91ef7bcd3f7fb7323633fc83",
+        "structural": "7a5201b019fc01fc5c4567686ab85b34b68bf6d2943581d8f4932083d43ebd73"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -59,7 +59,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:2:10: error: expected ')' before '{' token"
+        "raw_text": "src/main.c:2:10: error: expected ')' before '{' token\nsrc/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -88,9 +88,9 @@
         "rule_id": "rule.family.syntax.phase_or_message"
       },
       "fingerprints": {
-        "family": "19581f86718c26db8721219ccb03257cc763c0b2e2b98ba84c9182733d5e40f7",
-        "raw": "63ef0da2b4d6433f53587506e4ba48708c2e7f35551370480130cd54f57d797e",
-        "structural": "698a3ffc6b7e069f721d090335965a182b2619dda4eb9121061ed1d0f344c9d5"
+        "family": "69c3831d13617787820b639ff954388cdbe935375d4c26d7cfb49c9711e61220",
+        "raw": "8ef2beebe999367b5434e1f2d40ed6b4c3a5e83b1c683a0ec7e836e6893e1ba9",
+        "structural": "0cdb7bb47862f453eeb20ef3943f7f9e2fa7109ab9625818e2aea06ad849f76b"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -117,7 +117,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/main.c:5:1: error: expected expression before '}' token"
+        "raw_text": "src/main.c:5:1: error: expected expression before '}' token\n    5 | }\n      | ^"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -129,39 +129,6 @@
         "source": "residual_text"
       },
       "semantic_role": "root",
-      "severity": "error"
-    },
-    {
-      "analysis": {
-        "confidence": 0.6499999761581421,
-        "family": "linker",
-        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
-        "group_ref": "group-abe91b79ea07",
-        "headline": "linker reported a failure",
-        "matched_conditions": [
-          "phase=link"
-        ],
-        "rule_id": "rule.family.linker.structured_or_message"
-      },
-      "fingerprints": {
-        "family": "19701b2262ab6f7d70b4c73c2c438c8dd141f35cc2e9fe77041b729febc6db76",
-        "raw": "86b579e7e60b860ee67b272a68542f623b58e0bb6c151061bc6db1c561088116",
-        "structural": "d962b0e198d7fb1a788c4d5e04b82dd83f767791d645e231d8bc1ad94040e798"
-      },
-      "id": "residual-passthrough",
-      "message": {
-        "raw_text": "src/main.c: In function 'main':\n    2 |     if (1 {\n      |        ~ ^~\n      |          )\n    5 | }\n      | ^"
-      },
-      "node_completeness": "passthrough",
-      "origin": "external_tool",
-      "phase": "link",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "passthrough",
       "severity": "error"
     }
   ],
@@ -186,16 +153,6 @@
           "lead_root_score": 0.8700000047683716,
           "member_group_refs": [
             "group-acc4d5d3731f"
-          ]
-        },
-        {
-          "confidence": 0.4000000059604645,
-          "episode_ref": "episode-effeba5c4f59",
-          "family": "linker",
-          "lead_group_ref": "group-abe91b79ea07",
-          "lead_root_score": 0.4000000059604645,
-          "member_group_refs": [
-            "group-abe91b79ea07"
           ]
         }
       ],
@@ -233,22 +190,6 @@
         "summary_likelihood": 0.37300002574920654,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
-      },
-      {
-        "episode_ref": "episode-effeba5c4f59",
-        "evidence_tags": [
-          "actionability_short",
-          "classified_family",
-          "early_invocation",
-          "no_primary_location"
-        ],
-        "group_ref": "group-abe91b79ea07",
-        "independence_score": 0.4399999976158142,
-        "role": "uncertain",
-        "root_score": 0.4000000059604645,
-        "summary_likelihood": 0.5799999833106995,
-        "suppress_likelihood": 0.25999999046325684,
-        "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
@@ -257,15 +198,15 @@
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
       "independent_root_count": 2,
-      "uncertain_count": 1
+      "uncertain_count": 0
     }
   },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "1239feb9ea4ea7959b58f588afcf032748dd9bab56f5bfe719042f34354e31f3",
-    "raw": "9cec28bf43d25b9107b1d87532fb8ec94b00025c3bc750814e32734d49dece62",
-    "structural": "ea806b42ee7e1ff67381c9e16e52c06c1661d3284343cb0ab0796e6f9ca9bf8f"
+    "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
+    "raw": "b36ffc406d376ecec500938ed30ec15287cfd742c20f2af954d8a420e8769c5b",
+    "structural": "0a49ae06dcbb70200b900121e169434e2a49bd63b8e89eabb9ebc3ed5e46732b"
   },
   "producer": {
     "name": "gcc-formed",
