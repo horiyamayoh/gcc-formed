@@ -510,16 +510,28 @@ pub(crate) fn build_replay_report(
     Ok(report)
 }
 
-pub(crate) fn run_snapshot(
-    root: &Path,
-    fixture_filter: Option<&str>,
-    family_filter: Option<&str>,
-    subset: SnapshotSubset,
-    check: bool,
-    docker_image: &str,
-    version_band: Option<&str>,
-    report_dir: Option<&Path>,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub(crate) struct SnapshotCommand<'a> {
+    pub(crate) root: &'a Path,
+    pub(crate) fixture_filter: Option<&'a str>,
+    pub(crate) family_filter: Option<&'a str>,
+    pub(crate) subset: SnapshotSubset,
+    pub(crate) check: bool,
+    pub(crate) docker_image: &'a str,
+    pub(crate) version_band: Option<&'a str>,
+    pub(crate) report_dir: Option<&'a Path>,
+}
+
+pub(crate) fn run_snapshot(command: SnapshotCommand<'_>) -> Result<(), Box<dyn std::error::Error>> {
+    let SnapshotCommand {
+        root,
+        fixture_filter,
+        family_filter,
+        subset,
+        check,
+        docker_image,
+        version_band,
+        report_dir,
+    } = command;
     let fixtures = discover(root)?;
     let selected = select_fixtures(&fixtures, fixture_filter, family_filter, subset);
     if selected.is_empty() {
@@ -2357,8 +2369,13 @@ fn fixture_compatible_with_version_band(fixture: &Fixture, runtime_band: Version
     let fixture_band = fixture_support_band(fixture);
     match fixture_band {
         VersionBand::Gcc15Plus => matches!(runtime_band, VersionBand::Gcc15Plus),
-        VersionBand::Gcc13_14 => matches!(runtime_band, VersionBand::Gcc13_14 | VersionBand::Gcc15Plus),
-        VersionBand::Gcc9_12 => matches!(runtime_band, VersionBand::Gcc9_12 | VersionBand::Gcc13_14 | VersionBand::Gcc15Plus),
+        VersionBand::Gcc13_14 => {
+            matches!(runtime_band, VersionBand::Gcc13_14 | VersionBand::Gcc15Plus)
+        }
+        VersionBand::Gcc9_12 => matches!(
+            runtime_band,
+            VersionBand::Gcc9_12 | VersionBand::Gcc13_14 | VersionBand::Gcc15Plus
+        ),
         VersionBand::Unknown => true,
     }
 }
