@@ -1,0 +1,236 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In lambda function:\nsrc/main.cpp:3:33: error: 'value' is not captured\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~\nsrc/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^\nsrc/main.cpp:2:9: note: 'int value' declared here\n    2 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 417,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5530,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "lambda_closure",
+        "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+        "headline": "lambda capture error",
+        "matched_conditions": [
+          "message_contains=is not captured",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.lambda_closure.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.8999999761581421,
+            "family": "lambda_closure",
+            "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+            "headline": "lambda capture error",
+            "matched_conditions": [
+              "message_contains=the lambda has no capture-default",
+              "phase=semantic"
+            ],
+            "rule_id": "rule.family.lambda_closure.message_terms"
+          },
+          "fingerprints": {
+            "family": "678c43bc47e207bf5e17a8417786e33fd667c915eb92a3e1f7efc355e90716a4",
+            "raw": "2a8fdac7afbda8f0edebaaf5c7887a211bc76747df2a14870cdf5fe7faa29c76",
+            "structural": "6419a64ff63f5799c515507cf63f752dca1dd0450e4d8429fd3556d6f56336ba"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:20:3:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the lambda has no capture-default"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "'int value' declared here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "a297cfc57c45ebc91a0973cefcf97fcb16c773917dbf1db4b703ea8f61020d78",
+            "raw": "75c3e2f9966f18308fb90f591eb7bf2707fd64b30926f04dc54f883c4b9b53f3",
+            "structural": "3db493261e7ac869d67978884a02034ea00a626b843d270ebae32fad6314fc48"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:9:2:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "'int value' declared here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "4e13b6f5661164b4c1531414d94560cd6e6bb718d9d17a2b40c8a438722323c8",
+        "raw": "62fe09c7cf9a3bca07f91df64cedafbd488beabe3e3045d93dd4e2e59980a5f2",
+        "structural": "b72fc884d8ad277d295fc03be41f3c8544507b872406411c2540fbcf380e3297"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 33,
+            "column_native": 33,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:33:3:33",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'value' is not captured"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b61d764c5bb4174212ed02ea3723521f9fd197390a6d24305cf1269356e60033",
+    "raw": "0174ac8c589f274235e83a1905181a97d082b96503ebc508c1a755179fe18037",
+    "structural": "a47099f46e62e58f81630e12dd78792f056bc68db7eee47a89fb9c19d23f4993"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

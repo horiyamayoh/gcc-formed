@@ -908,6 +908,26 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("inheritance_virtual")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("constexpr")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("lambda_closure")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("lifetime_dangling")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("init_order")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("linker.undefined_reference")),
             RendererFamilyKind::Linker
         );

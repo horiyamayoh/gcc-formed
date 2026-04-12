@@ -1,0 +1,8 @@
+src/main.cpp:3:12: warning: dangling pointer or reference to local
+help: return by value instead of by pointer/reference, or extend the object lifetime
+why: address of local variable 'value' returned
+| src/main.cpp:3:12
+|     return &value;
+|            ^
+note: declared here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

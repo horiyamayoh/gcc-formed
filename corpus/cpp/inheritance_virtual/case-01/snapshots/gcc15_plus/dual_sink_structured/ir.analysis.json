@@ -1,0 +1,236 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:8:13: error: cannot declare variable 'value' to be of abstract type 'Derived'\n    8 |     Derived value;\n      |             ^~~~~\nsrc/main.cpp:5:8: note:   because the following virtual functions are pure within 'Derived':\n    5 | struct Derived : Base {};\n      |        ^~~~~~~\nsrc/main.cpp:2:17: note:     'virtual int Base::value() const'\n    2 |     virtual int value() const = 0;\n      |                 ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 470,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 5583,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "inheritance_virtual",
+        "first_action_hint": "implement all pure virtual functions or fix the class hierarchy",
+        "headline": "inheritance or virtual function error",
+        "matched_conditions": [
+          "message_contains=abstract type",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.inheritance_virtual.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "  because the following virtual functions are pure within 'Derived':",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "3b94373c940a4d8332576510d77fdf7a41b151fedd5736af0edc84ff2e4d0311",
+            "raw": "dcee136d7d6fa724018f4b38df7dcbbab40ce1880a77504bc011f35dbc00c131",
+            "structural": "86b613d748e887210f779786e47cd2d4be1c1db665b916189617df4e5abe43b2"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:8:5:8",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  because the following virtual functions are pure within 'Derived':"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "    'virtual int Base::value() const'",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "0589c1afca0c2fac03e853e0459d57cde6f4164ef2387be6905a15dc2662a232",
+            "raw": "0f3bdd43e139a19bedbe27f3f52e403119287f18d5e4f667eeb3291a7c957cf1",
+            "structural": "c02185ce8cadaecef685ed24f3d37399dee996ca5c9c3dc5811c2ef2786fbc7f"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 17,
+                "column_native": 17,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:17:2:17",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "    'virtual int Base::value() const'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "28e19acda72977da735bb7f75cd07a4fa8e14691ad7679f4f1ffb988a23f6023",
+        "raw": "9e31a760285398b718e92bcb1ea1f757178c101b56424123ad1319297d9f16ad",
+        "structural": "b6353c1d0212f1157c05bbe5bbe6d92217c997763529f8872d4445a5a94adcab"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 13,
+            "column_native": 13,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 8
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:8:13:8:13",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "cannot declare variable 'value' to be of abstract type 'Derived'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "4bd40d4e3e0147dcb7eaf104633ad60b1f4dcb6c73c365fb6554472c6b49e42d",
+    "raw": "952d2b6f3bc2a9f1741a820e5c7ac9bf0a2870644965c61f72c38518baf927e1",
+    "structural": "b278908ba7c6569c3be762395024caf8b788fa09da312c15de6f9b452bd568d5"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

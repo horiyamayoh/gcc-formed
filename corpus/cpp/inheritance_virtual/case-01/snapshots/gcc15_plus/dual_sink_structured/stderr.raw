@@ -1,0 +1,10 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:8:13: error: cannot declare variable 'value' to be of abstract type 'Derived'
+    8 |     Derived value;
+      |             ^~~~~
+src/main.cpp:5:8: note:   because the following virtual functions are pure within 'Derived':
+    5 | struct Derived : Base {};
+      |        ^~~~~~~
+src/main.cpp:2:17: note:     'virtual int Base::value() const'
+    2 |     virtual int value() const = 0;
+      |                 ^~~~~

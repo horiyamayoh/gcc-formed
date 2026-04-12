@@ -1,0 +1,10 @@
+src/main.cpp: In constructor 'Example::Example()':
+src/main.cpp:3:9: warning: 'Example::value' will be initialized after [-Wreorder]
+    3 |     int value;
+      |         ^~~~~
+src/main.cpp:2:9: warning:   'int Example::count' [-Wreorder]
+    2 |     int count;
+      |         ^~~~~
+src/main.cpp:5:5: warning:   when initialized here [-Wreorder]
+    5 |     Example() : value(1), count(2) {}
+      |     ^~~~~~~

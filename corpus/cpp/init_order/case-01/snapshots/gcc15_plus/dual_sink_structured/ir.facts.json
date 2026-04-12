@@ -1,0 +1,202 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In constructor 'Example::Example()':\nsrc/main.cpp:3:9: warning: 'Example::value' will be initialized after [-Wreorder]\n    3 |     int value;\n      |         ^~~~~\nsrc/main.cpp:2:9: warning:   'int Example::count' [-Wreorder]\n    2 |     int count;\n      |         ^~~~~\nsrc/main.cpp:5:5: warning:   when initialized here [-Wreorder]\n    5 |     Example() : value(1), count(2) {}\n      |     ^~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 414,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 6375,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "12f872bedb98ade7cc8e2c5d79dda057459cce51c410706d72a9d60b229f8f51",
+        "raw": "cbf2796e39e7d4a0a2dec862c9c4a70438f1f2337956f0836bb44ddf7325d91e",
+        "structural": "cd5f6d1aa57b2683466e1bd607ee4bac66b6cb04fdc54b5ebd2d612841045716"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 9,
+            "column_native": 9,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:9:3:9",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'Example::value' will be initialized after"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "fingerprints": {
+        "family": "a294d440cdd1a8aa70f619040a55e1759d400a8781a3fb05bb6a9ebf193cfacb",
+        "raw": "e151f83392fc8ff5362f29b9d9c12d8c22cfad397dd0acec05c8758bd9ad2c97",
+        "structural": "d1a6bd77bd1f59db220c09cc36857d2b0dabbc2fc465b11e67303b604c83361a"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 9,
+            "column_native": 9,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:2:9:2:9",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "  'int Example::count'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "fingerprints": {
+        "family": "c5c17f4a004ac2f639dceb645cc0ba5af758c11ebc3f8008ad43d8465f136af1",
+        "raw": "066f9e2b2a66e67f8376b41490fe39f66f828fe731fa20df189c67b32e7a66bb",
+        "structural": "c1d928c3d517f65654b0c682fd6c4280a560e67fa6f2e1003c3b02f0e719275f"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:5:5:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "  when initialized here"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "c2ab92c0dfe8563b047ef06900b94a7d6c11f5b82f41326f7fc0beae62b30d9b",
+    "structural": "5ccb4b2f2196335963499ca1fc2afb66ee27566695a3944a6d2560e14eb0c69a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wreorder",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

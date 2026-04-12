@@ -923,6 +923,97 @@ access.cpp:3:9: note: declared private here\n";
     }
 
     #[test]
+    fn classifies_inheritance_virtual_compiler_error() {
+        let stderr = "\
+main.cpp:7:13: error: cannot declare variable 'value' to be of abstract type 'Derived'\n\
+main.cpp:3:18: note:   because the following virtual functions are pure within 'Derived':\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("inheritance_virtual")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_constexpr_compiler_error() {
+        let stderr = "main.cpp:1:19: error: static assertion failed: int size mismatch\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("constexpr")
+        );
+    }
+
+    #[test]
+    fn classifies_lambda_closure_compiler_error() {
+        let stderr = "\
+main.cpp:3:27: error: 'value' is not captured\n\
+main.cpp:3:24: note: the lambda has no capture-default\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("lambda_closure")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_lifetime_dangling_compiler_warning() {
+        let stderr = "main.cpp:3:12: warning: address of local variable 'value' returned [-Wreturn-local-addr]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("lifetime_dangling")
+        );
+    }
+
+    #[test]
+    fn classifies_init_order_compiler_warning() {
+        let stderr = "main.cpp:4:5: warning: 'Example::value' will be initialized after 'int Example::count' [-Wreorder]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("init_order")
+        );
+    }
+
+    #[test]
     fn keeps_structured_compiler_residuals_when_passthrough_is_disabled() {
         let stderr = "\
 main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\

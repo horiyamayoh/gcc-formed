@@ -1,0 +1,9 @@
+src/main.cpp:8:13: error: inheritance or virtual function error
+help: implement all pure virtual functions or fix the class hierarchy
+why: cannot declare variable 'value' to be of abstract type 'Derived'
+| src/main.cpp:8:13
+|     Derived value;
+|             ^
+note: because the following virtual functions are pure within 'Derived':
+note: 'virtual int Base::value() const'
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

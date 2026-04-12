@@ -1,0 +1,43 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:8:13",
+      "child_notes": [
+        "because the following virtual functions are pure within 'Derived':",
+        "'virtual int Base::value() const'"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "            ^"
+          ],
+          "lines": [
+            "    Derived value;"
+          ],
+          "location": "src/main.cpp:8:13"
+        }
+      ],
+      "family": "inheritance_virtual",
+      "first_action": "implement all pure virtual functions or fix the class hierarchy",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=abstract type",
+        "phase=semantic"
+      ],
+      "raw_message": "cannot declare variable 'value' to be of abstract type 'Derived'",
+      "rule_id": "rule.family.inheritance_virtual.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "inheritance or virtual function error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

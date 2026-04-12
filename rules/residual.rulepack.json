@@ -59,6 +59,26 @@
         "text": "access to private or protected member"
       },
       {
+        "family": "inheritance_virtual",
+        "text": "inheritance or virtual function error"
+      },
+      {
+        "family": "constexpr",
+        "text": "compile-time evaluation failure"
+      },
+      {
+        "family": "lambda_closure",
+        "text": "lambda capture error"
+      },
+      {
+        "family": "lifetime_dangling",
+        "text": "dangling pointer or reference to local"
+      },
+      {
+        "family": "init_order",
+        "text": "initialization order or aggregate init issue"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -129,6 +149,26 @@
         "text": "use a public interface, add a friend declaration, or change access specifier"
       },
       {
+        "family": "inheritance_virtual",
+        "text": "implement all pure virtual functions or fix the class hierarchy"
+      },
+      {
+        "family": "constexpr",
+        "text": "ensure all expressions and function calls in the constexpr context are constant-evaluable"
+      },
+      {
+        "family": "lambda_closure",
+        "text": "add the variable to the capture list or specify a default capture mode [=] or [&]"
+      },
+      {
+        "family": "lifetime_dangling",
+        "text": "return by value instead of by pointer/reference, or extend the object lifetime"
+      },
+      {
+        "family": "init_order",
+        "text": "reorder member initializers to match declaration order, or fix the initializer list"
+      },
+      {
         "family": "passthrough",
         "text": "inspect the preserved raw diagnostics for the first corrective action"
       },
@@ -173,6 +213,23 @@
           "#error",
           "#warning",
           "no such file or directory"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "init_order",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_init_order",
+        "headline_strategy": "fixed_text",
+        "headline": "initialization order or aggregate init issue",
+        "first_action_hint": "reorder member initializers to match declaration order, or fix the initializer list",
+        "match_any": [
+          "will be initialized after",
+          "too many initializers",
+          "excess elements in",
+          "missing initializer for member",
+          "missing field initializers",
+          "designated initializers"
         ]
       },
       {
@@ -368,6 +425,77 @@
           "is protected within this context",
           "is inaccessible within this context",
           "is inaccessible"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "inheritance_virtual",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_inheritance_virtual",
+        "headline_strategy": "fixed_text",
+        "headline": "inheritance or virtual function error",
+        "first_action_hint": "implement all pure virtual functions or fix the class hierarchy",
+        "match_any": [
+          "abstract type",
+          "pure virtual",
+          "ambiguous base",
+          "no unique final overrider",
+          "covariant return type",
+          "accessible non-virtual destructor"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "constexpr",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_constexpr",
+        "headline_strategy": "fixed_text",
+        "headline": "compile-time evaluation failure",
+        "first_action_hint": "ensure all expressions and function calls in the constexpr context are constant-evaluable",
+        "match_any": [
+          "is not a constant expression",
+          "not usable in a constant expression",
+          "call to non-'constexpr' function",
+          "static assertion failed",
+          "static_assert",
+          "constexpr loop iteration count exceeds",
+          "consteval",
+          "in 'constexpr' expansion"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "lambda_closure",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_lambda_closure",
+        "headline_strategy": "fixed_text",
+        "headline": "lambda capture error",
+        "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+        "match_any": [
+          "cannot be implicitly captured",
+          "is not captured",
+          "was not captured",
+          "no default capture mode",
+          "the lambda has no capture-default",
+          "'this' was not captured",
+          "structured bindings cannot be captured",
+          "lambda-expression in a default argument"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "lifetime_dangling",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_lifetime_dangling",
+        "headline_strategy": "fixed_text",
+        "headline": "dangling pointer or reference to local",
+        "first_action_hint": "return by value instead of by pointer/reference, or extend the object lifetime",
+        "match_any": [
+          "returns address of local variable",
+          "address of local variable",
+          "dangling pointer",
+          "return-local-addr",
+          "storing the address of local variable"
         ]
       },
       {

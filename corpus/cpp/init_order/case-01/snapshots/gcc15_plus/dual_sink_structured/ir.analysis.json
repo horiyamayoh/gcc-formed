@@ -1,0 +1,235 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In constructor 'Example::Example()':\nsrc/main.cpp:3:9: warning: 'Example::value' will be initialized after [-Wreorder]\n    3 |     int value;\n      |         ^~~~~\nsrc/main.cpp:2:9: warning:   'int Example::count' [-Wreorder]\n    2 |     int count;\n      |         ^~~~~\nsrc/main.cpp:5:5: warning:   when initialized here [-Wreorder]\n    5 |     Example() : value(1), count(2) {}\n      |     ^~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 414,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 6375,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "init_order",
+        "first_action_hint": "reorder member initializers to match declaration order, or fix the initializer list",
+        "headline": "initialization order or aggregate init issue",
+        "matched_conditions": [
+          "message_contains=will be initialized after",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.init_order.message_terms"
+      },
+      "fingerprints": {
+        "family": "0db8205630d17b9975b16407299dc8709a014b5048db14b70b8582ffd37e55e9",
+        "raw": "cbf2796e39e7d4a0a2dec862c9c4a70438f1f2337956f0836bb44ddf7325d91e",
+        "structural": "c7d470c58f7a6fdaea3f0fcbfcca01720da37063422efe242460e23cc3c84d33"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 9,
+            "column_native": 9,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:9:3:9",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'Example::value' will be initialized after"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "analysis": {
+        "confidence": 0.3499999940395355,
+        "family": "unknown",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "  'int Example::count'",
+        "matched_conditions": [
+          "no_family_rule_matched"
+        ],
+        "rule_id": "rule.family.unknown",
+        "suppression_reason": "generic_fallback"
+      },
+      "fingerprints": {
+        "family": "a294d440cdd1a8aa70f619040a55e1759d400a8781a3fb05bb6a9ebf193cfacb",
+        "raw": "e151f83392fc8ff5362f29b9d9c12d8c22cfad397dd0acec05c8758bd9ad2c97",
+        "structural": "f3a5571ab5e0fcef3fde633189c923d9c458eb9c764fa135b2b1dd3d64c53494"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 9,
+            "column_native": 9,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:2:9:2:9",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "  'int Example::count'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    },
+    {
+      "analysis": {
+        "confidence": 0.3499999940395355,
+        "family": "unknown",
+        "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "  when initialized here",
+        "matched_conditions": [
+          "no_family_rule_matched"
+        ],
+        "rule_id": "rule.family.unknown",
+        "suppression_reason": "generic_fallback"
+      },
+      "fingerprints": {
+        "family": "c5c17f4a004ac2f639dceb645cc0ba5af758c11ebc3f8008ad43d8465f136af1",
+        "raw": "066f9e2b2a66e67f8376b41490fe39f66f828fe731fa20df189c67b32e7a66bb",
+        "structural": "5457279f73ed0a252f6774dce9994a5e220f3ebc8a23cc722a204da9854f1acc"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:5:5:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "  when initialized here"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "377a53e215fb4005698df19d93505cfb299a035c89574b0221e6d8f121ea7622",
+    "raw": "44badbb4da73a4ebabc31dd88f3604775ce38f916a608ea4f604ed68253eaa66",
+    "structural": "9be199e1db5690730a58ef66d727e401ab473aa1342d686326125f02cfc28bfe"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wreorder",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

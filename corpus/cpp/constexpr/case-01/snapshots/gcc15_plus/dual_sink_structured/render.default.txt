@@ -1,0 +1,9 @@
+error: compile-time evaluation failure
+--> src/main.cpp:1:15
+help: ensure all expressions and function calls in the constexpr context are constant-evaluable
+why: static assertion failed: int size mismatch
+| src/main.cpp:1:15
+| static_assert(sizeof(int) == 1, "int size mismatch");
+|               ^
+note: the comparison reduces to '(4 == 1)'
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

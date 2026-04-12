@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:1:15",
+      "child_notes": [
+        "the comparison reduces to '(4 == 1)'"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "static_assert(sizeof(int) == 1, \"int size mismatch\");"
+          ],
+          "location": "src/main.cpp:1:15"
+        }
+      ],
+      "family": "constexpr",
+      "first_action": "ensure all expressions and function calls in the constexpr context are constant-evaluable",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=static assertion failed",
+        "phase=semantic"
+      ],
+      "raw_message": "static assertion failed: int size mismatch",
+      "rule_id": "rule.family.constexpr.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "compile-time evaluation failure"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

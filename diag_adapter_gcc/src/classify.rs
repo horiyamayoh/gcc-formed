@@ -516,6 +516,71 @@ mod tests {
     }
 
     #[test]
+    fn classifies_inheritance_virtual_seed_from_rulepack() {
+        let decision =
+            classify_family_seed("cannot declare variable 'node' to be of abstract type 'Derived'");
+
+        assert_eq!(decision.family, "inheritance_virtual");
+        assert_eq!(decision.rule_id, "rule.family_seed.inheritance_virtual");
+        assert_eq!(
+            decision.first_action_hint,
+            "implement all pure virtual functions or fix the class hierarchy"
+        );
+    }
+
+    #[test]
+    fn classifies_constexpr_seed_from_rulepack() {
+        let decision = classify_family_seed("static assertion failed: int size mismatch");
+
+        assert_eq!(decision.family, "constexpr");
+        assert_eq!(decision.rule_id, "rule.family_seed.constexpr");
+        assert_eq!(
+            decision.first_action_hint,
+            "ensure all expressions and function calls in the constexpr context are constant-evaluable"
+        );
+    }
+
+    #[test]
+    fn classifies_lambda_closure_seed_from_rulepack() {
+        let decision = classify_family_seed("'value' is not captured");
+
+        assert_eq!(decision.family, "lambda_closure");
+        assert_eq!(decision.rule_id, "rule.family_seed.lambda_closure");
+        assert_eq!(
+            decision.first_action_hint,
+            "add the variable to the capture list or specify a default capture mode [=] or [&]"
+        );
+    }
+
+    #[test]
+    fn classifies_lifetime_dangling_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "address of local variable 'value' returned [-Wreturn-local-addr]",
+        );
+
+        assert_eq!(decision.family, "lifetime_dangling");
+        assert_eq!(decision.rule_id, "rule.family_seed.lifetime_dangling");
+        assert_eq!(
+            decision.first_action_hint,
+            "return by value instead of by pointer/reference, or extend the object lifetime"
+        );
+    }
+
+    #[test]
+    fn classifies_init_order_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "'Example::value' will be initialized after 'int Example::count' [-Wreorder]",
+        );
+
+        assert_eq!(decision.family, "init_order");
+        assert_eq!(decision.rule_id, "rule.family_seed.init_order");
+        assert_eq!(
+            decision.first_action_hint,
+            "reorder member initializers to match declaration order, or fix the initializer list"
+        );
+    }
+
+    #[test]
     fn falls_back_to_rulepack_unknown_seed() {
         let decision = classify_family_seed("this diagnostic does not match any adapter seed");
 

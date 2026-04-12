@@ -1,0 +1,4 @@
+src/main.cpp:1:27: error: static assertion failed: int size mismatch
+    1 | static_assert(sizeof(int) == 1, "int size mismatch");
+      |               ~~~~~~~~~~~~^~~~
+src/main.cpp:1:27: note: the comparison reduces to '(4 == 1)'

@@ -478,7 +478,7 @@ mod tests {
 
     #[test]
     fn leaves_unmatched_diagnostics_as_unknown() {
-        let node = sample_node("static assertion failed");
+        let node = sample_node("opaque compiler failure text");
         let mut document = sample_document(node);
 
         enrich_document(&mut document, Path::new("/tmp/project"));
@@ -493,7 +493,7 @@ mod tests {
         );
         assert_eq!(
             analysis.headline.as_deref(),
-            Some("static assertion failed")
+            Some("opaque compiler failure text")
         );
     }
 

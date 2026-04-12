@@ -1,0 +1,10 @@
+error: lambda capture error
+--> src/main.cpp:3:33
+help: add the variable to the capture list or specify a default capture mode [=] or [&]
+why: 'value' is not captured
+| src/main.cpp:3:33
+|     auto lambda = []() { return value; };
+|                                 ^
+note: the lambda has no capture-default
+note: 'int value' declared here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
