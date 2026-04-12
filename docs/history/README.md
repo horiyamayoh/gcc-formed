@@ -23,6 +23,7 @@ superseded_by: []
 
 ## Historical Planning
 
+- [planning/gcc-formed-post-cascade-value-maximization-report-2026-04-12.md](planning/gcc-formed-post-cascade-value-maximization-report-2026-04-12.md): post-cascade value-maximization report kept for provenance
 - [planning/gcc-formed-vnext-contract-docs-rewrite.md](planning/gcc-formed-vnext-contract-docs-rewrite.md): contract-doc rewrite の履歴用 pack
 - [planning/gcc_formed_milestones_agent_playbook.md](planning/gcc_formed_milestones_agent_playbook.md): pre-vNext playbook
 - [planning/gcc_formed_release_ready_priorities.md](planning/gcc_formed_release_ready_priorities.md): release-ready priorities の履歴
