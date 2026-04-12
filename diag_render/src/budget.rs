@@ -16,8 +16,12 @@ pub enum WarningFailureMode {
 pub struct DisplayBudget {
     /// Maximum number of diagnostic groups rendered in full.
     pub expanded_groups: usize,
-    /// Maximum output lines before truncation.
+    /// Maximum session output lines before truncation in legacy/session-global paths.
     pub first_screenful_max_lines: usize,
+    /// Target output lines per rendered diagnostic block before degradation begins.
+    pub target_lines_per_block: usize,
+    /// Hard maximum output lines per rendered diagnostic block.
+    pub hard_max_lines_per_block: usize,
     /// Maximum source code excerpt blocks per card.
     pub source_excerpts: usize,
     /// Maximum template instantiation frames shown.
@@ -41,6 +45,8 @@ pub struct DisclosurePolicy {
     pub raw_diagnostics_hint: &'static str,
     /// Notice shown when output was truncated.
     pub truncation_notice: &'static str,
+    /// Notice shown when a single diagnostic block was truncated locally.
+    pub block_truncation_notice: &'static str,
     /// Label preceding the raw compiler excerpt block.
     pub raw_block_label: &'static str,
     /// Notice shown when warnings were suppressed.
@@ -72,6 +78,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::Default => DisplayBudget {
             expanded_groups: 1,
             first_screenful_max_lines: 28,
+            target_lines_per_block: 18,
+            hard_max_lines_per_block: 28,
             source_excerpts: 2,
             template_frames: 5,
             macro_include_frames: 4,
@@ -81,6 +89,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::Concise => DisplayBudget {
             expanded_groups: 1,
             first_screenful_max_lines: 14,
+            target_lines_per_block: 10,
+            hard_max_lines_per_block: 14,
             source_excerpts: 1,
             template_frames: 3,
             macro_include_frames: 2,
@@ -90,6 +100,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::Verbose => DisplayBudget {
             expanded_groups: usize::MAX,
             first_screenful_max_lines: 80,
+            target_lines_per_block: 40,
+            hard_max_lines_per_block: 80,
             source_excerpts: 6,
             template_frames: 20,
             macro_include_frames: 12,
@@ -99,6 +111,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::Debug => DisplayBudget {
             expanded_groups: usize::MAX,
             first_screenful_max_lines: 120,
+            target_lines_per_block: 60,
+            hard_max_lines_per_block: 120,
             source_excerpts: 8,
             template_frames: 30,
             macro_include_frames: 20,
@@ -108,6 +122,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::Ci => DisplayBudget {
             expanded_groups: 1,
             first_screenful_max_lines: 16,
+            target_lines_per_block: 12,
+            hard_max_lines_per_block: 16,
             source_excerpts: 1,
             template_frames: 3,
             macro_include_frames: 2,
@@ -117,6 +133,8 @@ pub fn budget_for(profile: RenderProfile) -> DisplayBudget {
         RenderProfile::RawFallback => DisplayBudget {
             expanded_groups: 0,
             first_screenful_max_lines: usize::MAX,
+            target_lines_per_block: 0,
+            hard_max_lines_per_block: usize::MAX,
             source_excerpts: 0,
             template_frames: 0,
             macro_include_frames: 0,
@@ -137,6 +155,12 @@ pub fn disclosure_policy_for(profile: RenderProfile) -> DisclosurePolicy {
                 "note: omitted additional details even under --formed-profile=debug; inspect the preserved raw diagnostics"
             }
             _ => "note: omitted additional details; rerun with --formed-profile=verbose",
+        },
+        block_truncation_notice: match profile {
+            RenderProfile::Debug => {
+                "note: omitted additional details from this diagnostic block even under --formed-profile=debug"
+            }
+            _ => "note: omitted additional details from this diagnostic block",
         },
         raw_block_label: "raw:",
         suppressed_warning_notice: "note: suppressed {count} warning(s) while focusing on the failing group",

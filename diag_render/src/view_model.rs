@@ -4,7 +4,7 @@ use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::path::format_location;
 use crate::presentation::{
-    RenderSemanticCard, RenderSemanticSlot, ResolvedPresentationPolicy, SemanticSlotId,
+    RenderSemanticCard, RenderSemanticSlot, ResolvedPresentationPolicy, SemanticSlotId, SessionMode,
 };
 use crate::selector::{
     render_group_ref, should_hide_episode_member_for_profile,
@@ -28,6 +28,9 @@ pub struct RenderSessionSummary {
     pub partial_notice: bool,
     /// Optional hint directing the user to raw diagnostic output.
     pub raw_diagnostics_hint: Option<String>,
+    /// Internal session mode used for formatter/session behavior.
+    #[serde(skip, default = "default_session_mode")]
+    pub(crate) session_mode: SessionMode,
 }
 
 /// A diagnostic group rendered only as a one-line summary.
@@ -200,6 +203,7 @@ pub fn build(
                 .iter()
                 .any(|capture| capture.id == "stderr.raw")
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
+            session_mode: resolved_session_mode(presentation_policy, has_failure),
         },
         cards: rendered_cards,
         summary_only_groups: summary_only_cards
@@ -548,6 +552,10 @@ fn default_raw_block_label() -> String {
     "raw:".to_string()
 }
 
+fn default_session_mode() -> SessionMode {
+    SessionMode::LeadPlusSummary
+}
+
 fn is_default_raw_block_label(label: &str) -> bool {
     label == "raw:"
 }
@@ -558,4 +566,15 @@ fn conservative_band_c_notice() -> &'static str {
 
 fn conservative_raw_block_label() -> &'static str {
     "raw compiler excerpt:"
+}
+
+fn resolved_session_mode(
+    presentation_policy: &ResolvedPresentationPolicy,
+    has_failure: bool,
+) -> SessionMode {
+    if has_failure {
+        presentation_policy.session_mode
+    } else {
+        SessionMode::LeadPlusSummary
+    }
 }

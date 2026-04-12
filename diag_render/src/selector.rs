@@ -1,5 +1,6 @@
 use crate::budget::{WarningFailureMode, budget_for};
 use crate::family::renderer_specificity_rank;
+use crate::presentation::{ResolvedPresentationPolicy, SessionMode};
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
     CascadePolicySnapshot, CompressionLevel, DiagnosticDocument, DiagnosticNode,
@@ -38,6 +39,15 @@ pub struct Selection {
 
 /// Selects, ranks, and partitions diagnostic groups from the request document.
 pub fn select_groups(request: &RenderRequest) -> Selection {
+    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    select_groups_with_presentation_policy(request, &presentation_policy)
+}
+
+/// Selects, ranks, and partitions diagnostic groups using an explicit presentation policy.
+pub fn select_groups_with_presentation_policy(
+    request: &RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
+) -> Selection {
     let mut diagnostics = request.document.diagnostics.clone();
     let budget = budget_for(request.profile);
     diagnostics.sort_by(|left, right| {
@@ -65,6 +75,7 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
 
     if let Some(selection) = select_episode_groups(
         request,
+        presentation_policy,
         &request.document,
         &diagnostics,
         has_failure,
@@ -73,21 +84,39 @@ pub fn select_groups(request: &RenderRequest) -> Selection {
         return selection;
     }
 
-    legacy_select_groups(request, diagnostics, has_failure, suppressed_warning_count)
+    legacy_select_groups(
+        request,
+        presentation_policy,
+        diagnostics,
+        has_failure,
+        suppressed_warning_count,
+    )
 }
 
 fn legacy_select_groups(
     request: &RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
     diagnostics: Vec<DiagnosticNode>,
     has_failure: bool,
     suppressed_warning_count: usize,
 ) -> Selection {
     let budget = budget_for(request.profile);
-    let mut expanded_groups = match request.profile {
-        RenderProfile::Default if !has_failure => 2,
-        _ => budget.expanded_groups,
+    let session_mode = resolve_session_mode(presentation_policy, has_failure);
+    let mut expanded_groups = match session_mode {
+        SessionMode::AllVisibleBlocks if has_failure => diagnostics.len(),
+        SessionMode::LeadPlusSummary
+            if matches!(request.profile, RenderProfile::Default) && !has_failure =>
+        {
+            2
+        }
+        SessionMode::LeadPlusSummary | SessionMode::CappedBlocks => match request.profile {
+            RenderProfile::Default if !has_failure => 2,
+            _ => budget.expanded_groups,
+        },
+        SessionMode::AllVisibleBlocks => budget.expanded_groups,
     };
-    if diagnostics.len() > expanded_groups
+    if !matches!(session_mode, SessionMode::AllVisibleBlocks if has_failure)
+        && diagnostics.len() > expanded_groups
         && matches!(
             request.profile,
             RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci
@@ -100,7 +129,11 @@ fn legacy_select_groups(
     }
     let mut diagnostics = diagnostics.into_iter();
     let expanded = diagnostics.by_ref().take(expanded_groups).collect();
-    let summary_only_cards = diagnostics.collect();
+    let summary_only_cards = if should_summary_overflow_visible_roots(session_mode, has_failure) {
+        diagnostics.collect()
+    } else {
+        Vec::new()
+    };
     Selection {
         cards: expanded,
         summary_only_cards,
@@ -112,6 +145,7 @@ fn legacy_select_groups(
 
 fn select_episode_groups(
     request: &RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
     document: &DiagnosticDocument,
     diagnostics: &[DiagnosticNode],
     has_failure: bool,
@@ -176,7 +210,8 @@ fn select_episode_groups(
         .then_with(|| left.cmp(right))
     });
 
-    let expanded_limit = expanded_independent_root_limit(request, has_failure);
+    let session_mode = resolve_session_mode(presentation_policy, has_failure);
+    let expanded_limit = expanded_independent_root_limit(request, has_failure, session_mode);
     let expanded_group_refs = visible_group_refs
         .iter()
         .take(expanded_limit)
@@ -194,16 +229,21 @@ fn select_episode_groups(
                 .clone()
         })
         .collect::<Vec<_>>();
-    let mut summary_only_cards = visible_group_refs
-        .iter()
-        .skip(expanded_limit)
-        .map(|group_ref| {
-            representatives
-                .get(*group_ref)
-                .expect("summary-only representative")
-                .clone()
-        })
-        .collect::<Vec<_>>();
+    let mut summary_only_cards = if should_summary_overflow_visible_roots(session_mode, has_failure)
+    {
+        visible_group_refs
+            .iter()
+            .skip(expanded_limit)
+            .map(|group_ref| {
+                representatives
+                    .get(*group_ref)
+                    .expect("summary-only representative")
+                    .clone()
+            })
+            .collect::<Vec<_>>()
+    } else {
+        Vec::new()
+    };
 
     let mut collapsed_notices_by_group_ref = BTreeMap::new();
     let mut hidden_group_count = 0usize;
@@ -227,7 +267,14 @@ fn select_episode_groups(
                 .expect("episode member analysis");
             let hide_member = should_hide_episode_member(request, group);
             let summarize_member = should_materialize_episode_member_as_summary(request, group);
-            if (!lead_expanded || summarize_member) && !hide_member {
+            if should_surface_episode_member_as_summary(
+                request,
+                session_mode,
+                has_failure,
+                lead_expanded,
+                summarize_member,
+                hide_member,
+            ) {
                 summary_only_cards.push(
                     representatives
                         .get(member_ref.as_str())
@@ -382,14 +429,23 @@ fn cascade_role_rank(role: GroupCascadeRole) -> u8 {
     }
 }
 
-fn expanded_independent_root_limit(request: &RenderRequest, has_failure: bool) -> usize {
-    match request.profile {
-        RenderProfile::Verbose | RenderProfile::Debug => usize::MAX,
-        RenderProfile::RawFallback => 0,
-        RenderProfile::Default if !has_failure => 2,
-        RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci => {
-            request.cascade_policy.max_expanded_independent_roots.max(1)
-        }
+fn expanded_independent_root_limit(
+    request: &RenderRequest,
+    has_failure: bool,
+    session_mode: SessionMode,
+) -> usize {
+    match session_mode {
+        SessionMode::AllVisibleBlocks if has_failure => usize::MAX,
+        SessionMode::LeadPlusSummary
+        | SessionMode::CappedBlocks
+        | SessionMode::AllVisibleBlocks => match request.profile {
+            RenderProfile::Verbose | RenderProfile::Debug => usize::MAX,
+            RenderProfile::RawFallback => 0,
+            RenderProfile::Default if !has_failure => 2,
+            RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci => {
+                request.cascade_policy.max_expanded_independent_roots.max(1)
+            }
+        },
     }
 }
 
@@ -627,6 +683,44 @@ fn disclosure_confidence(node: &DiagnosticNode) -> DisclosureConfidence {
         .as_ref()
         .map(|analysis| analysis.disclosure_confidence())
         .unwrap_or(DisclosureConfidence::Hidden)
+}
+
+fn resolve_session_mode(
+    presentation_policy: &ResolvedPresentationPolicy,
+    has_failure: bool,
+) -> SessionMode {
+    if has_failure {
+        presentation_policy.session_mode
+    } else {
+        SessionMode::LeadPlusSummary
+    }
+}
+
+fn should_summary_overflow_visible_roots(session_mode: SessionMode, has_failure: bool) -> bool {
+    !matches!(session_mode, SessionMode::AllVisibleBlocks if has_failure)
+}
+
+fn should_surface_episode_member_as_summary(
+    request: &RenderRequest,
+    session_mode: SessionMode,
+    has_failure: bool,
+    lead_expanded: bool,
+    summarize_member: bool,
+    hide_member: bool,
+) -> bool {
+    if hide_member {
+        return false;
+    }
+    if !lead_expanded {
+        return true;
+    }
+    if !has_failure || !matches!(session_mode, SessionMode::AllVisibleBlocks) {
+        return summarize_member;
+    }
+    matches!(
+        request.profile,
+        RenderProfile::Verbose | RenderProfile::Debug
+    ) || request.cascade_policy.compression_level == CompressionLevel::Off
 }
 
 #[cfg(test)]

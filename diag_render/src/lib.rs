@@ -36,7 +36,7 @@ pub use presentation::{
     SemanticSlotId, SessionMode,
 };
 /// Selects and ranks diagnostic groups for rendering.
-pub use selector::select_groups;
+pub use selector::{select_groups, select_groups_with_presentation_policy};
 /// Re-exported view-model types used to inspect the rendering intermediate representation.
 pub use view_model::{
     RenderActionItem, RenderGroupCard, RenderSessionSummary, RenderViewModel, SummaryOnlyGroup,
@@ -247,7 +247,7 @@ pub fn render_with_presentation_policy(
         ));
     }
 
-    let selected = selector::select_groups(&request);
+    let selected = selector::select_groups_with_presentation_policy(&request, presentation_policy);
     if selected.cards.is_empty() {
         return Ok(fallback::render_fallback(
             &request,
@@ -291,7 +291,7 @@ pub fn build_view_model_with_presentation_policy(
     {
         return None;
     }
-    let selected = selector::select_groups(request);
+    let selected = selector::select_groups_with_presentation_policy(request, presentation_policy);
     if selected.cards.is_empty() {
         None
     } else {
@@ -835,6 +835,8 @@ mod tests {
 
         assert_eq!(budget.expanded_groups, usize::MAX);
         assert_eq!(budget.first_screenful_max_lines, 120);
+        assert_eq!(budget.target_lines_per_block, 60);
+        assert_eq!(budget.hard_max_lines_per_block, 120);
         assert_eq!(budget.source_excerpts, 8);
         assert_eq!(budget.template_frames, 30);
         assert_eq!(budget.macro_include_frames, 20);
@@ -844,6 +846,11 @@ mod tests {
             crate::budget::WarningFailureMode::Show
         ));
         assert_eq!(disclosure.raw_sub_block_lines, 6);
+        assert!(
+            disclosure
+                .block_truncation_notice
+                .contains("diagnostic block")
+        );
         assert!(
             disclosure
                 .truncation_notice
@@ -1891,6 +1898,156 @@ mod tests {
     }
 
     #[test]
+    fn legacy_preset_keeps_lead_plus_summary_for_multi_error_failures() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "secondary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "tertiary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "tertiary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/third.c", 12, 7, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let legacy_policy = ResolvedPresentationPolicy::legacy_v1();
+        let selection = select_groups_with_presentation_policy(&request, &legacy_policy);
+
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.summary_only_cards.len(), 2);
+
+        let output = render_with_presentation_policy(request, &legacy_policy).unwrap();
+        assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
+        assert!(output.text.contains("other errors:"));
+    }
+
+    #[test]
+    fn subject_blocks_failure_run_emits_all_visible_roots_as_blocks() {
+        let mut request = sample_request();
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "secondary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "secondary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/other.c", 9, 4, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+        request
+            .document
+            .diagnostics
+            .push(diag_core::DiagnosticNode {
+                id: "tertiary".to_string(),
+                origin: Origin::Gcc,
+                phase: Phase::Semantic,
+                severity: Severity::Error,
+                semantic_role: SemanticRole::Root,
+                message: MessageText {
+                    raw_text: "tertiary failure".to_string(),
+                    normalized_text: None,
+                    locale: None,
+                },
+                locations: vec![sample_location("src/third.c", 12, 7, Ownership::User)],
+                children: Vec::new(),
+                suggestions: Vec::new(),
+                context_chains: Vec::new(),
+                symbol_context: None,
+                node_completeness: NodeCompleteness::Complete,
+                provenance: Provenance {
+                    source: ProvenanceSource::Compiler,
+                    capture_refs: vec!["stderr.raw".to_string()],
+                },
+                analysis: None,
+                fingerprints: None,
+            });
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let selection = select_groups_with_presentation_policy(&request, &subject_blocks);
+
+        assert_eq!(selection.cards.len(), 3);
+        assert!(selection.summary_only_cards.is_empty());
+        assert_eq!(selection.cards[0].id, "root");
+        assert_eq!(selection.cards[1].id, "secondary");
+        assert_eq!(selection.cards[2].id, "tertiary");
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert_eq!(
+            output.displayed_group_refs,
+            vec![
+                "root".to_string(),
+                "secondary".to_string(),
+                "tertiary".to_string()
+            ]
+        );
+        assert!(!output.text.contains("other errors:"));
+        assert!(output.text.contains("\n\nerror: secondary failure"));
+        assert!(output.text.contains("error: tertiary failure"));
+    }
+
+    #[test]
     fn episode_first_selection_keeps_overflow_roots_visible_and_counts_hidden_dependents() {
         let mut request = sample_request();
         request.document.diagnostics = vec![
@@ -1953,6 +2110,73 @@ mod tests {
             output
                 .text
                 .contains("note: omitted 1 related diagnostic(s) already covered by visible roots")
+        );
+        assert!(!output.text.contains("parser tail failure"));
+    }
+
+    #[test]
+    fn subject_blocks_episode_selection_keeps_all_visible_roots_as_blocks() {
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node("root-a", "group-a", "src/main.c", 2, "primary failure"),
+            grouped_error_node("root-b", "group-b", "src/other.c", 5, "secondary failure"),
+            grouped_error_node("root-c", "group-c", "src/third.c", 9, "tertiary failure"),
+            grouped_error_node(
+                "tail-c",
+                "group-c-tail",
+                "src/third.c",
+                10,
+                "parser tail failure",
+            ),
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![
+                episode("episode-a", "group-a", vec!["group-a"], 0.96),
+                episode("episode-b", "group-b", vec!["group-b"], 0.93),
+                episode(
+                    "episode-c",
+                    "group-c",
+                    vec!["group-c", "group-c-tail"],
+                    0.88,
+                ),
+            ],
+            vec![
+                lead_root_group("group-a", "episode-a", 0.96, 0.91),
+                lead_root_group("group-b", "episode-b", 0.93, 0.88),
+                lead_root_group("group-c", "episode-c", 0.88, 0.83),
+                dependent_group(
+                    "group-c-tail",
+                    "episode-c",
+                    "group-c",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let selection = select_groups_with_presentation_policy(&request, &subject_blocks);
+        assert_eq!(selection.cards.len(), 3);
+        assert!(selection.summary_only_cards.is_empty());
+        assert_eq!(selection.hidden_group_count, 0);
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert_eq!(
+            output.displayed_group_refs,
+            vec![
+                "group-a".to_string(),
+                "group-b".to_string(),
+                "group-c".to_string()
+            ]
+        );
+        assert_eq!(output.suppressed_group_count, 0);
+        assert!(!output.text.contains("other errors:"));
+        assert!(output.text.contains("primary failure"));
+        assert!(output.text.contains("secondary failure"));
+        assert!(output.text.contains("tertiary failure"));
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 follow-on diagnostic(s)")
         );
         assert!(!output.text.contains("parser tail failure"));
     }
