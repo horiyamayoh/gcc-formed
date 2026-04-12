@@ -16,6 +16,7 @@ mod family;
 mod formatter;
 mod layout;
 mod path;
+mod presentation;
 mod selector;
 mod suggestion;
 mod theme;
@@ -28,6 +29,12 @@ use serde::{Deserialize, Serialize};
 
 /// A single source-code excerpt block attached to a diagnostic card.
 pub use excerpt::ExcerptBlock;
+/// Re-exported presentation policy and semantic slot types.
+pub use presentation::{
+    LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation,
+    ResolvedLocationPolicy, ResolvedPresentationPolicy, ResolvedTemplate, ResolvedTemplateLine,
+    SemanticSlotId, SessionMode,
+};
 /// Selects and ranks diagnostic groups for rendering.
 pub use selector::select_groups;
 /// Re-exported view-model types used to inspect the rendering intermediate representation.
@@ -206,6 +213,15 @@ pub enum RenderError {
 /// Selects the appropriate rendering path based on the request profile and
 /// document completeness, falling back to raw output when necessary.
 pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
+    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    render_with_presentation_policy(request, &presentation_policy)
+}
+
+/// Renders a [`DiagnosticDocument`] using an explicit resolved presentation policy.
+pub fn render_with_presentation_policy(
+    request: RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
+) -> Result<RenderResult, RenderError> {
     if matches!(request.profile, RenderProfile::RawFallback) {
         return Ok(fallback::render_fallback(
             &request,
@@ -243,6 +259,7 @@ pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
         selected.cards,
         selected.summary_only_cards,
         selected.collapsed_notices_by_group_ref,
+        presentation_policy,
     );
     Ok(formatter::emit(
         &request,
@@ -257,6 +274,15 @@ pub fn render(request: RenderRequest) -> Result<RenderResult, RenderError> {
 /// Returns `None` when the document would trigger a fallback path (raw profile,
 /// passthrough/failed completeness, or empty selection).
 pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
+    let presentation_policy = ResolvedPresentationPolicy::legacy_v1();
+    build_view_model_with_presentation_policy(request, &presentation_policy)
+}
+
+/// Builds the intermediate [`RenderViewModel`] using an explicit resolved presentation policy.
+pub fn build_view_model_with_presentation_policy(
+    request: &RenderRequest,
+    presentation_policy: &ResolvedPresentationPolicy,
+) -> Option<RenderViewModel> {
     if matches!(request.profile, RenderProfile::RawFallback)
         || matches!(
             request.document.document_completeness,
@@ -274,6 +300,7 @@ pub fn build_view_model(request: &RenderRequest) -> Option<RenderViewModel> {
             selected.cards,
             selected.summary_only_cards,
             selected.collapsed_notices_by_group_ref,
+            presentation_policy,
         ))
     }
 }
@@ -689,6 +716,95 @@ mod tests {
         let right = diag_core::canonical_json(&build_view_model(&request).unwrap()).unwrap();
         assert_eq!(left, right);
         assert!(left.contains("syntax error"));
+    }
+
+    #[test]
+    fn explicit_legacy_presentation_policy_matches_default_render() {
+        let request = sample_request();
+        let default_output = render(request.clone()).unwrap();
+        let legacy_policy = ResolvedPresentationPolicy::legacy_v1();
+
+        let explicit_output = render_with_presentation_policy(request, &legacy_policy).unwrap();
+
+        assert_eq!(default_output.text, explicit_output.text);
+        assert_eq!(
+            default_output.displayed_group_refs,
+            explicit_output.displayed_group_refs
+        );
+    }
+
+    #[test]
+    fn subject_blocks_policy_builds_semantic_slot_skeleton() {
+        let request = sample_request();
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(card.semantic_card.subject, "syntax error");
+        assert_eq!(card.semantic_card.presentation.template_id, "parser_block");
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::FirstAction),
+            Some("fix the first parser error at the user-owned location")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::WhyRaw),
+            Some("expected ';' before '}' token")
+        );
+    }
+
+    #[test]
+    fn unknown_template_falls_open_to_generic_legacy_adapter() {
+        let request = sample_request();
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.family_mappings = vec![ResolvedFamilyPresentation {
+            matcher: "syntax".to_string(),
+            display_family: Some("syntax".to_string()),
+            template_id: "missing_block".to_string(),
+        }];
+
+        let view = build_view_model_with_presentation_policy(&request, &policy).unwrap();
+        assert_eq!(
+            view.cards[0].semantic_card.presentation.template_id,
+            "generic_block"
+        );
+        assert!(
+            view.cards[0]
+                .semantic_card
+                .presentation
+                .fell_back_to_generic_template
+        );
+
+        let output = render_with_presentation_policy(request, &policy).unwrap();
+        assert!(
+            output
+                .text
+                .contains("help: fix the first parser error at the user-owned location")
+        );
+        assert!(output.text.contains("why: expected ';' before '}' token"));
+    }
+
+    #[test]
+    fn missing_slot_data_keeps_generic_path_alive() {
+        let mut request = sample_request();
+        request.document.diagnostics[0]
+            .analysis
+            .as_mut()
+            .unwrap()
+            .first_action_hint = None;
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        assert_eq!(
+            view.cards[0]
+                .semantic_card
+                .slot_text(SemanticSlotId::FirstAction),
+            None
+        );
+
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+        assert!(!output.text.contains("help:"));
+        assert!(output.text.contains("why: expected ';' before '}' token"));
     }
 
     #[test]

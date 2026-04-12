@@ -1,3 +1,4 @@
+use crate::presentation::SemanticSlotId;
 use crate::theme::ThemePolicy;
 use crate::view_model::RenderGroupCard;
 use crate::{RenderProfile, RenderRequest};
@@ -31,53 +32,7 @@ impl LayoutProfile {
         card: &RenderGroupCard,
         lines: &mut Vec<String>,
     ) {
-        lines.push(self.primary_line(theme, card));
-        if self.show_location_line
-            && let Some(location) = card.canonical_location.as_ref()
-        {
-            lines.push(format!("--> {}", theme.inline(location)));
-        }
-        if let Some(confidence_notice) = card.confidence_notice.as_ref() {
-            lines.push(confidence_notice.clone());
-        }
-        if let Some(first_action) = card.first_action.as_ref() {
-            lines.push(format!("help: {}", theme.inline(first_action)));
-        }
-        lines.push(format!("why: {}", theme.raw(&card.raw_message)));
-        for excerpt in &card.excerpts {
-            lines.push(format!("| {}", theme.inline(&excerpt.location)));
-            for source in &excerpt.lines {
-                lines.push(format!("| {}", theme.inline(source)));
-            }
-            for annotation in &excerpt.annotations {
-                lines.push(format!("| {}", theme.inline(annotation)));
-            }
-        }
-        for context in &card.context_lines {
-            lines.push(theme.inline(context));
-        }
-        for note in &card.child_notes {
-            lines.push(format!("note: {}", theme.inline(note)));
-        }
-        for notice in &card.collapsed_notices {
-            lines.push(format!("note: {}", theme.inline(notice)));
-        }
-        for suggestion in &card.suggestions {
-            lines.push(format!(
-                "{}: {}",
-                suggestion.label,
-                theme.inline(&suggestion.text)
-            ));
-            for patch_line in &suggestion.inline_patch {
-                lines.push(format!("  {}", theme.inline(patch_line)));
-            }
-        }
-        if !card.raw_sub_block.is_empty() {
-            lines.push(card.raw_block_label.clone());
-            for raw_line in &card.raw_sub_block {
-                lines.push(format!("{}{}", self.raw_block_indent, theme.raw(raw_line)));
-            }
-        }
+        LegacyPresentationAdapter::new(self, theme, card).render(lines);
     }
 
     fn primary_line(&self, theme: &ThemePolicy, card: &RenderGroupCard) -> String {
@@ -110,5 +65,90 @@ impl LayoutProfile {
         }
 
         format!("{}: {}", card.severity, theme.inline(&card.title))
+    }
+}
+
+struct LegacyPresentationAdapter<'a> {
+    layout: &'a LayoutProfile,
+    theme: &'a ThemePolicy,
+    card: &'a RenderGroupCard,
+}
+
+impl<'a> LegacyPresentationAdapter<'a> {
+    fn new(layout: &'a LayoutProfile, theme: &'a ThemePolicy, card: &'a RenderGroupCard) -> Self {
+        Self {
+            layout,
+            theme,
+            card,
+        }
+    }
+
+    fn render(&self, lines: &mut Vec<String>) {
+        lines.push(self.layout.primary_line(self.theme, self.card));
+        if self.layout.show_location_line
+            && let Some(location) = self.card.canonical_location.as_ref()
+        {
+            lines.push(format!("--> {}", self.theme.inline(location)));
+        }
+        if let Some(confidence_notice) = self.card.confidence_notice.as_ref() {
+            lines.push(confidence_notice.clone());
+        }
+        if let Some(first_action) = self
+            .card
+            .semantic_card
+            .slot_text(SemanticSlotId::FirstAction)
+            .or(self.card.first_action.as_deref())
+        {
+            lines.push(format!("help: {}", self.theme.inline(first_action)));
+        }
+        let why_label = self
+            .card
+            .semantic_card
+            .slot_label(SemanticSlotId::WhyRaw)
+            .unwrap_or("why");
+        let why_text = self
+            .card
+            .semantic_card
+            .slot_text(SemanticSlotId::WhyRaw)
+            .unwrap_or(&self.card.raw_message);
+        lines.push(format!("{why_label}: {}", self.theme.raw(why_text)));
+        for excerpt in &self.card.excerpts {
+            lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
+            for source in &excerpt.lines {
+                lines.push(format!("| {}", self.theme.inline(source)));
+            }
+            for annotation in &excerpt.annotations {
+                lines.push(format!("| {}", self.theme.inline(annotation)));
+            }
+        }
+        for context in &self.card.context_lines {
+            lines.push(self.theme.inline(context));
+        }
+        for note in &self.card.child_notes {
+            lines.push(format!("note: {}", self.theme.inline(note)));
+        }
+        for notice in &self.card.collapsed_notices {
+            lines.push(format!("note: {}", self.theme.inline(notice)));
+        }
+        for suggestion in &self.card.suggestions {
+            lines.push(format!(
+                "{}: {}",
+                suggestion.label,
+                self.theme.inline(&suggestion.text)
+            ));
+            for patch_line in &suggestion.inline_patch {
+                lines.push(format!("  {}", self.theme.inline(patch_line)));
+            }
+        }
+        if !self.card.raw_sub_block.is_empty() {
+            lines.push(self.card.raw_block_label.clone());
+            for raw_line in &self.card.raw_sub_block {
+                lines.push(format!(
+                    "{}{}",
+                    self.layout.raw_block_indent,
+                    self.theme.raw(raw_line)
+                ));
+            }
+        }
     }
 }

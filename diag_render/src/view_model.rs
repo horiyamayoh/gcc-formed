@@ -3,6 +3,9 @@ use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{is_conservative_useful_subset_card, summarize_supporting_evidence};
 use crate::path::format_location;
+use crate::presentation::{
+    RenderSemanticCard, RenderSemanticSlot, ResolvedPresentationPolicy, SemanticSlotId,
+};
 use crate::selector::{
     render_group_ref, should_hide_episode_member_for_profile,
     should_materialize_episode_member_as_summary_for_profile,
@@ -94,6 +97,9 @@ pub struct RenderGroupCard {
     /// Debug-only cascade explainability for this group.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cascade_debug: Option<CascadeDebugInfo>,
+    /// Internal semantic card kept off the serialized legacy view model for now.
+    #[serde(skip)]
+    pub(crate) semantic_card: RenderSemanticCard,
 }
 
 /// Debug-only cascade explainability attached to rendered groups.
@@ -154,6 +160,7 @@ pub fn build(
     cards: Vec<DiagnosticNode>,
     summary_only_cards: Vec<DiagnosticNode>,
     collapsed_notices_by_group_ref: BTreeMap<String, Vec<String>>,
+    presentation_policy: &ResolvedPresentationPolicy,
 ) -> RenderViewModel {
     let policy = render_policy(request.profile);
     let selected_cards_include_incomplete = cards.iter().any(|node| {
@@ -164,7 +171,14 @@ pub fn build(
     });
     let rendered_cards = cards
         .into_iter()
-        .map(|node| build_card(request, &node, &collapsed_notices_by_group_ref))
+        .map(|node| {
+            build_card(
+                request,
+                &node,
+                &collapsed_notices_by_group_ref,
+                presentation_policy,
+            )
+        })
         .collect::<Vec<_>>();
     let has_failure = rendered_cards
         .iter()
@@ -199,6 +213,7 @@ fn build_card(
     request: &RenderRequest,
     node: &DiagnosticNode,
     collapsed_notices_by_group_ref: &BTreeMap<String, Vec<String>>,
+    presentation_policy: &ResolvedPresentationPolicy,
 ) -> RenderGroupCard {
     let policy = render_policy(request.profile);
     let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
@@ -232,6 +247,14 @@ fn build_card(
             .then_some(policy.disclosure.low_confidence_notice.to_string())
     };
     let raw_sub_block = raw_sub_block(request, node);
+    let semantic_card = build_semantic_card(
+        presentation_policy,
+        family.as_deref(),
+        &title,
+        first_action.as_deref(),
+        canonical_location.as_deref(),
+        &node.message.raw_text,
+    );
 
     RenderGroupCard {
         group_id: render_group_ref(node),
@@ -274,6 +297,7 @@ fn build_card(
             .as_ref()
             .and_then(|analysis| analysis.suppression_reason.clone()),
         cascade_debug: cascade_debug_info(request, node, false),
+        semantic_card,
     }
 }
 
@@ -290,6 +314,42 @@ fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> S
         ),
         canonical_location: canonical_location(request, node),
         cascade_debug: cascade_debug_info(request, node, true),
+    }
+}
+
+fn build_semantic_card(
+    presentation_policy: &ResolvedPresentationPolicy,
+    family: Option<&str>,
+    title: &str,
+    first_action: Option<&str>,
+    canonical_location: Option<&str>,
+    raw_message: &str,
+) -> RenderSemanticCard {
+    let resolved_presentation = presentation_policy.resolve_card_presentation(family);
+    let mut slots = Vec::new();
+    if let Some(first_action) = first_action {
+        slots.push(RenderSemanticSlot {
+            slot: SemanticSlotId::FirstAction,
+            value: first_action.to_string(),
+            label: presentation_policy.label("help").map(str::to_string),
+        });
+    }
+    slots.push(RenderSemanticSlot {
+        slot: SemanticSlotId::WhyRaw,
+        value: raw_message.to_string(),
+        label: presentation_policy
+            .slot_label(SemanticSlotId::WhyRaw)
+            .map(str::to_string),
+    });
+
+    RenderSemanticCard {
+        internal_family: family.map(ToString::to_string),
+        display_family: resolved_presentation.display_family.clone(),
+        subject: title.to_string(),
+        presentation: resolved_presentation,
+        slots,
+        canonical_location: canonical_location.map(ToString::to_string),
+        raw_message: raw_message.to_string(),
     }
 }
 
