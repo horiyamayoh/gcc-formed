@@ -8,10 +8,10 @@
       "confidence_notice": null,
       "context_lines": [
         "while instantiating:",
-        "  - src/main.cpp:3:5 candidate: ‘template<class T> Pair(T, T)-> Pair<T>’",
+        "  - src/main.cpp:3:5 candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
         "  - src/main.cpp:3:5 template argument deduction/substitution failed:",
-        "  - src/main.cpp:7:22 deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)",
-        "omitted 2 internal template frames"
+        "  - src/main.cpp:7:22 deduced conflicting types for parameter 'T' ('int' and 'const char*')",
+        "omitted 1 internal template frames"
       ],
       "excerpts": [
         {
@@ -26,16 +26,17 @@
       ],
       "family": "template",
       "first_action": "start from the first user-owned template frame and match template arguments",
-      "group_id": "json-1",
+      "group_id": "json-0",
       "matched_conditions": [
         "context=template_instantiation",
         "child_note_kind=template_context",
-        "phase=instantiate",
+        "message_contains=template",
         "child_message_contains=template",
         "child_message_contains=deduction/substitution",
-        "child_message_contains=deduced conflicting"
+        "child_message_contains=deduced conflicting",
+        "phase=instantiate"
       ],
-      "raw_message": "no matching function for call to ‘Pair(int, const char [2])’",
+      "raw_message": "class template argument deduction failed:",
       "rule_id": "rule.family.template.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
@@ -46,13 +47,5 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.cpp:7:22",
-      "group_id": "json-0",
-      "severity": "error",
-      "title": "template instantiation failed"
-    }
-  ]
+  }
 }

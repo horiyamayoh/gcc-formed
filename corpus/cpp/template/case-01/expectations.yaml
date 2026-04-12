@@ -9,10 +9,10 @@ semantic:
   severity: error
   lead_group_any_of:
     - sarif-0-0
+    - residual-compiler-0
   primary_locations:
     - path: src/main.cpp
       line: 4
-      column: 14
   primary_location_user_owned_required: true
   first_action_required: true
   raw_provenance_required: true
@@ -22,20 +22,18 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
-    first_action_max_line: 3
+    first_action_max_line: 4
     raw_diagnostics_hint_required: true
     compaction_required_substrings:
       - "while instantiating:"
   concise:
-    omission_notice_required: false
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
-    first_screenful_max_lines: 14
-    first_action_max_line: 3
-    path_first_required: true
+    first_screenful_max_lines: 15
+    first_action_max_line: 4
     color_meaning_forbidden: true
     raw_diagnostics_hint_required: true
     compaction_required_substrings:

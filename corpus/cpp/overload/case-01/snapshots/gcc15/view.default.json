@@ -28,8 +28,8 @@
       "group_id": "sarif-0-0",
       "matched_conditions": [
         "child_role=candidate",
-        "phase=semantic",
-        "message_contains=no matching"
+        "message_contains=no matching",
+        "phase=semantic"
       ],
       "raw_message": "no matching function for call to 'takes(int)'",
       "rule_id": "rule.family.type_overload.structured_or_message",

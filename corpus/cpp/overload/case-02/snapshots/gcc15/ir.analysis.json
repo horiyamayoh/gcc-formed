@@ -35,15 +35,15 @@
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=invalid conversion"
+          "message_contains=invalid conversion",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "49900857ebc1d90cbb480de3abc9fdfec98501546e81555ec744fb757605d643",
         "raw": "92b08f22f5b5d464a9cff06958718f7651c418e6462208b4a9734ab6294a6431",
-        "structural": "ec6ec6afeb3dc56178a67dab163022e6a445950dca0f0bce565003598a12479c"
+        "structural": "566aaa0014f741e8ae0f12342a0463ed72d2f7bcaf314d198d5ce9841cb588dd"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -147,15 +147,15 @@
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=invalid conversion"
+          "message_contains=invalid conversion",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "0d8d9e840cc87770efd6493aa5cdd063c46102397053b101611e8de49ea00c82",
         "raw": "783ccc6bd7ca068cadddb02a181d4618d829f80486a5458699020a8f348e5ff4",
-        "structural": "3212bd67b2c525c3d61d1977571f49e41f44e46214acd3c80c14d44f2a634d36"
+        "structural": "6248e54a1409d002940f4ed7f69f1153a9547cdd307e3dae169af6d1ea0f80e4"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -201,8 +201,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "54984fedec065264a5f8ebcd54240158caa971e223dc2df3860ef81764e9ea1c",
-    "raw": "1c0a8915bd6f147612e06adf686bec0c8daea9a1ccf509b39e83a0b3ef703d47",
-    "structural": "45fba68d857fd6fe05d7547662bf882d8b1f88f7d2c5beb9f68467aac9598804"
+    "raw": "11c2f6d4a0c56ab5cf8914d7056bfddca8793dfe88612029d40938f8758ca39b",
+    "structural": "37607e25de60c3261e714558ea439526ca8c58af1d4fcceb28c243e4907f35fa"
   },
   "producer": {
     "name": "gcc-formed",

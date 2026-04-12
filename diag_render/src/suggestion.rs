@@ -266,7 +266,7 @@ fn is_single_file_edit(suggestion: &Suggestion) -> bool {
     unique_edit_paths(&suggestion.edits).len() <= 1
 }
 
-fn unique_edit_paths<'a>(edits: &'a [TextEdit]) -> Vec<&'a str> {
+fn unique_edit_paths(edits: &[TextEdit]) -> Vec<&str> {
     let mut unique = BTreeSet::new();
     for edit in edits {
         unique.insert(edit.path.as_str());

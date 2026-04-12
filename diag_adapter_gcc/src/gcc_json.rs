@@ -1,8 +1,8 @@
 //! GCC JSON diagnostic parsing.
 
 use crate::classify::{
-    classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
-    infer_related_phase, infer_related_role, structured_message_text,
+    PhaseInferenceSignals, classify_family_seed, combined_message_seed, first_action_hint,
+    infer_phase, infer_related_phase, infer_related_role, structured_message_text,
 };
 use crate::context::{option_context_kind, text_context_kinds};
 use crate::fixits::suggestion_from_edits;
@@ -45,6 +45,7 @@ pub(crate) fn from_gcc_json_payload(
         fingerprints: None,
     };
     let mut has_partial_nodes = false;
+    let tool_component = run.primary_tool.component.as_deref();
 
     for (index, diagnostic) in diagnostics.iter().enumerate() {
         if !diagnostic.is_object() {
@@ -61,8 +62,13 @@ pub(crate) fn from_gcc_json_payload(
             continue;
         }
 
-        let node =
-            gcc_json_diagnostic_to_node(format!("json-{index}"), diagnostic, capture_ref, true);
+        let node = gcc_json_diagnostic_to_node(
+            format!("json-{index}"),
+            diagnostic,
+            capture_ref,
+            true,
+            tool_component,
+        );
         has_partial_nodes |= node_is_partial(&node);
         document.diagnostics.push(node);
     }
@@ -90,6 +96,7 @@ fn gcc_json_diagnostic_to_node(
     diagnostic: &Value,
     capture_ref: &str,
     is_root: bool,
+    tool_component: Option<&str>,
 ) -> DiagnosticNode {
     let raw_text = json_message_text(diagnostic.get("message"))
         .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
@@ -112,7 +119,13 @@ fn gcc_json_diagnostic_to_node(
         infer_related_role(&raw_text)
     };
     let phase = if is_root {
-        infer_phase(&family_seed, &context_chains)
+        infer_phase(PhaseInferenceSignals {
+            message: &family_seed,
+            context_chains: &context_chains,
+            option: gcc_json_option(diagnostic),
+            rule_id: None,
+            tool_component,
+        })
     } else {
         infer_related_phase(&raw_text)
     };
@@ -253,6 +266,7 @@ fn parse_gcc_json_children(
                 child,
                 capture_ref,
                 false,
+                None,
             )
         })
         .collect()
@@ -297,6 +311,11 @@ fn parse_fixit_text_edit(fixit: &Value) -> Option<TextEdit> {
 
 fn json_message_text(message: Option<&Value>) -> Option<String> {
     structured_message_text(message)
+}
+
+fn gcc_json_option(diagnostic: &Value) -> Option<&str> {
+    let option = json_str(diagnostic, "option");
+    (!option.is_empty()).then_some(option)
 }
 
 fn json_child_messages(diagnostic: &Value) -> Vec<String> {

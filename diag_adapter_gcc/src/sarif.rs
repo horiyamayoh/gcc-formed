@@ -1,9 +1,9 @@
 //! SARIF diagnostic parsing.
 
 use crate::classify::{
-    classify_family_seed, combined_message_seed, first_action_hint, infer_phase,
-    infer_related_phase, infer_related_role, is_candidate_count_message, related_messages,
-    structured_message_text,
+    PhaseInferenceSignals, classify_family_seed, combined_message_seed, first_action_hint,
+    infer_phase, infer_related_phase, infer_related_role, is_candidate_count_message,
+    related_messages, structured_message_text,
 };
 use crate::context::{extend_unique_context_kinds, metadata_context_kinds, text_context_kinds};
 use crate::fixits::suggestion_from_edits;
@@ -81,8 +81,15 @@ fn from_sarif_payload(
             .and_then(Value::as_array)
             .cloned()
             .unwrap_or_default();
+        let tool_component = sarif_run_tool_component(run_value);
         for (result_index, result) in results.iter().enumerate() {
-            let node = result_to_node(run_index, result_index, result, capture_ref);
+            let node = result_to_node(
+                run_index,
+                result_index,
+                result,
+                capture_ref,
+                tool_component.as_deref(),
+            );
             document.diagnostics.push(node);
         }
     }
@@ -127,6 +134,7 @@ fn result_to_node(
     result_index: usize,
     result: &Value,
     capture_ref: &str,
+    tool_component: Option<&str>,
 ) -> DiagnosticNode {
     let raw_text = structured_message_text(result.get("message"))
         .unwrap_or_else(|| "compiler reported a diagnostic".to_string());
@@ -153,7 +161,13 @@ fn result_to_node(
     DiagnosticNode {
         id: format!("sarif-{run_index}-{result_index}"),
         origin: Origin::Gcc,
-        phase: infer_phase(&family_seed, &context_chains),
+        phase: infer_phase(PhaseInferenceSignals {
+            message: &family_seed,
+            context_chains: &context_chains,
+            option: sarif_warning_option(result),
+            rule_id: result.get("ruleId").and_then(Value::as_str),
+            tool_component,
+        }),
         severity,
         semantic_role: SemanticRole::Root,
         message: MessageText {
@@ -209,6 +223,30 @@ fn result_to_node(
             family: diag_core::fingerprint_for(&family_decision.family),
         }),
     }
+}
+
+fn sarif_warning_option(result: &Value) -> Option<&str> {
+    result
+        .get("ruleId")
+        .and_then(Value::as_str)
+        .filter(|rule_id| rule_id.starts_with('-'))
+}
+
+fn sarif_run_tool_component(run_value: &Value) -> Option<String> {
+    run_value
+        .get("invocations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|invocation| invocation.get("arguments").and_then(Value::as_array))
+        .flatten()
+        .filter_map(Value::as_str)
+        .find_map(|argument| {
+            std::path::Path::new(argument)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .map(ToString::to_string)
+        })
 }
 
 fn parse_locations(result: &Value) -> Vec<Location> {
@@ -511,10 +549,10 @@ fn parse_thread_flow_frames(thread_flow: &Value) -> Vec<diag_core::ContextFrame>
 }
 
 fn infer_thread_flow_kind(thread_flow: &Value) -> Option<ContextChainKind> {
-    if let Some(message) = structured_message_text(thread_flow.get("message")) {
-        if let Some(kind) = text_context_kinds(&message).into_iter().next() {
-            return Some(kind);
-        }
+    if let Some(message) = structured_message_text(thread_flow.get("message"))
+        && let Some(kind) = text_context_kinds(&message).into_iter().next()
+    {
+        return Some(kind);
     }
     thread_flow
         .get("locations")

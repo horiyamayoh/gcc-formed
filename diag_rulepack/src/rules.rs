@@ -88,6 +88,8 @@ pub struct ResidualSection {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum CompilerResidualKind {
+    /// Preprocessor directive or include failure residual.
+    Preprocess,
     /// Syntax error residual.
     Syntax,
     /// Template instantiation failure residual.

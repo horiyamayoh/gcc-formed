@@ -23,113 +23,49 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 2310,
+      "size_bytes": 4708,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
-      "context_chains": [
-        {
-          "kind": "template_instantiation"
-        }
-      ],
-      "fingerprints": {
-        "family": "f29fe89475c6423f37dfbb4b77da01dcf8c79c487fae9d5805da8e6be09069f8",
-        "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
-        "structural": "d5c3cb30e5e44d3cf6ca52edd50b8df5910fc8390f03450033bf7d17cede3064"
-      },
-      "id": "json-0",
-      "locations": [
-        {
-          "column": 22,
-          "line": 7,
-          "ownership": "user",
-          "path": "src/main.cpp"
-        }
-      ],
-      "message": {
-        "raw_text": "class template argument deduction failed:"
-      },
-      "node_completeness": "complete",
-      "origin": "gcc",
-      "phase": "instantiate",
-      "provenance": {
-        "capture_refs": [
-          "diagnostics.json"
-        ],
-        "source": "compiler"
-      },
-      "semantic_role": "root",
-      "severity": "error"
-    },
-    {
       "children": [
         {
-          "context_chains": [
-            {
-              "kind": "template_instantiation"
-            }
-          ],
           "fingerprints": {
-            "family": "68f5d04bd0e3abaa7190f551e5fb5d1b7cede0ced4ca43065cdb0ae5bc932090",
-            "raw": "a3dfa7bfb3b7755c4b7f81e29797243ee96b71269d28f92e234e77092128c78f",
-            "structural": "9a69fe1f704fcd5003325c51d7b8810f2c92dd216c196ad6eac8c52850f2d7e6"
+            "family": "5e6c3f44dfc1250008ebd8998c26665ca1aa239c1e4dd8e0748bed5ad99a3699",
+            "raw": "ff00e2c8a0879c2c6b786bbc970f68bc432cc616bbf2ac3b3e5c3dc07d1185ef",
+            "structural": "9425fc3f6284ef3036cf143774e0c2a8f22d64a29fbeba0fd2eca38387bfc7f8"
           },
-          "id": "json-1-child-0",
+          "id": "json-0-child-0",
           "locations": [
             {
-              "column": 5,
-              "end_column": 8,
-              "end_line": 3,
-              "line": 3,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 22,
+                "column_native": 22,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 7
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:7:22:7:22",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’"
+            "raw_text": "no matching function for call to 'Pair(int, const char [2])'"
           },
           "node_completeness": "complete",
           "origin": "gcc",
-          "phase": "instantiate",
-          "provenance": {
-            "capture_refs": [
-              "diagnostics.json"
-            ],
-            "source": "compiler"
-          },
-          "semantic_role": "candidate",
-          "severity": "note"
-        },
-        {
-          "context_chains": [
-            {
-              "kind": "template_instantiation"
-            }
-          ],
-          "fingerprints": {
-            "family": "c61185edf58cc068a231944e999438047e8caad001e074fd166a71344543acb3",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "3485bd58f12055c9a8221e65d5eba03d870ed85e7aac345a67eaf6ad44d74ef1"
-          },
-          "id": "json-1-child-1",
-          "locations": [
-            {
-              "column": 5,
-              "end_column": 8,
-              "end_line": 3,
-              "line": 3,
-              "ownership": "user",
-              "path": "src/main.cpp"
-            }
-          ],
-          "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
-          },
-          "node_completeness": "complete",
-          "origin": "gcc",
-          "phase": "instantiate",
+          "phase": "semantic",
           "provenance": {
             "capture_refs": [
               "diagnostics.json"
@@ -137,25 +73,40 @@
             "source": "compiler"
           },
           "semantic_role": "supporting",
-          "severity": "note"
+          "severity": "error"
         },
         {
           "fingerprints": {
-            "family": "3cb7aff0858518cd697906056f8ce7e4244b890013f720b19110ebcda228290c",
-            "raw": "9a1a497fca17fa3c9a18107f31df93125cece6ef9cbb1632a2a416d67e529908",
-            "structural": "f9d6b31e3ab17ed5a4f6bed837b27af5f51668aebf28afb53cf08d923dd71985"
+            "family": "453b80af3f1789d7f2962226b9ff0e0679e065c15a96dd94e184235d6a1d656c",
+            "raw": "58ef64abd39cae8156f5917ae7bc85921a823329dcea8ad9aebbf0ea59597a30",
+            "structural": "c43a9c205938189a756740abb1a563d1c74d314752e3f0d34508799484672158"
           },
-          "id": "json-1-child-2",
+          "id": "json-0-child-1",
           "locations": [
             {
-              "column": 22,
-              "line": 7,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 22,
+                "column_native": 22,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 7
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:7:22:7:22",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "  deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)"
+            "raw_text": "there are 2 candidates"
           },
           "node_completeness": "complete",
           "origin": "gcc",
@@ -176,23 +127,53 @@
             }
           ],
           "fingerprints": {
-            "family": "5044db9c1fcc445f0128bdf043c57a368dfe4a1f5ae042ecfc44388f4dd1c46b",
-            "raw": "29d35c92859fb25844c354fad8cf3fe910967a4731999c3c916fa819338f40a4",
-            "structural": "0e8eebf9deb446cc3e22d70ebdf25337ff95e33d91de350a5c76a2b399c228b5"
+            "family": "f61532cea1e9ad424f24a9223297bd7b373fa863e244a23980de30e839f97ae2",
+            "raw": "ff18d2705971f4cfa77f32b5016c21002b1e16dc1b28190833dd5b0b7fc186a4",
+            "structural": "bd23eaceb7f3aad64ca881fd153f16c6a75c9ba1f1457a4042efea6463c94b30"
           },
-          "id": "json-1-child-3",
+          "id": "json-0-child-2",
           "locations": [
             {
-              "column": 8,
-              "end_column": 11,
-              "end_line": 2,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:5:3:8",
+              "range": {
+                "boundary_semantics": "unknown",
+                "end": {
+                  "column_display": 8,
+                  "column_native": 8,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 3
+                },
+                "start": {
+                  "column_display": 5,
+                  "column_native": 5,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 3
+                }
+              },
+              "role": "primary",
+              "source_kind": "range"
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’"
+            "raw_text": "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'"
           },
           "node_completeness": "complete",
           "origin": "gcc",
@@ -213,23 +194,53 @@
             }
           ],
           "fingerprints": {
-            "family": "c61185edf58cc068a231944e999438047e8caad001e074fd166a71344543acb3",
-            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "2b528b97a2e8a987e88a6d0fd2ff978bf7277e15062af58bd98284a3cd8a8128"
+            "family": "f562e120bbf9c8a3b3edd4df8bd7f71b2af821ab6ab02b2aae3361e3458045e9",
+            "raw": "bbb22fee1267eecf85a749aedf39bd54cee185069f5d6d0fbd0011b12928140c",
+            "structural": "14ad457b8c58242933335a243233ae7a044c07e8a4b5d7e9d916beb3b7c64fc4"
           },
-          "id": "json-1-child-4",
+          "id": "json-0-child-3",
           "locations": [
             {
-              "column": 8,
-              "end_column": 11,
-              "end_line": 2,
-              "line": 2,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:5:3:8",
+              "range": {
+                "boundary_semantics": "unknown",
+                "end": {
+                  "column_display": 8,
+                  "column_native": 8,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 3
+                },
+                "start": {
+                  "column_display": 5,
+                  "column_native": 5,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 3
+                }
+              },
+              "role": "primary",
+              "source_kind": "range"
             }
           ],
           "message": {
-            "raw_text": "  template argument deduction/substitution failed:"
+            "raw_text": "template argument deduction/substitution failed:"
           },
           "node_completeness": "complete",
           "origin": "gcc",
@@ -244,22 +255,171 @@
           "severity": "note"
         },
         {
+          "context_chains": [
+            {
+              "kind": "template_instantiation"
+            }
+          ],
           "fingerprints": {
-            "family": "c4f290f301c30794440ad55f4bc0d1baa7cf2d8be536b7336ff02d328d5da263",
-            "raw": "d9bfaa9cd844da7f40fbf94969c9ae8810622f7ad8ff29667e4997351c5c88d7",
-            "structural": "4fcfa1e9685850500a215ce6ed0693a70859a4fcf572c5e4db0c994ee2f686e0"
+            "family": "148fe28cd8d18b05fec2e8b9655448c9c25971753a05158e4125192b592aedc0",
+            "raw": "e055c5b2d55f0472dde830fdcad5ac6efb0421a8e52f0b485ce97f32eeccf64a",
+            "structural": "58dd402e5159e19d7230434f29fae293c4aead1021542a8cc96276e212576f68"
           },
-          "id": "json-1-child-5",
+          "id": "json-0-child-4",
           "locations": [
             {
-              "column": 22,
-              "line": 7,
-              "ownership": "user",
-              "path": "src/main.cpp"
+              "anchor": {
+                "column_display": 22,
+                "column_native": 22,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 7
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:7:22:7:22",
+              "role": "primary",
+              "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "  mismatched types ‘Pair<T>’ and ‘int’"
+            "raw_text": "  deduced conflicting types for parameter 'T' ('int' and 'const char*')"
+          },
+          "node_completeness": "complete",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.json"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "context_chains": [
+            {
+              "kind": "template_instantiation"
+            }
+          ],
+          "fingerprints": {
+            "family": "37a19a8d428d93a81963d021090de161bf7cc73a21d4e9c2f3d851a9ee630a4b",
+            "raw": "7215558af083a839290898bc7c85bcdae5e7fdee7b9bec7ad6582ad0cb21b208",
+            "structural": "4af8355b30285d2d631b227b37e466cd9a23375c2a1cf0485e9631de8b52fff5"
+          },
+          "id": "json-0-child-5",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:8:2:11",
+              "range": {
+                "boundary_semantics": "unknown",
+                "end": {
+                  "column_display": 11,
+                  "column_native": 11,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 2
+                },
+                "start": {
+                  "column_display": 8,
+                  "column_native": 8,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 2
+                }
+              },
+              "role": "primary",
+              "source_kind": "range"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'"
+          },
+          "node_completeness": "complete",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.json"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "09c1a5594f5c336a9c47e704d6c028bf0c2ac9490bb5bc64ee6f1250ec4c6d90",
+            "raw": "96b0a70fd1daf93ee95ffd842223afc0a4eb9c18c34f7a6232343ee23bc86580",
+            "structural": "fed186387275f59fe84d82b4ddd76fe09214f1e7fadaf20eb5c5274bb05ad370"
+          },
+          "id": "json-0-child-6",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:8:2:11",
+              "range": {
+                "boundary_semantics": "unknown",
+                "end": {
+                  "column_display": 11,
+                  "column_native": 11,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 2
+                },
+                "start": {
+                  "column_display": 8,
+                  "column_native": 8,
+                  "column_native_unit": "display",
+                  "column_origin": 1,
+                  "line": 2
+                }
+              },
+              "role": "primary",
+              "source_kind": "range"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate expects 1 argument, 2 provided"
           },
           "node_completeness": "complete",
           "origin": "gcc",
@@ -279,7 +439,7 @@
           "frames": [
             {
               "column": 5,
-              "label": "candidate: ‘template<class T> Pair(T, T)-> Pair<T>’",
+              "label": "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
               "line": 3,
               "path": "src/main.cpp"
             },
@@ -291,19 +451,13 @@
             },
             {
               "column": 22,
-              "label": "deduced conflicting types for parameter ‘T’ (‘int’ and ‘const char*’)",
+              "label": "deduced conflicting types for parameter 'T' ('int' and 'const char*')",
               "line": 7,
               "path": "src/main.cpp"
             },
             {
               "column": 8,
-              "label": "candidate: ‘template<class T> Pair(Pair<T>)-> Pair<T>’",
-              "line": 2,
-              "path": "src/main.cpp"
-            },
-            {
-              "column": 8,
-              "label": "template argument deduction/substitution failed:",
+              "label": "candidate 2: 'template<class T> Pair(Pair<T>) -> Pair<T>'",
               "line": 2,
               "path": "src/main.cpp"
             }
@@ -312,21 +466,36 @@
         }
       ],
       "fingerprints": {
-        "family": "32b7e08de7d34af7122fdf14533290056a4768416e857fd5fc8ef3b759b45ad9",
-        "raw": "92b10ee1450405a7d493e83644ca908eb18ef2fcff1aff545f3d25ceb7a95ec9",
-        "structural": "a9f028b40b208c138ce96e55b34cff075e15636019976e45721d677f8169b70b"
+        "family": "f29fe89475c6423f37dfbb4b77da01dcf8c79c487fae9d5805da8e6be09069f8",
+        "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
+        "structural": "a83f58df0a62ad545c5a995c8f89f5d4b9f3f964b4b1d9498d77b54404d9be2f"
       },
-      "id": "json-1",
+      "id": "json-0",
       "locations": [
         {
-          "column": 22,
-          "line": 7,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 22,
+            "column_native": 22,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:7:22:7:22",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘Pair(int, const char [2])’"
+        "raw_text": "class template argument deduction failed:"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -344,9 +513,9 @@
   "document_completeness": "complete",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "339a5e3690a80b06dbbde1d36402bf1b244a696f2818e246566ec7187b129aa4",
-    "structural": "6904b9068382b5b8696f1a66a75119b1a1cc47f12c2cc4fbf4bfa8bdfafd7afc"
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "cff9d94e3d709b319a280c295434a4df6e7225b3c4baf03a8a852ac7d274b33b",
+    "structural": "da00c8d710f24cd61ef9bb998a0988184506fcb1699f74cd92e02be88f73a85f"
   },
   "producer": {
     "name": "gcc-formed",

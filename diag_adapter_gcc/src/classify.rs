@@ -2,6 +2,7 @@
 
 use diag_core::{ContextChain, ContextChainKind, Phase, SemanticRole};
 use serde_json::Value;
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub(crate) struct AdapterFamilyDecision {
@@ -109,20 +110,160 @@ pub(crate) fn first_action_hint(family: &str) -> String {
     }
 }
 
-pub(crate) fn infer_phase(message: &str, context_chains: &[ContextChain]) -> Phase {
-    let message = message.to_lowercase();
-    if message.contains("undefined reference") || message.contains("multiple definition") {
+pub(crate) struct PhaseInferenceSignals<'a> {
+    pub(crate) message: &'a str,
+    pub(crate) context_chains: &'a [ContextChain],
+    pub(crate) option: Option<&'a str>,
+    pub(crate) rule_id: Option<&'a str>,
+    pub(crate) tool_component: Option<&'a str>,
+}
+
+pub(crate) fn infer_phase(signals: PhaseInferenceSignals<'_>) -> Phase {
+    let message = signals.message.to_lowercase();
+
+    if has_analyzer_context(signals.context_chains)
+        || is_analyzer_option(signals.option)
+        || is_analyzer_option(signals.rule_id)
+    {
+        Phase::Analyze
+    } else if is_constraints_option(signals.option) || is_constraints_option(signals.rule_id) {
+        Phase::Constraints
+    } else if let Some(phase) = infer_tool_phase(signals.tool_component, &message) {
+        phase
+    } else if is_constraints_message(&message) {
+        Phase::Constraints
+    } else if is_preprocess_message(&message, signals.context_chains) {
+        Phase::Preprocess
+    } else if is_driver_message(&message) {
+        Phase::Driver
+    } else if is_assemble_message(&message) {
+        Phase::Assemble
+    } else if let Some(phase) = infer_internal_compiler_phase(&message) {
+        phase
+    } else if message.contains("undefined reference") || message.contains("multiple definition") {
         Phase::Link
-    } else if context_chains
+    } else if signals
+        .context_chains
         .iter()
         .any(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
     {
         Phase::Instantiate
-    } else if message.contains("expected") || message.contains("before") {
+    } else if is_parse_message(&message) {
         Phase::Parse
     } else {
         Phase::Semantic
     }
+}
+
+fn has_analyzer_context(context_chains: &[ContextChain]) -> bool {
+    context_chains
+        .iter()
+        .any(|chain| matches!(chain.kind, ContextChainKind::AnalyzerPath))
+}
+
+fn is_analyzer_option(option: Option<&str>) -> bool {
+    option
+        .map(str::trim)
+        .map(str::to_ascii_lowercase)
+        .is_some_and(|option| option == "-fanalyzer" || option.starts_with("-wanalyzer-"))
+}
+
+fn is_constraints_option(option: Option<&str>) -> bool {
+    option
+        .map(str::trim)
+        .map(str::to_ascii_lowercase)
+        .is_some_and(|option| option == "-wconcepts")
+}
+
+fn infer_tool_phase(tool_component: Option<&str>, message: &str) -> Option<Phase> {
+    let normalized = normalize_tool_component(tool_component?)?;
+
+    if normalized == "as" {
+        return Some(Phase::Assemble);
+    }
+    if normalized == "collect2" || normalized.starts_with("ld") {
+        return Some(Phase::Link);
+    }
+    if (normalized == "gcc" || normalized == "g++") && is_driver_message(message) {
+        return Some(Phase::Driver);
+    }
+    if normalized == "cc1" || normalized == "cc1plus" {
+        return infer_internal_compiler_phase(message);
+    }
+
+    None
+}
+
+fn normalize_tool_component(tool_component: &str) -> Option<String> {
+    let trimmed = tool_component.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let component = Path::new(trimmed)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or(trimmed);
+
+    Some(component.to_ascii_lowercase())
+}
+
+fn is_constraints_message(message: &str) -> bool {
+    message.contains("constraints not satisfied")
+        || message.contains(" because ")
+            && (message.contains("concept") || message.contains("constraint"))
+        || message.contains("concept")
+}
+
+fn is_preprocess_message(message: &str, context_chains: &[ContextChain]) -> bool {
+    if message.contains("#error") || message.contains("#warning") {
+        return true;
+    }
+
+    let has_include_context = context_chains
+        .iter()
+        .any(|chain| matches!(chain.kind, ContextChainKind::Include));
+    has_include_context
+        && message.contains("no such file or directory")
+        && (message.contains("#include") || message.contains("included from"))
+}
+
+fn is_driver_message(message: &str) -> bool {
+    message.contains("no input files")
+        || message.contains("unrecognized command-line option")
+        || message.contains("unrecognized option")
+        || message.starts_with("gcc: fatal error:")
+        || message.starts_with("g++: fatal error:")
+}
+
+fn is_assemble_message(message: &str) -> bool {
+    message.starts_with("as:")
+        || message.starts_with("assembler:")
+        || message.contains("assembler messages")
+}
+
+fn infer_internal_compiler_phase(message: &str) -> Option<Phase> {
+    if message.contains("during gimple pass")
+        || message.contains("during ipa pass")
+        || message.contains("optimization pass")
+        || message.contains("optimizing")
+    {
+        Some(Phase::Optimize)
+    } else if message.contains("during rtl pass")
+        || message.contains("during code generation")
+        || message.contains("during expand")
+    {
+        Some(Phase::Codegen)
+    } else {
+        None
+    }
+}
+
+fn is_parse_message(message: &str) -> bool {
+    message.contains(" before ")
+        || message.contains(" at end of input")
+        || message.contains("expected declaration or statement")
+        || message.contains("expected expression")
 }
 
 pub(crate) fn infer_related_role(message: &str) -> SemanticRole {
@@ -197,4 +338,132 @@ pub(crate) fn structured_message_text(message: Option<&Value>) -> Option<String>
                 .filter(|text| !text.trim().is_empty())
         })
         .map(ToString::to_string)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn infer(message: &str) -> Phase {
+        infer_phase(PhaseInferenceSignals {
+            message,
+            context_chains: &[],
+            option: None,
+            rule_id: None,
+            tool_component: None,
+        })
+    }
+
+    #[test]
+    fn infers_analyze_from_warning_option() {
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "dereference of NULL 'ptr'",
+                context_chains: &[],
+                option: Some("-Wanalyzer-null-dereference"),
+                rule_id: None,
+                tool_component: None,
+            }),
+            Phase::Analyze
+        );
+    }
+
+    #[test]
+    fn infers_constraints_from_rule_id() {
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "no matching function for call to 'consume(int)'",
+                context_chains: &[],
+                option: None,
+                rule_id: Some("-Wconcepts"),
+                tool_component: None,
+            }),
+            Phase::Constraints
+        );
+    }
+
+    #[test]
+    fn infers_preprocess_from_directive_message() {
+        assert_eq!(infer("#error stop here"), Phase::Preprocess);
+        assert_eq!(infer("#warning deprecated branch"), Phase::Preprocess);
+    }
+
+    #[test]
+    fn infers_driver_from_message_pattern() {
+        assert_eq!(infer("gcc: fatal error: no input files"), Phase::Driver);
+        assert_eq!(
+            infer("gcc: error: unrecognized option '--wat'"),
+            Phase::Driver
+        );
+    }
+
+    #[test]
+    fn infers_assemble_from_tool_component() {
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "fatal error: Killed signal terminated program as",
+                context_chains: &[],
+                option: None,
+                rule_id: None,
+                tool_component: Some("/usr/bin/as"),
+            }),
+            Phase::Assemble
+        );
+    }
+
+    #[test]
+    fn infers_internal_compiler_phase_from_ice_context() {
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "internal compiler error: Segmentation fault\nduring gimple pass: vrp",
+                context_chains: &[],
+                option: None,
+                rule_id: None,
+                tool_component: Some("cc1"),
+            }),
+            Phase::Optimize
+        );
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "internal compiler error: unexpected failure\nduring rtl pass: expand",
+                context_chains: &[],
+                option: None,
+                rule_id: None,
+                tool_component: Some("cc1plus"),
+            }),
+            Phase::Codegen
+        );
+    }
+
+    #[test]
+    fn preserves_existing_link_instantiate_parse_and_semantic_paths() {
+        assert_eq!(
+            infer("undefined reference to `missing_symbol`"),
+            Phase::Link
+        );
+        assert_eq!(
+            infer_phase(PhaseInferenceSignals {
+                message: "no matching function for call to 'consume(int)'",
+                context_chains: &[ContextChain {
+                    kind: ContextChainKind::TemplateInstantiation,
+                    frames: Vec::new(),
+                }],
+                option: None,
+                rule_id: None,
+                tool_component: None,
+            }),
+            Phase::Instantiate
+        );
+        assert_eq!(infer("expected ';' before '}' token"), Phase::Parse);
+        assert_eq!(
+            infer(
+                "passing argument 1 of 'takes_int' makes integer from pointer without a cast\nexpected 'int' but argument is of type 'const char *'"
+            ),
+            Phase::Semantic
+        );
+        assert_eq!(
+            infer("invalid conversion from 'int' to 'char *'"),
+            Phase::Semantic
+        );
+    }
 }

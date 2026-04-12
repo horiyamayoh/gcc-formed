@@ -30,7 +30,7 @@
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "high",
+        "confidence": 0.8999999761581421,
         "family": "macro_include",
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
         "headline": "error surfaced through macro/include context",
@@ -55,16 +55,30 @@
       "fingerprints": {
         "family": "516564eab95cb51a46bf524b54f13491c931446af0f4b478c92e1b30661679cb",
         "raw": "8656d4c1dae0beda317273d663831c673c42cb168fd5b819a61dd687004a8f28",
-        "structural": "a53bc36c28a0060097c1689fc1a43ab78de39a2f688440c07022a724321f8d35"
+        "structural": "8f719bde7a2decae32116fe66c63356fe9eca02e020574e0009af3c8bfe00bee"
       },
       "id": "sarif-0-0",
       "locations": [
         {
-          "column": 40,
-          "end_column": 41,
-          "line": 3,
-          "ownership": "user",
-          "path": "src/main.c"
+          "anchor": {
+            "column_display": 40,
+            "column_native": 40,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:3:40:3:40",
+          "role": "primary",
+          "source_kind": "caret"
         }
       ],
       "message": {
@@ -87,8 +101,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "a840997e3dc9e833ae0daf597f2b8210c5723c35df8ee606ad128e50e232bfa5",
-    "structural": "93722ee2a54f21d9bd5584f41d0832d66f0b53ea5262ef5cae5d5acde88cfa25"
+    "raw": "b6c6113f93f9f243bf0126f3898dc4c67d4276edb4f165f53d2ed73a8297fe9a",
+    "structural": "0e775ed34130f1eae97fe080a6acb08f81de4c1517839b01eee46c71638d5fc0"
   },
   "producer": {
     "name": "gcc-formed",

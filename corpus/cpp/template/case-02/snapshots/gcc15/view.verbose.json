@@ -1,6 +1,42 @@
 {
   "cards": [
     {
+      "canonical_location": "src/main.cpp:6:15",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [
+        "while instantiating:",
+        "  - src/main.cpp:2:6 template argument deduction/substitution failed:"
+      ],
+      "excerpts": [
+        {
+          "annotations": [
+            "              ^"
+          ],
+          "lines": [
+            "    expect_ptr(value);"
+          ],
+          "location": "src/main.cpp:6:15"
+        }
+      ],
+      "family": "template",
+      "first_action": "start from the first user-owned template frame and match template arguments",
+      "group_id": "residual-compiler-0",
+      "matched_conditions": [
+        "context=template_instantiation"
+      ],
+      "raw_message": "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'",
+      "raw_sub_block": [
+        "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'"
+      ],
+      "rule_id": "rule.family.template.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "template instantiation failed"
+    },
+    {
       "canonical_location": "src/main.cpp:6:5",
       "child_notes": [],
       "collapsed_notices": [],
@@ -28,49 +64,15 @@
       "matched_conditions": [
         "context=template_instantiation",
         "child_note_kind=template_context",
-        "phase=instantiate",
         "child_message_contains=template",
-        "child_message_contains=deduction/substitution"
+        "child_message_contains=deduction/substitution",
+        "phase=instantiate"
       ],
       "raw_message": "no matching function for call to 'expect_ptr(int&)'",
       "rule_id": "rule.family.template.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
       "title": "template instantiation failed"
-    },
-    {
-      "canonical_location": "src/main.cpp:6:15",
-      "child_notes": [],
-      "collapsed_notices": [],
-      "confidence_label": "likely",
-      "confidence_notice": null,
-      "context_lines": [],
-      "excerpts": [
-        {
-          "annotations": [
-            "              ^"
-          ],
-          "lines": [
-            "    expect_ptr(value);"
-          ],
-          "location": "src/main.cpp:6:15"
-        }
-      ],
-      "family": "type_overload",
-      "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "residual-compiler-0",
-      "matched_conditions": [
-        "phase=semantic",
-        "message_contains=no matching"
-      ],
-      "raw_message": "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'",
-      "raw_sub_block": [
-        "src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'"
-      ],
-      "rule_id": "rule.family.type_overload.structured_or_message",
-      "severity": "error",
-      "suppression_reason": null,
-      "title": "type or overload mismatch"
     }
   ],
   "summary": {

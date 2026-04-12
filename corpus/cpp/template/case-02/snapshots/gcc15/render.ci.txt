@@ -1,12 +1,14 @@
-src/main.cpp:6:5: error: template instantiation failed
+note: some compiler details were not fully structured; original diagnostics are preserved
+src/main.cpp:6:15: error: template instantiation failed
 help: start from the first user-owned template frame and match template arguments
-why: no matching function for call to 'expect_ptr(int&)'
-| src/main.cpp:6:5
+why: src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'
+| src/main.cpp:6:15
 |     expect_ptr(value);
-|     ^
+|               ^
 while instantiating:
-  - src/main.cpp:2:6 candidate 1: 'template<class T> void expect_ptr(T*)'
   - src/main.cpp:2:6 template argument deduction/substitution failed:
+raw:
+  src/main.cpp:6:15: error: no matching function for call to 'expect_ptr(int&)'
 other errors:
-  - src/main.cpp:6:15: error: type or overload mismatch
+  - src/main.cpp:6:5: error: template instantiation failed
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

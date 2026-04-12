@@ -694,6 +694,20 @@ mod tests {
     }
 
     #[test]
+    fn classifies_preprocessor_directives_as_preprocess_phase() {
+        let nodes = classify("src/config.h:3:2: error: #error stop here\n", true);
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].phase, Phase::Preprocess);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("compiler.preprocess")
+        );
+    }
+
+    #[test]
     fn keeps_structured_compiler_residuals_when_passthrough_is_disabled() {
         let stderr = "\
 main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\

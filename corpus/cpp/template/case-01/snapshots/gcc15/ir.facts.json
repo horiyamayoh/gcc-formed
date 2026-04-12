@@ -122,9 +122,9 @@
         },
         {
           "fingerprints": {
-            "family": "8e6584eeb0a8dee931b22148d36e78260dfcd7b4ada764d776d1303c42b4f45f",
+            "family": "9a692a63f96b54f35df88d5bbd432df985a0bb04b979b75f85fd516c9b5f6a42",
             "raw": "ff59002388b2d94cedacf3229f008ad588726751d776c6f484611e00ba9fa3b2",
-            "structural": "d45a7901c8d16c1ad7a3dcd564c42c0f3b1cda83178e76673a3d35633aac254f"
+            "structural": "a9d44fe9cb4bb23e8d9224f5d531c7cc3043d7e3b8ec809c23656a263e69e248"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -155,7 +155,7 @@
           },
           "node_completeness": "partial",
           "origin": "gcc",
-          "phase": "semantic",
+          "phase": "instantiate",
           "provenance": {
             "capture_refs": [
               "diagnostics.sarif"
@@ -194,7 +194,7 @@
       "fingerprints": {
         "family": "91a0a3709a894fb7b4e7cd8f37da7fc1b93597f1aabd9347465fd429d2c6fc61",
         "raw": "42ba3b1913bab82a1387c855afdd646913c284106b1d8973fdcb727c915fa98a",
-        "structural": "3d10251a141f778140f367963100f8d467f73290deba442b50cb91a3345c662a"
+        "structural": "737d6770018f511ce5eb82b2c9850d7b58d9ccece2f4b2426bd2344147982010"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -236,10 +236,29 @@
       "severity": "error"
     },
     {
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 6,
+              "label": "src/main.cpp:2:6: note: template argument deduction/substitution failed:",
+              "line": 2,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 24,
+              "label": "src/main.cpp:4:24: note:   deduced conflicting types for parameter 'T' ('int' and 'double')",
+              "line": 4,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
       "fingerprints": {
         "family": "db0f8ffadc18eb99da0d870e4938d4904057b8f7812ab79a2102b49f06401cbf",
         "raw": "7580db3b8c996f19d378e7535ecc33534aae7f8293c8d37595360a63682938da",
-        "structural": "9492daa0b0a07defe2cf95f861decdbc908d75d9fdece75b6445f54d2644858a"
+        "structural": "df89e5131bba4ecf633a8d15a2d98246db2dc1a7f1f362443f1703d2e58599d7"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -285,8 +304,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "1d51d45c1aa99659b4bc9565c1d46a0e1bf6ebb42afc57077e3c67234be2c1f9",
-    "structural": "ccc0e277ce065b610eb2c862526f3dbae4409f8280dcf9a68e5d1086ade272a8"
+    "raw": "c4c278c31bfbc8b34f21e9154505764b879b4d3ef94f42549d563c285b7ed59a",
+    "structural": "1de47ab4899c33a6d09d8ae7e460ec4b08238d5e22528b2eb3e47c5489a83e69"
   },
   "producer": {
     "name": "gcc-formed",

@@ -35,8 +35,8 @@
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=passing argument"
+          "message_contains=passing argument",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
@@ -100,7 +100,7 @@
       "fingerprints": {
         "family": "6719d6502acb3bcabb9d3af991e92f528f02c56ad236bad68484d88a4e6716d9",
         "raw": "f703d245af755a90b954c1decd48882ec4799514aed233fa9de939a083a53f35",
-        "structural": "3fb951b2dcbff4889a013adfc0fcad294b5fcca7c17eb857e175c565877ea5e7"
+        "structural": "c106fb74c9d3adaaca1ea611b36d50cf4ead408446e5c17556f49bdfe906f2ee"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -148,15 +148,15 @@
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=passing argument"
+          "message_contains=passing argument",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
         "family": "fcfe15f106a463fbff4d5a9c754b183ea8c3da4e016ef21d6a2909a6e53f4ba0",
         "raw": "3fb6503ccf3cd9e9b9870fbca103116bb45ca6747a45e6aff22ab018ef62df77",
-        "structural": "2aca14434c5cba3acbdcc6be09798560fbd2a106a9bd7b5a35d89bc42115095b"
+        "structural": "d5bc8db5dacec605e45cb6b2d92728d34dc5770b98f12ba87e133d79c301bafe"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -202,8 +202,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "e1e8c1da326ac07097e192dc25198dd785c5c1f57e87b030591d17027448963d",
-    "raw": "bc37980cee7682326ec54be4194a57c4a09327639af8ea3c8c3960eeb35f0b39",
-    "structural": "c48b8a21617335f6122b4f26dbedac147d382c062a55d48e3898396836f5b7fe"
+    "raw": "6744b7c795388d839e1faca48ce5a367abac18b221a76b6af913e8f48d82c5e4",
+    "structural": "e9a3514c14a6c8745d606c0f353edb87a505a8d47486d75145857021888672da"
   },
   "producer": {
     "name": "gcc-formed",

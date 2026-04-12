@@ -9,4 +9,5 @@ through macro expansion:
   - src/main.c:3:25 in expansion of macro 'CALL_BAD'
 from include chain:
   - In file included from src/wrapper.h:1
+  - src/main.c:1 from src/main.c:1:
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

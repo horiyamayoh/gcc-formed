@@ -23,41 +23,71 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 891,
+      "size_bytes": 1404,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
       "analysis": {
-        "confidence": "medium",
+        "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
         "headline": "type or overload mismatch",
         "matched_conditions": [
-          "phase=semantic",
-          "message_contains=invalid conversion"
+          "message_contains=invalid conversion",
+          "phase=semantic"
         ],
         "rule_id": "rule.family.type_overload.structured_or_message"
       },
       "fingerprints": {
-        "family": "443505acac1d0c21704551154334323498de909a556a8772f76b412df1bd392a",
-        "raw": "477c785277de43a358e7c45ec8d8002191961117517fd576c5540a7631f43365",
-        "structural": "75bb7a4926be4db036da7629a45d0de56bbb1ee2655583caf18c5ee258b2c332"
+        "family": "6a2a5e104cee19b7cd847cc021698709de0696d15a43dbf7f2d52d88baaebc6a",
+        "raw": "6dfc7f826c76e7631d308e3dbf22bf07896113e1f1d07e6d7843c617e5d19a74",
+        "structural": "bcc813879e8e19b3bbcddc98f841abca186a32e423c5e1d240690fa3845b3b70"
       },
       "id": "json-0",
       "locations": [
         {
-          "column": 17,
-          "end_column": 19,
-          "end_line": 5,
-          "line": 5,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 17,
+            "column_native": 17,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:17:5:19",
+          "range": {
+            "boundary_semantics": "unknown",
+            "end": {
+              "column_display": 19,
+              "column_native": 19,
+              "column_native_unit": "display",
+              "column_origin": 1,
+              "line": 5
+            },
+            "start": {
+              "column_display": 17,
+              "column_native": 17,
+              "column_native_unit": "display",
+              "column_origin": 1,
+              "line": 5
+            }
+          },
+          "role": "primary",
+          "source_kind": "range"
         }
       ],
       "message": {
-        "raw_text": "invalid conversion from ‘const char*’ to ‘short int’"
+        "raw_text": "invalid conversion from 'const char*' to 'short int'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -73,10 +103,10 @@
     },
     {
       "analysis": {
-        "confidence": "low",
+        "confidence": 0.3499999940395355,
         "family": "unknown",
         "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-        "headline": "  initializing argument 1 of ‘void takes_short(short int)’",
+        "headline": "initializing argument 1 of 'void takes_short(short int)'",
         "matched_conditions": [
           "no_family_rule_matched"
         ],
@@ -84,23 +114,53 @@
         "suppression_reason": "generic_fallback"
       },
       "fingerprints": {
-        "family": "bdfae880e841d4c2e938dce9b5845f5a3ed4cf1a87eb91d9b4662732e5cff326",
-        "raw": "1371080e66589ed7ed16507fa9d3311114734ca797103b618ac85f897cae1360",
-        "structural": "4e7f0502bab609137dc4df212e7ff970dd31f183664d2d7e64d0a1fbac6ad987"
+        "family": "e1f81f2eeec82216cd3e5caaac1d91b70a9a055d5c73aa656a7db763cc350a17",
+        "raw": "aa73c4d7a4d40bdc6a0f07d075267e76fec3eed699e62de0c306715349ee6fa6",
+        "structural": "09734d09bd325066f55588914d13acbd966012bbd37e0c793e1c4a0e801edeb1"
       },
       "id": "json-1",
       "locations": [
         {
-          "column": 18,
-          "end_column": 22,
-          "end_line": 1,
-          "line": 1,
-          "ownership": "user",
-          "path": "src/main.cpp"
+          "anchor": {
+            "column_display": 18,
+            "column_native": 18,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:1:18:1:22",
+          "range": {
+            "boundary_semantics": "unknown",
+            "end": {
+              "column_display": 22,
+              "column_native": 22,
+              "column_native_unit": "display",
+              "column_origin": 1,
+              "line": 1
+            },
+            "start": {
+              "column_display": 18,
+              "column_native": 18,
+              "column_native_unit": "display",
+              "column_origin": 1,
+              "line": 1
+            }
+          },
+          "role": "primary",
+          "source_kind": "range"
         }
       ],
       "message": {
-        "raw_text": "  initializing argument 1 of ‘void takes_short(short int)’"
+        "raw_text": "initializing argument 1 of 'void takes_short(short int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -119,8 +179,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "379ee7ec878c5418c1b1c12dd21335eed2370cafcc85d900d2afbe5b31758c93",
-    "raw": "8cc17844869c3c3b61005592737c6f1540154c3f94bb9c73d2d6a94855542e22",
-    "structural": "ef45252a786dd1f399cbfaf836862730982a895129866c65ccf5cecf24d4374a"
+    "raw": "6ce00530de0631f7d1c5f6f457c2fe3f219849d263b7f435e554a0d9a72f654d",
+    "structural": "ba62736fab2c7257fa4e36ec8204961ce622152288f53a19bd61fda3068b454a"
   },
   "producer": {
     "name": "gcc-formed",

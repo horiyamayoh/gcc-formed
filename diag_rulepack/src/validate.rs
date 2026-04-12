@@ -103,13 +103,13 @@ pub(crate) fn validate_enrich_rulepack(
             path,
             "rule.child_message_groups",
         )?;
-        if let Some(phases) = &rule.phase_match {
-            if phases.is_empty() {
-                return Err(invalid_rulepack(
-                    path,
-                    "rule.phase_match must not be an empty list",
-                ));
-            }
+        if let Some(phases) = &rule.phase_match
+            && phases.is_empty()
+        {
+            return Err(invalid_rulepack(
+                path,
+                "rule.phase_match must not be an empty list",
+            ));
         }
         if rule.phase_match.is_none()
             && rule.require_any_of.is_empty()

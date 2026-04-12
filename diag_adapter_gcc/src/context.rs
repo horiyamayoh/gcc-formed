@@ -3,6 +3,8 @@ use diag_core::ContextChainKind;
 pub(crate) fn option_context_kind(option: &str) -> Option<ContextChainKind> {
     if option.starts_with("-Wtemplate-") {
         Some(ContextChainKind::TemplateInstantiation)
+    } else if option == "-fanalyzer" || option.starts_with("-Wanalyzer-") {
+        Some(ContextChainKind::AnalyzerPath)
     } else if option.starts_with("-Wmacro-") {
         Some(ContextChainKind::MacroExpansion)
     } else {
@@ -35,6 +37,9 @@ pub(crate) fn metadata_context_kinds(seed: &str) -> Vec<ContextChainKind> {
         || lowered.contains("substitution")
     {
         kinds.push(ContextChainKind::TemplateInstantiation);
+    }
+    if lowered.contains("analyzer") {
+        kinds.push(ContextChainKind::AnalyzerPath);
     }
     if lowered.contains("macro") {
         kinds.push(ContextChainKind::MacroExpansion);

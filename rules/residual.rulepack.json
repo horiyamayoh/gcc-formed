@@ -75,6 +75,19 @@
   "residual": {
     "compiler_groups": [
       {
+        "kind": "preprocess",
+        "family": "compiler.preprocess",
+        "phase": "preprocess",
+        "rule_id": "rule.residual.compiler_preprocess",
+        "headline_strategy": "message_passthrough",
+        "first_action_hint": "inspect the failing preprocessor directive or include edge in the preserved raw diagnostics",
+        "match_any": [
+          "#error",
+          "#warning",
+          "no such file or directory"
+        ]
+      },
+      {
         "kind": "syntax",
         "family": "syntax",
         "phase": "parse",

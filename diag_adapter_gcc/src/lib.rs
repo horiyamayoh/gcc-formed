@@ -1082,6 +1082,171 @@ mod tests {
     }
 
     #[test]
+    fn gcc_json_option_drives_analyzer_phase() {
+        let document = from_gcc_json_payload(
+            r#"[
+              {
+                "kind":"warning",
+                "option":"-Wanalyzer-null-dereference",
+                "message":"dereference of NULL 'ptr'",
+                "locations":[
+                  {
+                    "caret":{"file":"src/main.c","line":8,"column":15}
+                  }
+                ]
+              }
+            ]"#,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["gcc".to_string()],
+                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::C),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        let root = &document.diagnostics[0];
+        assert_eq!(root.phase, Phase::Analyze);
+        assert!(
+            root.context_chains
+                .iter()
+                .any(|chain| matches!(chain.kind, ContextChainKind::AnalyzerPath))
+        );
+    }
+
+    #[test]
+    fn gcc_json_hash_error_maps_to_preprocess_phase() {
+        let document = from_gcc_json_payload(
+            r##"[
+              {
+                "kind":"error",
+                "message":"#error stop here",
+                "locations":[
+                  {
+                    "caret":{"file":"src/config.h","line":3,"column":2}
+                  }
+                ]
+              }
+            ]"##,
+            "diagnostics.json",
+            &producer_for_version("0.1.0"),
+            &RunInfo {
+                argv_redacted: vec!["gcc".to_string()],
+                primary_tool: tool_for_backend("gcc", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::C),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics[0].phase, Phase::Preprocess);
+    }
+
+    #[test]
+    fn sarif_rule_id_drives_constraints_phase() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "invocations":[
+                    {
+                      "arguments":["/usr/local/libexec/gcc/x86_64-linux-gnu/15.2.0/cc1plus"]
+                    }
+                  ],
+                  "results":[
+                    {
+                      "ruleId":"-Wconcepts",
+                      "level":"error",
+                      "message":{"text":"constraints not satisfied"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics[0].phase, Phase::Constraints);
+    }
+
+    #[test]
+    fn sarif_run_tool_component_drives_internal_compiler_phase() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("diag.sarif");
+        fs::write(
+            &path,
+            r#"{
+              "version":"2.1.0",
+              "runs":[
+                {
+                  "invocations":[
+                    {
+                      "arguments":["/usr/local/libexec/gcc/x86_64-linux-gnu/15.2.0/cc1plus"]
+                    }
+                  ],
+                  "results":[
+                    {
+                      "ruleId":"error",
+                      "level":"error",
+                      "message":{"text":"internal compiler error: unexpected failure\nduring rtl pass: expand"},
+                      "locations":[
+                        {
+                          "physicalLocation":{
+                            "artifactLocation":{"uri":"src/main.cpp"},
+                            "region":{"startLine":8,"startColumn":15}
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let document = from_sarif(
+            &path,
+            producer_for_version("0.1.0"),
+            RunInfo {
+                argv_redacted: vec!["g++".to_string()],
+                primary_tool: tool_for_backend("g++", Some("15.2.0".to_string())),
+                language_mode: Some(LanguageMode::Cpp),
+                ..base_run_info()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(document.diagnostics[0].phase, Phase::Codegen);
+    }
+
+    #[test]
     fn parses_gcc_json_context_chains_from_recursive_note_children() {
         let document = from_gcc_json_payload(
             r#"[

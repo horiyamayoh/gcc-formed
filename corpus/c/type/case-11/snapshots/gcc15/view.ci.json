@@ -22,8 +22,8 @@
       "first_action": "compare the expected type and actual argument at the call site",
       "group_id": "residual-compiler-0",
       "matched_conditions": [
-        "phase=semantic",
-        "message_contains=passing argument"
+        "message_contains=passing argument",
+        "phase=semantic"
       ],
       "raw_message": "src/main.c:9:19: error: passing argument 1 of 'takes_int_ptr' from incompatible pointer type [-Wincompatible-pointer-types]",
       "raw_sub_block": [
