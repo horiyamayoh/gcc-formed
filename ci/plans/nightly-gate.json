@@ -170,7 +170,7 @@
       "name": "Representative matrix snapshot check",
       "policy": "always",
       "failure_classification": "product",
-      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image \"$MATRIX_GCC_VERSION\" --report-dir \"$REPORT_ROOT/snapshot\"",
+      "command": "cargo xtask snapshot --root corpus --subset representative --check --docker-image \"$MATRIX_GCC_VERSION\" --version-band \"$MATRIX_VERSION_BAND\" --report-dir \"$REPORT_ROOT/snapshot\"",
       "fixture": "subset:representative",
       "gcc_version": "${MATRIX_GCC_VERSION}",
       "artifact_paths": [

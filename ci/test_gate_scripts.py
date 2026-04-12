@@ -570,6 +570,12 @@ class CheckedInPlanTest(unittest.TestCase):
                 self.assertEqual(step["gate_scope"], "matrix")
                 self.assertEqual(step["version_band"], "${MATRIX_VERSION_BAND}")
 
+        snapshot_step = steps_by_id["representative-matrix-snapshot-check"]
+        self.assertIn(
+            '--version-band "$MATRIX_VERSION_BAND"',
+            snapshot_step["command"],
+        )
+
         for step_id in [
             "cargo-xtask-fuzz-smoke",
             "vendor-dependency-tree",
@@ -653,6 +659,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
             workflow,
         )
         self.assertIsNotNone(snapshot_block)
+        self.assertIn('--version-band "$MATRIX_VERSION_BAND"', snapshot_block.group(0))
         self.assertNotIn("if: matrix.release_blocker", snapshot_block.group(0))
 
     def test_release_beta_workflow_uses_reference_path_snapshot_and_replay_stop_ship(self) -> None:

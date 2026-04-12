@@ -3965,6 +3965,56 @@ mod tests {
     }
 
     #[test]
+    fn runtime_version_band_filters_out_newer_representative_fixtures() {
+        let band_a_fixture = fixture_with_tags(
+            "c/linker/case-band-a-reference",
+            "15",
+            "render",
+            &[
+                "representative",
+                "band:gcc15_plus",
+                "processing_path:dual_sink_structured",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let band_b_fixture = fixture_with_tags(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+        let band_c_fixture = fixture_with_tags(
+            "c/type/case-band-c-native",
+            "12",
+            "render",
+            &[
+                "representative",
+                "band:gcc9_12",
+                "processing_path:native_text_capture",
+            ],
+            Some(ExpectedFallback::Forbidden),
+        );
+
+        assert!(!fixture_compatible_with_version_band(
+            &band_a_fixture,
+            VersionBand::Gcc13_14
+        ));
+        assert!(fixture_compatible_with_version_band(
+            &band_b_fixture,
+            VersionBand::Gcc13_14
+        ));
+        assert!(fixture_compatible_with_version_band(
+            &band_c_fixture,
+            VersionBand::Gcc13_14
+        ));
+    }
+
+    #[test]
     fn capture_bundle_tracks_missing_band_c_single_sink_json_as_unavailable() {
         let fixture = fixture_with_tags(
             "cpp/template/case-band-c-single-sink",
