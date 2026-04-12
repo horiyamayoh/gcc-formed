@@ -6,7 +6,7 @@
     {
       "kind": "enrich",
       "path": "enrich.rulepack.json",
-      "sha256": "1d255e9696bc985c763690014cbe008099ce67183dbb96ca19823a8cb1bc5c3d"
+      "sha256": "5676d31055e7d37937bb2a216a9415492905876714e97a630fd4d8a1060839e2"
     },
     {
       "kind": "render",

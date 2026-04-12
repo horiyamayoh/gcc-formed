@@ -1,112 +1,86 @@
 //! Classification and inference helpers for diagnostic family assignment.
 
 use diag_core::{ContextChain, ContextChainKind, Phase, SemanticRole};
+use diag_rulepack::{EnrichRulepack, checked_in_rulepack};
 use serde_json::Value;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub(crate) struct AdapterFamilyDecision {
     pub(crate) family: String,
+    pub(crate) first_action_hint: String,
     pub(crate) rule_id: String,
     pub(crate) matched_conditions: Vec<String>,
     pub(crate) suppression_reason: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy)]
-struct AdapterFamilyRule {
-    id: &'static str,
-    family: &'static str,
-    contains_any: &'static [&'static str],
+pub(crate) fn classify_family_seed(message: &str) -> AdapterFamilyDecision {
+    classify_family_seed_with_rulepack(message, checked_in_rulepack().enrich())
 }
 
-const ADAPTER_FAMILY_RULES: &[AdapterFamilyRule] = &[
-    AdapterFamilyRule {
-        id: "rule.family_seed.linker.undefined_reference",
-        family: "linker.undefined_reference",
-        contains_any: &["undefined reference"],
-    },
-    AdapterFamilyRule {
-        id: "rule.family_seed.linker.multiple_definition",
-        family: "linker.multiple_definition",
-        contains_any: &["multiple definition"],
-    },
-    AdapterFamilyRule {
-        id: "rule.family_seed.template",
-        family: "template",
-        contains_any: &[
-            "template",
-            "required from",
-            "required by substitution",
-            "deduction/substitution",
-            "deduced conflicting",
-        ],
-    },
-    AdapterFamilyRule {
-        id: "rule.family_seed.macro_include",
-        family: "macro_include",
-        contains_any: &["macro", "include"],
-    },
-    AdapterFamilyRule {
-        id: "rule.family_seed.type_overload",
-        family: "type_overload",
-        contains_any: &[
-            "cannot convert",
-            "no matching",
-            "invalid conversion",
-            "incompatible type",
-            "passing argument",
-        ],
-    },
-    AdapterFamilyRule {
-        id: "rule.family_seed.syntax",
-        family: "syntax",
-        contains_any: &["expected", "before"],
-    },
-];
-
-pub(crate) fn classify_family_seed(message: &str) -> AdapterFamilyDecision {
+fn classify_family_seed_with_rulepack(
+    message: &str,
+    rulepack: &EnrichRulepack,
+) -> AdapterFamilyDecision {
     let lowered = message.to_lowercase();
-    for rule in ADAPTER_FAMILY_RULES {
+    let mut best_match = None;
+
+    for (index, rule) in rulepack.adapter_seed_rules.iter().enumerate() {
         let matched_conditions = rule
-            .contains_any
+            .terms
             .iter()
-            .filter(|needle| lowered.contains(**needle))
+            .filter(|needle| lowered.contains(needle.as_str()))
             .map(|needle| format!("message_contains={needle}"))
             .collect::<Vec<_>>();
-        if !matched_conditions.is_empty() {
-            return AdapterFamilyDecision {
-                family: rule.family.to_string(),
-                rule_id: rule.id.to_string(),
-                matched_conditions,
-                suppression_reason: None,
-            };
+
+        if matched_conditions.is_empty() {
+            continue;
+        }
+
+        let should_replace = match best_match.as_ref() {
+            None => true,
+            Some((best_priority, best_index, _, _)) => {
+                (rule.priority, index) < (*best_priority, *best_index)
+            }
+        };
+        if should_replace {
+            best_match = Some((rule.priority, index, rule, matched_conditions));
         }
     }
-    AdapterFamilyDecision {
-        family: "unknown".to_string(),
-        rule_id: "rule.family_seed.unknown".to_string(),
-        matched_conditions: vec!["no_seed_rule_matched".to_string()],
-        suppression_reason: Some("generic_fallback".to_string()),
+
+    if let Some((_, _, rule, matched_conditions)) = best_match {
+        return build_family_decision(
+            rule.family.clone(),
+            rule.rule_id.clone(),
+            matched_conditions,
+            None,
+        );
     }
+
+    let fallback = &rulepack.unknown_fallback;
+    build_family_decision(
+        fallback.family.clone(),
+        fallback.rule_id.clone(),
+        fallback.matched_conditions.clone(),
+        Some(fallback.suppression_reason.clone()),
+    )
 }
 
-pub(crate) fn first_action_hint(family: &str) -> String {
-    match family {
-        "syntax" => "fix the parse error at the first user-owned location".to_string(),
-        "type_overload" => "compare the expected and actual types at the call site".to_string(),
-        "template" => "start from the first user-owned template frame and match template arguments"
+fn build_family_decision(
+    family: String,
+    rule_id: String,
+    matched_conditions: Vec<String>,
+    suppression_reason: Option<String>,
+) -> AdapterFamilyDecision {
+    AdapterFamilyDecision {
+        first_action_hint: checked_in_rulepack()
+            .residual()
+            .action_hint_for_family(&family)
             .to_string(),
-        "macro_include" => {
-            "inspect the user-owned include edge or macro invocation that triggers the error"
-                .to_string()
-        }
-        "linker.undefined_reference" => {
-            "define the missing symbol or adjust link order/library inputs".to_string()
-        }
-        "linker.multiple_definition" => {
-            "keep exactly one definition and move shared declarations into headers".to_string()
-        }
-        _ => "inspect the preserved compiler diagnostics for the first corrective step".to_string(),
+        family,
+        rule_id,
+        matched_conditions,
+        suppression_reason,
     }
 }
 
@@ -464,6 +438,54 @@ mod tests {
         assert_eq!(
             infer("invalid conversion from 'int' to 'char *'"),
             Phase::Semantic
+        );
+    }
+
+    #[test]
+    fn classifies_family_seed_from_checked_in_rulepack() {
+        let decision =
+            classify_family_seed("undefined reference to `missing_symbol`\nrequired from here");
+
+        assert_eq!(decision.family, "linker.undefined_reference");
+        assert_eq!(
+            decision.rule_id,
+            "rule.family_seed.linker.undefined_reference"
+        );
+        assert_eq!(
+            decision.matched_conditions,
+            vec!["message_contains=undefined reference".to_string()]
+        );
+    }
+
+    #[test]
+    fn uses_rulepack_action_hint_for_specific_linker_seed() {
+        let decision =
+            classify_family_seed("helper.c:(.text+0x0): multiple definition of `duplicate_symbol'");
+
+        assert_eq!(decision.family, "linker.multiple_definition");
+        assert_eq!(
+            decision.first_action_hint,
+            "remove the duplicate definition or make the symbol internal to one translation unit"
+        );
+    }
+
+    #[test]
+    fn falls_back_to_rulepack_unknown_seed() {
+        let decision = classify_family_seed("this diagnostic does not match any adapter seed");
+
+        assert_eq!(decision.family, "unknown");
+        assert_eq!(decision.rule_id, "rule.family.unknown");
+        assert_eq!(
+            decision.matched_conditions,
+            vec!["no_family_rule_matched".to_string()]
+        );
+        assert_eq!(
+            decision.suppression_reason.as_deref(),
+            Some("generic_fallback")
+        );
+        assert_eq!(
+            decision.first_action_hint,
+            "inspect the preserved raw diagnostics for the first corrective action"
         );
     }
 }

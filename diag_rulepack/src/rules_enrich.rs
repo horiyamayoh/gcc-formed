@@ -25,6 +25,9 @@ pub struct EnrichRulepack {
     pub passthrough_fallback: FallbackRuleConfig,
     /// Ordered list of family match rules evaluated during enrichment.
     pub rules: Vec<FamilyRuleConfig>,
+    /// Ordered seed rules used by ingress adapters before enrichment.
+    #[serde(default)]
+    pub adapter_seed_rules: Vec<AdapterSeedRuleConfig>,
     /// Default confidence policy used when no family-specific policy exists.
     pub default_confidence_policy: ConfidencePolicyConfig,
     /// Family-specific confidence policies.
@@ -90,6 +93,19 @@ pub struct FamilyRuleConfig {
     /// Phase annotations applied when this rule matches.
     #[serde(default)]
     pub phase_annotations: Vec<PhaseAnnotationConfig>,
+}
+
+/// Declarative adapter seed rule evaluated against ingress message text.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AdapterSeedRuleConfig {
+    /// Unique rule identifier for tracing and auditing.
+    pub rule_id: String,
+    /// Target family name this adapter seed assigns on match.
+    pub family: String,
+    /// Explicit priority used to order seed evaluation.
+    pub priority: u32,
+    /// Terms matched against the normalized primary or related messages.
+    pub terms: Vec<String>,
 }
 
 /// Strategy that determines how a family rule matches diagnostic messages.

@@ -49,6 +49,13 @@ mod tests {
             rulepack.enrich().rule("syntax").rule_id,
             "rule.family.syntax.phase_or_message"
         );
+        assert!(
+            rulepack
+                .enrich()
+                .adapter_seed_rules
+                .iter()
+                .any(|entry| entry.rule_id == "rule.family_seed.syntax")
+        );
         assert_eq!(
             rulepack
                 .residual()
@@ -56,6 +63,12 @@ mod tests {
                 .headline
                 .as_deref(),
             Some("template instantiation failed")
+        );
+        assert_eq!(
+            rulepack
+                .residual()
+                .action_hint_for_family("linker.multiple_definition"),
+            "remove the duplicate definition or make the symbol internal to one translation unit"
         );
         assert!(
             rulepack
@@ -169,6 +182,40 @@ mod tests {
         match error {
             RulepackError::InvalidRulepack { message, .. } => {
                 assert!(message.contains("message_terms"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_adapter_seed_rule_without_terms() {
+        let temp_dir = TempDir::new().unwrap();
+        let manifest_path = copy_checked_in_rulepack(&temp_dir);
+        let enrich_path = temp_dir.path().join("enrich.rulepack.json");
+        let mut enrich: EnrichRulepack =
+            serde_json::from_slice(&fs::read(&enrich_path).unwrap()).unwrap();
+        enrich.adapter_seed_rules[0].terms.clear();
+        let enrich_raw = serde_json::to_vec_pretty(&enrich).unwrap();
+        fs::write(&enrich_path, &enrich_raw).unwrap();
+
+        let mut manifest: RulepackManifest =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest
+            .sections
+            .iter_mut()
+            .find(|section| section.path == "enrich.rulepack.json")
+            .unwrap()
+            .sha256 = hex_sha256(&enrich_raw);
+        fs::write(
+            &manifest_path,
+            serde_json::to_vec_pretty(&manifest).unwrap(),
+        )
+        .unwrap();
+
+        let error = load_rulepack_from_manifest(&manifest_path).unwrap_err();
+        match error {
+            RulepackError::InvalidRulepack { message, .. } => {
+                assert!(message.contains("adapter_seed_rule.terms"));
             }
             other => panic!("unexpected error: {other:?}"),
         }

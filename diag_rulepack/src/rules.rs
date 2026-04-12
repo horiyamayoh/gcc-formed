@@ -362,6 +362,14 @@ impl ResidualRulepack {
             .map(|entry| entry.text.as_str())
     }
 
+    /// Returns the preferred action hint for the given family.
+    pub fn action_hint_for_family(&self, family: &str) -> &str {
+        self.specific_wording_override(family)
+            .map(|entry| entry.first_action_hint.as_str())
+            .or_else(|| self.generic_action_hint(family))
+            .unwrap_or(self.wording.default_action_hint.as_str())
+    }
+
     /// Returns the specific wording override for the given family, if one exists.
     pub fn specific_wording_override(&self, family: &str) -> Option<&SpecificWordingOverride> {
         self.wording

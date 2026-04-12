@@ -273,6 +273,66 @@
       "semantic_role_condition": "semantic_role=passthrough"
     }
   ],
+  "adapter_seed_rules": [
+    {
+      "rule_id": "rule.family_seed.linker.undefined_reference",
+      "family": "linker.undefined_reference",
+      "priority": 10,
+      "terms": [
+        "undefined reference"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.linker.multiple_definition",
+      "family": "linker.multiple_definition",
+      "priority": 20,
+      "terms": [
+        "multiple definition"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.template",
+      "family": "template",
+      "priority": 30,
+      "terms": [
+        "template",
+        "required from",
+        "required by substitution",
+        "deduction/substitution",
+        "deduced conflicting"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.macro_include",
+      "family": "macro_include",
+      "priority": 40,
+      "terms": [
+        "macro",
+        "include"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.type_overload",
+      "family": "type_overload",
+      "priority": 50,
+      "terms": [
+        "cannot convert",
+        "no matching",
+        "invalid conversion",
+        "incompatible type",
+        "passing argument"
+      ]
+    },
+    {
+      "rule_id": "rule.family_seed.syntax",
+      "family": "syntax",
+      "priority": 60,
+      "terms": [
+        "expected",
+        "before"
+      ]
+    }
+  ],
   "default_confidence_policy": {
     "high_when_any": [
       {

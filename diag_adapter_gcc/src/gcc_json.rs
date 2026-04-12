@@ -1,8 +1,8 @@
 //! GCC JSON diagnostic parsing.
 
 use crate::classify::{
-    PhaseInferenceSignals, classify_family_seed, combined_message_seed, first_action_hint,
-    infer_phase, infer_related_phase, infer_related_role, structured_message_text,
+    PhaseInferenceSignals, classify_family_seed, combined_message_seed, infer_phase,
+    infer_related_phase, infer_related_role, structured_message_text,
 };
 use crate::context::{option_context_kind, text_context_kinds};
 use crate::fixits::suggestion_from_edits;
@@ -166,7 +166,7 @@ fn gcc_json_diagnostic_to_node(
                     .to_string()
                     .into(),
             ),
-            first_action_hint: Some(first_action_hint(family_decision.family.as_str()).into()),
+            first_action_hint: Some(family_decision.first_action_hint.clone().into()),
             confidence: Some(Confidence::Medium.score()),
             preferred_primary_location_id: None,
             rule_id: Some(family_decision.rule_id.into()),

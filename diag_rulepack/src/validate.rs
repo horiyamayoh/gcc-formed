@@ -73,6 +73,12 @@ pub(crate) fn validate_enrich_rulepack(
             "checked-in enrich rulepack must define at least one family rule",
         ));
     }
+    if rulepack.adapter_seed_rules.is_empty() {
+        return Err(invalid_rulepack(
+            path,
+            "checked-in enrich rulepack must define at least one adapter seed rule",
+        ));
+    }
 
     let mut families = BTreeSet::new();
     let mut rule_ids = BTreeSet::new();
@@ -146,6 +152,37 @@ pub(crate) fn validate_enrich_rulepack(
                 "rule.phase_annotations.condition",
             )?;
         }
+    }
+
+    let mut adapter_seed_priorities = BTreeSet::new();
+    for seed in &rulepack.adapter_seed_rules {
+        if !rule_ids.insert(seed.rule_id.as_str()) {
+            return Err(invalid_rulepack(
+                path,
+                format!(
+                    "duplicate rule id in checked-in enrich rulepack: {}",
+                    seed.rule_id
+                ),
+            ));
+        }
+        if !adapter_seed_priorities.insert(seed.priority) {
+            return Err(invalid_rulepack(
+                path,
+                format!(
+                    "duplicate adapter seed priority in checked-in enrich rulepack: {}",
+                    seed.priority
+                ),
+            ));
+        }
+        ensure_non_empty(&seed.rule_id, path, "adapter_seed_rule.rule_id")?;
+        ensure_non_empty(&seed.family, path, "adapter_seed_rule.family")?;
+        if seed.terms.is_empty() {
+            return Err(invalid_rulepack(
+                path,
+                "adapter_seed_rule.terms must define at least one term",
+            ));
+        }
+        ensure_non_empty_strings(&seed.terms, path, "adapter_seed_rule.terms")?;
     }
 
     let mut confidence_families = BTreeSet::new();

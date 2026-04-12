@@ -1445,7 +1445,9 @@ mod tests {
             root.analysis
                 .as_ref()
                 .and_then(|analysis| analysis.first_action_hint.as_deref()),
-            Some("keep exactly one definition and move shared declarations into headers")
+            Some(
+                "remove the duplicate definition or make the symbol internal to one translation unit"
+            )
         );
     }
 
