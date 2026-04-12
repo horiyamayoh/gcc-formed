@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:8:20",
+      "child_notes": [
+        "declared private here"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "                   ^"
+          ],
+          "lines": [
+            "    return counter.value;"
+          ],
+          "location": "src/main.cpp:8:20"
+        }
+      ],
+      "family": "access_control",
+      "first_action": "use a public interface, add a friend declaration, or change access specifier",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=is private within this context",
+        "phase=semantic"
+      ],
+      "raw_message": "'int Counter::value' is private within this context",
+      "rule_id": "rule.family.access_control.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "access to private or protected member"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

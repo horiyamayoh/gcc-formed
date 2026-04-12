@@ -1,0 +1,7 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:5:16: error: invalid use of incomplete type 'struct Node'
+    5 |     return node->value;
+      |                ^~
+src/main.cpp:1:8: note: forward declaration of 'struct Node'
+    1 | struct Node;
+      |        ^~~~

@@ -1,0 +1,179 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:5:16: error: invalid use of incomplete type 'struct Node'\n    5 |     return node->value;\n      |                ^~\nsrc/main.cpp:1:8: note: forward declaration of 'struct Node'\n    1 | struct Node;\n      |        ^~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 271,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4420,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "pointer_reference",
+        "first_action_hint": "provide the full type definition via #include or fix the value category",
+        "headline": "invalid pointer or reference operation",
+        "matched_conditions": [
+          "message_contains=incomplete type",
+          "message_contains=invalid use of incomplete type",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.pointer_reference.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "forward declaration of 'struct Node'",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "26f8c1c8eda4956c291ad15e6d0e6b3752476fef8dff46c8dd750e4976ceb882",
+            "raw": "b01eb43508689ff4137e15d11c73a4bf31530338d9a1a33d85117e6e84bbaad8",
+            "structural": "51592ca6b744b54f6ed806b3bf3cfbe8920735de1228a7d3a69d3b0c9d3326f7"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 8,
+                "column_native": 8,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:8:1:8",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "forward declaration of 'struct Node'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "5ce1ed45e9aba9e7f9ea190016f08934275e5f64a5dd77516054939385a98c32",
+        "raw": "f09abe798406c3a769f2668db152c1fa5591077e3f45d2c0b251a510ff33c034",
+        "structural": "54d69413dce6f34a5c1ce3b4cbd6a8b68a0d74f5f5009302a53022f5fadc5f95"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 16,
+            "column_native": 16,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 5
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:5:16:5:16",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "invalid use of incomplete type 'struct Node'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "defd9198d194ae91aec1382a84c7ee5ef7e256480731a2084b09414663cd0654",
+    "raw": "5fa6281e1e3059913d8c211425658a35cc2ef324633345ce9940f02848aa40b9",
+    "structural": "ab9c19b6254697f84ff3acde321addcff197f830e100a4ed6cdf363e8068c608"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

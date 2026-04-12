@@ -849,6 +849,80 @@ main.cpp:3:5: note: declared here\n";
     }
 
     #[test]
+    fn classifies_conversion_narrowing_compiler_warning() {
+        let stderr = "main.c:2:17: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("conversion_narrowing")
+        );
+    }
+
+    #[test]
+    fn classifies_const_qualifier_compiler_warning() {
+        let stderr = "main.c:7:18: warning: passing argument 1 of 'takes' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Warning);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("const_qualifier")
+        );
+    }
+
+    #[test]
+    fn classifies_pointer_reference_compiler_error() {
+        let stderr = "\
+main.cpp:5:16: error: invalid use of incomplete type 'struct Node'\n\
+main.cpp:1:8: note: forward declaration of 'struct Node'\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("pointer_reference")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
+    fn classifies_access_control_compiler_error() {
+        let stderr = "\
+access.cpp:8:20: error: 'int Counter::value' is private within this context\n\
+access.cpp:3:9: note: declared private here\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].severity, Severity::Error);
+        assert_eq!(nodes[0].phase, Phase::Semantic);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("access_control")
+        );
+        assert_eq!(nodes[0].children.len(), 1);
+    }
+
+    #[test]
     fn keeps_structured_compiler_residuals_when_passthrough_is_disabled() {
         let stderr = "\
 main.cpp:5:7: error: no matching function for call to 'takes(int)'\n\

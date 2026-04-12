@@ -1,0 +1,158 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'main':\nsrc/main.c:7:18: warning: passing argument 1 of 'takes' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]\n    7 |     return takes(&value);\n      |                  ^~~~~~\nsrc/main.c:1:16: note: expected 'int *' but argument is of type 'const int *'\n    1 | int takes(int *ptr) {\n      |           ~~~~~^~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 366,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4738,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "493a5114eb096339f30cf1e5a935511e0e9c1cd5b75263dc5b0d192bc57d086d",
+            "raw": "250aae0c5c2833323fa135c5002c0a9855147691630c2516a4ac3d99c838ef9d",
+            "structural": "575fd010052c8a21145401c7f3d800aa4af1e2ec5ad330fecfdc429eb2b76b02"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 11,
+                "column_native": 11,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:1:11:1:11",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "expected 'int *' but argument is of type 'const int *'"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "76e774a34a8ccc90a839869533867c63b70b5841d90da5fa09a4f67dd15ffaeb",
+        "raw": "42a04b016e3a4b63097ad1f6a07b51da48fde2340b4fc9d8de495a85acdeb66e",
+        "structural": "2605cb2fcedd3601081e2772f255e657f1926887daa33707358e610cffcb20de"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 18,
+            "column_native": 18,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:7:18:7:18",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "passing argument 1 of 'takes' discards 'const' qualifier from pointer target type"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "708d66328a41b4e3011b02107460b6076d38f25529399f9715c760032ac0e1e4",
+    "structural": "2104adb81dfc23d6a37462e2e1999970807d48887d367707fd15238d4865a84a"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

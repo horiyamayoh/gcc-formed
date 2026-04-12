@@ -494,6 +494,28 @@ mod tests {
     }
 
     #[test]
+    fn classifies_conversion_narrowing_seed_from_rulepack() {
+        let decision = classify_family_seed(
+            "comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]",
+        );
+
+        assert_eq!(decision.family, "conversion_narrowing");
+        assert_eq!(decision.rule_id, "rule.family_seed.conversion_narrowing");
+        assert_eq!(
+            decision.first_action_hint,
+            "add an explicit cast or change the variable type to match"
+        );
+    }
+
+    #[test]
+    fn preserves_type_overload_seed_precedence_over_conversion_narrowing() {
+        let decision = classify_family_seed("invalid conversion from 'const char *' to 'int'");
+
+        assert_eq!(decision.family, "type_overload");
+        assert_eq!(decision.rule_id, "rule.family_seed.type_overload");
+    }
+
+    #[test]
     fn falls_back_to_rulepack_unknown_seed() {
         let decision = classify_family_seed("this diagnostic does not match any adapter seed");
 

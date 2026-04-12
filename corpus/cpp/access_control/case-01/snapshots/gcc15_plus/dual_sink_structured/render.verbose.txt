@@ -1,0 +1,11 @@
+error: access to private or protected member
+--> src/main.cpp:8:20
+help: use a public interface, add a friend declaration, or change access specifier
+why: 'int Counter::value' is private within this context
+| src/main.cpp:8:20
+|     return counter.value;
+|                    ^
+note: declared private here
+debug: rule_id=rule.family.access_control.message_terms
+debug: matched_conditions=message_contains=is private within this context, phase=semantic
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

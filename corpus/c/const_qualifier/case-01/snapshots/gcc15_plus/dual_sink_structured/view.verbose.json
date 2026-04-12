@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:7:18",
+      "child_notes": [
+        "expected 'int *' but argument is of type 'const int *'"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "                 ^"
+          ],
+          "lines": [
+            "    return takes(&value);"
+          ],
+          "location": "src/main.c:7:18"
+        }
+      ],
+      "family": "const_qualifier",
+      "first_action": "make the destination const-correct or remove the const from the source",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=discards 'const' qualifier",
+        "phase=semantic"
+      ],
+      "raw_message": "passing argument 1 of 'takes' discards 'const' qualifier from pointer target type",
+      "rule_id": "rule.family.const_qualifier.message_terms",
+      "severity": "warning",
+      "suppression_reason": null,
+      "title": "const qualification violation"
+    }
+  ],
+  "summary": {
+    "failure_kind": "warnings_only",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

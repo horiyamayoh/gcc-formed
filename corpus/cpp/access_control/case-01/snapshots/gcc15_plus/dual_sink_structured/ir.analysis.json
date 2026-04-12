@@ -1,0 +1,178 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:8:20: error: 'int Counter::value' is private within this context\n    8 |     return counter.value;\n      |                    ^~~~~\nsrc/main.cpp:3:9: note: declared private here\n    3 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 280,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 4454,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "access_control",
+        "first_action_hint": "use a public interface, add a friend declaration, or change access specifier",
+        "headline": "access to private or protected member",
+        "matched_conditions": [
+          "message_contains=is private within this context",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.access_control.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "declared private here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "bb5f860d4cbebdfef5f19f1146253df7944d4261c2161b62df4eefcaefff168b",
+            "raw": "a63d0af0f116d6504d8db277cd6c0ec11bd66a819b392623e171f6d36f51916b",
+            "structural": "efe2d79efa7bb7eb5bcac608e738941e4a0866d77268b2b55bdf94929bc58006"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:9:3:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "declared private here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "f6ed6c115117b7df7a23124b8838468c3c2bb8bc2ff9547380495cc0e37c4e6b",
+        "raw": "2f7602dd881ea6aebf6b14a32c0dc85e356197aaed37719ec95c9cf1448c070b",
+        "structural": "37934d8391858eb93202389cb3b540c1f001bd56ec6a4269ddd38e920fcdffba"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 20,
+            "column_native": 20,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 8
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:8:20:8:20",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'int Counter::value' is private within this context"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "f173fa75d4cc1ecaf051ff391786781a86f2fe879524a999613a37afc0d4702a",
+    "raw": "091d57cb29dfe14e5fd63f2ce9086f52d5c73cfac895da040d84b871eccaf21c",
+    "structural": "df847bab3676460e927207631b2b6fe90fe596954965fed9f6cbfe5a34843b1b"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

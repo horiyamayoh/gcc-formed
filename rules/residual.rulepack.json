@@ -43,6 +43,22 @@
         "text": "variable used without initialization"
       },
       {
+        "family": "conversion_narrowing",
+        "text": "implicit or narrowing conversion detected"
+      },
+      {
+        "family": "const_qualifier",
+        "text": "const qualification violation"
+      },
+      {
+        "family": "pointer_reference",
+        "text": "invalid pointer or reference operation"
+      },
+      {
+        "family": "access_control",
+        "text": "access to private or protected member"
+      },
+      {
         "family": "passthrough",
         "text": "showing conservative wrapper view"
       },
@@ -95,6 +111,22 @@
       {
         "family": "uninitialized",
         "text": "initialize the variable at its declaration or before first use"
+      },
+      {
+        "family": "conversion_narrowing",
+        "text": "add an explicit cast or change the variable type to match"
+      },
+      {
+        "family": "const_qualifier",
+        "text": "make the destination const-correct or remove the const from the source"
+      },
+      {
+        "family": "pointer_reference",
+        "text": "provide the full type definition via #include or fix the value category"
+      },
+      {
+        "family": "access_control",
+        "text": "use a public interface, add a friend declaration, or change access specifier"
       },
       {
         "family": "passthrough",
@@ -268,6 +300,74 @@
         "match_any": [
           "is used uninitialized",
           "may be used uninitialized"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "conversion_narrowing",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_conversion_narrowing",
+        "headline_strategy": "fixed_text",
+        "headline": "implicit or narrowing conversion detected",
+        "first_action_hint": "add an explicit cast or change the variable type to match",
+        "match_any": [
+          "narrowing conversion",
+          "implicit conversion",
+          "may change value",
+          "different signedness",
+          "signed/unsigned comparison"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "const_qualifier",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_const_qualifier",
+        "headline_strategy": "fixed_text",
+        "headline": "const qualification violation",
+        "first_action_hint": "make the destination const-correct or remove the const from the source",
+        "match_any": [
+          "discards qualifiers",
+          "discards 'const' qualifier",
+          "assignment of read-only variable",
+          "assignment of read-only member",
+          "read-only object",
+          "passing 'const",
+          "qualifiers ignored on function return type"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "pointer_reference",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_pointer_reference",
+        "headline_strategy": "fixed_text",
+        "headline": "invalid pointer or reference operation",
+        "first_action_hint": "provide the full type definition via #include or fix the value category",
+        "match_any": [
+          "incomplete type",
+          "invalid use of incomplete type",
+          "dereferencing pointer to incomplete type",
+          "lvalue required",
+          "cannot bind",
+          "taking address of temporary",
+          "cannot take the address of",
+          "invalid initialization of reference"
+        ]
+      },
+      {
+        "kind": "syntax",
+        "family": "access_control",
+        "phase": "semantic",
+        "rule_id": "rule.residual.compiler_access_control",
+        "headline_strategy": "fixed_text",
+        "headline": "access to private or protected member",
+        "first_action_hint": "use a public interface, add a friend declaration, or change access specifier",
+        "match_any": [
+          "is private within this context",
+          "is protected within this context",
+          "is inaccessible within this context",
+          "is inaccessible"
         ]
       },
       {

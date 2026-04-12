@@ -1,0 +1,15 @@
+corpus_id: c/const_qualifier/case-01
+title: discarded const qualifier in function call
+tags:
+  - const_qualifier
+  - phase1
+ownership: curated
+provenance: hand-authored
+reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-12'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

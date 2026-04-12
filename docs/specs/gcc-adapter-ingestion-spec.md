@@ -957,15 +957,19 @@ raw stderr residual classifier は、structured path の外側にある text を
 9. `return_type`
 10. `format_string`
 11. `uninitialized`
-12. `driver_fatal`
-13. `linker.undefined_reference`
-14. `linker.multiple_definition`
-15. `linker.cannot_find_library`
-16. `linker.file_format_or_relocation`
-17. `collect2_summary`
-18. `assembler_error`
-19. `internal_compiler_error_banner`
-20. `passthrough`
+12. `conversion_narrowing`
+13. `const_qualifier`
+14. `pointer_reference`
+15. `access_control`
+16. `driver_fatal`
+17. `linker.undefined_reference`
+18. `linker.multiple_definition`
+19. `linker.cannot_find_library`
+20. `linker.file_format_or_relocation`
+21. `collect2_summary`
+22. `assembler_error`
+23. `internal_compiler_error_banner`
+24. `passthrough`
 
 ### 20.3 classifier の安全原則
 
@@ -973,7 +977,7 @@ raw stderr residual classifier は、structured path の外側にある text を
 - **MUST NOT** weak / open-ended な generic GCC text diagnostics を推定で family 化する
 - **MUST NOT** location を捏造する
 - **SHOULD** confidence を family ごとに固定または narrow range で出す
-- **MAY** `scope_declaration` / `redefinition` / `deleted_function` / `unused` / `return_type` / `format_string` / `uninitialized` のような high-precision compiler residual family を明示 wording で分類する
+- **MAY** `scope_declaration` / `redefinition` / `deleted_function` / `unused` / `return_type` / `format_string` / `uninitialized` / `conversion_narrowing` / `const_qualifier` / `pointer_reference` / `access_control` のような high-precision compiler residual family を明示 wording で分類する
 - **MAY** symbol / archive / object file 名を抽出する
 
 ### 20.4 grouping 規則

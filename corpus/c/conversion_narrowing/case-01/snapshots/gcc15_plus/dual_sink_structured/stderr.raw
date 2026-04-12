@@ -1,0 +1,4 @@
+src/main.c: In function 'compare_values':
+src/main.c:2:17: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+    2 |     return left < right;
+      |                 ^

@@ -1,0 +1,9 @@
+warning: const qualification violation
+--> src/main.c:7:18
+help: make the destination const-correct or remove the const from the source
+why: passing argument 1 of 'takes' discards 'const' qualifier from pointer target type
+| src/main.c:7:18
+|     return takes(&value);
+|                  ^
+note: expected 'int *' but argument is of type 'const int *'
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

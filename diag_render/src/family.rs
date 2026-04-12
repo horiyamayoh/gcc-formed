@@ -892,6 +892,22 @@ mod tests {
             RendererFamilyKind::Syntax
         );
         assert_eq!(
+            renderer_family_kind(&sample_node("conversion_narrowing")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("const_qualifier")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("pointer_reference")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
+            renderer_family_kind(&sample_node("access_control")),
+            RendererFamilyKind::Syntax
+        );
+        assert_eq!(
             renderer_family_kind(&sample_node("linker.undefined_reference")),
             RendererFamilyKind::Linker
         );

@@ -1,0 +1,8 @@
+src/main.cpp:8:20: error: access to private or protected member
+help: use a public interface, add a friend declaration, or change access specifier
+why: 'int Counter::value' is private within this context
+| src/main.cpp:8:20
+|     return counter.value;
+|                    ^
+note: declared private here
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

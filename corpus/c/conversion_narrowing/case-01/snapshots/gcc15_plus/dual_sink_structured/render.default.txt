@@ -1,0 +1,8 @@
+warning: implicit or narrowing conversion detected
+--> src/main.c:2:17
+help: add an explicit cast or change the variable type to match
+why: comparison of integer expressions of different signedness: 'int' and 'unsigned int'
+| src/main.c:2:17
+|     return left < right;
+|                 ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

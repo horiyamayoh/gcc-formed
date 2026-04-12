@@ -1,0 +1,15 @@
+corpus_id: cpp/access_control/case-01
+title: private member access from user code
+tags:
+  - access_control
+  - phase1
+ownership: curated
+provenance: hand-authored
+reviewer: codex
+redaction_class: public
+owner_team: compiler-ux
+last_reviewed: '2026-04-12'
+reviewers:
+  - codex
+promotion_status: curated
+known_version_drift_notes: []

@@ -1,0 +1,123 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.c: In function 'compare_values':\nsrc/main.c:2:17: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]\n    2 |     return left < right;\n      |                 ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 228,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "gcc",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3820,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "conversion_narrowing",
+        "first_action_hint": "add an explicit cast or change the variable type to match",
+        "headline": "implicit or narrowing conversion detected",
+        "matched_conditions": [
+          "message_contains=different signedness",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.conversion_narrowing.message_terms"
+      },
+      "fingerprints": {
+        "family": "77ed704816941e9915f70a720c692ddd8f5757bd95665ff34ef381bdaffa7b5a",
+        "raw": "552eff94543afdb84f3ece3cd90d0efcd0c96f5dda05523e356bf24e76ef53b2",
+        "structural": "b5113223dbdf82ec5affc8869e68f6608fbc30f8e66fab9904eb570d606532ae"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 17,
+            "column_native": 17,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:2:17:2:17",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "625e262c1c223c95d80263c7212b386324b93bec141375e5dcd8011017476eeb",
+    "raw": "84be342d5fc5db8467bfdecb2cc293352f336686ddb05937a64a529ebe15ec92",
+    "structural": "1a70d7e1814338dbdd79beda09322197ffd265f43ed740f60ca06b3ec6309f48"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wsign-compare",
+      "-c",
+      "src/main.c"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

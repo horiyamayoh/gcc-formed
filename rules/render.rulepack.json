@@ -46,6 +46,30 @@
     },
     {
       "kind": "syntax",
+      "match_exact": "conversion_narrowing",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "const_qualifier",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "pointer_reference",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
+      "match_exact": "access_control",
+      "specificity_rank": 2,
+      "band_c_conservative_useful_subset": true
+    },
+    {
+      "kind": "syntax",
       "match_exact": "syntax",
       "specificity_rank": 2,
       "band_c_conservative_useful_subset": true

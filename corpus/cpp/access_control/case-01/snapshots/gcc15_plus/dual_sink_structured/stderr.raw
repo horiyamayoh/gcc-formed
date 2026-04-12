@@ -1,0 +1,7 @@
+src/main.cpp: In function 'int main()':
+src/main.cpp:8:20: error: 'int Counter::value' is private within this context
+    8 |     return counter.value;
+      |                    ^~~~~
+src/main.cpp:3:9: note: declared private here
+    3 |     int value = 1;
+      |         ^~~~~
