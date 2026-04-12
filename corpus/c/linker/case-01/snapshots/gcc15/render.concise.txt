@@ -6,5 +6,5 @@ linker: symbol `duplicate`
 raw:
   helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
 other errors:
-  - error: linker reported a failure
+  - error: driver reported a linker failure summary
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

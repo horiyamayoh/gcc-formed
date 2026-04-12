@@ -2,19 +2,13 @@ use crate::{
     AnchorSource, CandidatePair, CandidateReason, CascadeContext, CascadeError, CascadeReport,
     DocumentAnalyzer, LogicalGroup, candidate_pairs, extract_logical_groups,
 };
-use diag_backend_probe::{ProcessingPath, VersionBand};
 use diag_core::{
     CascadePolicySnapshot, CompressionLevel, DiagnosticDocument, DiagnosticEpisode, DiagnosticNode,
-    DocumentAnalysis, EpisodeGraph, EpisodeRelation, EpisodeRelationKind, FallbackGrade,
-    GroupCascadeAnalysis, GroupCascadeRole, Ownership, Score, SourceAuthority, VisibilityFloor,
-    fingerprint_for,
+    DocumentAnalysis, EpisodeGraph, EpisodeRelation, EpisodeRelationKind, GroupCascadeAnalysis,
+    GroupCascadeRole, Ownership, Score, VisibilityFloor, fingerprint_for,
 };
+use diag_rulepack::{CascadeRedundancyPolicy, checked_in_cascade_rulepack};
 use std::collections::{BTreeMap, BTreeSet};
-
-const INDEPENDENT_ROOT_SCORE: f32 = 0.50;
-const DEPENDENCY_THRESHOLD: f32 = 0.70;
-const DUPLICATE_THRESHOLD: f32 = 0.78;
-const PARENT_ROOT_ADVANTAGE_MIN: f32 = 0.05;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SafeDocumentAnalyzer;
@@ -42,16 +36,6 @@ struct ParentSelection {
     best_candidate: Option<RelationAssessment>,
     best_margin: Option<f32>,
     ambiguous: bool,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct HiddenPolicy {
-    dependency_threshold_delta: f32,
-    margin_delta: f32,
-    extra_evidence_points: usize,
-    hidden_disabled: bool,
-    duplicate_only: bool,
-    suppress_penalty: f32,
 }
 
 impl DocumentAnalyzer for SafeDocumentAnalyzer {
@@ -109,6 +93,7 @@ fn score_root_group(
     group: &LogicalGroup,
     context: &CascadeContext,
 ) -> RootAssessment {
+    let rulepack = checked_in_cascade_rulepack();
     let node = &document.diagnostics[group.node_index];
     let mut score = 0.34;
     let mut tags = BTreeSet::new();
@@ -118,8 +103,9 @@ fn score_root_group(
         .and_then(|analysis| analysis.family.as_deref())
         .unwrap_or("unknown");
     let message = normalized_message(node);
+    let message_lower = message.to_lowercase();
 
-    if is_strong_root_family(family, node, &message) {
+    if is_strong_root_family(rulepack, family, node, &message_lower) {
         score += 0.22;
         tags.insert("strong_root_family".to_string());
     } else if family != "unknown" {
@@ -179,12 +165,12 @@ fn score_root_group(
         tags.insert("early_invocation".to_string());
     }
 
-    if is_generic_follow_on(node, family, &message) {
+    if is_generic_follow_on(rulepack, node, family, &message_lower) {
         score -= 0.26;
         tags.insert("generic_follow_on".to_string());
     }
 
-    if is_candidate_note_repeat(node, family, &message) {
+    if is_candidate_note_repeat(rulepack, node, family, &message_lower) {
         score -= 0.18;
         tags.insert("candidate_note_repeat".to_string());
     }
@@ -194,7 +180,7 @@ fn score_root_group(
         tags.insert("no_primary_location".to_string());
     }
 
-    if is_generic_linker_wrapper(node, family, &message) {
+    if is_generic_linker_wrapper(rulepack, node, family, &message_lower) {
         score -= 0.20;
         tags.insert("generic_linker_wrapper".to_string());
     }
@@ -238,10 +224,15 @@ fn score_relation(
     roots: &[RootAssessment],
     pair: &CandidatePair,
 ) -> Option<RelationAssessment> {
+    let rulepack = checked_in_cascade_rulepack();
+    let weights = rulepack.weights();
     let parent = &groups[pair.left_index];
     let child = &groups[pair.right_index];
     let parent_node = &document.diagnostics[parent.node_index];
     let child_node = &document.diagnostics[child.node_index];
+    let parent_message = normalized_message(parent_node).to_lowercase();
+    let child_message = normalized_message(child_node).to_lowercase();
+    let child_policy = rulepack.family_policy(child.keys.family_key.as_str());
 
     if parent.keys.ordinal_in_invocation >= child.keys.ordinal_in_invocation {
         return None;
@@ -303,23 +294,54 @@ fn score_relation(
             CandidateReason::FamilyPhaseWindow => {
                 cascade += 0.05;
             }
+            CandidateReason::LinkerSummaryWindow => {
+                cascade += weights.linker_summary_window_bonus;
+                duplicate += 0.06;
+                tags.insert("linker_summary_window".to_string());
+                strong += 1;
+            }
         }
     }
 
     if is_generic_follow_on(
+        rulepack,
         child_node,
         child.keys.family_key.as_str(),
-        &normalized_message(child_node),
+        &child_message,
     ) {
-        cascade += 0.12;
+        cascade += child_policy.follow_on_cascade_bonus;
         tags.insert("generic_follow_on_child".to_string());
         medium += 1;
     }
 
+    if is_candidate_note_repeat(
+        rulepack,
+        child_node,
+        child.keys.family_key.as_str(),
+        &child_message,
+    ) {
+        cascade += 0.08;
+        duplicate += child_policy.candidate_duplicate_bonus;
+        tags.insert("candidate_repeat_child".to_string());
+        medium += 1;
+    }
+
+    if is_generic_linker_wrapper(
+        rulepack,
+        child_node,
+        child.keys.family_key.as_str(),
+        &child_message,
+    ) {
+        cascade += child_policy.generic_wrapper_cascade_bonus;
+        tags.insert("generic_linker_wrapper_child".to_string());
+        medium += 1;
+    }
+
     if is_strong_root_family(
+        rulepack,
         parent.keys.family_key.as_str(),
         parent_node,
-        &normalized_message(parent_node),
+        &parent_message,
     ) {
         cascade += 0.12;
     }
@@ -335,7 +357,9 @@ fn score_relation(
         medium += 1;
     }
 
-    if roots[pair.left_index].score >= roots[pair.right_index].score + PARENT_ROOT_ADVANTAGE_MIN {
+    if roots[pair.left_index].score
+        >= roots[pair.right_index].score + weights.parent_root_advantage_min
+    {
         cascade += 0.10;
         tags.insert("parent_root_advantage".to_string());
         medium += 1;
@@ -351,7 +375,7 @@ fn score_relation(
         tags.insert("separate_primary_problem".to_string());
     }
 
-    if parent.keys.origin_phase_key != child.keys.origin_phase_key {
+    if parent_node.phase != child_node.phase {
         cascade -= 0.35;
         tags.insert("cross_phase_without_shared_key".to_string());
     }
@@ -359,9 +383,9 @@ fn score_relation(
     cascade = clamp01(cascade);
     duplicate = clamp01(duplicate);
 
-    let (kind, score) = if duplicate >= DUPLICATE_THRESHOLD && duplicate >= cascade - 0.02 {
+    let (kind, score) = if duplicate >= weights.duplicate_threshold && duplicate >= cascade - 0.02 {
         (EpisodeRelationKind::Duplicate, duplicate)
-    } else if cascade >= DEPENDENCY_THRESHOLD {
+    } else if cascade >= weights.dependency_threshold {
         (EpisodeRelationKind::Cascade, cascade)
     } else {
         return None;
@@ -383,9 +407,10 @@ fn choose_parent_forest(
     policy: &CascadePolicySnapshot,
     context: &CascadeContext,
 ) -> Vec<ParentSelection> {
+    let weights = checked_in_cascade_rulepack().weights();
     let hidden_policy = hidden_policy(context);
-    let threshold = DEPENDENCY_THRESHOLD + hidden_policy.dependency_threshold_delta;
-    let min_margin = policy.min_parent_margin + hidden_policy.margin_delta;
+    let threshold = weights.dependency_threshold + hidden_policy.dependency_threshold_delta_score();
+    let min_margin = policy.min_parent_margin + hidden_policy.margin_delta_score();
     let mut selected = vec![ParentSelection::default(); by_child.len()];
     let mut accepted_parents = vec![None; by_child.len()];
 
@@ -456,7 +481,8 @@ fn build_document_analysis(
     let mut group_analysis = Vec::with_capacity(groups.len());
     let mut relations = Vec::new();
     let hidden_policy = hidden_policy(context);
-    let margin_floor = policy.min_parent_margin + hidden_policy.margin_delta;
+    let margin_floor = policy.min_parent_margin + hidden_policy.margin_delta_score();
+    let weights = checked_in_cascade_rulepack().weights();
 
     for (index, group) in groups.iter().enumerate() {
         let root_score = roots[index].score;
@@ -484,7 +510,7 @@ fn build_document_analysis(
             }
         } else if component.len() > 1 && index == lead_index {
             GroupCascadeRole::LeadRoot
-        } else if selection[index].ambiguous || root_score < INDEPENDENT_ROOT_SCORE {
+        } else if selection[index].ambiguous || root_score < weights.independent_root_score {
             GroupCascadeRole::Uncertain
         } else {
             GroupCascadeRole::IndependentRoot
@@ -753,7 +779,7 @@ fn suppress_likelihood_for(
                 0.66
             };
             clamp01(
-                (base + redundancy_bonus + margin_bonus + hidden_policy.suppress_penalty)
+                (base + redundancy_bonus + margin_bonus + hidden_policy.suppress_penalty_score())
                     .min(floor_cap),
             )
         }
@@ -822,87 +848,13 @@ fn hidden_allowed(
     relation.strong_evidence_count >= 1 && evidence_points >= required_points
 }
 
-fn hidden_policy(context: &CascadeContext) -> HiddenPolicy {
-    let mut policy = HiddenPolicy {
-        dependency_threshold_delta: 0.0,
-        margin_delta: 0.0,
-        extra_evidence_points: 0,
-        hidden_disabled: false,
-        duplicate_only: false,
-        suppress_penalty: 0.0,
-    };
-
-    match context.version_band {
-        VersionBand::Gcc15Plus => {}
-        VersionBand::Gcc13_14 => {
-            policy.suppress_penalty -= 0.02;
-        }
-        VersionBand::Gcc9_12 => {
-            policy.dependency_threshold_delta += 0.02;
-            policy.margin_delta += 0.01;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.05;
-        }
-        VersionBand::Unknown => {
-            policy.dependency_threshold_delta += 0.05;
-            policy.margin_delta += 0.03;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.10;
-        }
-    }
-
-    match context.processing_path {
-        ProcessingPath::DualSinkStructured => {}
-        ProcessingPath::SingleSinkStructured => {
-            policy.suppress_penalty -= 0.02;
-        }
-        ProcessingPath::NativeTextCapture => {
-            policy.dependency_threshold_delta += 0.04;
-            policy.margin_delta += 0.03;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.10;
-        }
-        ProcessingPath::Passthrough => {
-            policy.hidden_disabled = true;
-            policy.dependency_threshold_delta += 0.08;
-            policy.margin_delta += 0.05;
-            policy.suppress_penalty -= 0.18;
-        }
-    }
-
-    match context.source_authority {
-        SourceAuthority::Structured => {}
-        SourceAuthority::ResidualText => {
-            policy.dependency_threshold_delta += 0.03;
-            policy.margin_delta += 0.02;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.08;
-        }
-        SourceAuthority::None => {
-            policy.hidden_disabled = true;
-            policy.dependency_threshold_delta += 0.06;
-            policy.margin_delta += 0.03;
-            policy.suppress_penalty -= 0.12;
-        }
-    }
-
-    match context.fallback_grade {
-        FallbackGrade::None => {}
-        FallbackGrade::Compatibility => {
-            policy.margin_delta += 0.02;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.08;
-        }
-        FallbackGrade::FailOpen => {
-            policy.duplicate_only = true;
-            policy.dependency_threshold_delta += 0.04;
-            policy.margin_delta += 0.03;
-            policy.extra_evidence_points += 1;
-            policy.suppress_penalty -= 0.14;
-        }
-    }
-
-    policy
+fn hidden_policy(context: &CascadeContext) -> CascadeRedundancyPolicy {
+    checked_in_cascade_rulepack().redundancy_policy(
+        context.version_band,
+        context.processing_path,
+        context.source_authority,
+        context.fallback_grade,
+    )
 }
 
 fn would_create_cycle(
@@ -920,47 +872,54 @@ fn would_create_cycle(
     false
 }
 
-fn is_strong_root_family(family: &str, node: &DiagnosticNode, message: &str) -> bool {
-    family == "syntax"
-        || family == "template"
+fn is_strong_root_family(
+    rulepack: &diag_rulepack::CascadeRulepack,
+    family: &str,
+    node: &DiagnosticNode,
+    message_lower: &str,
+) -> bool {
+    rulepack.is_strong_root(family, message_lower)
         || family == "macro_include"
-        || family.starts_with("linker.undefined_reference")
-        || family.starts_with("linker.multiple_definition")
-        || family.starts_with("linker.cannot_find_library")
         || matches!(
             node.phase,
             diag_core::Phase::Parse | diag_core::Phase::Instantiate | diag_core::Phase::Constraints
-        ) && (message.contains("expected ")
-            || message.contains("undeclared")
-            || message.contains("does not name a type")
-            || message.contains("undefined reference")
-            || message.contains("multiple definition"))
+        ) && (message_lower.contains("expected ")
+            || message_lower.contains("undeclared")
+            || message_lower.contains("does not name a type")
+            || message_lower.contains("undefined reference")
+            || message_lower.contains("multiple definition"))
 }
 
-fn is_generic_follow_on(node: &DiagnosticNode, family: &str, message: &str) -> bool {
+fn is_generic_follow_on(
+    rulepack: &diag_rulepack::CascadeRulepack,
+    node: &DiagnosticNode,
+    family: &str,
+    message_lower: &str,
+) -> bool {
     matches!(
         node.severity,
         diag_core::Severity::Note | diag_core::Severity::Remark | diag_core::Severity::Info
     ) || family == "passthrough"
-        || message.contains("required from here")
-        || message.contains("instantiated from here")
-        || message.contains("in expansion of macro")
-        || message.contains("previous declaration")
-        || message.contains("previous definition")
-        || message.contains("first defined here")
-        || message.contains("candidate:")
+        || rulepack.is_generic_follow_on(family, message_lower)
 }
 
-fn is_candidate_note_repeat(node: &DiagnosticNode, family: &str, message: &str) -> bool {
+fn is_candidate_note_repeat(
+    rulepack: &diag_rulepack::CascadeRulepack,
+    node: &DiagnosticNode,
+    family: &str,
+    message_lower: &str,
+) -> bool {
     node.semantic_role == diag_core::SemanticRole::Candidate
-        || family.contains("overload")
-            && (message.contains("candidate:") || message.contains("conversion candidate"))
+        || rulepack.is_candidate_repeat(family, message_lower)
 }
 
-fn is_generic_linker_wrapper(node: &DiagnosticNode, family: &str, message: &str) -> bool {
-    node.origin == diag_core::Origin::Linker
-        && (family == "linker" || family == "unknown")
-        && (message.contains("ld returned") || message.contains("collect2:"))
+fn is_generic_linker_wrapper(
+    rulepack: &diag_rulepack::CascadeRulepack,
+    _node: &DiagnosticNode,
+    family: &str,
+    message_lower: &str,
+) -> bool {
+    rulepack.is_generic_wrapper(family, message_lower)
 }
 
 fn separate_primary_problem(

@@ -1,3 +1,4 @@
+use crate::headline::is_broad_enrich_family;
 use diag_core::{Confidence, ContextChainKind, DiagnosticNode, Ownership, Phase, SemanticRole};
 use diag_rulepack::{
     ChildNoteConditionKind, ConfidenceClauseConfig, ConfidencePolicyConfig, ConfidenceSignal,
@@ -415,13 +416,7 @@ fn finalize_family_decision(
     rule: &FamilyRuleConfig,
     mut matched_conditions: Vec<String>,
 ) -> FamilyDecision {
-    let existing_specific = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.family.as_ref())
-        .filter(|family| family.contains('.') && rule.family != "unknown")
-        .cloned()
-        .map(|c| c.into_owned());
+    let existing_specific = preserved_ingress_family(node, rulepack, Some(rule.family.as_str()));
     if let Some(existing_family) = existing_specific {
         matched_conditions.push(format!("existing_specific_family={existing_family}"));
         FamilyDecision {
@@ -441,13 +436,7 @@ fn finalize_family_decision(
 }
 
 fn finalize_unknown_family(node: &DiagnosticNode, rulepack: &EnrichRulepack) -> FamilyDecision {
-    let existing_specific = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.family.as_ref())
-        .filter(|family| family.contains('.'))
-        .cloned()
-        .map(|c| c.into_owned());
+    let existing_specific = preserved_ingress_family(node, rulepack, None);
     if let Some(existing_family) = existing_specific {
         return FamilyDecision {
             family: existing_family,
@@ -469,6 +458,30 @@ fn finalize_unknown_family(node: &DiagnosticNode, rulepack: &EnrichRulepack) -> 
         matched_conditions: fallback.matched_conditions.clone(),
         suppression_reason: Some(fallback.suppression_reason.clone()),
     }
+}
+
+fn preserved_ingress_family(
+    node: &DiagnosticNode,
+    _rulepack: &EnrichRulepack,
+    derived_family: Option<&str>,
+) -> Option<String> {
+    let existing_family = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.family.as_deref())
+        .map(str::trim)
+        .filter(|family| !family.is_empty())?;
+
+    if matches!(derived_family, Some(derived) if derived == existing_family) {
+        return None;
+    }
+    if existing_family.contains('.') {
+        return Some(existing_family.to_string());
+    }
+    if existing_family == "unknown" || existing_family == "passthrough" {
+        return None;
+    }
+    (!is_broad_enrich_family(existing_family)).then(|| existing_family.to_string())
 }
 
 fn evaluate_confidence_policy(

@@ -3,13 +3,15 @@ use diag_rulepack::{
     FamilyText, HeadlineFallbackStrategy, ResidualRulepack, SpecificWordingOverride,
     checked_in_rulepack,
 };
+use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
 
 pub(crate) fn headline_for(node: &DiagnosticNode, family: &str) -> String {
     if let Some(override_rule) = specific_wording_override(family) {
         return render_specific_headline(node, override_rule);
     }
 
-    if family.contains('.') {
+    if preserves_existing_ingress_wording(family) {
         preserved_specific_headline(node, family).unwrap_or_else(|| generic_headline(node, family))
     } else {
         generic_headline(node, family)
@@ -17,7 +19,13 @@ pub(crate) fn headline_for(node: &DiagnosticNode, family: &str) -> String {
 }
 
 pub(crate) fn generic_action_hint_rule(family: &str) -> Option<&'static str> {
-    wording_rulepack().generic_action_hint(family)
+    generic_action_hints().get(family).copied().or_else(|| {
+        if family.starts_with("linker.") && family != "linker" {
+            generic_action_hints().get("linker").copied()
+        } else {
+            None
+        }
+    })
 }
 
 pub(crate) fn specific_action_hint_rule(family: &str) -> Option<&'static str> {
@@ -25,11 +33,7 @@ pub(crate) fn specific_action_hint_rule(family: &str) -> Option<&'static str> {
 }
 
 pub(crate) fn specific_wording_override(family: &str) -> Option<&'static SpecificWordingOverride> {
-    wording_rulepack()
-        .wording
-        .specific_overrides
-        .iter()
-        .find(|entry| entry.family == family)
+    specific_wording_overrides().get(family).copied()
 }
 
 pub(crate) fn default_action_hint() -> &'static str {
@@ -38,6 +42,14 @@ pub(crate) fn default_action_hint() -> &'static str {
 
 fn wording_rulepack() -> &'static ResidualRulepack {
     checked_in_rulepack().residual()
+}
+
+pub(crate) fn preserves_existing_ingress_wording(family: &str) -> bool {
+    family.contains('.') || !is_broad_enrich_family(family)
+}
+
+pub(crate) fn is_broad_enrich_family(family: &str) -> bool {
+    broad_enrich_families().contains(family)
 }
 
 fn render_specific_headline(node: &DiagnosticNode, rule: &SpecificWordingOverride) -> String {
@@ -76,8 +88,13 @@ fn generic_family_text(
     entries: &'static [FamilyText],
     family: &str,
 ) -> Option<&'static FamilyText> {
-    entries.iter().find(|entry| {
-        entry.family == family || (entry.family == "linker" && family.starts_with("linker."))
+    let exact = generic_family_texts(entries).get(family).copied();
+    exact.or_else(|| {
+        if family.starts_with("linker.") && family != "linker" {
+            generic_family_texts(entries).get("linker").copied()
+        } else {
+            None
+        }
     })
 }
 
@@ -100,6 +117,66 @@ fn preserved_specific_headline(node: &DiagnosticNode, family: &str) -> Option<St
         return analysis.headline.as_ref().map(|c| c.clone().into_owned());
     }
     None
+}
+
+fn broad_enrich_families() -> &'static HashSet<&'static str> {
+    static BROAD_FAMILIES: OnceLock<HashSet<&'static str>> = OnceLock::new();
+    BROAD_FAMILIES.get_or_init(|| {
+        let rulepack = checked_in_rulepack().enrich();
+        let mut families = HashSet::with_capacity(rulepack.rules.len() + 2);
+        for rule in &rulepack.rules {
+            families.insert(rule.family.as_str());
+        }
+        families.insert(rulepack.unknown_fallback.family.as_str());
+        families.insert(rulepack.passthrough_fallback.family.as_str());
+        families
+    })
+}
+
+fn specific_wording_overrides() -> &'static HashMap<&'static str, &'static SpecificWordingOverride>
+{
+    static SPECIFIC_OVERRIDES: OnceLock<HashMap<&'static str, &'static SpecificWordingOverride>> =
+        OnceLock::new();
+    SPECIFIC_OVERRIDES.get_or_init(|| {
+        wording_rulepack()
+            .wording
+            .specific_overrides
+            .iter()
+            .map(|entry| (entry.family.as_str(), entry))
+            .collect()
+    })
+}
+
+fn generic_action_hints() -> &'static HashMap<&'static str, &'static str> {
+    static GENERIC_ACTION_HINTS: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+    GENERIC_ACTION_HINTS.get_or_init(|| {
+        wording_rulepack()
+            .wording
+            .generic_action_hints
+            .iter()
+            .map(|entry| (entry.family.as_str(), entry.text.as_str()))
+            .collect()
+    })
+}
+
+fn generic_family_texts(
+    entries: &'static [FamilyText],
+) -> &'static HashMap<&'static str, &'static FamilyText> {
+    static GENERIC_HEADLINES: OnceLock<HashMap<&'static str, &'static FamilyText>> =
+        OnceLock::new();
+    match entries.as_ptr() == wording_rulepack().wording.generic_headlines.as_ptr() {
+        true => GENERIC_HEADLINES.get_or_init(|| {
+            wording_rulepack()
+                .wording
+                .generic_headlines
+                .iter()
+                .map(|entry| (entry.family.as_str(), entry))
+                .collect()
+        }),
+        false => {
+            unreachable!("generic_family_texts is only used with checked-in generic headlines")
+        }
+    }
 }
 
 fn render_template(template: &str, key: &str, value: &str) -> String {

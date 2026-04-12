@@ -10,12 +10,14 @@
 //! - [`ResidualRulepack`] -- wording templates and residual classification seeds.
 //! - [`RenderRulepack`] -- per-family rendering policies and profile limits.
 
+mod cascade;
 mod manifest;
 mod rules;
 mod rules_enrich;
 mod validate;
 mod validate_residual;
 
+pub use cascade::*;
 pub use manifest::*;
 pub use rules::*;
 pub use rules_enrich::*;

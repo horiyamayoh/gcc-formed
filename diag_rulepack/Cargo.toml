@@ -6,6 +6,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+diag_backend_probe.workspace = true
 diag_core.workspace = true
 regex.workspace = true
 serde.workspace = true

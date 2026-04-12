@@ -8,6 +8,7 @@ version.workspace = true
 [dependencies]
 diag_backend_probe.workspace = true
 diag_core.workspace = true
+diag_rulepack.workspace = true
 thiserror.workspace = true
 
 [lints]

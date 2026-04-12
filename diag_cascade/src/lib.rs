@@ -770,6 +770,56 @@ mod tests {
     }
 
     #[test]
+    fn collect2_summary_stays_under_the_specific_linker_root() {
+        let mut lead = sample_node(
+            "node-link-root",
+            "undefined reference to `missing_symbol`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(8),
+            Ownership::User,
+        );
+        lead.symbol_context = Some(SymbolContext {
+            primary_symbol: Some("missing_symbol".to_string()),
+            related_objects: vec!["src/main.o".to_string()],
+            archive: None,
+        });
+        let mut summary = sample_node(
+            "node-collect2",
+            "collect2: error: ld returned 1 exit status",
+            Origin::Driver,
+            Phase::Link,
+            "collect2_summary",
+            None,
+            None,
+            Ownership::Unknown,
+        );
+        summary.node_completeness = NodeCompleteness::Partial;
+
+        let analysis = run_safe_analysis(vec![lead, summary], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 1);
+        assert_eq!(
+            analysis.group_analysis[0].role,
+            diag_core::GroupCascadeRole::LeadRoot
+        );
+        assert_eq!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::FollowOn
+        );
+        assert_eq!(
+            analysis.group_analysis[1].best_parent_group_ref.as_deref(),
+            Some(analysis.group_analysis[0].group_ref.as_str())
+        );
+        assert!(
+            analysis.group_analysis[0].root_score.unwrap()
+                > analysis.group_analysis[1].root_score.unwrap()
+        );
+    }
+
+    #[test]
     fn ambiguous_best_parent_margin_keeps_child_uncertain() {
         let mut first = sample_node(
             "node-first",
@@ -828,6 +878,48 @@ mod tests {
     }
 
     #[test]
+    fn syntax_desync_tail_becomes_follow_on_instead_of_another_root() {
+        let root = sample_node(
+            "node-parse-root",
+            "expected ';' before '}' token",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(11),
+            Ownership::User,
+        );
+        let mut tail = sample_node(
+            "node-parse-tail",
+            "expected declaration or statement at end of input",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(12),
+            Ownership::User,
+        );
+        tail.node_completeness = NodeCompleteness::Partial;
+
+        let analysis = run_safe_analysis(vec![root, tail], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 1);
+        assert_eq!(
+            analysis.group_analysis[0].role,
+            diag_core::GroupCascadeRole::LeadRoot
+        );
+        assert_eq!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::FollowOn
+        );
+        assert!(matches!(
+            analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::HiddenAllowed
+                | diag_core::VisibilityFloor::SummaryOrExpandedOnly
+        ));
+    }
+
+    #[test]
     fn weak_evidence_does_not_open_hidden_suppression() {
         let mut root = sample_node(
             "node-root",
@@ -871,6 +963,99 @@ mod tests {
                 .unwrap()
                 .into_inner()
                 < CascadePolicySnapshot::default().suppress_likelihood_threshold
+        );
+    }
+
+    #[test]
+    fn template_candidate_repeat_is_compressed_as_dependent_detail() {
+        let mut root = sample_node(
+            "node-template-root",
+            "template argument deduction/substitution failed",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(20),
+            Ownership::User,
+        );
+        root.context_chains = vec![template_chain("src/main.cpp", 20)];
+
+        let mut candidate = sample_node(
+            "node-template-candidate",
+            "candidate 1: 'template<class T> Pair(T, T) -> Pair<T>'",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(20),
+            Ownership::User,
+        );
+        candidate.semantic_role = SemanticRole::Summary;
+        candidate.severity = Severity::Note;
+        candidate.context_chains = vec![template_chain("src/main.cpp", 20)];
+
+        let analysis = run_safe_analysis(vec![root, candidate], &sample_context());
+
+        assert_eq!(analysis.episode_graph.episodes.len(), 1);
+        assert!(matches!(
+            analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::Duplicate | diag_core::GroupCascadeRole::FollowOn
+        ));
+        assert!(matches!(
+            analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::HiddenAllowed
+                | diag_core::VisibilityFloor::SummaryOrExpandedOnly
+        ));
+    }
+
+    #[test]
+    fn band_and_path_only_reduce_hidden_aggressiveness_for_the_same_template_follow_on() {
+        let mut root = sample_node(
+            "node-template-root",
+            "template argument deduction/substitution failed",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        root.context_chains = vec![template_chain("src/main.cpp", 12)];
+
+        let mut follow_on = sample_node(
+            "node-template-follow-on",
+            "required from here",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            None,
+            None,
+            Ownership::Unknown,
+        );
+        follow_on.severity = Severity::Note;
+        follow_on.node_completeness = NodeCompleteness::Partial;
+        follow_on.context_chains = vec![template_chain("src/main.cpp", 12)];
+
+        let default_analysis =
+            run_safe_analysis(vec![root.clone(), follow_on.clone()], &sample_context());
+        let conservative_analysis =
+            run_safe_analysis(vec![root, follow_on], &conservative_context());
+
+        assert_eq!(
+            default_analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::FollowOn
+        );
+        assert_eq!(
+            conservative_analysis.group_analysis[1].role,
+            diag_core::GroupCascadeRole::FollowOn
+        );
+        assert_eq!(
+            default_analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::HiddenAllowed
+        );
+        assert_eq!(
+            conservative_analysis.group_analysis[1].visibility_floor,
+            diag_core::VisibilityFloor::SummaryOrExpandedOnly
         );
     }
 

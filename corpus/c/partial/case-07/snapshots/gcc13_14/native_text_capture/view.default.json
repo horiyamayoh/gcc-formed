@@ -39,7 +39,7 @@
     {
       "group_id": "residual-0",
       "severity": "error",
-      "title": "linker reported a failure"
+      "title": "driver reported a linker failure summary"
     },
     {
       "group_id": "residual-passthrough",

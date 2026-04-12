@@ -1,6 +1,6 @@
 use crate::headline::{
-    default_action_hint, generic_action_hint_rule, specific_action_hint_rule,
-    specific_wording_override,
+    default_action_hint, generic_action_hint_rule, preserves_existing_ingress_wording,
+    specific_action_hint_rule, specific_wording_override,
 };
 use diag_core::DiagnosticNode;
 
@@ -9,7 +9,7 @@ pub(crate) fn action_hint_for(node: &DiagnosticNode, family: &str) -> String {
         return action_hint.to_string();
     }
 
-    if family.contains('.') {
+    if preserves_existing_ingress_wording(family) {
         preserved_specific_action_hint(node, family).unwrap_or_else(|| generic_action_hint(family))
     } else {
         generic_action_hint(family)

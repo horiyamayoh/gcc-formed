@@ -6,6 +6,6 @@ linker: symbol `missing_symbol`
 raw:
   main.c:(.text+0x5): undefined reference to `missing_symbol'
 other errors:
-  - error: linker reported a failure
+  - error: driver reported a linker failure summary
   - error: linker reported a failure
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

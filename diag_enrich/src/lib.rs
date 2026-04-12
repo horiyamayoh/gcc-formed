@@ -772,6 +772,54 @@ mod tests {
     }
 
     #[test]
+    fn preserves_collect2_summary_family_from_ingress() {
+        let mut node = sample_node("collect2: error: ld returned 1 exit status");
+        node.phase = Phase::Link;
+        node.locations.clear();
+        node.analysis = Some(AnalysisOverlay {
+            family: Some("collect2_summary".into()),
+            family_version: None,
+            family_confidence: None,
+            root_cause_score: None,
+            actionability_score: None,
+            user_code_priority: None,
+            headline: Some("driver reported a linker failure summary".into()),
+            first_action_hint: Some(
+                "inspect the linker diagnostics immediately above this summary".into(),
+            ),
+            confidence: None,
+            preferred_primary_location_id: None,
+            rule_id: None,
+            matched_conditions: Vec::new(),
+            suppression_reason: None,
+            collapsed_child_ids: Vec::new(),
+            collapsed_chain_ids: Vec::new(),
+            group_ref: None,
+            reasons: Vec::new(),
+            policy_profile: None,
+            producer_version: None,
+        });
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("collect2_summary"));
+        assert_eq!(
+            analysis.rule_id.as_deref(),
+            Some("rule.family.ingress_specific_override")
+        );
+        assert_eq!(
+            analysis.headline.as_deref(),
+            Some("driver reported a linker failure summary")
+        );
+        assert_eq!(
+            analysis.first_action_hint.as_deref(),
+            Some("inspect the linker diagnostics immediately above this summary")
+        );
+    }
+
+    #[test]
     fn annotates_passthrough_nodes_conservatively() {
         let mut node = sample_node("wrapper preserved stderr");
         node.semantic_role = SemanticRole::Passthrough;

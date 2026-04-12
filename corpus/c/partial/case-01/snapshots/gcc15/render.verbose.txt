@@ -8,12 +8,13 @@ raw:
 debug: rule_id=rule.family.ingress_specific_override
 debug: matched_conditions=phase=link, context=linker_resolution, symbol_context=present, message_contains=undefined reference, existing_specific_family=linker.undefined_reference
 debug: suppression_reason=preserved_specific_family_from_ingress
-error: linker reported a failure
-help: check the missing/duplicate symbol and the object or library inputs
+error: driver reported a linker failure summary
+help: inspect the linker diagnostics immediately above this summary
 why: collect2: error: ld returned 1 exit status
 linker: preserved
 raw:
   collect2: error: ld returned 1 exit status
-debug: rule_id=rule.family.linker.structured_or_message
-debug: matched_conditions=phase=link, context=linker_resolution
+debug: rule_id=rule.family.ingress_specific_override
+debug: matched_conditions=phase=link, context=linker_resolution, existing_specific_family=collect2_summary
+debug: suppression_reason=preserved_specific_family_from_ingress
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

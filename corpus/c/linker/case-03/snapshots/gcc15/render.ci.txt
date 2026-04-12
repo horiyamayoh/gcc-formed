@@ -6,5 +6,5 @@ linker: symbol `shared`
 raw:
   /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
 other errors:
-  - error: linker reported a failure
+  - error: driver reported a linker failure summary
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

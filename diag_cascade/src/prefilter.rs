@@ -1,4 +1,5 @@
 use crate::logical_group::LogicalGroup;
+use diag_rulepack::checked_in_cascade_rulepack;
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Maximum ordinal distance used for same-translation-unit candidate windows.
@@ -25,6 +26,8 @@ pub enum CandidateReason {
     SharedIncludeFrontier,
     /// Sparse fallback for adjacent groups in the same family/phase.
     FamilyPhaseWindow,
+    /// Adjacent linker summary line paired with a more specific linker root.
+    LinkerSummaryWindow,
 }
 
 /// Deterministic candidate pair that survived the prefilter.
@@ -109,6 +112,7 @@ pub fn candidate_pairs(groups: &[LogicalGroup]) -> Vec<CandidatePair> {
     add_nearby_file_bucket_pairs(groups, &mut pair_reasons);
     add_translation_unit_window_pairs(groups, &mut pair_reasons);
     add_family_phase_window_pairs(groups, &mut pair_reasons);
+    add_linker_summary_pairs(groups, &mut pair_reasons);
 
     pair_reasons
         .into_iter()
@@ -279,6 +283,42 @@ fn add_family_phase_window_pairs(
                     pair_reasons,
                 );
             }
+        }
+    }
+}
+
+fn add_linker_summary_pairs(
+    groups: &[LogicalGroup],
+    pair_reasons: &mut BTreeMap<(usize, usize), BTreeSet<CandidateReason>>,
+) {
+    let rulepack = checked_in_cascade_rulepack();
+
+    for left_index in 0..groups.len() {
+        for right_index in (left_index + 1)..groups.len() {
+            if groups[right_index].keys.ordinal_in_invocation
+                - groups[left_index].keys.ordinal_in_invocation
+                > TRANSLATION_UNIT_ORDINAL_WINDOW
+            {
+                break;
+            }
+            if !groups[left_index].keys.origin_phase_key.ends_with(":link")
+                || !groups[right_index].keys.origin_phase_key.ends_with(":link")
+            {
+                continue;
+            }
+            if !rulepack.is_linker_summary_pair(
+                groups[left_index].keys.family_key.as_str(),
+                groups[right_index].keys.family_key.as_str(),
+            ) {
+                continue;
+            }
+            add_pair(
+                groups,
+                left_index,
+                right_index,
+                CandidateReason::LinkerSummaryWindow,
+                pair_reasons,
+            );
         }
     }
 }

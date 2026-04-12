@@ -31,14 +31,16 @@
     {
       "analysis": {
         "confidence": 0.6499999761581421,
-        "family": "linker",
-        "first_action_hint": "check the missing/duplicate symbol and the object or library inputs",
-        "headline": "linker reported a failure",
+        "family": "collect2_summary",
+        "first_action_hint": "inspect the linker diagnostics immediately above this summary",
+        "headline": "driver reported a linker failure summary",
         "matched_conditions": [
           "phase=link",
-          "context=linker_resolution"
+          "context=linker_resolution",
+          "existing_specific_family=collect2_summary"
         ],
-        "rule_id": "rule.family.linker.structured_or_message"
+        "rule_id": "rule.family.ingress_specific_override",
+        "suppression_reason": "preserved_specific_family_from_ingress"
       },
       "context_chains": [
         {
