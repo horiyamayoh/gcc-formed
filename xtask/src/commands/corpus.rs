@@ -30,6 +30,7 @@ use std::time::Instant;
 pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "c/partial/case-01",
     "c/partial/case-07",
+    "c/redefinition/case-01",
     "c/syntax/case-01",
     "c/syntax/case-02",
     "c/syntax/case-05",
@@ -42,6 +43,8 @@ pub(crate) const REPRESENTATIVE_FIXTURES: &[&str] = &[
     "cpp/template/case-05",
     "cpp/template/case-13",
     "cpp/template/case-14",
+    "cpp/scope_declaration/case-01",
+    "cpp/deleted_function/case-01",
     "c/type/case-01",
     "c/type/case-11",
     "cpp/overload/case-01",

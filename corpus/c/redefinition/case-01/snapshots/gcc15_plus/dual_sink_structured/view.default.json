@@ -1,0 +1,42 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:5",
+      "child_notes": [
+        "previous definition of 'counter' with type 'int'"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "int counter = 1;"
+          ],
+          "location": "src/main.c:2:5"
+        }
+      ],
+      "family": "redefinition",
+      "first_action": "add or fix include guards, or remove the duplicate definition",
+      "group_id": "sarif-0-0",
+      "matched_conditions": [
+        "message_contains=redefinition of",
+        "phase=semantic"
+      ],
+      "raw_message": "redefinition of 'counter'",
+      "rule_id": "rule.family.redefinition.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "duplicate definition detected"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:2:12: error: 'missing_value' was not declared in this scope\n    2 |     return missing_value;\n      |            ^~~~~~~~~~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 180,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 3460,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "scope_declaration",
+        "first_action_hint": "check for typos, missing #include, or missing namespace qualifier",
+        "headline": "identifier not found in scope",
+        "matched_conditions": [
+          "message_contains=was not declared in this scope",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.scope_declaration.message_terms"
+      },
+      "fingerprints": {
+        "family": "1e96e8680d18d7b98d9988f3d9f0dbb216ff300baff2126e44ea681f20ad0ac5",
+        "raw": "837c03ccfb1792ccb1355aa5241b6189c68a999832697f9b0598f10d8b7eee32",
+        "structural": "b84b0deb241c0f7e75e2832aa37c8bef0e13b3c46a70f230a95882fa2235406b"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 2
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:2:12:2:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "'missing_value' was not declared in this scope"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1fb5e5b8b63ba7b0984ed5ae187d7192de0ba5ce1e89a89ad12b73212d4ca63a",
+    "raw": "1bcdb82452288f4dbee53101866516c146173d7b4090aa9694a57dda299390a9",
+    "structural": "0fce0e246de985bf04c0f63a11d59116012fb5aaedad44a2d5fcd421861deb3d"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

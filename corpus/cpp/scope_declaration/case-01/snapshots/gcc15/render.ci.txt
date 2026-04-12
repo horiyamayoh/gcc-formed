@@ -1,9 +1,0 @@
-src/main.cpp:2:12: error: identifier not found in scope
-help: check for typos, missing #include, or missing namespace qualifier
-why: 'missing_value' was not declared in this scope
-| src/main.cpp:2:12
-|     return missing_value;
-|            ^
-other errors:
-  - src/main.cpp:2:12: error: identifier not found in scope
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

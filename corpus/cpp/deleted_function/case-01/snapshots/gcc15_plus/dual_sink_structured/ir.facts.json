@@ -1,0 +1,246 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function 'int main()':\nsrc/main.cpp:10:9: error: use of deleted function 'NoCopy::NoCopy(const NoCopy&)'\n   10 |     take(value);\n      |     ~~~~^~~~~~~\nsrc/main.cpp:3:5: note: declared here\n    3 |     NoCopy(const NoCopy&) = delete;\n      |     ^~~~~~\nsrc/main.cpp:10:9: note: use '-fdiagnostics-all-candidates' to display considered candidates\n   10 |     take(value);\n      |     ~~~~^~~~~~~\nsrc/main.cpp:6:18: note: initializing argument 1 of 'void take(NoCopy)'\n    6 | void take(NoCopy value) {}\n      |           ~~~~~~~^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 552,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 7071,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "a8ffd372375f5755b9bdd994daa2aeb5faedaefecd62e2393c3545dc5c1b8ce1",
+            "raw": "c4658929ec05cc4b272593263c4f30e647f9d7e4ff3c3f5c95f374b8ce287e86",
+            "structural": "093aff6676ef9eb2a5e06ff0d55256a78b491dd3da5c1e31a2a56ae91d848267"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:5:3:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "declared here"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "e8602875e186a97812aad608ac8526ec3899e771336388e20f3f834a0093caa8",
+        "raw": "9e86cbf57304a919e6e0040f1519b1fa753fa293f48314381acb93553da04e79",
+        "structural": "636b25d7dcb6141a557620a3703e1d9e80489b47cb0089369a8bff39ace9f2e0"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 10
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:10:5:10:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "use of deleted function 'NoCopy::NoCopy(const NoCopy&)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "262457fb1fc33cc55338abcef78da169f1401b3f00cd5613d08f20d024ce1adf",
+        "raw": "53617adde887862b206929609bb04620066f2583727748d00b6727447fe159de",
+        "structural": "a624fba7dc1d9d2c39b03c3b1a05943e4415d98bdf0ba3bdc6049744c1f1dd18"
+      },
+      "id": "sarif-0-1",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 5,
+            "column_native": 5,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 10
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:10:5:10:5",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "note"
+    },
+    {
+      "fingerprints": {
+        "family": "2ac5f4660b361f3599920167952311ba0234017cd07fbac95a9575afb5426e61",
+        "raw": "a4966c05170f3b306167658f793f9397e4906024726ad13ada5f8bd8ca4a6fcd",
+        "structural": "cce273d57ec8277749157c9942c22dc6f5a5bff4ff5c40535221b07f9f8ebfaa"
+      },
+      "id": "sarif-0-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 11,
+            "column_native": 11,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 6
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:6:11:6:11",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "initializing argument 1 of 'void take(NoCopy)'"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "note"
+    }
+  ],
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
+    "raw": "8b41bb3be33017b7e9b95223ec45a29a887c25d7275e6c7b4c6f35c3227307e4",
+    "structural": "fd4624b8ad680090d68144e3e9df0cafa39d991c5db16e27c27008f3bb879ae9"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
