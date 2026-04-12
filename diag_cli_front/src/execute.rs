@@ -15,7 +15,7 @@ use diag_backend_probe::ProbeCache;
 use diag_capture_runtime::{
     CaptureBundle, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
 };
-use diag_cascade::{CascadeContext, CascadeReport, DocumentAnalyzer, NoopDocumentAnalyzer};
+use diag_cascade::{CascadeContext, CascadeReport, DocumentAnalyzer, SafeDocumentAnalyzer};
 use diag_core::{CascadePolicySnapshot, DiagnosticDocument, RunInfo};
 use diag_enrich::enrich_document;
 use diag_render::{
@@ -128,7 +128,7 @@ fn real_main() -> Result<i32, CliError> {
         cwd: cwd.clone(),
     };
     let _ = run_cascade_analysis(
-        &NoopDocumentAnalyzer,
+        &SafeDocumentAnalyzer,
         &mut document,
         &cascade_context,
         &cascade_policy,
@@ -152,6 +152,7 @@ fn real_main() -> Result<i32, CliError> {
     let render_started = Instant::now();
     let render_result = render(RenderRequest {
         document: document.clone(),
+        cascade_policy: cascade_policy.clone(),
         profile: plan.profile,
         capabilities: plan.capabilities.clone(),
         cwd: Some(cwd),
@@ -268,10 +269,10 @@ mod tests {
     };
     use diag_cascade::{CascadeError, CascadeReport, DocumentAnalyzer};
     use diag_core::{
-        Confidence, DiagnosticDocument, DiagnosticNode, DocumentAnalysis, DocumentCompleteness,
-        FallbackGrade, LanguageMode, Location, LocationRole, MessageText, NodeCompleteness, Origin,
-        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, SemanticRole, Severity,
-        SourceAuthority, ToolInfo, WrapperSurface,
+        CompressionLevel, Confidence, DiagnosticDocument, DiagnosticNode, DocumentAnalysis,
+        DocumentCompleteness, FallbackGrade, LanguageMode, Location, LocationRole, MessageText,
+        NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource,
+        SemanticRole, Severity, SourceAuthority, ToolInfo, WrapperSurface,
     };
     use diag_render::{
         DebugRefs, PathPolicy, RenderCapabilities, RenderProfile, RenderRequest,
@@ -458,6 +459,7 @@ mod tests {
     fn sample_render_request(document: DiagnosticDocument) -> RenderRequest {
         RenderRequest {
             document,
+            cascade_policy: CascadePolicySnapshot::default(),
             profile: RenderProfile::Default,
             capabilities: RenderCapabilities {
                 stream_kind: StreamKind::Pipe,
@@ -551,6 +553,36 @@ mod tests {
         assert_eq!(
             document.document_analysis,
             Some(DocumentAnalysis::default())
+        );
+    }
+
+    #[test]
+    fn safe_document_analyzer_materializes_document_analysis_from_resolved_policy() {
+        let mut document = sample_document(None);
+        let policy = CascadePolicySnapshot {
+            compression_level: CompressionLevel::Off,
+            ..CascadePolicySnapshot::default()
+        };
+
+        let report = run_cascade_analysis(
+            &SafeDocumentAnalyzer,
+            &mut document,
+            &sample_cascade_context(),
+            &policy,
+        );
+
+        assert_eq!(
+            report,
+            Some(CascadeReport {
+                document_analysis_present: true,
+            })
+        );
+        assert_eq!(
+            document
+                .document_analysis
+                .as_ref()
+                .and_then(|analysis| analysis.policy_profile.as_deref()),
+            Some("default-off")
         );
     }
 

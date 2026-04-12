@@ -21,7 +21,9 @@ mod suggestion;
 mod theme;
 mod view_model;
 
-use diag_core::{DiagnosticDocument, DocumentCompleteness, FallbackReason, IntegrityIssue};
+use diag_core::{
+    CascadePolicySnapshot, DiagnosticDocument, DocumentCompleteness, FallbackReason, IntegrityIssue,
+};
 use serde::{Deserialize, Serialize};
 
 /// A single source-code excerpt block attached to a diagnostic card.
@@ -130,6 +132,8 @@ pub enum SourceExcerptPolicy {
 pub struct RenderRequest {
     /// The diagnostic document to render.
     pub document: DiagnosticDocument,
+    /// Resolved cascade policy shared with document analysis.
+    pub cascade_policy: CascadePolicySnapshot,
     /// Verbosity and layout preset.
     pub profile: RenderProfile,
     /// Terminal and stream capabilities of the target output.
@@ -280,12 +284,12 @@ mod tests {
     use crate::family::summarize_supporting_evidence;
     use crate::selector::select_groups;
     use diag_core::{
-        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
-        ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticEpisode, DocumentAnalysis,
-        DocumentCompleteness, EpisodeGraph, GroupCascadeAnalysis, GroupCascadeRole, Location,
-        MessageText, NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance,
-        ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability,
-        TextEdit, ToolInfo, VisibilityFloor,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, CompressionLevel,
+        ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticEpisode,
+        DocumentAnalysis, DocumentCompleteness, EpisodeGraph, GroupCascadeAnalysis,
+        GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
+        ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
+        SuggestionApplicability, SuppressedCountVisibility, TextEdit, ToolInfo, VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -432,6 +436,7 @@ mod tests {
                 document_analysis: None,
                 fingerprints: None,
             },
+            cascade_policy: CascadePolicySnapshot::default(),
             profile: RenderProfile::Default,
             capabilities: RenderCapabilities {
                 stream_kind: StreamKind::Pipe,
@@ -1984,6 +1989,223 @@ mod tests {
         assert_eq!(output.displayed_group_refs, vec!["root".to_string()]);
         assert_eq!(output.suppressed_group_count, 2);
         assert!(output.text.contains("other errors:"));
+    }
+
+    #[test]
+    fn cascade_policy_max_expanded_roots_controls_episode_budget() {
+        let mut request = sample_request();
+        request.cascade_policy.max_expanded_independent_roots = 1;
+        request.document.diagnostics = vec![
+            grouped_error_node("root-a", "group-a", "src/main.c", 2, "primary failure"),
+            grouped_error_node("root-b", "group-b", "src/other.c", 5, "secondary failure"),
+            grouped_error_node("root-c", "group-c", "src/third.c", 9, "tertiary failure"),
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![
+                episode("episode-a", "group-a", vec!["group-a"], 0.96),
+                episode("episode-b", "group-b", vec!["group-b"], 0.93),
+                episode("episode-c", "group-c", vec!["group-c"], 0.88),
+            ],
+            vec![
+                lead_root_group("group-a", "episode-a", 0.96, 0.91),
+                lead_root_group("group-b", "episode-b", 0.93, 0.88),
+                lead_root_group("group-c", "episode-c", 0.88, 0.83),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.cards[0].id, "root-a");
+        assert_eq!(selection.summary_only_cards.len(), 2);
+        assert_eq!(selection.summary_only_cards[0].id, "root-b");
+        assert_eq!(selection.summary_only_cards[1].id, "root-c");
+    }
+
+    #[test]
+    fn cascade_level_off_keeps_episode_members_out_of_hidden_suppression() {
+        let mut request = sample_request();
+        request.cascade_policy.compression_level = CompressionLevel::Off;
+        request.document.diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "follow-on",
+                "group-follow",
+                "src/main.c",
+                3,
+                "follow-on parse failure",
+            ),
+            grouped_error_node(
+                "duplicate",
+                "group-duplicate",
+                "src/main.c",
+                4,
+                "duplicate parse failure",
+            ),
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-follow", "group-duplicate"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-follow",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+                dependent_group(
+                    "group-duplicate",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::Duplicate,
+                ),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert_eq!(selection.summary_only_cards.len(), 2);
+        assert_eq!(selection.hidden_group_count, 0);
+        assert!(selection.collapsed_notices_by_group_ref.is_empty());
+
+        let output = render(request).unwrap();
+        assert_eq!(output.suppressed_group_count, 2);
+        assert!(output.text.contains("other errors:"));
+        assert!(output.text.contains("follow-on parse failure"));
+        assert!(output.text.contains("duplicate parse failure"));
+        assert!(!output.text.contains("omitted 1 follow-on diagnostic(s)"));
+        assert!(!output.text.contains("omitted 1 duplicate diagnostic(s)"));
+    }
+
+    #[test]
+    fn suppress_threshold_moves_member_between_hidden_and_summary_only() {
+        let diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "follow-on",
+                "group-follow",
+                "src/main.c",
+                3,
+                "follow-on parse failure",
+            ),
+        ];
+        let document_analysis = document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-follow"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-follow",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        );
+
+        let mut hidden_request = sample_request();
+        hidden_request.document.diagnostics = diagnostics.clone();
+        hidden_request.document.document_analysis = Some(document_analysis.clone());
+        hidden_request.cascade_policy.compression_level = CompressionLevel::Aggressive;
+        hidden_request.cascade_policy.suppress_likelihood_threshold = 0.78;
+        hidden_request.cascade_policy.summary_likelihood_threshold = 0.70;
+
+        let hidden_selection = select_groups(&hidden_request);
+        assert_eq!(hidden_selection.summary_only_cards.len(), 0);
+        assert_eq!(hidden_selection.hidden_group_count, 0);
+        assert_eq!(
+            hidden_selection
+                .collapsed_notices_by_group_ref
+                .get("group-root")
+                .cloned()
+                .unwrap(),
+            vec!["omitted 1 follow-on diagnostic(s)".to_string()]
+        );
+
+        let mut summary_request = sample_request();
+        summary_request.document.diagnostics = diagnostics;
+        summary_request.document.document_analysis = Some(document_analysis);
+        summary_request.cascade_policy.compression_level = CompressionLevel::Aggressive;
+        summary_request.cascade_policy.suppress_likelihood_threshold = 0.95;
+        summary_request.cascade_policy.summary_likelihood_threshold = 0.70;
+
+        let summary_selection = select_groups(&summary_request);
+        assert_eq!(summary_selection.summary_only_cards.len(), 1);
+        assert_eq!(summary_selection.summary_only_cards[0].id, "follow-on");
+        assert_eq!(summary_selection.hidden_group_count, 0);
+
+        let output = render(summary_request).unwrap();
+        assert!(output.text.contains("follow-on parse failure"));
+        assert!(!output.text.contains("omitted 1 related diagnostic(s)"));
+    }
+
+    #[test]
+    fn debug_profile_and_suppressed_count_visibility_change_hidden_output() {
+        let diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "follow-on",
+                "group-follow",
+                "src/main.c",
+                3,
+                "follow-on parse failure",
+            ),
+        ];
+        let document_analysis = document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-follow"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-follow",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        );
+
+        let mut default_request = sample_request();
+        default_request.document.diagnostics = diagnostics.clone();
+        default_request.document.document_analysis = Some(document_analysis.clone());
+        default_request.cascade_policy.compression_level = CompressionLevel::Aggressive;
+        default_request.cascade_policy.show_suppressed_count = SuppressedCountVisibility::Never;
+
+        let default_output = render(default_request).unwrap();
+        assert!(
+            !default_output
+                .text
+                .contains("note: omitted 1 related diagnostic(s) already covered by visible roots")
+        );
+        assert!(!default_output.text.contains("follow-on parse failure"));
+
+        let mut debug_request = sample_request();
+        debug_request.profile = RenderProfile::Debug;
+        debug_request.document.diagnostics = diagnostics;
+        debug_request.document.document_analysis = Some(document_analysis);
+        debug_request.cascade_policy.compression_level = CompressionLevel::Aggressive;
+        debug_request.cascade_policy.show_suppressed_count = SuppressedCountVisibility::Never;
+
+        let debug_output = render(debug_request).unwrap();
+        assert!(debug_output.text.contains("other errors:"));
+        assert!(debug_output.text.contains("follow-on parse failure"));
+        assert!(
+            !debug_output
+                .text
+                .contains("note: omitted 1 related diagnostic(s) already covered by visible roots")
+        );
     }
 
     #[test]

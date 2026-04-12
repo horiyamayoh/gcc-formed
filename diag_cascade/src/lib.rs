@@ -259,9 +259,16 @@ mod tests {
         diagnostics: Vec<DiagnosticNode>,
         context: &CascadeContext,
     ) -> diag_core::DocumentAnalysis {
+        run_safe_analysis_with_policy(diagnostics, context, &CascadePolicySnapshot::default())
+    }
+
+    fn run_safe_analysis_with_policy(
+        diagnostics: Vec<DiagnosticNode>,
+        context: &CascadeContext,
+        policy: &CascadePolicySnapshot,
+    ) -> diag_core::DocumentAnalysis {
         let mut document = sample_document(diagnostics);
-        let report =
-            analyze_document(&mut document, context, &CascadePolicySnapshot::default()).unwrap();
+        let report = analyze_document(&mut document, context, policy).unwrap();
         assert!(report.document_analysis_present);
         document.validate().unwrap();
         document.document_analysis.unwrap()
@@ -875,6 +882,75 @@ mod tests {
         );
         assert!(analysis.group_analysis[2].best_parent_group_ref.is_some());
         assert_eq!(analysis.episode_graph.relations.len(), 1);
+    }
+
+    #[test]
+    fn policy_min_parent_margin_changes_parent_acceptance_deterministically() {
+        let mut first = sample_node(
+            "node-first",
+            "undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(8),
+            Ownership::User,
+        );
+        first.symbol_context = Some(SymbolContext {
+            primary_symbol: Some("foo".to_string()),
+            related_objects: vec!["src/main.o".to_string()],
+            archive: None,
+        });
+        let second = sample_node(
+            "node-second",
+            "src/main.c:(.text+0x15): undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(9),
+            Ownership::User,
+        );
+        let mut third = sample_node(
+            "node-third",
+            "src/main.c:(.text+0x20): undefined reference to `foo`",
+            Origin::Linker,
+            Phase::Link,
+            "linker.undefined_reference",
+            Some("src/main.c"),
+            Some(10),
+            Ownership::User,
+        );
+        third.severity = Severity::Note;
+
+        let default_analysis = run_safe_analysis(
+            vec![first.clone(), second.clone(), third.clone()],
+            &sample_context(),
+        );
+        assert_eq!(
+            default_analysis.group_analysis[2].role,
+            diag_core::GroupCascadeRole::Uncertain
+        );
+
+        let relaxed_policy = CascadePolicySnapshot {
+            min_parent_margin: 0.0,
+            ..CascadePolicySnapshot::default()
+        };
+        let relaxed_analysis = run_safe_analysis_with_policy(
+            vec![first, second, third],
+            &sample_context(),
+            &relaxed_policy,
+        );
+
+        assert_ne!(
+            relaxed_analysis.group_analysis[2].role,
+            diag_core::GroupCascadeRole::Uncertain
+        );
+        assert!(
+            relaxed_analysis.group_analysis[2]
+                .best_parent_group_ref
+                .is_some()
+        );
     }
 
     #[test]

@@ -15,9 +15,11 @@ debug_refs = "none"
 retention_policy = "on-wrapper-failure"
 
 [cascade]
+# default = aggressive safe compression; CLI can still override each field
 compression_level = "aggressive"
 suppress_likelihood_threshold = 0.78
 summary_likelihood_threshold = 0.55
 min_parent_margin = 0.12
 max_expanded_independent_roots = 2
+# true = always, false = never
 show_suppressed_count = true

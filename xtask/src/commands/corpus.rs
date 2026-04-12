@@ -1207,6 +1207,7 @@ pub(crate) fn render_request_for_fixture(
 ) -> RenderRequest {
     RenderRequest {
         document: document.clone(),
+        cascade_policy: diag_core::CascadePolicySnapshot::default(),
         profile,
         capabilities: RenderCapabilities {
             stream_kind: if matches!(profile, RenderProfile::Ci) {

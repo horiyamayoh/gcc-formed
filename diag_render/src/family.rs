@@ -764,6 +764,7 @@ mod tests {
                 document_analysis: None,
                 fingerprints: None,
             },
+            cascade_policy: diag_core::CascadePolicySnapshot::default(),
             profile: RenderProfile::Default,
             capabilities: RenderCapabilities {
                 stream_kind: crate::StreamKind::Tty,

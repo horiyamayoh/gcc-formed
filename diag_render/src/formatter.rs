@@ -3,6 +3,7 @@ use crate::layout::LayoutProfile;
 use crate::theme::ThemePolicy;
 use crate::view_model::{RenderViewModel, SummaryOnlyGroup};
 use crate::{DebugRefs, RenderRequest, RenderResult};
+use diag_core::SuppressedCountVisibility;
 
 /// Emits the final rendered text from a view model, applying layout, theme, and truncation.
 pub fn emit(
@@ -46,7 +47,7 @@ pub fn emit(
             lines.push(format!("  - {}", render_summary_only_group(&theme, group)));
         }
     }
-    if hidden_group_count > 0 {
+    if should_emit_hidden_group_notice(request, hidden_group_count) {
         lines.push(format!(
             "note: omitted {hidden_group_count} related diagnostic(s) already covered by visible roots"
         ));
@@ -104,6 +105,22 @@ pub fn emit(
         suppressed_warning_count,
         truncation_occurred,
         render_issues: Vec::new(),
+    }
+}
+
+fn should_emit_hidden_group_notice(request: &RenderRequest, hidden_group_count: usize) -> bool {
+    if hidden_group_count == 0 {
+        return false;
+    }
+    match request.cascade_policy.show_suppressed_count {
+        SuppressedCountVisibility::Always => true,
+        SuppressedCountVisibility::Never => false,
+        SuppressedCountVisibility::Auto => matches!(
+            request.profile,
+            crate::RenderProfile::Default
+                | crate::RenderProfile::Concise
+                | crate::RenderProfile::Ci
+        ),
     }
 }
 

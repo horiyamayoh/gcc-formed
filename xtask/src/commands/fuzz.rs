@@ -1095,6 +1095,7 @@ fn inline_capture_missing_text_document() -> DiagnosticDocument {
 fn synthetic_render_request(document: DiagnosticDocument, profile: RenderProfile) -> RenderRequest {
     RenderRequest {
         document,
+        cascade_policy: diag_core::CascadePolicySnapshot::default(),
         profile,
         capabilities: RenderCapabilities {
             stream_kind: StreamKind::Pipe,

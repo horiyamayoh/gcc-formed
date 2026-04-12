@@ -2,9 +2,9 @@ use crate::budget::{WarningFailureMode, budget_for};
 use crate::family::renderer_specificity_rank;
 use crate::{RenderProfile, RenderRequest, WarningVisibility};
 use diag_core::{
-    CascadePolicySnapshot, DiagnosticDocument, DiagnosticNode, DisclosureConfidence,
-    DocumentAnalysis, GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Ownership, Phase,
-    SemanticRole, Severity,
+    CompressionLevel, DiagnosticDocument, DiagnosticNode, DisclosureConfidence, DocumentAnalysis,
+    GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Ownership, Phase, SemanticRole,
+    Severity, VisibilityFloor,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -178,7 +178,7 @@ fn select_episode_groups(
         .then_with(|| left.cmp(right))
     });
 
-    let expanded_limit = expanded_independent_root_limit(request.profile, has_failure);
+    let expanded_limit = expanded_independent_root_limit(request, has_failure);
     let expanded_group_refs = visible_group_refs
         .iter()
         .take(expanded_limit)
@@ -196,7 +196,7 @@ fn select_episode_groups(
                 .clone()
         })
         .collect::<Vec<_>>();
-    let summary_only_cards = visible_group_refs
+    let mut summary_only_cards = visible_group_refs
         .iter()
         .skip(expanded_limit)
         .map(|group_ref| {
@@ -227,6 +227,17 @@ fn select_episode_groups(
             let group = group_analysis_by_ref
                 .get(member_ref.as_str())
                 .expect("episode member analysis");
+            let hide_member = should_hide_episode_member(request, group);
+            let summarize_member = should_materialize_episode_member_as_summary(request, group);
+            if (!lead_expanded || summarize_member) && !hide_member {
+                summary_only_cards.push(
+                    representatives
+                        .get(member_ref.as_str())
+                        .expect("episode member representative")
+                        .clone(),
+                );
+                continue;
+            }
             match group.role {
                 GroupCascadeRole::FollowOn if lead_expanded => follow_on_count += 1,
                 GroupCascadeRole::Duplicate if lead_expanded => duplicate_count += 1,
@@ -235,7 +246,7 @@ fn select_episode_groups(
             }
         }
 
-        if lead_expanded {
+        if lead_expanded && (follow_on_count > 0 || duplicate_count > 0 || related_count > 0) {
             let notices = collapsed_notices_by_group_ref
                 .entry(lead_group_ref.to_string())
                 .or_insert_with(Vec::new);
@@ -300,7 +311,7 @@ fn should_keep_group_visible(group: &GroupCascadeAnalysis) -> bool {
     matches!(
         group.role,
         GroupCascadeRole::LeadRoot | GroupCascadeRole::IndependentRoot
-    ) || group.visibility_floor == diag_core::VisibilityFloor::NeverHidden
+    ) || group.visibility_floor == VisibilityFloor::NeverHidden
 }
 
 fn visible_group_sort_key(
@@ -330,17 +341,83 @@ fn cascade_role_rank(role: GroupCascadeRole) -> u8 {
     }
 }
 
-fn expanded_independent_root_limit(profile: RenderProfile, has_failure: bool) -> usize {
-    match profile {
+fn expanded_independent_root_limit(request: &RenderRequest, has_failure: bool) -> usize {
+    match request.profile {
         RenderProfile::Verbose | RenderProfile::Debug => usize::MAX,
         RenderProfile::RawFallback => 0,
         RenderProfile::Default if !has_failure => 2,
         RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci => {
-            CascadePolicySnapshot::default()
-                .max_expanded_independent_roots
-                .max(1)
+            request.cascade_policy.max_expanded_independent_roots.max(1)
         }
     }
+}
+
+fn should_materialize_episode_member_as_summary(
+    request: &RenderRequest,
+    group: &GroupCascadeAnalysis,
+) -> bool {
+    if matches!(
+        request.profile,
+        RenderProfile::Verbose | RenderProfile::Debug
+    ) {
+        return true;
+    }
+    if request.cascade_policy.compression_level == CompressionLevel::Off {
+        return true;
+    }
+    if matches!(
+        group.visibility_floor,
+        VisibilityFloor::NeverHidden | VisibilityFloor::SummaryOrExpandedOnly
+    ) {
+        return true;
+    }
+    group
+        .summary_likelihood
+        .map(|score| score.into_inner())
+        .unwrap_or_default()
+        >= request.cascade_policy.summary_likelihood_threshold
+}
+
+fn should_hide_episode_member(request: &RenderRequest, group: &GroupCascadeAnalysis) -> bool {
+    if matches!(
+        request.profile,
+        RenderProfile::Verbose | RenderProfile::Debug | RenderProfile::RawFallback
+    ) {
+        return false;
+    }
+    if group.visibility_floor != VisibilityFloor::HiddenAllowed {
+        return false;
+    }
+    let suppress_score = group
+        .suppress_likelihood
+        .map(|score| score.into_inner())
+        .unwrap_or_default();
+    let minimum_threshold = match request.cascade_policy.compression_level {
+        CompressionLevel::Off => return false,
+        CompressionLevel::Conservative => {
+            if group.role != GroupCascadeRole::Duplicate {
+                return false;
+            }
+            request.cascade_policy.suppress_likelihood_threshold
+        }
+        CompressionLevel::Balanced => match group.role {
+            GroupCascadeRole::Duplicate => request.cascade_policy.suppress_likelihood_threshold,
+            GroupCascadeRole::FollowOn => {
+                (request.cascade_policy.suppress_likelihood_threshold + 0.10).min(0.95)
+            }
+            _ => return false,
+        },
+        CompressionLevel::Aggressive => {
+            if !matches!(
+                group.role,
+                GroupCascadeRole::FollowOn | GroupCascadeRole::Duplicate
+            ) {
+                return false;
+            }
+            request.cascade_policy.suppress_likelihood_threshold
+        }
+    };
+    suppress_score >= minimum_threshold
 }
 
 pub(crate) fn render_group_ref(node: &DiagnosticNode) -> String {

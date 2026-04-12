@@ -234,6 +234,7 @@ renderer は概念上、以下の入力と出力を持つ。
 | フィールド | 型 | 必須 | 意味 |
 |---|---|---:|---|
 | `document` | `DiagnosticDocument` | MUST | facts を持つ入力文書 |
+| `cascade_policy` | `CascadePolicySnapshot` | MUST | resolved external cascade policy |
 | `profile` | enum | MUST | `default | concise | verbose | ci | debug | raw_fallback` |
 | `capabilities` | `RenderCapabilities` | MUST | 出力先の制約 |
 | `path_policy` | enum | MAY | `shortest_unambiguous | relative_to_cwd | absolute` |
@@ -249,6 +250,7 @@ renderer は概念上、以下の入力と出力を持つ。
 #### `RenderRequest` の規則
 
 - `document` は validation 済みであることが望ましいが、renderer は未知 field や partial document でも壊れてはならない。
+- `cascade_policy` は `CLI > user config > admin config > built-in defaults` で解決済みの値を受け取る。
 - `document.document_analysis.episode_graph` が利用可能な場合、renderer は episode-first の selection / ordering を優先する。
 - `profile = raw_fallback` は wrapper 独自 UX を最小化し、raw diagnostics を主とする表示を意味する。
 - `selected_group_refs` が無い場合、renderer 自身が group selection を行う。
@@ -341,7 +343,7 @@ profile が明示されない場合、既定は以下とする。
 ### 8.5 expanded group 数の規則
 
 - `default` / `concise` / `ci` は lead group を 1 件だけ fully expanded にしてよい。
-- `document.document_analysis.episode_graph` がある場合、独立 root group は visibility を失ってはならない。`max_expanded_independent_roots` を超えた overflow root は invisible ではなく summary-only に落とす。
+- `document.document_analysis.episode_graph` がある場合、独立 root group は visibility を失ってはならない。resolved `cascade_policy.max_expanded_independent_roots` を超えた overflow root は invisible ではなく summary-only に落とす。
 - 2 件目以降の visible root は summary line のみでもよいが、hidden にしてはならない。
 - warning-only run では `default` は最大 2 groups まで expanded にしてよい。
 
@@ -537,6 +539,8 @@ document に error/fatal を含む場合、表示順は以下とする。
 
 `document.document_analysis.episode_graph` がある場合、独立 root group は全件 visible に保たなければならない。expanded budget を超えた root は summary-only にし、invisible にしてはならない。follow-on / duplicate / dependent group は独立 root として数えず、visible lead の collapsed notice か hidden count に吸収してよい。
 
+`default` / `concise` / `ci` は resolved `cascade_policy.compression_level` と threshold 群を使って dependent group の hidden / summary-only / collapsed-notice 境界を決める。`off` は hidden suppression を無効にし、dependent group を少なくとも summary-only には残す。`verbose` / `debug` は dependent group を hidden にせず、少なくとも summary-only として見えるようにする。
+
 ### 11.3 unrelated warning の扱い
 
 失敗 run に warning が混在する場合:
@@ -557,6 +561,12 @@ other errors:
   - src/b.cc:87: error: no matching function for call to 'push_back'
   - include/foo.hpp:41: warning: comparison of signed and unsigned values
 ```
+
+hidden suppression が発生した場合、suppressed count line の表示は resolved `cascade_policy.show_suppressed_count` に従う。
+
+- `always`: hidden count line を出す
+- `never`: hidden count line を出さない
+- `auto`: `default` / `concise` / `ci` では 1 行の hidden count line を出してよい。`verbose` / `debug` では suppressed member 自体が見えていることを優先してよい
 
 ### 11.5 AnalysisOverlay の利用規則
 
