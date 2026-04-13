@@ -1,0 +1,59 @@
+preset_id = "custom_subject_first_contract"
+session_mode = "all_visible_blocks"
+default_template_id = "generic_block"
+generic_template_id = "generic_block"
+label_width_mode = "template_max"
+
+[header]
+subject_first = true
+interactive_format = "{severity}: [{family}] {subject}"
+ci_path_first_format = "{location}: {severity}: [{family}] {subject}"
+unknown_family = "generic"
+
+[location_policy]
+default_placement = "inline_suffix"
+fallback_order = ["header_suffix", "evidence_suffix", "excerpt_header", "none"]
+inline_suffix_format = " @ {location}"
+width_soft_limit = 100
+
+[label_catalog]
+help = "help"
+raw = "raw"
+want = "want"
+near = "near"
+
+[templates.generic_block]
+id = "generic_block"
+
+[[templates.generic_block.core]]
+slot = "first_action"
+label = "help"
+optional = true
+
+[[templates.generic_block.core]]
+slot = "raw"
+label = "raw"
+
+[templates.parser_block]
+id = "parser_block"
+
+[[templates.parser_block.core]]
+slot = "first_action"
+label = "help"
+optional = true
+
+[[templates.parser_block.core]]
+slot = "want"
+label = "want"
+optional = true
+
+[[templates.parser_block.core]]
+slot = "near"
+label = "near"
+optional = true
+
+[[family_mappings]]
+matcher = "syntax"
+display_family = "syntax"
+template_id = "parser_block"
+semantic_shape = "parser"

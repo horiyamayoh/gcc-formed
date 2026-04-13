@@ -1,0 +1,24 @@
+src/main.c:2:12: error: [syntax] syntax error
+help: fix the first parser error at the user-owned location
+want: ;
+near: } token
+| src/main.c:2:12
+|     return }
+|            ^
+
+src/other.c:2:12: error: [generic] secondary failure
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : secondary failure
+| src/other.c:2:12
+|     return Widget();
+|            ^
+
+src/third.c:2:12: error: [generic] tertiary failure
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : tertiary failure
+| src/third.c:2:12
+|     return missing_call(
+|            ^
+note: omitted 1 follow-on diagnostic(s)
+note: suppressed 1 warning(s) while focusing on the failing group
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

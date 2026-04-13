@@ -1,0 +1,8 @@
+error: [syntax] syntax error @ src/custom.c:2:12
+help: fix the first parser error at the user-owned location
+want: ;
+near: } token
+| src/custom.c:2:12
+|     return }
+|            ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

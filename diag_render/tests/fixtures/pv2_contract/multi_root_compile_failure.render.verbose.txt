@@ -1,0 +1,37 @@
+error: [syntax] syntax error @ src/main.c:2:12
+help: fix the first parser error at the user-owned location
+want: ;
+near: } token
+| src/main.c:2:12
+|     return }
+|            ^
+debug: rule_id=rule.syntax.expected_or_before
+
+error: [generic] secondary failure @ src/other.c:2:12
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : secondary failure
+| src/other.c:2:12
+|     return Widget();
+|            ^
+
+error: [generic] tertiary failure @ src/third.c:2:12
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : tertiary failure
+| src/third.c:2:12
+|     return missing_call(
+|            ^
+
+error: [generic] tertiary follow-on detail @ src/third.c:3:1
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : tertiary follow-on detail
+| src/third.c:3:1
+| }
+| ^
+
+warning: [generic] unused variable 'tmp' @ src/warn.c:2:9
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : unused variable 'tmp'
+| src/warn.c:2:9
+|     int tmp = 0;
+|         ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,0 +1,95 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.c:2:12",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return }"
+          ],
+          "location": "src/main.c:2:12"
+        }
+      ],
+      "family": "syntax",
+      "first_action": "fix the first parser error at the user-owned location",
+      "group_id": "root-a",
+      "matched_conditions": [],
+      "raw_message": "expected ';' before '}' token",
+      "rule_id": "rule.syntax.expected_or_before",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "syntax error"
+    },
+    {
+      "canonical_location": "src/other.c:2:12",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "hidden",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return Widget();"
+          ],
+          "location": "src/other.c:2:12"
+        }
+      ],
+      "family": null,
+      "first_action": null,
+      "group_id": "root-b",
+      "matched_conditions": [],
+      "raw_message": "secondary failure",
+      "rule_id": null,
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "secondary failure"
+    },
+    {
+      "canonical_location": "src/third.c:2:12",
+      "child_notes": [],
+      "collapsed_notices": [
+        "omitted 1 follow-on diagnostic(s)"
+      ],
+      "confidence_label": "hidden",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return missing_call("
+          ],
+          "location": "src/third.c:2:12"
+        }
+      ],
+      "family": null,
+      "first_action": null,
+      "group_id": "root-c",
+      "matched_conditions": [],
+      "raw_message": "tertiary failure",
+      "rule_id": null,
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "tertiary failure"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}
