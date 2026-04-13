@@ -5,6 +5,4 @@
 /vendor
 /coverage
 /.DS_Store
-/.codex/evidence/
-/.codex/__pycache__/
 **/*.snap.new

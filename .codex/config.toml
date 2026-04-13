@@ -1,8 +1,0 @@
-[features]
-codex_hooks = true
-
-# Codex reads hooks from .codex/hooks.json automatically when codex_hooks = true.
-# See .codex/hooks.json for PreToolUse (publish guard) and Stop (completion guard) hooks.
-
-project_doc_fallback_filenames = ["Codex.md"]
-project_doc_max_bytes = 32768
