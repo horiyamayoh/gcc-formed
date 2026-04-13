@@ -139,7 +139,8 @@ Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` 
 | GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `Experimental` | in-scope product path。価値の幅はより限定的 |
 | Unknown / other | `Passthrough` | `PassthroughOnly` | fail-open と provenance 保持を優先 |
 
-Trace bundle は support 用の opt-in artifact である。`--formed-trace-bundle[=<path>]` で local file として収集し、`<path>` を省略した場合は state root 配下の wrapper-managed trace root に書く。maintainer replay は stored bundle contents only で `cargo xtask replay-trace-bundle --bundle <path>` を使い、redaction や欠損で fidelity が落ちる場合は明示的にその degradation を disclose する。
+operator guidance は [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md)、既知の制約は [docs/support/KNOWN-LIMITATIONS.md](docs/support/KNOWN-LIMITATIONS.md) を参照する。  
+Trace bundle の収集と replay は [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md) / [docs/runbooks/trace-bundle-replay.md](docs/runbooks/trace-bundle-replay.md) を正本とする。
 
 ## Public Machine-Readable Export
 
@@ -165,18 +166,22 @@ gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 
 1. [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)  
    現在の public wording と beta support posture の正本
-2. [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)  
+2. [docs/README.md](docs/README.md)  
+   文書群の authority map と配置ルール
+3. [docs/architecture/gcc-formed-vnext-change-design.md](docs/architecture/gcc-formed-vnext-change-design.md)  
+   vNext architecture baseline と migration design
+4. [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)  
    Epic を切る前提、Issue 正本主義、nightly agent 運用の正本
-3. [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md)  
+5. [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md)  
    正規化 IR の実装契約
-4. [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md)  
+6. [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md)  
    capture / ingest の実装契約
-5. [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md)  
+7. [docs/specs/rendering-ux-contract-spec.md](docs/specs/rendering-ux-contract-spec.md)  
    renderer と disclosure の実装契約
-6. [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md): public JSON export の実装契約
-7. [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): corpus-driven quality gate の実装契約
-8. [adr-initial-set/README.md](adr-initial-set/README.md): 採択済み ADR の索引
-9. [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) / [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md): 成熟度ラベル、artifact 系列、変更分類の用語契約
+8. [docs/specs/public-machine-readable-diagnostic-surface-spec.md](docs/specs/public-machine-readable-diagnostic-surface-spec.md): public JSON export の実装契約
+9. [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): corpus-driven quality gate の実装契約
+10. [adr-initial-set/README.md](adr-initial-set/README.md): 採択済み ADR の索引
+11. [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) / [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md): 成熟度ラベル、artifact 系列、変更分類の用語契約
 
 全体の文書索引は [docs/README.md](docs/README.md) を参照。
 
@@ -205,6 +210,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 
 - [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md): public wording と support posture の正本
 - [docs/support/PUBLIC-SURFACE.md](docs/support/PUBLIC-SURFACE.md): repo landing / release body / GitHub About metadata の正本
+- [docs/architecture/gcc-formed-vnext-change-design.md](docs/architecture/gcc-formed-vnext-change-design.md): top-level architecture baseline
 - [docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md): delivery system の正本
 - [docs/specs/diagnostic-ir-v1alpha-spec.md](docs/specs/diagnostic-ir-v1alpha-spec.md): IR 契約
 - [docs/specs/gcc-adapter-ingestion-spec.md](docs/specs/gcc-adapter-ingestion-spec.md): capture / ingest 契約

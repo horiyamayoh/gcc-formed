@@ -2,9 +2,12 @@
 
 `gcc-formed` is still in the `v1beta` / `0.2.0-beta.N` line, so support remains intentionally narrow and release-boundary driven.
 
-## Current Support Boundary
+## Canonical Support Docs
 
-Keep wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
+Current support wording is owned by [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).  
+Known operating limits and path-dependent constraints are summarized in [docs/support/KNOWN-LIMITATIONS.md](docs/support/KNOWN-LIMITATIONS.md).
+
+Keep the canonical wording below aligned with `SUPPORT-BOUNDARY.md`.
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -16,6 +19,8 @@ Keep wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPOR
 - `GCC9-12` is a product path with narrower guarantees and different capture constraints.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
+
+This file is still the routing page. The detailed support procedure lives in the linked runbooks.
 
 ## First Routing
 

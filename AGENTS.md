@@ -19,10 +19,13 @@ Use this file as the default starting point for AI coding agents working in this
 ## Current Authority Order
 
 1. `README.md`
-2. `docs/support/SUPPORT-BOUNDARY.md`
-3. `docs/process/EXECUTION-MODEL.md`
-4. `adr-initial-set/README.md`
-5. current specs under `docs/specs/`
+2. `docs/README.md`
+3. `docs/support/SUPPORT-BOUNDARY.md`
+4. `docs/architecture/gcc-formed-vnext-change-design.md`
+5. `docs/process/EXECUTION-MODEL.md`
+6. `adr-initial-set/README.md`
+7. current specs under `docs/specs/`
+8. `docs/process/implementation-bootstrap-sequence.md` for rollout-order checks
 
 Only documents marked as `doc_role: current-authority` may drive implementation decisions.
 

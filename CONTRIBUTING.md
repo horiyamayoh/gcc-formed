@@ -6,7 +6,7 @@
 
 ## Current Support Boundary
 
-Keep support-boundary wording aligned with [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
+The canonical current support wording lives in [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md).
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -16,6 +16,8 @@ Keep support-boundary wording aligned with [docs/support/SUPPORT-BOUNDARY.md](do
 - `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
+
+If your change widens, narrows, or rephrases public support claims, update that document and every dependent user-facing surface in the same change.
 
 ## Local Prerequisites
 
@@ -62,7 +64,7 @@ The automated public-beta GitHub Release workflow also expects the repository se
 - If a change alters CLI surface, config or environment behavior, IR semantics, renderer wording, or release/install contract, add or supersede an ADR instead of quietly rewriting the baseline.
 - If a change is classified as `breaking`, include the migration / rollout impact in the PR and align `docs/policies/GOVERNANCE.md`, `ADR-0020`, and the affected contract docs in the same change.
 - If a change is classified as `experimental`, keep it opt-in, disabled by default, and outside `docs/support/SUPPORT-BOUNDARY.md` and release promises until it graduates through ADR review.
-- If a change alters the support boundary, update `docs/support/SUPPORT-BOUNDARY.md`, the copied wording in user-facing docs, and the GitHub templates in the same change.
+- If a change alters the support boundary, update `docs/support/SUPPORT-BOUNDARY.md`, the dependent user-facing docs, and the GitHub templates in the same change.
 - If a change alters repo landing copy, release-body wording inputs, or GitHub About metadata, update `docs/support/PUBLIC-SURFACE.md`, `README.md`, and the public-surface contract tests in the same change.
 - If a change alters public `VersionBand` / `ProcessingPath` wording while runtime still emits legacy internal tier-style fields, keep the user-facing docs canonical and either align the runtime in the same change or explicitly document the temporary mismatch in `docs/support/KNOWN-LIMITATIONS.md`.
 - If a change alters stable release automation, keep `cargo xtask stable-release`, `.github/workflows/release-stable.yml`, `docs/releases/STABLE-RELEASE.md`, `docs/releases/RELEASE-CHECKLIST.md`, the packaging spec, and the related ADRs aligned in the same change.

@@ -52,6 +52,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
+- Use the exact canonical wording in [docs/support/SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) for release notes, release bodies, README summaries, and templates.
 
 ## Explicit Non-Goals
 

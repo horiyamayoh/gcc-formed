@@ -22,6 +22,7 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 
 - [support/SUPPORT-BOUNDARY.md](support/SUPPORT-BOUNDARY.md): public wording と support posture の正本
 - [support/PUBLIC-SURFACE.md](support/PUBLIC-SURFACE.md): repo landing / release body / GitHub About metadata の正本
+- [architecture/gcc-formed-vnext-change-design.md](architecture/gcc-formed-vnext-change-design.md): vNext architecture baseline (`current-authority` / `draft`)
 - [process/EXECUTION-MODEL.md](process/EXECUTION-MODEL.md): vNext delivery system の正本
 - [process/implementation-bootstrap-sequence.md](process/implementation-bootstrap-sequence.md): 実装順序の正本
 - [policies/VERSIONING.md](policies/VERSIONING.md): maturity label / artifact semver policy
@@ -35,6 +36,17 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 - [releases/](releases/): current artifact / release / signing 契約
 - [runbooks/README.md](runbooks/README.md): current support runbooks
 - [../adr-initial-set/README.md](../adr-initial-set/README.md): accepted ADR の索引
+
+## Placement Guide
+
+- `support/`: current public wording, support posture, operator guidance
+- `architecture/`: top-level architecture baseline and migration design
+- `process/`: execution policy, sequencing, rollout order
+- `specs/`: implementation contracts and public machine/user surfaces
+- `releases/`: release, packaging, signing, promotion contracts
+- `runbooks/`: operational response, recovery, and handoff procedures
+- `planning/`: active draft workspace only; never normative
+- `history/` / `archive/`: provenance only
 
 ## Active Non-Authoritative Planning
 
@@ -59,3 +71,5 @@ AI コーディングエージェントの入口は [../AGENTS.md](../AGENTS.md)
 - `CONTRIBUTING.md`: 変更手順と contributor 向けルール
 - `SECURITY.md`: security reporting policy
 - `SUPPORT.md`: maintainer / user のサポート導線
+
+Root docs は summary と routing を担う。canonical wording や detailed procedure を重複して持たせず、authority docs へ案内する。

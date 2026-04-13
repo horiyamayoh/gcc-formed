@@ -15,7 +15,7 @@ superseded_by: []
 # gcc-formed vNext Execution Model
 
 - 文書種別: 実装運用契約 / delivery system 正本
-- 状態: Draft for immediate adoption
+- 状態: Accepted baseline for immediate use
 - 対象: `horiyamayoh/gcc-formed` (`main`, 2026-04-09 時点)
 - 目的: Doctrine と vNext 変更設計を、Epic 生成と夜間 agent 運用に耐える実行体系へ落とす
 - 想定読者: maintainer / reviewer / coding agent / future contributor

@@ -15,7 +15,7 @@ superseded_by: []
 # gcc-formed vNext 実装開始シーケンス
 
 - **文書種別**: 実装順序契約
-- **状態**: Draft for adoption
+- **状態**: Accepted baseline for current adoption
 - **版**: `vNext-bootstrap-1`
 - **日付**: 2026-04-09
 - **関連文書**:
@@ -32,11 +32,10 @@ superseded_by: []
 ## 1. 目的
 
 この文書は、vNext で**何から実装してよいか**を固定するための順序契約である。  
-ここで守りたいのは 1 つだけである。
+`EXECUTION-MODEL.md` と change design が方針を定め、本書はその順序を operational checklist として固定する。
 
-> **GCC 15 を本線にした設計の上へ、そのまま Path B / Path C を継ぎ足してはならない。**
-
-vNext の初手は feature 追加ではなく、**複数 ProcessingPath を受け止められる受け皿づくり**である。
+support posture や architecture rationale を再定義する文書ではない。  
+理由づけや doctrine の読み直しが必要な場合は `EXECUTION-MODEL.md` と `docs/architecture/gcc-formed-vnext-change-design.md` を先に参照する。
 
 ---
 

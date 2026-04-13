@@ -17,6 +17,8 @@ Security support statements should be read inside the same support boundary docu
 - `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
+This file defines the reporting path and response expectations. It does not widen the product support posture beyond the canonical support boundary.
+
 ## Supported Versions
 
 | Artifact line | Security support status |
