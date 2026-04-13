@@ -14,6 +14,7 @@ Keep the canonical wording below aligned with `SUPPORT-BOUNDARY.md`.
 - The terminal renderer is the primary user-facing surface.
 - `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
 - `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- Public JSON and self-check use the stable machine labels `in_scope` and `passthrough_only` for `SupportLevel`; those labels describe scope/applicability only, not a public tier split inside `GCC 9-15`.
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.

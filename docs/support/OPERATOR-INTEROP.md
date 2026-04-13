@@ -82,6 +82,8 @@ For a direct wrapper invocation, `--formed-mode=passthrough` is the explicit byp
 
 Self-check and runtime notices use the same operator-next-step wording below.
 
+Public JSON and self-check spell `SupportLevel` with the stable machine labels `in_scope` and `passthrough_only`. Treat those labels as scope/applicability markers only, not as a value hierarchy between in-scope bands.
+
 - `GCC15`, `GCC13-14`, `GCC9-12`: set `CC=gcc-formed` and `CXX=g++-formed`, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` only if the topology is not proven.
 - For in-scope older GCC runs, prefer `NativeTextCapture` for ordinary runs and use explicit `SingleSinkStructured` only when you need machine-readable structured capture.
 - `Unknown`: use raw `gcc` / `g++` or `--formed-mode=passthrough` until a supported `VersionBand` is confirmed.

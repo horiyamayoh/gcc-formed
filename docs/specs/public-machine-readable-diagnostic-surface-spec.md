@@ -143,7 +143,9 @@ Current `support_level` labels are current-authority machine labels such as:
 
 `version_band` and `processing_path` remain observability metadata. They must not be used to infer weaker public value claims inside the current `GCC 9-15` contract.
 
-`allowed_processing_paths` lists the capability-valid path labels for the resolved `version_band`, so machine consumers can reason about path availability without inferring a band hierarchy from `support_level`.
+`support_level` uses the stable machine labels `in_scope` and `passthrough_only`. These labels describe scope/applicability only; they are not product tiers inside the shared `GCC 9-15` contract.
+
+`allowed_processing_paths` lists the capability-valid path labels carried in the export context for the observed backend contract view, so machine consumers can reason about path availability without inferring a band hierarchy from `support_level`.
 
 ### 4.4 `result`
 

@@ -25,6 +25,7 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - The terminal renderer is the primary user-facing surface.
 - `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
 - `VersionBand` and `ProcessingPath` are observability metadata; they do not justify weaker value claims inside `GCC 9-15`.
+- `SupportLevel` appears in self-check and public JSON as the machine labels `in_scope` and `passthrough_only`; those labels describe applicability, not a public hierarchy inside the shared `GCC 9-15` contract.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - The currently recommended build-system insertion pattern is direct `CC` / `CXX` replacement, optionally with one wrapper-owned backend launcher via `FORMED_BACKEND_LAUNCHER`, `--formed-backend-launcher`, or `[backend].launcher`.
 - The checked-in interop lab is the source of truth for Make / CMake topology guidance. When the lab does not prove a chain, prefer raw `gcc` / `g++` or `--formed-mode=passthrough` rather than adding another launcher layer in front of the wrapper.

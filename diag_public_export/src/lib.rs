@@ -172,6 +172,7 @@ pub struct PublicExportContext {
     pub version_band: VersionBand,
     pub processing_path: ProcessingPath,
     pub support_level: SupportLevel,
+    pub allowed_processing_paths: Vec<ProcessingPath>,
     pub source_authority: Option<diag_core::SourceAuthority>,
     pub fallback_grade: Option<FallbackGrade>,
     pub fallback_reason: Option<FallbackReason>,
@@ -208,10 +209,21 @@ impl PublicExportContext {
             version_band,
             processing_path,
             support_level,
+            allowed_processing_paths: default_allowed_processing_paths_for_version_band(
+                version_band,
+            ),
             source_authority: Some(source_authority),
             fallback_grade: Some(fallback_grade),
             fallback_reason,
         }
+    }
+
+    pub fn with_allowed_processing_paths<I>(mut self, paths: I) -> Self
+    where
+        I: IntoIterator<Item = ProcessingPath>,
+    {
+        self.allowed_processing_paths = paths.into_iter().collect();
+        self
     }
 }
 
@@ -229,7 +241,12 @@ pub fn export_from_document(
             version_band: label(context.version_band),
             processing_path: label(context.processing_path),
             support_level: label(context.support_level),
-            allowed_processing_paths: allowed_processing_paths_for_version_band(context.version_band),
+            allowed_processing_paths: context
+                .allowed_processing_paths
+                .iter()
+                .copied()
+                .map(label)
+                .collect(),
             source_authority: context.source_authority.map(label),
             fallback_grade: context.fallback_grade.map(label),
             fallback_reason: context.fallback_reason.map(label),
@@ -261,7 +278,12 @@ pub fn unavailable_export(
             version_band: label(context.version_band),
             processing_path: label(context.processing_path),
             support_level: label(context.support_level),
-            allowed_processing_paths: allowed_processing_paths_for_version_band(context.version_band),
+            allowed_processing_paths: context
+                .allowed_processing_paths
+                .iter()
+                .copied()
+                .map(label)
+                .collect(),
             source_authority: context.source_authority.map(label),
             fallback_grade: context.fallback_grade.map(label),
             fallback_reason: context.fallback_reason.map(label),
@@ -435,11 +457,12 @@ fn label<T: Serialize>(value: T) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-fn allowed_processing_paths_for_version_band(version_band: VersionBand) -> Vec<String> {
+fn default_allowed_processing_paths_for_version_band(
+    version_band: VersionBand,
+) -> Vec<ProcessingPath> {
     capability_profile_for_major(representative_major_for_band(version_band))
         .allowed_processing_paths
         .into_iter()
-        .map(label)
         .collect()
 }
 
@@ -812,6 +835,10 @@ mod tests {
             version_band: VersionBand::Gcc15,
             processing_path: ProcessingPath::Passthrough,
             support_level: SupportLevel::InScope,
+            allowed_processing_paths: vec![
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough,
+            ],
             source_authority: None,
             fallback_grade: None,
             fallback_reason: Some(FallbackReason::UserOptOut),
@@ -872,5 +899,86 @@ mod tests {
             diag_core::fingerprint_for(&representative_shapes),
             EXPECTED_PUBLIC_SCHEMA_SHAPE_FINGERPRINT
         );
+    }
+
+    #[test]
+    fn custom_allowed_processing_paths_override_band_defaults() {
+        let document = sample_document();
+        let context = PublicExportContext::from_document(
+            &document,
+            VersionBand::Gcc15,
+            ProcessingPath::NativeTextCapture,
+            SupportLevel::InScope,
+            diag_core::SourceAuthority::ResidualText,
+            FallbackGrade::Compatibility,
+            None,
+        )
+        .with_allowed_processing_paths([
+            ProcessingPath::NativeTextCapture,
+            ProcessingPath::SingleSinkStructured,
+            ProcessingPath::Passthrough,
+        ]);
+
+        let export = export_from_document(&document, &context);
+
+        assert_eq!(
+            export.execution.allowed_processing_paths,
+            vec![
+                "native_text_capture".to_string(),
+                "single_sink_structured".to_string(),
+                "passthrough".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn representative_band_exports_keep_required_execution_fields() {
+        let document = sample_document();
+        let contexts = [
+            PublicExportContext::from_document(
+                &document,
+                VersionBand::Gcc15,
+                ProcessingPath::DualSinkStructured,
+                SupportLevel::InScope,
+                diag_core::SourceAuthority::Structured,
+                FallbackGrade::None,
+                None,
+            ),
+            PublicExportContext::from_document(
+                &document,
+                VersionBand::Gcc13_14,
+                ProcessingPath::NativeTextCapture,
+                SupportLevel::InScope,
+                diag_core::SourceAuthority::ResidualText,
+                FallbackGrade::Compatibility,
+                None,
+            ),
+            PublicExportContext::from_document(
+                &document,
+                VersionBand::Gcc9_12,
+                ProcessingPath::SingleSinkStructured,
+                SupportLevel::InScope,
+                diag_core::SourceAuthority::Structured,
+                FallbackGrade::None,
+                None,
+            ),
+        ];
+
+        let exports = contexts
+            .iter()
+            .map(|context| export_from_document(&document, context))
+            .collect::<Vec<_>>();
+
+        assert_eq!(exports[0].execution.version_band, "gcc15");
+        assert_eq!(exports[1].execution.version_band, "gcc13_14");
+        assert_eq!(exports[2].execution.version_band, "gcc9_12");
+        for export in exports {
+            assert!(!export.execution.version_band.is_empty());
+            assert!(!export.execution.processing_path.is_empty());
+            assert!(!export.execution.support_level.is_empty());
+            assert!(!export.execution.allowed_processing_paths.is_empty());
+            assert!(export.execution.source_authority.is_some());
+            assert!(export.execution.fallback_grade.is_some());
+        }
     }
 }

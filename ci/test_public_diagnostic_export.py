@@ -37,6 +37,7 @@ class PublicDiagnosticExportDocsTest(unittest.TestCase):
             "`version_band`",
             "`processing_path`",
             "`support_level`",
+            "`allowed_processing_paths`",
             "`public.export.json`",
             "`public.export.schema-shape-fingerprint.txt`",
             "`--formed-public-json=<sink>`",

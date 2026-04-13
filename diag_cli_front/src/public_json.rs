@@ -92,6 +92,12 @@ pub(crate) fn export_context_for_unavailable(
         version_band: backend.version_band(),
         processing_path,
         support_level: backend.support_level(),
+        allowed_processing_paths: backend
+            .capability_profile()
+            .allowed_processing_paths
+            .iter()
+            .copied()
+            .collect(),
         source_authority: None,
         fallback_grade: None,
         fallback_reason,

@@ -121,6 +121,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
 
     Ok(json!({
         "binary": "ok",
+        "shared_contract": shared_contract_summary(),
         "manifest": {
             "target_triple": manifest.artifact_target_triple,
             "target_triple_matches_build": target_matches_build,
@@ -170,6 +171,16 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
         },
         "warnings": warnings,
     }))
+}
+
+fn shared_contract_summary() -> serde_json::Value {
+    json!({
+        "status": "shared_gcc_9_15_contract",
+        "in_scope_version_bands": ["gcc15", "gcc13_14", "gcc9_12"],
+        "support_level_labels": ["in_scope", "passthrough_only"],
+        "observability_metadata": ["version_band", "processing_path"],
+        "parity_note": "VersionBand and ProcessingPath remain observability metadata only inside the shared GCC 9-15 public contract.",
+    })
 }
 
 fn rollout_matrix_cases() -> Vec<serde_json::Value> {
@@ -473,6 +484,30 @@ mod tests {
                 && case["scope_notice"]
                     == "gcc-formed: version band=unknown; support level=passthrough_only; selected mode=passthrough; processing path=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
         }));
+    }
+
+    #[test]
+    fn shared_contract_summary_marks_band_and_path_as_observability_only() {
+        let summary = shared_contract_summary();
+
+        assert_eq!(summary["status"], "shared_gcc_9_15_contract");
+        assert_eq!(
+            summary["in_scope_version_bands"],
+            serde_json::json!(["gcc15", "gcc13_14", "gcc9_12"])
+        );
+        assert_eq!(
+            summary["support_level_labels"],
+            serde_json::json!(["in_scope", "passthrough_only"])
+        );
+        assert_eq!(
+            summary["observability_metadata"],
+            serde_json::json!(["version_band", "processing_path"])
+        );
+        assert!(
+            summary["parity_note"]
+                .as_str()
+                .is_some_and(|note| note.contains("observability metadata only"))
+        );
     }
 
     #[test]
