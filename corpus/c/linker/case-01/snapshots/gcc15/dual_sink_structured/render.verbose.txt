@@ -1,8 +1,10 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: [linker] multiple definition of `duplicate`
-help  : remove the duplicate definition or make the symbol internal to one translation unit
-symbol: duplicate
-from  : helper.c:(.text+0x0)
+help   : remove the duplicate definition or make the symbol internal to one translation unit
+symbol : duplicate
+from   : helper.c:(.text+0x0)
+now    : helper.c:(.text+0x0)
+prev   : <temp-object>:main.c:(.text+0x0)
 raw:
   helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
 debug: rule_id=rule.family.ingress_specific_override

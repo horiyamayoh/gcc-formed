@@ -746,7 +746,10 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
-            structured_capture: if matches!(backend.default_processing_path(), diag_backend_probe::ProcessingPath::DualSinkStructured) {
+            structured_capture: if matches!(
+                backend.default_processing_path(),
+                diag_backend_probe::ProcessingPath::DualSinkStructured
+            ) {
                 diag_capture_runtime::StructuredCapturePolicy::SarifFile
             } else {
                 diag_capture_runtime::StructuredCapturePolicy::Disabled
@@ -771,7 +774,10 @@ fn measure_success_path_overhead() -> Result<BenchScenarioReport, Box<dyn std::e
             capture_passthrough_stderr: false,
             retention: RetentionPolicy::Never,
             paths: paths.clone(),
-            structured_capture: if matches!(backend.default_processing_path(), diag_backend_probe::ProcessingPath::DualSinkStructured) {
+            structured_capture: if matches!(
+                backend.default_processing_path(),
+                diag_backend_probe::ProcessingPath::DualSinkStructured
+            ) {
                 diag_capture_runtime::StructuredCapturePolicy::SarifFile
             } else {
                 diag_capture_runtime::StructuredCapturePolicy::Disabled
@@ -2140,9 +2146,7 @@ fn is_linker_heavy_family(family: &str) -> bool {
 
 fn default_execution_mode_for(version_band: VersionBand) -> ExecutionMode {
     match version_band {
-        VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {
-            ExecutionMode::Render
-        }
+        VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => ExecutionMode::Render,
         VersionBand::Gcc16Plus | VersionBand::Unknown => ExecutionMode::Passthrough,
     }
 }

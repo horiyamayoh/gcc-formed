@@ -1,8 +1,8 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: [linker] undefined reference to `missing_symbol`
-help  : define the missing symbol or link the object/library that provides it
-symbol: missing_symbol
-from  : main.c:(.text+0x5)
+help   : define the missing symbol or link the object/library that provides it
+symbol : missing_symbol
+from   : main.c:(.text+0x5)
 raw:
   main.c:(.text+0x5): undefined reference to `missing_symbol'
 debug: rule_id=rule.family.ingress_specific_override

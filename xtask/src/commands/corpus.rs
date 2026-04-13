@@ -3798,12 +3798,9 @@ mod tests {
 title: fixture\n\
 tags:\n\
 {tags_yaml}\n\
-matrix_applicability:\n{matrix_fields}",
-                matrix_fields = format!(
-                    "  version_band: {version_band}\n  processing_path: {processing_path}\n  surfaces:\n{matrix_surfaces_yaml}\n",
-                    version_band = fixture.expectations.version_band,
-                    processing_path = fixture.expectations.processing_path,
-                ),
+matrix_applicability:\n  version_band: {version_band}\n  processing_path: {processing_path}\n  surfaces:\n{matrix_surfaces_yaml}\n",
+                version_band = fixture.expectations.version_band,
+                processing_path = fixture.expectations.processing_path,
             ),
         )
         .expect("meta.yaml");

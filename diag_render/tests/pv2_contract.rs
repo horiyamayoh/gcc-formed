@@ -161,6 +161,7 @@ fn base_request(cwd: &Path, profile: RenderProfile) -> RenderRequest {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn diagnostic_node(
     id: &str,
     path: &str,

@@ -1,8 +1,10 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: [linker] multiple definition of `shared`
-help  : remove the duplicate definition or make the symbol internal to one translation unit
-symbol: shared
-from  : <temp-object>:(.data+0x0)
+help   : remove the duplicate definition or make the symbol internal to one translation unit
+symbol : shared
+from   : <temp-object>:(.data+0x0)
+now    : <temp-object>:(.data+0x0)
+prev   : <temp-object>:(.data+0x0)
 raw:
   /usr/bin/ld: <temp-object>:(.data+0x0): multiple definition of `shared'; <temp-object>:(.data+0x0): first defined here
 

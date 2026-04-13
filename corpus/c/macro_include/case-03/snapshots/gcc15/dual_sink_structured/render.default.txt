@@ -1,8 +1,10 @@
 error: [macro_include] error surfaced through macro/include context @ src/main.c:3:25
 help: inspect the user-owned macro invocation or include edge that reaches the failing line
 from: invocation of 'FETCH_VALUE' @ src/main.c:3:25
-via : include src/wrapper.h:1 <- src/main.c:1
+via : src/wrapper.h:1
 | src/main.c:3:25
 | int main(void) { return FETCH_VALUE(); }
 |                         ^
+from include chain:
+  - src/wrapper.h:1 included from src/main.c:1
 raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

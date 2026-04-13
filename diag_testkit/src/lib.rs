@@ -808,9 +808,7 @@ fn normalize_processing_path(
     }
 
     Ok(
-        if expected_mode == "passthrough"
-            || matches!(version_band, "unknown" | "gcc16_plus")
-        {
+        if expected_mode == "passthrough" || matches!(version_band, "unknown" | "gcc16_plus") {
             "passthrough"
         } else if version_band == "gcc15" {
             "dual_sink_structured"

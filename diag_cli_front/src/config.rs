@@ -2129,11 +2129,10 @@ mod tests {
             .to_render_policy();
 
         assert!(render_policy.header.subject_first);
-        assert_eq!(
+        assert!(
             render_policy
                 .resolve_card_presentation(Some("syntax"))
-                .subject_first_header,
-            true
+                .subject_first_header
         );
         assert_eq!(render_policy.label("help"), Some("custom-help"));
     }

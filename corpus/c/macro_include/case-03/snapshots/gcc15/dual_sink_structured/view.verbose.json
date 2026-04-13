@@ -6,7 +6,10 @@
       "collapsed_notices": [],
       "confidence_label": "certain",
       "confidence_notice": null,
-      "context_lines": [],
+      "context_lines": [
+        "from include chain:",
+        "  - src/wrapper.h:1 included from src/main.c:1"
+      ],
       "excerpts": [
         {
           "annotations": [

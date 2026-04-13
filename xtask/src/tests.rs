@@ -399,7 +399,9 @@ fn assert_emitted_family_replay_contract(
             "{fixture_id} should record residual_only for the nearest emitted proof",
         );
         assert!(
-            render_result.text.contains("failed to read compiled module"),
+            render_result
+                .text
+                .contains("failed to read compiled module"),
             "{fixture_id} should preserve the native module-import diagnostic text",
         );
     } else {
@@ -2430,13 +2432,11 @@ fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicabil
         let tags = yaml_string_sequence(meta.get("tags"));
 
         assert_eq!(
-            fixture.expectations.version_band,
-            "gcc13_14",
+            fixture.expectations.version_band, "gcc13_14",
             "{fixture_id} should be promoted as a gcc13_14 representative anchor",
         );
         assert_eq!(
-            fixture.expectations.processing_path,
-            processing_path,
+            fixture.expectations.processing_path, processing_path,
             "{fixture_id} should declare the expected representative processing path",
         );
         for required_tag in [
@@ -2522,7 +2522,10 @@ fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicabil
         let gcc15_companion =
             fixture_with_snapshot(fixture_id, "gcc15", "dual_sink_structured", "15");
         assert!(
-            gcc15_companion.snapshot_root().join("public.export.json").exists(),
+            gcc15_companion
+                .snapshot_root()
+                .join("public.export.json")
+                .exists(),
             "{fixture_id} should keep a checked-in gcc15 companion public export snapshot",
         );
     }

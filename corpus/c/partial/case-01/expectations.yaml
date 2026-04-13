@@ -23,7 +23,7 @@ render:
     raw_diagnostics_hint_required: true
     raw_sub_block_required: true
     required_substrings:
-      - "symbol: missing_symbol"
+      - "symbol : missing_symbol"
       - "  main.c:(.text+0x5): undefined reference to `missing_symbol'"
       - "raw: rerun with --formed-profile=raw_fallback"
   concise:
@@ -46,7 +46,7 @@ render:
     raw_sub_block_required: true
     color_meaning_forbidden: true
     required_substrings:
-      - "symbol: missing_symbol"
+      - "symbol : missing_symbol"
       - "  main.c:(.text+0x5): undefined reference to `missing_symbol'"
       - "raw: rerun with --formed-profile=raw_fallback"
   raw_fallback:

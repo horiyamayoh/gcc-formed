@@ -7,7 +7,14 @@
       "internal_family": "deleted_function",
       "presentation": {
         "display_family": "unavailable_api",
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": false,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -15,8 +22,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "lookup",
         "subject_first_header": true,
         "template_id": "lookup_block"
       },
@@ -54,7 +64,14 @@
       "internal_family": "type_overload",
       "presentation": {
         "display_family": "type_mismatch",
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": true,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -62,8 +79,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "generic",
         "subject_first_header": true,
         "template_id": "generic_block"
       },
@@ -77,7 +97,7 @@
         },
         {
           "label": "raw",
-          "slot": "why_raw",
+          "slot": "raw",
           "value": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates"
         }
       ],
@@ -89,7 +109,14 @@
       "group_id": "group-d84feff7273f",
       "internal_family": "unknown",
       "presentation": {
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": false,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -97,8 +124,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "generic",
         "subject_first_header": true,
         "template_id": "generic_block"
       },
@@ -107,7 +137,7 @@
       "slots": [
         {
           "label": "raw",
-          "slot": "why_raw",
+          "slot": "raw",
           "value": "initializing argument 1 of 'void take(NoCopy)'"
         }
       ],

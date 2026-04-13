@@ -6,7 +6,14 @@
       "internal_family": "linker.multiple_definition",
       "presentation": {
         "display_family": "linker",
+        "evidence_label_width": 7,
         "fell_back_to_generic_template": false,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -14,8 +21,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "linker",
         "subject_first_header": true,
         "template_id": "linker_block"
       },
@@ -36,6 +46,16 @@
           "label": "from",
           "slot": "from",
           "value": "helper.c:(.text+0x0)"
+        },
+        {
+          "label": "now",
+          "slot": "now",
+          "value": "helper.c:(.text+0x0)"
+        },
+        {
+          "label": "prev",
+          "slot": "prev",
+          "value": "/tmp/cczB1U1i.o:main.c:(.text+0x0)"
         }
       ],
       "subject": "multiple definition of `duplicate`",
@@ -45,7 +65,14 @@
       "group_id": "group-ac2f5a684011",
       "internal_family": "collect2_summary",
       "presentation": {
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": false,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -53,8 +80,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "generic",
         "subject_first_header": true,
         "template_id": "generic_block"
       },
@@ -68,7 +98,7 @@
         },
         {
           "label": "raw",
-          "slot": "why_raw",
+          "slot": "raw",
           "value": "collect2: error: ld returned 1 exit status"
         }
       ],

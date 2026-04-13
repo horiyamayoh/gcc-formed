@@ -7,7 +7,14 @@
       "internal_family": "macro_include",
       "presentation": {
         "display_family": "macro_include",
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": false,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -15,8 +22,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "context",
         "subject_first_header": true,
         "template_id": "context_block"
       },
@@ -36,7 +46,7 @@
         {
           "label": "via",
           "slot": "via",
-          "value": "include src/wrapper.h:1 <- src/main.c:1"
+          "value": "src/wrapper.h:1"
         }
       ],
       "subject": "error surfaced through macro/include context",

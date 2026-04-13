@@ -6,9 +6,11 @@ raw:
   /usr/bin/ld: <temp-object>: in function `duplicate_symbol':
 
 error: [linker] multiple definition of `duplicate_symbol`
-help  : remove the duplicate definition or make the symbol internal to one translation unit
-symbol: duplicate_symbol
-from  : helper.c:(.text+0x0)
+help   : remove the duplicate definition or make the symbol internal to one translation unit
+symbol : duplicate_symbol
+from   : helper.c:(.text+0x0)
+now    : helper.c:(.text+0x0)
+prev   : <temp-object>:main.c:(.text+0x0)
 raw:
   helper.c:(.text+0x0): multiple definition of `duplicate_symbol'; <temp-object>:main.c:(.text+0x0): first defined here
 
