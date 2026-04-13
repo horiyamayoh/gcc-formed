@@ -1,0 +1,171 @@
+kind = "cc_formed_presentation"
+schema_version = 2
+
+[session]
+visible_root_mode = "all_visible_blocks"
+warning_only_mode = "lead_plus_summary"
+block_separator = "blank_line"
+unknown_template = "generic_block"
+
+[header]
+subject_first = true
+interactive_format = "{severity}: [{family}] {subject}"
+ci_path_first_format = "{location}: {severity}: [{family}] {subject}"
+unknown_family = "generic"
+
+[labels]
+label_width_mode = "template_max"
+help = "help"
+want = "want"
+got = "got"
+via = "via"
+need = "need"
+from = "from"
+name = "name"
+use = "use"
+near = "near"
+symbol = "symbol"
+archive = "archive"
+now = "now"
+prev = "prev"
+raw = "raw"
+omitted = "omitted"
+
+[location]
+default_placement = "inline_suffix"
+inline_suffix_format = " @ {location}"
+fallback_order = ["header", "evidence", "excerpt_header", "none"]
+width_soft_limit = 100
+
+[[templates]]
+id = "generic_block"
+excerpt = "off"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "raw", label = "raw", optional = true },
+]
+
+[[templates]]
+id = "contrast_block"
+excerpt = "off"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "want", label = "want", optional = true },
+  { slot = "got", label = "got", optional = true },
+  { slot = "via", label = "via", suffix_slot = "omitted_notes_suffix", optional = true },
+]
+
+[[templates]]
+id = "parser_block"
+excerpt = "auto"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "want", label = "want", optional = true },
+  { slot = "near", label = "near", optional = true },
+]
+
+[[templates]]
+id = "lookup_block"
+excerpt = "auto"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "name", label = "name", optional = true },
+  { slot = "use", label = "use", optional = true },
+  { slot = "need", label = "need", optional = true },
+  { slot = "from", label = "from", optional = true },
+  { slot = "near", label = "near", optional = true },
+]
+
+[[templates]]
+id = "missing_header_block"
+excerpt = "off"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "need", label = "need", optional = true },
+  { slot = "from", label = "from", optional = true },
+]
+
+[[templates]]
+id = "conflict_block"
+excerpt = "off"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "now", label = "now", optional = true },
+  { slot = "prev", label = "prev", optional = true },
+]
+
+[[templates]]
+id = "context_block"
+excerpt = "auto"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "from", label = "from", optional = true },
+  { slot = "via", label = "via", optional = true },
+]
+
+[[templates]]
+id = "linker_block"
+excerpt = "off"
+core = [
+  { slot = "help", label = "help", optional = true },
+  { slot = "symbol", label = "symbol", optional = true },
+  { slot = "from", label = "from", suffix_slot = "omitted_refs_suffix", optional = true },
+  { slot = "archive", label = "archive", optional = true },
+]
+
+[[family_mappings]]
+match = ["type_overload", "concepts_constraints", "format_string", "conversion_narrowing", "const_qualifier"]
+display_family = "type_mismatch"
+semantic_shape = "contrast"
+template = "contrast_block"
+
+[[family_mappings]]
+match = ["syntax", "attribute", "storage_class", "module_import", "coroutine", "asm_inline", "openmp"]
+display_family = "syntax"
+semantic_shape = "parser"
+template = "parser_block"
+
+[[family_mappings]]
+match = ["preprocessor_directive"]
+display_family = "syntax"
+semantic_shape = "parser"
+template = "parser_block"
+shape_fallback = [
+  { shape = "missing_header", display_family = "missing_header" },
+]
+
+[[family_mappings]]
+match = ["scope_declaration"]
+display_family = "missing_name"
+semantic_shape = "lookup"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["pointer_reference"]
+display_family = "incomplete_type"
+semantic_shape = "lookup"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["deleted_function", "access_control"]
+display_family = "unavailable_api"
+semantic_shape = "lookup"
+template = "lookup_block"
+
+[[family_mappings]]
+match = ["redefinition", "odr_inline_linkage"]
+display_family = "redefinition"
+semantic_shape = "conflict"
+template = "conflict_block"
+
+[[family_mappings]]
+match = ["macro_include"]
+display_family = "macro_include"
+semantic_shape = "context"
+template = "context_block"
+
+[[family_mappings]]
+match = ["prefix:linker."]
+display_family = "linker"
+semantic_shape = "linker"
+template = "linker_block"

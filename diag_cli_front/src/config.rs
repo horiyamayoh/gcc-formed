@@ -10,10 +10,11 @@ use diag_core::{CascadePolicySnapshot, CompressionLevel, SuppressedCountVisibili
 use diag_render::{
     DebugRefs, LocationPlacement, PathPolicy, RenderProfile,
     ResolvedFamilyPresentation as RenderResolvedFamilyPresentation,
+    ResolvedHeaderPolicy as RenderResolvedHeaderPolicy,
     ResolvedLocationPolicy as RenderResolvedLocationPolicy,
-    ResolvedPresentationPolicy as RenderResolvedPresentationPolicy,
+    ResolvedPresentationPolicy as RenderResolvedPresentationPolicy, ResolvedShapeFallback,
     ResolvedTemplate as RenderResolvedTemplate, ResolvedTemplateLine as RenderResolvedTemplateLine,
-    SemanticSlotId, SessionMode,
+    SemanticShape, SemanticSlotId, SessionMode,
 };
 use diag_trace::{RetentionPolicy, WrapperPaths};
 use serde::Deserialize;
@@ -25,8 +26,13 @@ use std::path::{Path, PathBuf};
 
 const DEFAULT_PRESENTATION_PRESET: &str = "subject_blocks_v1";
 const PRESENTATION_SCHEMA_KIND: &str = "cc_formed_presentation";
-const PRESENTATION_SCHEMA_VERSION: u32 = 1;
+const PRESENTATION_SCHEMA_VERSION_V1: u32 = 1;
+const PRESENTATION_SCHEMA_VERSION_V2: u32 = 2;
 const GENERIC_BLOCK_TEMPLATE: &str = "generic_block";
+const SUBJECT_BLOCKS_V2_ASSET: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../config/presentation/subject_blocks_v2.toml"
+));
 const SUBJECT_BLOCKS_V1_ASSET: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../config/presentation/subject_blocks_v1.toml"
@@ -57,8 +63,11 @@ const KNOWN_FALLBACK_LOCATIONS: &[&str] = &[
 const KNOWN_TEMPLATE_EXCERPTS: &[&str] = &["off", "auto", "on"];
 const KNOWN_TEMPLATE_SLOTS: &[&str] = &[
     "first_action",
+    "help",
     "expected",
+    "want",
     "actual",
+    "got",
     "via",
     "need",
     "from",
@@ -70,8 +79,20 @@ const KNOWN_TEMPLATE_SLOTS: &[&str] = &[
     "now",
     "prev",
     "why_raw",
+    "raw",
 ];
 const KNOWN_SUFFIX_SLOTS: &[&str] = &["omitted_notes_suffix", "omitted_refs_suffix"];
+const KNOWN_LABEL_WIDTH_MODES: &[&str] = &["template_max", "fixed"];
+const KNOWN_SEMANTIC_SHAPES: &[&str] = &[
+    "contrast",
+    "parser",
+    "lookup",
+    "missing_header",
+    "conflict",
+    "context",
+    "linker",
+    "generic",
+];
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 pub(crate) struct PresentationConfigFile {
@@ -80,7 +101,9 @@ pub(crate) struct PresentationConfigFile {
     #[serde(default)]
     pub(crate) session: PresentationSessionSection,
     #[serde(default)]
-    pub(crate) labels: BTreeMap<String, String>,
+    pub(crate) header: PresentationHeaderSection,
+    #[serde(default)]
+    pub(crate) labels: PresentationLabelsSection,
     #[serde(default)]
     pub(crate) location: PresentationLocationSection,
     #[serde(default)]
@@ -102,11 +125,35 @@ pub(crate) struct PresentationSessionSection {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationHeaderSection {
+    #[serde(default)]
+    pub(crate) subject_first: Option<bool>,
+    #[serde(default)]
+    pub(crate) interactive_format: Option<String>,
+    #[serde(default)]
+    pub(crate) ci_path_first_format: Option<String>,
+    #[serde(default)]
+    pub(crate) unknown_family: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationLabelsSection {
+    #[serde(default)]
+    pub(crate) label_width_mode: Option<String>,
+    #[serde(default)]
+    pub(crate) fixed_label_width: Option<usize>,
+    #[serde(flatten)]
+    pub(crate) values: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 pub(crate) struct PresentationLocationSection {
     #[serde(default)]
     pub(crate) default_placement: Option<String>,
     #[serde(default)]
     pub(crate) fallback_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub(crate) inline_suffix_format: Option<String>,
     #[serde(default)]
     pub(crate) width_soft_limit: Option<usize>,
     #[serde(default)]
@@ -141,6 +188,17 @@ pub(crate) struct PresentationFamilyMapping {
     pub(crate) display_family: Option<String>,
     #[serde(default)]
     pub(crate) template: Option<String>,
+    #[serde(default)]
+    pub(crate) semantic_shape: Option<String>,
+    #[serde(default)]
+    pub(crate) shape_fallback: Vec<PresentationShapeFallback>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub(crate) struct PresentationShapeFallback {
+    pub(crate) shape: String,
+    #[serde(default)]
+    pub(crate) display_family: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -398,6 +456,27 @@ impl ResolvedPresentationPolicy {
                     .as_deref()
                     .unwrap_or("all_visible_blocks"),
             ),
+            header: RenderResolvedHeaderPolicy {
+                subject_first: self.policy.header.subject_first.unwrap_or(false),
+                interactive_format: self
+                    .policy
+                    .header
+                    .interactive_format
+                    .clone()
+                    .unwrap_or_else(|| "{severity}: [{family}] {subject}".to_string()),
+                ci_path_first_format: self
+                    .policy
+                    .header
+                    .ci_path_first_format
+                    .clone()
+                    .unwrap_or_else(|| "{location}: {severity}: [{family}] {subject}".to_string()),
+                unknown_family: self
+                    .policy
+                    .header
+                    .unknown_family
+                    .clone()
+                    .unwrap_or_else(|| "generic".to_string()),
+            },
             location_policy: RenderResolvedLocationPolicy {
                 default_placement: location_placement(
                     self.policy
@@ -433,6 +512,15 @@ impl ResolvedPresentationPolicy {
                                 .template
                                 .clone()
                                 .unwrap_or_else(|| GENERIC_BLOCK_TEMPLATE.to_string()),
+                            semantic_shape: mapping
+                                .semantic_shape
+                                .as_deref()
+                                .and_then(resolved_semantic_shape),
+                            shape_fallbacks: mapping
+                                .shape_fallback
+                                .iter()
+                                .filter_map(resolved_shape_fallback)
+                                .collect(),
                         })
                 })
                 .collect(),
@@ -537,11 +625,14 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
 
 fn load_builtin_presentation_asset(preset_id: &str) -> Result<PresentationConfigFile, String> {
     let source = match preset_id {
+        "subject_blocks_v2" => SUBJECT_BLOCKS_V2_ASSET,
         "subject_blocks_v1" => SUBJECT_BLOCKS_V1_ASSET,
         "legacy_v1" => LEGACY_V1_ASSET,
         other => return Err(format!("unknown preset id: {other}")),
     };
-    parse_presentation_config(source, &format!("built-in preset '{preset_id}'"))
+    let mut config = parse_presentation_config(source, &format!("built-in preset '{preset_id}'"))?;
+    apply_builtin_presentation_defaults(&mut config, preset_id);
+    Ok(config)
 }
 
 fn load_presentation_file(path: &Path) -> Result<PresentationConfigFile, String> {
@@ -567,10 +658,11 @@ fn parse_presentation_config(
         None => return Err(format!("missing kind in {source}")),
     }
     match config.schema_version {
-        Some(PRESENTATION_SCHEMA_VERSION) => {}
+        Some(PRESENTATION_SCHEMA_VERSION_V1 | PRESENTATION_SCHEMA_VERSION_V2) => {}
         Some(other) => {
             return Err(format!(
-                "unsupported presentation schema_version in {source}: {other}"
+                "unsupported presentation schema_version in {source}: {other} (supported: {} and {})",
+                PRESENTATION_SCHEMA_VERSION_V1, PRESENTATION_SCHEMA_VERSION_V2
             ));
         }
         None => return Err(format!("missing schema_version in {source}")),
@@ -584,6 +676,16 @@ fn merge_presentation_config(
 ) -> PresentationConfigFile {
     base.kind = overlay.kind.or(base.kind);
     base.schema_version = overlay.schema_version.or(base.schema_version);
+    base.header.subject_first = overlay.header.subject_first.or(base.header.subject_first);
+    base.header.interactive_format = overlay
+        .header
+        .interactive_format
+        .or(base.header.interactive_format);
+    base.header.ci_path_first_format = overlay
+        .header
+        .ci_path_first_format
+        .or(base.header.ci_path_first_format);
+    base.header.unknown_family = overlay.header.unknown_family.or(base.header.unknown_family);
     base.session.visible_root_mode = overlay
         .session
         .visible_root_mode
@@ -600,8 +702,16 @@ fn merge_presentation_config(
         .session
         .unknown_template
         .or(base.session.unknown_template);
-    for (key, value) in overlay.labels {
-        base.labels.insert(key, value);
+    base.labels.label_width_mode = overlay
+        .labels
+        .label_width_mode
+        .or(base.labels.label_width_mode);
+    base.labels.fixed_label_width = overlay
+        .labels
+        .fixed_label_width
+        .or(base.labels.fixed_label_width);
+    for (key, value) in overlay.labels.values {
+        base.labels.values.insert(key, value);
     }
     base.location.default_placement = overlay
         .location
@@ -611,6 +721,10 @@ fn merge_presentation_config(
         .location
         .fallback_order
         .or(base.location.fallback_order);
+    base.location.inline_suffix_format = overlay
+        .location
+        .inline_suffix_format
+        .or(base.location.inline_suffix_format);
     base.location.width_soft_limit = overlay
         .location
         .width_soft_limit
@@ -658,8 +772,11 @@ fn merge_family_mappings(
 fn semantic_slot_id(slot: &str) -> Option<SemanticSlotId> {
     match slot {
         "first_action" => Some(SemanticSlotId::FirstAction),
+        "help" => Some(SemanticSlotId::FirstAction),
         "expected" => Some(SemanticSlotId::Want),
+        "want" => Some(SemanticSlotId::Want),
         "actual" => Some(SemanticSlotId::Got),
+        "got" => Some(SemanticSlotId::Got),
         "via" => Some(SemanticSlotId::Via),
         "name" => Some(SemanticSlotId::Name),
         "use" => Some(SemanticSlotId::Use),
@@ -671,8 +788,30 @@ fn semantic_slot_id(slot: &str) -> Option<SemanticSlotId> {
         "symbol" => Some(SemanticSlotId::Symbol),
         "archive" => Some(SemanticSlotId::Archive),
         "why_raw" => Some(SemanticSlotId::WhyRaw),
+        "raw" => Some(SemanticSlotId::Raw),
         _ => None,
     }
+}
+
+fn resolved_semantic_shape(shape: &str) -> Option<SemanticShape> {
+    match shape {
+        "contrast" => Some(SemanticShape::Contrast),
+        "parser" => Some(SemanticShape::Parser),
+        "lookup" => Some(SemanticShape::Lookup),
+        "missing_header" => Some(SemanticShape::MissingHeader),
+        "conflict" => Some(SemanticShape::Conflict),
+        "context" => Some(SemanticShape::Context),
+        "linker" => Some(SemanticShape::Linker),
+        "generic" => Some(SemanticShape::Generic),
+        _ => None,
+    }
+}
+
+fn resolved_shape_fallback(fallback: &PresentationShapeFallback) -> Option<ResolvedShapeFallback> {
+    Some(ResolvedShapeFallback {
+        shape: resolved_semantic_shape(&fallback.shape)?,
+        display_family: fallback.display_family.clone(),
+    })
 }
 
 fn session_mode(mode: &str) -> SessionMode {
@@ -699,17 +838,22 @@ fn location_placement(placement: &str) -> LocationPlacement {
 }
 
 fn resolved_label_catalog(policy: &PresentationConfigFile) -> BTreeMap<String, String> {
-    let mut labels = policy.labels.clone();
+    let mut labels = policy.labels.values.clone();
     for template in &policy.templates {
         for line in &template.core {
             if let (Some(slot), Some(label_id)) =
                 (semantic_slot_id(&line.slot), line.label.as_deref())
-                && !labels.contains_key(slot.stable_id())
-                && let Some(label) = policy.labels.get(label_id)
+                && let Some(label) = policy.labels.values.get(label_id)
             {
                 labels.insert(slot.stable_id().to_string(), label.clone());
+                if matches!(slot, SemanticSlotId::Raw) {
+                    labels.insert("why_raw".to_string(), label.clone());
+                }
             }
         }
+    }
+    if let Some(raw) = labels.get("raw").cloned() {
+        labels.entry("why_raw".to_string()).or_insert(raw);
     }
     labels
 }
@@ -726,12 +870,77 @@ fn normalize_presentation_config(
     defaults: &PresentationConfigFile,
     warnings: &mut Vec<String>,
 ) {
-    policy.kind = Some(PRESENTATION_SCHEMA_KIND.to_string());
-    policy.schema_version = Some(PRESENTATION_SCHEMA_VERSION);
+    policy
+        .kind
+        .get_or_insert_with(|| PRESENTATION_SCHEMA_KIND.to_string());
+    if policy.schema_version.is_none() {
+        policy.schema_version = defaults
+            .schema_version
+            .or(Some(PRESENTATION_SCHEMA_VERSION_V2));
+    }
     normalize_session(policy, defaults, warnings);
+    normalize_header(policy, defaults);
+    normalize_labels(policy, defaults, warnings);
     normalize_location(policy, defaults, warnings);
     normalize_templates(policy, defaults, warnings);
     normalize_family_mappings(policy, defaults, warnings);
+}
+
+fn normalize_header(policy: &mut PresentationConfigFile, defaults: &PresentationConfigFile) {
+    policy.header.subject_first = policy
+        .header
+        .subject_first
+        .or(defaults.header.subject_first)
+        .or(Some(false));
+    policy.header.interactive_format = policy
+        .header
+        .interactive_format
+        .clone()
+        .or_else(|| defaults.header.interactive_format.clone())
+        .or(Some("{severity}: [{family}] {subject}".to_string()));
+    policy.header.ci_path_first_format = policy
+        .header
+        .ci_path_first_format
+        .clone()
+        .or_else(|| defaults.header.ci_path_first_format.clone())
+        .or(Some(
+            "{location}: {severity}: [{family}] {subject}".to_string(),
+        ));
+    policy.header.unknown_family = policy
+        .header
+        .unknown_family
+        .clone()
+        .or_else(|| defaults.header.unknown_family.clone())
+        .or(Some("generic".to_string()));
+}
+
+fn normalize_labels(
+    policy: &mut PresentationConfigFile,
+    defaults: &PresentationConfigFile,
+    warnings: &mut Vec<String>,
+) {
+    normalize_enum_field(
+        &mut policy.labels.label_width_mode,
+        defaults
+            .labels
+            .label_width_mode
+            .as_deref()
+            .or_else(|| policy.location.label_width.map(|_| "fixed")),
+        KNOWN_LABEL_WIDTH_MODES,
+        "labels.label_width_mode",
+        warnings,
+    );
+
+    if matches!(policy.labels.label_width_mode.as_deref(), Some("fixed"))
+        && policy.labels.fixed_label_width.unwrap_or(0) == 0
+    {
+        policy.labels.fixed_label_width = policy
+            .location
+            .label_width
+            .or(defaults.labels.fixed_label_width)
+            .or(defaults.location.label_width)
+            .or(Some(4));
+    }
 }
 
 fn normalize_session(
@@ -836,6 +1045,13 @@ fn normalize_location(
     if policy.location.label_width.unwrap_or(0) == 0 {
         policy.location.label_width = defaults.location.label_width.or(Some(4));
     }
+    if policy.location.inline_suffix_format.is_none() {
+        policy.location.inline_suffix_format = defaults
+            .location
+            .inline_suffix_format
+            .clone()
+            .or(Some(" @ {location}".to_string()));
+    }
 }
 
 fn normalize_templates(
@@ -934,6 +1150,26 @@ fn normalize_family_mappings(
                 mapping.template = Some(generic_template.clone());
             }
         }
+        if let Some(shape) = mapping.semantic_shape.as_deref()
+            && !KNOWN_SEMANTIC_SHAPES.contains(&shape)
+        {
+            warnings.push(format!(
+                "note: family mapping {:?} references unsupported semantic_shape '{}'; using built-in routing defaults",
+                mapping.matchers, shape
+            ));
+            mapping.semantic_shape = None;
+        }
+        mapping.shape_fallback.retain(|fallback| {
+            if KNOWN_SEMANTIC_SHAPES.contains(&fallback.shape.as_str()) {
+                true
+            } else {
+                warnings.push(format!(
+                    "note: family mapping {:?} references unsupported shape_fallback '{}'; skipping fallback",
+                    mapping.matchers, fallback.shape
+                ));
+                false
+            }
+        });
         true
     });
 }
@@ -968,6 +1204,28 @@ fn normalize_enum_field(
         None => {
             *field = default.map(ToOwned::to_owned);
         }
+    }
+}
+
+fn apply_builtin_presentation_defaults(policy: &mut PresentationConfigFile, preset_id: &str) {
+    if policy.header == PresentationHeaderSection::default() {
+        policy.header = builtin_header_defaults(preset_id);
+    }
+    if policy.labels.label_width_mode.is_none() && policy.location.label_width.is_some() {
+        policy.labels.label_width_mode = Some("fixed".to_string());
+        policy.labels.fixed_label_width = policy.location.label_width;
+    }
+}
+
+fn builtin_header_defaults(preset_id: &str) -> PresentationHeaderSection {
+    PresentationHeaderSection {
+        subject_first: Some(matches!(
+            preset_id,
+            "subject_blocks_v1" | "subject_blocks_v2"
+        )),
+        interactive_format: Some("{severity}: [{family}] {subject}".to_string()),
+        ci_path_first_format: Some("{location}: {severity}: [{family}] {subject}".to_string()),
+        unknown_family: Some("generic".to_string()),
     }
 }
 
@@ -1477,7 +1735,12 @@ mod tests {
         assert_eq!(resolved.preset_id, "legacy_v1");
         assert_eq!(resolved.presentation_file, Some(user_overlay));
         assert_eq!(
-            resolved.policy.labels.get("help").map(String::as_str),
+            resolved
+                .policy
+                .labels
+                .values
+                .get("help")
+                .map(String::as_str),
             Some("user-help")
         );
         assert!(!resolved.fell_back_to_default);
@@ -1544,6 +1807,7 @@ mod tests {
             resolved.policy.session.visible_root_mode.as_deref(),
             Some("all_visible_blocks")
         );
+        assert_eq!(resolved.policy.header.subject_first, Some(true));
     }
 
     #[test]
@@ -1629,12 +1893,24 @@ mod tests {
 
         assert_eq!(render_policy.preset_id, "subject_blocks_v1");
         assert_eq!(render_policy.session_mode, SessionMode::AllVisibleBlocks);
+        assert!(render_policy.header.subject_first);
         assert_eq!(render_policy.default_template_id, "generic_block");
         assert_eq!(render_policy.generic_template_id, "generic_block");
         assert_eq!(render_policy.label("why_raw"), Some("raw"));
         assert_eq!(
             render_policy.slot_label(SemanticSlotId::WhyRaw),
             Some("raw")
+        );
+        let preprocessor = render_policy
+            .family_mappings
+            .iter()
+            .find(|mapping| mapping.matcher == "preprocessor_directive")
+            .unwrap();
+        assert_eq!(preprocessor.semantic_shape, Some(SemanticShape::Parser));
+        assert_eq!(preprocessor.shape_fallbacks.len(), 1);
+        assert_eq!(
+            preprocessor.shape_fallbacks[0].shape,
+            SemanticShape::MissingHeader
         );
     }
 
@@ -1652,10 +1928,142 @@ mod tests {
 
         assert_eq!(render_policy.preset_id, "legacy_v1");
         assert_eq!(render_policy.session_mode, SessionMode::LeadPlusSummary);
+        assert!(!render_policy.header.subject_first);
         assert_eq!(render_policy.default_template_id, "legacy_primary_block");
         assert_eq!(
             render_policy.slot_label(SemanticSlotId::WhyRaw),
             Some("why")
         );
+    }
+
+    #[test]
+    fn subject_blocks_v2_builtin_preset_is_available() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation=subject_blocks_v2"),
+        ])
+        .unwrap();
+
+        let render_policy = ConfigFile::default()
+            .resolve_presentation_policy(&parsed)
+            .to_render_policy();
+
+        assert_eq!(render_policy.preset_id, "subject_blocks_v2");
+        assert!(render_policy.header.subject_first);
+        assert_eq!(
+            render_policy.header.interactive_format,
+            "{severity}: [{family}] {subject}"
+        );
+        assert_eq!(
+            render_policy.header.ci_path_first_format,
+            "{location}: {severity}: [{family}] {subject}"
+        );
+        assert_eq!(render_policy.label("raw"), Some("raw"));
+    }
+
+    #[test]
+    fn external_v2_presentation_file_is_loaded_and_subject_first_is_config_driven() {
+        let temp = tempdir().unwrap();
+        let overlay = temp.path().join("presentation-v2.toml");
+        fs::write(
+            &overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 2
+
+                [header]
+                subject_first = false
+                interactive_format = "{severity}: {subject}"
+
+                [labels]
+                label_width_mode = "fixed"
+                fixed_label_width = 6
+
+                [[family_mappings]]
+                match = ["type_overload"]
+                display_family = "type_mismatch"
+                semantic_shape = "contrast"
+                template = "contrast_block"
+            "#,
+        )
+        .unwrap();
+
+        let config = ConfigFile {
+            render: RenderSection {
+                presentation_file: Some(overlay),
+                ..RenderSection::default()
+            },
+            ..ConfigFile::default()
+        };
+
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+        let render_policy = resolved.to_render_policy();
+        let card = render_policy.resolve_card_presentation(Some("type_overload"));
+
+        assert!(!render_policy.header.subject_first);
+        assert_eq!(
+            render_policy.header.interactive_format,
+            "{severity}: {subject}"
+        );
+        assert_eq!(
+            resolved.policy.labels.label_width_mode.as_deref(),
+            Some("fixed")
+        );
+        assert_eq!(resolved.policy.labels.fixed_label_width, Some(6));
+        assert!(!card.subject_first_header);
+        assert_eq!(card.semantic_shape, SemanticShape::Contrast);
+    }
+
+    #[test]
+    fn external_v1_presentation_file_keeps_subject_first_default_from_builtin_preset() {
+        let temp = tempdir().unwrap();
+        let overlay = temp.path().join("presentation-v1.toml");
+        fs::write(
+            &overlay,
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 1
+
+                [labels]
+                help = "custom-help"
+            "#,
+        )
+        .unwrap();
+
+        let config = ConfigFile {
+            render: RenderSection {
+                presentation_file: Some(overlay),
+                ..RenderSection::default()
+            },
+            ..ConfigFile::default()
+        };
+
+        let render_policy = config
+            .resolve_presentation_policy(&ParsedArgs::default())
+            .to_render_policy();
+
+        assert!(render_policy.header.subject_first);
+        assert_eq!(
+            render_policy
+                .resolve_card_presentation(Some("syntax"))
+                .subject_first_header,
+            true
+        );
+        assert_eq!(render_policy.label("help"), Some("custom-help"));
+    }
+
+    #[test]
+    fn schema_version_errors_are_human_readable() {
+        let error = parse_presentation_config(
+            r#"
+                kind = "cc_formed_presentation"
+                schema_version = 9
+            "#,
+            "fixture.toml",
+        )
+        .unwrap_err();
+
+        assert!(error.contains("unsupported presentation schema_version"));
+        assert!(error.contains("supported: 1 and 2"));
     }
 }

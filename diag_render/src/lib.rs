@@ -32,9 +32,9 @@ use serde::{Deserialize, Serialize};
 pub use excerpt::ExcerptBlock;
 /// Re-exported presentation policy and semantic slot types.
 pub use presentation::{
-    LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation,
-    ResolvedLocationPolicy, ResolvedPresentationPolicy, ResolvedTemplate, ResolvedTemplateLine,
-    SemanticSlotId, SessionMode,
+    LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation, ResolvedHeaderPolicy,
+    ResolvedLocationPolicy, ResolvedPresentationPolicy, ResolvedShapeFallback, ResolvedTemplate,
+    ResolvedTemplateLine, SemanticShape, SemanticSlotId, SessionMode,
 };
 /// Re-exported internal presentation snapshot types for corpus/debug artifacts.
 pub use presentation_snapshot::{
@@ -958,6 +958,8 @@ mod tests {
             matcher: "syntax".to_string(),
             display_family: Some("syntax".to_string()),
             template_id: "missing_block".to_string(),
+            semantic_shape: None,
+            shape_fallbacks: Vec::new(),
         }];
 
         let view = build_view_model_with_presentation_policy(&request, &policy).unwrap();

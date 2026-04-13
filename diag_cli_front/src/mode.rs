@@ -238,7 +238,7 @@ pub(crate) fn select_processing_path_for_seam(
     requested: Option<ProcessingPath>,
 ) -> ProcessingPath {
     seam.select_processing_path(decision.mode, requested)
-        .unwrap_or_else(|_| match decision.mode {
+        .unwrap_or(match decision.mode {
             ExecutionMode::Passthrough => ProcessingPath::Passthrough,
             ExecutionMode::Shadow => seam.default_processing_path,
             ExecutionMode::Render => seam.default_processing_path,

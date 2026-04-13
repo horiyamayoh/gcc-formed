@@ -101,6 +101,26 @@ pub struct ResolvedLocationPolicy {
     pub fallback_order: Vec<LocationPlacement>,
 }
 
+/// Resolved header policy carried from the presentation config.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ResolvedHeaderPolicy {
+    pub subject_first: bool,
+    pub interactive_format: String,
+    pub ci_path_first_format: String,
+    pub unknown_family: String,
+}
+
+impl Default for ResolvedHeaderPolicy {
+    fn default() -> Self {
+        Self {
+            subject_first: false,
+            interactive_format: "{severity}: [{family}] {subject}".to_string(),
+            ci_path_first_format: "{location}: {severity}: [{family}] {subject}".to_string(),
+            unknown_family: "generic".to_string(),
+        }
+    }
+}
+
 /// One logical line inside a resolved presentation template.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResolvedTemplateLine {
@@ -128,6 +148,10 @@ pub struct ResolvedFamilyPresentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_family: Option<String>,
     pub template_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub semantic_shape: Option<SemanticShape>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub shape_fallbacks: Vec<ResolvedShapeFallback>,
 }
 
 /// The effective presentation decision for a single rendered card.
@@ -152,6 +176,8 @@ pub struct ResolvedCardPresentation {
 pub struct ResolvedPresentationPolicy {
     pub preset_id: String,
     pub session_mode: SessionMode,
+    #[serde(default)]
+    pub header: ResolvedHeaderPolicy,
     pub location_policy: ResolvedLocationPolicy,
     #[serde(default)]
     pub label_catalog: BTreeMap<String, String>,
@@ -228,6 +254,12 @@ impl ResolvedPresentationPolicy {
         Self {
             preset_id: "legacy_v1".to_string(),
             session_mode: SessionMode::LeadPlusSummary,
+            header: ResolvedHeaderPolicy {
+                subject_first: false,
+                interactive_format: "{severity}: [{family}] {subject}".to_string(),
+                ci_path_first_format: "{location}: {severity}: [{family}] {subject}".to_string(),
+                unknown_family: "generic".to_string(),
+            },
             location_policy: ResolvedLocationPolicy {
                 default_placement: LocationPlacement::DedicatedLine,
                 fallback_order: vec![
@@ -242,6 +274,8 @@ impl ResolvedPresentationPolicy {
                 matcher: "prefix:linker.".to_string(),
                 display_family: Some("linker".to_string()),
                 template_id: "legacy_linker_block".to_string(),
+                semantic_shape: None,
+                shape_fallbacks: Vec::new(),
             }],
             default_template_id: LEGACY_DEFAULT_TEMPLATE_ID.to_string(),
             generic_template_id: GENERIC_TEMPLATE_ID.to_string(),
@@ -490,6 +524,12 @@ impl ResolvedPresentationPolicy {
         Self {
             preset_id: "subject_blocks_v1".to_string(),
             session_mode: SessionMode::AllVisibleBlocks,
+            header: ResolvedHeaderPolicy {
+                subject_first: true,
+                interactive_format: "{severity}: [{family}] {subject}".to_string(),
+                ci_path_first_format: "{location}: {severity}: [{family}] {subject}".to_string(),
+                unknown_family: "generic".to_string(),
+            },
             location_policy: ResolvedLocationPolicy {
                 default_placement: LocationPlacement::InlineSuffix,
                 fallback_order: vec![
@@ -506,106 +546,151 @@ impl ResolvedPresentationPolicy {
                     matcher: "type_overload".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Contrast),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "concepts_constraints".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Contrast),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "format_string".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Contrast),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "conversion_narrowing".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Contrast),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "const_qualifier".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     template_id: "contrast_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Contrast),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "prefix:linker.".to_string(),
                     display_family: Some("linker".to_string()),
                     template_id: "linker_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Linker),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "syntax".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "preprocessor_directive".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: vec![ResolvedShapeFallback {
+                        shape: SemanticShape::MissingHeader,
+                        display_family: Some("missing_header".to_string()),
+                    }],
                 },
                 ResolvedFamilyPresentation {
                     matcher: "attribute".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "storage_class".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "module_import".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "coroutine".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "asm_inline".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "openmp".to_string(),
                     display_family: Some("syntax".to_string()),
                     template_id: "parser_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Parser),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "scope_declaration".to_string(),
                     display_family: Some("missing_name".to_string()),
                     template_id: "lookup_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Lookup),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "pointer_reference".to_string(),
                     display_family: Some("incomplete_type".to_string()),
                     template_id: "lookup_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Lookup),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "deleted_function".to_string(),
                     display_family: Some("unavailable_api".to_string()),
                     template_id: "lookup_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Lookup),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "access_control".to_string(),
                     display_family: Some("unavailable_api".to_string()),
                     template_id: "lookup_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Lookup),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "redefinition".to_string(),
                     display_family: Some("redefinition".to_string()),
                     template_id: "conflict_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Conflict),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "odr_inline_linkage".to_string(),
                     display_family: Some("redefinition".to_string()),
                     template_id: "conflict_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Conflict),
+                    shape_fallbacks: Vec::new(),
                 },
                 ResolvedFamilyPresentation {
                     matcher: "macro_include".to_string(),
                     display_family: Some("macro_include".to_string()),
                     template_id: "context_block".to_string(),
+                    semantic_shape: Some(SemanticShape::Context),
+                    shape_fallbacks: Vec::new(),
                 },
             ],
             default_template_id: SUBJECT_BLOCKS_DEFAULT_TEMPLATE_ID.to_string(),
@@ -709,6 +794,15 @@ impl ResolvedPresentationPolicy {
             || resolved_template_id.starts_with("legacy_")
         {
             (SemanticShape::Generic, Vec::new())
+        } else if let Some(mapping) = mapping {
+            if let Some(semantic_shape) = mapping.semantic_shape {
+                (semantic_shape, mapping.shape_fallbacks.clone())
+            } else {
+                semantic_shape_plan(
+                    internal_family,
+                    self.template_semantic_shape(resolved_template_id),
+                )
+            }
         } else {
             semantic_shape_plan(
                 internal_family,
@@ -721,7 +815,7 @@ impl ResolvedPresentationPolicy {
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
             semantic_shape,
             shape_fallbacks,
-            subject_first_header: self.preset_id == "subject_blocks_v1",
+            subject_first_header: self.header.subject_first,
             location_policy: self.location_policy.clone(),
             fell_back_to_generic_template,
         }
@@ -929,6 +1023,7 @@ mod tests {
 
         assert_eq!(resolved.template_id, "legacy_linker_block");
         assert_eq!(resolved.display_family.as_deref(), Some("linker"));
+        assert!(!resolved.subject_first_header);
     }
 
     #[test]
@@ -980,6 +1075,8 @@ mod tests {
             matcher: "syntax".to_string(),
             display_family: Some("syntax".to_string()),
             template_id: "missing_block".to_string(),
+            semantic_shape: None,
+            shape_fallbacks: Vec::new(),
         }];
 
         let resolved = policy.resolve_card_presentation(Some("syntax"));
@@ -1041,5 +1138,15 @@ mod tests {
         assert_eq!(policy.label("help"), Some("help"));
         assert_eq!(policy.label("raw"), Some("raw"));
         assert_eq!(SemanticSlotId::Raw.stable_id(), "raw");
+    }
+
+    #[test]
+    fn header_policy_controls_subject_first_activation() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.header.subject_first = false;
+
+        let resolved = policy.resolve_card_presentation(Some("syntax"));
+
+        assert!(!resolved.subject_first_header);
     }
 }
