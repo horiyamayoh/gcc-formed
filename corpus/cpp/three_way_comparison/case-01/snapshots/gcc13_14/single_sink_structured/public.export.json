@@ -1,0 +1,68 @@
+{
+  "execution": {
+    "allowed_processing_paths": [
+      "single_sink_structured",
+      "native_text_capture",
+      "passthrough"
+    ],
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "single_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-three_way_comparison-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "13.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "three_way_comparison",
+        "first_action": "ensure all members support <=> or provide a custom comparison operator",
+        "headline": "three-way comparison (spaceship) operator error",
+        "message": "no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 18,
+          "line": 6,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 1,
+      "duplicate_count": 0,
+      "error_count": 1,
+      "independent_root_count": 1,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "2.0.0-alpha.1",
+  "status": "available"
+}

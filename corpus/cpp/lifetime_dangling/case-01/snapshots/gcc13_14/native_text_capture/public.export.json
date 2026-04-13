@@ -1,0 +1,90 @@
+{
+  "execution": {
+    "allowed_processing_paths": [
+      "single_sink_structured",
+      "native_text_capture",
+      "passthrough"
+    ],
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "in_scope",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-lifetime_dangling-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "13.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "lifetime_dangling",
+        "first_action": "return by value instead of by pointer/reference, or extend the object lifetime",
+        "headline": "dangling pointer or reference to local",
+        "message": "src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\nsrc/main.cpp: In function ‘int* make_ptr()’:\n    3 |     return &value;\n      |            ^~~~~~",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 12,
+          "line": 3,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:9: note: declared here",
+            "message": "src/main.cpp:2:9: note: declared here\n    2 |     int value = 1;\n      |         ^~~~~",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 9,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 2,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 1,
+      "note_count": 1,
+      "uncertain_count": 0,
+      "warning_count": 1
+    }
+  },
+  "schema_version": "2.0.0-alpha.1",
+  "status": "available"
+}

@@ -1,0 +1,155 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 266,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "designated_init",
+        "first_action_hint": "reorder the designators to match the declaration order or check the member name",
+        "group_ref": "group-6e2d9a57bc26",
+        "headline": "designated initializer error",
+        "matched_conditions": [
+          "message_contains=designator order for field",
+          "message_contains=does not match declaration order",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.designated_init.message_terms"
+      },
+      "fingerprints": {
+        "family": "554630150b116011d8663cce018820db5b2ba1b8ac96eca4d2afca0fd0848151",
+        "raw": "6eaec070b83dd96ed1a04ab6c6d7d2c9ed3d727a7fa5ef8c975c494b2792945d",
+        "structural": "98e1999859ed4a895bb7d569b912e808e90692765217994be6382eb22efd4353"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 41,
+            "column_native": 41,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:7:41:7:41",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’\nsrc/main.cpp: In function ‘int main()’:\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-73c3be19c485",
+          "family": "designated_init",
+          "lead_group_ref": "group-6e2d9a57bc26",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-6e2d9a57bc26"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-73c3be19c485",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-6e2d9a57bc26",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b7039ecd1b145b668d7e678b322165a6455fce002ac40fcf22dd7ed562fea685",
+    "raw": "c6ad008b031f43b990a26b6ffda6a0900adb648ab47043dff3db22266b17e13a",
+    "structural": "34111fcc74f8f70a3f8c833ab3f66dde55de22e63957897596f5f89ab4753a08"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-Wno-missing-field-initializers",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

@@ -1,14 +1,37 @@
 corpus_id: cpp/module_import/case-01
-title: missing compiled module import
+title: GCC13 native-text missing compiled module import
 tags:
   - module_import
   - phase1
+  - beta-bar
+  - representative
+  - 'band:gcc13_14'
+  - 'processing_path:native_text_capture'
+  - 'surface:default'
+  - 'surface:ci'
+  - 'fallback_contract:bounded_render'
+matrix_applicability:
+  version_band: gcc13_14
+  processing_path: native_text_capture
+  surfaces:
+    - default
+    - ci
+  note: debug surface is intentionally omitted until a checked-in render.debug expectation exists.
+older_band_applicability:
+  shared_contract_when_emitted: true
+  gcc9_12:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: GCC9-12 module-import support is version-sensitive; GCC9-GCC10 front ends are unavailable for this family, and no checked-in GCC9-12 native_text_capture representative ingress exists yet. Do not infer a band-wide claim from the GCC13-14 native_text_capture anchor or GCC15 dual_sink_structured companion snapshot.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: GCC9-12 module-import support is version-sensitive; GCC9-GCC10 front ends are unavailable for this family, and no checked-in GCC9-12 single_sink_structured representative ingress exists yet. Do not infer a band-wide claim from the GCC13-14 native_text_capture anchor or GCC15 dual_sink_structured companion snapshot.
 ownership: curated
 provenance: hand-authored
 reviewer: codex
 redaction_class: public
 owner_team: compiler-ux
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-14'
 reviewers:
   - codex
 promotion_status: curated

@@ -1,0 +1,12 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: [structured_binding] structured binding decomposition error @ src/main.cpp:8:10
+help: ensure the type is decomposable and the number of bindings matches the member count
+raw : src/main.cpp:8:10: error: only 1 name provided for structured binding
+| src/main.cpp:8:10
+|     auto [only] = pair;
+|          ^
+note: src/main.cpp:8:10: note: while ‘Pair’ decomposes into 2 elements
+raw:
+  src/main.cpp:8:10: error: only 1 name provided for structured binding
+  src/main.cpp: In function ‘int main()’:
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

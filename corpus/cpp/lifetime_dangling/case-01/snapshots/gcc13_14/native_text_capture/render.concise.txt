@@ -1,0 +1,11 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+warning: [lifetime_dangling] dangling pointer or reference to local @ src/main.cpp:3:12
+help: return by value instead of by pointer/reference, or extend the object lifetime
+raw : src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]
+| src/main.cpp:3:12
+|     return &value;
+|            ^
+note: src/main.cpp:2:9: note: declared here
+raw:
+  src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

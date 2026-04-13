@@ -60,6 +60,22 @@ fn corpus_fixture(fixture_id: &str) -> diag_testkit::Fixture {
         .unwrap_or_else(|| panic!("fixture `{fixture_id}` not found"))
 }
 
+fn fixture_with_snapshot(
+    fixture_id: &str,
+    version_band: &str,
+    processing_path: &str,
+    major_version_selector: &str,
+) -> diag_testkit::Fixture {
+    let mut fixture = corpus_fixture(fixture_id);
+    fixture.invoke.version_band = version_band.to_string();
+    fixture.invoke.support_level = "in_scope".to_string();
+    fixture.invoke.major_version_selector = major_version_selector.to_string();
+    fixture.expectations.version_band = version_band.to_string();
+    fixture.expectations.processing_path = processing_path.to_string();
+    fixture.expectations.support_level = "in_scope".to_string();
+    fixture
+}
+
 fn public_export_for_fixture(
     fixture: &diag_testkit::Fixture,
     replay: &ReplayOutcomeAndDocument,
@@ -187,6 +203,210 @@ fn assert_fixture_does_not_claim_older_band_representative_cells(
             matrix.get("processing_path").and_then(YamlValue::as_str),
             Some("dual_sink_structured"),
             "{fixture_id} should only keep representative matrix_applicability for GCC15 dual_sink_structured",
+        );
+    }
+}
+
+fn assert_emitted_family_replay_contract(
+    fixture: &diag_testkit::Fixture,
+    expected_family: &str,
+    expect_residual_only_passthrough: bool,
+) {
+    let fixture_id = fixture.fixture_id().to_string();
+    let semantic = fixture.expectations.semantic.as_ref().unwrap();
+    let replay = replay_fixture_document(fixture).unwrap();
+    let request = render_request_for_fixture(fixture, &replay.document, RenderProfile::Default);
+    let render_result = render(request).unwrap();
+    let lead_node =
+        lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+    assert_eq!(
+        lead_node
+            .analysis
+            .as_ref()
+            .and_then(|analysis| analysis.family.as_deref()),
+        Some(expected_family),
+        "{fixture_id} should keep {expected_family} as the lead family",
+    );
+
+    if semantic.first_action_required {
+        assert!(
+            lead_node
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.first_action_hint.as_deref())
+                .is_some_and(|hint| !hint.trim().is_empty()),
+            "{fixture_id} should keep a lead first_action_hint",
+        );
+    }
+
+    if let Some(max_line) = fixture
+        .expectations
+        .render
+        .default
+        .as_ref()
+        .and_then(|expectations| expectations.first_action_max_line)
+    {
+        let line = first_help_line(&render_result.text).expect("expected help line");
+        assert!(
+            line <= max_line,
+            "{fixture_id} should keep help within line {max_line}, got {line}",
+        );
+    }
+
+    if fixture
+        .expectations
+        .render
+        .default
+        .as_ref()
+        .and_then(|expectations| expectations.partial_notice_required)
+        == Some(true)
+    {
+        assert!(
+            contains_partial_notice(&render_result.text),
+            "{fixture_id} should keep the partial notice visible",
+        );
+    }
+
+    if fixture
+        .expectations
+        .render
+        .default
+        .as_ref()
+        .and_then(|expectations| expectations.raw_diagnostics_hint_required)
+        == Some(true)
+    {
+        assert!(
+            contains_raw_diagnostics_hint(&render_result.text),
+            "{fixture_id} should keep the raw diagnostics hint visible",
+        );
+    }
+
+    if fixture
+        .expectations
+        .render
+        .default
+        .as_ref()
+        .and_then(|expectations| expectations.raw_sub_block_required)
+        == Some(true)
+    {
+        assert!(
+            contains_raw_sub_block(&render_result.text),
+            "{fixture_id} should keep the raw diagnostics sub-block visible",
+        );
+    }
+
+    if fixture
+        .expectations
+        .render
+        .default
+        .as_ref()
+        .and_then(|expectations| expectations.low_confidence_notice_required)
+        == Some(true)
+    {
+        assert!(
+            render_result.text.contains("confidence is limited"),
+            "{fixture_id} should keep the low-confidence notice visible",
+        );
+    }
+
+    let export = public_export_for_fixture(fixture, &replay);
+    assert_eq!(export.status, PublicExportStatus::Available);
+    assert_eq!(
+        export.execution.version_band,
+        fixture.expectations.version_band
+    );
+    assert_eq!(
+        export.execution.processing_path,
+        fixture.expectations.processing_path
+    );
+    assert!(
+        export
+            .execution
+            .allowed_processing_paths
+            .contains(&fixture.expectations.processing_path),
+        "{fixture_id} should list its processing path in allowed_processing_paths",
+    );
+
+    if fixture.expectations.version_band != "gcc15" {
+        assert!(
+            export
+                .execution
+                .allowed_processing_paths
+                .contains(&"passthrough".to_string()),
+            "{fixture_id} should keep passthrough in allowed_processing_paths",
+        );
+    }
+
+    let diagnostics = &export.result.as_ref().unwrap().diagnostics;
+    assert!(
+        !diagnostics.is_empty(),
+        "{fixture_id} should export at least one diagnostic",
+    );
+    let matching_diagnostics = diagnostics
+        .iter()
+        .filter(|diagnostic| {
+            diagnostic
+                .family
+                .as_deref()
+                .is_some_and(|family| family == expected_family)
+        })
+        .collect::<Vec<_>>();
+    assert!(
+        !matching_diagnostics.is_empty(),
+        "{fixture_id} should export at least one diagnostic tagged as {expected_family}",
+    );
+    assert!(
+        matching_diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .headline
+                .as_deref()
+                .is_some_and(|headline| !headline.trim().is_empty())
+        }),
+        "{fixture_id} should export a non-empty headline for {expected_family}",
+    );
+
+    if semantic.first_action_required {
+        assert!(
+            matching_diagnostics.iter().any(|diagnostic| {
+                diagnostic
+                    .first_action
+                    .as_deref()
+                    .is_some_and(|action| !action.trim().is_empty())
+            }),
+            "{fixture_id} should export a non-empty first_action for {expected_family}",
+        );
+    }
+
+    if semantic.raw_provenance_required {
+        assert!(
+            matching_diagnostics
+                .iter()
+                .any(|diagnostic| !diagnostic.provenance_capture_refs.is_empty()),
+            "{fixture_id} should keep provenance_capture_refs on exported diagnostics for {expected_family}",
+        );
+    }
+
+    if expect_residual_only_passthrough {
+        assert_eq!(
+            export.execution.document_completeness.as_deref(),
+            Some("passthrough"),
+            "{fixture_id} should preserve passthrough document completeness for the nearest emitted proof",
+        );
+        assert_eq!(
+            export.execution.fallback_reason.as_deref(),
+            Some("residual_only"),
+            "{fixture_id} should record residual_only for the nearest emitted proof",
+        );
+        assert!(
+            render_result.text.contains("failed to read compiled module"),
+            "{fixture_id} should preserve the native module-import diagnostic text",
+        );
+    } else {
+        assert_ne!(
+            export.execution.fallback_reason.as_deref(),
+            Some("residual_only"),
+            "{fixture_id} should not regress to residual_only fallback",
         );
     }
 }
@@ -2146,6 +2366,254 @@ fn prp08_cpp_replays_keep_shared_render_and_public_export_contract() {
                 semantic.family,
             );
         }
+    }
+}
+
+#[test]
+fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicability_inventory() {
+    let fixtures = [
+        (
+            "cpp/constexpr/case-01",
+            "native_text_capture",
+            "The compiler can emit this family on GCC9-12",
+        ),
+        (
+            "cpp/lambda_closure/case-01",
+            "native_text_capture",
+            "The compiler can emit this family on GCC9-12",
+        ),
+        (
+            "cpp/lifetime_dangling/case-01",
+            "native_text_capture",
+            "The compiler can emit this family on GCC9-12",
+        ),
+        (
+            "cpp/structured_binding/case-01",
+            "native_text_capture",
+            "The compiler can emit this family on GCC9-12",
+        ),
+        (
+            "cpp/designated_init/case-01",
+            "native_text_capture",
+            "The compiler can emit this family on GCC9-12",
+        ),
+        (
+            "cpp/three_way_comparison/case-01",
+            "single_sink_structured",
+            "older front ends are unavailable for part of the band",
+        ),
+        (
+            "cpp/concepts_constraints/case-01",
+            "single_sink_structured",
+            "older front ends are unavailable for part of the band",
+        ),
+        (
+            "cpp/coroutine/case-01",
+            "single_sink_structured",
+            "older front ends are unavailable for part of the band",
+        ),
+        (
+            "cpp/module_import/case-01",
+            "native_text_capture",
+            "GCC9-GCC10 front ends are unavailable",
+        ),
+        (
+            "cpp/ranges_views/case-01",
+            "single_sink_structured",
+            "older front ends are unavailable for part of the band",
+        ),
+    ];
+
+    for (fixture_id, processing_path, note_needle) in fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        let meta = meta_yaml_for_fixture(&fixture);
+        let tags = yaml_string_sequence(meta.get("tags"));
+
+        assert_eq!(
+            fixture.expectations.version_band,
+            "gcc13_14",
+            "{fixture_id} should be promoted as a gcc13_14 representative anchor",
+        );
+        assert_eq!(
+            fixture.expectations.processing_path,
+            processing_path,
+            "{fixture_id} should declare the expected representative processing path",
+        );
+        for required_tag in [
+            "beta-bar",
+            "representative",
+            "band:gcc13_14",
+            "surface:default",
+            "surface:ci",
+            "fallback_contract:bounded_render",
+        ] {
+            assert!(
+                tags.iter().any(|tag| tag == required_tag),
+                "{fixture_id} should keep tag {required_tag}",
+            );
+        }
+        assert!(
+            tags.iter()
+                .any(|tag| tag == format!("processing_path:{processing_path}").as_str()),
+            "{fixture_id} should keep the processing-path representative tag",
+        );
+
+        let matrix = matrix_applicability_for_fixture(&fixture);
+        assert_eq!(
+            matrix.get("version_band").and_then(YamlValue::as_str),
+            Some("gcc13_14"),
+            "{fixture_id} should declare gcc13_14 matrix applicability",
+        );
+        assert_eq!(
+            matrix.get("processing_path").and_then(YamlValue::as_str),
+            Some(processing_path),
+            "{fixture_id} should declare the expected matrix processing path",
+        );
+        assert_eq!(
+            yaml_string_sequence(matrix.get("surfaces")),
+            vec!["default".to_string(), "ci".to_string()],
+            "{fixture_id} should declare default/ci as the checked-in stop-ship surfaces",
+        );
+        let matrix_note = matrix
+            .get("note")
+            .and_then(YamlValue::as_str)
+            .unwrap_or_default();
+        assert!(
+            matrix_note.contains("debug surface is intentionally omitted"),
+            "{fixture_id} should explain the missing debug surface",
+        );
+
+        let applicability = older_band_applicability_for_fixture(&fixture);
+        assert_eq!(
+            applicability
+                .get("shared_contract_when_emitted")
+                .and_then(YamlValue::as_bool),
+            Some(true),
+            "{fixture_id} should declare shared_contract_when_emitted",
+        );
+        for older_path in ["native_text_capture", "single_sink_structured"] {
+            let cell = older_band_applicability_cell(&applicability, "gcc9_12", older_path);
+            assert_eq!(
+                cell.get("status").and_then(YamlValue::as_str),
+                Some("missing_representative_evidence"),
+                "{fixture_id} should mark gcc9_12/{older_path} as missing representative evidence",
+            );
+            let note = cell
+                .get("note")
+                .and_then(YamlValue::as_str)
+                .unwrap_or_default();
+            assert!(
+                note.contains(note_needle),
+                "{fixture_id} should explain gcc9_12/{older_path} with the expected applicability note",
+            );
+            let normalized_note = note.to_ascii_lowercase();
+            assert!(
+                normalized_note.contains("do not infer"),
+                "{fixture_id} should keep the explicit non-inference note for gcc9_12/{older_path}",
+            );
+        }
+
+        let primary_snapshot_root = fixture.snapshot_root();
+        assert!(
+            primary_snapshot_root.join("public.export.json").exists(),
+            "{fixture_id} should keep a checked-in gcc13_14 representative public export snapshot",
+        );
+
+        let gcc15_companion =
+            fixture_with_snapshot(fixture_id, "gcc15", "dual_sink_structured", "15");
+        assert!(
+            gcc15_companion.snapshot_root().join("public.export.json").exists(),
+            "{fixture_id} should keep a checked-in gcc15 companion public export snapshot",
+        );
+    }
+}
+
+#[test]
+fn prp09_modern_cpp_replays_keep_shared_render_and_public_export_contract() {
+    let fixtures = [
+        (
+            "cpp/constexpr/case-01",
+            "constexpr",
+            false,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/lambda_closure/case-01",
+            "lambda_closure",
+            false,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/lifetime_dangling/case-01",
+            "lifetime_dangling",
+            false,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/structured_binding/case-01",
+            "structured_binding",
+            false,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/designated_init/case-01",
+            "designated_init",
+            false,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/three_way_comparison/case-01",
+            "three_way_comparison",
+            false,
+            diag_backend_probe::ProcessingPath::SingleSinkStructured,
+        ),
+        (
+            "cpp/concepts_constraints/case-01",
+            "concepts_constraints",
+            false,
+            diag_backend_probe::ProcessingPath::SingleSinkStructured,
+        ),
+        (
+            "cpp/coroutine/case-01",
+            "coroutine",
+            false,
+            diag_backend_probe::ProcessingPath::SingleSinkStructured,
+        ),
+        (
+            "cpp/module_import/case-01",
+            "module_import",
+            true,
+            diag_backend_probe::ProcessingPath::NativeTextCapture,
+        ),
+        (
+            "cpp/ranges_views/case-01",
+            "ranges_views",
+            false,
+            diag_backend_probe::ProcessingPath::SingleSinkStructured,
+        ),
+    ];
+
+    for (fixture_id, expected_family, expect_residual_only_passthrough, expected_path) in fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        assert_eq!(
+            fixture_processing_path(&fixture),
+            expected_path,
+            "{fixture_id} should keep the expected gcc13_14 representative path",
+        );
+        assert_emitted_family_replay_contract(
+            &fixture,
+            expected_family,
+            expect_residual_only_passthrough,
+        );
+
+        let gcc15_companion =
+            fixture_with_snapshot(fixture_id, "gcc15", "dual_sink_structured", "15");
+        assert_eq!(
+            fixture_processing_path(&gcc15_companion),
+            diag_backend_probe::ProcessingPath::DualSinkStructured,
+            "{fixture_id} should keep a gcc15 dual-sink companion snapshot",
+        );
+        assert_emitted_family_replay_contract(&gcc15_companion, expected_family, false);
     }
 }
 

@@ -1,0 +1,445 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 2922,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "concepts_constraints",
+        "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+        "group_ref": "group-92d9522d9923",
+        "headline": "template constraint not satisfied",
+        "matched_conditions": [
+          "child_message_contains=constraints not satisfied",
+          "child_message_contains=the required expression",
+          "phase=constraints"
+        ],
+        "rule_id": "rule.family.concepts_constraints.structured_or_message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "7225f759cbdff2dbcfaf71d3cb3077b07b5e06f40d46ef368fe03e779795aade",
+            "raw": "006fc41269f40efa77b250bd59bdffda67cf03f35556a239bcfc7449bcdcda21",
+            "structural": "6b51bcf692a33297d6f0f481c8c5bb1076a7227ec7601084d0d2dbd3a2ad9e05"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "381e9383fd363e81917de1eb3217ae34df0e7cbd2532c517ea3741191a1bb48e",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "122b590cd1c5f0d995259e71b74bd10dd7e6a0b8d3a3c4f0f4a615b7222e3e46"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.8999999761581421,
+            "family": "concepts_constraints",
+            "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "matched_conditions": [
+              "message_contains=constraints not satisfied"
+            ],
+            "rule_id": "rule.family.concepts_constraints.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "1e17a2af4665ef66c2b12d9d355a043a3cd625331ff7f8b7a6999736e56de423",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "21b644e28ce5ac5dfd25ea8b6f9d6acba2651f720c66914e74b7dadee316db6a"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 5,
+                "column_native": 5,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 5
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:5:5:5:5",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.8999999761581421,
+            "family": "concepts_constraints",
+            "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "matched_conditions": [
+              "message_contains=the required expression"
+            ],
+            "rule_id": "rule.family.concepts_constraints.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "ee92f505cd2365a0775057fbaec73293d2a1ea6181954776c4049ebbea76c3cf",
+            "raw": "8a512bb5111a2cbac5ba655101ca4bf325a725328366da19228b663b4dc8c71e",
+            "structural": "4bdfc99c13842330b232294f3db96d3e5460af77e5fd146b1003d29ce4dfbac2"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 39,
+                "column_native": 39,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:39:2:39",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the required expression ‘value.size()’ is invalid"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "be856e8eab5ff00757e650eeec573e191da9ec7a21cdd0e07076c41348965157",
+            "raw": "73a749e002f208674505757ad5eb7c42788aca8a4026f8f56427dee81294ed4c",
+            "structural": "4c539d4e725473084e363bfe9b3710681824d109247f8a36e1e9941b3f845c04"
+          },
+          "id": "sarif-0-0-related-4",
+          "message": {
+            "raw_text": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 5,
+              "label": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’",
+              "line": 5,
+              "path": "src/main.cpp"
+            },
+            {
+              "column": 5,
+              "label": "template argument deduction/substitution failed:",
+              "line": 5,
+              "path": "src/main.cpp"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "fcdf225212d002116d555d04a8dbae25542edf3714b48419b4a20c0198594240",
+        "raw": "ff46f0158b1f3489bb01f1751306fc1a042cd39766eb5e72bbb65ee3554b7a10",
+        "structural": "adf90a88541aaa2fa4a719baf54c63500f05bc16e6f3fc5c67ce494407d5a783"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 8
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:8:12:8:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no matching function for call to ‘consume(int)’"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "constraints",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.800000011920929,
+          "episode_ref": "episode-70dde84f3528",
+          "family": "concepts_constraints",
+          "lead_group_ref": "group-92d9522d9923",
+          "lead_root_score": 0.800000011920929,
+          "member_group_refs": [
+            "group-92d9522d9923"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-70dde84f3528",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-92d9522d9923",
+        "independence_score": 0.800000011920929,
+        "role": "independent_root",
+        "root_score": 0.800000011920929,
+        "summary_likelihood": 0.3800000250339508,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "0183ed1809d35c25bc6ccd6c67e0da74ee4808ed37fd3466336f62f7b42413e7",
+    "raw": "bfe0c43ffec610895fee3c744523840183fc03cab1f85a5ab889d00aa062a732",
+    "structural": "28cf33ec2b6064ad7a02f556789f1500265a29b58bce7d40a9f622b93d9e41fe"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

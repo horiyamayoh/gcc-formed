@@ -576,6 +576,75 @@ mod tests {
     }
 
     #[test]
+    fn classifies_constexpr_from_message_terms() {
+        let node = sample_node("static assertion failed: int size mismatch");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("constexpr"));
+    }
+
+    #[test]
+    fn classifies_lambda_closure_from_message_terms() {
+        let node = sample_node("'value' is not captured");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("lambda_closure"));
+    }
+
+    #[test]
+    fn classifies_lifetime_dangling_from_message_terms() {
+        let node = sample_node("address of local variable 'value' returned [-Wreturn-local-addr]");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("lifetime_dangling"));
+    }
+
+    #[test]
+    fn classifies_coroutine_from_message_terms() {
+        let node = sample_node("unable to find the promise type for this coroutine");
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("coroutine"));
+    }
+
+    #[test]
+    fn classifies_module_import_passthrough_message_before_linker_fallback() {
+        let mut node = sample_node(
+            "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated.",
+        );
+        node.phase = Phase::Link;
+        node.semantic_role = SemanticRole::Passthrough;
+        node.node_completeness = NodeCompleteness::Passthrough;
+        node.locations.clear();
+        let mut document = sample_document(node);
+
+        enrich_document(&mut document, Path::new("/tmp/project"));
+
+        let analysis = document.diagnostics[0].analysis.as_ref().unwrap();
+        assert_eq!(analysis.family.as_deref(), Some("module_import"));
+        assert_eq!(
+            analysis.rule_id.as_deref(),
+            Some("rule.family.module_import.message_terms")
+        );
+        assert_eq!(
+            analysis.first_action_hint.as_deref(),
+            Some("build or export the requested module interface before importing it")
+        );
+    }
+
+    #[test]
     fn classifies_string_character_before_syntax() {
         let node = sample_node("missing terminating \" character");
         let mut document = sample_document(node);

@@ -1,0 +1,110 @@
+{
+  "execution": {
+    "allowed_processing_paths": [
+      "single_sink_structured",
+      "native_text_capture",
+      "passthrough"
+    ],
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
+    "processing_path": "native_text_capture",
+    "source_authority": "residual_text",
+    "support_level": "in_scope",
+    "version_band": "gcc13_14"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-lambda_closure-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "13.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "lambda_closure",
+        "first_action": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+        "headline": "lambda capture error",
+        "message": "src/main.cpp:3:33: error: ‘value’ is not captured\nsrc/main.cpp: In lambda function:\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 33,
+          "line": 3,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "high",
+            "family": "lambda_closure",
+            "first_action": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+            "headline": "lambda capture error",
+            "message": "src/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 20,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "low",
+            "family": "unknown",
+            "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:9: note: ‘int value’ declared here",
+            "message": "src/main.cpp:2:9: note: ‘int value’ declared here\n    2 |     int value = 1;\n      |         ^~~~~",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 9,
+              "line": 2,
+              "ownership": "user",
+              "path": "src/main.cpp",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 3,
+      "duplicate_count": 0,
+      "error_count": 1,
+      "independent_root_count": 1,
+      "note_count": 2,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "2.0.0-alpha.1",
+  "status": "available"
+}

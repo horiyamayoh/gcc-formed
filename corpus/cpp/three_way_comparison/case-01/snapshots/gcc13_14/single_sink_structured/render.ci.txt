@@ -1,0 +1,7 @@
+src/main.cpp:6:18: error: [three_way_comparison] three-way comparison (spaceship) operator error
+help: ensure all members support <=> or provide a custom comparison operator
+raw : no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)
+| src/main.cpp:6:18
+|     return (left <=> right) == 0;
+|                  ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

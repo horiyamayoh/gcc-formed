@@ -1,0 +1,211 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:8:10: error: only 1 name provided for structured binding\n    8 |     auto [only] = pair;\n      |          ^~~~~~\nsrc/main.cpp:8:10: note: while ‘Pair’ decomposes into 2 elements\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 239,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "structured_binding",
+        "first_action_hint": "ensure the type is decomposable and the number of bindings matches the member count",
+        "group_ref": "group-e2a636de30cb",
+        "headline": "structured binding decomposition error",
+        "matched_conditions": [
+          "message_contains=name provided for structured binding",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.structured_binding.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:8:10: note: while ‘Pair’ decomposes into 2 elements",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "095716b049a87a4aea16cba26ef1ee1139e37b3befcb7194cbed46050d0a8151",
+            "raw": "3e5650d7de778820671726b42ef5a0e1596cac343061c5961b4e8a65d857d4d7",
+            "structural": "9b1aff8e7dd88089f55a3fe7ccd40a3a8c8fabe4811e28f0ad6829d881e5ac9d"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 10,
+                "column_native": 10,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 8
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:8:10:8:10",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:8:10: note: while ‘Pair’ decomposes into 2 elements"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "083c07fcc6aa2008a35a80b51e500edc3c84f95fe1c11160f3ea557b8e6d7cf7",
+        "raw": "b911a6d1aa38b5da522819595b3e9aac98c9634f69eb15897a9dd959791ab7e1",
+        "structural": "2a3e1b93231dae6b53a66c4b87080da2c224de383307adfb92608d16db83c475"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 10,
+            "column_native": 10,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 8
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:8:10:8:10",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:8:10: error: only 1 name provided for structured binding\nsrc/main.cpp: In function ‘int main()’:\n    8 |     auto [only] = pair;\n      |          ^~~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-4a7695ffa88f",
+          "family": "structured_binding",
+          "lead_group_ref": "group-e2a636de30cb",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-e2a636de30cb"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-4a7695ffa88f",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-e2a636de30cb",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "6fd56d003f2585ee0cc47a280d0df9122863af7b948d353590828a7d3efca180",
+    "raw": "faab6d5922a377c2cb3b34bfa401eb4dd77d300f652bd9b1120fdebce1f4db53",
+    "structural": "6ed95fabb89cd4b6d6ce9d85801097fc6bc57e68486fb707bc61cc1a3e2c2b06"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

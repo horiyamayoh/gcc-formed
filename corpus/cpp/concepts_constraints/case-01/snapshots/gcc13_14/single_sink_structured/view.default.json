@@ -1,0 +1,46 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:8:12",
+      "child_notes": [],
+      "collapsed_notices": [
+        "omitted 2 additional note(s)"
+      ],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [
+        "template: src/main.cpp:5:5 candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’",
+        "template: src/main.cpp:5:5 template argument deduction/substitution failed:"
+      ],
+      "excerpts": [
+        {
+          "annotations": [
+            "           ^"
+          ],
+          "lines": [
+            "    return consume(1);"
+          ],
+          "location": "src/main.cpp:8:12"
+        }
+      ],
+      "family": "concepts_constraints",
+      "first_action": "match the required concept or requires-clause against the actual template arguments",
+      "group_id": "group-92d9522d9923",
+      "matched_conditions": [
+        "child_message_contains=constraints not satisfied",
+        "child_message_contains=the required expression",
+        "phase=constraints"
+      ],
+      "raw_message": "no matching function for call to ‘consume(int)’",
+      "rule_id": "rule.family.concepts_constraints.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "template constraint not satisfied"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

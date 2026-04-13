@@ -1,0 +1,13 @@
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: [lambda_closure] lambda capture error @ src/main.cpp:3:33
+help: add the variable to the capture list or specify a default capture mode [=] or [&]
+raw : src/main.cpp:3:33: error: ‘value’ is not captured
+| src/main.cpp:3:33
+|     auto lambda = []() { return value; };
+|                                 ^
+note: src/main.cpp:3:20: note: the lambda has no capture-default
+note: src/main.cpp:2:9: note: ‘int value’ declared here
+raw:
+  src/main.cpp:3:33: error: ‘value’ is not captured
+  src/main.cpp: In lambda function:
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

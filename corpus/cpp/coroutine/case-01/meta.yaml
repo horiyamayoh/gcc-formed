@@ -1,14 +1,37 @@
 corpus_id: cpp/coroutine/case-01
-title: coroutine return type lacks promise_type
+title: GCC13 single-sink structured coroutine return type lacks promise_type
 tags:
   - coroutine
   - phase1
+  - beta-bar
+  - representative
+  - 'band:gcc13_14'
+  - 'processing_path:single_sink_structured'
+  - 'surface:default'
+  - 'surface:ci'
+  - 'fallback_contract:bounded_render'
+matrix_applicability:
+  version_band: gcc13_14
+  processing_path: single_sink_structured
+  surfaces:
+    - default
+    - ci
+  note: debug surface is intentionally omitted until a checked-in render.debug expectation exists.
+older_band_applicability:
+  shared_contract_when_emitted: true
+  gcc9_12:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: GCC9-12 support for this C++20 family is version-sensitive and older front ends are unavailable for part of the band. No checked-in GCC9-12 native_text_capture representative ingress exists yet, so do not infer a band-wide claim from the GCC13-14 single_sink_structured anchor or GCC15 dual_sink_structured companion snapshot.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: GCC9-12 support for this C++20 family is version-sensitive and older front ends are unavailable for part of the band. No checked-in GCC9-12 single_sink_structured representative ingress exists yet, so do not infer a band-wide claim from the GCC13-14 single_sink_structured anchor or GCC15 dual_sink_structured companion snapshot.
 ownership: curated
 provenance: hand-authored
 reviewer: codex
 redaction_class: public
 owner_team: compiler-ux
-last_reviewed: '2026-04-12'
+last_reviewed: '2026-04-14'
 reviewers:
   - codex
 promotion_status: curated

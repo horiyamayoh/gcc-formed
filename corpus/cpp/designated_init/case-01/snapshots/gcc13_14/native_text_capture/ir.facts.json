@@ -1,0 +1,99 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int main()’:\nsrc/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 266,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "422bc502c97ebc912e7f7967d84799480dbafaba3e7d0fe3351fdcbc9b227249",
+        "raw": "6eaec070b83dd96ed1a04ab6c6d7d2c9ed3d727a7fa5ef8c975c494b2792945d",
+        "structural": "70174105d5f61ea9fba2fd20e0269e716b83a853d90cb14bdae9a3cafd7b14c4"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 41,
+            "column_native": 41,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 7
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:7:41:7:41",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’\nsrc/main.cpp: In function ‘int main()’:\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "36015be2fae88f85afc6ad6a50ef6c4d92f7348efeca67afd1cbbfbbec5c6a96",
+    "structural": "52697c455be36879204781cbc6cf3e72dcafdf8b3acd8399009327b24e6a5740"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-Wno-missing-field-initializers",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

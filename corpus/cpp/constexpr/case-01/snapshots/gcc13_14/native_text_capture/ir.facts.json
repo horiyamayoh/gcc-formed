@@ -1,0 +1,145 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp:1:27: error: static assertion failed: int size mismatch\n    1 | static_assert(sizeof(int) == 1, \"int size mismatch\");\n      |               ~~~~~~~~~~~~^~~~\nsrc/main.cpp:1:27: note: the comparison reduces to ‘(4 == 1)’\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 236,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "b0a2a010fc590de221c417fe0cca0540241d89aebff47bc926e63857da28bf09",
+            "raw": "87c17b491fdd7a467d5bcc9e5d41a6df966ff2f98d4978cad7a2314b6c5c26d3",
+            "structural": "3b7cfe6431dff61f7fb439b667ab0db497b791c30a5112240d891309dc87df16"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 27,
+                "column_native": 27,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:27:1:27",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:1:27: note: the comparison reduces to ‘(4 == 1)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "6890294da2fab9c18febfb95c6f8807c3934dc7bcfdbbe75ce91966605717ece",
+        "raw": "85ee948919601b41ff24514bfac4c88fda4421c296bcc3dc17bbe9ca3cb8ac13",
+        "structural": "e46959fd06d25cae852069413c5e22f9349c8606645f9ad639b2ebcd13192a09"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 27,
+            "column_native": 27,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:1:27:1:27",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:1:27: error: static assertion failed: int size mismatch\n    1 | static_assert(sizeof(int) == 1, \"int size mismatch\");\n      |               ~~~~~~~~~~~~^~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "e64d05e4af4152a3fa8cf01cc194f5ed2ae50c57fbc121fc98d196e225a64fe0",
+    "structural": "c4d1e743912251f9d15ec25c22e7ec1f0a2b51cd78cd17958ae00755aab0943c"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

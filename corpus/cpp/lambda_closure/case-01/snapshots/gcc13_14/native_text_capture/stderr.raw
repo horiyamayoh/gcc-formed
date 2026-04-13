@@ -1,0 +1,10 @@
+src/main.cpp: In lambda function:
+src/main.cpp:3:33: error: ‘value’ is not captured
+    3 |     auto lambda = []() { return value; };
+      |                                 ^~~~~
+src/main.cpp:3:20: note: the lambda has no capture-default
+    3 |     auto lambda = []() { return value; };
+      |                    ^
+src/main.cpp:2:9: note: ‘int value’ declared here
+    2 |     int value = 1;
+      |         ^~~~~

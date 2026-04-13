@@ -1,0 +1,146 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int* make_ptr()’:\nsrc/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\n    3 |     return &value;\n      |            ^~~~~~\nsrc/main.cpp:2:9: note: declared here\n    2 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 286,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "c8138b9cb1f2385bac8ebef44a00257d07240fa0447995c6fcbf663fa8e120dd",
+            "raw": "8ca4b932bc414d1830a7d63ac111d87e708124d6841ca28d3e0d94788d5986bd",
+            "structural": "8773287c4699cc5e248f86ff6c011be0f989071b26e114ba4b683fff85369105"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:9:2:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:9: note: declared here\n    2 |     int value = 1;\n      |         ^~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "687a4f3355a431dc982c4a56a8ba19b8a11854fbe279d6ba7d3006a7a818ff77",
+        "raw": "cbd27f31979ab690374c593f7446b45258426db680fd2c994df10a4aa0a68deb",
+        "structural": "0adace18213464e0066da5aacd124131b2ee9267379427528af9843ba4dcfe56"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:12:3:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\nsrc/main.cpp: In function ‘int* make_ptr()’:\n    3 |     return &value;\n      |            ^~~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "841febded478ac8e86808d5d46221f81318fda425c06768a3421ca6fc024a198",
+    "structural": "56a52eb0c10c2acf9c52190bd896eb358695f28affca2a260c16bd1d7962f964"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wreturn-local-addr",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

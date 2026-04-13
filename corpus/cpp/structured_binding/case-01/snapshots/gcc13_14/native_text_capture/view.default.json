@@ -1,0 +1,46 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:8:10",
+      "child_notes": [
+        "src/main.cpp:8:10: note: while ‘Pair’ decomposes into 2 elements"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "         ^"
+          ],
+          "lines": [
+            "    auto [only] = pair;"
+          ],
+          "location": "src/main.cpp:8:10"
+        }
+      ],
+      "family": "structured_binding",
+      "first_action": "ensure the type is decomposable and the number of bindings matches the member count",
+      "group_id": "group-e2a636de30cb",
+      "matched_conditions": [
+        "message_contains=name provided for structured binding",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:8:10: error: only 1 name provided for structured binding\nsrc/main.cpp: In function ‘int main()’:\n    8 |     auto [only] = pair;\n      |          ^~~~~~",
+      "raw_sub_block": [
+        "src/main.cpp:8:10: error: only 1 name provided for structured binding",
+        "src/main.cpp: In function ‘int main()’:"
+      ],
+      "rule_id": "rule.family.structured_binding.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "structured binding decomposition error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

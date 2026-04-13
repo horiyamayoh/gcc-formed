@@ -1,0 +1,7 @@
+error: [syntax] coroutine promise type error @ src/main.cpp:6:5
+help: define a valid promise_type or align the coroutine return type with the coroutine body
+raw : unable to find the promise type for this coroutine
+| src/main.cpp:6:5
+|     co_return;
+|     ^
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

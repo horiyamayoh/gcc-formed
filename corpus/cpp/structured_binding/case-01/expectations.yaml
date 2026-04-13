@@ -1,14 +1,12 @@
 schema_version: 1
 fixture_id: cpp/structured_binding/case-01
-version_band: gcc15
-processing_path: dual_sink_structured
+version_band: gcc13_14
+processing_path: native_text_capture
 support_level: in_scope
 expected_mode: render
 semantic:
   family: structured_binding
   severity: error
-  lead_group_any_of:
-    - sarif-0-0
   primary_locations:
     - path: src/main.cpp
       line: 8

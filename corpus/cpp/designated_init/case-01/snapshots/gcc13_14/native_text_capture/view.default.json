@@ -1,0 +1,45 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:7:41",
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "                                        ^"
+          ],
+          "lines": [
+            "    Config cfg{.timeout = 30, .port = 10};"
+          ],
+          "location": "src/main.cpp:7:41"
+        }
+      ],
+      "family": "designated_init",
+      "first_action": "reorder the designators to match the declaration order or check the member name",
+      "group_id": "group-6e2d9a57bc26",
+      "matched_conditions": [
+        "message_contains=designator order for field",
+        "message_contains=does not match declaration order",
+        "phase=semantic"
+      ],
+      "raw_message": "src/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’\nsrc/main.cpp: In function ‘int main()’:\n    7 |     Config cfg{.timeout = 30, .port = 10};\n      |                                         ^",
+      "raw_sub_block": [
+        "src/main.cpp:7:41: error: designator order for field ‘Config::port’ does not match declaration order in ‘Config’",
+        "src/main.cpp: In function ‘int main()’:"
+      ],
+      "rule_id": "rule.family.designated_init.message_terms",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "designated initializer error"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

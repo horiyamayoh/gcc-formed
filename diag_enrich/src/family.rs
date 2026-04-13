@@ -152,6 +152,20 @@ fn classify_family_with_rulepack(
 ) -> FamilyDecision {
     let input = RuleInput::from(node, rulepack);
 
+    // Native-text module-import failures can arrive with linker-like framing,
+    // but the message terms are still specific enough to keep the
+    // `module_import` family instead of falling into the broad linker bucket.
+    if input.message.contains("failed to read compiled module")
+        || input
+            .message
+            .contains("imports must be built before being imported")
+    {
+        let rule = rulepack.rule("module_import");
+        if let Some(matched_conditions) = match_family_rule(&input, rule) {
+            return finalize_family_decision(node, rulepack, rule, matched_conditions);
+        }
+    }
+
     for rule in &rulepack.rules {
         if let Some(matched_conditions) = match_family_rule(&input, rule) {
             return finalize_family_decision(node, rulepack, rule, matched_conditions);

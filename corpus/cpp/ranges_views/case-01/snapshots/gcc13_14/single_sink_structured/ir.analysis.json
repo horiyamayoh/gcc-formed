@@ -1,0 +1,680 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 0,
+      "storage": "inline"
+    },
+    {
+      "encoding": "utf-8",
+      "external_ref": "<capture:diagnostics.sarif>",
+      "id": "diagnostics.sarif",
+      "kind": "gcc_sarif",
+      "media_type": "application/sarif+json",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 290701,
+      "storage": "external_ref"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "ranges_views",
+        "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+        "group_ref": "group-462dc815ce79",
+        "headline": "C++20 ranges or views error",
+        "matched_conditions": [
+          "message_contains=std::ranges::",
+          "child_message_contains=std::ranges::"
+        ],
+        "rule_id": "rule.family.ranges_views.structured_or_message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "ranges_views",
+            "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "matched_conditions": [
+              "message_contains=std::ranges::",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.ranges_views.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "3c95a88a81cf6e1864938b1ed4c7acef7f4f4e91a9b4e71f14698cc62ddb90c7",
+            "raw": "c2bb187368f292a36f33e8be6870d6f9a7aad9fca404b9a3980682e52c9fa70f",
+            "structural": "a3fd86e71f7aa6310fbc6865f8cd4e9d7debdf2bcbcba7686d1c452b6194fc83"
+          },
+          "id": "sarif-0-0-related-0",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 896
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "a8f3d2c2e64b6440edce19f180ccec679fd5dbfe059943aac7d2ae5da914f115",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "89a8b4da1eadef21d5e53600eb7cf298447c6770e550a71e278e8dc636593237"
+          },
+          "id": "sarif-0-0-related-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 896
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "concepts_constraints",
+            "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "matched_conditions": [
+              "message_contains=constraints not satisfied"
+            ],
+            "rule_id": "rule.family.concepts_constraints.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "cf4408d11d190fdbe11618f1e3e657b3d3f40b0a78b96960f1adb06835d3e0a3",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "7dac3af51e8d84aa8bc4783c97b233134b3c3ee0353b86bfd60f5ff23ba582ff"
+          },
+          "id": "sarif-0-0-related-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 896
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "ranges_views",
+            "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "matched_conditions": [
+              "message_contains=std::ranges::",
+              "phase=semantic"
+            ],
+            "rule_id": "rule.family.ranges_views.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "d42f9d84cee5460fad01e5487ea0848d73a2d641f8680d039a9554aa255591dd",
+            "raw": "ff5c1deb84fb106b82df00afaa850dadc1b8f580054b4b4179a16b419e1e74d9",
+            "structural": "7fd2b0a4e42a968343cb323d413e8d39f8aa845a31109573c441745a1dd74fdb"
+          },
+          "id": "sarif-0-0-related-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 28,
+                "column_native": 28,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 67
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/concepts",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/concepts:67:28:67:28",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  ‘std::ranges::views::__adaptor::_RangeAdaptorClosure’ is not a base of ‘int’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "ranges_views",
+            "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
+            "headline": "C++20 ranges or views error",
+            "matched_conditions": [
+              "message_contains=std::ranges::",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.ranges_views.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "fe5579050fca570054ee6469e95d00f383561cb5918d4f00d31607bf5483a5f3",
+            "raw": "e72066fc8b39ae6d3b05aeda2eb691b5135666010f31414ccee5ce5e17ab7382",
+            "structural": "72ee277d9faf9f4275ad8ca8bf1d47378fe9cdbd7b6e597ca3d00dba7d0401f4"
+          },
+          "id": "sarif-0-0-related-4",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 887
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "candidate",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "template",
+            "first_action_hint": "start from the first user-owned template frame and match template arguments",
+            "headline": "template instantiation failed",
+            "matched_conditions": [
+              "message_contains=template",
+              "message_contains=deduction/substitution",
+              "phase=instantiate"
+            ],
+            "rule_id": "rule.family.template.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "a8f3d2c2e64b6440edce19f180ccec679fd5dbfe059943aac7d2ae5da914f115",
+            "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
+            "structural": "8522206d1d16a8b4a95dc9bce3d269287a1ae2ac648ad2bd22027151f6ff135a"
+          },
+          "id": "sarif-0-0-related-5",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 887
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "  template argument deduction/substitution failed:"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "instantiate",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "concepts_constraints",
+            "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "matched_conditions": [
+              "message_contains=constraints not satisfied"
+            ],
+            "rule_id": "rule.family.concepts_constraints.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "cf4408d11d190fdbe11618f1e3e657b3d3f40b0a78b96960f1adb06835d3e0a3",
+            "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
+            "structural": "3669295b88b2db47b8a504ab014b8ab3e489c34392c6a0df3c9a03d62e4a76aa"
+          },
+          "id": "sarif-0-0-related-6",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 7,
+                "column_native": 7,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 887
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "constraints not satisfied"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "concepts_constraints",
+            "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
+            "headline": "template constraint not satisfied",
+            "matched_conditions": [
+              "message_contains=the required expression"
+            ],
+            "rule_id": "rule.family.concepts_constraints.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "667e21874725ef1704031f3d09b53c66b02dde1aafe1f803ec1129691684f10e",
+            "raw": "5269bcbbdb4bbf30e1db411a7ef9fe05a2317c7156298e0e089b75f5d21b2b12",
+            "structural": "138bd9540aa513650a00dbf36ea63e0d88acad9cdd38b95029200c2738b362af"
+          },
+          "id": "sarif-0-0-related-7",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 860
+              },
+              "file": {
+                "ownership": {
+                  "owner": "system",
+                  "reason": "system_path"
+                },
+                "path_kind": "absolute",
+                "path_raw": "/usr/include/c++/13/ranges",
+                "path_style": "posix"
+              },
+              "id": "loc:/usr/include/c++/13/ranges:860:20:860:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "the required expression ‘declval<_Adaptor>()((declval<_Args>)()...)’ is invalid"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "be856e8eab5ff00757e650eeec573e191da9ec7a21cdd0e07076c41348965157",
+            "raw": "73a749e002f208674505757ad5eb7c42788aca8a4026f8f56427dee81294ed4c",
+            "structural": "92ff8dca750a77c1b7ad05fe4a89ee7ad17fbe3fa8f98b007d0debe84e14155f"
+          },
+          "id": "sarif-0-0-related-8",
+          "message": {
+            "raw_text": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "diagnostics.sarif"
+            ],
+            "source": "compiler"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "column": 7,
+              "label": "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’",
+              "line": 896,
+              "path": "/usr/include/c++/13/ranges"
+            },
+            {
+              "column": 7,
+              "label": "template argument deduction/substitution failed:",
+              "line": 896,
+              "path": "/usr/include/c++/13/ranges"
+            },
+            {
+              "column": 7,
+              "label": "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’",
+              "line": 887,
+              "path": "/usr/include/c++/13/ranges"
+            },
+            {
+              "column": 7,
+              "label": "template argument deduction/substitution failed:",
+              "line": 887,
+              "path": "/usr/include/c++/13/ranges"
+            }
+          ],
+          "kind": "template_instantiation"
+        }
+      ],
+      "fingerprints": {
+        "family": "d69be474787c0efad12c0a18aef67bb4db7ca7ef2a937f850029e63ef58720dc",
+        "raw": "ab649e07f7db4fae92e98f94d1998dc2d4ce5c15b9092cbd4ada697ae63f8c2b",
+        "structural": "42c392b566555725aa7c52e947332fa2aa0aecb2cde7aecb81810bd92825beeb"
+      },
+      "id": "sarif-0-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 22,
+            "column_native": 22,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 4
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:4:22:4:22",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "no match for ‘operator|’ (operand types are ‘int’ and ‘std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>’)"
+      },
+      "node_completeness": "complete",
+      "origin": "gcc",
+      "phase": "constraints",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "source": "compiler"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.800000011920929,
+          "episode_ref": "episode-594f5397950f",
+          "family": "ranges_views",
+          "lead_group_ref": "group-462dc815ce79",
+          "lead_root_score": 0.800000011920929,
+          "member_group_refs": [
+            "group-462dc815ce79"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-594f5397950f",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "specific_symbol_or_frontier",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-462dc815ce79",
+        "independence_score": 0.800000011920929,
+        "role": "independent_root",
+        "root_score": 0.800000011920929,
+        "summary_likelihood": 0.3800000250339508,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "complete",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "9c76abfb51078ae7ad2617a07e6df87d9726456e14d767f67a52a69cb81c3360",
+    "raw": "c46cbf11f582305b24e0694d4504ed001e41e5b452c9dfc72383c90129c6de56",
+    "structural": "ca616a9bd84e76f241dba43e5aa816289849f7c14e7b0f5464b996f879bbc4be"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

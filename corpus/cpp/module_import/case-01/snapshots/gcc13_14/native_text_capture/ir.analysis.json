@@ -1,0 +1,131 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated.\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 366,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.6499999761581421,
+        "family": "module_import",
+        "first_action_hint": "build or export the requested module interface before importing it",
+        "group_ref": "group-e51b73d28d30",
+        "headline": "C++20 module import error",
+        "matched_conditions": [
+          "message_contains=failed to read compiled module",
+          "message_contains=imports must be built before being imported"
+        ],
+        "rule_id": "rule.family.module_import.message_terms"
+      },
+      "fingerprints": {
+        "family": "97d1af1cd78fe6232b67f5301d1789c27691c6b1727f41db590953106311d3b6",
+        "raw": "c5d5695b02911007c222928ddb9dfc53c377f6dc2775dd6e001d29439dc8038b",
+        "structural": "064be45cb283f0e2c4deaf12b3f3d8e769eb12a32b0e1542e90a97f301e740e4"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated."
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.46000000834465027,
+          "episode_ref": "episode-829d56431349",
+          "family": "module_import",
+          "lead_group_ref": "group-e51b73d28d30",
+          "lead_root_score": 0.46000000834465027,
+          "member_group_refs": [
+            "group-e51b73d28d30"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-829d56431349",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "no_primary_location"
+        ],
+        "group_ref": "group-e51b73d28d30",
+        "independence_score": 0.46000000834465027,
+        "role": "uncertain",
+        "root_score": 0.46000000834465027,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 0,
+      "uncertain_count": 1
+    }
+  },
+  "document_completeness": "passthrough",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "124744772988e68197d235084492097aada9f47effa3edf13374504044d02dee",
+    "raw": "08e90353582874892e0fba0660e5b7728ab200fa6e2e04908a8c78b1020c4390",
+    "structural": "052d252ce0e574af70513e86c668c103a6db4e3e39fd0108fd92ffaa75197953"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-fmodules-ts",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

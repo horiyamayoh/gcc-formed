@@ -1,0 +1,15 @@
+error: [ranges_views] C++20 ranges or views error @ src/main.cpp:4:22
+help: check that the range/iterator models the required concept (input_range, forward_range, etc.)
+raw : no match for ‘operator|’ (operand types are ‘int’ and ‘std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>’)
+| src/main.cpp:4:22
+|     auto result = 42 | std::views::take(2);
+|                      ^
+template: /usr/include/c++/13/ranges:896:7 candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’
+template: /usr/include/c++/13/ranges:896:7 template argument deduction/substitution failed:
+template: /usr/include/c++/13/ranges:887:7 template argument deduction/substitution failed:
+omitted 1 template frames
+note: candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’
+note: template argument deduction/substitution failed:
+note: constraints not satisfied
+note: omitted 6 additional note(s)
+raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -1,0 +1,213 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In function ‘int* make_ptr()’:\nsrc/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\n    3 |     return &value;\n      |            ^~~~~~\nsrc/main.cpp:2:9: note: declared here\n    2 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 286,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "lifetime_dangling",
+        "first_action_hint": "return by value instead of by pointer/reference, or extend the object lifetime",
+        "group_ref": "group-35fa8bb9112d",
+        "headline": "dangling pointer or reference to local",
+        "matched_conditions": [
+          "message_contains=address of local variable",
+          "message_contains=return-local-addr",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.lifetime_dangling.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:9: note: declared here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "c8138b9cb1f2385bac8ebef44a00257d07240fa0447995c6fcbf663fa8e120dd",
+            "raw": "8ca4b932bc414d1830a7d63ac111d87e708124d6841ca28d3e0d94788d5986bd",
+            "structural": "6c5523fd963e00ecda378c0d0704d4cd5ca40a929b4cc6780d5d22023e8187a3"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:9:2:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:9: note: declared here\n    2 |     int value = 1;\n      |         ^~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "d0f0a97f5c2fc35cac78cc96f10f85b2a30e3b5c567d914fa575e03e4d92d2af",
+        "raw": "cbd27f31979ab690374c593f7446b45258426db680fd2c994df10a4aa0a68deb",
+        "structural": "3ead7caf7ed22588aacfaa1290d872d1f209815f88c7a04746750cb9a34c06fb"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 12,
+            "column_native": 12,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:12:3:12",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\nsrc/main.cpp: In function ‘int* make_ptr()’:\n    3 |     return &value;\n      |            ^~~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "warning"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-9703412217ca",
+          "family": "lifetime_dangling",
+          "lead_group_ref": "group-35fa8bb9112d",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-35fa8bb9112d"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-9703412217ca",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-35fa8bb9112d",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "03d04e050765fc59e5d74e3288dd7bfc77f116f958c20a4cad0f627fcbb88791",
+    "raw": "3890e06a6c2046154c92aa7662998a1e02f491e95844cdc820ed35c0317a79a7",
+    "structural": "7c7cf7fdd18a39df47c797287650d4668d7e701410bdd5b88a968e7f876cdef0"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wreturn-local-addr",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

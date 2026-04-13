@@ -1,0 +1,76 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated.\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 366,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "fingerprints": {
+        "family": "fd9c1ac25ca4870006224170f93d1192e4d6e12de2e8cacce26f4e3caa29e187",
+        "raw": "c5d5695b02911007c222928ddb9dfc53c377f6dc2775dd6e001d29439dc8038b",
+        "structural": "92699c4e07c46747b274f63cb1c5b5246a15b8841696c40ba4d719f34c310a22"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "In module imported at src/main.cpp:1:1:\nmissing_module: error: failed to read compiled module: No such file or directory\nmissing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’\nmissing_module: note: imports must be built before being imported\nmissing_module: fatal error: returning to the gate for a mechanical issue\ncompilation terminated."
+      },
+      "node_completeness": "passthrough",
+      "origin": "external_tool",
+      "phase": "link",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "passthrough",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "passthrough",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "e1b6a0feee723e0e5f48236a878411f78360e9c06e877ca2a5ed6c7083aefc13",
+    "structural": "99d0db5330e0fff7c6ea2e9b448adc735a26fe7624c612c66357c428872de150"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++20",
+      "-fmodules-ts",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

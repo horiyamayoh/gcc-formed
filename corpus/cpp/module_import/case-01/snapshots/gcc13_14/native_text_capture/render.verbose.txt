@@ -1,0 +1,9 @@
+error: showing a conservative wrapper view; original compiler diagnostics are preserved
+note: fallback reason = residual_only
+raw:
+  In module imported at src/main.cpp:1:1:
+  missing_module: error: failed to read compiled module: No such file or directory
+  missing_module: note: compiled module file is ‘gcm.cache/missing_module.gcm’
+  missing_module: note: imports must be built before being imported
+  missing_module: fatal error: returning to the gate for a mechanical issue
+  compilation terminated.

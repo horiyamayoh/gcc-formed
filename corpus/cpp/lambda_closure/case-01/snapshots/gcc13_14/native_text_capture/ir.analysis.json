@@ -1,0 +1,267 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In lambda function:\nsrc/main.cpp:3:33: error: ‘value’ is not captured\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~\nsrc/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^\nsrc/main.cpp:2:9: note: ‘int value’ declared here\n    2 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 425,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "lambda_closure",
+        "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+        "group_ref": "group-1c87eaea533f",
+        "headline": "lambda capture error",
+        "matched_conditions": [
+          "message_contains=is not captured",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.lambda_closure.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.8999999761581421,
+            "family": "lambda_closure",
+            "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
+            "headline": "lambda capture error",
+            "matched_conditions": [
+              "message_contains=the lambda has no capture-default",
+              "phase=semantic"
+            ],
+            "rule_id": "rule.family.lambda_closure.message_terms"
+          },
+          "fingerprints": {
+            "family": "b2be97bfa5e9cc6dbcd598dc7b56d8467d5fbaed63545524ca71dd6e5b6aa65f",
+            "raw": "62fc6da55656af059c8f29dbb080eeb8df13fcfee0f58ecc5991d9a1201a2853",
+            "structural": "22bb398d5e0859802def2dfd9ca2c3883d1f8bbe625b4ca4929554ad6e6478b6"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:20:3:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:2:9: note: ‘int value’ declared here",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "b85d6626565b0e25d26b038e9b800702397ff4183c6fe1d12897fa89a291ae9f",
+            "raw": "b47053628c487e72679a87da5d0ff02d7559b29f4f8354fff5918ce22cb81b31",
+            "structural": "a4407944da6a5fd8da669e7f6fa8c71442e3af047e24b5bec15909d4ddd5af53"
+          },
+          "id": "residual-compiler-0-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:9:2:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:9: note: ‘int value’ declared here\n    2 |     int value = 1;\n      |         ^~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "816e795f222993afc419c2221f026656fa3a47b75ab38efc64118d146edb2290",
+        "raw": "de0cc5cdd1f58a9de108a1253e16be6b0e4df7c89afbd6d27f924357060d6e70",
+        "structural": "58c838a2ed5f658586f2a9eacd99b7d6b61b3850c9b42f309e166c9b8bbefa97"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 33,
+            "column_native": 33,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:33:3:33",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:3:33: error: ‘value’ is not captured\nsrc/main.cpp: In lambda function:\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-191de9c7fa7c",
+          "family": "lambda_closure",
+          "lead_group_ref": "group-1c87eaea533f",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-1c87eaea533f"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-191de9c7fa7c",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-1c87eaea533f",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "b61d764c5bb4174212ed02ea3723521f9fd197390a6d24305cf1269356e60033",
+    "raw": "125b4b7efb1d35d7b1ba5276cc5e6bc0f3fe942250987bf878ad35d039dae604",
+    "structural": "df2edfa262c7c5a25fe765d7ecb6132b90b48d4bd8fc95f38eb0e0ddd3df0db7"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

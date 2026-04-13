@@ -1,9 +1,9 @@
 language: cpp
 standard: c++20
 target_compiler_family: gcc
-version_band: gcc15
+version_band: gcc13_14
 support_level: in_scope
-major_version_selector: '15'
+major_version_selector: '13'
 argv:
   - -fmodules-ts
   - -Wall

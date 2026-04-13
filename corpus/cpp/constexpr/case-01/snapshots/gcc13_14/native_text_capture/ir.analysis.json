@@ -1,0 +1,212 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp:1:27: error: static assertion failed: int size mismatch\n    1 | static_assert(sizeof(int) == 1, \"int size mismatch\");\n      |               ~~~~~~~~~~~~^~~~\nsrc/main.cpp:1:27: note: the comparison reduces to ‘(4 == 1)’\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 236,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "constexpr",
+        "first_action_hint": "ensure all expressions and function calls in the constexpr context are constant-evaluable",
+        "group_ref": "group-a7138dad0c39",
+        "headline": "compile-time evaluation failure",
+        "matched_conditions": [
+          "message_contains=static assertion failed",
+          "message_contains=static_assert",
+          "phase=semantic"
+        ],
+        "rule_id": "rule.family.constexpr.message_terms"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.3499999940395355,
+            "family": "unknown",
+            "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
+            "headline": "src/main.cpp:1:27: note: the comparison reduces to ‘(4 == 1)’",
+            "matched_conditions": [
+              "no_family_rule_matched"
+            ],
+            "rule_id": "rule.family.unknown",
+            "suppression_reason": "generic_fallback"
+          },
+          "fingerprints": {
+            "family": "b0a2a010fc590de221c417fe0cca0540241d89aebff47bc926e63857da28bf09",
+            "raw": "87c17b491fdd7a467d5bcc9e5d41a6df966ff2f98d4978cad7a2314b6c5c26d3",
+            "structural": "28fdd6adecbf7f2d86132edc458c20d5bf71d926f6156bd3410092ad5e04aba0"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 27,
+                "column_native": 27,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:1:27:1:27",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:1:27: note: the comparison reduces to ‘(4 == 1)’"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "7a6e31403d046410b3f1229bef1253b03e865798b45e1fe02695816fa6790315",
+        "raw": "85ee948919601b41ff24514bfac4c88fda4421c296bcc3dc17bbe9ca3cb8ac13",
+        "structural": "e4283c9fe355054b94bde7d4178363de32f8c814b9ad7c5bd13d1d95ee909f3b"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 27,
+            "column_native": 27,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:1:27:1:27",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:1:27: error: static assertion failed: int size mismatch\n    1 | static_assert(sizeof(int) == 1, \"int size mismatch\");\n      |               ~~~~~~~~~~~~^~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_analysis": {
+    "episode_graph": {
+      "episodes": [
+        {
+          "confidence": 0.7400000095367432,
+          "episode_ref": "episode-507b72e7bdc6",
+          "family": "constexpr",
+          "lead_group_ref": "group-a7138dad0c39",
+          "lead_root_score": 0.7400000095367432,
+          "member_group_refs": [
+            "group-a7138dad0c39"
+          ]
+        }
+      ],
+      "relations": []
+    },
+    "group_analysis": [
+      {
+        "episode_ref": "episode-507b72e7bdc6",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-a7138dad0c39",
+        "independence_score": 0.7400000095367432,
+        "role": "independent_root",
+        "root_score": 0.7400000095367432,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      }
+    ],
+    "policy_profile": "default-aggressive",
+    "producer_version": "0.2.0-beta.1",
+    "stats": {
+      "dependent_follow_on_count": 0,
+      "duplicate_count": 0,
+      "independent_root_count": 1,
+      "uncertain_count": 0
+    }
+  },
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "1de5dc4ca1d19d818f00b28798efc281f1e1932fa39a61810840a36888156424",
+    "raw": "dbbbfe9737539f1a6abed39947328313fce41a13c045c9b9fc76654ef488c403",
+    "structural": "f72ad5fa1d5732ca873d32cad57aaa1f67dc4c687747f0e559c4610b5fca4b01"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}

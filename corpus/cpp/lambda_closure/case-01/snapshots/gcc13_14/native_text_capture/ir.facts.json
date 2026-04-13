@@ -1,0 +1,190 @@
+{
+  "captures": [
+    {
+      "encoding": "utf-8",
+      "id": "stderr.raw",
+      "inline_text": "src/main.cpp: In lambda function:\nsrc/main.cpp:3:33: error: ‘value’ is not captured\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~\nsrc/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^\nsrc/main.cpp:2:9: note: ‘int value’ declared here\n    2 |     int value = 1;\n      |         ^~~~~\n",
+      "kind": "compiler_stderr_text",
+      "media_type": "text/plain",
+      "produced_by": {
+        "name": "g++",
+        "vendor": "GNU"
+      },
+      "size_bytes": 425,
+      "storage": "inline"
+    }
+  ],
+  "diagnostics": [
+    {
+      "children": [
+        {
+          "fingerprints": {
+            "family": "4c6f5406ab978d4885ea206420a2c1bb7f7488720c163926cebc1e095ccfd2a9",
+            "raw": "62fc6da55656af059c8f29dbb080eeb8df13fcfee0f58ecc5991d9a1201a2853",
+            "structural": "f4df905d5a596f2198d40c99d1692ac55428820a82165a95da5b22bf93a129ad"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:3:20:3:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:3:20: note: the lambda has no capture-default\n    3 |     auto lambda = []() { return value; };\n      |                    ^"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "b85d6626565b0e25d26b038e9b800702397ff4183c6fe1d12897fa89a291ae9f",
+            "raw": "b47053628c487e72679a87da5d0ff02d7559b29f4f8354fff5918ce22cb81b31",
+            "structural": "97112b60210bf9d93011dc55c21db3d82e67e96bb7353d0e307d5249f526bc43"
+          },
+          "id": "residual-compiler-0-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 9,
+                "column_native": 9,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 2
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.cpp",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.cpp:2:9:2:9",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.cpp:2:9: note: ‘int value’ declared here\n    2 |     int value = 1;\n      |         ^~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "f588ea2ef7cb8ac313df2d9f9329dd53d12c8b5e4646f185275cfd86498d4ebe",
+        "raw": "de0cc5cdd1f58a9de108a1253e16be6b0e4df7c89afbd6d27f924357060d6e70",
+        "structural": "06dc0e2e4db1d4f8a057ae7529b7bdf33edc3a166c783f2eb03eae599f5649d7"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 33,
+            "column_native": 33,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 3
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.cpp",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.cpp:3:33:3:33",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/main.cpp:3:33: error: ‘value’ is not captured\nsrc/main.cpp: In lambda function:\n    3 |     auto lambda = []() { return value; };\n      |                                 ^~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    }
+  ],
+  "document_completeness": "partial",
+  "document_id": "<document>",
+  "fingerprints": {
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "4e2576afc8abf8270e5a2aa9ebf2e70f90fc863a29b15a2d542e8fb54e710c53",
+    "structural": "9252221549fdd8fe0a9a03990638cc3632c9e1a62426913ad1f6fd4489c4a503"
+  },
+  "producer": {
+    "name": "gcc-formed",
+    "rulepack_version": "phase1",
+    "version": "<normalized>"
+  },
+  "run": {
+    "argv_redacted": [
+      "g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-c",
+      "src/main.cpp"
+    ],
+    "cwd_display": "<cwd>",
+    "exit_status": 1,
+    "invocation_id": "<invocation>",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU"
+    },
+    "target_triple": "x86_64-unknown-linux-gnu",
+    "wrapper_mode": "terminal"
+  },
+  "schema_version": "1.0.0-alpha.1"
+}
