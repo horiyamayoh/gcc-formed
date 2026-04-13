@@ -110,38 +110,55 @@ core = [
 match = ["type_overload", "concepts_constraints", "format_string", "conversion_narrowing", "const_qualifier"]
 display_family = "type_mismatch"
 template = "contrast_block"
+semantic_shape = "contrast"
 
 [[family_mappings]]
-match = ["syntax", "preprocessor_directive", "attribute", "storage_class", "module_import", "coroutine", "asm_inline", "openmp"]
+match = ["syntax", "attribute", "storage_class", "module_import", "coroutine", "asm_inline", "openmp"]
 display_family = "syntax"
 template = "parser_block"
+semantic_shape = "parser"
+
+[[family_mappings]]
+match = ["preprocessor_directive"]
+display_family = "syntax"
+template = "parser_block"
+semantic_shape = "parser"
+shape_fallback = [
+  { shape = "missing_header", display_family = "missing_header" },
+]
 
 [[family_mappings]]
 match = ["scope_declaration"]
 display_family = "missing_name"
 template = "lookup_block"
+semantic_shape = "lookup"
 
 [[family_mappings]]
 match = ["pointer_reference"]
 display_family = "incomplete_type"
 template = "lookup_block"
+semantic_shape = "lookup"
 
 [[family_mappings]]
 match = ["deleted_function", "access_control"]
 display_family = "unavailable_api"
 template = "lookup_block"
+semantic_shape = "lookup"
 
 [[family_mappings]]
 match = ["redefinition", "odr_inline_linkage"]
 display_family = "redefinition"
 template = "conflict_block"
+semantic_shape = "conflict"
 
 [[family_mappings]]
 match = ["macro_include"]
 display_family = "macro_include"
 template = "context_block"
+semantic_shape = "context"
 
 [[family_mappings]]
 match = ["prefix:linker."]
 display_family = "linker"
 template = "linker_block"
+semantic_shape = "linker"

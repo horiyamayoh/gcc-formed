@@ -22,10 +22,13 @@ pub enum SemanticSlotId {
     Prev,
     Symbol,
     Archive,
-    WhyRaw,
+    Raw,
 }
 
 impl SemanticSlotId {
+    #[allow(non_upper_case_globals)]
+    pub const WhyRaw: Self = Self::Raw;
+
     /// Returns the stable `snake_case` ID used across templates and adapters.
     pub fn stable_id(self) -> &'static str {
         match self {
@@ -42,9 +45,31 @@ impl SemanticSlotId {
             Self::Prev => "prev",
             Self::Symbol => "symbol",
             Self::Archive => "archive",
-            Self::WhyRaw => "why_raw",
+            Self::Raw => "raw",
         }
     }
+}
+
+/// Stable semantic extraction/routing shapes used by the view-model layer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SemanticShape {
+    Contrast,
+    Parser,
+    Lookup,
+    MissingHeader,
+    Conflict,
+    Context,
+    Linker,
+    Generic,
+}
+
+/// Ordered fallback shape candidates evaluated before the primary shape.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ResolvedShapeFallback {
+    pub shape: SemanticShape,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_family: Option<String>,
 }
 
 /// Session-level presentation mode for visible diagnostic groups.
@@ -111,6 +136,9 @@ pub struct ResolvedCardPresentation {
     pub template_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_family: Option<String>,
+    pub semantic_shape: SemanticShape,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub shape_fallbacks: Vec<ResolvedShapeFallback>,
     #[serde(default)]
     pub subject_first_header: bool,
     #[serde(default = "default_card_location_policy")]
@@ -156,7 +184,7 @@ impl ResolvedPresentationPolicy {
                 ResolvedTemplate {
                     id: GENERIC_TEMPLATE_ID.to_string(),
                     core: vec![ResolvedTemplateLine {
-                        slot: SemanticSlotId::WhyRaw,
+                        slot: SemanticSlotId::Raw,
                         label: Some("why".to_string()),
                         suffix_slot: None,
                         optional: false,
@@ -175,7 +203,7 @@ impl ResolvedPresentationPolicy {
                             optional: true,
                         },
                         ResolvedTemplateLine {
-                            slot: SemanticSlotId::WhyRaw,
+                            slot: SemanticSlotId::Raw,
                             label: Some("why".to_string()),
                             suffix_slot: None,
                             optional: false,
@@ -188,7 +216,7 @@ impl ResolvedPresentationPolicy {
                 ResolvedTemplate {
                     id: "legacy_linker_block".to_string(),
                     core: vec![ResolvedTemplateLine {
-                        slot: SemanticSlotId::WhyRaw,
+                        slot: SemanticSlotId::Raw,
                         label: Some("why".to_string()),
                         suffix_slot: None,
                         optional: false,
@@ -237,7 +265,7 @@ impl ResolvedPresentationPolicy {
                             optional: true,
                         },
                         ResolvedTemplateLine {
-                            slot: SemanticSlotId::WhyRaw,
+                            slot: SemanticSlotId::Raw,
                             label: Some("why".to_string()),
                             suffix_slot: None,
                             optional: false,
@@ -602,6 +630,60 @@ impl ResolvedPresentationPolicy {
         self.label(slot.stable_id())
     }
 
+    /// Infers the semantic shape supported by a resolved template.
+    pub fn template_semantic_shape(&self, template_id: &str) -> SemanticShape {
+        let Some(template) = self.template(template_id) else {
+            return SemanticShape::Generic;
+        };
+        let semantic_slots = template
+            .core
+            .iter()
+            .map(|line| line.slot)
+            .filter(|slot| !matches!(slot, SemanticSlotId::FirstAction | SemanticSlotId::Raw))
+            .collect::<Vec<_>>();
+        semantic_shape_from_slots(&semantic_slots)
+    }
+
+    /// Resolves a template ID capable of rendering the requested semantic shape.
+    pub fn template_id_for_shape<'a>(
+        &'a self,
+        current_template_id: &'a str,
+        shape: SemanticShape,
+    ) -> Option<&'a str> {
+        if shape == SemanticShape::Generic {
+            return Some(self.generic_template_id.as_str());
+        }
+
+        if self.template(current_template_id).is_some()
+            && current_template_id != self.generic_template_id
+            && !current_template_id.starts_with("legacy_")
+            && self.template_semantic_shape(current_template_id) == shape
+        {
+            return Some(current_template_id);
+        }
+
+        let canonical = match shape {
+            SemanticShape::Contrast => "contrast_block",
+            SemanticShape::Parser => "parser_block",
+            SemanticShape::Lookup => "lookup_block",
+            SemanticShape::MissingHeader => "missing_header_block",
+            SemanticShape::Conflict => "conflict_block",
+            SemanticShape::Context => "context_block",
+            SemanticShape::Linker => "linker_block",
+            SemanticShape::Generic => self.generic_template_id.as_str(),
+        };
+        if self.template(canonical).is_some() {
+            return Some(canonical);
+        }
+
+        self.templates.iter().find_map(|(template_id, _)| {
+            (template_id != &self.generic_template_id
+                && !template_id.starts_with("legacy_")
+                && self.template_semantic_shape(template_id) == shape)
+                .then_some(template_id.as_str())
+        })
+    }
+
     /// Resolves display family and template selection for a card.
     pub fn resolve_card_presentation(
         &self,
@@ -617,14 +699,28 @@ impl ResolvedPresentationPolicy {
             .map(|candidate| candidate.template_id.as_str())
             .unwrap_or(self.default_template_id.as_str());
         let fell_back_to_generic_template = self.template(requested_template_id).is_none();
+        let resolved_template_id = if fell_back_to_generic_template {
+            self.generic_template_id.as_str()
+        } else {
+            requested_template_id
+        };
+        let (semantic_shape, shape_fallbacks) = if fell_back_to_generic_template
+            || resolved_template_id == self.generic_template_id
+            || resolved_template_id.starts_with("legacy_")
+        {
+            (SemanticShape::Generic, Vec::new())
+        } else {
+            semantic_shape_plan(
+                internal_family,
+                self.template_semantic_shape(resolved_template_id),
+            )
+        };
 
         ResolvedCardPresentation {
-            template_id: if fell_back_to_generic_template {
-                self.generic_template_id.clone()
-            } else {
-                requested_template_id.to_string()
-            },
+            template_id: resolved_template_id.to_string(),
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
+            semantic_shape,
+            shape_fallbacks,
             subject_first_header: self.preset_id == "subject_blocks_v1",
             location_policy: self.location_policy.clone(),
             fell_back_to_generic_template,
@@ -662,6 +758,8 @@ impl Default for ResolvedCardPresentation {
         Self {
             template_id: GENERIC_TEMPLATE_ID.to_string(),
             display_family: None,
+            semantic_shape: SemanticShape::Generic,
+            shape_fallbacks: Vec::new(),
             subject_first_header: false,
             location_policy: default_card_location_policy(),
             fell_back_to_generic_template: false,
@@ -712,6 +810,74 @@ fn matcher_matches(matcher: &str, family: &str) -> bool {
         .map_or_else(|| matcher == family, |prefix| family.starts_with(prefix))
 }
 
+fn semantic_shape_plan(
+    internal_family: Option<&str>,
+    template_shape: SemanticShape,
+) -> (SemanticShape, Vec<ResolvedShapeFallback>) {
+    match internal_family {
+        Some(
+            "type_overload" | "concepts_constraints" | "format_string" | "conversion_narrowing",
+        )
+        | Some("const_qualifier") => (SemanticShape::Contrast, Vec::new()),
+        Some("syntax" | "attribute" | "storage_class" | "module_import" | "coroutine")
+        | Some("asm_inline" | "openmp") => (SemanticShape::Parser, Vec::new()),
+        Some("preprocessor_directive") => (
+            SemanticShape::Parser,
+            vec![ResolvedShapeFallback {
+                shape: SemanticShape::MissingHeader,
+                display_family: Some("missing_header".to_string()),
+            }],
+        ),
+        Some("scope_declaration" | "pointer_reference" | "deleted_function")
+        | Some("access_control") => (SemanticShape::Lookup, Vec::new()),
+        Some("redefinition" | "odr_inline_linkage") => (SemanticShape::Conflict, Vec::new()),
+        Some("macro_include") => (SemanticShape::Context, Vec::new()),
+        Some(family) if family.starts_with("linker.") => (SemanticShape::Linker, Vec::new()),
+        _ => (template_shape, Vec::new()),
+    }
+}
+
+fn semantic_shape_from_slots(slots: &[SemanticSlotId]) -> SemanticShape {
+    let has = |needle| slots.contains(&needle);
+    if slots.is_empty() {
+        return SemanticShape::Generic;
+    }
+    if has(SemanticSlotId::Symbol) || has(SemanticSlotId::Archive) {
+        return SemanticShape::Linker;
+    }
+    if has(SemanticSlotId::Now) || has(SemanticSlotId::Prev) {
+        return SemanticShape::Conflict;
+    }
+    if has(SemanticSlotId::Name) || has(SemanticSlotId::Use) {
+        return SemanticShape::Lookup;
+    }
+    if has(SemanticSlotId::Need)
+        && !has(SemanticSlotId::Name)
+        && !has(SemanticSlotId::Use)
+        && !has(SemanticSlotId::Near)
+        && !has(SemanticSlotId::Want)
+        && !has(SemanticSlotId::Got)
+        && !has(SemanticSlotId::Via)
+    {
+        return SemanticShape::MissingHeader;
+    }
+    if has(SemanticSlotId::From)
+        && has(SemanticSlotId::Via)
+        && !has(SemanticSlotId::Want)
+        && !has(SemanticSlotId::Got)
+        && !has(SemanticSlotId::Need)
+    {
+        return SemanticShape::Context;
+    }
+    if has(SemanticSlotId::Got) || has(SemanticSlotId::Via) {
+        return SemanticShape::Contrast;
+    }
+    if has(SemanticSlotId::Want) || has(SemanticSlotId::Near) {
+        return SemanticShape::Parser;
+    }
+    SemanticShape::Generic
+}
+
 fn builtin_label_catalog() -> BTreeMap<String, String> {
     BTreeMap::from([
         ("first_action".to_string(), "help".to_string()),
@@ -729,13 +895,14 @@ fn builtin_label_catalog() -> BTreeMap<String, String> {
         ("symbol".to_string(), "symbol".to_string()),
         ("archive".to_string(), "archive".to_string()),
         ("why_raw".to_string(), "why".to_string()),
-        ("raw".to_string(), "raw".to_string()),
+        ("raw".to_string(), "why".to_string()),
         ("omitted".to_string(), "omitted".to_string()),
     ])
 }
 
 fn subject_blocks_label_catalog() -> BTreeMap<String, String> {
     let mut labels = builtin_label_catalog();
+    labels.insert("raw".to_string(), "raw".to_string());
     labels.insert("why_raw".to_string(), "raw".to_string());
     labels
 }
@@ -773,19 +940,37 @@ mod tests {
         let lookup = policy.resolve_card_presentation(Some("pointer_reference"));
         let conflict = policy.resolve_card_presentation(Some("redefinition"));
         let context = policy.resolve_card_presentation(Some("macro_include"));
+        let preprocessor = policy.resolve_card_presentation(Some("preprocessor_directive"));
 
         assert_eq!(contrast.template_id, "contrast_block");
         assert_eq!(contrast.display_family.as_deref(), Some("type_mismatch"));
+        assert_eq!(contrast.semantic_shape, SemanticShape::Contrast);
         assert!(contrast.subject_first_header);
         assert_eq!(linker.template_id, "linker_block");
         assert_eq!(linker.display_family.as_deref(), Some("linker"));
+        assert_eq!(linker.semantic_shape, SemanticShape::Linker);
         assert!(linker.subject_first_header);
         assert_eq!(lookup.template_id, "lookup_block");
         assert_eq!(lookup.display_family.as_deref(), Some("incomplete_type"));
+        assert_eq!(lookup.semantic_shape, SemanticShape::Lookup);
         assert_eq!(conflict.template_id, "conflict_block");
         assert_eq!(conflict.display_family.as_deref(), Some("redefinition"));
+        assert_eq!(conflict.semantic_shape, SemanticShape::Conflict);
         assert_eq!(context.template_id, "context_block");
         assert_eq!(context.display_family.as_deref(), Some("macro_include"));
+        assert_eq!(context.semantic_shape, SemanticShape::Context);
+        assert_eq!(preprocessor.template_id, "parser_block");
+        assert_eq!(preprocessor.display_family.as_deref(), Some("syntax"));
+        assert_eq!(preprocessor.semantic_shape, SemanticShape::Parser);
+        assert_eq!(preprocessor.shape_fallbacks.len(), 1);
+        assert_eq!(
+            preprocessor.shape_fallbacks[0].shape,
+            SemanticShape::MissingHeader
+        );
+        assert_eq!(
+            preprocessor.shape_fallbacks[0].display_family.as_deref(),
+            Some("missing_header")
+        );
     }
 
     #[test]
@@ -800,16 +985,61 @@ mod tests {
         let resolved = policy.resolve_card_presentation(Some("syntax"));
 
         assert_eq!(resolved.template_id, "generic_block");
+        assert_eq!(resolved.semantic_shape, SemanticShape::Generic);
         assert!(resolved.fell_back_to_generic_template);
     }
 
     #[test]
+    fn template_semantic_shape_infers_custom_contrast_aliases() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        let contrast_template = policy.template("contrast_block").unwrap().clone();
+        policy.templates.insert(
+            "contrast_alt".to_string(),
+            ResolvedTemplate {
+                id: "contrast_alt".to_string(),
+                core: contrast_template.core,
+            },
+        );
+
+        assert_eq!(
+            policy.template_semantic_shape("contrast_alt"),
+            SemanticShape::Contrast
+        );
+    }
+
+    #[test]
+    fn template_id_for_shape_prefers_current_alias_and_fallback_shape_template() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        let contrast_template = policy.template("contrast_block").unwrap().clone();
+        policy.templates.insert(
+            "contrast_alt".to_string(),
+            ResolvedTemplate {
+                id: "contrast_alt".to_string(),
+                core: contrast_template.core,
+            },
+        );
+
+        assert_eq!(
+            policy.template_id_for_shape("contrast_alt", SemanticShape::Contrast),
+            Some("contrast_alt")
+        );
+        assert_eq!(
+            policy.template_id_for_shape("parser_block", SemanticShape::MissingHeader),
+            Some("missing_header_block")
+        );
+    }
+
+    #[test]
     fn builtin_labels_cover_core_slot_ids() {
+        let legacy = ResolvedPresentationPolicy::legacy_v1();
         let policy = ResolvedPresentationPolicy::subject_blocks_v1();
 
+        assert_eq!(legacy.slot_label(SemanticSlotId::Raw), Some("why"));
+        assert_eq!(policy.slot_label(SemanticSlotId::Raw), Some("raw"));
         assert_eq!(policy.slot_label(SemanticSlotId::WhyRaw), Some("raw"));
         assert_eq!(policy.slot_label(SemanticSlotId::FirstAction), Some("help"));
         assert_eq!(policy.label("help"), Some("help"));
         assert_eq!(policy.label("raw"), Some("raw"));
+        assert_eq!(SemanticSlotId::Raw.stable_id(), "raw");
     }
 }

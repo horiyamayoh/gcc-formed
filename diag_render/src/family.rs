@@ -472,7 +472,17 @@ pub fn extract_parser_slots(
     node: &DiagnosticNode,
 ) -> Option<ParserSlotFacts> {
     let family = analysis_family(node)?;
-    if family != "syntax" {
+    if !matches!(
+        family,
+        "syntax"
+            | "preprocessor_directive"
+            | "attribute"
+            | "storage_class"
+            | "module_import"
+            | "coroutine"
+            | "asm_inline"
+            | "openmp"
+    ) {
         return None;
     }
 

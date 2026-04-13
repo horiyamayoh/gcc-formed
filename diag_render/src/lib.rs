@@ -811,6 +811,10 @@ mod tests {
         );
         assert_eq!(snapshot.cards.len(), 1);
         assert_eq!(snapshot.cards[0].presentation.template_id, "parser_block");
+        assert_eq!(
+            snapshot.cards[0].presentation.semantic_shape,
+            crate::presentation::SemanticShape::Parser
+        );
         assert_eq!(snapshot.cards[0].subject, "syntax error");
         assert_eq!(snapshot.cards[0].display_family.as_deref(), Some("syntax"));
         assert_eq!(
@@ -842,6 +846,10 @@ mod tests {
         assert_eq!(card.semantic_card.subject, "syntax error");
         assert_eq!(card.semantic_card.presentation.template_id, "parser_block");
         assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Parser
+        );
+        assert_eq!(
             card.semantic_card.slot_text(SemanticSlotId::FirstAction),
             Some("fix the first parser error at the user-owned location")
         );
@@ -853,6 +861,93 @@ mod tests {
             card.semantic_card.slot_text(SemanticSlotId::Near),
             Some("} token")
         );
+    }
+
+    #[test]
+    fn subject_blocks_shape_routing_is_not_bound_to_template_id() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "passing argument 1 of 'takes_int' makes integer from pointer without a cast"
+                .to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.c", 5, 22, Ownership::User)];
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "expected-note".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "expected 'int' but argument is of type 'const char *'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![sample_location("src/main.c", 1, 19, Ownership::User)],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.family = Some("type_overload".into());
+        analysis.headline = Some("type or overload mismatch".into());
+        analysis.first_action_hint =
+            Some("compare the expected type and actual argument at the call site".into());
+        analysis.rule_id = Some("rule.family.type_overload.structured_or_message".into());
+
+        let mut subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let contrast_template = subject_blocks.template("contrast_block").unwrap().clone();
+        subject_blocks.templates.insert(
+            "contrast_alt".to_string(),
+            ResolvedTemplate {
+                id: "contrast_alt".to_string(),
+                core: contrast_template.core,
+            },
+        );
+        subject_blocks.family_mappings = subject_blocks
+            .family_mappings
+            .into_iter()
+            .map(|mapping| {
+                if mapping.matcher == "type_overload" {
+                    ResolvedFamilyPresentation {
+                        template_id: "contrast_alt".to_string(),
+                        ..mapping
+                    }
+                } else {
+                    mapping
+                }
+            })
+            .collect();
+
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(card.semantic_card.presentation.template_id, "contrast_alt");
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Contrast
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Want),
+            Some("int")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Got),
+            Some("const char *")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Via),
+            Some("takes_int")
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::Raw), None);
     }
 
     #[test]
@@ -971,7 +1066,11 @@ mod tests {
             card.semantic_card.slot_text(SemanticSlotId::Via),
             Some("takes_int")
         );
-        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::WhyRaw), None);
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Contrast
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::Raw), None);
 
         let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
         assert!(
@@ -1031,7 +1130,11 @@ mod tests {
             card.semantic_card.slot_text(SemanticSlotId::Archive),
             Some("libfoo.a")
         );
-        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::WhyRaw), None);
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Linker
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::Raw), None);
 
         let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
         assert!(
@@ -1066,6 +1169,42 @@ mod tests {
         assert!(output.text.contains("| src/main.c:2:10"));
         assert!(output.text.contains("|     if (1 {"));
         assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_preprocessor_parser_route_uses_parser_shape() {
+        let mut request = sample_request();
+        request.document.diagnostics[0].phase = Phase::Preprocess;
+        request.document.diagnostics[0].message.raw_text =
+            "expected ')' before 'defined'".to_string();
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "preprocessor_directive",
+            "preprocessor directive error",
+            Some(
+                "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
+            ),
+            diag_core::Confidence::High,
+            "rule.family.preprocessor_directive.message_terms",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let view = build_view_model_with_presentation_policy(&request, &subject_blocks).unwrap();
+        let card = &view.cards[0];
+
+        assert_eq!(card.semantic_card.presentation.template_id, "parser_block");
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Parser
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Want),
+            Some(")")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Near),
+            Some("defined")
+        );
+        assert_eq!(card.semantic_card.slot_text(SemanticSlotId::Raw), None);
     }
 
     #[test]
@@ -1123,6 +1262,10 @@ mod tests {
         assert_eq!(
             card.semantic_card.presentation.template_id,
             "missing_header_block"
+        );
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::MissingHeader
         );
         assert_eq!(
             card.semantic_card.display_family.as_deref(),
@@ -1386,13 +1529,17 @@ mod tests {
         let card = &view.cards[0];
 
         assert_eq!(card.semantic_card.presentation.template_id, "generic_block");
+        assert_eq!(
+            card.semantic_card.presentation.semantic_shape,
+            crate::presentation::SemanticShape::Generic
+        );
         assert!(
             card.semantic_card
                 .presentation
                 .fell_back_to_generic_template
         );
         assert_eq!(
-            card.semantic_card.slot_text(SemanticSlotId::WhyRaw),
+            card.semantic_card.slot_text(SemanticSlotId::Raw),
             Some(
                 "comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
             )
@@ -2035,6 +2182,8 @@ mod tests {
                 presentation: ResolvedCardPresentation {
                     template_id: "contrast_block".to_string(),
                     display_family: Some("type_mismatch".to_string()),
+                    semantic_shape: crate::presentation::SemanticShape::Contrast,
+                    shape_fallbacks: Vec::new(),
                     subject_first_header: true,
                     location_policy: ResolvedLocationPolicy {
                         default_placement: LocationPlacement::HeaderSuffix,

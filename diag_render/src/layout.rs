@@ -243,10 +243,7 @@ impl LayoutProfile {
             .or(card.first_action.as_deref())
             .is_some()
             || !rendered_semantic_slots(card).is_empty()
-            || card
-                .semantic_card
-                .slot_text(SemanticSlotId::WhyRaw)
-                .is_some()
+            || card.semantic_card.slot_text(SemanticSlotId::Raw).is_some()
             || !card.semantic_card.presentation.subject_first_header
     }
 
@@ -409,11 +406,11 @@ impl<'a> LegacyPresentationAdapter<'a> {
             ));
         }
         self.render_legacy_semantic_evidence(lines);
-        if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::WhyRaw) {
+        if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::Raw) {
             let why_label = self
                 .card
                 .semantic_card
-                .slot_label(SemanticSlotId::WhyRaw)
+                .slot_label(SemanticSlotId::Raw)
                 .unwrap_or("why");
             lines.push(format!(
                 "{} {}",
@@ -485,11 +482,11 @@ impl<'a> LegacyPresentationAdapter<'a> {
                 raw: false,
             });
         }
-        if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::WhyRaw) {
+        if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::Raw) {
             let why_label = self
                 .card
                 .semantic_card
-                .slot_label(SemanticSlotId::WhyRaw)
+                .slot_label(SemanticSlotId::Raw)
                 .unwrap_or("why");
             entries.push(EvidenceEntry {
                 label: why_label,
@@ -511,9 +508,7 @@ fn rendered_semantic_slots(card: &RenderGroupCard) -> Vec<&RenderSemanticSlot> {
     card.semantic_card
         .slots
         .iter()
-        .filter(|slot| {
-            slot.slot != SemanticSlotId::FirstAction && slot.slot != SemanticSlotId::WhyRaw
-        })
+        .filter(|slot| slot.slot != SemanticSlotId::FirstAction && slot.slot != SemanticSlotId::Raw)
         .collect()
 }
 
