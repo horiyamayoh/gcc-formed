@@ -1,5 +1,10 @@
 {
   "execution": {
+    "allowed_processing_paths": [
+      "single_sink_structured",
+      "native_text_capture",
+      "passthrough"
+    ],
     "document_completeness": "complete",
     "fallback_grade": "none",
     "processing_path": "single_sink_structured",
@@ -78,6 +83,6 @@
       "warning_count": 0
     }
   },
-  "schema_version": "1.0.0-alpha.1",
+  "schema_version": "2.0.0-alpha.1",
   "status": "available"
 }

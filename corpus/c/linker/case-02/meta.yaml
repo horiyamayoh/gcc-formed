@@ -4,6 +4,18 @@ tags:
   - linker
   - phase1
   - representative
+  - 'band:gcc15'
+  - 'processing_path:dual_sink_structured'
+  - 'surface:default'
+  - 'surface:ci'
+  - 'surface:debug'
+matrix_applicability:
+  version_band: gcc15
+  processing_path: dual_sink_structured
+  surfaces:
+    - default
+    - ci
+    - debug
 ownership: curated
 provenance: hand-authored
 reviewer: codex

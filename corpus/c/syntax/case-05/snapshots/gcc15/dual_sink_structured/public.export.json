@@ -1,0 +1,139 @@
+{
+  "execution": {
+    "allowed_processing_paths": [
+      "dual_sink_structured",
+      "passthrough"
+    ],
+    "document_completeness": "partial",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc15"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-syntax-case-05",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "message": "expected ')' before ';' token",
+        "phase": "parse",
+        "primary_location": {
+          "column": 18,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error",
+        "suggestions": [
+          {
+            "applicability": "machine_applicable",
+            "edits": [
+              {
+                "end_column": 18,
+                "end_line": 2,
+                "path": "src/main.c",
+                "replacement": ")",
+                "start_column": 18,
+                "start_line": 2
+              }
+            ],
+            "label": "insert ')'"
+          }
+        ]
+      },
+      {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "message": "expected ';' before '}}' token",
+        "phase": "parse",
+        "primary_location": {
+          "column": 19,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error",
+        "suggestions": [
+          {
+            "applicability": "machine_applicable",
+            "edits": [
+              {
+                "end_column": 19,
+                "end_line": 2,
+                "path": "src/main.c",
+                "replacement": ";",
+                "start_column": 19,
+                "start_line": 2
+              }
+            ],
+            "label": "insert ';'"
+          }
+        ]
+      },
+      {
+        "confidence": "high",
+        "family": "syntax",
+        "first_action": "fix the first parser error at the user-owned location",
+        "headline": "syntax error",
+        "message": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  ",
+        "phase": "parse",
+        "primary_location": {
+          "column": 19,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 3,
+      "duplicate_count": 0,
+      "error_count": 3,
+      "independent_root_count": 3,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "2.0.0-alpha.1",
+  "status": "available"
+}

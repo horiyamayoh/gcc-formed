@@ -1,0 +1,96 @@
+{
+  "cards": [
+    {
+      "canonical_location": null,
+      "cascade_debug": {
+        "cascade_role": "independent_root",
+        "episode_ref": "episode-18fb65ae404a",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "no_primary_location",
+          "specific_symbol_or_frontier",
+          "strong_root_family"
+        ],
+        "group_ref": "group-5a2b7fabe834",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "visibility_floor": "never_hidden"
+      },
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [],
+      "excerpts": [],
+      "family": "linker.undefined_reference",
+      "first_action": "define the missing symbol or link the object/library that provides it",
+      "group_id": "group-5a2b7fabe834",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "symbol_context=present",
+        "message_contains=undefined reference",
+        "existing_specific_family=linker.undefined_reference"
+      ],
+      "raw_message": "main.c:(.text+0x5): undefined reference to `missing_symbol'",
+      "raw_sub_block": [
+        "main.c:(.text+0x5): undefined reference to `missing_symbol'"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "undefined reference to `missing_symbol`"
+    },
+    {
+      "canonical_location": null,
+      "cascade_debug": {
+        "cascade_role": "uncertain",
+        "episode_ref": "episode-da5205a3f6d2",
+        "evidence_tags": [
+          "actionability_short",
+          "classified_family",
+          "early_invocation",
+          "generic_follow_on",
+          "generic_linker_wrapper",
+          "no_primary_location"
+        ],
+        "group_ref": "group-ac2f5a684011",
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "visibility_floor": "never_hidden"
+      },
+      "child_notes": [],
+      "collapsed_notices": [],
+      "confidence_label": "likely",
+      "confidence_notice": null,
+      "context_lines": [
+        "linker: preserved"
+      ],
+      "excerpts": [],
+      "family": "collect2_summary",
+      "first_action": "inspect the linker diagnostics immediately above this summary",
+      "group_id": "group-ac2f5a684011",
+      "matched_conditions": [
+        "phase=link",
+        "context=linker_resolution",
+        "existing_specific_family=collect2_summary"
+      ],
+      "raw_message": "collect2: error: ld returned 1 exit status",
+      "raw_sub_block": [
+        "collect2: error: ld returned 1 exit status"
+      ],
+      "rule_id": "rule.family.ingress_specific_override",
+      "severity": "error",
+      "suppression_reason": "preserved_specific_family_from_ingress",
+      "title": "driver reported a linker failure summary"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": true,
+    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+  }
+}

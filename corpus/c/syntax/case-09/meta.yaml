@@ -13,6 +13,13 @@ tags:
 - 'surface:ci'
 - 'surface:debug'
 - 'fallback_contract:bounded_render'
+matrix_applicability:
+  version_band: gcc9_12
+  processing_path: native_text_capture
+  surfaces:
+    - default
+    - ci
+    - debug
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex

@@ -3,6 +3,17 @@ tags:
 - phase1
 - representative
 - anti_collision
+- 'band:gcc15'
+- 'processing_path:dual_sink_structured'
+- 'surface:default'
+- 'surface:ci'
+matrix_applicability:
+  version_band: gcc15
+  processing_path: dual_sink_structured
+  surfaces:
+    - default
+    - ci
+  note: debug surface is intentionally omitted until a checked-in render.debug expectation exists.
 ownership: curated
 provenance: generated-from-phase1-plan
 reviewer: codex

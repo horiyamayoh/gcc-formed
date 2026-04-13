@@ -10,6 +10,13 @@ tags:
 - 'surface:default'
 - 'surface:ci'
 - 'fallback_contract:bounded_render'
+matrix_applicability:
+  version_band: gcc9_12
+  processing_path: native_text_capture
+  surfaces:
+    - default
+    - ci
+  note: debug surface is intentionally omitted until a checked-in render.debug expectation exists.
 ownership: curated
 provenance: hand-authored-minimal-repro
 reviewer: codex

@@ -7,7 +7,17 @@ tags:
   - beta-bar
   - 'band:gcc13_14'
   - 'processing_path:native_text_capture'
+  - 'surface:default'
+  - 'surface:ci'
+  - 'surface:debug'
   - 'fallback_contract:honest_fallback'
+matrix_applicability:
+  version_band: gcc13_14
+  processing_path: native_text_capture
+  surfaces:
+    - default
+    - ci
+    - debug
 ownership: curated
 provenance: hand-authored
 reviewer: codex
