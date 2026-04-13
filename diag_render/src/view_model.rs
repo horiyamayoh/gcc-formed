@@ -514,6 +514,12 @@ fn extract_slots_for_shape(
             if let Some(archive) = linker.archive {
                 push(&mut slots, SemanticSlotId::Archive, archive);
             }
+            if let Some(now) = linker.now {
+                push(&mut slots, SemanticSlotId::Now, now);
+            }
+            if let Some(prev) = linker.prev {
+                push(&mut slots, SemanticSlotId::Prev, prev);
+            }
         }
         SemanticShape::Generic => return None,
     }
@@ -554,7 +560,14 @@ fn adapt_supporting_evidence_for_presentation(
             child_notes.clear();
         }
         SemanticShape::Context => {
-            context_lines.clear();
+            if let Some(include_chain_start) = context_lines
+                .iter()
+                .position(|line| line.trim_start() == "from include chain:")
+            {
+                context_lines = context_lines.split_off(include_chain_start);
+            } else {
+                context_lines.clear();
+            }
             child_notes.clear();
         }
         SemanticShape::Parser | SemanticShape::Generic => {}

@@ -1198,6 +1198,14 @@ mod tests {
             Some("libfoo.a")
         );
         assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Now),
+            Some("helper.c:(.text+0x0)")
+        );
+        assert_eq!(
+            card.semantic_card.slot_text(SemanticSlotId::Prev),
+            Some("/tmp/ccnwX900.o:main.c:(.text+0x0)")
+        );
+        assert_eq!(
             card.semantic_card.presentation.semantic_shape,
             crate::presentation::SemanticShape::Linker
         );
@@ -1212,6 +1220,10 @@ mod tests {
         assert!(output.text.contains("symbol : duplicate"));
         assert!(output.text.contains("from   : lib/helper.o  +2 references"));
         assert!(output.text.contains("archive: libfoo.a"));
+        assert!(output.text.contains("now    : helper.c:(.text+0x0)"));
+        assert!(output.text.lines().any(|line| {
+            line.contains("prev") && line.contains("<temp-object>:main.c:(.text+0x0)")
+        }));
         assert!(!output.text.contains("why:"));
     }
 
@@ -1425,13 +1437,78 @@ mod tests {
                 .text
                 .contains("use : int main() { return node->value; }")
         );
+        assert!(output.text.contains("need: full type definition"));
+        assert!(output.text.contains("from: src/main.cpp:1:8 struct Node;"));
+        assert!(!output.text.contains("why:"));
+    }
+
+    #[test]
+    fn subject_blocks_lookup_render_uses_missing_include_hint_without_becoming_missing_header() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(
+            &root,
+            "src/main.cpp",
+            "int main() { return WidgetFactory::create(); }\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        request.document.run.language_mode = Some(diag_core::LanguageMode::Cpp);
+        request.document.run.primary_tool.name = "g++".to_string();
+        request.document.diagnostics[0].phase = Phase::Semantic;
+        request.document.diagnostics[0].message.raw_text =
+            "'WidgetFactory' was not declared in this scope".to_string();
+        request.document.diagnostics[0].locations =
+            vec![sample_location("src/main.cpp", 1, 21, Ownership::User)];
+        request.document.diagnostics[0].children = vec![diag_core::DiagnosticNode {
+            id: "include-hint".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "'WidgetFactory' is defined in header '<widget_factory.hpp>'; did you forget to '#include <widget_factory.hpp>'?".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: Vec::new(),
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+        request.document.diagnostics[0].analysis = Some(sample_analysis(
+            "scope_declaration",
+            "identifier is not declared",
+            Some("include the declaration or fix the symbol name"),
+            diag_core::Confidence::High,
+            "rule.family.scope_declaration.message_terms",
+        ));
+
+        let subject_blocks = ResolvedPresentationPolicy::subject_blocks_v1();
+        let output = render_with_presentation_policy(request, &subject_blocks).unwrap();
+
         assert!(
             output
                 .text
-                .contains("need: complete definition of 'struct Node'")
+                .contains("error: [missing_name] identifier is not declared @ src/main.cpp:1:21")
         );
-        assert!(output.text.contains("from: src/main.cpp:1:8 struct Node;"));
-        assert!(!output.text.contains("why:"));
+        assert!(output.text.contains("name: WidgetFactory"));
+        assert!(
+            output
+                .text
+                .contains("use : int main() { return WidgetFactory::create(); }")
+        );
+        assert!(output.text.contains("need: <widget_factory.hpp>"));
+        assert!(output.text.contains("from: #include <widget_factory.hpp>"));
+        assert!(!output.text.contains("error: [missing_header]"));
     }
 
     #[test]
@@ -1571,7 +1648,12 @@ mod tests {
                 .contains("via : src/config.h:2:29 in expansion of macro 'INNER_ACCESS'")
         );
         assert!(!output.text.contains("through macro expansion:"));
-        assert!(!output.text.contains("from include chain:"));
+        assert!(output.text.contains("from include chain:"));
+        assert!(
+            output
+                .text
+                .contains("src/wrapper.h:1 included from src/main.c:1")
+        );
         assert!(!output.text.contains("why:"));
     }
 

@@ -99,6 +99,12 @@ pub struct MissingHeaderSlotFacts {
     pub from: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct LookupRequirementHint {
+    need: String,
+    from: String,
+}
+
 fn render_rulepack() -> &'static RenderRulepack {
     checked_in_rulepack().render()
 }
@@ -264,18 +270,24 @@ fn summarize_macro_include(
             &mut evidence.context_lines,
             "from include chain:".to_string(),
         );
-        let unique_count = dedup_frames(&chain.frames).len();
-        let visible = summarize_include_frames(request, node, &chain.frames, frame_limit);
-        for frame in &visible {
-            push_unique(&mut evidence.context_lines, format!("  - {frame}"));
+        let unique = dedup_frames(&chain.frames);
+        let root_index = user_owned_frame_indices(request, node, &unique)
+            .last()
+            .copied()
+            .unwrap_or(unique.len().saturating_sub(1));
+        let include_index = root_index.saturating_sub(1);
+        if unique.len() > 2
+            && let Some(terminal) = render_terminal_include_fact(&chain.frames)
+        {
+            push_unique(&mut evidence.context_lines, format!("  - {terminal}"));
         }
-        if unique_count > visible.len() {
+        if let Some(root_edge) = render_include_root_edge_fact(request, node, &chain.frames) {
+            push_unique(&mut evidence.context_lines, format!("  - {root_edge}"));
+        }
+        if include_index > 1 {
             push_unique(
                 &mut evidence.context_lines,
-                format!(
-                    "  - through {} intermediate includes",
-                    unique_count - visible.len()
-                ),
+                format!("  - through {} intermediate includes", include_index - 1),
             );
         }
     }
@@ -571,7 +583,8 @@ pub fn extract_context_slots(
             render_macro_invocation_fact(&unique[index])
         })
         .or_else(|| {
-            include_chain.and_then(|chain| compressed_include_summary(request, node, &chain.frames))
+            include_chain
+                .and_then(|chain| render_include_root_edge_fact(request, node, &chain.frames))
         });
 
     let via = macro_chain
@@ -582,15 +595,8 @@ pub fn extract_context_slots(
             let index = indices.next()?;
             Some(format_frame(&unique[index]))
         })
-        .or_else(|| {
-            include_chain.and_then(|chain| compressed_include_summary(request, node, &chain.frames))
-        })
-        .or_else(|| {
-            include_chain.and_then(|chain| {
-                let unique = dedup_frames(&chain.frames);
-                unique.first().map(format_frame)
-            })
-        });
+        .or_else(|| include_chain.and_then(|chain| render_terminal_include_fact(&chain.frames)))
+        .filter(|via| from.as_deref() != Some(via.as_str()));
 
     if from.is_none() && via.is_none() {
         return None;
@@ -623,16 +629,22 @@ pub fn extract_missing_header_slots(
     }
 
     let location = best_location(request, node)?;
-    let source_line = source_line_text(request, location)?;
-    let include_operand = parse_include_operand(&source_line)?;
-
-    Some(MissingHeaderSlotFacts {
-        need: include_operand,
-        from: Some(format!(
+    let source_line = source_line_text(request, location);
+    let include_operand = source_line
+        .as_deref()
+        .and_then(parse_missing_dependency_operand)
+        .or_else(|| parse_missing_header_message_operand(&message))?;
+    let from = source_line.map(|source_line| {
+        format!(
             "{} {}",
             format_location(request, location),
             collapse_source_line(&source_line)
-        )),
+        )
+    });
+
+    Some(MissingHeaderSlotFacts {
+        need: include_operand,
+        from: from.or_else(|| Some(format_location(request, location))),
     })
 }
 
@@ -642,14 +654,14 @@ fn extract_scope_lookup_slots(
 ) -> Option<LookupSlotFacts> {
     let message = normalized_message_with_request(request, node);
     let name = quoted_value_at_start(&message)?;
+    let use_site = lookup_source_context(request, node);
+    let requirement_hint = first_lookup_requirement_hint(request, node);
 
     Some(LookupSlotFacts {
         name: Some(name),
-        use_site: best_location(request, node).and_then(|location| {
-            source_line_text(request, location).map(|line| collapse_source_line(&line))
-        }),
-        need: None,
-        from: None,
+        use_site,
+        need: requirement_hint.as_ref().map(|hint| hint.need.clone()),
+        from: requirement_hint.map(|hint| hint.from),
         near: None,
     })
 }
@@ -660,15 +672,19 @@ fn extract_incomplete_type_slots(
 ) -> Option<LookupSlotFacts> {
     let message = normalized_message_with_request(request, node);
     let name = quoted_value_after(&message, "incomplete type ")?;
+    let requirement_hint = first_lookup_requirement_hint(request, node);
 
     Some(LookupSlotFacts {
         name: Some(name.clone()),
-        use_site: best_location(request, node).and_then(|location| {
-            source_line_text(request, location).map(|line| collapse_source_line(&line))
-        }),
-        need: Some(format!("complete definition of '{name}'")),
-        from: first_supporting_site(request, node, |note| {
-            note.contains("forward declaration") || note.contains("declaration of")
+        use_site: lookup_source_context(request, node),
+        need: requirement_hint
+            .as_ref()
+            .map(|hint| hint.need.clone())
+            .or_else(|| Some("full type definition".to_string())),
+        from: requirement_hint.map(|hint| hint.from).or_else(|| {
+            first_supporting_site(request, node, |note| {
+                note.contains("forward declaration") || note.contains("declaration of")
+            })
         }),
         near: None,
     })
@@ -1166,6 +1182,10 @@ fn parse_parser_near(message: &str) -> Option<String> {
     None
 }
 
+fn parse_missing_dependency_operand(source_line: &str) -> Option<String> {
+    parse_include_operand(source_line).or_else(|| parse_import_operand(source_line))
+}
+
 fn parse_include_operand(source_line: &str) -> Option<String> {
     let trimmed = source_line.trim();
     let rest = trimmed
@@ -1183,8 +1203,43 @@ fn parse_include_operand(source_line: &str) -> Option<String> {
     None
 }
 
+fn parse_import_operand(source_line: &str) -> Option<String> {
+    let trimmed = source_line.trim();
+    let rest = trimmed.strip_prefix("import")?.trim_start();
+    if let Some(rest) = rest.strip_prefix('<') {
+        let end = rest.find('>')?;
+        return Some(format!("<{}>", rest[..end].trim()));
+    }
+    if let Some(rest) = rest.strip_prefix('"') {
+        let end = rest.find('"')?;
+        return Some(format!("\"{}\"", rest[..end].trim()));
+    }
+
+    let module_name = rest
+        .trim_end_matches(';')
+        .split_whitespace()
+        .next()?
+        .trim_end_matches(';')
+        .trim();
+    (!module_name.is_empty()).then(|| module_name.to_string())
+}
+
+fn parse_missing_header_message_operand(message: &str) -> Option<String> {
+    message
+        .split_once(": No such file or directory")
+        .map(|(prefix, _)| prefix.trim())
+        .filter(|prefix| !prefix.is_empty())
+        .map(str::to_string)
+}
+
 fn collapse_source_line(source_line: &str) -> String {
     source_line.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn lookup_source_context(request: &RenderRequest, node: &DiagnosticNode) -> Option<String> {
+    best_location(request, node).and_then(|location| {
+        source_line_text(request, location).map(|line| collapse_source_line(&line))
+    })
 }
 
 fn render_location_source_fact(
@@ -1232,6 +1287,43 @@ fn first_supporting_site(
     })
 }
 
+fn first_lookup_requirement_hint(
+    request: &RenderRequest,
+    node: &DiagnosticNode,
+) -> Option<LookupRequirementHint> {
+    node.children.iter().find_map(|child| {
+        let note = normalized_child_note(request, child);
+        parse_lookup_requirement_hint(&note)
+    })
+}
+
+fn parse_lookup_requirement_hint(note: &str) -> Option<LookupRequirementHint> {
+    let include_directive = quoted_value_after(note, "did you forget to ")
+        .filter(|value| value.starts_with("#include"))
+        .or_else(|| {
+            quoted_value_after(note, "consider adding ")
+                .filter(|value| value.starts_with("#include"))
+        });
+    if let Some(include_directive) = include_directive {
+        return Some(LookupRequirementHint {
+            need: include_directive
+                .strip_prefix("#include")
+                .map(str::trim)
+                .unwrap_or(include_directive.as_str())
+                .to_string(),
+            from: include_directive,
+        });
+    }
+
+    let header = quoted_value_after(note, "defined in header ")
+        .or_else(|| quoted_value_after(note, "declared in header "))
+        .or_else(|| quoted_value_after(note, "provided by header "))?;
+    Some(LookupRequirementHint {
+        need: header.clone(),
+        from: format!("#include {header}"),
+    })
+}
+
 fn render_macro_invocation_fact(frame: &ContextFrame) -> Option<String> {
     let macro_name = frame
         .label
@@ -1244,30 +1336,33 @@ fn render_macro_invocation_fact(frame: &ContextFrame) -> Option<String> {
     }
 }
 
-fn compressed_include_summary(
+fn render_include_root_edge_fact(
     request: &RenderRequest,
     node: &DiagnosticNode,
     frames: &[ContextFrame],
 ) -> Option<String> {
     let unique = dedup_frames(frames);
-    let first = unique.first()?;
     let root_index = user_owned_frame_indices(request, node, &unique)
         .last()
         .copied()
         .unwrap_or(unique.len().saturating_sub(1));
+    let include_index = root_index.saturating_sub(1);
+    let include = unique.get(include_index)?;
     let root = unique.get(root_index)?;
-    let first_site = frame_site(first)?;
-    let root_site = frame_site(root)?;
-    let omitted = unique.len().saturating_sub(2);
-    let summary = if omitted == 0 {
-        format!("include {first_site} <- {root_site}")
+    let include_site = frame_site(include).or_else(|| Some(format_frame(include)))?;
+    let root_site = frame_site(root).or_else(|| Some(format_frame(root)))?;
+
+    if include_site == root_site {
+        Some(root_site)
     } else {
-        format!(
-            "include {first_site} <- {root_site}  +{omitted} include{}",
-            plural_suffix(omitted)
-        )
-    };
-    Some(summary)
+        Some(format!("{include_site} included from {root_site}"))
+    }
+}
+
+fn render_terminal_include_fact(frames: &[ContextFrame]) -> Option<String> {
+    let unique = dedup_frames(frames);
+    let first = unique.first()?;
+    frame_site(first).or_else(|| Some(format_frame(first)))
 }
 
 fn frame_site(frame: &ContextFrame) -> Option<String> {
@@ -1382,21 +1477,6 @@ fn summarize_macro_frames(
         &dedup_frames(frames),
         frame_limit,
         select_macro_frame_indices,
-    )
-}
-
-fn summarize_include_frames(
-    request: &RenderRequest,
-    node: &DiagnosticNode,
-    frames: &[ContextFrame],
-    frame_limit: usize,
-) -> Vec<String> {
-    summarize_family_frames(
-        request,
-        node,
-        &dedup_frames(frames),
-        frame_limit,
-        select_include_frame_indices,
     )
 }
 
@@ -1598,38 +1678,6 @@ fn select_macro_frame_indices(
         }
     }
     for index in boundary + 1..frames.len() {
-        push_index(&mut selected, index);
-        if selected.len() == frame_limit {
-            return selected;
-        }
-    }
-    selected.truncate(frame_limit);
-    selected
-}
-
-fn select_include_frame_indices(
-    request: &RenderRequest,
-    node: &DiagnosticNode,
-    frames: &[ContextFrame],
-    frame_limit: usize,
-) -> Vec<usize> {
-    if frames.is_empty() || frame_limit == 0 {
-        return Vec::new();
-    }
-    let user_indices = user_owned_frame_indices(request, node, frames);
-    let boundary = user_indices
-        .last()
-        .copied()
-        .unwrap_or(frames.len().saturating_sub(1));
-    let mut selected = Vec::new();
-
-    push_index(&mut selected, 0);
-    push_index(&mut selected, boundary);
-    if boundary > 0 {
-        push_index(&mut selected, boundary - 1);
-    }
-    push_index(&mut selected, frames.len().saturating_sub(1));
-    for index in 0..frames.len() {
         push_index(&mut selected, index);
         if selected.len() == frame_limit {
             return selected;
@@ -1913,6 +1961,7 @@ mod tests {
         Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
         Severity, SymbolContext, ToolInfo, WrapperSurface,
     };
+    use std::fs;
 
     fn sample_request() -> RenderRequest {
         RenderRequest {
@@ -2079,6 +2128,14 @@ mod tests {
         ];
         child.message.raw_text = format!("expected '{want}' but argument is of type '{got}'");
         child
+    }
+
+    fn write_source_file(root: &tempfile::TempDir, relative: &str, contents: &str) {
+        let path = root.path().join(relative);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(path, contents).unwrap();
     }
 
     #[test]
@@ -2428,6 +2485,123 @@ mod tests {
     }
 
     #[test]
+    fn extract_missing_header_slots_falls_back_to_message_operand_without_source() {
+        let request = sample_request();
+        let mut node = sample_node("module_import");
+        node.message.raw_text = "missing/header.hpp: No such file or directory".to_string();
+
+        let facts =
+            extract_missing_header_slots(&request, &node).expect("expected missing-header facts");
+
+        assert_eq!(facts.need, "missing/header.hpp");
+        assert_eq!(facts.from.as_deref(), Some("src/main.cpp:5:7"));
+    }
+
+    #[test]
+    fn extract_scope_lookup_slots_uses_include_hint_for_need_and_from() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(
+            &root,
+            "src/main.cpp",
+            "int main() { return WidgetFactory::create(); }\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        let mut node = sample_node("scope_declaration");
+        node.message.raw_text = "'WidgetFactory' was not declared in this scope".to_string();
+        node.locations = vec![
+            Location::caret("src/main.cpp", 1, 21, diag_core::LocationRole::Primary)
+                .with_ownership(Ownership::User, "user_workspace"),
+        ];
+        node.children = vec![DiagnosticNode {
+            id: "include-hint".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "'WidgetFactory' is defined in header '<widget_factory.hpp>'; did you forget to '#include <widget_factory.hpp>'?".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: Vec::new(),
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+
+        let facts = extract_lookup_slots(&request, &node).expect("expected lookup facts");
+
+        assert_eq!(facts.name.as_deref(), Some("WidgetFactory"));
+        assert_eq!(
+            facts.use_site.as_deref(),
+            Some("int main() { return WidgetFactory::create(); }")
+        );
+        assert_eq!(facts.need.as_deref(), Some("<widget_factory.hpp>"));
+        assert_eq!(facts.from.as_deref(), Some("#include <widget_factory.hpp>"));
+    }
+
+    #[test]
+    fn extract_incomplete_type_slots_uses_canonical_need_wording() {
+        let root = tempfile::tempdir().unwrap();
+        write_source_file(
+            &root,
+            "src/main.cpp",
+            "struct Node;\nint main() { return node->value; }\n",
+        );
+
+        let mut request = sample_request();
+        request.cwd = Some(root.path().to_path_buf());
+        let mut node = sample_node("pointer_reference");
+        node.message.raw_text = "invalid use of incomplete type 'struct Node'".to_string();
+        node.locations = vec![
+            Location::caret("src/main.cpp", 2, 25, diag_core::LocationRole::Primary)
+                .with_ownership(Ownership::User, "user_workspace"),
+        ];
+        node.children = vec![DiagnosticNode {
+            id: "forward-note".to_string(),
+            origin: Origin::Gcc,
+            phase: Phase::Semantic,
+            severity: Severity::Note,
+            semantic_role: SemanticRole::Supporting,
+            message: MessageText {
+                raw_text: "forward declaration of 'struct Node'".to_string(),
+                normalized_text: None,
+                locale: None,
+            },
+            locations: vec![
+                Location::caret("src/main.cpp", 1, 8, diag_core::LocationRole::Primary)
+                    .with_ownership(Ownership::User, "user_workspace"),
+            ],
+            children: Vec::new(),
+            suggestions: Vec::new(),
+            context_chains: Vec::new(),
+            symbol_context: None,
+            node_completeness: NodeCompleteness::Partial,
+            provenance: Provenance {
+                source: ProvenanceSource::Compiler,
+                capture_refs: vec!["stderr.raw".to_string()],
+            },
+            analysis: None,
+            fingerprints: None,
+        }];
+
+        let facts = extract_lookup_slots(&request, &node).expect("expected lookup facts");
+
+        assert_eq!(facts.need.as_deref(), Some("full type definition"));
+        assert_eq!(facts.from.as_deref(), Some("src/main.cpp:1:8 struct Node;"));
+    }
+
+    #[test]
     fn template_frontier_compaction_leads_with_first_user_owned_frame() {
         let request = sample_request();
         let mut node = sample_node("template");
@@ -2576,6 +2750,46 @@ mod tests {
                 .context_lines
                 .iter()
                 .any(|line| line.contains("src/main.c:2:1"))
+        );
+    }
+
+    #[test]
+    fn extract_context_slots_distinguishes_include_root_edge_from_terminal_header() {
+        let request = sample_request();
+        let mut node = sample_node("macro_include");
+        node.context_chains = vec![ContextChain {
+            kind: ContextChainKind::Include,
+            frames: vec![
+                ContextFrame {
+                    label: "In file included from /usr/include/project/detail.hpp:1,".to_string(),
+                    path: Some("/usr/include/project/detail.hpp".to_string()),
+                    line: Some(1),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "from src/wrapper.h:1:".to_string(),
+                    path: Some("src/wrapper.h".to_string()),
+                    line: Some(1),
+                    column: Some(1),
+                },
+                ContextFrame {
+                    label: "from src/main.c:2:".to_string(),
+                    path: Some("src/main.c".to_string()),
+                    line: Some(2),
+                    column: Some(1),
+                },
+            ],
+        }];
+
+        let facts = extract_context_slots(&request, &node).expect("expected context facts");
+
+        assert_eq!(
+            facts.from.as_deref(),
+            Some("src/wrapper.h:1:1 included from src/main.c:2:1")
+        );
+        assert_eq!(
+            facts.via.as_deref(),
+            Some("/usr/include/project/detail.hpp:1:1")
         );
     }
 
