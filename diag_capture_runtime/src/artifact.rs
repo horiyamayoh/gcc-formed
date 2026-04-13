@@ -85,13 +85,28 @@ impl CaptureBundle {
         })
     }
 
-    /// Returns the expected SARIF output path within the temp directory.
+    /// Returns the authoritative SARIF artifact path when the bundle knows it.
+    ///
+    /// Prefers an actual structured artifact reference from the bundle and only
+    /// falls back to the plan-derived temp-path expectation when runtime capture
+    /// reserved a wrapper-owned SARIF file path.
     pub fn authoritative_sarif_path(&self, temp_dir: &Path) -> Option<PathBuf> {
-        matches!(
-            self.plan.structured_capture,
-            StructuredCapturePolicy::SarifFile | StructuredCapturePolicy::SingleSinkSarifFile
-        )
-        .then(|| temp_dir.join("diagnostics.sarif"))
+        self.structured_artifacts
+            .iter()
+            .find_map(|artifact| {
+                matches!(artifact.kind, ArtifactKind::GccSarif)
+                    .then(|| artifact.external_ref.as_deref())
+                    .flatten()
+                    .map(PathBuf::from)
+            })
+            .or_else(|| {
+                matches!(
+                    self.plan.structured_capture,
+                    StructuredCapturePolicy::SarifFile
+                        | StructuredCapturePolicy::SingleSinkSarifFile
+                )
+                .then(|| temp_dir.join("diagnostics.sarif"))
+            })
     }
 
     /// Returns the diagnostic flags that were injected into the backend invocation.
@@ -135,9 +150,13 @@ impl CaptureBundle {
 pub struct CaptureOutcome {
     /// Exit status of the backend process.
     pub exit_status: ExitStatusInfo,
-    /// Raw stderr bytes captured from the backend.
+    /// Raw stderr preview bytes captured from the backend.
+    ///
+    /// The bundle's `raw_text_artifacts` remain the normative ingest surface.
     pub stderr_bytes: Vec<u8>,
-    /// Path to the SARIF file, if one was produced.
+    /// Convenience mirror of the runtime-owned SARIF path, if one was produced.
+    ///
+    /// The bundle's structured artifacts remain the normative ingest surface.
     pub sarif_path: Option<PathBuf>,
     /// Temporary directory used for this capture session.
     pub temp_dir: PathBuf,

@@ -86,8 +86,9 @@ enum ResidualContract {
 
 /// Ingest GCC output and return a [`DiagnosticDocument`].
 ///
-/// Convenience wrapper around [`crate::ingest_with_reason`] that discards the
-/// fallback reason. Accepts an optional SARIF file path and raw stderr text.
+/// Compatibility wrapper around [`crate::ingest_with_reason`] that discards the
+/// fallback reason. New production call sites should prefer
+/// [`crate::ingest_bundle`] and pass a full [`CaptureBundle`].
 pub fn ingest(
     sarif_path: Option<&Path>,
     stderr_text: &str,
@@ -302,8 +303,10 @@ fn materialize_capture_artifacts(document: &mut DiagnosticDocument, bundle: &Cap
 /// Ingest GCC output and return an [`IngestOutcome`] that includes a
 /// fallback reason when structured input was unavailable or unparseable.
 ///
-/// Builds a compatibility [`CaptureBundle`] from the legacy path/stderr
-/// arguments and delegates to [`crate::ingest_bundle`].
+/// Builds a conservative compatibility [`CaptureBundle`] from the legacy
+/// path/stderr arguments and delegates to [`crate::ingest_bundle`]. The
+/// synthesized bundle must not imply stronger runtime path guarantees than the
+/// supplied legacy inputs can prove.
 pub fn ingest_with_reason(
     sarif_path: Option<&Path>,
     stderr_text: &str,
@@ -531,16 +534,19 @@ pub(crate) fn compatibility_bundle_from_legacy_inputs(
     stderr_text: &str,
     run: &RunInfo,
 ) -> CaptureBundle {
-    let has_sarif_path = sarif_path.is_some();
-    let processing_path = if has_sarif_path {
-        ProcessingPath::DualSinkStructured
+    let has_structured_artifact = sarif_path.is_some();
+    let has_residual_text = !stderr_text.is_empty();
+    let processing_path = if has_structured_artifact {
+        ProcessingPath::SingleSinkStructured
+    } else if has_residual_text {
+        ProcessingPath::NativeTextCapture
     } else {
         ProcessingPath::Passthrough
     };
-    let selected_mode = if has_sarif_path {
-        ExecutionMode::Render
-    } else {
+    let selected_mode = if matches!(processing_path, ProcessingPath::Passthrough) {
         ExecutionMode::Passthrough
+    } else {
+        ExecutionMode::Render
     };
     let primary_tool = run.primary_tool.clone();
 
@@ -548,12 +554,14 @@ pub(crate) fn compatibility_bundle_from_legacy_inputs(
         plan: CapturePlan {
             execution_mode: selected_mode,
             processing_path,
-            structured_capture: if has_sarif_path {
-                StructuredCapturePolicy::SarifFile
+            structured_capture: if has_structured_artifact {
+                StructuredCapturePolicy::SingleSinkSarifFile
             } else {
                 StructuredCapturePolicy::Disabled
             },
-            native_text_capture: if has_sarif_path {
+            native_text_capture: if has_residual_text
+                && !matches!(processing_path, ProcessingPath::Passthrough)
+            {
                 NativeTextCapturePolicy::CaptureOnly
             } else {
                 NativeTextCapturePolicy::Passthrough

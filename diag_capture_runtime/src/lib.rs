@@ -986,6 +986,58 @@ exit 1
     }
 
     #[test]
+    fn bundle_authoritative_sarif_path_prefers_actual_artifact_ref() {
+        let actual_sarif = PathBuf::from("/tmp/custom/legacy.sarif");
+        let temp_dir = PathBuf::from("/tmp/runtime/formed-123");
+        let bundle = CaptureBundle {
+            plan: CapturePlan {
+                execution_mode: ExecutionMode::Render,
+                processing_path: diag_backend_probe::ProcessingPath::SingleSinkStructured,
+                structured_capture: StructuredCapturePolicy::SingleSinkSarifFile,
+                native_text_capture: NativeTextCapturePolicy::CaptureOnly,
+                preserve_native_color: false,
+                locale_handling: LocaleHandling::ForceMessagesC,
+                retention_policy: diag_trace::RetentionPolicy::Always,
+            },
+            invocation: CaptureInvocation {
+                backend_path: "/usr/bin/gcc".to_string(),
+                launcher_path: None,
+                spawn_path: "/usr/bin/gcc".to_string(),
+                argv: vec!["-c".to_string(), "main.c".to_string()],
+                spawn_argv: vec!["-c".to_string(), "main.c".to_string()],
+                argv_hash: "hash".to_string(),
+                cwd: "/tmp/project".to_string(),
+                selected_mode: ExecutionMode::Render,
+                processing_path: diag_backend_probe::ProcessingPath::SingleSinkStructured,
+            },
+            raw_text_artifacts: Vec::new(),
+            structured_artifacts: vec![CaptureArtifact {
+                id: "diagnostics.sarif".to_string(),
+                kind: ArtifactKind::GccSarif,
+                media_type: "application/sarif+json".to_string(),
+                encoding: Some("utf-8".to_string()),
+                digest_sha256: None,
+                size_bytes: None,
+                storage: ArtifactStorage::ExternalRef,
+                inline_text: None,
+                external_ref: Some(actual_sarif.display().to_string()),
+                produced_by: Some(tool_info(&fake_probe())),
+            }],
+            exit_status: ExitStatusInfo {
+                code: Some(1),
+                signal: None,
+                success: false,
+            },
+            integrity_issues: Vec::new(),
+        };
+
+        assert_eq!(
+            bundle.authoritative_sarif_path(&temp_dir),
+            Some(actual_sarif)
+        );
+    }
+
+    #[test]
     fn invocation_record_honestly_reports_runtime_passthrough_conflict() {
         let request = CaptureRequest {
             backend: fake_probe(),

@@ -4,8 +4,8 @@
 //! [`diag_core::DiagnosticDocument`] instances defined in the core IR.
 //!
 //! Key entry points:
-//! - [`ingest`] -- simplified one-shot conversion (SARIF path + stderr text).
-//! - [`ingest_bundle`] -- full-fidelity ingestion from a [`diag_capture_runtime::CaptureBundle`].
+//! - [`ingest_bundle`] -- primary ingestion from a [`diag_capture_runtime::CaptureBundle`].
+//! - [`ingest`] -- compatibility wrapper for legacy one-shot conversion inputs.
 //! - [`from_sarif`] -- parse a standalone SARIF file on disk.
 
 mod canonicalize;
@@ -93,6 +93,8 @@ mod tests {
     use crate::gcc_json::from_gcc_json_payload;
     use crate::ingest::compatibility_bundle_from_legacy_inputs;
     use crate::sarif::MAX_STRUCTURED_ARTIFACT_BYTES;
+    use diag_backend_probe::ProcessingPath;
+    use diag_capture_runtime::{ExecutionMode, NativeTextCapturePolicy, StructuredCapturePolicy};
     use diag_core::WrapperSurface;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
@@ -1719,20 +1721,26 @@ mod tests {
     fn fail_opens_when_authoritative_sarif_is_missing() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("missing.sarif");
-        let outcome = ingest_with_reason(
-            Some(&path),
-            "src/main.c:4:1: error: expected ';' before '}' token\n",
-            producer_for_version("0.1.0"),
-            base_run_info(),
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(
+                Some(&path),
+                "src/main.c:4:1: error: expected ';' before '}' token\n",
+                &run,
+            ),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
         )
         .unwrap();
 
-        assert_eq!(outcome.fallback_reason, Some(FallbackReason::SarifMissing));
+        assert_eq!(report.fallback_reason, Some(FallbackReason::SarifMissing));
         assert_eq!(
-            outcome.document.document_completeness,
+            report.document.document_completeness,
             DocumentCompleteness::Partial
         );
-        assert!(outcome.document.diagnostics.iter().any(|node| {
+        assert!(report.document.diagnostics.iter().any(|node| {
             matches!(node.semantic_role, SemanticRole::Root)
                 && node
                     .message
@@ -1741,7 +1749,7 @@ mod tests {
                 && node.primary_location().is_some()
         }));
         assert!(
-            outcome.document.integrity_issues[0]
+            report.document.integrity_issues[0]
                 .message
                 .contains("authoritative SARIF was not produced")
         );
@@ -1752,24 +1760,30 @@ mod tests {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("diag.sarif");
         fs::write(&path, "{\"version\":").unwrap();
-        let outcome = ingest_with_reason(
-            Some(&path),
-            "src/main.c:4:1: error: expected ';' before '}' token\n",
-            producer_for_version("0.1.0"),
-            base_run_info(),
+        let run = base_run_info();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(
+                Some(&path),
+                "src/main.c:4:1: error: expected ';' before '}' token\n",
+                &run,
+            ),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
         )
         .unwrap();
 
         assert_eq!(
-            outcome.fallback_reason,
+            report.fallback_reason,
             Some(FallbackReason::SarifParseFailed)
         );
         assert_eq!(
-            outcome.document.document_completeness,
+            report.document.document_completeness,
             DocumentCompleteness::Failed
         );
-        assert_eq!(outcome.document.diagnostics.len(), 2);
-        assert!(outcome.document.diagnostics.iter().any(|node| {
+        assert_eq!(report.document.diagnostics.len(), 2);
+        assert!(report.document.diagnostics.iter().any(|node| {
             node.provenance.source == ProvenanceSource::ResidualText
                 && node.primary_location().is_some()
                 && node
@@ -1778,7 +1792,7 @@ mod tests {
                     .and_then(|analysis| analysis.family.as_deref())
                     == Some("syntax")
         }));
-        assert!(outcome.document.diagnostics.iter().any(|node| {
+        assert!(report.document.diagnostics.iter().any(|node| {
             matches!(node.semantic_role, SemanticRole::Passthrough)
                 && node
                     .message
@@ -1786,7 +1800,7 @@ mod tests {
                     .contains("expected ';' before '}' token")
         }));
         assert!(
-            outcome.document.integrity_issues[0]
+            report.document.integrity_issues[0]
                 .message
                 .contains("failed to parse authoritative SARIF")
         );
@@ -3117,5 +3131,74 @@ src/main.c:4:1: note: extra opaque detail\n";
         );
         assert!(report.document.validate().is_ok());
         assert!(outcome.document.validate().is_ok());
+    }
+
+    #[test]
+    fn compatibility_bundle_uses_conservative_processing_metadata() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let path = tempdir.path().join("legacy.sarif");
+        fs::write(&path, r#"{"version":"2.1.0","runs":[]}"#).unwrap();
+        let run = base_run_info();
+
+        let structured = compatibility_bundle_from_legacy_inputs(
+            Some(&path),
+            "src/main.c:4:1: error: expected ';' before '}' token\n",
+            &run,
+        );
+        let residual_only = compatibility_bundle_from_legacy_inputs(
+            None,
+            "src/main.c:4:1: error: expected ';' before '}' token\n",
+            &run,
+        );
+        let empty = compatibility_bundle_from_legacy_inputs(None, "", &run);
+
+        assert_eq!(structured.plan.execution_mode, ExecutionMode::Render);
+        assert_eq!(
+            structured.plan.processing_path,
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(
+            structured.invocation.processing_path,
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(
+            structured.plan.structured_capture,
+            StructuredCapturePolicy::SingleSinkSarifFile
+        );
+        assert_eq!(
+            structured.plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
+        );
+        assert_eq!(
+            structured.authoritative_sarif_path(tempdir.path()),
+            Some(path.clone())
+        );
+
+        assert_eq!(residual_only.plan.execution_mode, ExecutionMode::Render);
+        assert_eq!(
+            residual_only.plan.processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            residual_only.invocation.processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            residual_only.plan.native_text_capture,
+            NativeTextCapturePolicy::CaptureOnly
+        );
+        assert!(residual_only.structured_artifacts.is_empty());
+
+        assert_eq!(empty.plan.execution_mode, ExecutionMode::Passthrough);
+        assert_eq!(empty.plan.processing_path, ProcessingPath::Passthrough);
+        assert_eq!(
+            empty.invocation.processing_path,
+            ProcessingPath::Passthrough
+        );
+        assert_eq!(
+            empty.plan.native_text_capture,
+            NativeTextCapturePolicy::Passthrough
+        );
+        assert!(empty.raw_text_artifacts.is_empty());
     }
 }

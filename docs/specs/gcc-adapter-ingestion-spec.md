@@ -257,6 +257,12 @@ ingest_bundle(bundle: &CaptureBundle, policy: IngestPolicy) -> IngestReport
 
 `ingest(sarif_path, stderr_text, ...)` / `ingest_with_reason(...)` は **compatibility wrapper only** とし、normative boundary と見なしてはならない。
 
+legacy compatibility wrapper が `CaptureBundle` を合成する場合も、bundle metadata は supplied artifact から証明できる範囲に留める。
+
+- `sarif_path` があるだけで `DualSinkStructured` を推定してはならない
+- residual text だけを受けた compatibility ingress を `Passthrough` と偽装してはならない
+- compatibility wrapper metadata から same-run native+structured preservation を推定してはならない
+
 ### 7.2 source authority / fallback grade semantics
 
 `IngestReport` の意味は以下で固定する。
