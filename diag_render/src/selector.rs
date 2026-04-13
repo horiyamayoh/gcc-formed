@@ -102,20 +102,24 @@ fn legacy_select_groups(
 ) -> Selection {
     let budget = budget_for(request.profile);
     let session_mode = resolve_session_mode(presentation_policy, has_failure);
-    let mut expanded_groups = match session_mode {
-        SessionMode::AllVisibleBlocks if has_failure => diagnostics.len(),
-        SessionMode::LeadPlusSummary
-            if matches!(request.profile, RenderProfile::Default) && !has_failure =>
-        {
-            2
+    let expand_all_failure_roots = expands_all_failure_roots(session_mode, has_failure);
+    let mut expanded_groups = if expand_all_failure_roots {
+        diagnostics.len()
+    } else {
+        match session_mode {
+            SessionMode::LeadPlusSummary
+                if matches!(request.profile, RenderProfile::Default) && !has_failure =>
+            {
+                2
+            }
+            SessionMode::LeadPlusSummary | SessionMode::CappedBlocks => match request.profile {
+                RenderProfile::Default if !has_failure => 2,
+                _ => budget.expanded_groups,
+            },
+            SessionMode::AllVisibleBlocks => budget.expanded_groups,
         }
-        SessionMode::LeadPlusSummary | SessionMode::CappedBlocks => match request.profile {
-            RenderProfile::Default if !has_failure => 2,
-            _ => budget.expanded_groups,
-        },
-        SessionMode::AllVisibleBlocks => budget.expanded_groups,
     };
-    if !matches!(session_mode, SessionMode::AllVisibleBlocks if has_failure)
+    if !expand_all_failure_roots
         && diagnostics.len() > expanded_groups
         && matches!(
             request.profile,
@@ -434,8 +438,11 @@ fn expanded_independent_root_limit(
     has_failure: bool,
     session_mode: SessionMode,
 ) -> usize {
+    if expands_all_failure_roots(session_mode, has_failure) {
+        return usize::MAX;
+    }
+
     match session_mode {
-        SessionMode::AllVisibleBlocks if has_failure => usize::MAX,
         SessionMode::LeadPlusSummary
         | SessionMode::CappedBlocks
         | SessionMode::AllVisibleBlocks => match request.profile {
@@ -697,7 +704,7 @@ fn resolve_session_mode(
 }
 
 fn should_summary_overflow_visible_roots(session_mode: SessionMode, has_failure: bool) -> bool {
-    !matches!(session_mode, SessionMode::AllVisibleBlocks if has_failure)
+    !expands_all_failure_roots(session_mode, has_failure)
 }
 
 fn should_surface_episode_member_as_summary(
@@ -714,13 +721,17 @@ fn should_surface_episode_member_as_summary(
     if !lead_expanded {
         return true;
     }
-    if !has_failure || !matches!(session_mode, SessionMode::AllVisibleBlocks) {
+    if !expands_all_failure_roots(session_mode, has_failure) {
         return summarize_member;
     }
     matches!(
         request.profile,
         RenderProfile::Verbose | RenderProfile::Debug
     ) || request.cascade_policy.compression_level == CompressionLevel::Off
+}
+
+fn expands_all_failure_roots(session_mode: SessionMode, has_failure: bool) -> bool {
+    has_failure && matches!(session_mode, SessionMode::AllVisibleBlocks)
 }
 
 #[cfg(test)]

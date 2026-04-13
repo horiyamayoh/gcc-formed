@@ -2773,6 +2773,41 @@ mod tests {
     }
 
     #[test]
+    fn subject_blocks_warning_only_run_uses_lead_plus_summary() {
+        let mut request = sample_request();
+        request.document.diagnostics = (1..=3)
+            .map(|index| {
+                let mut node = grouped_error_node(
+                    &format!("warning-{index}"),
+                    &format!("group-warning-{index}"),
+                    "src/main.c",
+                    index,
+                    &format!("warning {index}"),
+                );
+                node.severity = Severity::Warning;
+                node.message.raw_text = format!("warning {index}");
+                node.analysis.as_mut().unwrap().headline = Some(format!("warning {index}").into());
+                node
+            })
+            .collect();
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 2);
+        assert_eq!(selection.summary_only_cards.len(), 1);
+        assert_eq!(selection.summary_only_cards[0].id, "warning-3");
+
+        let snapshot = build_presentation_snapshot(&request).unwrap();
+        assert_eq!(
+            snapshot.summary.policy_session_mode,
+            SessionMode::AllVisibleBlocks
+        );
+        assert_eq!(
+            snapshot.summary.resolved_session_mode,
+            SessionMode::LeadPlusSummary
+        );
+    }
+
+    #[test]
     fn low_confidence_primary_group_expands_second_group() {
         let mut request = sample_request();
         request.document.diagnostics[0]
@@ -3127,6 +3162,68 @@ mod tests {
     }
 
     #[test]
+    fn subject_blocks_failure_profiles_ignore_deprecated_root_cap() {
+        for profile in [
+            RenderProfile::Default,
+            RenderProfile::Concise,
+            RenderProfile::Ci,
+        ] {
+            let mut request = sample_request();
+            request.profile = profile;
+            request.cascade_policy.max_expanded_independent_roots = 1;
+            request.document.diagnostics = vec![
+                grouped_error_node("root-a", "group-a", "src/main.c", 2, "primary failure"),
+                grouped_error_node("root-b", "group-b", "src/other.c", 5, "secondary failure"),
+                grouped_error_node("root-c", "group-c", "src/third.c", 9, "tertiary failure"),
+            ];
+            request.document.document_analysis = Some(document_analysis(
+                vec![
+                    episode("episode-a", "group-a", vec!["group-a"], 0.96),
+                    episode("episode-b", "group-b", vec!["group-b"], 0.93),
+                    episode("episode-c", "group-c", vec!["group-c"], 0.88),
+                ],
+                vec![
+                    lead_root_group("group-a", "episode-a", 0.96, 0.91),
+                    lead_root_group("group-b", "episode-b", 0.93, 0.88),
+                    lead_root_group("group-c", "episode-c", 0.88, 0.83),
+                ],
+            ));
+
+            let selection = select_groups(&request);
+            assert_eq!(selection.cards.len(), 3, "profile={profile:?}");
+            assert!(
+                selection.summary_only_cards.is_empty(),
+                "profile={profile:?}"
+            );
+            assert_eq!(selection.hidden_group_count, 0, "profile={profile:?}");
+            assert_eq!(
+                selection
+                    .cards
+                    .iter()
+                    .map(|card| card.id.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["root-a", "root-b", "root-c"],
+                "profile={profile:?}"
+            );
+
+            let output = render(request).unwrap();
+            assert_eq!(
+                output.displayed_group_refs,
+                vec![
+                    "group-a".to_string(),
+                    "group-b".to_string(),
+                    "group-c".to_string(),
+                ],
+                "profile={profile:?}"
+            );
+            assert!(
+                !output.text.contains("other errors:"),
+                "profile={profile:?}"
+            );
+        }
+    }
+
+    #[test]
     fn episode_first_selection_keeps_overflow_roots_visible_and_counts_hidden_dependents() {
         let mut request = sample_request();
         request.document.diagnostics = vec![
@@ -3258,6 +3355,96 @@ mod tests {
                 .contains("note: omitted 1 follow-on diagnostic(s)")
         );
         assert!(!output.text.contains("parser tail failure"));
+    }
+
+    #[test]
+    fn subject_blocks_failure_profiles_absorb_dependents_into_omission_notice() {
+        for profile in [
+            RenderProfile::Default,
+            RenderProfile::Concise,
+            RenderProfile::Ci,
+        ] {
+            let mut request = sample_request();
+            request.profile = profile;
+            request.cascade_policy.max_expanded_independent_roots = 1;
+            request.document.diagnostics = vec![
+                grouped_error_node("root-a", "group-a", "src/main.c", 2, "primary failure"),
+                grouped_error_node("root-b", "group-b", "src/other.c", 5, "secondary failure"),
+                grouped_error_node("root-c", "group-c", "src/third.c", 9, "tertiary failure"),
+                grouped_error_node(
+                    "tail-c",
+                    "group-c-tail",
+                    "src/third.c",
+                    10,
+                    "parser tail failure",
+                ),
+            ];
+            request.document.document_analysis = Some(document_analysis(
+                vec![
+                    episode("episode-a", "group-a", vec!["group-a"], 0.96),
+                    episode("episode-b", "group-b", vec!["group-b"], 0.93),
+                    episode(
+                        "episode-c",
+                        "group-c",
+                        vec!["group-c", "group-c-tail"],
+                        0.88,
+                    ),
+                ],
+                vec![
+                    lead_root_group("group-a", "episode-a", 0.96, 0.91),
+                    lead_root_group("group-b", "episode-b", 0.93, 0.88),
+                    lead_root_group("group-c", "episode-c", 0.88, 0.83),
+                    dependent_group(
+                        "group-c-tail",
+                        "episode-c",
+                        "group-c",
+                        GroupCascadeRole::FollowOn,
+                    ),
+                ],
+            ));
+
+            let selection = select_groups(&request);
+            assert_eq!(selection.cards.len(), 3, "profile={profile:?}");
+            assert!(
+                selection.summary_only_cards.is_empty(),
+                "profile={profile:?}"
+            );
+            assert_eq!(selection.hidden_group_count, 0, "profile={profile:?}");
+            assert_eq!(
+                selection
+                    .collapsed_notices_by_group_ref
+                    .get("group-c")
+                    .cloned()
+                    .unwrap(),
+                vec!["omitted 1 follow-on diagnostic(s)".to_string()],
+                "profile={profile:?}"
+            );
+
+            let output = render(request).unwrap();
+            assert_eq!(
+                output.displayed_group_refs,
+                vec![
+                    "group-a".to_string(),
+                    "group-b".to_string(),
+                    "group-c".to_string(),
+                ],
+                "profile={profile:?}"
+            );
+            assert!(
+                output
+                    .text
+                    .contains("note: omitted 1 follow-on diagnostic(s)"),
+                "profile={profile:?}"
+            );
+            assert!(
+                !output.text.contains("parser tail failure"),
+                "profile={profile:?}"
+            );
+            assert!(
+                !output.text.contains("other errors:"),
+                "profile={profile:?}"
+            );
+        }
     }
 
     #[test]
@@ -3404,6 +3591,109 @@ mod tests {
         );
         assert!(!output.text.contains("follow-on parse failure"));
         assert!(!output.text.contains("duplicate parse failure"));
+    }
+
+    #[test]
+    fn subject_blocks_overload_flood_renders_one_block_plus_omission() {
+        let mut request = sample_request();
+        let mut root = grouped_error_node(
+            "root",
+            "group-root",
+            "src/main.cpp",
+            5,
+            "no matching function for call to 'combine'",
+        );
+        root.analysis.as_mut().unwrap().family = Some("type_overload".into());
+        root.analysis.as_mut().unwrap().headline = Some("type or overload mismatch".into());
+        root.analysis.as_mut().unwrap().rule_id = Some("rule.family.type_overload".into());
+
+        let mut candidate_a = grouped_error_node(
+            "candidate-a",
+            "group-candidate-a",
+            "src/main.cpp",
+            5,
+            "candidate expects 2 arguments, 1 provided",
+        );
+        candidate_a.severity = Severity::Note;
+        candidate_a.semantic_role = SemanticRole::Candidate;
+        candidate_a.analysis.as_mut().unwrap().family = Some("type_overload".into());
+        candidate_a.analysis.as_mut().unwrap().headline = Some("candidate detail".into());
+
+        let mut candidate_b = grouped_error_node(
+            "candidate-b",
+            "group-candidate-b",
+            "src/main.cpp",
+            5,
+            "candidate 2: 'void combine(int, int)'",
+        );
+        candidate_b.severity = Severity::Note;
+        candidate_b.semantic_role = SemanticRole::Candidate;
+        candidate_b.analysis.as_mut().unwrap().family = Some("type_overload".into());
+        candidate_b.analysis.as_mut().unwrap().headline = Some("candidate detail".into());
+
+        request.document.diagnostics = vec![root, candidate_a, candidate_b];
+        request.document.document_analysis = Some(document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-candidate-a", "group-candidate-b"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-candidate-a",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+                dependent_group(
+                    "group-candidate-b",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::Duplicate,
+                ),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert!(selection.summary_only_cards.is_empty());
+        assert_eq!(
+            selection
+                .collapsed_notices_by_group_ref
+                .get("group-root")
+                .cloned()
+                .unwrap(),
+            vec![
+                "omitted 1 follow-on diagnostic(s)".to_string(),
+                "omitted 1 duplicate diagnostic(s)".to_string(),
+            ]
+        );
+
+        let output = render(request).unwrap();
+        assert_eq!(output.displayed_group_refs, vec!["group-root".to_string()]);
+        assert!(
+            output
+                .text
+                .contains("error: [type_mismatch] type or overload mismatch")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 follow-on diagnostic(s)")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 duplicate diagnostic(s)")
+        );
+        assert!(!output.text.contains("candidate expects 2 arguments"));
+        assert!(
+            !output
+                .text
+                .contains("candidate 2: 'void combine(int, int)'")
+        );
     }
 
     #[test]

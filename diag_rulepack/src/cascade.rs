@@ -280,7 +280,7 @@ const SYNTAX_POLICY: CascadeFamilyPolicy = CascadeFamilyPolicy {
 
 const TYPE_OVERLOAD_POLICY: CascadeFamilyPolicy = CascadeFamilyPolicy {
     family: "type_overload",
-    exact_families: &["type_overload"],
+    exact_families: &["type_overload", "concepts_constraints"],
     prefix_families: &[],
     strong_root: true,
     root_terms: &[
@@ -473,6 +473,20 @@ mod tests {
             rulepack
                 .is_candidate_repeat("type_overload", "candidate expects 2 arguments, 1 provided")
         );
+    }
+
+    #[test]
+    fn concepts_constraints_uses_overload_candidate_repeat_policy() {
+        let rulepack = checked_in_cascade_rulepack();
+
+        assert_eq!(
+            rulepack.family_policy("concepts_constraints").family,
+            "type_overload"
+        );
+        assert!(rulepack.is_candidate_repeat(
+            "concepts_constraints",
+            "candidate expects 2 arguments, 1 provided"
+        ));
     }
 
     #[test]
