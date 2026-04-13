@@ -110,6 +110,47 @@ fn older_band_applicability_cell<'a>(
         })
 }
 
+fn yaml_string_sequence(node: Option<&YamlValue>) -> Vec<String> {
+    node.and_then(YamlValue::as_sequence)
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(YamlValue::as_str)
+                .map(str::to_string)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default()
+}
+
+fn assert_representative_fixture_matches_band_and_path(
+    fixture_id: &str,
+    expected_band: diag_backend_probe::VersionBand,
+    expected_path: diag_backend_probe::ProcessingPath,
+) {
+    let fixture = corpus_fixture(fixture_id);
+    let meta = meta_yaml_for_fixture(&fixture);
+    let tags = yaml_string_sequence(meta.get("tags"));
+
+    assert_eq!(
+        fixture_support_band(&fixture),
+        expected_band,
+        "{fixture_id} should match the expected representative band",
+    );
+    assert_eq!(
+        fixture_processing_path(&fixture),
+        expected_path,
+        "{fixture_id} should match the expected representative processing path",
+    );
+    assert!(
+        tags.iter().any(|tag| tag == "representative"),
+        "{fixture_id} should remain tagged as representative",
+    );
+    assert!(
+        meta.get("matrix_applicability").is_some(),
+        "{fixture_id} should keep matrix_applicability metadata",
+    );
+}
+
 fn assert_fixture_does_not_claim_older_band_representative_cells(
     fixture_id: &str,
     meta: &YamlValue,
@@ -1687,6 +1728,422 @@ fn prp07_c_emitted_family_replays_keep_shared_render_and_public_export_contract(
                     .iter()
                     .any(|diagnostic| !diagnostic.provenance_capture_refs.is_empty()),
                 "{fixture_id} should keep provenance_capture_refs on at least one exported diagnostic",
+            );
+        }
+    }
+}
+
+#[test]
+fn prp08_cpp_family_anchors_declare_older_band_inventory_and_shared_contract_proof() {
+    let gcc15_only_core_fixtures = [
+        "cpp/access_control/case-01",
+        "cpp/deleted_function/case-01",
+        "cpp/deprecated/case-01",
+        "cpp/enum_switch/case-01",
+        "cpp/exception_handling/case-01",
+        "cpp/inheritance_virtual/case-01",
+        "cpp/init_order/case-01",
+        "cpp/move_semantics/case-01",
+        "cpp/pointer_reference/case-01",
+        "cpp/scope_declaration/case-01",
+    ];
+
+    for fixture_id in gcc15_only_core_fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        let meta = meta_yaml_for_fixture(&fixture);
+        assert_fixture_does_not_claim_older_band_representative_cells(fixture_id, &meta);
+        let applicability = older_band_applicability_for_fixture(&fixture);
+        assert_eq!(
+            applicability
+                .get("shared_contract_when_emitted")
+                .and_then(YamlValue::as_bool),
+            Some(true),
+            "{fixture_id} should declare shared_contract_when_emitted",
+        );
+
+        for (version_band, processing_path) in [
+            ("gcc13_14", "native_text_capture"),
+            ("gcc13_14", "single_sink_structured"),
+            ("gcc9_12", "native_text_capture"),
+            ("gcc9_12", "single_sink_structured"),
+        ] {
+            let cell = older_band_applicability_cell(&applicability, version_band, processing_path);
+            assert_eq!(
+                cell.get("status").and_then(YamlValue::as_str),
+                Some("missing_representative_evidence"),
+                "{fixture_id} should mark {version_band}/{processing_path} as missing evidence",
+            );
+            let note = cell
+                .get("note")
+                .and_then(YamlValue::as_str)
+                .unwrap_or_default();
+            assert!(
+                note.contains("Do not infer")
+                    && note.contains("GCC15 dual_sink_structured fixture"),
+                "{fixture_id} should keep a non-inference note for {version_band}/{processing_path}",
+            );
+        }
+    }
+
+    let overload_anchor = corpus_fixture("cpp/overload/case-01");
+    let overload_meta = meta_yaml_for_fixture(&overload_anchor);
+    assert_fixture_does_not_claim_older_band_representative_cells(
+        "cpp/overload/case-01",
+        &overload_meta,
+    );
+    let overload_applicability = older_band_applicability_for_fixture(&overload_anchor);
+    assert_eq!(
+        overload_applicability
+            .get("shared_contract_when_emitted")
+            .and_then(YamlValue::as_bool),
+        Some(true),
+        "cpp/overload/case-01 should declare shared_contract_when_emitted",
+    );
+    for (version_band, processing_path) in [
+        ("gcc13_14", "native_text_capture"),
+        ("gcc13_14", "single_sink_structured"),
+        ("gcc9_12", "native_text_capture"),
+    ] {
+        let cell =
+            older_band_applicability_cell(&overload_applicability, version_band, processing_path);
+        assert_eq!(
+            cell.get("status").and_then(YamlValue::as_str),
+            Some("missing_representative_evidence"),
+            "cpp/overload/case-01 should mark {version_band}/{processing_path} as missing evidence",
+        );
+        let note = cell
+            .get("note")
+            .and_then(YamlValue::as_str)
+            .unwrap_or_default();
+        assert!(
+            note.contains("Do not infer") && note.contains("GCC15 dual_sink_structured fixture"),
+            "cpp/overload/case-01 should keep a non-inference note for {version_band}/{processing_path}",
+        );
+    }
+    let overload_single_sink =
+        older_band_applicability_cell(&overload_applicability, "gcc9_12", "single_sink_structured");
+    assert_eq!(
+        overload_single_sink
+            .get("status")
+            .and_then(YamlValue::as_str),
+        Some("representative_evidence"),
+        "cpp/overload/case-01 should mark gcc9_12/single_sink_structured as representative evidence",
+    );
+    assert_eq!(
+        yaml_string_sequence(overload_single_sink.get("representative_fixtures")),
+        vec!["cpp/overload/case-07".to_string()],
+        "cpp/overload/case-01 should point at the checked-in overload representative proof fixture",
+    );
+    let overload_note = overload_single_sink
+        .get("note")
+        .and_then(YamlValue::as_str)
+        .unwrap_or_default();
+    assert!(
+        overload_note.contains("shared overload contract")
+            && overload_note.contains("lower guarantee"),
+        "cpp/overload/case-01 should describe representative proof as shared-contract evidence",
+    );
+    assert_representative_fixture_matches_band_and_path(
+        "cpp/overload/case-07",
+        diag_backend_probe::VersionBand::Gcc9_12,
+        diag_backend_probe::ProcessingPath::SingleSinkStructured,
+    );
+
+    let template_anchor = corpus_fixture("cpp/template/case-01");
+    let template_meta = meta_yaml_for_fixture(&template_anchor);
+    assert_fixture_does_not_claim_older_band_representative_cells(
+        "cpp/template/case-01",
+        &template_meta,
+    );
+    let template_applicability = older_band_applicability_for_fixture(&template_anchor);
+    assert_eq!(
+        template_applicability
+            .get("shared_contract_when_emitted")
+            .and_then(YamlValue::as_bool),
+        Some(true),
+        "cpp/template/case-01 should declare shared_contract_when_emitted",
+    );
+    for (version_band, processing_path) in [
+        ("gcc13_14", "native_text_capture"),
+        ("gcc9_12", "native_text_capture"),
+    ] {
+        let cell =
+            older_band_applicability_cell(&template_applicability, version_band, processing_path);
+        assert_eq!(
+            cell.get("status").and_then(YamlValue::as_str),
+            Some("missing_representative_evidence"),
+            "cpp/template/case-01 should mark {version_band}/{processing_path} as missing evidence",
+        );
+        let note = cell
+            .get("note")
+            .and_then(YamlValue::as_str)
+            .unwrap_or_default();
+        assert!(
+            note.contains("Do not infer") && note.contains("GCC15 dual_sink_structured fixture"),
+            "cpp/template/case-01 should keep a non-inference note for {version_band}/{processing_path}",
+        );
+    }
+    let template_gcc13_single = older_band_applicability_cell(
+        &template_applicability,
+        "gcc13_14",
+        "single_sink_structured",
+    );
+    assert_eq!(
+        template_gcc13_single
+            .get("status")
+            .and_then(YamlValue::as_str),
+        Some("representative_evidence"),
+        "cpp/template/case-01 should mark gcc13_14/single_sink_structured as representative evidence",
+    );
+    assert_eq!(
+        yaml_string_sequence(template_gcc13_single.get("representative_fixtures")),
+        vec![
+            "cpp/template/case-13".to_string(),
+            "cpp/template/case-15".to_string(),
+        ],
+        "cpp/template/case-01 should point at the checked-in GCC13-14 template proof fixtures",
+    );
+    let template_gcc13_note = template_gcc13_single
+        .get("note")
+        .and_then(YamlValue::as_str)
+        .unwrap_or_default();
+    assert!(
+        template_gcc13_note.contains("shared template contract")
+            && template_gcc13_note.contains("lower guarantee"),
+        "cpp/template/case-01 should describe GCC13-14 template proof as shared-contract evidence",
+    );
+    let template_gcc9_single =
+        older_band_applicability_cell(&template_applicability, "gcc9_12", "single_sink_structured");
+    assert_eq!(
+        template_gcc9_single
+            .get("status")
+            .and_then(YamlValue::as_str),
+        Some("representative_evidence"),
+        "cpp/template/case-01 should mark gcc9_12/single_sink_structured as representative evidence",
+    );
+    assert_eq!(
+        yaml_string_sequence(template_gcc9_single.get("representative_fixtures")),
+        vec!["cpp/template/case-14".to_string()],
+        "cpp/template/case-01 should point at the checked-in GCC9-12 template proof fixture",
+    );
+    let template_gcc9_note = template_gcc9_single
+        .get("note")
+        .and_then(YamlValue::as_str)
+        .unwrap_or_default();
+    assert!(
+        template_gcc9_note.contains("shared template contract")
+            && template_gcc9_note.contains("lower guarantee"),
+        "cpp/template/case-01 should describe GCC9-12 template proof as shared-contract evidence",
+    );
+    for fixture_id in ["cpp/template/case-13", "cpp/template/case-15"] {
+        assert_representative_fixture_matches_band_and_path(
+            fixture_id,
+            diag_backend_probe::VersionBand::Gcc13_14,
+            diag_backend_probe::ProcessingPath::SingleSinkStructured,
+        );
+    }
+    assert_representative_fixture_matches_band_and_path(
+        "cpp/template/case-14",
+        diag_backend_probe::VersionBand::Gcc9_12,
+        diag_backend_probe::ProcessingPath::SingleSinkStructured,
+    );
+}
+
+#[test]
+fn prp08_cpp_replays_keep_shared_render_and_public_export_contract() {
+    for fixture_id in [
+        "cpp/access_control/case-01",
+        "cpp/deleted_function/case-01",
+        "cpp/deprecated/case-01",
+        "cpp/enum_switch/case-01",
+        "cpp/exception_handling/case-01",
+        "cpp/inheritance_virtual/case-01",
+        "cpp/init_order/case-01",
+        "cpp/move_semantics/case-01",
+        "cpp/pointer_reference/case-01",
+        "cpp/scope_declaration/case-01",
+        "cpp/overload/case-01",
+        "cpp/overload/case-07",
+        "cpp/template/case-01",
+        "cpp/template/case-13",
+        "cpp/template/case-14",
+        "cpp/template/case-15",
+    ] {
+        let fixture = corpus_fixture(fixture_id);
+        let semantic = fixture.expectations.semantic.as_ref().unwrap();
+        let replay = replay_fixture_document(&fixture).unwrap();
+        let request =
+            render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+        let render_result = render(request).unwrap();
+        let lead_node =
+            lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+        assert_eq!(
+            lead_node
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some(semantic.family.as_str()),
+            "{fixture_id} should keep {0} as the lead family",
+            semantic.family,
+        );
+
+        if semantic.first_action_required {
+            assert!(
+                lead_node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.first_action_hint.as_deref())
+                    .is_some_and(|hint| !hint.trim().is_empty()),
+                "{fixture_id} should keep a lead first_action_hint",
+            );
+        }
+
+        if let Some(max_line) = fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.first_action_max_line)
+        {
+            let line = first_help_line(&render_result.text).expect("expected help line");
+            assert!(
+                line <= max_line,
+                "{fixture_id} should keep help within line {max_line}, got {line}",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.partial_notice_required)
+            == Some(true)
+        {
+            assert!(
+                contains_partial_notice(&render_result.text),
+                "{fixture_id} should keep the partial notice visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_diagnostics_hint_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_diagnostics_hint(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics hint visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_sub_block_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_sub_block(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics sub-block visible",
+            );
+        }
+
+        let export = public_export_for_fixture(&fixture, &replay);
+        assert_eq!(export.status, PublicExportStatus::Available);
+        assert_eq!(
+            export.execution.version_band,
+            fixture.expectations.version_band
+        );
+        assert_eq!(
+            export.execution.processing_path,
+            fixture.expectations.processing_path
+        );
+        assert!(
+            export
+                .execution
+                .allowed_processing_paths
+                .contains(&fixture.expectations.processing_path),
+            "{fixture_id} should list its processing path in allowed_processing_paths",
+        );
+
+        if matches!(
+            fixture_id,
+            "cpp/overload/case-07"
+                | "cpp/template/case-13"
+                | "cpp/template/case-14"
+                | "cpp/template/case-15"
+        ) {
+            assert!(
+                export
+                    .execution
+                    .allowed_processing_paths
+                    .contains(&"native_text_capture".to_string()),
+                "{fixture_id} should keep native_text_capture in allowed_processing_paths for older-band shared-contract proof",
+            );
+            assert!(
+                export
+                    .execution
+                    .allowed_processing_paths
+                    .contains(&"passthrough".to_string()),
+                "{fixture_id} should keep passthrough in allowed_processing_paths for older-band shared-contract proof",
+            );
+        }
+
+        let diagnostics = &export.result.as_ref().unwrap().diagnostics;
+        assert!(
+            !diagnostics.is_empty(),
+            "{fixture_id} should export at least one diagnostic",
+        );
+        let matching_diagnostics = diagnostics
+            .iter()
+            .filter(|diagnostic| {
+                diagnostic
+                    .family
+                    .as_deref()
+                    .is_some_and(|family| family == semantic.family.as_str())
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !matching_diagnostics.is_empty(),
+            "{fixture_id} should export at least one diagnostic tagged as {}",
+            semantic.family,
+        );
+        assert!(
+            matching_diagnostics.iter().any(|diagnostic| {
+                diagnostic
+                    .headline
+                    .as_deref()
+                    .is_some_and(|headline| !headline.trim().is_empty())
+            }),
+            "{fixture_id} should export a non-empty headline for {}",
+            semantic.family,
+        );
+        if semantic.first_action_required {
+            assert!(
+                matching_diagnostics.iter().any(|diagnostic| {
+                    diagnostic
+                        .first_action
+                        .as_deref()
+                        .is_some_and(|action| !action.trim().is_empty())
+                }),
+                "{fixture_id} should export a non-empty first_action for {}",
+                semantic.family,
+            );
+        }
+        if semantic.raw_provenance_required {
+            assert!(
+                matching_diagnostics
+                    .iter()
+                    .any(|diagnostic| !diagnostic.provenance_capture_refs.is_empty()),
+                "{fixture_id} should keep provenance_capture_refs on exported diagnostics for {}",
+                semantic.family,
             );
         }
     }
