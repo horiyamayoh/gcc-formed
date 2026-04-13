@@ -1,0 +1,37 @@
+name: codex-branch-gate
+
+on:
+  push:
+    branches:
+      - "codex/**"
+      - "agent/**"
+      - "wip/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codex-branch-gate:
+    name: codex-branch-gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5.0.0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@1.94.1
+        with:
+          components: rustfmt
+          targets: x86_64-unknown-linux-musl
+
+      - name: Run repo-local parity gate
+        run: |
+          bash ci/run_pr_gate_local.sh
+
+      - name: Upload codex branch gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: codex-branch-gate-artifacts
+          path: .codex/evidence/pr-gate
+          if-no-files-found: warn
