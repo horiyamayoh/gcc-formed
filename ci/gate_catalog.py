@@ -103,12 +103,12 @@ def build_execution_env(
 ) -> dict[str, str]:
     package_version = os.environ.get("PACKAGE_VERSION") or load_package_version(repo_root)
     if local_mode:
-        work_root = Path(os.environ.get("WORK_ROOT", report_root / "work"))
-        target_dir = Path(os.environ.get("TARGET_DIR", work_root / "target"))
-        dist_dir = Path(os.environ.get("DIST_DIR", work_root / "dist"))
-        vendor_dir = Path(os.environ.get("VENDOR_DIR", work_root / "vendor"))
-        release_repo_dir = Path(os.environ.get("RELEASE_REPO_DIR", work_root / "release-repo"))
-        signing_key_path = Path(os.environ.get("SIGNING_KEY_PATH", work_root / "release-signing.key"))
+        work_root = report_root / "work"
+        target_dir = work_root / "target"
+        dist_dir = work_root / "dist"
+        vendor_dir = work_root / "vendor"
+        release_repo_dir = work_root / "release-repo"
+        signing_key_path = work_root / "release-signing.key"
     else:
         runner_temp = Path(os.environ.get("RUNNER_TEMP", report_root.parent))
         work_root = Path(os.environ.get("WORK_ROOT", runner_temp))
