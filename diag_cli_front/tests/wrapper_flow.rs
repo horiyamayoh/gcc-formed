@@ -1323,6 +1323,10 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
         report["backend"]["default_processing_path"],
         "dual_sink_structured"
     );
+    assert_eq!(
+        report["backend"]["allowed_processing_paths"],
+        serde_json::json!(["dual_sink_structured", "passthrough"])
+    );
     assert_eq!(report["backend"]["support_level"], "in_scope");
     assert_eq!(
         report["operator_guidance"]["summary"].as_str(),

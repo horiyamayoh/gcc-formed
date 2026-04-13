@@ -405,7 +405,12 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
 }
 
 fn probe_add_output_sarif_support(path: &Path, major: u32) -> bool {
-    let output = match Command::new(path).arg("--help=common").output() {
+    let output = match Command::new(path)
+        .env("LC_ALL", "C")
+        .env("LANG", "C")
+        .arg("--help=common")
+        .output()
+    {
         Ok(output) => output,
         Err(_) => return major == 15,
     };
