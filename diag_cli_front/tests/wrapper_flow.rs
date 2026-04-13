@@ -134,6 +134,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
         .env("FORMED_BACKEND_GCC", &backend)
         .env("FORMED_TRACE_DIR", &trace_root)
         .current_dir(temp.path())
+        .arg("--formed-profile=default")
         .arg("--formed-trace=always")
         .arg("-c")
         .arg(&source)
@@ -186,6 +187,36 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
             .iter()
             .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
     );
+}
+
+#[test]
+fn renders_with_fake_gcc13_backend_on_native_text_ci_profile() {
+    let temp = fixture("13.3.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-profile=ci")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected_tier_b_native_text_notice()))
+        .stderr(predicate::str::contains(
+            "note: some compiler details were not fully structured; original diagnostics are preserved",
+        ))
+        .stderr(predicate::str::contains("main.c:4:1: error: [syntax] syntax error"))
+        .stderr(predicate::str::contains(
+            "help: fix the first parser error at the user-owned location",
+        ))
+        .stderr(predicate::str::contains(
+            "raw:\n  main.c:4:1: error: expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("error: [syntax] syntax error @ main.c:4:1").not())
+        .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 }
 
 #[test]
