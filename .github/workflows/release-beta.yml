@@ -53,16 +53,25 @@ jobs:
             exit 1
           fi
 
+          work_root="$RUNNER_TEMP/public-beta-work"
+          dist_dir="$work_root/dist"
+          vendor_dir="$work_root/vendor"
+          signing_key_path="$work_root/release-signing.key"
+
           echo "REPORT_ROOT=$RUNNER_TEMP/public-beta-release" >> "$GITHUB_ENV"
+          echo "WORK_ROOT=$work_root" >> "$GITHUB_ENV"
+          echo "DIST_DIR=$dist_dir" >> "$GITHUB_ENV"
+          echo "VENDOR_DIR=$vendor_dir" >> "$GITHUB_ENV"
           echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/public-beta-release-repo" >> "$GITHUB_ENV"
           echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/public-beta-assets" >> "$GITHUB_ENV"
           echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/public-beta-release-notes.md" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"
           echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
-          echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
-          echo "PRIMARY_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
-          echo "DEBUG_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
-          echo "SOURCE_ARCHIVE=dist/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-source.tar.gz" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
+          echo "PRIMARY_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
+          echo "DEBUG_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
+          echo "SOURCE_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-source.tar.gz" >> "$GITHUB_ENV"
       - name: Ensure signing key is configured
         run: |
           if [ -z "$RELEASE_SIGNING_PRIVATE_KEY_HEX" ]; then
@@ -71,7 +80,7 @@ jobs:
           fi
       - name: Prepare release directories
         run: |
-          mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/release" "$RELEASE_REPO_ROOT" "$RELEASE_ASSET_ROOT"
+          mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/release" "$RELEASE_REPO_ROOT" "$RELEASE_ASSET_ROOT" "$WORK_ROOT" "$DIST_DIR" "$VENDOR_DIR"
       - name: cargo xtask check
         run: cargo xtask check
       - name: Representative acceptance replay
@@ -82,21 +91,22 @@ jobs:
             --replay-report "$REPORT_ROOT/replay/replay-report.json" \
             --output "$REPORT_ROOT/release/replay-stop-ship.json"
       - name: Vendor dependency tree
-        run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
+        run: cargo xtask vendor --output-dir "$VENDOR_DIR" > "$REPORT_ROOT/release/vendor.json"
       - name: Hermetic release build
-        run: cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target-triple "$TARGET_TRIPLE" > "$REPORT_ROOT/release/hermetic-release.json"
+        run: cargo xtask hermetic-release-check --vendor-dir "$VENDOR_DIR" --bin gcc-formed --target-triple "$TARGET_TRIPLE" > "$REPORT_ROOT/release/hermetic-release.json"
       - name: Write release signing key
         run: |
-          printf '%s\n' "$RELEASE_SIGNING_PRIVATE_KEY_HEX" > "$RUNNER_TEMP/release-signing.key"
-          chmod 0600 "$RUNNER_TEMP/release-signing.key"
+          printf '%s\n' "$RELEASE_SIGNING_PRIVATE_KEY_HEX" > "$SIGNING_KEY_PATH"
+          chmod 0600 "$SIGNING_KEY_PATH"
       - name: Signed package generation
         run: |
           cargo xtask package \
             --binary "target/hermetic-release/${TARGET_TRIPLE}/release/gcc-formed" \
             --target-triple "$TARGET_TRIPLE" \
+            --out-dir "$DIST_DIR" \
             --release-channel "$RELEASE_CHANNEL" \
             --maturity-label "$MATURITY_LABEL" \
-            --signing-private-key "$RUNNER_TEMP/release-signing.key" \
+            --signing-private-key "$SIGNING_KEY_PATH" \
             > "$REPORT_ROOT/release/package.json"
       - name: Install smoke
         run: |
@@ -170,7 +180,7 @@ jobs:
           control_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz"
           release_repo_dir="$RUNNER_TEMP/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
           release_repo_bundle="$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
-          tar -czf "$control_bundle" -C dist "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}"
+          tar -czf "$control_bundle" -C "$DIST_DIR" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}"
           cp -R "$RELEASE_REPO_ROOT" "$release_repo_dir"
           tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
       - name: Write release provenance

@@ -45,8 +45,14 @@ jobs:
           targets: x86_64-unknown-linux-musl
       - name: Resolve runtime paths
         run: |
+          work_root="$RUNNER_TEMP/gcc-formed-work"
           echo "REPORT_ROOT=$RUNNER_TEMP/reports" >> "$GITHUB_ENV"
+          echo "WORK_ROOT=$work_root" >> "$GITHUB_ENV"
           echo "TARGET_DIR=$RUNNER_TEMP/gcc-formed-target" >> "$GITHUB_ENV"
+          echo "DIST_DIR=$work_root/dist" >> "$GITHUB_ENV"
+          echo "VENDOR_DIR=$work_root/vendor" >> "$GITHUB_ENV"
+          echo "RELEASE_REPO_DIR=$work_root/release-repo" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_PATH=$work_root/release-signing.key" >> "$GITHUB_ENV"
       - name: Resolve package version
         run: |
           package_version="$(python3 - <<'PY'
@@ -58,7 +64,7 @@ jobs:
           PY
           )"
           echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
-          echo "CONTROL_DIR=dist/gcc-formed-v${package_version}-linux-x86_64-musl" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=$DIST_DIR/gcc-formed-v${package_version}-linux-x86_64-musl" >> "$GITHUB_ENV"
       - name: Prepare report directories
         run: |
           python3 ci/run_gate_step.py \

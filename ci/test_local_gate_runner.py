@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import tempfile
 import types
@@ -54,6 +55,32 @@ class LocalGateRunnerTest(unittest.TestCase):
             self.assertEqual(env["VENDOR_DIR"], str(report_root / "work" / "vendor"))
             self.assertEqual(
                 env["RELEASE_REPO_DIR"], str(report_root / "work" / "release-repo")
+            )
+            self.assertEqual(
+                env["CONTROL_DIR"],
+                str(report_root / "work" / "dist" / "gcc-formed-v0.2.0-beta.1-linux-x86_64-musl"),
+            )
+
+    def test_ci_execution_env_defaults_stay_inside_runner_temp_work_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            report_root = Path(tmpdir) / "reports"
+            with mock.patch.dict(os.environ, {"RUNNER_TEMP": tmpdir}, clear=False):
+                env = run_local_gate.build_execution_env(
+                    REPO_ROOT,
+                    report_root,
+                    "pr-gate",
+                    local_mode=False,
+                )
+            work_root = Path(tmpdir) / "gcc-formed-work"
+            self.assertEqual(env["WORK_ROOT"], str(work_root))
+            self.assertEqual(env["TARGET_DIR"], str(Path(tmpdir) / "gcc-formed-target"))
+            self.assertEqual(env["DIST_DIR"], str(work_root / "dist"))
+            self.assertEqual(env["VENDOR_DIR"], str(work_root / "vendor"))
+            self.assertEqual(env["RELEASE_REPO_DIR"], str(work_root / "release-repo"))
+            self.assertEqual(env["SIGNING_KEY_PATH"], str(work_root / "release-signing.key"))
+            self.assertEqual(
+                env["CONTROL_DIR"],
+                str(work_root / "dist" / "gcc-formed-v0.2.0-beta.1-linux-x86_64-musl"),
             )
 
     def test_run_single_workflow_fail_fast_still_runs_always_steps(self) -> None:

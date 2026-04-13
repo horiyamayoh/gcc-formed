@@ -111,12 +111,16 @@ def build_execution_env(
         signing_key_path = work_root / "release-signing.key"
     else:
         runner_temp = Path(os.environ.get("RUNNER_TEMP", report_root.parent))
-        work_root = Path(os.environ.get("WORK_ROOT", runner_temp))
+        work_root = Path(os.environ.get("WORK_ROOT", runner_temp / "gcc-formed-work"))
         target_dir = Path(os.environ.get("TARGET_DIR", runner_temp / "gcc-formed-target"))
-        dist_dir = Path(os.environ.get("DIST_DIR", "dist"))
-        vendor_dir = Path(os.environ.get("VENDOR_DIR", "vendor"))
-        release_repo_dir = Path(os.environ.get("RELEASE_REPO_DIR", runner_temp / "gcc-formed-release-repo"))
-        signing_key_path = Path(os.environ.get("SIGNING_KEY_PATH", runner_temp / "release-signing.key"))
+        dist_dir = Path(os.environ.get("DIST_DIR", work_root / "dist"))
+        vendor_dir = Path(os.environ.get("VENDOR_DIR", work_root / "vendor"))
+        release_repo_dir = Path(
+            os.environ.get("RELEASE_REPO_DIR", work_root / "release-repo")
+        )
+        signing_key_path = Path(
+            os.environ.get("SIGNING_KEY_PATH", work_root / "release-signing.key")
+        )
 
     control_dir = Path(
         os.environ.get(

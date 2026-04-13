@@ -4,7 +4,7 @@
 
 `cargo xtask check` は `cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、`python3 -B -m unittest discover -s ci -p test_*.py` を同じ標準 gate として実行する。したがって `cargo-xtask-check` step が green であれば、Rust workspace lint/test、representative replay、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests が同じ入口で通っている。
 
-`cargo xtask ci-gate --workflow <pr|nightly|rc>` は local GitHub CI-equivalent gate であり、GitHub Actions と同じ shared execution catalog を使って `ci/run_gate_step.py` から step を解決する。local 実行は `target/local-gates/<workflow>/` を既定出力先とし、`vendor/`、`dist/`、release repository、signing key は `work/` 配下へ隔離する。
+`cargo xtask ci-gate --workflow <pr|nightly|rc>` は local GitHub CI-equivalent gate であり、GitHub Actions と同じ shared execution catalog を使って `ci/run_gate_step.py` から step を解決する。local 実行は `target/local-gates/<workflow>/` を既定出力先とし、GitHub Actions / local のどちらでも `vendor/`、`dist/`、release repository、signing key は report-owned `work/` 相当の一時ディレクトリへ隔離する。
 
 ## Layout
 

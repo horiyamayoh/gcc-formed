@@ -669,6 +669,25 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("--step-id build-reference-ci-image", workflow)
         self.assertNotIn("--step-id representative-reference-snapshot-check", workflow)
 
+    def test_pr_and_nightly_workflows_isolate_generated_workdirs_under_runner_temp(self) -> None:
+        expected_snippets = [
+            'work_root="$RUNNER_TEMP/gcc-formed-work"',
+            'echo "WORK_ROOT=$work_root" >> "$GITHUB_ENV"',
+            'echo "DIST_DIR=$work_root/dist" >> "$GITHUB_ENV"',
+            'echo "VENDOR_DIR=$work_root/vendor" >> "$GITHUB_ENV"',
+            'echo "RELEASE_REPO_DIR=$work_root/release-repo" >> "$GITHUB_ENV"',
+            'echo "SIGNING_KEY_PATH=$work_root/release-signing.key" >> "$GITHUB_ENV"',
+            'echo "CONTROL_DIR=$DIST_DIR/gcc-formed-v${package_version}-linux-x86_64-musl" >> "$GITHUB_ENV"',
+        ]
+        for relative_path in [
+            ".github/workflows/pr.yml",
+            ".github/workflows/nightly.yml",
+        ]:
+            workflow = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
+            for snippet in expected_snippets:
+                with self.subTest(workflow=relative_path, snippet=snippet):
+                    self.assertIn(snippet, workflow)
+
     def test_nightly_workflow_uses_matrix_version_band_metadata(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "nightly.yml"
@@ -723,6 +742,27 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("snapshot-report.json", workflow)
         self.assertNotIn("--version-band gcc15", workflow)
         self.assertNotIn("gcc15_plus", workflow)
+
+    def test_release_workflows_isolate_release_artifacts_under_runner_temp_workdirs(self) -> None:
+        release_beta = (
+            REPO_ROOT / ".github" / "workflows" / "release-beta.yml"
+        ).read_text(encoding="utf-8")
+        release_stable = (
+            REPO_ROOT / ".github" / "workflows" / "release-stable.yml"
+        ).read_text(encoding="utf-8")
+        for workflow_name, workflow, work_root_snippet in [
+            ("release-beta", release_beta, 'work_root="$RUNNER_TEMP/public-beta-work"'),
+            ("release-stable", release_stable, 'work_root="$RUNNER_TEMP/stable-release-work"'),
+        ]:
+            with self.subTest(workflow=workflow_name):
+                self.assertIn(work_root_snippet, workflow)
+                self.assertIn('echo "DIST_DIR=$dist_dir" >> "$GITHUB_ENV"', workflow)
+                self.assertIn('echo "VENDOR_DIR=$vendor_dir" >> "$GITHUB_ENV"', workflow)
+                self.assertIn('echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"', workflow)
+                self.assertIn('--out-dir "$DIST_DIR"', workflow)
+                self.assertIn('cargo xtask vendor --output-dir "$VENDOR_DIR"', workflow)
+                self.assertIn('cargo xtask hermetic-release-check --vendor-dir "$VENDOR_DIR"', workflow)
+                self.assertIn('tar -czf "$control_bundle" -C "$DIST_DIR"', workflow)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
         step_names = self.extract_step_names(".github/workflows/release-beta.yml")
