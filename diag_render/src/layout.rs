@@ -69,48 +69,24 @@ impl LayoutProfile {
     ) -> String {
         let show_header_location = matches!(location_host, LocationHost::Header);
         if card.semantic_card.presentation.subject_first_header {
-            let family = card
-                .semantic_card
-                .display_family
-                .as_deref()
-                .or(card.family.as_deref())
-                .unwrap_or("unknown");
-            let subject = format!(
-                "{} {}",
-                self.style_family_tag(&format!("[{}]", theme.inline(family))),
-                theme.inline(&card.title)
-            );
-            if self.path_first_primary_line {
-                return card
-                    .canonical_location
-                    .as_ref()
-                    .map(|location| {
-                        format!(
-                            "{}: {}: {}",
-                            theme.inline(location),
-                            self.style_severity(&card.severity),
-                            subject
-                        )
-                    })
-                    .unwrap_or_else(|| {
-                        format!("{}: {}", self.style_severity(&card.severity), subject)
-                    });
+            if self.path_first_primary_line && card.canonical_location.is_some() {
+                return self.render_subject_first_header(
+                    theme,
+                    card,
+                    &card.semantic_card.presentation.header.ci_path_first_format,
+                    true,
+                );
             }
-            return card
-                .canonical_location
-                .as_ref()
-                .filter(|_| show_header_location)
-                .map(|location| {
-                    format!(
-                        "{}: {} @ {}",
-                        self.style_severity(&card.severity),
-                        subject,
-                        theme.inline(location)
-                    )
-                })
-                .unwrap_or_else(|| {
-                    format!("{}: {}", self.style_severity(&card.severity), subject)
-                });
+            let mut line = self.render_subject_first_header(
+                theme,
+                card,
+                &card.semantic_card.presentation.header.interactive_format,
+                false,
+            );
+            if show_header_location {
+                self.append_inline_location_suffix(theme, card, &mut line);
+            }
+            return line;
         }
 
         if self.path_first_primary_line {
@@ -141,24 +117,15 @@ impl LayoutProfile {
                 });
         }
 
-        card.canonical_location
-            .as_ref()
-            .filter(|_| show_header_location)
-            .map(|location| {
-                format!(
-                    "{}: {} @ {}",
-                    self.style_severity(&card.severity),
-                    theme.inline(&card.title),
-                    theme.inline(location)
-                )
-            })
-            .unwrap_or_else(|| {
-                format!(
-                    "{}: {}",
-                    self.style_severity(&card.severity),
-                    theme.inline(&card.title)
-                )
-            })
+        let mut line = format!(
+            "{}: {}",
+            self.style_severity(&card.severity),
+            theme.inline(&card.title)
+        );
+        if show_header_location {
+            self.append_inline_location_suffix(theme, card, &mut line);
+        }
+        line
     }
 
     fn location_host(&self, card: &RenderGroupCard) -> LocationHost {
@@ -230,11 +197,11 @@ impl LayoutProfile {
         if self.path_first_primary_line {
             return true;
         }
-        let Some(location) = card.canonical_location.as_ref() else {
+        if card.canonical_location.is_none() {
             return false;
-        };
-        visible_header_len(card, false) + " @ ".len() + location.chars().count()
-            <= self.inline_location_soft_limit
+        }
+        self.header_len_without_location(card) + self.inline_location_suffix_len(card)
+            <= self.effective_inline_location_soft_limit(card)
     }
 
     fn has_evidence_host(&self, card: &RenderGroupCard) -> bool {
@@ -273,6 +240,144 @@ impl LayoutProfile {
             return text.to_string();
         };
         format!("\u{1b}[{ansi}m{text}\u{1b}[0m")
+    }
+
+    fn render_subject_first_header(
+        &self,
+        theme: &ThemePolicy,
+        card: &RenderGroupCard,
+        template: &str,
+        include_location: bool,
+    ) -> String {
+        let family = self.subject_first_family(card);
+        let family_text = theme.inline(family);
+        let family_tag = self.style_family_tag(&format!("[{}]", family_text));
+        let subject = theme.inline(&card.title);
+        self.render_header_template(
+            template,
+            &self.style_severity(&card.severity),
+            &family_text,
+            &family_tag,
+            &subject,
+            include_location
+                .then_some(card.canonical_location.as_ref())
+                .flatten()
+                .map(|location| theme.inline(location)),
+        )
+    }
+
+    fn render_header_template(
+        &self,
+        template: &str,
+        severity: &str,
+        family: &str,
+        family_tag: &str,
+        subject: &str,
+        location: Option<String>,
+    ) -> String {
+        let mut rendered = template.replace("[{family}]", family_tag);
+        rendered = rendered.replace("{severity}", severity);
+        rendered = rendered.replace("{family}", family);
+        rendered = rendered.replace("{subject}", subject);
+        if let Some(location) = location {
+            rendered.replace("{location}", &location)
+        } else {
+            rendered.replace("{location}", "")
+        }
+    }
+
+    fn subject_first_family<'a>(&self, card: &'a RenderGroupCard) -> &'a str {
+        card.semantic_card
+            .display_family
+            .as_deref()
+            .or(card.family.as_deref())
+            .unwrap_or(
+                card.semantic_card
+                    .presentation
+                    .header
+                    .unknown_family
+                    .as_str(),
+            )
+    }
+
+    fn append_inline_location_suffix(
+        &self,
+        theme: &ThemePolicy,
+        card: &RenderGroupCard,
+        line: &mut String,
+    ) {
+        if let Some(suffix) = self.inline_location_suffix(theme, card) {
+            line.push_str(&suffix);
+        }
+    }
+
+    fn inline_location_suffix(
+        &self,
+        theme: &ThemePolicy,
+        card: &RenderGroupCard,
+    ) -> Option<String> {
+        let location = card.canonical_location.as_ref()?;
+        Some(
+            self.format_location_suffix(
+                &card
+                    .semantic_card
+                    .presentation
+                    .location_policy
+                    .inline_suffix_format,
+                &theme.inline(location),
+            ),
+        )
+    }
+
+    fn inline_location_suffix_len(&self, card: &RenderGroupCard) -> usize {
+        let Some(location) = card.canonical_location.as_ref() else {
+            return 0;
+        };
+        self.format_location_suffix(
+            &card
+                .semantic_card
+                .presentation
+                .location_policy
+                .inline_suffix_format,
+            location,
+        )
+        .chars()
+        .count()
+    }
+
+    fn effective_inline_location_soft_limit(&self, card: &RenderGroupCard) -> usize {
+        self.inline_location_soft_limit.min(
+            card.semantic_card
+                .presentation
+                .location_policy
+                .width_soft_limit,
+        )
+    }
+
+    fn header_len_without_location(&self, card: &RenderGroupCard) -> usize {
+        if card.semantic_card.presentation.subject_first_header {
+            return self
+                .render_header_template(
+                    &card.semantic_card.presentation.header.interactive_format,
+                    &card.severity,
+                    self.subject_first_family(card),
+                    &format!("[{}]", self.subject_first_family(card)),
+                    &card.title,
+                    None,
+                )
+                .chars()
+                .count();
+        }
+
+        card.severity.chars().count() + ": ".len() + card.title.chars().count()
+    }
+
+    fn format_location_suffix(&self, template: &str, location: &str) -> String {
+        if template.contains("{location}") {
+            template.replace("{location}", location)
+        } else {
+            format!("{template}{location}")
+        }
     }
 }
 
@@ -314,7 +419,7 @@ impl<'a> LegacyPresentationAdapter<'a> {
         if self.card.semantic_card.presentation.subject_first_header {
             self.render_subject_first_evidence(lines, location_host);
         } else {
-            self.render_legacy_evidence(lines);
+            self.render_legacy_evidence(lines, location_host);
         }
         for excerpt in &self.card.excerpts {
             lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
@@ -361,12 +466,7 @@ impl<'a> LegacyPresentationAdapter<'a> {
         if evidence.is_empty() {
             return;
         }
-        let label_width = evidence
-            .iter()
-            .map(|entry| entry.label.chars().count())
-            .max()
-            .unwrap_or(0)
-            .max(MIN_EVIDENCE_LABEL_WIDTH);
+        let label_width = self.configured_label_width(&evidence);
         let mut appended_location = false;
         for entry in evidence {
             let value = if entry.raw {
@@ -379,56 +479,61 @@ impl<'a> LegacyPresentationAdapter<'a> {
                 self.layout.style_evidence_label(entry.label, label_width),
                 value
             );
-            if matches!(location_host, LocationHost::Evidence)
-                && !appended_location
-                && let Some(location) = self.card.canonical_location.as_ref()
-            {
-                line.push_str(" @ ");
-                line.push_str(&self.theme.inline(location));
-                appended_location = true;
-            }
+            self.append_inline_location_once(&mut line, location_host, &mut appended_location);
             lines.push(line);
         }
     }
 
-    fn render_legacy_evidence(&self, lines: &mut Vec<String>) {
+    fn render_legacy_evidence(&self, lines: &mut Vec<String>, location_host: LocationHost) {
+        let mut appended_location = false;
         if let Some(first_action) = self
             .card
             .semantic_card
             .slot_text(SemanticSlotId::FirstAction)
             .or(self.card.first_action.as_deref())
         {
-            lines.push(format!(
+            let mut line = format!(
                 "{} {}",
                 self.layout
                     .style_evidence_label("help", "help".chars().count()),
                 self.theme.inline(first_action)
-            ));
+            );
+            self.append_inline_location_once(&mut line, location_host, &mut appended_location);
+            lines.push(line);
         }
-        self.render_legacy_semantic_evidence(lines);
+        self.render_legacy_semantic_evidence(lines, location_host, &mut appended_location);
         if let Some(why_text) = self.card.semantic_card.slot_text(SemanticSlotId::Raw) {
             let why_label = self
                 .card
                 .semantic_card
                 .slot_label(SemanticSlotId::Raw)
                 .unwrap_or("why");
-            lines.push(format!(
+            let mut line = format!(
                 "{} {}",
                 self.layout
                     .style_evidence_label(why_label, why_label.chars().count()),
                 self.theme.raw(why_text)
-            ));
+            );
+            self.append_inline_location_once(&mut line, location_host, &mut appended_location);
+            lines.push(line);
         } else {
-            lines.push(format!(
+            let mut line = format!(
                 "{} {}",
                 self.layout
                     .style_evidence_label("why", "why".chars().count()),
                 self.theme.raw(&self.card.raw_message)
-            ));
+            );
+            self.append_inline_location_once(&mut line, location_host, &mut appended_location);
+            lines.push(line);
         }
     }
 
-    fn render_legacy_semantic_evidence(&self, lines: &mut Vec<String>) {
+    fn render_legacy_semantic_evidence(
+        &self,
+        lines: &mut Vec<String>,
+        location_host: LocationHost,
+        appended_location: &mut bool,
+    ) {
         let mut rendered_slots = rendered_semantic_slots(self.card);
         if rendered_slots.is_empty() {
             return;
@@ -444,11 +549,13 @@ impl<'a> LegacyPresentationAdapter<'a> {
                 .label
                 .as_deref()
                 .unwrap_or_else(|| slot.slot.stable_id());
-            lines.push(format!(
+            let mut line = format!(
                 "{} {}",
                 self.layout.style_evidence_label(label, label_width),
                 self.theme.inline(&slot.value)
-            ));
+            );
+            self.append_inline_location_once(&mut line, location_host, appended_location);
+            lines.push(line);
         }
     }
 
@@ -502,6 +609,36 @@ impl<'a> LegacyPresentationAdapter<'a> {
         }
         entries
     }
+
+    fn configured_label_width(&self, evidence: &[EvidenceEntry<'_>]) -> usize {
+        self.card
+            .semantic_card
+            .presentation
+            .evidence_label_width
+            .max(
+                evidence
+                    .iter()
+                    .map(|entry| entry.label.chars().count())
+                    .max()
+                    .unwrap_or(0),
+            )
+            .max(MIN_EVIDENCE_LABEL_WIDTH)
+    }
+
+    fn append_inline_location_once(
+        &self,
+        line: &mut String,
+        location_host: LocationHost,
+        appended_location: &mut bool,
+    ) {
+        if matches!(location_host, LocationHost::Evidence)
+            && !*appended_location
+            && let Some(suffix) = self.layout.inline_location_suffix(self.theme, self.card)
+        {
+            line.push_str(&suffix);
+            *appended_location = true;
+        }
+    }
 }
 
 fn rendered_semantic_slots(card: &RenderGroupCard) -> Vec<&RenderSemanticSlot> {
@@ -510,31 +647,4 @@ fn rendered_semantic_slots(card: &RenderGroupCard) -> Vec<&RenderSemanticSlot> {
         .iter()
         .filter(|slot| slot.slot != SemanticSlotId::FirstAction && slot.slot != SemanticSlotId::Raw)
         .collect()
-}
-
-fn visible_header_len(card: &RenderGroupCard, include_location: bool) -> usize {
-    if card.semantic_card.presentation.subject_first_header {
-        let family = card
-            .semantic_card
-            .display_family
-            .as_deref()
-            .or(card.family.as_deref())
-            .unwrap_or("unknown");
-        let mut len = card.severity.chars().count()
-            + ": ".len()
-            + "[".len()
-            + family.chars().count()
-            + "] ".len()
-            + card.title.chars().count();
-        if include_location && let Some(location) = card.canonical_location.as_ref() {
-            len += " @ ".len() + location.chars().count();
-        }
-        return len;
-    }
-
-    let mut len = card.severity.chars().count() + ": ".len() + card.title.chars().count();
-    if include_location && let Some(location) = card.canonical_location.as_ref() {
-        len += " @ ".len() + location.chars().count();
-    }
-    len
 }

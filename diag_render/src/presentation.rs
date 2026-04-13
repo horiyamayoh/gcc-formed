@@ -99,6 +99,10 @@ pub struct ResolvedLocationPolicy {
     pub default_placement: LocationPlacement,
     #[serde(default)]
     pub fallback_order: Vec<LocationPlacement>,
+    #[serde(default = "default_inline_suffix_format")]
+    pub inline_suffix_format: String,
+    #[serde(default = "default_location_width_soft_limit")]
+    pub width_soft_limit: usize,
 }
 
 /// Resolved header policy carried from the presentation config.
@@ -119,6 +123,15 @@ impl Default for ResolvedHeaderPolicy {
             unknown_family: "generic".to_string(),
         }
     }
+}
+
+/// Resolved evidence label alignment strategy.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LabelWidthMode {
+    #[default]
+    TemplateMax,
+    Fixed,
 }
 
 /// One logical line inside a resolved presentation template.
@@ -164,9 +177,13 @@ pub struct ResolvedCardPresentation {
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub shape_fallbacks: Vec<ResolvedShapeFallback>,
     #[serde(default)]
+    pub header: ResolvedHeaderPolicy,
+    #[serde(default)]
     pub subject_first_header: bool,
     #[serde(default = "default_card_location_policy")]
     pub location_policy: ResolvedLocationPolicy,
+    #[serde(default)]
+    pub evidence_label_width: usize,
     #[serde(default)]
     pub fell_back_to_generic_template: bool,
 }
@@ -179,6 +196,10 @@ pub struct ResolvedPresentationPolicy {
     #[serde(default)]
     pub header: ResolvedHeaderPolicy,
     pub location_policy: ResolvedLocationPolicy,
+    #[serde(default)]
+    pub label_width_mode: LabelWidthMode,
+    #[serde(default)]
+    pub fixed_label_width: Option<usize>,
     #[serde(default)]
     pub label_catalog: BTreeMap<String, String>,
     #[serde(default)]
@@ -267,7 +288,11 @@ impl ResolvedPresentationPolicy {
                     LocationPlacement::ExcerptHeader,
                     LocationPlacement::None,
                 ],
+                inline_suffix_format: default_inline_suffix_format(),
+                width_soft_limit: default_location_width_soft_limit(),
             },
+            label_width_mode: LabelWidthMode::TemplateMax,
+            fixed_label_width: None,
             label_catalog: builtin_label_catalog(),
             templates,
             family_mappings: vec![ResolvedFamilyPresentation {
@@ -538,7 +563,11 @@ impl ResolvedPresentationPolicy {
                     LocationPlacement::ExcerptHeader,
                     LocationPlacement::None,
                 ],
+                inline_suffix_format: default_inline_suffix_format(),
+                width_soft_limit: default_location_width_soft_limit(),
             },
+            label_width_mode: LabelWidthMode::TemplateMax,
+            fixed_label_width: None,
             label_catalog: subject_blocks_label_catalog(),
             templates,
             family_mappings: vec![
@@ -715,6 +744,36 @@ impl ResolvedPresentationPolicy {
         self.label(slot.stable_id())
     }
 
+    fn template_line_label_text<'a>(&'a self, line: &'a ResolvedTemplateLine) -> &'a str {
+        line.label
+            .as_deref()
+            .and_then(|label_id| self.label(label_id).or(Some(label_id)))
+            .or_else(|| self.slot_label(line.slot))
+            .unwrap_or_else(|| line.slot.stable_id())
+    }
+
+    fn template_label_width(&self, template_id: &str) -> usize {
+        self.template(template_id)
+            .map(|template| {
+                template
+                    .core
+                    .iter()
+                    .map(|line| self.template_line_label_text(line).chars().count())
+                    .max()
+                    .unwrap_or(0)
+            })
+            .unwrap_or(0)
+    }
+
+    fn resolved_evidence_label_width(&self, template_id: &str) -> usize {
+        match self.label_width_mode {
+            LabelWidthMode::TemplateMax => self.template_label_width(template_id),
+            LabelWidthMode::Fixed => self
+                .fixed_label_width
+                .unwrap_or_else(|| self.template_label_width(template_id)),
+        }
+    }
+
     /// Infers the semantic shape supported by a resolved template.
     pub fn template_semantic_shape(&self, template_id: &str) -> SemanticShape {
         let Some(template) = self.template(template_id) else {
@@ -815,8 +874,10 @@ impl ResolvedPresentationPolicy {
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
             semantic_shape,
             shape_fallbacks,
+            header: self.header.clone(),
             subject_first_header: self.header.subject_first,
             location_policy: self.location_policy.clone(),
+            evidence_label_width: self.resolved_evidence_label_width(resolved_template_id),
             fell_back_to_generic_template,
         }
     }
@@ -854,8 +915,10 @@ impl Default for ResolvedCardPresentation {
             display_family: None,
             semantic_shape: SemanticShape::Generic,
             shape_fallbacks: Vec::new(),
+            header: ResolvedHeaderPolicy::default(),
             subject_first_header: false,
             location_policy: default_card_location_policy(),
+            evidence_label_width: 0,
             fell_back_to_generic_template: false,
         }
     }
@@ -895,7 +958,17 @@ fn default_card_location_policy() -> ResolvedLocationPolicy {
             LocationPlacement::ExcerptHeader,
             LocationPlacement::None,
         ],
+        inline_suffix_format: default_inline_suffix_format(),
+        width_soft_limit: default_location_width_soft_limit(),
     }
+}
+
+fn default_inline_suffix_format() -> String {
+    " @ {location}".to_string()
+}
+
+fn default_location_width_soft_limit() -> usize {
+    100
 }
 
 fn matcher_matches(matcher: &str, family: &str) -> bool {
@@ -1137,6 +1210,7 @@ mod tests {
         assert_eq!(policy.slot_label(SemanticSlotId::FirstAction), Some("help"));
         assert_eq!(policy.label("help"), Some("help"));
         assert_eq!(policy.label("raw"), Some("raw"));
+        assert_eq!(policy.label_width_mode, LabelWidthMode::TemplateMax);
         assert_eq!(SemanticSlotId::Raw.stable_id(), "raw");
     }
 
@@ -1148,5 +1222,46 @@ mod tests {
         let resolved = policy.resolve_card_presentation(Some("syntax"));
 
         assert!(!resolved.subject_first_header);
+    }
+
+    #[test]
+    fn card_presentation_inherits_header_location_and_template_label_width() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.header.interactive_format = "{severity} -> [{family}] {subject}".to_string();
+        policy.location_policy.inline_suffix_format = " ({location})".to_string();
+        policy.location_policy.width_soft_limit = 72;
+        policy
+            .label_catalog
+            .insert("want".to_string(), "expected type".to_string());
+
+        let resolved = policy.resolve_card_presentation(Some("type_overload"));
+
+        assert_eq!(
+            resolved.header.interactive_format,
+            "{severity} -> [{family}] {subject}"
+        );
+        assert_eq!(
+            resolved.location_policy.inline_suffix_format,
+            " ({location})"
+        );
+        assert_eq!(resolved.location_policy.width_soft_limit, 72);
+        assert_eq!(
+            resolved.evidence_label_width,
+            "expected type".chars().count()
+        );
+    }
+
+    #[test]
+    fn fixed_label_width_overrides_template_max_width() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.label_width_mode = LabelWidthMode::Fixed;
+        policy.fixed_label_width = Some(6);
+        policy
+            .label_catalog
+            .insert("symbol".to_string(), "very_long_symbol".to_string());
+
+        let resolved = policy.resolve_card_presentation(Some("linker.undefined_reference"));
+
+        assert_eq!(resolved.evidence_label_width, 6);
     }
 }

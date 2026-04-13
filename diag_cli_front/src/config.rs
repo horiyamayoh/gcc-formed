@@ -8,7 +8,7 @@ use diag_backend_probe::ProcessingPath;
 use diag_capture_runtime::ExecutionMode;
 use diag_core::{CascadePolicySnapshot, CompressionLevel, SuppressedCountVisibility};
 use diag_render::{
-    DebugRefs, LocationPlacement, PathPolicy, RenderProfile,
+    DebugRefs, LabelWidthMode, LocationPlacement, PathPolicy, RenderProfile,
     ResolvedFamilyPresentation as RenderResolvedFamilyPresentation,
     ResolvedHeaderPolicy as RenderResolvedHeaderPolicy,
     ResolvedLocationPolicy as RenderResolvedLocationPolicy,
@@ -494,7 +494,22 @@ impl ResolvedPresentationPolicy {
                     .flatten()
                     .map(|placement| location_placement(placement))
                     .collect(),
+                inline_suffix_format: self
+                    .policy
+                    .location
+                    .inline_suffix_format
+                    .clone()
+                    .unwrap_or_else(|| " @ {location}".to_string()),
+                width_soft_limit: self.policy.location.width_soft_limit.unwrap_or(100),
             },
+            label_width_mode: label_width_mode(
+                self.policy
+                    .labels
+                    .label_width_mode
+                    .as_deref()
+                    .unwrap_or("template_max"),
+            ),
+            fixed_label_width: self.policy.labels.fixed_label_width,
             label_catalog,
             templates,
             family_mappings: self
@@ -834,6 +849,13 @@ fn location_placement(placement: &str) -> LocationPlacement {
         "dedicated_line" => LocationPlacement::DedicatedLine,
         "none" => LocationPlacement::None,
         _ => LocationPlacement::None,
+    }
+}
+
+fn label_width_mode(mode: &str) -> LabelWidthMode {
+    match mode {
+        "fixed" => LabelWidthMode::Fixed,
+        _ => LabelWidthMode::TemplateMax,
     }
 }
 
@@ -1958,6 +1980,12 @@ mod tests {
             render_policy.header.ci_path_first_format,
             "{location}: {severity}: [{family}] {subject}"
         );
+        assert_eq!(
+            render_policy.location_policy.inline_suffix_format,
+            " @ {location}"
+        );
+        assert_eq!(render_policy.location_policy.width_soft_limit, 100);
+        assert_eq!(render_policy.label_width_mode, LabelWidthMode::TemplateMax);
         assert_eq!(render_policy.label("raw"), Some("raw"));
     }
 
@@ -2005,6 +2033,9 @@ mod tests {
             render_policy.header.interactive_format,
             "{severity}: {subject}"
         );
+        assert_eq!(render_policy.label_width_mode, LabelWidthMode::Fixed);
+        assert_eq!(render_policy.fixed_label_width, Some(6));
+        assert_eq!(card.evidence_label_width, 6);
         assert_eq!(
             resolved.policy.labels.label_width_mode.as_deref(),
             Some("fixed")

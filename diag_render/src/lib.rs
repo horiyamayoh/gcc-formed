@@ -32,9 +32,10 @@ use serde::{Deserialize, Serialize};
 pub use excerpt::ExcerptBlock;
 /// Re-exported presentation policy and semantic slot types.
 pub use presentation::{
-    LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation, ResolvedHeaderPolicy,
-    ResolvedLocationPolicy, ResolvedPresentationPolicy, ResolvedShapeFallback, ResolvedTemplate,
-    ResolvedTemplateLine, SemanticShape, SemanticSlotId, SessionMode,
+    LabelWidthMode, LocationPlacement, ResolvedCardPresentation, ResolvedFamilyPresentation,
+    ResolvedHeaderPolicy, ResolvedLocationPolicy, ResolvedPresentationPolicy,
+    ResolvedShapeFallback, ResolvedTemplate, ResolvedTemplateLine, SemanticShape, SemanticSlotId,
+    SessionMode,
 };
 /// Re-exported internal presentation snapshot types for corpus/debug artifacts.
 pub use presentation_snapshot::{
@@ -526,6 +527,70 @@ mod tests {
 
     fn legacy_render(request: RenderRequest) -> RenderResult {
         render_with_presentation_policy(request, &legacy_policy()).unwrap()
+    }
+
+    fn synthetic_subject_first_card(
+        evidence_label_width: usize,
+        location_policy: ResolvedLocationPolicy,
+    ) -> RenderGroupCard {
+        RenderGroupCard {
+            group_id: "group.synthetic".to_string(),
+            severity: "error".to_string(),
+            family: Some("type_overload".to_string()),
+            title: "type or overload mismatch".to_string(),
+            confidence_label: "high".to_string(),
+            confidence_notice: None,
+            first_action: None,
+            canonical_location: Some("src/main.c:5:22".to_string()),
+            raw_message: "raw mismatch".to_string(),
+            excerpts: Vec::new(),
+            context_lines: Vec::new(),
+            child_notes: Vec::new(),
+            collapsed_notices: Vec::new(),
+            suggestions: Vec::new(),
+            raw_block_label: "raw:".to_string(),
+            raw_sub_block: Vec::new(),
+            rule_id: None,
+            matched_conditions: Vec::new(),
+            suppression_reason: None,
+            cascade_debug: None,
+            semantic_card: crate::presentation::RenderSemanticCard {
+                internal_family: Some("type_overload".to_string()),
+                display_family: Some("type_mismatch".to_string()),
+                subject: "type or overload mismatch".to_string(),
+                presentation: ResolvedCardPresentation {
+                    template_id: "contrast_block".to_string(),
+                    display_family: Some("type_mismatch".to_string()),
+                    semantic_shape: crate::presentation::SemanticShape::Contrast,
+                    shape_fallbacks: Vec::new(),
+                    header: ResolvedHeaderPolicy {
+                        subject_first: true,
+                        interactive_format: "{severity}: [{family}] {subject}".to_string(),
+                        ci_path_first_format: "{location}: {severity}: [{family}] {subject}"
+                            .to_string(),
+                        unknown_family: "generic".to_string(),
+                    },
+                    subject_first_header: true,
+                    location_policy,
+                    evidence_label_width,
+                    fell_back_to_generic_template: false,
+                },
+                slots: vec![
+                    crate::presentation::RenderSemanticSlot {
+                        slot: SemanticSlotId::Got,
+                        value: "const char *".to_string(),
+                        label: Some("got".to_string()),
+                    },
+                    crate::presentation::RenderSemanticSlot {
+                        slot: SemanticSlotId::Via,
+                        value: "takes_int".to_string(),
+                        label: Some("via".to_string()),
+                    },
+                ],
+                canonical_location: Some("src/main.c:5:22".to_string()),
+                raw_message: "raw mismatch".to_string(),
+            },
+        }
     }
 
     fn write_source_file(root: &tempfile::TempDir, relative: &str, contents: &str) {
@@ -2155,65 +2220,102 @@ mod tests {
         let layout = crate::layout::LayoutProfile::for_request(&request);
         let theme = crate::theme::ThemePolicy::for_request(&request);
         let mut lines = Vec::new();
-
-        let card = RenderGroupCard {
-            group_id: "group.synthetic".to_string(),
-            severity: "error".to_string(),
-            family: Some("type_overload".to_string()),
-            title: "type or overload mismatch".to_string(),
-            confidence_label: "high".to_string(),
-            confidence_notice: None,
-            first_action: None,
-            canonical_location: Some("src/main.c:5:22".to_string()),
-            raw_message: "raw mismatch".to_string(),
-            excerpts: Vec::new(),
-            context_lines: Vec::new(),
-            child_notes: Vec::new(),
-            collapsed_notices: Vec::new(),
-            suggestions: Vec::new(),
-            raw_block_label: "raw:".to_string(),
-            raw_sub_block: Vec::new(),
-            rule_id: None,
-            matched_conditions: Vec::new(),
-            suppression_reason: None,
-            cascade_debug: None,
-            semantic_card: crate::presentation::RenderSemanticCard {
-                internal_family: Some("type_overload".to_string()),
-                display_family: Some("type_mismatch".to_string()),
-                subject: "type or overload mismatch".to_string(),
-                presentation: ResolvedCardPresentation {
-                    template_id: "contrast_block".to_string(),
-                    display_family: Some("type_mismatch".to_string()),
-                    semantic_shape: crate::presentation::SemanticShape::Contrast,
-                    shape_fallbacks: Vec::new(),
-                    subject_first_header: true,
-                    location_policy: ResolvedLocationPolicy {
-                        default_placement: LocationPlacement::HeaderSuffix,
-                        fallback_order: vec![LocationPlacement::EvidenceSuffix],
-                    },
-                    fell_back_to_generic_template: false,
-                },
-                slots: vec![
-                    crate::presentation::RenderSemanticSlot {
-                        slot: SemanticSlotId::Got,
-                        value: "const char *".to_string(),
-                        label: Some("got".to_string()),
-                    },
-                    crate::presentation::RenderSemanticSlot {
-                        slot: SemanticSlotId::Via,
-                        value: "takes_int".to_string(),
-                        label: Some("via".to_string()),
-                    },
-                ],
-                canonical_location: Some("src/main.c:5:22".to_string()),
-                raw_message: "raw mismatch".to_string(),
+        let card = synthetic_subject_first_card(
+            4,
+            ResolvedLocationPolicy {
+                default_placement: LocationPlacement::HeaderSuffix,
+                fallback_order: vec![LocationPlacement::EvidenceSuffix],
+                inline_suffix_format: " @ {location}".to_string(),
+                width_soft_limit: 100,
             },
-        };
+        );
 
         layout.render_card(&theme, &card, &mut lines);
 
         assert!(lines.iter().any(|line| line == "got : const char *"));
         assert!(lines.iter().any(|line| line == "via : takes_int"));
+    }
+
+    #[test]
+    fn default_header_and_inline_suffix_follow_presentation_policy() {
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.header.interactive_format = "{severity} :: {subject} [{family}]".to_string();
+        policy.location_policy.inline_suffix_format = " ({location})".to_string();
+
+        let output = render_with_presentation_policy(sample_request(), &policy).unwrap();
+        let first_line = output.text.lines().next().unwrap();
+
+        assert_eq!(
+            first_line,
+            "error :: syntax error [syntax] (src/main.c:2:13)"
+        );
+    }
+
+    #[test]
+    fn ci_header_format_follows_presentation_policy() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Ci;
+
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        policy.header.ci_path_first_format =
+            "[{family}] {severity} @ {location} :: {subject}".to_string();
+
+        let output = render_with_presentation_policy(request, &policy).unwrap();
+        let first_line = output.text.lines().next().unwrap();
+
+        assert_eq!(
+            first_line,
+            "[syntax] error @ src/main.c:2:13 :: syntax error"
+        );
+    }
+
+    #[test]
+    fn template_max_label_width_and_inline_suffix_apply_on_evidence_host() {
+        let request = sample_request();
+        let layout = crate::layout::LayoutProfile::for_request(&request);
+        let theme = crate::theme::ThemePolicy::for_request(&request);
+        let mut lines = Vec::new();
+        let card = synthetic_subject_first_card(
+            "expected type".chars().count(),
+            ResolvedLocationPolicy {
+                default_placement: LocationPlacement::InlineSuffix,
+                fallback_order: vec![LocationPlacement::EvidenceSuffix],
+                inline_suffix_format: " ({location})".to_string(),
+                width_soft_limit: 8,
+            },
+        );
+
+        layout.render_card(&theme, &card, &mut lines);
+
+        assert_eq!(lines[0], "error: [type_mismatch] type or overload mismatch");
+        assert!(
+            lines
+                .iter()
+                .any(|line| line == "got          : const char * (src/main.c:5:22)")
+        );
+        assert!(lines.iter().any(|line| line == "via          : takes_int"));
+    }
+
+    #[test]
+    fn fixed_label_width_is_honored_by_layout() {
+        let request = sample_request();
+        let layout = crate::layout::LayoutProfile::for_request(&request);
+        let theme = crate::theme::ThemePolicy::for_request(&request);
+        let mut lines = Vec::new();
+        let card = synthetic_subject_first_card(
+            6,
+            ResolvedLocationPolicy {
+                default_placement: LocationPlacement::HeaderSuffix,
+                fallback_order: vec![LocationPlacement::EvidenceSuffix],
+                inline_suffix_format: " @ {location}".to_string(),
+                width_soft_limit: 100,
+            },
+        );
+
+        layout.render_card(&theme, &card, &mut lines);
+
+        assert!(lines.iter().any(|line| line == "got   : const char *"));
+        assert!(lines.iter().any(|line| line == "via   : takes_int"));
     }
 
     #[test]
@@ -2933,12 +3035,12 @@ mod tests {
         assert!(
             output
                 .text
-                .contains("\n\nerror: [unknown] secondary failure @ src/other.c:9:4")
+                .contains("\n\nerror: [generic] secondary failure @ src/other.c:9:4")
         );
         assert!(
             output
                 .text
-                .contains("error: [unknown] tertiary failure @ src/third.c:12:7")
+                .contains("error: [generic] tertiary failure @ src/third.c:12:7")
         );
     }
 
