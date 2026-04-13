@@ -24,7 +24,7 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_PRESENTATION_PRESET: &str = "subject_blocks_v1";
+const DEFAULT_PRESENTATION_PRESET: &str = "subject_blocks_v2";
 const PRESENTATION_SCHEMA_KIND: &str = "cc_formed_presentation";
 const PRESENTATION_SCHEMA_VERSION_V1: u32 = 1;
 const PRESENTATION_SCHEMA_VERSION_V2: u32 = 2;
@@ -359,18 +359,23 @@ impl ConfigFile {
 
         let mut warnings = Vec::new();
         let mut fell_back_to_default = false;
-        let mut preset_id = requested_preset.to_string();
-        let mut policy = match load_builtin_presentation_asset(requested_preset) {
-            Ok(policy) => policy,
+        let (built_in_preset_id, built_in_policy) = match load_builtin_presentation_asset(
+            requested_preset,
+        ) {
+            Ok(policy) => (requested_preset.to_string(), policy),
             Err(error) => {
                 fell_back_to_default = true;
                 warnings.push(format!(
                     "note: presentation preset '{requested_preset}' is unavailable; using built-in default '{DEFAULT_PRESENTATION_PRESET}' ({error})"
                 ));
-                preset_id = DEFAULT_PRESENTATION_PRESET.to_string();
-                default_policy.clone()
+                (
+                    DEFAULT_PRESENTATION_PRESET.to_string(),
+                    default_policy.clone(),
+                )
             }
         };
+        let mut preset_id = built_in_preset_id.clone();
+        let mut policy = built_in_policy.clone();
 
         if let Some(path) = presentation_file.as_ref() {
             match load_presentation_file(path) {
@@ -378,13 +383,16 @@ impl ConfigFile {
                     policy = merge_presentation_config(policy, overlay);
                 }
                 Err(error) => {
-                    fell_back_to_default = true;
+                    if built_in_preset_id == DEFAULT_PRESENTATION_PRESET {
+                        fell_back_to_default = true;
+                    }
                     warnings.push(format!(
-                        "note: failed to load presentation file {}; using built-in default '{DEFAULT_PRESENTATION_PRESET}' ({error})",
-                        path.display()
+                        "note: failed to load presentation file {}; using built-in preset '{}' ({error})",
+                        path.display(),
+                        built_in_preset_id
                     ));
-                    preset_id = DEFAULT_PRESENTATION_PRESET.to_string();
-                    policy = default_policy.clone();
+                    preset_id = built_in_preset_id.clone();
+                    policy = built_in_policy.clone();
                 }
             }
         }
@@ -1799,7 +1807,7 @@ mod tests {
     }
 
     #[test]
-    fn invalid_external_presentation_file_falls_back_to_default_preset() {
+    fn invalid_external_presentation_file_falls_back_to_requested_builtin_preset() {
         let temp = tempdir().unwrap();
         let user = temp.path().join("config.toml");
         let overlay = temp.path().join("broken-presentation.toml");
@@ -1818,16 +1826,45 @@ mod tests {
         let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
 
         assert_eq!(resolved.preset_id, "subject_blocks_v1");
+        assert!(!resolved.fell_back_to_default);
+        assert!(
+            resolved
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("using built-in preset 'subject_blocks_v1'"))
+        );
+        assert_eq!(
+            resolved.policy.session.visible_root_mode.as_deref(),
+            Some("all_visible_blocks")
+        );
+        assert_eq!(resolved.policy.header.subject_first, Some(true));
+    }
+
+    #[test]
+    fn invalid_external_presentation_file_without_explicit_preset_falls_back_to_default_preset() {
+        let temp = tempdir().unwrap();
+        let user = temp.path().join("config.toml");
+        let overlay = temp.path().join("broken-presentation.toml");
+        fs::write(
+            &user,
+            r#"
+                [render]
+                presentation_file = "broken-presentation.toml"
+            "#,
+        )
+        .unwrap();
+        fs::write(&overlay, "not = [valid").unwrap();
+
+        let config = ConfigFile::load_from_paths([], Some(&user)).unwrap();
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+
+        assert_eq!(resolved.preset_id, "subject_blocks_v2");
         assert!(resolved.fell_back_to_default);
         assert!(
             resolved
                 .warnings
                 .iter()
-                .any(|warning| warning.contains("failed to load presentation file"))
-        );
-        assert_eq!(
-            resolved.policy.session.visible_root_mode.as_deref(),
-            Some("all_visible_blocks")
+                .any(|warning| warning.contains("using built-in preset 'subject_blocks_v2'"))
         );
         assert_eq!(resolved.policy.header.subject_first, Some(true));
     }
@@ -1902,7 +1939,7 @@ mod tests {
     fn existing_config_without_presentation_keys_uses_subject_blocks_default() {
         let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved.preset_id, "subject_blocks_v1");
+        assert_eq!(resolved.preset_id, "subject_blocks_v2");
         assert!(!resolved.fell_back_to_default);
         assert!(resolved.warnings.is_empty());
     }
@@ -1913,7 +1950,7 @@ mod tests {
 
         let render_policy = resolved.to_render_policy();
 
-        assert_eq!(render_policy.preset_id, "subject_blocks_v1");
+        assert_eq!(render_policy.preset_id, "subject_blocks_v2");
         assert_eq!(render_policy.session_mode, SessionMode::AllVisibleBlocks);
         assert!(render_policy.header.subject_first);
         assert_eq!(render_policy.default_template_id, "generic_block");
@@ -1987,6 +2024,24 @@ mod tests {
         assert_eq!(render_policy.location_policy.width_soft_limit, 100);
         assert_eq!(render_policy.label_width_mode, LabelWidthMode::TemplateMax);
         assert_eq!(render_policy.label("raw"), Some("raw"));
+    }
+
+    #[test]
+    fn subject_blocks_v1_builtin_preset_remains_available_as_rollback_path() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation=subject_blocks_v1"),
+        ])
+        .unwrap();
+
+        let render_policy = ConfigFile::default()
+            .resolve_presentation_policy(&parsed)
+            .to_render_policy();
+
+        assert_eq!(render_policy.preset_id, "subject_blocks_v1");
+        assert!(render_policy.header.subject_first);
+        assert_eq!(render_policy.label_width_mode, LabelWidthMode::Fixed);
+        assert_eq!(render_policy.fixed_label_width, Some(4));
     }
 
     #[test]

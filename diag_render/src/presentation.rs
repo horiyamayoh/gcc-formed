@@ -218,7 +218,7 @@ pub struct ResolvedPresentationPolicy {
 
 impl Default for ResolvedPresentationPolicy {
     fn default() -> Self {
-        Self::subject_blocks_v1()
+        Self::subject_blocks_v2()
     }
 }
 
@@ -309,8 +309,8 @@ impl ResolvedPresentationPolicy {
         }
     }
 
-    /// Built-in subject-first preset skeleton. The generic path remains fail-open.
-    pub fn subject_blocks_v1() -> Self {
+    /// Built-in subject-first preset used by the current no-config default.
+    pub fn subject_blocks_v2() -> Self {
         let templates = BTreeMap::from([
             (
                 GENERIC_TEMPLATE_ID.to_string(),
@@ -547,7 +547,7 @@ impl ResolvedPresentationPolicy {
         ]);
 
         Self {
-            preset_id: "subject_blocks_v1".to_string(),
+            preset_id: "subject_blocks_v2".to_string(),
             session_mode: SessionMode::AllVisibleBlocks,
             header: ResolvedHeaderPolicy {
                 subject_first: true,
@@ -727,6 +727,13 @@ impl ResolvedPresentationPolicy {
             warnings: Vec::new(),
             fell_back_to_default: false,
         }
+    }
+
+    /// Previous beta default kept as an explicit subject-first rollback preset ID.
+    pub fn subject_blocks_v1() -> Self {
+        let mut policy = Self::subject_blocks_v2();
+        policy.preset_id = "subject_blocks_v1".to_string();
+        policy
     }
 
     /// Looks up a resolved template by ID.

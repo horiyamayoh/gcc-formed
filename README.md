@@ -18,7 +18,7 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After (default `subject_blocks_v1`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
+> After (default `subject_blocks_v2`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
 - **状態**: Public Beta
@@ -43,11 +43,11 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
-Presentation V2 の `subject_blocks_v1` は beta runtime default であり、no-config の terminal render は subject-first blocks を使う。  
+Presentation V2 の `subject_blocks_v2` は beta runtime default であり、no-config の terminal render は subject-first blocks を使う。  
 rollout は `docs / ADR -> opt-in preset -> corpus / snapshot / review -> default promotion` の gate を通した。  
-`legacy_v1` は explicit rollback preset として残しており、`[render] presentation = "legacy_v1"` または `--formed-presentation=legacy_v1` で切り戻せる。  
+以前の beta default を pin したい場合は `subject_blocks_v1` を、legacy wording へ戻したい場合は `legacy_v1` を explicit rollback preset として使える。`[render] presentation = "subject_blocks_v1"` / `--formed-presentation=subject_blocks_v1` と `[render] presentation = "legacy_v1"` / `--formed-presentation=legacy_v1` の両方を維持する。  
 `cascade.max_expanded_independent_roots` は visible-root cap としては deprecated であり、新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
-representative corpus は `snapshots/.../subject_blocks_v1/` に review 用 cluster を持てるが、`render.presentation.json` は internal artifact であり public contract ではない。
+representative corpus は `snapshots/.../subject_blocks_v2/` や `snapshots/.../subject_blocks_v1/` のような review 用 cluster を持てるが、`render.presentation.json` は internal artifact であり public contract ではない。
 
 ### 1. テンプレートエラー（C++）
 
@@ -65,7 +65,7 @@ src/main.cpp:1:6: note: declared here
       |      ^~~~~
 ```
 
-**After (default `subject_blocks_v1`)**
+**After (default `subject_blocks_v2`)**
 
 ```text
 error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
@@ -87,7 +87,7 @@ helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c
 collect2: error: ld returned 1 exit status
 ```
 
-**After (default `subject_blocks_v1`)**
+**After (default `subject_blocks_v2`)**
 
 ```text
 error: [linker] multiple definition of `duplicate`

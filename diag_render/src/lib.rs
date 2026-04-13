@@ -830,10 +830,10 @@ mod tests {
     }
 
     #[test]
-    fn explicit_subject_blocks_presentation_policy_matches_default_render() {
+    fn explicit_subject_blocks_v2_presentation_policy_matches_default_render() {
         let request = sample_request();
         let default_output = render(request.clone()).unwrap();
-        let subject_blocks_policy = ResolvedPresentationPolicy::subject_blocks_v1();
+        let subject_blocks_policy = ResolvedPresentationPolicy::subject_blocks_v2();
 
         let explicit_output =
             render_with_presentation_policy(request, &subject_blocks_policy).unwrap();

@@ -71,6 +71,7 @@ superseded_by: []
 | [ADR-0033](./adr-0033-execution-model-precedes-epic-generation.md) | Execution Model precedes Epic generation | Accepted | Epic より先に delivery system を固定する |
 | [ADR-0034](./adr-0034-presentation-v2-subject-first-blocks.md) | Presentation V2 subject-first blocks stay separate from the machine contract | Accepted | subject-first block grammar と machine contract の境界を固定する |
 | [ADR-0035](./adr-0035-gcc-9-15-public-contract-parity.md) | GCC 9-15 share one public contract | Accepted | in-scope bands の public hierarchy を止める |
+| [ADR-0036](./adr-0036-presentation-v2-default-promotion-and-rollback.md) | Presentation V2 becomes the beta default while preserving explicit rollback presets | Accepted | default promotion と rollback preset の current baseline を固定する |
 
 ### Historical-Only Superseded ADRs
 
@@ -91,7 +92,7 @@ Historical vocabulary names such as `Support Tier` or `compatibility tier` appea
 - **0011–0016** は出力 surface、ownership、trace/redaction の製品境界
 - **0017–0025** は dependency、corpus、render surface、stability、versioning semantics、public beta / stable release policy の運用統制
 
-最初に読む順序は `0001 → 0002 → 0006 → 0009 → 0026 → 0027 → 0028 → 0029 → 0035 → 0030 → 0031 → 0033 → 0034` を推奨する。
+最初に読む順序は `0001 → 0002 → 0006 → 0009 → 0026 → 0027 → 0028 → 0029 → 0035 → 0030 → 0031 → 0033 → 0034 → 0036` を推奨する。
 
 ## 4. ステータス運用
 

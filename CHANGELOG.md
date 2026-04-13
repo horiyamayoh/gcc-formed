@@ -8,6 +8,7 @@ The current maturity label is `v1beta`, and the current artifact semver line is 
 
 ### Changed
 
+- Promoted `subject_blocks_v2` to the no-config beta terminal default, kept `subject_blocks_v1` and `legacy_v1` as explicit rollback presets, and preserved preset-local fail-open when an external presentation overlay cannot be loaded.
 - Reset the public contract so `GCC15`, `GCC13-14`, and `GCC9-12` now share one in-scope value claim, exact machine labels use `gcc15` / `gcc13_14` / `gcc9_12` / `gcc16_plus`, `SupportLevel` is binary (`in_scope` / `passthrough_only`), and the public JSON schema moved to `2.0.0-alpha.1` with explicit `allowed_processing_paths`.
 - Added `docs/support/PUBLIC-SURFACE.md` plus `ci/public_surface.py`, so repo About metadata, README top copy, and beta/stable GitHub Release bodies are now generated from one versioned current-authority contract instead of workflow-local heredocs.
 - Hardened the release provenance and workflow contract tests so they now check workflow ordering, workflow-specific evidence routing, `maturity_label` manifest/release-metadata vocabulary, and legacy vocabulary regressions for public-beta and stable release paths.

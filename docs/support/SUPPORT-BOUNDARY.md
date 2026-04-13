@@ -66,9 +66,9 @@ How much native / raw compiler output is preserved in the same run.
 - `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
-- `subject_blocks_v1` is the current beta default terminal preset; `legacy_v1` remains supported as an explicit rollback / compatibility preset via `render.presentation = "legacy_v1"` or `--formed-presentation=legacy_v1`.
+- `subject_blocks_v2` is the current beta default terminal preset; `subject_blocks_v1` and `legacy_v1` remain supported as explicit rollback / compatibility presets via `render.presentation = "subject_blocks_v1"`, `render.presentation = "legacy_v1"`, `--formed-presentation=subject_blocks_v1`, or `--formed-presentation=legacy_v1`.
 - `cascade.max_expanded_independent_roots` remains a deprecated compatibility knob; visible-root behavior belongs to presentation/session policy, not cascade semantics.
-- Representative corpus may carry review-only `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
+- Representative corpus may carry review-only `subject_blocks_v2/render.presentation.json` or `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - The wrapper must not knowingly ship a default TTY experience that is less legible than native GCC without either correcting the output or conservatively falling back / explicitly disclosing the limitation.
 

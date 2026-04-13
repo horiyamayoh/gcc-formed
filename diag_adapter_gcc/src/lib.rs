@@ -1809,7 +1809,9 @@ mod tests {
     #[test]
     fn parses_corpus_sarif_fixture_from_gcc15_overload_case() {
         let document = from_sarif(
-            &corpus_fixture("corpus/cpp/overload/case-02/snapshots/gcc15/diagnostics.sarif"),
+            &corpus_fixture(
+                "corpus/cpp/overload/case-02/snapshots/gcc15/dual_sink_structured/diagnostics.sarif",
+            ),
             producer_for_version("0.1.0"),
             RunInfo {
                 argv_redacted: vec!["g++".to_string()],

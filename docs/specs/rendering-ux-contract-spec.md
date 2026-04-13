@@ -1352,9 +1352,9 @@ Presentation V2 の rollout は次の順で進める。
 
 interactive default と CI preset は同一のタイミングで promote しなくてもよい。
 
-current beta runtime default は `subject_blocks_v1` であり、no-config terminal render は subject-first blocks を使う。`legacy_v1` は explicit rollback / compatibility preset として維持する。  
+current beta runtime default は `subject_blocks_v2` であり、no-config terminal render は subject-first blocks を使う。以前の beta default `subject_blocks_v1` と legacy wording の `legacy_v1` は explicit rollback / compatibility preset として維持する。  
 `cascade.max_expanded_independent_roots` は visible-root cap meaning では deprecated であり、互換用途を除く新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
-corpus replay / snapshot review のために `subject_blocks_v1/render.presentation.json` のような internal artifact を持ってよいが、それは public machine contract ではない。
+corpus replay / snapshot review のために `subject_blocks_v2/render.presentation.json` や `subject_blocks_v1/render.presentation.json` のような internal artifact を持ってよいが、それは public machine contract ではない。
 
 ---
 

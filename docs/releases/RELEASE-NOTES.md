@@ -27,10 +27,12 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
+- `subject_blocks_v2` is the current beta default terminal preset; pin `subject_blocks_v1` or `legacy_v1` explicitly if you need the previous beta default or the legacy wording during migration review.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ### Highlights
 
+- Promotes `subject_blocks_v2` to the no-config beta terminal default, keeps `subject_blocks_v1` and `legacy_v1` as explicit rollback presets, and preserves preset-local fail-open when an external presentation file cannot be loaded.
 - Ships the first public-beta artifact line as `0.2.0-beta.1` in the `v1beta` maturity line.
 - Publishes a public GitHub prerelease with the signed primary/debug/source archives, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, a full control-dir bundle, an immutable release-repo bundle, and `release-provenance.json`.
 - Adds a dedicated public-beta release workflow and `ADR-0024` so GitHub Releases, immutable release repositories, promote metadata, and support-boundary wording are governed by one policy.
