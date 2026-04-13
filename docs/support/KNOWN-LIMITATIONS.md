@@ -34,6 +34,8 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 
 - In-scope bands share one public contract, but capture mechanisms, same-run raw-preservation details, and default processing paths still differ by capability.
 - `ProcessingPath` may vary by invocation, diagnostics sink, or explicit mode request.
+- The C semantics / systems / toolchain older-band backfill is still a mix of representative evidence and explicit applicability inventory. When a family has no checked-in GCC13-14 or GCC9-12 representative replay cell yet, the repo records that gap in `meta.yaml` under `older_band_applicability`; that inventory is not stop-ship matrix coverage.
+- `openmp`, `analyzer`, and historical path/toolchain residue do not yet claim older-band emitted representative cells. When those families emit on in-scope bands, they still follow the shared headline / first-action / disclosure contract rather than a weaker older-band variant.
 - `x86_64-unknown-linux-gnu` remains a compatibility smoke and exception path, not the primary shipped artifact.
 - `GCC16+`, older compilers outside `GCC 9-15`, and unknown gcc-like variants may still resolve conservatively to passthrough behavior.
 - Current runtime and self-check output already use the current vocabulary. The remaining limit is capability-dependent capture behavior, not a public hierarchy between in-scope bands. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.

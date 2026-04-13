@@ -1,6 +1,22 @@
 tags:
 - path
 - phase1
+older_band_applicability:
+  shared_contract_when_emitted: true
+  gcc13_14:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: Historical path/toolchain residue like case-05 does not yet claim a GCC13-14 native_text_capture emitted representative cell. Treat this as an explicit applicability gap rather than inferring it from the GCC15 legacy-root fixture.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: Historical path/toolchain residue like case-05 does not yet claim a GCC13-14 single_sink_structured emitted representative cell. Treat this as an explicit applicability gap rather than inferring it from the GCC15 legacy-root fixture.
+  gcc9_12:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: Historical path/toolchain residue like case-05 does not yet claim a GCC9-12 native_text_capture emitted representative cell. Treat this as an explicit applicability gap rather than inferring it from the GCC15 legacy-root fixture.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: Historical path/toolchain residue like case-05 does not yet claim a GCC9-12 single_sink_structured emitted representative cell. Treat this as an explicit applicability gap rather than inferring it from the GCC15 legacy-root fixture.
 ownership: curated
 provenance: generated-from-phase1-plan
 reviewer: codex

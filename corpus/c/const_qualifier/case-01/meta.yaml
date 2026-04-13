@@ -3,6 +3,22 @@ title: discarded const qualifier in function call
 tags:
   - const_qualifier
   - phase1
+older_band_applicability:
+  shared_contract_when_emitted: true
+  gcc13_14:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: No checked-in GCC13-14 native_text_capture representative ingress exists yet for this family. Do not infer older-band coverage from the GCC15 dual_sink_structured fixture.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: No checked-in GCC13-14 single_sink_structured representative ingress exists yet for this family. Do not infer older-band coverage from the GCC15 dual_sink_structured fixture.
+  gcc9_12:
+    native_text_capture:
+      status: missing_representative_evidence
+      note: No checked-in GCC9-12 native_text_capture representative ingress exists yet for this family. Do not infer older-band coverage from the GCC15 dual_sink_structured fixture.
+    single_sink_structured:
+      status: missing_representative_evidence
+      note: No checked-in GCC9-12 single_sink_structured representative ingress exists yet for this family. Do not infer older-band coverage from the GCC15 dual_sink_structured fixture.
 ownership: curated
 provenance: hand-authored
 reviewer: codex

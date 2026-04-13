@@ -78,13 +78,76 @@ fn public_export_for_fixture(
     )
 }
 
-fn matrix_applicability_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {
+fn meta_yaml_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {
     let raw = fs::read_to_string(fixture.root.join("meta.yaml")).unwrap();
-    serde_yaml::from_str::<YamlValue>(&raw)
-        .unwrap()
+    serde_yaml::from_str::<YamlValue>(&raw).unwrap()
+}
+
+fn matrix_applicability_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {
+    meta_yaml_for_fixture(fixture)
         .get("matrix_applicability")
         .cloned()
         .expect("expected matrix_applicability block")
+}
+
+fn older_band_applicability_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {
+    meta_yaml_for_fixture(fixture)
+        .get("older_band_applicability")
+        .cloned()
+        .expect("expected older_band_applicability block")
+}
+
+fn older_band_applicability_cell<'a>(
+    applicability: &'a YamlValue,
+    version_band: &str,
+    processing_path: &str,
+) -> &'a YamlValue {
+    applicability
+        .get(version_band)
+        .and_then(|band| band.get(processing_path))
+        .unwrap_or_else(|| {
+            panic!("expected older_band_applicability.{version_band}.{processing_path} entry")
+        })
+}
+
+fn assert_fixture_does_not_claim_older_band_representative_cells(
+    fixture_id: &str,
+    meta: &YamlValue,
+) {
+    let tags = meta
+        .get("tags")
+        .and_then(YamlValue::as_sequence)
+        .map(|tags| {
+            tags.iter()
+                .filter_map(YamlValue::as_str)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    for forbidden_tag in [
+        "band:gcc13_14",
+        "band:gcc9_12",
+        "processing_path:native_text_capture",
+        "processing_path:single_sink_structured",
+    ] {
+        assert!(
+            !tags.contains(&forbidden_tag),
+            "{fixture_id} should not claim older-band representative tag {forbidden_tag}",
+        );
+    }
+
+    if let Some(matrix) = meta.get("matrix_applicability") {
+        assert_eq!(
+            matrix.get("version_band").and_then(YamlValue::as_str),
+            Some("gcc15"),
+            "{fixture_id} should only keep representative matrix_applicability for GCC15",
+        );
+        assert_eq!(
+            matrix.get("processing_path").and_then(YamlValue::as_str),
+            Some("dual_sink_structured"),
+            "{fixture_id} should only keep representative matrix_applicability for GCC15 dual_sink_structured",
+        );
+    }
 }
 
 fn acceptance_summary(
@@ -1298,6 +1361,335 @@ fn older_band_honest_fallback_anchor_keeps_disclosure_and_public_export_context(
             }),
         "honest-fallback anchor should still export actionable first-action text",
     );
+}
+
+#[test]
+fn prp07_c_family_fixtures_declare_explicit_older_band_applicability_inventory() {
+    let generic_fixtures = [
+        "c/format_string/case-01",
+        "c/const_qualifier/case-01",
+        "c/conversion_narrowing/case-01",
+        "c/fallthrough/case-01",
+        "c/storage_class/case-01",
+        "c/string_character/case-01",
+        "c/strict_aliasing/case-01",
+        "c/sizeof_allocation/case-01",
+        "c/null_pointer/case-01",
+        "c/redefinition/case-01",
+        "c/return_type/case-01",
+        "c/uninitialized/case-01",
+        "c/unused/case-01",
+        "c/abi_alignment/case-01",
+        "c/asm_inline/case-01",
+        "c/bit_field_packed/case-01",
+        "c/odr_inline_linkage/case-01",
+        "c/overflow_arithmetic/case-01",
+        "c/pedantic_compliance/case-01",
+        "c/sanitizer_buffer/case-01",
+    ];
+    let applicability_gap_fixtures = ["c/openmp/case-01", "c/analyzer/case-01"];
+    let path_gap_fixtures = [
+        "c/path/case-01",
+        "c/path/case-02",
+        "c/path/case-03",
+        "c/path/case-04",
+        "c/path/case-05",
+        "c/path/case-06",
+    ];
+
+    for fixture_id in generic_fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        let meta = meta_yaml_for_fixture(&fixture);
+        assert_fixture_does_not_claim_older_band_representative_cells(fixture_id, &meta);
+        let applicability = older_band_applicability_for_fixture(&fixture);
+        assert_eq!(
+            applicability
+                .get("shared_contract_when_emitted")
+                .and_then(YamlValue::as_bool),
+            Some(true),
+            "{fixture_id} should declare shared_contract_when_emitted",
+        );
+
+        for (version_band, processing_path) in [
+            ("gcc13_14", "native_text_capture"),
+            ("gcc13_14", "single_sink_structured"),
+            ("gcc9_12", "native_text_capture"),
+            ("gcc9_12", "single_sink_structured"),
+        ] {
+            let cell = older_band_applicability_cell(&applicability, version_band, processing_path);
+            assert_eq!(
+                cell.get("status").and_then(YamlValue::as_str),
+                Some("missing_representative_evidence"),
+                "{fixture_id} should mark {version_band}/{processing_path} as missing evidence",
+            );
+            let note = cell
+                .get("note")
+                .and_then(YamlValue::as_str)
+                .unwrap_or_default();
+            assert!(
+                note.contains(
+                    "Do not infer older-band coverage from the GCC15 dual_sink_structured fixture."
+                ),
+                "{fixture_id} should keep an explicit non-inference note for {version_band}/{processing_path}",
+            );
+        }
+    }
+
+    for fixture_id in applicability_gap_fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        let meta = meta_yaml_for_fixture(&fixture);
+        assert_fixture_does_not_claim_older_band_representative_cells(fixture_id, &meta);
+        let applicability = older_band_applicability_for_fixture(&fixture);
+        assert_eq!(
+            applicability
+                .get("shared_contract_when_emitted")
+                .and_then(YamlValue::as_bool),
+            Some(true),
+            "{fixture_id} should declare shared_contract_when_emitted",
+        );
+        for (version_band, processing_path) in [
+            ("gcc13_14", "native_text_capture"),
+            ("gcc13_14", "single_sink_structured"),
+            ("gcc9_12", "native_text_capture"),
+            ("gcc9_12", "single_sink_structured"),
+        ] {
+            let note = older_band_applicability_cell(&applicability, version_band, processing_path)
+                .get("note")
+                .and_then(YamlValue::as_str)
+                .unwrap_or_default();
+            assert!(
+                note.contains("applicability gap"),
+                "{fixture_id} should describe {version_band}/{processing_path} as an applicability gap",
+            );
+            assert!(
+                note.contains("GCC15 dual_sink_structured fixture"),
+                "{fixture_id} should keep the non-inference note tied to the GCC15 fixture",
+            );
+        }
+    }
+
+    for fixture_id in path_gap_fixtures {
+        let fixture = corpus_fixture(fixture_id);
+        let meta = meta_yaml_for_fixture(&fixture);
+        assert_fixture_does_not_claim_older_band_representative_cells(fixture_id, &meta);
+        let applicability = older_band_applicability_for_fixture(&fixture);
+        assert_eq!(
+            applicability
+                .get("shared_contract_when_emitted")
+                .and_then(YamlValue::as_bool),
+            Some(true),
+            "{fixture_id} should declare shared_contract_when_emitted",
+        );
+        for (version_band, processing_path) in [
+            ("gcc13_14", "native_text_capture"),
+            ("gcc13_14", "single_sink_structured"),
+            ("gcc9_12", "native_text_capture"),
+            ("gcc9_12", "single_sink_structured"),
+        ] {
+            let note = older_band_applicability_cell(&applicability, version_band, processing_path)
+                .get("note")
+                .and_then(YamlValue::as_str)
+                .unwrap_or_default();
+            assert!(
+                note.contains("applicability gap"),
+                "{fixture_id} should describe {version_band}/{processing_path} as an applicability gap",
+            );
+            assert!(
+                note.contains("legacy-root fixture"),
+                "{fixture_id} should keep the legacy-root caveat for {version_band}/{processing_path}",
+            );
+        }
+    }
+}
+
+#[test]
+fn prp07_c_emitted_family_replays_keep_shared_render_and_public_export_contract() {
+    for fixture_id in [
+        "c/format_string/case-01",
+        "c/const_qualifier/case-01",
+        "c/conversion_narrowing/case-01",
+        "c/fallthrough/case-01",
+        "c/storage_class/case-01",
+        "c/string_character/case-01",
+        "c/strict_aliasing/case-01",
+        "c/sizeof_allocation/case-01",
+        "c/null_pointer/case-01",
+        "c/redefinition/case-01",
+        "c/return_type/case-01",
+        "c/uninitialized/case-01",
+        "c/unused/case-01",
+        "c/abi_alignment/case-01",
+        "c/asm_inline/case-01",
+        "c/bit_field_packed/case-01",
+        "c/odr_inline_linkage/case-01",
+        "c/overflow_arithmetic/case-01",
+        "c/pedantic_compliance/case-01",
+        "c/sanitizer_buffer/case-01",
+        "c/openmp/case-01",
+        "c/analyzer/case-01",
+    ] {
+        let fixture = corpus_fixture(fixture_id);
+        let semantic = fixture.expectations.semantic.as_ref().unwrap();
+        let replay = replay_fixture_document(&fixture).unwrap();
+        let request =
+            render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+        let render_result = render(request).unwrap();
+        let lead_node =
+            lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+        assert_eq!(
+            lead_node
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some(semantic.family.as_str()),
+            "{fixture_id} should keep {0} as the lead family",
+            semantic.family,
+        );
+
+        if semantic.first_action_required {
+            assert!(
+                lead_node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.first_action_hint.as_deref())
+                    .is_some_and(|hint| !hint.trim().is_empty()),
+                "{fixture_id} should keep a lead first_action_hint",
+            );
+        }
+
+        if let Some(max_line) = fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.first_action_max_line)
+        {
+            let line = first_help_line(&render_result.text).expect("expected help line");
+            assert!(
+                line <= max_line,
+                "{fixture_id} should keep help within line {max_line}, got {line}",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.partial_notice_required)
+            == Some(true)
+        {
+            assert!(
+                contains_partial_notice(&render_result.text),
+                "{fixture_id} should keep the partial notice visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_diagnostics_hint_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_diagnostics_hint(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics hint visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_sub_block_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_sub_block(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics sub-block visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.low_confidence_notice_required)
+            == Some(true)
+        {
+            assert!(
+                render_result.text.contains("confidence is limited"),
+                "{fixture_id} should keep the low-confidence notice visible",
+            );
+        }
+
+        let export = public_export_for_fixture(&fixture, &replay);
+        assert_eq!(export.status, PublicExportStatus::Available);
+        assert_eq!(
+            export.execution.version_band,
+            fixture.expectations.version_band
+        );
+        assert_eq!(
+            export.execution.processing_path,
+            fixture.expectations.processing_path
+        );
+        assert!(
+            export
+                .execution
+                .allowed_processing_paths
+                .contains(&fixture.expectations.processing_path),
+            "{fixture_id} should list its processing path in allowed_processing_paths",
+        );
+
+        let diagnostics = &export.result.as_ref().unwrap().diagnostics;
+        assert!(
+            !diagnostics.is_empty(),
+            "{fixture_id} should export at least one diagnostic",
+        );
+        assert!(
+            diagnostics.iter().any(|diagnostic| {
+                diagnostic
+                    .family
+                    .as_deref()
+                    .is_some_and(|family| family == semantic.family.as_str())
+            }),
+            "{fixture_id} should export at least one diagnostic tagged as {}",
+            semantic.family,
+        );
+        assert!(
+            diagnostics.iter().any(|diagnostic| {
+                diagnostic
+                    .headline
+                    .as_deref()
+                    .is_some_and(|headline| !headline.trim().is_empty())
+            }),
+            "{fixture_id} should export a non-empty headline",
+        );
+        if semantic.first_action_required {
+            assert!(
+                diagnostics.iter().any(|diagnostic| {
+                    diagnostic
+                        .first_action
+                        .as_deref()
+                        .is_some_and(|action| !action.trim().is_empty())
+                }),
+                "{fixture_id} should export at least one non-empty first_action",
+            );
+        }
+        if semantic.raw_provenance_required {
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|diagnostic| !diagnostic.provenance_capture_refs.is_empty()),
+                "{fixture_id} should keep provenance_capture_refs on at least one exported diagnostic",
+            );
+        }
+    }
 }
 
 #[test]
