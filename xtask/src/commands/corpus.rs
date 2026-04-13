@@ -2561,6 +2561,15 @@ pub(crate) fn fixture_surface_label(surface: FixtureSurface) -> &'static str {
     }
 }
 
+pub(crate) fn parse_fixture_surface_label(value: &str) -> Option<FixtureSurface> {
+    match value.trim() {
+        "default" => Some(FixtureSurface::Default),
+        "ci" => Some(FixtureSurface::Ci),
+        "debug" => Some(FixtureSurface::Debug),
+        _ => None,
+    }
+}
+
 pub(crate) fn fixture_coverage_report_for(
     fixtures: &[&Fixture],
     fixture_filter: Option<&str>,
@@ -2789,7 +2798,30 @@ pub(crate) fn required_anti_collision_scenarios() -> Vec<String> {
     ]
 }
 
+pub(crate) fn declared_matrix_applicability_surfaces(
+    fixture: &Fixture,
+) -> Option<Vec<FixtureSurface>> {
+    let meta_path = fixture.root.join("meta.yaml");
+    let raw = fs::read_to_string(meta_path).ok()?;
+    let parsed = serde_yaml::from_str::<serde_yaml::Value>(&raw).ok()?;
+    let mut surfaces = parsed
+        .get("matrix_applicability")?
+        .get("surfaces")?
+        .as_sequence()?
+        .iter()
+        .filter_map(|surface| surface.as_str())
+        .filter_map(parse_fixture_surface_label)
+        .collect::<Vec<_>>();
+    surfaces.sort();
+    surfaces.dedup();
+    Some(surfaces)
+}
+
 pub(crate) fn fixture_surfaces(fixture: &Fixture) -> Vec<FixtureSurface> {
+    if let Some(surfaces) = declared_matrix_applicability_surfaces(fixture) {
+        return surfaces;
+    }
+
     let mut surfaces = Vec::new();
     if fixture_has_any_tag(fixture, &["surface:default"]) {
         surfaces.push(FixtureSurface::Default);
@@ -3598,6 +3630,7 @@ mod tests {
         IntegrityExpectations, PerformanceExpectations, RenderExpectations, SemanticExpectations,
     };
     use std::collections::BTreeMap;
+    use std::fs;
     use std::path::PathBuf;
 
     fn fixture_with_tags(
@@ -3727,6 +3760,57 @@ mod tests {
             result: None,
             unavailable_reason: None,
         }
+    }
+
+    fn fixture_with_matrix_applicability(
+        fixture_id: &str,
+        major_version_selector: &str,
+        expected_mode: &str,
+        tags: &[&str],
+        fallback: Option<ExpectedFallback>,
+        matrix_surfaces: &[&str],
+    ) -> (tempfile::TempDir, Fixture) {
+        let tempdir = tempfile::tempdir().expect("tempdir");
+        let root = tempdir.path().join(fixture_id);
+        fs::create_dir_all(&root).expect("fixture root");
+
+        let fixture = fixture_with_tags(
+            fixture_id,
+            major_version_selector,
+            expected_mode,
+            tags,
+            fallback,
+        );
+        let matrix_surfaces_yaml = matrix_surfaces
+            .iter()
+            .map(|surface| format!("    - {surface}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let tags_yaml = tags
+            .iter()
+            .map(|tag| format!("  - '{tag}'"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        fs::write(
+            root.join("meta.yaml"),
+            format!(
+                "corpus_id: {fixture_id}\n\
+title: fixture\n\
+tags:\n\
+{tags_yaml}\n\
+matrix_applicability:\n{matrix_fields}",
+                matrix_fields = format!(
+                    "  version_band: {version_band}\n  processing_path: {processing_path}\n  surfaces:\n{matrix_surfaces_yaml}\n",
+                    version_band = fixture.expectations.version_band,
+                    processing_path = fixture.expectations.processing_path,
+                ),
+            ),
+        )
+        .expect("meta.yaml");
+
+        let mut fixture = fixture;
+        fixture.root = root;
+        (tempdir, fixture)
     }
 
     fn acceptance_summary_for_fixture(
@@ -3897,6 +3981,74 @@ mod tests {
         assert_eq!(
             fixture_surfaces(&fixture),
             vec![FixtureSurface::Default, FixtureSurface::Debug]
+        );
+    }
+
+    #[test]
+    fn fixture_surfaces_prefer_matrix_applicability_surfaces() {
+        let (tempdir, mut fixture) = fixture_with_matrix_applicability(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+                "surface:default",
+            ],
+            Some(ExpectedFallback::Required),
+            &["default", "ci"],
+        );
+        assert!(tempdir.path().exists());
+        assert!(fixture.root.join("meta.yaml").exists());
+        fixture.expectations.render.default = Some(RenderProfileExpectations::default());
+        fixture.expectations.render.debug = Some(RenderProfileExpectations::default());
+
+        assert_eq!(
+            fixture_surfaces(&fixture),
+            vec![FixtureSurface::Default, FixtureSurface::Ci]
+        );
+    }
+
+    #[test]
+    fn representative_coverage_uses_matrix_applicability_surface_declarations() {
+        let (tempdir, mut fixture) = fixture_with_matrix_applicability(
+            "c/syntax/case-band-b-native",
+            "13",
+            "render",
+            &[
+                "representative",
+                "band:gcc13_14",
+                "processing_path:native_text_capture",
+                "fallback_contract:honest_fallback",
+            ],
+            Some(ExpectedFallback::Required),
+            &["default", "ci"],
+        );
+        assert!(tempdir.path().exists());
+        assert!(fixture.root.join("meta.yaml").exists());
+        fixture.expectations.render.default = Some(RenderProfileExpectations::default());
+        fixture.expectations.render.debug = Some(RenderProfileExpectations::default());
+
+        let coverage =
+            fixture_coverage_report_for(&[&fixture], None, None, SnapshotSubset::Representative);
+
+        assert_eq!(
+            coverage
+                .counts_by_band_path_surface
+                .get("gcc13_14/native_text_capture/default"),
+            Some(&1)
+        );
+        assert_eq!(
+            coverage
+                .counts_by_band_path_surface
+                .get("gcc13_14/native_text_capture/ci"),
+            Some(&1)
+        );
+        assert!(
+            !coverage
+                .counts_by_band_path_surface
+                .contains_key("gcc13_14/native_text_capture/debug")
         );
     }
 

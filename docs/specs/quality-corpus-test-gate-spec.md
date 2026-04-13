@@ -616,7 +616,7 @@ GCC13-14 / GCC9-12 を first-class beta band として扱う場合、curated cor
 | `GCC9-12` | `NativeTextCapture` | `default`, `ci`, `debug` | useful-subset family では bounded render か honest fallback のどちらを期待するかを fixture で明示し、checked-in replay expectation が存在する surface を `surface:*` と `matrix_applicability.surfaces` で宣言する。missing surface は `matrix_applicability.note` で理由を残す | `band:gcc9_12`, `processing_path:native_text_capture`, `surface:default`, `surface:ci`, optional `surface:debug`, `fallback_contract:bounded_render`, `matrix_applicability` |
 | `GCC9-12` | `SingleSinkStructured` | `default`, `ci`, `debug` | explicit JSON structured capture の bounded render を fixture で明示し、checked-in replay expectation が存在する surface を `surface:*` と `matrix_applicability.surfaces` で宣言する。missing surface は `matrix_applicability.note` で理由を残す | `band:gcc9_12`, `processing_path:single_sink_structured`, `surface:default`, `surface:ci`, optional `surface:debug`, `fallback_contract:bounded_render`, `matrix_applicability` |
 
-representative fixture を gate に含めるときは、`VersionBand` を潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。`debug` surface を宣言した fixture は explainability signal と suppressed-group visibility の差分を replay で検証できなければならない。`debug` を宣言しない fixture は、`matrix_applicability.note` で omission reason を残さなければならない。
+representative fixture を gate に含めるときは、`VersionBand` を潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。`matrix_applicability.surfaces` が存在する場合、gate はそれを replay stop-ship surface の正本として扱い、incidental な render profile の有無で coverage を広げてはならない。`debug` surface を宣言した fixture は explainability signal と suppressed-group visibility の差分を replay で検証できなければならない。`debug` を宣言しない fixture は、`matrix_applicability.note` で omission reason を残さなければならない。CI summary / matrix summary は missing cell 名と path-aware regression を `matrix_cell` / `concern` 単位で残し、lane-level failed boolean だけに潰してはならない。
 
 representative replay には、別途 anti-collision corpus slice を持たせなければならない。anti-collision fixture は `anti_collision` tag と scenario tag を持ち、少なくとも `same_file_dual_syntax`, `syntax_flood_plus_type`, `template_frontier_independent` を 1 件以上ずつ含むこと。Band coverage は `gcc15/dual_sink_structured`, `gcc13_14/native_text_capture`, `gcc13_14/single_sink_structured`, `gcc9_12/native_text_capture`, `gcc9_12/single_sink_structured` を必須とする。
 
@@ -826,10 +826,11 @@ real compiler matrix は、`GCC15` / `GCC13-14` / `GCC9-12` を 1 つの in-scop
 
 | Band | 対象 | gate レベル |
 |---|---|---|
-| `GCC15` representative lane | GCC 15 latest patch | PR / nightly / release |
-| `GCC13-14` representative lane | GCC 13 latest patch | PR / nightly / release |
-| `GCC13-14` additional evidence lane | GCC 14 latest patch | nightly / release |
-| `GCC9-12` representative lane | GCC 12 latest patch or distro default | PR / nightly / release |
+| `GCC15` representative lane | GCC 15 latest patch | PR / nightly / periodic evidence |
+| `GCC13-14` representative lane | GCC 13 latest patch | PR / nightly / periodic evidence |
+| `GCC13-14` additional evidence lane | GCC 14 latest patch | nightly / periodic evidence |
+| `GCC9-12` representative lane | GCC 12 latest patch or distro default | PR / nightly / periodic evidence |
+| `gcc15` release smoke lane | GCC 15 packaging / signing / install path | release-only smoke; diagnostic contract stays on the PR / nightly / periodic lanes |
 
 ### 15.2 mode matrix
 

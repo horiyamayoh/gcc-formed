@@ -149,6 +149,42 @@ def run_gate_summary(
     return completed.returncode
 
 
+def aggregate_matrix_blockers(lane_summaries: list[dict]) -> tuple[dict, list[dict], list[str]]:
+    blockers: list[dict] = []
+    missing_required_matrix_cells: set[str] = set()
+    for lane_summary in lane_summaries:
+        for blocker in lane_summary.get("machine_readable_blockers", []):
+            enriched = dict(blocker)
+            enriched["lane"] = lane_summary["lane"]
+            blockers.append(enriched)
+            if blocker.get("category") == "matrix_hole" and blocker.get("matrix_cell"):
+                missing_required_matrix_cells.add(blocker["matrix_cell"])
+
+    blocker_counts = {
+        "total": len(blockers),
+        "by_category": {},
+        "by_concern": {},
+    }
+    for blocker in blockers:
+        category = blocker.get("category") or "unknown"
+        concern = blocker.get("concern") or "unknown"
+        blocker_counts["by_category"][category] = blocker_counts["by_category"].get(category, 0) + 1
+        blocker_counts["by_concern"][concern] = blocker_counts["by_concern"].get(concern, 0) + 1
+
+    blocker_counts["by_category"] = dict(sorted(blocker_counts["by_category"].items()))
+    blocker_counts["by_concern"] = dict(sorted(blocker_counts["by_concern"].items()))
+    blockers.sort(
+        key=lambda blocker: (
+            blocker.get("lane") or "",
+            blocker.get("category") or "",
+            blocker.get("matrix_cell") or "",
+            blocker.get("fixture_id") or "",
+            blocker.get("concern") or "",
+        )
+    )
+    return blocker_counts, blockers, sorted(missing_required_matrix_cells)
+
+
 def write_matrix_summary(report_dir: Path, lane_summaries: list[dict]) -> None:
     overall_status = "success"
     failed_lanes: list[str] = []
@@ -160,12 +196,18 @@ def write_matrix_summary(report_dir: Path, lane_summaries: list[dict]) -> None:
         for key, value in lane_summary["failure_classification_counts"].items():
             failure_classification_counts[key] = failure_classification_counts.get(key, 0) + value
 
+    machine_readable_blocker_counts, machine_readable_blockers, missing_required_matrix_cells = (
+        aggregate_matrix_blockers(lane_summaries)
+    )
     payload = {
         "schema_version": 1,
         "workflow": "nightly-gate",
         "overall_status": overall_status,
         "failed_lanes": failed_lanes,
         "failure_classification_counts": failure_classification_counts,
+        "machine_readable_blocker_counts": machine_readable_blocker_counts,
+        "missing_required_matrix_cells": missing_required_matrix_cells,
+        "machine_readable_blockers": machine_readable_blockers,
         "lanes": lane_summaries,
     }
     summary_json = report_dir / "matrix-summary.json"
@@ -177,21 +219,64 @@ def write_matrix_summary(report_dir: Path, lane_summaries: list[dict]) -> None:
         "",
         f"- overall_status: `{overall_status}`",
         f"- failed_lanes: `{', '.join(failed_lanes) if failed_lanes else 'none'}`",
+        (
+            "- machine_readable_blockers: "
+            f"total={machine_readable_blocker_counts['total']}, "
+            f"matrix_hole={machine_readable_blocker_counts['by_category'].get('matrix_hole', 0)}, "
+            f"native_parity={machine_readable_blocker_counts['by_category'].get('native_parity', 0)}, "
+            f"quality_regression={machine_readable_blocker_counts['by_category'].get('quality_regression', 0)}"
+        ),
+        (
+            "- missing_required_matrix_cells: "
+            f"`{', '.join(missing_required_matrix_cells) if missing_required_matrix_cells else 'none'}`"
+        ),
         "",
-        "| lane | gcc_image | version_band | release_blocker | overall_status | failure_classification |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| lane | gcc_image | version_band | release_blocker | overall_status | failure_classification | blockers |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for lane_summary in lane_summaries:
+        blocker_counts = lane_summary.get("machine_readable_blocker_counts") or {}
+        blocker_by_category = blocker_counts.get("by_category") or {}
         lines.append(
-            "| {lane} | {gcc_image} | {version_band} | {release_blocker} | {overall_status} | {failure_classification} |".format(
+            "| {lane} | {gcc_image} | {version_band} | {release_blocker} | {overall_status} | {failure_classification} | {blockers} |".format(
                 lane=lane_summary["lane"],
                 gcc_image=lane_summary["gcc_image"],
                 version_band=lane_summary["version_band"],
                 release_blocker=lane_summary["release_blocker"],
                 overall_status=lane_summary["overall_status"],
                 failure_classification=lane_summary["overall_failure_classification"] or "none",
+                blockers=(
+                    f"total={blocker_counts.get('total', 0)}, "
+                    f"matrix_hole={blocker_by_category.get('matrix_hole', 0)}, "
+                    f"native_parity={blocker_by_category.get('native_parity', 0)}, "
+                    f"quality_regression={blocker_by_category.get('quality_regression', 0)}"
+                ),
             )
         )
+
+    if machine_readable_blockers:
+        lines.extend(
+            [
+                "",
+                "## Machine-Readable Blockers",
+                "",
+                "| lane | category | band | path | surface | matrix_cell | concern | fixture | summary |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for blocker in machine_readable_blockers:
+            lines.append(
+                "| "
+                f"{blocker.get('lane') or '-'} | "
+                f"`{blocker.get('category') or '-'}` | "
+                f"`{blocker.get('support_band') or '-'}` | "
+                f"`{blocker.get('processing_path') or '-'}` | "
+                f"`{blocker.get('surface') or '-'}` | "
+                f"`{blocker.get('matrix_cell') or '-'}` | "
+                f"`{blocker.get('concern') or '-'}` | "
+                f"`{blocker.get('fixture_id') or '-'}` | "
+                f"{blocker.get('summary') or '-'} |"
+            )
     summary_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -324,6 +409,8 @@ def main() -> int:
                 "overall_status": summary["overall_status"],
                 "overall_failure_classification": summary["overall_failure_classification"],
                 "failure_classification_counts": summary["failure_classification_counts"],
+                "machine_readable_blocker_counts": summary.get("machine_readable_blocker_counts", {}),
+                "machine_readable_blockers": summary.get("machine_readable_blockers", []),
                 "report_root": str(lane_report_root),
                 "summary_path": str(lane_report_root / "gate" / "gate-summary.json"),
             }

@@ -366,7 +366,7 @@ class GateSummaryTest(unittest.TestCase):
             )
             self.assertEqual(summary["machine_readable_blockers"][0]["surface"], "ci")
 
-    def test_gate_summary_skips_reference_path_only_steps_outside_reference_band(self) -> None:
+    def test_gate_summary_skips_release_lane_only_steps_outside_release_lane(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             report_root = root / "reports"
@@ -382,7 +382,7 @@ class GateSummaryTest(unittest.TestCase):
                             "id": "release-packaging-smoke",
                             "order": 1,
                             "name": "Release packaging smoke",
-                            "policy": "reference_path_only",
+                            "policy": "release_lane_only",
                             "failure_classification": "product",
                             "gate_scope": "repository",
                             "command": "echo package",
@@ -404,7 +404,7 @@ class GateSummaryTest(unittest.TestCase):
                 (report_root / "gate" / "gate-summary.json").read_text(encoding="utf-8")
             )
             self.assertEqual(summary["steps"][0]["status"], "skipped_by_policy")
-            self.assertEqual(summary["steps"][0]["step"]["policy"], "reference_path_only")
+            self.assertEqual(summary["steps"][0]["step"]["policy"], "release_lane_only")
             self.assertEqual(summary["steps"][0]["matrix"]["version_band"], "gcc13_14")
 
 
@@ -600,7 +600,7 @@ class CheckedInPlanTest(unittest.TestCase):
             "dependency-and-license-gate",
         ]:
             with self.subTest(step_id=step_id):
-                self.assertEqual(steps_by_id[step_id]["policy"], "reference_path_only")
+                self.assertEqual(steps_by_id[step_id]["policy"], "release_lane_only")
 
 
 class CheckedInWorkflowTest(unittest.TestCase):
@@ -706,11 +706,10 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertIn('--matrix-version-band "$MATRIX_VERSION_BAND"', snapshot_block.group(0))
         self.assertNotIn("if: matrix.release_blocker", snapshot_block.group(0))
 
-    def test_release_beta_workflow_uses_reference_path_snapshot_and_replay_stop_ship(self) -> None:
+    def test_release_beta_workflow_keeps_replay_stop_ship_without_gcc15_only_snapshot(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "release-beta.yml"
         ).read_text(encoding="utf-8")
-        self.assertIn("Representative GCC 15 release-lane snapshot check", workflow)
         self.assertIn("Path-aware replay stop-ship contract", workflow)
         self.assertIn("ci/public_surface.py render-release-body", workflow)
         self.assertIn("ci/gate_replay_contract.py", workflow)
@@ -720,13 +719,15 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("--support-tier", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
         self.assertNotIn('cat > "$RELEASE_NOTES_PATH" <<EOF', workflow)
-        self.assertIn("--version-band gcc15", workflow)
+        self.assertNotIn("Representative GCC 15 release-lane snapshot check", workflow)
+        self.assertNotIn("snapshot-report.json", workflow)
+        self.assertNotIn("--version-band gcc15", workflow)
         self.assertNotIn("gcc15_plus", workflow)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
         step_names = self.extract_step_names(".github/workflows/release-beta.yml")
         self.assertLess(step_names.index("Representative acceptance replay"), step_names.index("Path-aware replay stop-ship contract"))
-        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Representative GCC 15 release-lane snapshot check"))
+        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Vendor dependency tree"))
         self.assertLess(step_names.index("Assemble GitHub Release bundles"), step_names.index("Write release provenance"))
         self.assertLess(step_names.index("Write release provenance"), step_names.index("Write release notes"))
         self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub prerelease"))

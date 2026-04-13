@@ -30,7 +30,9 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 - `pr-gate` is green on `main`.
 - The `nightly-gate` blocker portion is green across the current multi-band matrix.
-- The current blocker matrix lanes are `gcc:12`, `gcc:13`, `gcc:14`, and `gcc:15`.
+- The current required diagnostic matrix evidence lanes are `gcc:12`, `gcc:13`, and `gcc:15`.
+- `gcc:14` remains additional nightly / periodic evidence inside `gcc13_14`.
+- The release-only `gcc15` lane is limited to packaging / signing / install smoke and does not redefine diagnostic coverage.
 - Representative acceptance replay is green and the report artifacts are attached.
 - Representative matrix snapshot check is green and the report artifacts are attached.
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.

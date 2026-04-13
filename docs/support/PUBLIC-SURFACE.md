@@ -20,8 +20,8 @@ beta_release_intro: This GitHub prerelease ships artifact `{version}` in the `v1
 beta_release_gate_scope:
   - `pr-gate` blocks on representative replay plus self-check and snapshot coverage for `gcc9_12`, `gcc13_14`, and `gcc15`.
   - `replay-stop-ship.json` preserves missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions across the in-scope bands.
-  - Nightly real-compiler evidence retains an additional `gcc:14` lane inside `gcc13_14` without changing the public contract.
-  - Release-only packaging, signing, install, and promote steps may still run on the `gcc15` release lane, but they do not narrow the diagnostic contract.
+  - Nightly or periodic real-compiler evidence keeps `gcc:12`, `gcc:13`, and `gcc:15` visible, while `gcc:14` remains additional evidence inside `gcc13_14`.
+  - The release-only `gcc15` lane remains packaging / signing / install smoke and does not narrow the shared diagnostic contract.
 beta_install_path_lines:
   - Direct install / rollback path: see `docs/releases/PUBLIC-BETA-RELEASE.md` and use the `.control.tar.gz` bundle.
   - Exact-pin release-repository path: use the `.release-repo.tar.gz` bundle together with `cargo xtask install-release`.
@@ -61,8 +61,8 @@ stable_evidence_lines:
 stable_release_gate_scope:
   - Stable promotion is blocked by strict `rc-gate`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off across the shared `GCC 9-15` contract.
   - `rollout-matrix-report.json` and `replay-stop-ship.json` keep the required `gcc9_12`, `gcc13_14`, and `gcc15` coverage visible in the RC bundle.
-  - Additional nightly `gcc:14` evidence stays visible as capability coverage inside `gcc13_14`.
-  - Release-only packaging, signing, install, and promote steps may still run on the `gcc15` release lane without narrowing the diagnostic contract.
+  - Nightly or periodic real-compiler evidence keeps `gcc:12`, `gcc:13`, and `gcc:15` visible, while `gcc:14` remains additional evidence inside `gcc13_14`.
+  - The release-only `gcc15` lane remains packaging / signing / install smoke and does not narrow the shared diagnostic contract.
   - `rollout-matrix-report.json` records the expected current `VersionBand` / `ProcessingPath` cases.
   - `replay-stop-ship.json` records missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions from representative replay.
 stable_release_doc_paths:

@@ -145,6 +145,12 @@ class LocalGateRunnerTest(unittest.TestCase):
                             "infrastructure": 0,
                             "instrumentation": 0,
                         },
+                        "machine_readable_blocker_counts": {
+                            "total": 0,
+                            "by_category": {},
+                            "by_concern": {},
+                        },
+                        "machine_readable_blockers": [],
                         "report_root": str(report_dir / "lanes" / "gcc12"),
                         "summary_path": str(report_dir / "lanes" / "gcc12" / "gate/gate-summary.json"),
                     },
@@ -160,6 +166,35 @@ class LocalGateRunnerTest(unittest.TestCase):
                             "infrastructure": 0,
                             "instrumentation": 0,
                         },
+                        "machine_readable_blocker_counts": {
+                            "total": 2,
+                            "by_category": {"matrix_hole": 1, "quality_regression": 1},
+                            "by_concern": {
+                                "coverage.band_path_surface": 1,
+                                "semantic.family": 1,
+                            },
+                        },
+                        "machine_readable_blockers": [
+                            {
+                                "category": "matrix_hole",
+                                "concern": "coverage.band_path_surface",
+                                "matrix_cell": "gcc13_14/native_text_capture/ci",
+                                "support_band": "gcc13_14",
+                                "processing_path": "native_text_capture",
+                                "surface": "ci",
+                                "fixture_id": None,
+                                "summary": "missing required coverage cell `gcc13_14/native_text_capture/ci`",
+                            },
+                            {
+                                "category": "quality_regression",
+                                "concern": "semantic.family",
+                                "support_band": "gcc15",
+                                "processing_path": "dual_sink_structured",
+                                "surface": None,
+                                "fixture_id": "c/syntax/case-01",
+                                "summary": "expected `syntax`, got `linker`",
+                            },
+                        ],
                         "report_root": str(report_dir / "lanes" / "gcc15"),
                         "summary_path": str(report_dir / "lanes" / "gcc15" / "gate/gate-summary.json"),
                     },
@@ -169,9 +204,16 @@ class LocalGateRunnerTest(unittest.TestCase):
             self.assertEqual(payload["overall_status"], "failure")
             self.assertEqual(payload["failed_lanes"], ["gcc15"])
             self.assertEqual(payload["failure_classification_counts"]["product"], 1)
+            self.assertEqual(payload["machine_readable_blocker_counts"]["total"], 2)
+            self.assertEqual(
+                payload["missing_required_matrix_cells"],
+                ["gcc13_14/native_text_capture/ci"],
+            )
+            self.assertEqual(payload["machine_readable_blockers"][0]["lane"], "gcc15")
             markdown = (report_dir / "matrix-summary.md").read_text(encoding="utf-8")
             self.assertIn("gcc12", markdown)
             self.assertIn("gcc15", markdown)
+            self.assertIn("gcc13_14/native_text_capture/ci", markdown)
 
 
 if __name__ == "__main__":

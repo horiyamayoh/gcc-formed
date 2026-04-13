@@ -153,8 +153,8 @@ def policy_skips_step(
     policy = step.get("policy", "always")
     if policy == "release_blocker_only":
         return release_blocker == "false"
-    if policy == "reference_path_only":
-        return matrix_version_band not in {None, "gcc15"}
+    if policy in {"release_lane_only", "reference_path_only"}:
+        return release_blocker == "false"
     return False
 
 

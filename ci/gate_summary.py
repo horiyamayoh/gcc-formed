@@ -85,8 +85,8 @@ def policy_skips_step(step: dict, args: argparse.Namespace) -> bool:
     policy = step.get("policy", "always")
     if policy == "release_blocker_only":
         return args.release_blocker == "false"
-    if policy == "reference_path_only":
-        return resolve_matrix_version_band(args) not in {None, "gcc15"}
+    if policy in {"release_lane_only", "reference_path_only"}:
+        return args.release_blocker == "false"
     return False
 
 
@@ -347,17 +347,19 @@ def build_markdown(summary: dict) -> str:
                 "",
                 "## Machine-Readable Blockers",
                 "",
-                "| Step | Band | Path | Surface | Concern | Fixture | Summary |",
-                "| --- | --- | --- | --- | --- | --- | --- |",
+                "| Step | Category | Band | Path | Surface | Matrix Cell | Concern | Fixture | Summary |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
             ]
         )
         for blocker in summary["machine_readable_blockers"]:
             lines.append(
                 "| "
                 f"{blocker.get('step_name') or blocker.get('step_id') or '-'} | "
+                f"`{blocker.get('category') or '-'}` | "
                 f"`{blocker.get('support_band') or '-'}` | "
                 f"`{blocker.get('processing_path') or '-'}` | "
                 f"`{blocker.get('surface') or '-'}` | "
+                f"`{blocker.get('matrix_cell') or '-'}` | "
                 f"`{blocker.get('concern') or '-'}` | "
                 f"`{blocker.get('fixture_id') or '-'}` | "
                 f"{blocker.get('summary') or '-'} |"
