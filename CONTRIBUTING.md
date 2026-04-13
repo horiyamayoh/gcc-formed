@@ -41,6 +41,7 @@ Run these from the repository root unless the change is documentation-only:
 
 ```bash
 cargo xtask check
+cargo xtask ci-gate --workflow pr
 cargo xtask replay --root corpus
 cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15
 cargo deny check
@@ -52,6 +53,8 @@ cargo xtask hermetic-release-check --vendor-dir vendor --bin gcc-formed --target
 ```bash
 python3 -B -m unittest discover -s ci -p 'test_*.py'
 ```
+
+`cargo xtask ci-gate --workflow pr|nightly|rc` is the local GitHub CI-equivalent gate. It uses the same shared step catalog as the checked-in workflows, writes artifacts under `target/local-gates/<workflow>/` by default, and keeps local `vendor/` / `dist/` output under an isolated `work/` subtree. `nightly` accepts `--matrix-lane gcc12|gcc13|gcc14|gcc15|all`.
 
 If you touch release packaging, install flows, or release metadata, also validate the relevant `cargo xtask package`, `install`, `release-publish`, `release-promote`, and `install-release` paths in a clean worktree.
 

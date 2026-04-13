@@ -238,6 +238,66 @@ fn current_release_fixture_version_name() -> String {
     format!("v{}", current_release_fixture_version())
 }
 
+#[test]
+fn ci_gate_cli_parses_nightly_lane_and_report_dir() {
+    let cli = Cli::try_parse_from([
+        "xtask",
+        "ci-gate",
+        "--workflow",
+        "nightly",
+        "--matrix-lane",
+        "gcc15",
+        "--report-dir",
+        "target/local-gates/nightly-smoke",
+    ])
+    .unwrap();
+
+    match cli.command {
+        Commands::CiGate {
+            workflow,
+            report_dir,
+            matrix_lane,
+        } => {
+            assert_eq!(workflow, CiWorkflow::Nightly);
+            assert_eq!(
+                report_dir,
+                Some(Path::new("target/local-gates/nightly-smoke").to_path_buf())
+            );
+            assert_eq!(matrix_lane, Some(CiMatrixLane::Gcc15));
+        }
+        command => panic!("unexpected command: {command:?}"),
+    }
+}
+
+#[test]
+fn ci_gate_command_builder_rejects_matrix_lane_for_pr() {
+    let error = build_ci_gate_command(CiWorkflow::Pr, None, Some(CiMatrixLane::Gcc15)).unwrap_err();
+    assert!(error.to_string().contains("`nightly`"));
+}
+
+#[test]
+fn ci_gate_command_builder_points_to_local_runner() {
+    let command = build_ci_gate_command(
+        CiWorkflow::Nightly,
+        Some(&Path::new("target/local-gates/nightly").to_path_buf()),
+        Some(CiMatrixLane::Gcc12),
+    )
+    .unwrap();
+    assert_eq!(command.program, "python3");
+    assert!(command.args[0].ends_with("ci/run_local_gate.py"));
+    assert_eq!(
+        command.args[1..],
+        [
+            "--workflow",
+            "nightly",
+            "--report-dir",
+            "target/local-gates/nightly",
+            "--matrix-lane",
+            "gcc12",
+        ]
+    );
+}
+
 fn init_release_repo(version: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
     let sandbox = tempfile::tempdir().unwrap();
     let repo_root = sandbox.path().join("repo");

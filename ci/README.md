@@ -4,6 +4,8 @@
 
 `cargo xtask check` は `cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、`python3 -B -m unittest discover -s ci -p test_*.py` を同じ標準 gate として実行する。したがって `cargo-xtask-check` step が green であれば、Rust workspace lint/test、representative replay、CI helper scripts、support-boundary docs、governance docs、PR template の contract tests が同じ入口で通っている。
 
+`cargo xtask ci-gate --workflow <pr|nightly|rc>` は local GitHub CI-equivalent gate であり、GitHub Actions と同じ shared execution catalog を使って `ci/run_gate_step.py` から step を解決する。local 実行は `target/local-gates/<workflow>/` を既定出力先とし、`vendor/`、`dist/`、release repository、signing key は `work/` 配下へ隔離する。
+
 ## Layout
 
 ```text
@@ -92,4 +94,6 @@ When a job consumes a machine-readable export, keep the raw JSON artifact as par
 - [nightly-gate.json](/home/dhuru/13_gcc-formed/gcc-formed/ci/plans/nightly-gate.json)
 - [rc-gate.json](/home/dhuru/13_gcc-formed/gcc-formed/ci/plans/rc-gate.json)
 
-plan files は step order, gate scope / version-band classification, synthetic skip metadata, summary-only command preview を固定する。`pr-gate` は `gcc15_plus` reference path の checked-in contract として扱い、`nightly-gate` では `reference_path_only` policy を使って release packaging / install / dependency checks を `gcc15_plus` reference path に限定し、matrix replay / self-check / snapshot steps は in-scope bands すべての blocker として残す。workflow YAML 側では実際の shell command を `ci/gate_step.py` 経由で実行し、path-aware replay gate は `ci/gate_replay_contract.py` が `replay-report.json` を classification artifact に変換し、summary は `ci/gate_summary.py` が生成する。
+plan files は step order, gate scope / version-band classification, synthetic skip metadata, summary-only command preview を固定する。`pr-gate` は `gcc15_plus` reference path の checked-in contract として扱い、`nightly-gate` では `reference_path_only` policy を使って release packaging / install / dependency checks を `gcc15_plus` reference path に限定し、matrix replay / self-check / snapshot steps は in-scope bands すべての blocker として残す。workflow YAML 側では `ci/run_gate_step.py` が shared execution catalog から実コマンドを解決し、path-aware replay gate は `ci/gate_replay_contract.py` が `replay-report.json` を classification artifact に変換し、summary は `ci/gate_summary.py` が生成する。
+
+実コマンドの正本は `ci/gate_catalog.py` と `ci/run_gate_step.py` にあり、checked-in workflows と `ci/run_local_gate.py` の両方がそこを通る。`nightly` を local 実行するときは `cargo xtask ci-gate --workflow nightly --matrix-lane gcc12|gcc13|gcc14|gcc15|all` を使い、lane ごとの report root に加えて top-level `matrix-summary.json` / `matrix-summary.md` を出力する。

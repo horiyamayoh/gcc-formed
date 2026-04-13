@@ -5,7 +5,8 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*, trace_bundle::*,
+    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*,
+    trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -24,6 +25,14 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    CiGate {
+        #[arg(long, value_enum)]
+        workflow: CiWorkflow,
+        #[arg(long)]
+        report_dir: Option<PathBuf>,
+        #[arg(long, value_enum)]
+        matrix_lane: Option<CiMatrixLane>,
+    },
     HermeticReleaseCheck {
         #[arg(long, default_value = "vendor")]
         vendor_dir: PathBuf,
@@ -241,6 +250,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Check => run_check()?,
+        Commands::CiGate {
+            workflow,
+            report_dir,
+            matrix_lane,
+        } => run_ci_gate(workflow, report_dir, matrix_lane)?,
         Commands::HermeticReleaseCheck {
             vendor_dir,
             bin,

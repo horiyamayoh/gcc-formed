@@ -1,12 +1,16 @@
 import json
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "ci"))
+import gate_catalog  # noqa: E402
+
 GATE_SUMMARY = REPO_ROOT / "ci" / "gate_summary.py"
 GATE_REPLAY_CONTRACT = REPO_ROOT / "ci" / "gate_replay_contract.py"
 
@@ -554,6 +558,13 @@ class CheckedInPlanTest(unittest.TestCase):
                     self.assertIn("gate_scope", step)
                     self.assertNotIn("support_tier", step)
 
+    def test_checked_in_plans_all_have_shared_execution_entries(self) -> None:
+        for workflow in ["pr-gate", "nightly-gate", "rc-gate"]:
+            with self.subTest(workflow=workflow):
+                plan = self.load_plan(f"ci/plans/{workflow}.json")
+                expected_step_ids = {step["id"] for step in plan["steps"]}
+                self.assertEqual(expected_step_ids, set(gate_catalog.EXECUTION_CATALOG[workflow]))
+
     def test_nightly_plan_marks_matrix_blocker_steps_with_matrix_metadata(self) -> None:
         plan = self.load_plan("ci/plans/nightly-gate.json")
         steps_by_id = {step["id"]: step for step in plan["steps"]}
@@ -606,6 +617,17 @@ class CheckedInWorkflowTest(unittest.TestCase):
         plan_step_ids = [step["id"] for step in plan["steps"]]
         self.assertEqual(workflow_step_ids, plan_step_ids)
 
+    def test_workflows_use_shared_gate_runner(self) -> None:
+        for relative_path in [
+            ".github/workflows/pr.yml",
+            ".github/workflows/nightly.yml",
+            ".github/workflows/rc-gate.yml",
+        ]:
+            with self.subTest(workflow=relative_path):
+                workflow = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
+                self.assertIn("python3 ci/run_gate_step.py", workflow)
+                self.assertNotIn("python3 ci/gate_step.py", workflow)
+
     def test_pr_workflow_uses_reference_path_naming_instead_of_gcc15_labels(self) -> None:
         workflow = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text(encoding="utf-8")
         self.assertIn("Build GCC 15 reference-path CI image", workflow)
@@ -651,7 +673,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("continue-on-error: ${{ matrix.release_blocker == false }}", workflow)
         self.assertIn("Representative matrix snapshot check", workflow)
         self.assertIn("--step-id representative-matrix-snapshot-check", workflow)
-        self.assertIn('--docker-image "$MATRIX_GCC_VERSION"', workflow)
+        self.assertIn('python3 ci/run_gate_step.py', workflow)
         self.assertNotIn("Representative GCC 15 snapshot check", workflow)
         self.assertNotIn("--step-id representative-gcc15-snapshot-check", workflow)
         snapshot_block = re.search(
@@ -659,7 +681,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
             workflow,
         )
         self.assertIsNotNone(snapshot_block)
-        self.assertIn('--version-band "$MATRIX_VERSION_BAND"', snapshot_block.group(0))
+        self.assertIn('--matrix-version-band "$MATRIX_VERSION_BAND"', snapshot_block.group(0))
         self.assertNotIn("if: matrix.release_blocker", snapshot_block.group(0))
 
     def test_release_beta_workflow_uses_reference_path_snapshot_and_replay_stop_ship(self) -> None:

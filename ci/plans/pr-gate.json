@@ -191,7 +191,7 @@
       "gcc_version": "host",
       "artifact_paths": [
         "$REPORT_ROOT/release/package.json",
-        "dist"
+        "$DIST_DIR"
       ],
       "gate_scope": "repository"
     },

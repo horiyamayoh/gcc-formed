@@ -20,34 +20,30 @@ jobs:
           echo "REPORT_ROOT=$RUNNER_TEMP/reports" >> "$GITHUB_ENV"
       - name: Prepare report directories
         run: |
-          python3 ci/gate_step.py \
-            --plan "$GATE_PLAN" \
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
             --step-id prepare-report-directories \
-            --report-root "$REPORT_ROOT" \
-            --command 'mkdir -p "$REPORT_ROOT/rc-gate" "$REPORT_ROOT/gate"'
+            --report-root "$REPORT_ROOT"
       - name: Capture host build environment
         run: |
-          python3 ci/gate_step.py \
-            --plan "$GATE_PLAN" \
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
             --step-id capture-host-build-environment \
-            --report-root "$REPORT_ROOT" \
-            --command 'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" --mode host --toolchain-file rust-toolchain.toml'
+            --report-root "$REPORT_ROOT"
       - name: cargo xtask rc-gate
         id: cargo_xtask_rc_gate
         run: |
-          python3 ci/gate_step.py \
-            --plan "$GATE_PLAN" \
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
             --step-id cargo-xtask-rc-gate \
-            --report-root "$REPORT_ROOT" \
-            --command 'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" --metrics-manual-report eval/rc/metrics-manual-eval.json --issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz --ux-signoff-report eval/rc/ux-signoff.json --allow-pending-manual-checks'
+            --report-root "$REPORT_ROOT"
       - name: Replay stop-ship contract
         if: always() && steps.cargo_xtask_rc_gate.outcome != 'skipped'
         run: |
-          python3 ci/gate_step.py \
-            --plan "$GATE_PLAN" \
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
             --step-id path-aware-replay-stop-ship \
-            --report-root "$REPORT_ROOT" \
-            --command 'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/rc-gate/replay-report.json" --output "$REPORT_ROOT/gate/replay-stop-ship.json"'
+            --report-root "$REPORT_ROOT"
       - name: Gate summary
         if: always()
         run: |

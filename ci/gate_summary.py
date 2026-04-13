@@ -149,6 +149,14 @@ def normalize_status_payload(payload: dict) -> dict:
 def build_mapping(args: argparse.Namespace) -> dict:
     return {
         "REPORT_ROOT": args.report_root,
+        "WORK_ROOT": os.environ.get("WORK_ROOT", ""),
+        "TARGET_DIR": os.environ.get("TARGET_DIR", ""),
+        "DIST_DIR": os.environ.get("DIST_DIR", ""),
+        "VENDOR_DIR": os.environ.get("VENDOR_DIR", ""),
+        "CONTROL_DIR": os.environ.get("CONTROL_DIR", ""),
+        "RELEASE_REPO_DIR": os.environ.get("RELEASE_REPO_DIR", ""),
+        "SIGNING_KEY_PATH": os.environ.get("SIGNING_KEY_PATH", ""),
+        "PACKAGE_VERSION": os.environ.get("PACKAGE_VERSION", ""),
         "MATRIX_GCC_VERSION": args.matrix_gcc_version or "",
         "MATRIX_SUPPORT_TIER": args.legacy_matrix_support_tier or "",
         "MATRIX_VERSION_BAND": resolve_matrix_version_band(args) or "",

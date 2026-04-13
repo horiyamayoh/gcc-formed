@@ -257,12 +257,15 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 
 ```bash
 cargo xtask check
+cargo xtask ci-gate --workflow pr
 cargo build --bin gcc-formed
 ./target/debug/gcc-formed --formed-self-check
 cargo xtask replay --root corpus
 ```
 
 `cargo xtask check` は、`cargo fmt --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo test --workspace`、representative replay、Python の `ci/test_*.py` contract suite を同じ標準 developer gate として順に実行する。
+
+GitHub CI 相当の gate をローカルで回すときは `cargo xtask ci-gate --workflow <pr|nightly|rc>` を使う。`nightly` は `--matrix-lane gcc12|gcc13|gcc14|gcc15|all` を取り、出力は既定で `target/local-gates/<workflow>/` に隔離する。
 
 Path-aware の実装が進んだら、band ごとの replay / snapshot / quality gate を追加で回す。  
 個別の release / install / rollback / stable-promotion 手順は [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
