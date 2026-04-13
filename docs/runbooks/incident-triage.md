@@ -39,7 +39,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 
 ### `GCC15`
 
-- Treat as shared in-scope contract priority.
+- Treat as in-scope without introducing a higher-value band claim.
 - Check whether the failure is:
   - incorrect renderer output
   - missing/incorrect first action
@@ -48,14 +48,14 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 
 ### `GCC13-14`
 
-- Treat as in-scope under the same public contract as `GCC15`.
+- Treat as in-scope under the shared public contract.
 - Confirm whether the run behaved like `NativeTextCapture`, `SingleSinkStructured`, or a conservative fallback path.
-- If the complaint is “not enhanced enough,” compare it against the documented support boundary and current beta matrix before escalating it to stop-ship severity; do not downgrade it just because it is not `GCC15`.
+- If the complaint is “not enhanced enough,” compare it against the documented support boundary and current beta matrix before escalating it to stop-ship severity; do not downgrade it because it is an older in-scope band.
 - If the issue is install, trace, checksum, signature, or rollback related, treat it as a release-path defect regardless of band.
 
 ### `GCC9-12`
 
-- Treat as in-scope under the same public contract as `GCC15` and `GCC13-14`.
+- Treat as in-scope under the shared public contract.
 - Confirm whether the wrapper preserved build correctness, provenance, and an honest escape hatch.
 - Escalate when the wrapper breaks fail-open guarantees, corrupts packaging/install state, hides compiler-owned facts, or violates the shared CLI / JSON contract.
 
@@ -86,7 +86,7 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 
 ## 4. Initial Severity Decision
 
-- `release-blocker`: install/rollback/release integrity failures, signature/checksum bypass, or `GCC15` / `GCC13-14` / `GCC9-12` regressions that break the shared shipped contract
+- `release-blocker`: install/rollback/release integrity failures, signature/checksum bypass, or in-scope band regressions that break the shared shipped contract
 - `high`: wrong diagnosis ranking, raw fallback without documented reason, or broken trace collection/redaction/replay disclosure on an in-scope path
 - `normal`: capability-specific regressions that preserve fail-open behavior and the shared contract, or documentation gaps
 - `low`: cosmetic wording issues that do not change routing, support boundary, or recovery procedures

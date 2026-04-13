@@ -278,7 +278,7 @@ mod tests {
             ProcessingPath::NativeTextCapture,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
-            &pipe_capabilities(),
+            &tty_capabilities(),
             &[],
         );
 
@@ -288,7 +288,7 @@ mod tests {
             plan.native_text_capture,
             NativeTextCapturePolicy::CaptureOnly
         );
-        assert!(!plan.preserve_native_color);
+        assert!(plan.preserve_native_color);
         assert_eq!(plan.locale_handling, LocaleHandling::ForceMessagesC);
     }
 
@@ -347,7 +347,7 @@ mod tests {
             ProcessingPath::SingleSinkStructured,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
-            &pipe_capabilities(),
+            &tty_capabilities(),
             &[],
         );
 
@@ -360,6 +360,7 @@ mod tests {
             plan.native_text_capture,
             NativeTextCapturePolicy::CaptureOnly
         );
+        assert!(plan.preserve_native_color);
     }
 
     #[test]
@@ -370,7 +371,7 @@ mod tests {
             ProcessingPath::SingleSinkStructured,
             RetentionPolicy::OnWrapperFailure,
             DebugRefs::None,
-            &pipe_capabilities(),
+            &tty_capabilities(),
             &[],
         );
 
@@ -383,6 +384,7 @@ mod tests {
             plan.native_text_capture,
             NativeTextCapturePolicy::CaptureOnly
         );
+        assert!(plan.preserve_native_color);
     }
 
     #[test]

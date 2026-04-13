@@ -41,7 +41,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Documents the beta user path for install, rollback, exact version pin, and `install-release` in `PUBLIC-BETA-RELEASE.md`.
 - Verifies the canonical `x86_64-unknown-linux-musl` artifact end to end: vendored hermetic release build, signed package generation, install, rollback, system-wide pseudo-root layout, immutable release publish/promote, and exact-pin install all run against the musl payload.
 - Preserves reason-coded fallback evidence in trace, replay, snapshot, and release provenance outputs, including sink conflicts, unsupported version bands, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
-- Keeps release scope intentionally narrow: the current public contract covers `GCC15`, `GCC13-14`, and `GCC9-12`, `GCC16+` and unknown compilers remain passthrough-only, Linux-first runtime assumptions remain intact, and fail-open fallback behavior remains part of the shipped contract.
+- Keeps release scope intentionally narrow while preserving one shared in-scope diagnostic contract across `GCC15`, `GCC13-14`, and `GCC9-12`; `GCC16+` and unknown compilers remain passthrough-only, Linux-first runtime assumptions remain intact, and fail-open fallback behavior remains part of the shipped contract.
 
 ## Known Limits
 

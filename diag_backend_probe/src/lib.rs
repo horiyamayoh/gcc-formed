@@ -501,7 +501,7 @@ fn capability_profile_for_version_band(
             json_diagnostics: false,
             sarif_diagnostics,
             dual_sink,
-            tty_color_control: false,
+            tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
@@ -519,7 +519,7 @@ fn capability_profile_for_version_band(
             json_diagnostics: true,
             sarif_diagnostics,
             dual_sink,
-            tty_color_control: false,
+            tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
@@ -807,7 +807,7 @@ mod tests {
         assert!(!gcc13.json_diagnostics);
         assert!(gcc13.sarif_diagnostics);
         assert!(!gcc13.dual_sink);
-        assert!(!gcc13.tty_color_control);
+        assert!(gcc13.tty_color_control);
         assert_eq!(
             gcc13.default_processing_path,
             ProcessingPath::NativeTextCapture
@@ -1140,6 +1140,7 @@ exit 0
         assert!(gcc9.native_text_capture);
         assert!(gcc9.json_diagnostics);
         assert!(!gcc9.sarif_diagnostics);
+        assert!(gcc9.tty_color_control);
         assert_eq!(
             gcc9.allowed_processing_paths,
             BTreeSet::from([
@@ -1156,6 +1157,7 @@ exit 0
         assert!(!gcc14.json_diagnostics);
         assert!(gcc14.sarif_diagnostics);
         assert!(!gcc14.dual_sink);
+        assert!(gcc14.tty_color_control);
         assert_eq!(
             gcc14.allowed_processing_paths,
             BTreeSet::from([

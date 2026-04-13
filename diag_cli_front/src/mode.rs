@@ -118,7 +118,7 @@ impl CliCompatibilitySeam {
         forwarded_args: &[OsString],
     ) -> bool {
         mode == ExecutionMode::Render
-            && matches!(processing_path, ProcessingPath::DualSinkStructured)
+            && !matches!(processing_path, ProcessingPath::Passthrough)
             && self.tty_color_control
             && matches!(capabilities.stream_kind, StreamKind::Tty)
             && capabilities.interactive
@@ -753,7 +753,7 @@ mod tests {
 
     #[test]
     fn tty_color_preservation_requires_tty_and_no_user_override() {
-        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc15);
+        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14);
         let tty_capabilities = RenderCapabilities {
             stream_kind: StreamKind::Tty,
             width_columns: Some(100),
@@ -765,13 +765,13 @@ mod tests {
 
         assert!(seam.should_preserve_tty_color(
             ExecutionMode::Render,
-            ProcessingPath::DualSinkStructured,
+            ProcessingPath::NativeTextCapture,
             &tty_capabilities,
             &[]
         ));
         assert!(!seam.should_preserve_tty_color(
             ExecutionMode::Render,
-            ProcessingPath::DualSinkStructured,
+            ProcessingPath::NativeTextCapture,
             &RenderCapabilities {
                 stream_kind: StreamKind::Pipe,
                 ..tty_capabilities
@@ -780,9 +780,41 @@ mod tests {
         ));
         assert!(!seam.should_preserve_tty_color(
             ExecutionMode::Render,
-            ProcessingPath::DualSinkStructured,
+            ProcessingPath::NativeTextCapture,
             &tty_capabilities,
             &[OsString::from("-fdiagnostics-color=never")]
+        ));
+    }
+
+    #[test]
+    fn tty_color_preservation_applies_to_native_text_and_single_sink_paths() {
+        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12);
+        let tty_capabilities = RenderCapabilities {
+            stream_kind: StreamKind::Tty,
+            width_columns: Some(100),
+            ansi_color: true,
+            unicode: false,
+            hyperlinks: false,
+            interactive: true,
+        };
+
+        assert!(seam.should_preserve_tty_color(
+            ExecutionMode::Render,
+            ProcessingPath::NativeTextCapture,
+            &tty_capabilities,
+            &[]
+        ));
+        assert!(seam.should_preserve_tty_color(
+            ExecutionMode::Render,
+            ProcessingPath::SingleSinkStructured,
+            &tty_capabilities,
+            &[]
+        ));
+        assert!(!seam.should_preserve_tty_color(
+            ExecutionMode::Passthrough,
+            ProcessingPath::Passthrough,
+            &tty_capabilities,
+            &[]
         ));
     }
 }

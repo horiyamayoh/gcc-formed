@@ -19,7 +19,7 @@ GOVERNANCE_HEADINGS = [
 
 POST_STABLE_BACKLOG_ITEMS = [
     "non-Linux production artifacts",
-    "GCC 13/14 enhanced-render quality guarantees",
+    "exhaustive per-family parity evidence across every in-scope GCC band",
     "elimination of passthrough, shadow mode, or raw fallback",
     "package-manager-native distribution as the primary release path",
     "self-updater flows",

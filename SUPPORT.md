@@ -33,9 +33,7 @@ This file is still the routing page. The detailed support procedure lives in the
 
 ## VersionBand / ProcessingPath Routing
 
-- `GCC15`: in-scope. `DualSinkStructured` is the default capability profile, but the public contract is the same one used across `GCC 9-15`.
-- `GCC13-14`: in-scope. Check whether the observed path was `NativeTextCapture` or explicit `SingleSinkStructured`, and evaluate the complaint against the shared support boundary rather than a lower-value band contract.
-- `GCC9-12`: in-scope. Check whether the observed path was `NativeTextCapture` or explicit JSON `SingleSinkStructured`; honest passthrough remains valid only when it is the most trustworthy result, not because the band is treated as lower-value.
+- `GCC15`, `GCC13-14`, `GCC9-12`: in-scope. Route by the actual `ProcessingPath`, fallback reason, and user-visible behavior, not by a band hierarchy. The observed path may be `DualSinkStructured`, `NativeTextCapture`, or explicit `SingleSinkStructured`, but the public contract is the same across all three bands.
 - `GCC16+` / `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
 
 Runtime and trace output use `VersionBand`, `ProcessingPath`, and `SupportLevel` as the canonical public labels. Use `--formed-self-check` for the current operator guidance, and keep [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md) as the shared next-step reference for older GCC and C-first builds.

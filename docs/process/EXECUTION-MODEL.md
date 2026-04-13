@@ -33,7 +33,7 @@ superseded_by: []
 2. Epic を切る前に必要な前提条件を固定する
 3. 夜間に coding agent を 10〜20 件流しても壊れない作業単位を定義する
 4. 朝のレビューと仕分けを deterministic にする
-5. 旧来の GCC 15 single-track 前提で組まれた delivery 文書群を、vNext 方針へ置き換える
+5. 旧来の single-band hierarchy 前提で組まれた delivery 文書群を、vNext 方針へ置き換える
 
 本書が承認されるまで、**新規 Epic を正式に起票してはならない**。  
 Epic の正本は本書承認後に初めて生成される。
@@ -46,9 +46,9 @@ Epic の正本は本書承認後に初めて生成される。
 
 理由は明快である。
 
-- 現行 repo の README / support boundary / bootstrap sequence / agent playbook / PR template / bug form は、いずれも **GCC 15 single-track の旧前提**を色濃く残している
+- 現行 repo の README / support boundary / bootstrap sequence / agent playbook / PR template / bug form には、**1 つの reference product path を想定する旧前提の残骸**が残っている
 - この状態で夜間 agent を回すと、速く進む代わりに **誤った方角へ速く進む**
-- vNext は「単一の privileged path を磨く repo」ではなく、「複数 capture path を持ちながら 1 つの UX 原則を守る repo」へ移行する。そのためには作業単位、レビュー単位、停止条件も作り直す必要がある
+- vNext は「1 つの reference path を磨く repo」ではなく、「複数 capture path を持ちながら 1 つの UX 原則を守る repo」へ移行する。そのためには作業単位、レビュー単位、停止条件も作り直す必要がある
 
 したがって vNext の最初の到達状態は、機能追加ではない。  
 **「正しい方向に安全に速く進める delivery system を install した状態」**である。
@@ -687,7 +687,7 @@ Epic を正式起票する前に、最低限次の 3 つを終える。
 
 - `../history/planning/gcc_formed_milestones_agent_playbook.md` の vNext 正本としての役割
 - 旧 single-tier 中心の delivery vocabulary
-- GCC 15 single-track wording をそのまま Work Package 管理へ持ち込む運用
+- single-band hierarchy wording をそのまま Work Package 管理へ持ち込む運用
 
 ## Appendix B. 参照すべき現行 repo 文書
 

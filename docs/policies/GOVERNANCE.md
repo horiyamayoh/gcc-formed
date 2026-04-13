@@ -90,9 +90,9 @@ An experimental feature may change or be removed before `1.0.0`. After `1.0.0`, 
 
 These items are still in scope before `1.0.0`:
 
-- keep `pr-gate`, the GCC 15 blocker slice of `nightly-gate`, and release smoke evidence green
+- keep `pr-gate`, the current diagnostic blocker slice of `nightly-gate`, and release smoke evidence green
 - preserve the current support boundary, honest compatibility notices, and fail-open fallback behavior
-- fix regressions in GCC 15 primary render quality, trace integrity, signing, install, rollback, and release evidence
+- fix regressions in the shipped in-scope diagnostic contract, trace integrity, signing, install, rollback, and release evidence
 - keep corpus quality gates, human-eval packet, fuzz packet, metrics packet, and stable-release evidence aligned with the shipped contract
 - land any contract change only with the required ADR/docs/changelog/test updates
 
@@ -101,7 +101,7 @@ These items are still in scope before `1.0.0`:
 These remain explicitly out of scope for the current frozen contract and should not be smuggled into `v1beta` or the first stable release:
 
 - non-Linux production artifacts
-- GCC 13/14 enhanced-render quality guarantees
+- exhaustive per-family parity evidence across every in-scope GCC band
 - elimination of passthrough, shadow mode, or raw fallback
 - package-manager-native distribution as the primary release path
 - self-updater flows

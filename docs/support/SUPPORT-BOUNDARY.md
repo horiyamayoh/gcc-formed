@@ -78,9 +78,9 @@ How much native / raw compiler output is preserved in the same run.
 
 | VersionBand | Typical ProcessingPath | RawPreservationLevel | SupportLevel | Current expectation |
 |---|---|---|---|---|
-| `GCC15` | `DualSinkStructured` | `NativeAndStructuredSameRun` | `InScope` | Same public contract as other in-scope bands; dual-sink is the default capability profile |
-| `GCC13-14` | `NativeTextCapture`, `SingleSinkStructured` | path-dependent; do not assume same-run native+structured | `InScope` | Same public contract as other in-scope bands; native text is the default capability profile |
-| `GCC9-12` | `SingleSinkStructured` (JSON), `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `InScope` | Same public contract as other in-scope bands; JSON single-sink remains explicit |
+| `GCC15` | `DualSinkStructured` | `NativeAndStructuredSameRun` | `InScope` | Shared in-scope contract; this row documents one representative capability shape, not a stronger public value claim |
+| `GCC13-14` | `NativeTextCapture`, `SingleSinkStructured` | path-dependent; do not assume same-run native+structured | `InScope` | Shared in-scope contract; this row documents representative capability shapes, not a weaker product tier |
+| `GCC9-12` | `SingleSinkStructured` (JSON), `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `InScope` | Shared in-scope contract; this row documents representative capability shapes, not a weaker product tier |
 | `GCC16+` | `Passthrough` | `RawOnly` | `PassthroughOnly` | Outside the current `GCC 9-15` contract until separately evidenced |
 | `Unknown` | `Passthrough` | `RawOnly` | `PassthroughOnly` | Do not break the build or hide facts |
 
