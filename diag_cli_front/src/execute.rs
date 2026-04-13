@@ -92,7 +92,7 @@ fn real_main() -> Result<i32, CliError> {
         return Ok(exit_code);
     }
 
-    if let Some(note) = plan.scope_notice {
+    if let Some(note) = plan.scope_notice.as_deref() {
         eprintln!("{note}");
     }
 

@@ -88,6 +88,7 @@ How much native / raw compiler output is preserved in the same run.
 
 - “shared in-scope public contract” means: present in specs, tests, issue taxonomy, quality gates, roadmap, and corpus tagging with one public value claim across `GCC 9-15`.
 - Representative corpus / replay gates must track `GCC15/DualSinkStructured`, `GCC13-14/NativeTextCapture`, `GCC13-14/SingleSinkStructured`, `GCC9-12/NativeTextCapture`, and `GCC9-12/SingleSinkStructured` separately as capability coverage, not as unequal product tiers.
+- Runtime disclosure and machine-readable surfaces must derive `default_processing_path` and `allowed_processing_paths` from resolved capability facts. `VersionBand` constrains scope, but it must not silently stand in for the full path set of an observed backend.
 - Capture mechanisms and same-run raw-preservation guarantees may differ by capability profile even when the public contract is shared.
 - If a run resolves to `Passthrough`, that is still a valid shipped behavior when it is the most trustworthy choice.
 

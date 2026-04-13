@@ -106,6 +106,8 @@ internal capture capability は異なってよいが、Issue / PR / docs / quali
 
 Issue と PR は、この 4 つを混同してはならない。
 
+Runtime selection, self-check output, and machine-readable disclosure must keep these axes separate and derive default/allowed `ProcessingPath` facts from resolved capabilities rather than from a band-only hierarchy.
+
 ### 2.5 default TTY 非劣化は stop-ship
 
 native GCC より色が消える、長くなる、最初の画面で読みにくくなる、template/std:: ノイズが増える。  

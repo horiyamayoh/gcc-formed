@@ -131,10 +131,23 @@ pub struct CapabilityProfile {
     pub parseable_fixits: bool,
     /// Whether locale can be stabilized for reproducible output.
     pub locale_stabilization: bool,
-    /// Recommended processing path for this version.
+    /// Recommended processing path for this resolved capability profile.
     pub default_processing_path: ProcessingPath,
-    /// Set of processing paths this version can use.
+    /// Set of processing paths this resolved capability profile can use.
     pub allowed_processing_paths: BTreeSet<ProcessingPath>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CapabilityFacts {
+    support_level: SupportLevel,
+    native_text_capture: bool,
+    json_diagnostics: bool,
+    sarif_diagnostics: bool,
+    dual_sink: bool,
+    tty_color_control: bool,
+    caret_control: bool,
+    parseable_fixits: bool,
+    locale_stabilization: bool,
 }
 
 /// Filesystem identity key used to cache probe results.
@@ -204,9 +217,9 @@ impl ProbeResult {
         support_level_for_version_band(self.version_band())
     }
 
-    /// Returns the default processing path for this probe's version band.
+    /// Returns the default processing path resolved from this probe's capability facts.
     pub fn default_processing_path(&self) -> ProcessingPath {
-        default_processing_path_for_version_band(self.version_band())
+        self.capability_profile().default_processing_path
     }
 
     /// Builds a full capability profile from this probe result.
@@ -372,6 +385,7 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
         .to_string();
     let (major, minor) = parse_version(&version_string)?;
     let key = probe_key(path)?;
+    let add_output_sarif_supported = probe_add_output_sarif_support(path, major);
     Ok(ProbeResult {
         requested_backend: invoked_as,
         resolved_path: path.to_path_buf(),
@@ -385,9 +399,36 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
         major,
         minor,
         driver_kind: driver_kind_for_path(path),
-        add_output_sarif_supported: major == 15,
+        add_output_sarif_supported,
         version_probe_key: key,
     })
+}
+
+fn probe_add_output_sarif_support(path: &Path, major: u32) -> bool {
+    let output = match Command::new(path).arg("--help=common").output() {
+        Ok(output) => output,
+        Err(_) => return major == 15,
+    };
+
+    if !output.status.success() {
+        return major == 15;
+    }
+
+    let help = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    if help.contains("-fdiagnostics-add-output=") || help.contains("-fdiagnostics-add-output ") {
+        return true;
+    }
+
+    if help.contains("-fdiagnostics-format=") || help.contains("-fdiagnostics-") {
+        return false;
+    }
+
+    major == 15
 }
 
 /// One row from the current backend-topology support policy.
@@ -440,20 +481,16 @@ pub fn version_band_for_major(major: u32) -> VersionBand {
 /// Returns the support level for a given version band.
 pub fn support_level_for_version_band(version_band: VersionBand) -> SupportLevel {
     match version_band {
-        VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {
-            SupportLevel::InScope
-        }
+        VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => SupportLevel::InScope,
         VersionBand::Gcc16Plus | VersionBand::Unknown => SupportLevel::PassthroughOnly,
     }
 }
 
 /// Returns the default processing path for a given version band.
 pub fn default_processing_path_for_version_band(version_band: VersionBand) -> ProcessingPath {
-    match version_band {
-        VersionBand::Gcc15 => ProcessingPath::DualSinkStructured,
-        VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => ProcessingPath::NativeTextCapture,
-        VersionBand::Gcc16Plus | VersionBand::Unknown => ProcessingPath::Passthrough,
-    }
+    let representative_capabilities =
+        capability_facts_for_version_band(version_band, matches!(version_band, VersionBand::Gcc15));
+    default_processing_path_for_capability_facts(representative_capabilities)
 }
 
 /// Builds a capability profile from a GCC major version number.
@@ -471,67 +508,63 @@ fn capability_profile_for_version_band(
     version_band: VersionBand,
     add_output_sarif_supported: bool,
 ) -> CapabilityProfile {
-    // Keep the new vocabulary behind a probe-local compatibility seam until a
-    // later issue installs dedicated path/capability probing.
-    let sarif_diagnostics = matches!(version_band, VersionBand::Gcc15 | VersionBand::Gcc13_14);
-    let dual_sink = matches!(version_band, VersionBand::Gcc15) && add_output_sarif_supported;
+    let capabilities = capability_facts_for_version_band(version_band, add_output_sarif_supported);
 
+    CapabilityProfile {
+        version_band,
+        support_level: capabilities.support_level,
+        native_text_capture: capabilities.native_text_capture,
+        json_diagnostics: capabilities.json_diagnostics,
+        sarif_diagnostics: capabilities.sarif_diagnostics,
+        dual_sink: capabilities.dual_sink,
+        tty_color_control: capabilities.tty_color_control,
+        caret_control: capabilities.caret_control,
+        parseable_fixits: capabilities.parseable_fixits,
+        locale_stabilization: capabilities.locale_stabilization,
+        default_processing_path: default_processing_path_for_capability_facts(capabilities),
+        allowed_processing_paths: allowed_processing_paths_for_capability_facts(capabilities),
+    }
+}
+
+fn capability_facts_for_version_band(
+    version_band: VersionBand,
+    add_output_sarif_supported: bool,
+) -> CapabilityFacts {
     match version_band {
-        VersionBand::Gcc15 => CapabilityProfile {
-            version_band,
+        VersionBand::Gcc15 => CapabilityFacts {
             support_level: support_level_for_version_band(version_band),
             native_text_capture: true,
             json_diagnostics: false,
-            sarif_diagnostics,
-            dual_sink,
+            sarif_diagnostics: true,
+            dual_sink: add_output_sarif_supported,
             tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
-            default_processing_path: default_processing_path_for_version_band(version_band),
-            allowed_processing_paths: BTreeSet::from([
-                ProcessingPath::DualSinkStructured,
-                ProcessingPath::Passthrough,
-            ]),
         },
-        VersionBand::Gcc13_14 => CapabilityProfile {
-            version_band,
+        VersionBand::Gcc13_14 => CapabilityFacts {
             support_level: support_level_for_version_band(version_band),
             native_text_capture: true,
             json_diagnostics: false,
-            sarif_diagnostics,
-            dual_sink,
+            sarif_diagnostics: true,
+            dual_sink: false,
             tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
-            default_processing_path: default_processing_path_for_version_band(version_band),
-            allowed_processing_paths: BTreeSet::from([
-                ProcessingPath::NativeTextCapture,
-                ProcessingPath::SingleSinkStructured,
-                ProcessingPath::Passthrough,
-            ]),
         },
-        VersionBand::Gcc9_12 => CapabilityProfile {
-            version_band,
+        VersionBand::Gcc9_12 => CapabilityFacts {
             support_level: support_level_for_version_band(version_band),
             native_text_capture: true,
             json_diagnostics: true,
-            sarif_diagnostics,
-            dual_sink,
+            sarif_diagnostics: false,
+            dual_sink: false,
             tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
-            default_processing_path: ProcessingPath::NativeTextCapture,
-            allowed_processing_paths: BTreeSet::from([
-                ProcessingPath::NativeTextCapture,
-                ProcessingPath::SingleSinkStructured,
-                ProcessingPath::Passthrough,
-            ]),
         },
-        VersionBand::Gcc16Plus | VersionBand::Unknown => CapabilityProfile {
-            version_band,
+        VersionBand::Gcc16Plus | VersionBand::Unknown => CapabilityFacts {
             support_level: support_level_for_version_band(version_band),
             native_text_capture: false,
             json_diagnostics: false,
@@ -541,10 +574,53 @@ fn capability_profile_for_version_band(
             caret_control: false,
             parseable_fixits: false,
             locale_stabilization: false,
-            default_processing_path: default_processing_path_for_version_band(version_band),
-            allowed_processing_paths: BTreeSet::from([ProcessingPath::Passthrough]),
         },
     }
+}
+
+fn default_processing_path_for_capability_facts(capabilities: CapabilityFacts) -> ProcessingPath {
+    if matches!(capabilities.support_level, SupportLevel::PassthroughOnly) {
+        return ProcessingPath::Passthrough;
+    }
+
+    if capabilities.dual_sink {
+        return ProcessingPath::DualSinkStructured;
+    }
+
+    if capabilities.native_text_capture {
+        return ProcessingPath::NativeTextCapture;
+    }
+
+    if capabilities.sarif_diagnostics || capabilities.json_diagnostics {
+        return ProcessingPath::SingleSinkStructured;
+    }
+
+    ProcessingPath::Passthrough
+}
+
+fn allowed_processing_paths_for_capability_facts(
+    capabilities: CapabilityFacts,
+) -> BTreeSet<ProcessingPath> {
+    if matches!(capabilities.support_level, SupportLevel::PassthroughOnly) {
+        return BTreeSet::from([ProcessingPath::Passthrough]);
+    }
+
+    let mut paths = BTreeSet::new();
+
+    if capabilities.dual_sink {
+        // Prefer the safest same-run structured path when dual-sink is available.
+        paths.insert(ProcessingPath::DualSinkStructured);
+    } else {
+        if capabilities.native_text_capture {
+            paths.insert(ProcessingPath::NativeTextCapture);
+        }
+        if capabilities.sarif_diagnostics || capabilities.json_diagnostics {
+            paths.insert(ProcessingPath::SingleSinkStructured);
+        }
+    }
+
+    paths.insert(ProcessingPath::Passthrough);
+    paths
 }
 
 fn parse_version(line: &str) -> Result<(u32, u32), ProbeError> {
@@ -889,6 +965,47 @@ mod tests {
     }
 
     #[test]
+    fn probe_result_default_path_follows_resolved_capability_facts() {
+        let probe = ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: PathBuf::from("/usr/bin/gcc-15"),
+            execution_topology: direct_topology(),
+            version_string: "gcc (GCC) 15.1.0".to_string(),
+            major: 15,
+            minor: 1,
+            driver_kind: DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: ProbeKey {
+                realpath: PathBuf::from("/usr/bin/gcc-15"),
+                inode: 4,
+                mtime_seconds: 0,
+                size_bytes: 4,
+            },
+        };
+
+        let profile = probe.capability_profile();
+        assert_eq!(probe.version_band(), VersionBand::Gcc15);
+        assert_eq!(
+            probe.default_processing_path(),
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            profile.default_processing_path,
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            profile.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
+        assert!(!profile.dual_sink);
+        assert!(profile.sarif_diagnostics);
+    }
+
+    #[test]
     fn probe_result_accessors_reflect_band_c_contract() {
         let probe = ProbeResult {
             requested_backend: "gcc-formed".to_string(),
@@ -1034,6 +1151,76 @@ exit 0
             }
             other => panic!("expected version probe failure, got {other:?}"),
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn probe_backend_uses_help_output_to_confirm_dual_sink_support() {
+        let temp = tempfile::tempdir().unwrap();
+        let backend = temp.path().join("fake-gcc");
+        fs::write(
+            &backend,
+            r#"#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  printf '%s\n' 'gcc (Fake) 15.2.0'
+  exit 0
+fi
+if [ "${1:-}" = "--help=common" ]; then
+  printf '%s\n' '  -fdiagnostics-add-output=[sarif:version=2.1,file=PATH]'
+  exit 0
+fi
+exit 0
+"#,
+        )
+        .unwrap();
+        make_executable(&backend);
+
+        let probe = probe_backend(&backend, "gcc-formed".to_string()).unwrap();
+
+        assert!(probe.add_output_sarif_supported);
+        assert_eq!(
+            probe.default_processing_path(),
+            ProcessingPath::DualSinkStructured
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn probe_backend_can_override_gcc15_dual_sink_assumption_from_help_output() {
+        let temp = tempfile::tempdir().unwrap();
+        let backend = temp.path().join("fake-gcc");
+        fs::write(
+            &backend,
+            r#"#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  printf '%s\n' 'gcc (Fake) 15.2.0'
+  exit 0
+fi
+if [ "${1:-}" = "--help=common" ]; then
+  printf '%s\n' '  -fdiagnostics-format=[text|sarif-file|json-file]'
+  exit 0
+fi
+exit 0
+"#,
+        )
+        .unwrap();
+        make_executable(&backend);
+
+        let probe = probe_backend(&backend, "gcc-formed".to_string()).unwrap();
+
+        assert!(!probe.add_output_sarif_supported);
+        assert_eq!(
+            probe.default_processing_path(),
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            probe.capability_profile().allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
     }
 
     #[cfg(unix)]

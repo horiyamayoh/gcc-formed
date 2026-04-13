@@ -96,6 +96,10 @@ impl CliCompatibilitySeam {
         matches!(self.support_level, SupportLevel::InScope)
     }
 
+    pub(crate) fn support_level(&self) -> SupportLevel {
+        self.support_level
+    }
+
     pub(crate) fn should_inject_sarif(
         &self,
         mode: ExecutionMode,
@@ -204,10 +208,7 @@ pub(crate) fn select_mode_for_seam(
     }
     let mode = if seam.is_in_scope() {
         let selected = requested.unwrap_or(ExecutionMode::Render);
-        decision_log.push(format!(
-            "selected_mode={}",
-            execution_mode_label(selected)
-        ));
+        decision_log.push(format!("selected_mode={}", execution_mode_label(selected)));
         selected
     } else {
         decision_log.push("default_mode=passthrough_only".to_string());
@@ -215,10 +216,11 @@ pub(crate) fn select_mode_for_seam(
     };
 
     let fallback_reason = match mode {
-        ExecutionMode::Passthrough => {
-            matches!(seam.version_band, VersionBand::Gcc16Plus | VersionBand::Unknown)
-                .then_some(FallbackReason::UnsupportedVersionBand)
-        }
+        ExecutionMode::Passthrough => matches!(
+            seam.version_band,
+            VersionBand::Gcc16Plus | VersionBand::Unknown
+        )
+        .then_some(FallbackReason::UnsupportedVersionBand),
         ExecutionMode::Shadow => Some(FallbackReason::ShadowMode),
         ExecutionMode::Render => None,
     };
@@ -247,7 +249,7 @@ pub(crate) fn select_processing_path_for_seam(
 pub(crate) fn compatibility_scope_notice(
     version_band: VersionBand,
     decision: &ModeDecision,
-) -> Option<&'static str> {
+) -> Option<String> {
     let seam = CliCompatibilitySeam::from_version_band(version_band);
     compatibility_scope_notice_for_path(
         &seam,
@@ -260,26 +262,28 @@ pub(crate) fn compatibility_scope_notice_for_path(
     seam: &CliCompatibilitySeam,
     decision: &ModeDecision,
     processing_path: ProcessingPath,
-) -> Option<&'static str> {
+) -> Option<String> {
+    let context = notice_context(seam, decision, processing_path);
+
     if !seam.is_in_scope() {
-        return Some(
-            "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
-        );
+        return Some(format!(
+            "{context}; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
+        ));
     }
 
     match (decision.mode, processing_path, decision.fallback_reason) {
-        (ExecutionMode::Shadow, _, _) => Some(
-            "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract.",
-        ),
-        (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-            "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved.",
-        ),
-        (ExecutionMode::Passthrough, _, _) => Some(
-            "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=incompatible_sink; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved.",
-        ),
-        (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-            "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile.",
-        ),
+        (ExecutionMode::Shadow, _, _) => Some(format!(
+            "{context}; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract."
+        )),
+        (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(format!(
+            "{context}; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+        )),
+        (ExecutionMode::Passthrough, _, _) => Some(format!(
+            "{context}; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+        )),
+        (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(format!(
+            "{context}; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+        )),
         _ => None,
     }
 }
@@ -407,6 +411,25 @@ pub(crate) fn fallback_reason_label(reason: FallbackReason) -> &'static str {
     }
 }
 
+fn notice_context(
+    seam: &CliCompatibilitySeam,
+    decision: &ModeDecision,
+    processing_path: ProcessingPath,
+) -> String {
+    let mut parts = vec![
+        format!("version band={}", version_band_label(seam.version_band)),
+        format!("support level={}", support_level_label(seam.support_level)),
+        format!("selected mode={}", execution_mode_label(decision.mode)),
+        format!("processing path={}", processing_path_label(processing_path)),
+    ];
+
+    if let Some(reason) = decision.fallback_reason {
+        parts.push(format!("fallback reason={}", fallback_reason_label(reason)));
+    }
+
+    format!("gcc-formed: {}", parts.join("; "))
+}
+
 pub(crate) fn should_capture_passthrough_stderr(
     retention_policy: RetentionPolicy,
     debug_refs: DebugRefs,
@@ -513,7 +536,10 @@ mod tests {
     #[test]
     fn omits_notice_for_default_in_scope_render() {
         let decision = select_mode(VersionBand::Gcc13_14, None, false);
-        assert_eq!(compatibility_scope_notice(VersionBand::Gcc13_14, &decision), None);
+        assert_eq!(
+            compatibility_scope_notice(VersionBand::Gcc13_14, &decision),
+            None
+        );
     }
 
     #[test]
@@ -522,7 +548,7 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(VersionBand::Gcc13_14, &decision),
             Some(
-                "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
+                "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=shadow; processing path=native_text_capture; fallback reason=shadow_mode; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract.".to_string()
             )
         );
     }
@@ -552,7 +578,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+                "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile.".to_string()
             )
         );
     }
@@ -596,7 +622,7 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+                "gcc-formed: version band=gcc9_12; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile.".to_string()
             )
         );
     }
@@ -607,8 +633,56 @@ mod tests {
         assert_eq!(
             compatibility_scope_notice(VersionBand::Unknown, &decision),
             Some(
-                "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
+                "gcc-formed: version band=unknown; support level=passthrough_only; selected mode=passthrough; processing path=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.".to_string()
             )
+        );
+    }
+
+    #[test]
+    fn probe_vocabulary_seam_falls_back_to_native_text_when_gcc15_dual_sink_is_unavailable() {
+        let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: "/tmp/fake-gcc".into(),
+            execution_topology: diag_backend_probe::ActiveBackendTopology {
+                policy_version: diag_backend_probe::BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                kind: diag_backend_probe::BackendTopologyKind::Direct,
+                launcher_path: None,
+                disposition: diag_backend_probe::BackendTopologyDisposition::Supported,
+            },
+            version_string: "gcc (Fake) 15.2.0".to_string(),
+            major: 15,
+            minor: 2,
+            driver_kind: diag_backend_probe::DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: diag_backend_probe::ProbeKey {
+                realpath: "/tmp/fake-gcc".into(),
+                inode: 2,
+                mtime_seconds: 1,
+                size_bytes: 1,
+            },
+        });
+
+        let decision = select_mode_for_seam(&seam, None, false);
+        assert_eq!(decision.mode, ExecutionMode::Render);
+        assert_eq!(
+            select_processing_path_for_seam(&seam, &decision, None),
+            ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            select_processing_path_for_seam(
+                &seam,
+                &decision,
+                Some(ProcessingPath::SingleSinkStructured)
+            ),
+            ProcessingPath::SingleSinkStructured
+        );
+        assert_eq!(
+            select_processing_path_for_seam(
+                &seam,
+                &decision,
+                Some(ProcessingPath::DualSinkStructured)
+            ),
+            ProcessingPath::NativeTextCapture
         );
     }
 
@@ -745,10 +819,7 @@ mod tests {
         let decision = select_mode_for_seam(&seam, Some(ExecutionMode::Shadow), false);
         assert_eq!(decision.mode, ExecutionMode::Shadow);
         assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
-        assert!(!seam.should_inject_sarif(
-            decision.mode,
-            ProcessingPath::NativeTextCapture
-        ));
+        assert!(!seam.should_inject_sarif(decision.mode, ProcessingPath::NativeTextCapture));
     }
 
     #[test]

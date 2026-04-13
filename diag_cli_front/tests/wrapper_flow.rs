@@ -140,7 +140,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(expected_tier_b_native_text_notice()))
+        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
         .stderr(predicate::str::contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
@@ -204,7 +204,7 @@ fn renders_with_fake_gcc13_backend_on_native_text_ci_profile() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(expected_tier_b_native_text_notice()))
+        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
         .stderr(predicate::str::contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
@@ -237,9 +237,7 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_b_single_sink_notice(),
-        ))
+        .stderr(predicate::str::contains(expected_gcc13_single_sink_notice()))
         .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
@@ -301,7 +299,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(expected_tier_b_shadow_notice()))
+        .stderr(predicate::str::contains(expected_gcc13_shadow_notice()))
         .stderr(predicate::str::contains(
             "main.c:4:1: error: expected ';' before '}' token",
         ))
@@ -317,10 +315,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
         trace["environment_summary"]["processing_path"],
         "native_text_capture"
     );
-    assert_eq!(
-        trace["environment_summary"]["support_level"],
-        "in_scope"
-    );
+    assert_eq!(trace["environment_summary"]["support_level"], "in_scope");
     assert_eq!(trace["fallback_reason"], "shadow_mode");
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
@@ -359,7 +354,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(expected_tier_c_native_text_notice()))
+        .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
         .stderr(predicate::str::contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
@@ -381,10 +376,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
         trace["environment_summary"]["processing_path"],
         "native_text_capture"
     );
-    assert_eq!(
-        trace["environment_summary"]["support_level"],
-        "in_scope"
-    );
+    assert_eq!(trace["environment_summary"]["support_level"], "in_scope");
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
@@ -428,9 +420,7 @@ fn renders_with_explicit_single_sink_structured_json_on_fake_gcc12_backend() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_c_single_sink_notice(),
-        ))
+        .stderr(predicate::str::contains(expected_gcc9_single_sink_notice()))
         .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
@@ -504,7 +494,7 @@ fn missing_single_sink_json_falls_back_honestly_on_fake_gcc12_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            expected_tier_c_single_sink_notice(),
+            expected_gcc9_single_sink_notice(),
         ))
         .stderr(predicate::str::contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved",
@@ -579,9 +569,7 @@ main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n",
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_c_native_text_notice(),
-        ))
+        .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
         .stderr(predicate::str::contains("type or overload mismatch"))
         .stderr(predicate::str::contains(
             "compare the expected type and actual argument at the call site",
@@ -768,9 +756,7 @@ fn dumpdir_compile_flags_do_not_trigger_introspection_passthrough() {
         .arg(".c")
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_c_native_text_notice(),
-        ))
+        .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
         ));
@@ -811,9 +797,7 @@ fn empty_backend_env_falls_back_to_path_backend() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_c_native_text_notice(),
-        ))
+        .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
         .stderr(predicate::str::contains(
             "help: fix the first parser error at the user-owned location",
         ))
@@ -1335,7 +1319,10 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     );
     assert!(report["backend"]["support_tier"].is_null());
     assert_eq!(report["backend"]["version_band"], "gcc15");
-    assert_eq!(report["backend"]["processing_path"], "dual_sink_structured");
+    assert_eq!(
+        report["backend"]["default_processing_path"],
+        "dual_sink_structured"
+    );
     assert_eq!(report["backend"]["support_level"], "in_scope");
     assert_eq!(
         report["operator_guidance"]["summary"].as_str(),
@@ -1986,24 +1973,24 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn expected_tier_b_native_text_notice() -> &'static str {
+fn expected_gcc13_native_text_notice() -> &'static str {
     "note: some compiler details were not fully structured; original diagnostics are preserved"
 }
 
-fn expected_tier_b_single_sink_notice() -> &'static str {
-    "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+fn expected_gcc13_single_sink_notice() -> &'static str {
+    "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
 }
 
-fn expected_tier_b_shadow_notice() -> &'static str {
-    "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
+fn expected_gcc13_shadow_notice() -> &'static str {
+    "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=shadow; processing path=native_text_capture; fallback reason=shadow_mode; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract."
 }
 
-fn expected_tier_c_native_text_notice() -> &'static str {
+fn expected_gcc9_native_text_notice() -> &'static str {
     "note: some compiler details were not fully structured; original diagnostics are preserved"
 }
 
-fn expected_tier_c_single_sink_notice() -> &'static str {
-    "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+fn expected_gcc9_single_sink_notice() -> &'static str {
+    "gcc-formed: version band=gcc9_12; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
 }
 
 #[cfg(unix)]

@@ -26,7 +26,7 @@ pub(crate) struct ExecutionPlan {
     pub(crate) debug_refs: DebugRefs,
     capture_plan: CapturePlan,
     pub(crate) capabilities: RenderCapabilities,
-    pub(crate) scope_notice: Option<&'static str>,
+    pub(crate) scope_notice: Option<String>,
 }
 
 impl ExecutionPlan {
@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn tier_a_render_plan_keeps_dual_sink_capture() {
+    fn gcc15_render_plan_keeps_dual_sink_capture() {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_version_band(VersionBand::Gcc15),
             ExecutionMode::Render,
@@ -249,7 +249,7 @@ mod tests {
     }
 
     #[test]
-    fn tier_b_shadow_plan_keeps_native_text_capture() {
+    fn gcc13_shadow_plan_keeps_native_text_capture() {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Shadow,
@@ -271,7 +271,7 @@ mod tests {
     }
 
     #[test]
-    fn band_c_render_plan_keeps_native_text_capture() {
+    fn gcc9_render_plan_keeps_native_text_capture() {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12),
             ExecutionMode::Render,
@@ -340,7 +340,7 @@ mod tests {
     }
 
     #[test]
-    fn tier_b_single_sink_structured_plan_uses_explicit_sarif_file_capture() {
+    fn gcc13_single_sink_structured_plan_uses_explicit_sarif_file_capture() {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Render,
@@ -364,7 +364,7 @@ mod tests {
     }
 
     #[test]
-    fn band_c_single_sink_structured_plan_uses_explicit_json_file_capture() {
+    fn gcc9_single_sink_structured_plan_uses_explicit_json_file_capture() {
         let plan = build_capture_plan(
             &CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12),
             ExecutionMode::Render,

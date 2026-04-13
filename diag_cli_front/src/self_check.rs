@@ -8,7 +8,6 @@ use crate::mode::{
 };
 use diag_backend_probe::{
     ProbeCache, ProcessingPath, ResolveRequest, VersionBand, backend_topology_policy,
-    capability_profile_for_major,
 };
 use diag_capture_runtime::ExecutionMode;
 use diag_trace::{
@@ -146,7 +145,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
             "launcher_path": backend.execution_topology.launcher_path,
             "version": backend.version_string,
             "version_band": snake_case_label(&backend.version_band()),
-            "processing_path": snake_case_label(&backend.default_processing_path()),
+            "default_processing_path": snake_case_label(&backend.default_processing_path()),
             "allowed_processing_paths": backend
                 .capability_profile()
                 .allowed_processing_paths
@@ -210,7 +209,6 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             &decision,
             requested_processing_path,
         );
-        let profile = capability_profile_for_major(representative_major_for_band(version_band));
         json!({
             "version_band": snake_case_label(&version_band),
             "requested_mode": requested_mode.map(execution_mode_label),
@@ -218,7 +216,7 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             "hard_conflict": hard_conflict,
             "selected_mode": execution_mode_label(decision.mode),
             "processing_path": snake_case_label(&processing_path),
-            "support_level": snake_case_label(&profile.support_level),
+            "support_level": snake_case_label(&compatibility_seam.support_level()),
             "fallback_reason": decision.fallback_reason.map(fallback_reason_label),
             "scope_notice": compatibility_scope_notice_for_path(
                 &compatibility_seam,
@@ -228,16 +226,6 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
         })
     })
     .collect()
-}
-
-fn representative_major_for_band(version_band: VersionBand) -> u32 {
-    match version_band {
-        VersionBand::Gcc16Plus => 16,
-        VersionBand::Gcc15 => 15,
-        VersionBand::Gcc13_14 => 13,
-        VersionBand::Gcc9_12 => 9,
-        VersionBand::Unknown => 0,
-    }
 }
 
 fn snake_case_label<T: serde::Serialize>(value: &T) -> String {
@@ -402,7 +390,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
+                    == "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=shadow; processing path=native_text_capture; fallback reason=shadow_mode; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -412,7 +400,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=passthrough; processing path=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -423,7 +411,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+                    == "gcc-formed: version band=gcc13_14; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -442,7 +430,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
+                    == "gcc-formed: version band=gcc9_12; support level=in_scope; selected mode=shadow; processing path=native_text_capture; fallback reason=shadow_mode; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -453,7 +441,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+                    == "gcc-formed: version band=gcc9_12; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -463,7 +451,7 @@ mod tests {
                 && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+                    == "gcc-formed: version band=gcc9_12; support level=in_scope; selected mode=passthrough; processing path=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc16_plus"
@@ -473,7 +461,7 @@ mod tests {
                 && case["support_level"] == "passthrough_only"
                 && case["fallback_reason"] == "unsupported_version_band"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
+                    == "gcc-formed: version band=gcc16_plus; support level=passthrough_only; selected mode=passthrough; processing path=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "unknown"
@@ -483,7 +471,7 @@ mod tests {
                 && case["support_level"] == "passthrough_only"
                 && case["fallback_reason"] == "unsupported_version_band"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
+                    == "gcc-formed: version band=unknown; support level=passthrough_only; selected mode=passthrough; processing path=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
         }));
     }
 
