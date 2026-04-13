@@ -122,11 +122,11 @@ def build_execution_env(
             os.environ.get("SIGNING_KEY_PATH", work_root / "release-signing.key")
         )
 
-    control_dir = Path(
-        os.environ.get(
-            "CONTROL_DIR",
-            dist_dir / f"gcc-formed-v{package_version}-linux-x86_64-musl",
-        )
+    default_control_dir = dist_dir / f"gcc-formed-v{package_version}-linux-x86_64-musl"
+    control_dir = (
+        default_control_dir
+        if local_mode
+        else Path(os.environ.get("CONTROL_DIR", default_control_dir))
     )
     image_tag = "gcc-formed-ci:nightly" if canonical_workflow_name(workflow) == "nightly-gate" else "gcc-formed-ci:pr"
 

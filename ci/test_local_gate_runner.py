@@ -64,7 +64,7 @@ class LocalGateRunnerTest(unittest.TestCase):
     def test_ci_execution_env_defaults_stay_inside_runner_temp_work_root(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             report_root = Path(tmpdir) / "reports"
-            with mock.patch.dict(os.environ, {"RUNNER_TEMP": tmpdir}, clear=False):
+            with mock.patch.dict(os.environ, {"RUNNER_TEMP": tmpdir}, clear=True):
                 env = run_local_gate.build_execution_env(
                     REPO_ROOT,
                     report_root,
