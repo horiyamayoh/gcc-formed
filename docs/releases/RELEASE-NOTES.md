@@ -23,10 +23,10 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ### Highlights
@@ -40,8 +40,8 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Routes the Python `ci/test_*.py` contract suite through `cargo xtask check`, so CI helper scripts and governance/support docs now fail the same standard gate as the Rust workspace tests.
 - Documents the beta user path for install, rollback, exact version pin, and `install-release` in `PUBLIC-BETA-RELEASE.md`.
 - Verifies the canonical `x86_64-unknown-linux-musl` artifact end to end: vendored hermetic release build, signed package generation, install, rollback, system-wide pseudo-root layout, immutable release publish/promote, and exact-pin install all run against the musl payload.
-- Preserves reason-coded fallback evidence in trace, replay, snapshot, and release provenance outputs, including sink conflicts, unsupported tiers, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
-- Keeps release scope intentionally narrow: `GCC15+` remains the primary fidelity reference path, Linux-first runtime assumptions remain intact, and fail-open fallback behavior remains part of the shipped contract.
+- Preserves reason-coded fallback evidence in trace, replay, snapshot, and release provenance outputs, including sink conflicts, unsupported version bands, shadow-only paths, missing SARIF, malformed SARIF, and renderer-side conservative fallback.
+- Keeps release scope intentionally narrow: the current public contract covers `GCC15`, `GCC13-14`, and `GCC9-12`, `GCC16+` and unknown compilers remain passthrough-only, Linux-first runtime assumptions remain intact, and fail-open fallback behavior remains part of the shipped contract.
 
 ## Known Limits
 
@@ -50,7 +50,8 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Release verification now supports trusted signing public key sha256 pinning, so CI and installers can bind detached signatures to a stable trust anchor instead of relying on key id alone.
 - Future stable cuts are expected to retain `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, and `rollback-drill.json`; see [STABLE-RELEASE.md](STABLE-RELEASE.md) for the runbook.
 - `x86_64-unknown-linux-gnu` remains a compatibility and exception path; the shipped release story is centered on the primary `x86_64-unknown-linux-musl` artifact.
-- Current beta artifacts do not claim identical guarantees across all `VersionBand` values.
+- Current beta artifacts do not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
+- Internal capture mechanisms and same-run raw-preservation details still vary by capability even when the public contract is shared.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
 - See [KNOWN-LIMITATIONS.md](../support/KNOWN-LIMITATIONS.md) for the detailed support boundary and fallback semantics, and [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) for the public artifact and install story.
 

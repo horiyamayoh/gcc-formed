@@ -18,10 +18,10 @@ repo_topics:
 readme_tagline: GCC diagnostic UX wrapper for GCC 9-15 that keeps terminal output shorter, root-cause-first, and fail-open.
 beta_release_intro: This GitHub prerelease ships artifact `{version}` in the `v1beta` maturity line.
 beta_release_gate_scope:
-  - `GCC15+ / DualSinkStructured` remains the blocking reference-path snapshot smoke in this workflow.
-  - `gcc13_14` and `gcc9_12` product-path blockers are classified by `replay-stop-ship.json`.
-  - Nightly real-compiler evidence includes a `gcc:12` matrix lane for `gcc9_12`, so Band C workflow artifacts stay visible before RC promotion.
-  - `replay-stop-ship.json` preserves missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions from representative replay.
+  - `pr-gate` blocks on representative replay plus self-check and snapshot coverage for `gcc9_12`, `gcc13_14`, and `gcc15`.
+  - `replay-stop-ship.json` preserves missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions across the in-scope bands.
+  - Nightly real-compiler evidence retains an additional `gcc:14` lane inside `gcc13_14` without changing the public contract.
+  - Release-only packaging, signing, install, and promote steps may still run on the `gcc15` release lane, but they do not narrow the diagnostic contract.
 beta_install_path_lines:
   - Direct install / rollback path: see `docs/releases/PUBLIC-BETA-RELEASE.md` and use the `.control.tar.gz` bundle.
   - Exact-pin release-repository path: use the `.release-repo.tar.gz` bundle together with `cargo xtask install-release`.
@@ -43,7 +43,8 @@ beta_included_assets:
   - `release-provenance.json`
 beta_known_limits:
   - `{version}` remains a public-beta artifact, not a release candidate or stable release.
-  - Current beta artifacts do not claim identical guarantees across all `VersionBand` values.
+  - `GCC16+` and unknown gcc-like compilers remain outside the current `GCC 9-15` contract.
+  - Internal capture mechanisms still vary by capability path even when the public contract is shared.
   - Raw fallback remains part of the shipped contract.
 stable_release_intro: This GitHub Release publishes stable artifact `{version}` from a single signed build and promotes the same published bits through `canary`, `beta`, and `stable` without rebuilding.
 stable_evidence_lines:
@@ -58,9 +59,10 @@ stable_evidence_lines:
   - path-aware replay stop-ship report: `replay-stop-ship.json`
   - rc gate report: `rc-gate-report.json`
 stable_release_gate_scope:
-  - `GCC15+` remains the primary fidelity reference path for shipped release quality.
-  - Stable promotion is blocked by strict `rc-gate`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off.
-  - Band C real-compiler evidence stays visible through the nightly `gcc:12` lane plus the RC bundle's band/path reports.
+  - Stable promotion is blocked by strict `rc-gate`, which checks rollout drift, representative replay quality, deterministic replay, fuzz, and manual UX sign-off across the shared `GCC 9-15` contract.
+  - `rollout-matrix-report.json` and `replay-stop-ship.json` keep the required `gcc9_12`, `gcc13_14`, and `gcc15` coverage visible in the RC bundle.
+  - Additional nightly `gcc:14` evidence stays visible as capability coverage inside `gcc13_14`.
+  - Release-only packaging, signing, install, and promote steps may still run on the `gcc15` release lane without narrowing the diagnostic contract.
   - `rollout-matrix-report.json` records the expected current `VersionBand` / `ProcessingPath` cases.
   - `replay-stop-ship.json` records missing required `VersionBand × ProcessingPath × Surface` cells and path-aware quality regressions from representative replay.
 stable_release_doc_paths:
@@ -87,7 +89,8 @@ stable_included_assets:
   - `replay-stop-ship.json`
   - `release-provenance.json`
 stable_known_limits:
-  - Current release notes must not flatten the path-dependent guarantees across `VersionBand` values.
+  - Current release notes must not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
+  - Internal capture mechanisms still vary by capability path even when the public contract is shared.
   - Raw fallback remains part of the shipped contract when it is the most trustworthy choice.
 ---
 > [!IMPORTANT]

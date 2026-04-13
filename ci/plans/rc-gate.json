@@ -61,8 +61,7 @@
         "$REPORT_ROOT/rc-gate/rc-gate-report.json",
         "$REPORT_ROOT/rc-gate/rc-gate-summary.md"
       ],
-      "gate_scope": "reference_path",
-      "version_band": "gcc15_plus"
+      "gate_scope": "release_candidate"
     },
     {
       "id": "path-aware-replay-stop-ship",
@@ -76,8 +75,7 @@
       "artifact_paths": [
         "$REPORT_ROOT/gate/replay-stop-ship.json"
       ],
-      "gate_scope": "reference_path",
-      "version_band": "gcc15_plus"
+      "gate_scope": "release_candidate"
     }
   ]
 }

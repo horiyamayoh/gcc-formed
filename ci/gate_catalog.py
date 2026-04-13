@@ -51,7 +51,7 @@ NIGHTLY_LANES = {
     "gcc15": {
         "gcc_image": "gcc:15",
         "gcc_label": "gcc15",
-        "version_band": "gcc15_plus",
+        "version_band": "gcc15",
         "release_blocker": "true",
     },
 }
@@ -154,7 +154,7 @@ def policy_skips_step(
     if policy == "release_blocker_only":
         return release_blocker == "false"
     if policy == "reference_path_only":
-        return matrix_version_band not in {None, "gcc15_plus"}
+        return matrix_version_band not in {None, "gcc15"}
     return False
 
 
@@ -165,25 +165,74 @@ def common_prepare_directories_command() -> str:
     )
 
 
-def capture_host_environment_command() -> str:
-    return (
-        'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" '
+def merge_build_environment_command(source_path: str, section_name: str) -> str:
+    return "\n".join(
+        [
+            "python3 - <<'PY'",
+            "import json",
+            "import os",
+            "from pathlib import Path",
+            "",
+            f'source = Path(os.path.expandvars("{source_path}"))',
+            'target = Path(os.environ["REPORT_ROOT"]) / "gate" / "build-environment.json"',
+            'payload = json.loads(source.read_text(encoding="utf-8"))',
+            "if target.exists():",
+            '    merged = json.loads(target.read_text(encoding="utf-8"))',
+            "else:",
+            "    merged = {}",
+            'merged["schema_version"] = payload.get("schema_version", 1)',
+            'merged["updated_at"] = payload.get("updated_at")',
+            'merged.setdefault("host", None)',
+            'merged.setdefault("ci_image", None)',
+            f'merged["{section_name}"] = payload.get("{section_name}")',
+            'target.write_text(json.dumps(merged, indent=2) + "\\n", encoding="utf-8")',
+            "PY",
+        ]
+    )
+
+
+def capture_host_environment_command(
+    output_path: str = '$REPORT_ROOT/gate/build-environment.json',
+    *,
+    merge_into_summary: bool = False,
+) -> str:
+    command = (
+        f'python3 ci/gate_capture_environment.py --output "{output_path}" '
         '--mode host --toolchain-file rust-toolchain.toml'
     )
+    if not merge_into_summary:
+        return command
+    return "\n".join([command, merge_build_environment_command(output_path, "host")])
 
 
-def capture_ci_environment_command(docker_base_image: str) -> str:
-    return (
-        'python3 ci/gate_capture_environment.py --output "$REPORT_ROOT/gate/build-environment.json" '
+def capture_ci_environment_command(
+    docker_base_image: str,
+    *,
+    output_path: str = '$REPORT_ROOT/gate/build-environment.json',
+    docker_image_tag: str = '"$CI_IMAGE_TAG"',
+    merge_into_summary: bool = False,
+) -> str:
+    command = (
+        f'python3 ci/gate_capture_environment.py --output "{output_path}" '
         '--mode ci-image --toolchain-file rust-toolchain.toml --dockerfile ci/images/gcc-matrix/Dockerfile '
-        f'--docker-base-image {docker_base_image} --docker-image-tag "$CI_IMAGE_TAG"'
+        f'--docker-base-image {docker_base_image} --docker-image-tag {docker_image_tag}'
     )
+    if not merge_into_summary:
+        return command
+    return "\n".join([command, merge_build_environment_command(output_path, "ci_image")])
 
 
 def build_ci_image_command(docker_base_image: str) -> str:
     return (
         f'docker build --build-arg GCC_IMAGE={docker_base_image} '
         '-t "$CI_IMAGE_TAG" -f ci/images/gcc-matrix/Dockerfile .'
+    )
+
+
+def build_ci_image_with_tag_command(docker_base_image: str, docker_image_tag: str) -> str:
+    return (
+        f'docker build --build-arg GCC_IMAGE={docker_base_image} '
+        f'-t {docker_image_tag} -f ci/images/gcc-matrix/Dockerfile .'
     )
 
 
@@ -196,6 +245,21 @@ def build_wrapper_binary_command() -> str:
             "  -w /workspace \\",
             '  "$CI_IMAGE_TAG" \\',
             '  bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target && cargo build --bin gcc-formed"',
+        ]
+    )
+
+
+def build_wrapper_binary_in_image_command(docker_image_tag: str, target_subdir: str) -> str:
+    return "\n".join(
+        [
+            "docker run --rm \\",
+            '  -v "$PWD:/workspace" \\',
+            '  -v "$TARGET_DIR:/tmp/gcc-formed-target" \\',
+            "  -w /workspace \\",
+            f"  {docker_image_tag} \\",
+            '  bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target/'
+            + target_subdir
+            + ' && cargo build --bin gcc-formed"',
         ]
     )
 
@@ -336,12 +400,81 @@ def dependency_gate_command() -> str:
     )
 
 
+def wrapper_self_check_in_image_command(
+    docker_image_tag: str,
+    target_subdir: str,
+    report_subpath: str,
+) -> str:
+    return "\n".join(
+        [
+            "docker run --rm \\",
+            '  -v "$PWD:/workspace" \\',
+            '  -v "$TARGET_DIR:/tmp/gcc-formed-target" \\',
+            '  -v "$REPORT_ROOT:/reports" \\',
+            "  -w /workspace \\",
+            f"  {docker_image_tag} \\",
+            '  bash -lc "export CARGO_TARGET_DIR=/tmp/gcc-formed-target/'
+            + target_subdir
+            + ' && /tmp/gcc-formed-target/'
+            + target_subdir
+            + '/debug/gcc-formed --formed-self-check > /reports/'
+            + report_subpath
+            + '"',
+        ]
+    )
+
+
+def pr_prepare_directories_command() -> str:
+    return (
+        'mkdir -p "$REPORT_ROOT/replay" '
+        '"$REPORT_ROOT/snapshot/gcc9_12" "$REPORT_ROOT/snapshot/gcc13_14" "$REPORT_ROOT/snapshot/gcc15" '
+        '"$REPORT_ROOT/self-check/gcc9_12" "$REPORT_ROOT/self-check/gcc13_14" "$REPORT_ROOT/self-check/gcc15" '
+        '"$REPORT_ROOT/release" "$REPORT_ROOT/gate" "$TARGET_DIR" "$DIST_DIR" "$VENDOR_DIR" "$WORK_ROOT"'
+    )
+
+
 EXECUTION_CATALOG = {
     "pr-gate": {
-        "prepare-report-directories": StepExecution(common_prepare_directories_command()),
-        "capture-host-build-environment": StepExecution(capture_host_environment_command()),
-        "build-reference-ci-image": StepExecution(build_ci_image_command("gcc:15")),
-        "capture-reference-ci-environment": StepExecution(capture_ci_environment_command("gcc:15")),
+        "prepare-report-directories": StepExecution(pr_prepare_directories_command()),
+        "capture-host-build-environment": StepExecution(
+            capture_host_environment_command(
+                '$REPORT_ROOT/gate/build-environment-host.json',
+                merge_into_summary=True,
+            )
+        ),
+        "build-gcc12-ci-image": StepExecution(
+            build_ci_image_with_tag_command("gcc:12", "gcc-formed-ci:pr-gcc12")
+        ),
+        "capture-gcc12-ci-environment": StepExecution(
+            capture_ci_environment_command(
+                "gcc:12",
+                output_path='$REPORT_ROOT/gate/build-environment-gcc12.json',
+                docker_image_tag="gcc-formed-ci:pr-gcc12",
+                merge_into_summary=True,
+            )
+        ),
+        "build-gcc13-ci-image": StepExecution(
+            build_ci_image_with_tag_command("gcc:13", "gcc-formed-ci:pr-gcc13")
+        ),
+        "capture-gcc13-ci-environment": StepExecution(
+            capture_ci_environment_command(
+                "gcc:13",
+                output_path='$REPORT_ROOT/gate/build-environment-gcc13.json',
+                docker_image_tag="gcc-formed-ci:pr-gcc13",
+                merge_into_summary=True,
+            )
+        ),
+        "build-gcc15-ci-image": StepExecution(
+            build_ci_image_with_tag_command("gcc:15", "gcc-formed-ci:pr-gcc15")
+        ),
+        "capture-gcc15-ci-environment": StepExecution(
+            capture_ci_environment_command(
+                "gcc:15",
+                output_path='$REPORT_ROOT/gate/build-environment-gcc15.json',
+                docker_image_tag="gcc-formed-ci:pr-gcc15",
+                merge_into_summary=True,
+            )
+        ),
         "cargo-xtask-check": StepExecution("cargo xtask check"),
         "representative-acceptance-replay": StepExecution(
             'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
@@ -352,11 +485,47 @@ EXECUTION_CATALOG = {
             run_condition="after_step_not_skipped",
             requires_step_id="representative-acceptance-replay",
         ),
-        "build-wrapper-binary-reference-image": StepExecution(build_wrapper_binary_command()),
-        "wrapper-self-check-reference-image": StepExecution(wrapper_self_check_command()),
-        "representative-reference-snapshot-check": StepExecution(
+        "build-wrapper-binary-gcc12-image": StepExecution(
+            build_wrapper_binary_in_image_command("gcc-formed-ci:pr-gcc12", "gcc12")
+        ),
+        "wrapper-self-check-gcc12-image": StepExecution(
+            wrapper_self_check_in_image_command(
+                "gcc-formed-ci:pr-gcc12",
+                "gcc12",
+                "self-check/gcc9_12/report.json",
+            )
+        ),
+        "representative-gcc12-snapshot-check": StepExecution(
+            'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:12 '
+            '--version-band gcc9_12 --report-dir "$REPORT_ROOT/snapshot/gcc9_12"'
+        ),
+        "build-wrapper-binary-gcc13-image": StepExecution(
+            build_wrapper_binary_in_image_command("gcc-formed-ci:pr-gcc13", "gcc13")
+        ),
+        "wrapper-self-check-gcc13-image": StepExecution(
+            wrapper_self_check_in_image_command(
+                "gcc-formed-ci:pr-gcc13",
+                "gcc13",
+                "self-check/gcc13_14/report.json",
+            )
+        ),
+        "representative-gcc13-snapshot-check": StepExecution(
+            'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:13 '
+            '--version-band gcc13_14 --report-dir "$REPORT_ROOT/snapshot/gcc13_14"'
+        ),
+        "build-wrapper-binary-gcc15-image": StepExecution(
+            build_wrapper_binary_in_image_command("gcc-formed-ci:pr-gcc15", "gcc15")
+        ),
+        "wrapper-self-check-gcc15-image": StepExecution(
+            wrapper_self_check_in_image_command(
+                "gcc-formed-ci:pr-gcc15",
+                "gcc15",
+                "self-check/gcc15/report.json",
+            )
+        ),
+        "representative-gcc15-snapshot-check": StepExecution(
             'cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 '
-            '--version-band gcc15_plus --report-dir "$REPORT_ROOT/snapshot"'
+            '--version-band gcc15 --report-dir "$REPORT_ROOT/snapshot/gcc15"'
         ),
         "vendor-dependency-tree": StepExecution(vendor_command()),
         "hermetic-release-build-smoke": StepExecution(hermetic_release_command()),

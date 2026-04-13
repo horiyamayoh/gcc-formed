@@ -4,7 +4,7 @@
     "fallback_grade": "compatibility",
     "processing_path": "native_text_capture",
     "source_authority": "residual_text",
-    "support_level": "experimental",
+    "support_level": "in_scope",
     "version_band": "gcc13_14"
   },
   "invocation": {

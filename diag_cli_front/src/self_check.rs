@@ -175,10 +175,10 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
 
 fn rollout_matrix_cases() -> Vec<serde_json::Value> {
     [
-        (VersionBand::Gcc15Plus, None, None, false),
-        (VersionBand::Gcc15Plus, Some(ExecutionMode::Shadow), None, false),
-        (VersionBand::Gcc15Plus, Some(ExecutionMode::Passthrough), None, false),
-        (VersionBand::Gcc15Plus, Some(ExecutionMode::Render), None, true),
+        (VersionBand::Gcc15, None, None, false),
+        (VersionBand::Gcc15, Some(ExecutionMode::Shadow), None, false),
+        (VersionBand::Gcc15, Some(ExecutionMode::Passthrough), None, false),
+        (VersionBand::Gcc15, Some(ExecutionMode::Render), None, true),
         (VersionBand::Gcc13_14, None, None, false),
         (VersionBand::Gcc13_14, Some(ExecutionMode::Shadow), None, false),
         (VersionBand::Gcc13_14, Some(ExecutionMode::Render), None, false),
@@ -198,6 +198,7 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             false,
         ),
         (VersionBand::Gcc9_12, Some(ExecutionMode::Passthrough), None, false),
+        (VersionBand::Gcc16Plus, None, None, false),
         (VersionBand::Unknown, None, None, false),
     ]
     .into_iter()
@@ -231,7 +232,8 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
 
 fn representative_major_for_band(version_band: VersionBand) -> u32 {
     match version_band {
-        VersionBand::Gcc15Plus => 15,
+        VersionBand::Gcc16Plus => 16,
+        VersionBand::Gcc15 => 15,
         VersionBand::Gcc13_14 => 13,
         VersionBand::Gcc9_12 => 9,
         VersionBand::Unknown => 0,
@@ -373,44 +375,44 @@ mod tests {
     }
 
     #[test]
-    fn rollout_matrix_covers_primary_and_compatibility_modes() {
+    fn rollout_matrix_covers_in_scope_and_out_of_scope_modes() {
         let cases = rollout_matrix_cases();
         assert!(cases.iter().any(|case| {
-            case["version_band"] == "gcc15_plus"
+            case["version_band"] == "gcc15"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "dual_sink_structured"
-                && case["support_level"] == "preview"
+                && case["support_level"] == "in_scope"
+                && case["scope_notice"].is_null()
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
-                && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                && case["scope_notice"].is_null()
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
                 && case["requested_mode"] == "shadow"
                 && case["selected_mode"] == "shadow"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
                 && case["requested_mode"] == "passthrough"
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc13_14"
@@ -418,30 +420,29 @@ mod tests {
                 && case["requested_processing_path"] == "single_sink_structured"
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "single_sink_structured"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
                 && case["requested_mode"].is_null()
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
-                && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                && case["scope_notice"].is_null()
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
                 && case["requested_mode"] == "shadow"
                 && case["selected_mode"] == "shadow"
                 && case["processing_path"] == "native_text_capture"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "shadow_mode"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
@@ -449,20 +450,30 @@ mod tests {
                 && case["requested_processing_path"] == "single_sink_structured"
                 && case["selected_mode"] == "render"
                 && case["processing_path"] == "single_sink_structured"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"].is_null()
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "gcc9_12"
                 && case["requested_mode"] == "passthrough"
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
-                && case["support_level"] == "experimental"
+                && case["support_level"] == "in_scope"
                 && case["fallback_reason"] == "user_opt_out"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                    == "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+        }));
+        assert!(cases.iter().any(|case| {
+            case["version_band"] == "gcc16_plus"
+                && case["requested_mode"].is_null()
+                && case["selected_mode"] == "passthrough"
+                && case["processing_path"] == "passthrough"
+                && case["support_level"] == "passthrough_only"
+                && case["fallback_reason"] == "unsupported_version_band"
+                && case["scope_notice"]
+                    == "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
         }));
         assert!(cases.iter().any(|case| {
             case["version_band"] == "unknown"
@@ -470,9 +481,9 @@ mod tests {
                 && case["selected_mode"] == "passthrough"
                 && case["processing_path"] == "passthrough"
                 && case["support_level"] == "passthrough_only"
-                && case["fallback_reason"] == "unsupported_tier"
+                && case["fallback_reason"] == "unsupported_version_band"
                 && case["scope_notice"]
-                    == "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed."
+                    == "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
         }));
     }
 

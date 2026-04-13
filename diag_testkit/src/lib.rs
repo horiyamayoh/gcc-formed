@@ -23,7 +23,7 @@ pub struct FixtureInvoke {
     pub standard: Option<String>,
     /// Compiler family to target (e.g. "gcc").
     pub target_compiler_family: String,
-    /// GCC version band for this fixture (e.g. "`gcc15_plus`").
+    /// GCC version band for this fixture (e.g. "`gcc15`").
     pub version_band: String,
     /// Support level derived from the version band.
     pub support_level: String,
@@ -259,7 +259,7 @@ pub struct FixtureExpectations {
     pub schema_version: u32,
     /// Unique identifier for this fixture.
     pub fixture_id: String,
-    /// GCC version band (e.g. "`gcc15_plus`").
+    /// GCC version band (e.g. "`gcc15`").
     pub version_band: String,
     /// Processing path used (e.g. "`dual_sink_structured`").
     pub processing_path: String,
@@ -740,7 +740,8 @@ fn normalize_version_band(
         .filter(|value| !value.is_empty())
     {
         return match value.to_ascii_lowercase().as_str() {
-            "gcc15_plus" | "a" => Ok("gcc15_plus".to_string()),
+            "gcc16_plus" => Ok("gcc16_plus".to_string()),
+            "gcc15" | "gcc15_plus" | "a" => Ok("gcc15".to_string()),
             "gcc13_14" | "b" => Ok("gcc13_14".to_string()),
             "gcc9_12" | "c" => Ok("gcc9_12".to_string()),
             "unknown" => Ok("unknown".to_string()),
@@ -754,7 +755,8 @@ fn normalize_version_band(
         .and_then(|selector| selector.parse::<u32>().ok())
         .unwrap_or_default()
     {
-        major if major >= 15 => Ok("gcc15_plus".to_string()),
+        major if major >= 16 => Ok("gcc16_plus".to_string()),
+        15 => Ok("gcc15".to_string()),
         13 | 14 => Ok("gcc13_14".to_string()),
         9..=12 => Ok("gcc9_12".to_string()),
         _ => Ok("unknown".to_string()),
@@ -770,8 +772,7 @@ fn normalize_support_level(
         .filter(|value| !value.is_empty())
     {
         return match value.to_ascii_lowercase().as_str() {
-            "preview" => Ok("preview".to_string()),
-            "experimental" => Ok("experimental".to_string()),
+            "preview" | "experimental" | "in_scope" => Ok("in_scope".to_string()),
             "passthrough_only" => Ok("passthrough_only".to_string()),
             _ => Err(FixtureError::Invalid(format!(
                 "unsupported fixture support_level `{value}`"
@@ -780,8 +781,7 @@ fn normalize_support_level(
     }
 
     Ok(match version_band {
-        "gcc15_plus" => "preview",
-        "gcc13_14" | "gcc9_12" => "experimental",
+        "gcc15" | "gcc13_14" | "gcc9_12" => "in_scope",
         _ => "passthrough_only",
     }
     .to_string())
@@ -808,9 +808,11 @@ fn normalize_processing_path(
     }
 
     Ok(
-        if expected_mode == "passthrough" || version_band == "unknown" {
+        if expected_mode == "passthrough"
+            || matches!(version_band, "unknown" | "gcc16_plus")
+        {
             "passthrough"
-        } else if version_band == "gcc15_plus" {
+        } else if version_band == "gcc15" {
             "dual_sink_structured"
         } else {
             "native_text_capture"
@@ -947,8 +949,8 @@ tags: [syntax]
                     language: "c".to_string(),
                     standard: None,
                     target_compiler_family: "gcc".to_string(),
-                    version_band: "gcc15_plus".to_string(),
-                    support_level: "preview".to_string(),
+                    version_band: "gcc15".to_string(),
+                    support_level: "in_scope".to_string(),
                     major_version_selector: "15".to_string(),
                     argv: vec!["-c".to_string()],
                     cwd_policy: "fixture_root".to_string(),
@@ -961,9 +963,9 @@ tags: [syntax]
                 expectations: FixtureExpectations {
                     schema_version: 1,
                     fixture_id: "c/syntax/case-01".to_string(),
-                    version_band: "gcc15_plus".to_string(),
+                    version_band: "gcc15".to_string(),
                     processing_path: "dual_sink_structured".to_string(),
-                    support_level: "preview".to_string(),
+                    support_level: "in_scope".to_string(),
                     expected_mode: "render".to_string(),
                     family: Some("syntax".to_string()),
                     semantic: None,
@@ -993,8 +995,8 @@ tags: [syntax]
                     language: "c".to_string(),
                     standard: None,
                     target_compiler_family: "gcc".to_string(),
-                    version_band: "gcc15_plus".to_string(),
-                    support_level: "preview".to_string(),
+                    version_band: "gcc15".to_string(),
+                    support_level: "in_scope".to_string(),
                     major_version_selector: "15".to_string(),
                     argv: vec!["-c".to_string()],
                     cwd_policy: "fixture_root".to_string(),
@@ -1007,9 +1009,9 @@ tags: [syntax]
                 expectations: FixtureExpectations {
                     schema_version: 1,
                     fixture_id: "c/syntax/case-02".to_string(),
-                    version_band: "gcc15_plus".to_string(),
+                    version_band: "gcc15".to_string(),
                     processing_path: "dual_sink_structured".to_string(),
-                    support_level: "preview".to_string(),
+                    support_level: "in_scope".to_string(),
                     expected_mode: "render".to_string(),
                     family: Some("syntax".to_string()),
                     semantic: None,
@@ -1047,18 +1049,18 @@ tags: [syntax]
                 fixture_id: "corpus/c/syntax/case-01",
                 language: "c",
                 source_name: "main.c",
-                version_band: "gcc15_plus",
-                support_level: "preview",
+                version_band: "gcc15",
+                support_level: "in_scope",
                 major_version_selector: "15",
                 processing_path: "dual_sink_structured",
-                snapshot_layout: "snapshots/gcc15_plus/dual_sink_structured",
+                snapshot_layout: "snapshots/gcc15/dual_sink_structured",
             },
         );
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
         assert_eq!(
             fixture.snapshot_root(),
-            root.join("snapshots/gcc15_plus/dual_sink_structured")
+            root.join("snapshots/gcc15/dual_sink_structured")
         );
         let error = validate_fixture(&fixture).unwrap_err().to_string();
         assert!(error.contains("promoted fixture"));
@@ -1113,9 +1115,9 @@ tags: [syntax]
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
         assert_eq!(fixture.snapshot_root(), root.join("snapshots/gcc15"));
         assert_eq!(fixture.invoke.version_band, "gcc9_12");
-        assert_eq!(fixture.invoke.support_level, "experimental");
+        assert_eq!(fixture.invoke.support_level, "in_scope");
         assert_eq!(fixture.expectations.version_band, "gcc9_12");
-        assert_eq!(fixture.expectations.support_level, "experimental");
+        assert_eq!(fixture.expectations.support_level, "in_scope");
         assert_eq!(fixture.expectations.processing_path, "native_text_capture");
     }
 
@@ -1129,7 +1131,7 @@ tags: [syntax]
                 language: "c",
                 source_name: "main.c",
                 version_band: "gcc13_14",
-                support_level: "experimental",
+                support_level: "in_scope",
                 major_version_selector: "14",
                 processing_path: "native_text_capture",
                 snapshot_layout: "snapshots/gcc13_14/native_text_capture",
@@ -1156,7 +1158,7 @@ tags: [syntax]
                 language: "cpp",
                 source_name: "main.cpp",
                 version_band: "gcc9_12",
-                support_level: "experimental",
+                support_level: "in_scope",
                 major_version_selector: "12",
                 processing_path: "single_sink_structured",
                 snapshot_layout: "snapshots/gcc9_12/single_sink_structured",
@@ -1190,7 +1192,7 @@ tags: [syntax]
                 language: "cpp",
                 source_name: "main.cpp",
                 version_band: "gcc13_14",
-                support_level: "experimental",
+                support_level: "in_scope",
                 major_version_selector: "13",
                 processing_path: "single_sink_structured",
                 snapshot_layout: "snapshots/gcc13_14/single_sink_structured",
@@ -1231,14 +1233,14 @@ tags: [syntax]
                 fixture_id: "corpus/c/syntax/case-01",
                 language: "c",
                 source_name: "main.c",
-                version_band: "gcc15_plus",
-                support_level: "preview",
+                version_band: "gcc15",
+                support_level: "in_scope",
                 major_version_selector: "15",
                 processing_path: "dual_sink_structured",
-                snapshot_layout: "snapshots/gcc15_plus/dual_sink_structured",
+                snapshot_layout: "snapshots/gcc15/dual_sink_structured",
             },
         );
-        let snapshot_root = root.join("snapshots/gcc15_plus/dual_sink_structured");
+        let snapshot_root = root.join("snapshots/gcc15/dual_sink_structured");
         write_required_promoted_artifacts(&snapshot_root);
         fs::write(snapshot_root.join("diagnostics.sarif"), "{}\n").unwrap();
         fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();

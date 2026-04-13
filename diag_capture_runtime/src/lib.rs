@@ -26,7 +26,7 @@ mod tests {
     use crate::policy::{child_env_policy, child_env_policy_for_mode, child_env_policy_is_empty};
     use diag_backend_probe::{
         ActiveBackendTopology, BACKEND_TOPOLOGY_POLICY_VERSION, BackendTopologyDisposition,
-        BackendTopologyKind, DriverKind, ProbeKey, SupportTier,
+        BackendTopologyKind, DriverKind, ProbeKey,
     };
     use diag_core::{ArtifactKind, ArtifactStorage, CaptureArtifact, fingerprint_for};
     use std::collections::BTreeSet;
@@ -47,7 +47,6 @@ mod tests {
             version_string: "gcc (GCC) 15.1.0".to_string(),
             major: 15,
             minor: 1,
-            support_tier: SupportTier::A,
             driver_kind: DriverKind::Gcc,
             add_output_sarif_supported: true,
             version_probe_key: ProbeKey {

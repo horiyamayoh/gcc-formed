@@ -2,7 +2,7 @@ language: c
 standard: c11
 target_compiler_family: gcc
 version_band: gcc13_14
-support_level: experimental
+support_level: in_scope
 major_version_selector: '13'
 argv:
   - -I

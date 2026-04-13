@@ -833,8 +833,8 @@ mod tests {
             family_key: family_key.to_string(),
             language_key: "c".to_string(),
             title: Some(title.to_string()),
-            version_band: "gcc15_plus".to_string(),
-            support_level: "preview".to_string(),
+            version_band: "gcc15".to_string(),
+            support_level: "in_scope".to_string(),
             processing_path: "dual_sink_structured".to_string(),
             expected_mode: "render".to_string(),
             tags: vec!["representative".to_string()],
@@ -914,7 +914,7 @@ mod tests {
     fn current_fixture_vocabulary_uses_current_labels() {
         let fixture = sample_input_fixture(
             "gcc13_14",
-            "experimental",
+            "in_scope",
             "single_sink_structured",
             vec![
                 "representative".to_string(),
@@ -925,7 +925,7 @@ mod tests {
         let vocabulary = current_fixture_vocabulary(&fixture);
 
         assert_eq!(vocabulary.version_band, "gcc13_14");
-        assert_eq!(vocabulary.support_level, "experimental");
+        assert_eq!(vocabulary.support_level, "in_scope");
         assert_eq!(vocabulary.processing_path, "single_sink_structured");
     }
 
@@ -933,7 +933,7 @@ mod tests {
     fn current_fixture_vocabulary_uses_expectations_processing_path() {
         let fixture = sample_input_fixture(
             "gcc9_12",
-            "experimental",
+            "in_scope",
             "native_text_capture",
             vec!["representative".to_string()],
         );
@@ -941,7 +941,7 @@ mod tests {
         let vocabulary = current_fixture_vocabulary(&fixture);
 
         assert_eq!(vocabulary.version_band, "gcc9_12");
-        assert_eq!(vocabulary.support_level, "experimental");
+        assert_eq!(vocabulary.support_level, "in_scope");
         assert_eq!(vocabulary.processing_path, "native_text_capture");
     }
 
@@ -950,8 +950,8 @@ mod tests {
         let report = sample_fixture("c/syntax/case-01", "syntax", "syntax");
         let value = serde_json::to_value(&report).unwrap();
 
-        assert_eq!(value["version_band"], "gcc15_plus");
-        assert_eq!(value["support_level"], "preview");
+        assert_eq!(value["version_band"], "gcc15");
+        assert_eq!(value["support_level"], "in_scope");
         assert_eq!(value["processing_path"], "dual_sink_structured");
         assert!(value.get("support_tier").is_none());
     }
@@ -960,7 +960,7 @@ mod tests {
     fn copied_snapshot_artifact_names_omit_structured_capture_for_native_text() {
         let fixture = sample_input_fixture(
             "gcc13_14",
-            "experimental",
+            "in_scope",
             "native_text_capture",
             vec!["representative".to_string()],
         );
@@ -975,7 +975,7 @@ mod tests {
     fn copied_snapshot_artifact_names_use_json_for_band_c_single_sink() {
         let fixture = sample_input_fixture(
             "gcc9_12",
-            "experimental",
+            "in_scope",
             "single_sink_structured",
             vec![
                 "representative".to_string(),

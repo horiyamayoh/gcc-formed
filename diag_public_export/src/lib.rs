@@ -1,4 +1,4 @@
-use diag_backend_probe::{ProcessingPath, SupportLevel, VersionBand};
+use diag_backend_probe::{ProcessingPath, SupportLevel, VersionBand, capability_profile_for_major};
 use diag_core::{
     Confidence, DiagnosticDocument, DiagnosticNode, FallbackGrade, FallbackReason, Ownership,
     Suggestion,
@@ -6,7 +6,7 @@ use diag_core::{
 use serde::{Deserialize, Serialize};
 
 pub const PUBLIC_EXPORT_KIND: &str = "gcc_formed_public_diagnostic_export";
-pub const PUBLIC_EXPORT_SCHEMA_VERSION: &str = "1.0.0-alpha.1";
+pub const PUBLIC_EXPORT_SCHEMA_VERSION: &str = "2.0.0-alpha.1";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PublicDiagnosticExport {
@@ -79,6 +79,8 @@ pub struct PublicExportExecution {
     pub version_band: String,
     pub processing_path: String,
     pub support_level: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_processing_paths: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source_authority: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -227,6 +229,7 @@ pub fn export_from_document(
             version_band: label(context.version_band),
             processing_path: label(context.processing_path),
             support_level: label(context.support_level),
+            allowed_processing_paths: allowed_processing_paths_for_version_band(context.version_band),
             source_authority: context.source_authority.map(label),
             fallback_grade: context.fallback_grade.map(label),
             fallback_reason: context.fallback_reason.map(label),
@@ -258,6 +261,7 @@ pub fn unavailable_export(
             version_band: label(context.version_band),
             processing_path: label(context.processing_path),
             support_level: label(context.support_level),
+            allowed_processing_paths: allowed_processing_paths_for_version_band(context.version_band),
             source_authority: context.source_authority.map(label),
             fallback_grade: context.fallback_grade.map(label),
             fallback_reason: context.fallback_reason.map(label),
@@ -431,6 +435,24 @@ fn label<T: Serialize>(value: T) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
+fn allowed_processing_paths_for_version_band(version_band: VersionBand) -> Vec<String> {
+    capability_profile_for_major(representative_major_for_band(version_band))
+        .allowed_processing_paths
+        .into_iter()
+        .map(label)
+        .collect()
+}
+
+fn representative_major_for_band(version_band: VersionBand) -> u32 {
+    match version_band {
+        VersionBand::Gcc16Plus => 16,
+        VersionBand::Gcc15 => 15,
+        VersionBand::Gcc13_14 => 13,
+        VersionBand::Gcc9_12 => 9,
+        VersionBand::Unknown => 0,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -441,7 +463,7 @@ mod tests {
     };
 
     const EXPECTED_PUBLIC_SCHEMA_SHAPE_FINGERPRINT: &str =
-        "fcf7268377d5f5ced1c7c6716347488c0aa92b6f0eb28859b07c8f0439160ad5";
+        "ce5b18957f4a1d52853416ac7764f101d9469a76e10ffcaea37dc2cd06e06325";
 
     fn sample_document() -> DiagnosticDocument {
         DiagnosticDocument {
@@ -583,9 +605,13 @@ mod tests {
                 wrapper_mode: Some("terminal".to_string()),
             },
             execution: PublicExportExecution {
-                version_band: "gcc15_plus".to_string(),
+                version_band: "gcc15".to_string(),
                 processing_path: "dual_sink_structured".to_string(),
-                support_level: "preview".to_string(),
+                support_level: "in_scope".to_string(),
+                allowed_processing_paths: vec![
+                    "dual_sink_structured".to_string(),
+                    "passthrough".to_string(),
+                ],
                 source_authority: Some("structured".to_string()),
                 fallback_grade: Some("none".to_string()),
                 fallback_reason: Some("shadow_mode".to_string()),
@@ -661,9 +687,13 @@ mod tests {
                 wrapper_mode: Some("terminal".to_string()),
             },
             execution: PublicExportExecution {
-                version_band: "gcc15_plus".to_string(),
+                version_band: "gcc15".to_string(),
                 processing_path: "passthrough".to_string(),
-                support_level: "preview".to_string(),
+                support_level: "in_scope".to_string(),
+                allowed_processing_paths: vec![
+                    "dual_sink_structured".to_string(),
+                    "passthrough".to_string(),
+                ],
                 source_authority: Some("structured".to_string()),
                 fallback_grade: Some("none".to_string()),
                 fallback_reason: Some("incompatible_sink".to_string()),
@@ -680,7 +710,7 @@ mod tests {
             &document,
             VersionBand::Gcc13_14,
             ProcessingPath::NativeTextCapture,
-            SupportLevel::Experimental,
+            SupportLevel::InScope,
             diag_core::SourceAuthority::ResidualText,
             FallbackGrade::Compatibility,
             None,
@@ -695,7 +725,7 @@ mod tests {
             &document,
             VersionBand::Gcc13_14,
             ProcessingPath::NativeTextCapture,
-            SupportLevel::Experimental,
+            SupportLevel::InScope,
             diag_core::SourceAuthority::ResidualText,
             FallbackGrade::Compatibility,
             None,
@@ -742,7 +772,7 @@ mod tests {
         mutated.schema_version = "9.9.9".to_string();
         mutated.producer.version = "other-version".to_string();
         mutated.invocation.invocation_id = Some("inv-999".to_string());
-        mutated.execution.support_level = "preview".to_string();
+        mutated.execution.support_level = "in_scope".to_string();
         mutated.execution.document_completeness = Some("complete".to_string());
 
         assert_eq!(fingerprint, schema_shape_fingerprint(&mutated));
@@ -779,9 +809,9 @@ mod tests {
                 language_mode: Some("c".to_string()),
                 wrapper_mode: Some("terminal".to_string()),
             },
-            version_band: VersionBand::Gcc15Plus,
+            version_band: VersionBand::Gcc15,
             processing_path: ProcessingPath::Passthrough,
-            support_level: SupportLevel::Preview,
+            support_level: SupportLevel::InScope,
             source_authority: None,
             fallback_grade: None,
             fallback_reason: Some(FallbackReason::UserOptOut),
@@ -802,9 +832,9 @@ mod tests {
         let document = sample_document();
         let context = PublicExportContext::from_document(
             &document,
-            VersionBand::Gcc15Plus,
+            VersionBand::Gcc15,
             ProcessingPath::DualSinkStructured,
-            SupportLevel::Preview,
+            SupportLevel::InScope,
             diag_core::SourceAuthority::Structured,
             FallbackGrade::None,
             None,

@@ -81,8 +81,8 @@ jobs:
           python3 ci/gate_replay_contract.py \
             --replay-report "$REPORT_ROOT/replay/replay-report.json" \
             --output "$REPORT_ROOT/release/replay-stop-ship.json"
-      - name: Representative reference-path snapshot check
-        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --version-band gcc15_plus --report-dir "$REPORT_ROOT/snapshot"
+      - name: Representative GCC 15 release-lane snapshot check
+        run: cargo xtask snapshot --root corpus --subset representative --check --docker-image gcc:15 --version-band gcc15 --report-dir "$REPORT_ROOT/snapshot"
       - name: Vendor dependency tree
         run: cargo xtask vendor --output-dir vendor > "$REPORT_ROOT/release/vendor.json"
       - name: Hermetic release build

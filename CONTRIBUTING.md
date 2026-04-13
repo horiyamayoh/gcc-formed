@@ -11,10 +11,10 @@ The canonical current support wording lives in [docs/support/SUPPORT-BOUNDARY.md
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 If your change widens, narrows, or rephrases public support claims, update that document and every dependent user-facing surface in the same change.
@@ -79,7 +79,7 @@ The automated public-beta GitHub Release workflow also expects the repository se
 ## Corpus Workflow
 
 - Keep the hand-authored corpus within the current beta-bar target described in [corpus/README.md](corpus/README.md): 80 to 120 fixtures while preserving the composition quota from `docs/specs/quality-corpus-test-gate-spec.md`.
-- When a harvested trace graduates into the corpus, sanitize it first, minimize it to a bounded repro, then commit fixture metadata and GCC 15 snapshots in the same change.
+- When a harvested trace graduates into the corpus, sanitize it first, minimize it to a bounded repro, then commit fixture metadata and the required `gcc9_12`, `gcc13_14`, and `gcc15` snapshots in the same change.
 - Prefer semantic expectations that catch family, fallback, provenance, and first-action regressions without overfitting transient line or quote drift.
 - Use render expectation assertions such as `required_substrings` / `forbidden_substrings` when a promoted fixture needs to pin family-specific headings, omission notices, or the raw fallback escape hatch without snapshotting every line detail.
 

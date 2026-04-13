@@ -1,6 +1,4 @@
 use crate::args::os_to_string;
-#[cfg(test)]
-use diag_backend_probe::SupportTier;
 use diag_backend_probe::{
     CapabilityProfile, ProbeResult, ProcessingPath, SupportLevel, VersionBand,
     capability_profile_for_major,
@@ -44,16 +42,6 @@ impl CliCompatibilitySeam {
         Self::from_profile(backend.capability_profile())
     }
 
-    #[cfg(test)]
-    pub(crate) fn from_support_tier(tier: SupportTier) -> Self {
-        let version_band = match tier {
-            SupportTier::A => VersionBand::Gcc15Plus,
-            SupportTier::B => VersionBand::Gcc13_14,
-            SupportTier::C => VersionBand::Unknown,
-        };
-        Self::from_version_band(version_band)
-    }
-
     pub(crate) fn from_version_band(version_band: VersionBand) -> Self {
         let representative_major = representative_major_for_band(version_band);
         Self::from_profile(capability_profile_for_major(representative_major))
@@ -68,24 +56,6 @@ impl CliCompatibilitySeam {
             sarif_diagnostics: profile.sarif_diagnostics,
             tty_color_control: profile.tty_color_control,
         }
-    }
-
-    fn is_primary_structured(&self) -> bool {
-        matches!(self.support_level, SupportLevel::Preview)
-            && matches!(
-                self.default_processing_path,
-                ProcessingPath::DualSinkStructured
-            )
-    }
-
-    fn is_native_text_default(&self) -> bool {
-        matches!(
-            self.version_band,
-            VersionBand::Gcc13_14 | VersionBand::Gcc9_12
-        ) && matches!(
-            self.default_processing_path,
-            ProcessingPath::NativeTextCapture
-        )
     }
 
     fn allows_processing_path(&self, path: ProcessingPath) -> bool {
@@ -122,8 +92,18 @@ impl CliCompatibilitySeam {
         Ok(selected)
     }
 
-    pub(crate) fn should_inject_sarif(&self, mode: ExecutionMode) -> bool {
-        mode != ExecutionMode::Passthrough && self.sarif_diagnostics && self.is_primary_structured()
+    fn is_in_scope(&self) -> bool {
+        matches!(self.support_level, SupportLevel::InScope)
+    }
+
+    pub(crate) fn should_inject_sarif(
+        &self,
+        mode: ExecutionMode,
+        processing_path: ProcessingPath,
+    ) -> bool {
+        mode != ExecutionMode::Passthrough
+            && self.sarif_diagnostics
+            && matches!(processing_path, ProcessingPath::DualSinkStructured)
     }
 
     pub(crate) fn prefers_json_single_sink(&self) -> bool {
@@ -133,11 +113,12 @@ impl CliCompatibilitySeam {
     pub(crate) fn should_preserve_tty_color(
         &self,
         mode: ExecutionMode,
+        processing_path: ProcessingPath,
         capabilities: &RenderCapabilities,
         forwarded_args: &[OsString],
     ) -> bool {
         mode == ExecutionMode::Render
-            && self.is_primary_structured()
+            && matches!(processing_path, ProcessingPath::DualSinkStructured)
             && self.tty_color_control
             && matches!(capabilities.stream_kind, StreamKind::Tty)
             && capabilities.interactive
@@ -184,11 +165,11 @@ pub(crate) fn has_color_control_override(args: &[OsString]) -> bool {
 
 #[cfg(test)]
 pub(crate) fn select_mode(
-    tier: SupportTier,
+    version_band: VersionBand,
     requested: Option<ExecutionMode>,
     hard_conflict: bool,
 ) -> ModeDecision {
-    let seam = CliCompatibilitySeam::from_support_tier(tier);
+    let seam = CliCompatibilitySeam::from_version_band(version_band);
     select_mode_for_seam(&seam, requested, hard_conflict)
 }
 
@@ -221,36 +202,23 @@ pub(crate) fn select_mode_for_seam(
             decision_log,
         };
     }
-    let mode = if seam.is_primary_structured() {
+    let mode = if seam.is_in_scope() {
+        let selected = requested.unwrap_or(ExecutionMode::Render);
         decision_log.push(format!(
             "selected_mode={}",
-            format!("{:?}", requested.unwrap_or(ExecutionMode::Render)).to_lowercase()
+            execution_mode_label(selected)
         ));
-        requested.unwrap_or(ExecutionMode::Render)
-    } else if seam.is_native_text_default() {
-        match requested {
-            Some(ExecutionMode::Shadow) => {
-                decision_log.push("selected_mode=shadow_native_text".to_string());
-                ExecutionMode::Shadow
-            }
-            Some(ExecutionMode::Render) => {
-                decision_log.push("requested_mode=render_native_text".to_string());
-                ExecutionMode::Render
-            }
-            None => {
-                decision_log.push("default_mode=render_native_text".to_string());
-                ExecutionMode::Render
-            }
-            Some(ExecutionMode::Passthrough) => ExecutionMode::Passthrough,
-        }
+        selected
     } else {
         decision_log.push("default_mode=passthrough_only".to_string());
         ExecutionMode::Passthrough
     };
 
     let fallback_reason = match mode {
-        ExecutionMode::Passthrough => matches!(seam.version_band, VersionBand::Unknown)
-            .then_some(FallbackReason::UnsupportedTier),
+        ExecutionMode::Passthrough => {
+            matches!(seam.version_band, VersionBand::Gcc16Plus | VersionBand::Unknown)
+                .then_some(FallbackReason::UnsupportedVersionBand)
+        }
         ExecutionMode::Shadow => Some(FallbackReason::ShadowMode),
         ExecutionMode::Render => None,
     };
@@ -270,26 +238,17 @@ pub(crate) fn select_processing_path_for_seam(
     seam.select_processing_path(decision.mode, requested)
         .unwrap_or_else(|_| match decision.mode {
             ExecutionMode::Passthrough => ProcessingPath::Passthrough,
-            ExecutionMode::Shadow => {
-                if seam.is_primary_structured() {
-                    ProcessingPath::DualSinkStructured
-                } else {
-                    ProcessingPath::NativeTextCapture
-                }
-            }
-            ExecutionMode::Render if seam.is_primary_structured() => {
-                ProcessingPath::DualSinkStructured
-            }
+            ExecutionMode::Shadow => seam.default_processing_path,
             ExecutionMode::Render => seam.default_processing_path,
         })
 }
 
 #[cfg(test)]
 pub(crate) fn compatibility_scope_notice(
-    tier: SupportTier,
+    version_band: VersionBand,
     decision: &ModeDecision,
 ) -> Option<&'static str> {
-    let seam = CliCompatibilitySeam::from_support_tier(tier);
+    let seam = CliCompatibilitySeam::from_version_band(version_band);
     compatibility_scope_notice_for_path(
         &seam,
         decision,
@@ -302,54 +261,35 @@ pub(crate) fn compatibility_scope_notice_for_path(
     decision: &ModeDecision,
     processing_path: ProcessingPath,
 ) -> Option<&'static str> {
-    match seam.version_band {
-        VersionBand::Gcc15Plus => None,
-        VersionBand::Gcc13_14 => match (decision.mode, processing_path, decision.fallback_reason) {
-            (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-        },
-        VersionBand::Gcc9_12 => match (decision.mode, processing_path, decision.fallback_reason) {
-            (ExecutionMode::Shadow, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Passthrough, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=passthrough; fallback reason=incompatible_sink; enhanced capture was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-            (ExecutionMode::Render, _, _) => Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
-        },
-        VersionBand::Unknown => Some(
-            "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed.",
+    if !seam.is_in_scope() {
+        return Some(
+            "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
+        );
+    }
+
+    match (decision.mode, processing_path, decision.fallback_reason) {
+        (ExecutionMode::Shadow, _, _) => Some(
+            "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract.",
         ),
+        (ExecutionMode::Passthrough, _, Some(FallbackReason::UserOptOut)) => Some(
+            "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=user_opt_out; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved.",
+        ),
+        (ExecutionMode::Passthrough, _, _) => Some(
+            "gcc-formed: support level=in_scope; selected mode=passthrough; fallback reason=incompatible_sink; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved.",
+        ),
+        (ExecutionMode::Render, ProcessingPath::SingleSinkStructured, _) => Some(
+            "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile.",
+        ),
+        _ => None,
     }
 }
 
 pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> OperatorGuidance {
     match version_band {
-        VersionBand::Gcc15Plus => OperatorGuidance {
+        VersionBand::Gcc15 => OperatorGuidance {
             summary: "operator next step=keep direct CC/CXX replacement, and keep at most one wrapper-owned backend launcher behind the wrapper.",
             representative_limitations: &[
-                "GCC15+ remains the highest-fidelity reference path.",
+                "dual_sink_structured is the default capture path on this backend capability profile.",
                 "Launcher stacks in front of the wrapper are still outside the current beta contract.",
             ],
             actionable_next_steps: &[
@@ -361,8 +301,8 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
         VersionBand::Gcc13_14 => OperatorGuidance {
             summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             representative_limitations: &[
-                "native_text_capture is the default first-class product path.",
-                "explicit single_sink_structured selection remains opt-in.",
+                "native_text_capture is the default capture path on this backend capability profile.",
+                "single_sink_structured remains available as an explicit structured capture path.",
                 "raw native diagnostics may not be preserved in the same run when explicit structured capture is active.",
             ],
             actionable_next_steps: &[
@@ -375,9 +315,9 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
         VersionBand::Gcc9_12 => OperatorGuidance {
             summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             representative_limitations: &[
-                "native_text_capture is the default first-class product path.",
-                "explicit single_sink_structured JSON selection remains opt-in.",
-                "prefer C-first compile/type/linker/basic include+macro cases; do not assume GCC15+ fidelity.",
+                "native_text_capture is the default capture path on this backend capability profile.",
+                "single_sink_structured remains available as an explicit JSON capture path.",
+                "raw native diagnostics may not be preserved in the same run when explicit structured capture is active.",
             ],
             actionable_next_steps: &[
                 "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
@@ -393,14 +333,14 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
                 "preprocessor",
             ],
         },
-        VersionBand::Unknown => OperatorGuidance {
-            summary: "operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed.",
+        VersionBand::Gcc16Plus | VersionBand::Unknown => OperatorGuidance {
+            summary: "operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
             representative_limitations: &[
-                "this compiler version is outside the current product bands.",
+                "this compiler version is outside the current GCC 9-15 contract.",
                 "conservative raw diagnostics will be preserved.",
             ],
             actionable_next_steps: &[
-                "Use raw gcc/g++ for production builds until a supported VersionBand is confirmed.",
+                "Use raw gcc/g++ for production builds until an in-scope VersionBand is confirmed.",
                 "Use --formed-mode=passthrough when you need the wrapper path for triage only.",
             ],
             c_first_focus_areas: &[],
@@ -410,7 +350,8 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
 
 fn representative_major_for_band(version_band: VersionBand) -> u32 {
     match version_band {
-        VersionBand::Gcc15Plus => 15,
+        VersionBand::Gcc16Plus => 16,
+        VersionBand::Gcc15 => 15,
         VersionBand::Gcc13_14 => 13,
         VersionBand::Gcc9_12 => 9,
         VersionBand::Unknown => 0,
@@ -428,7 +369,8 @@ fn processing_path_label(path: ProcessingPath) -> &'static str {
 
 fn version_band_label(version_band: VersionBand) -> &'static str {
     match version_band {
-        VersionBand::Gcc15Plus => "gcc15_plus",
+        VersionBand::Gcc16Plus => "gcc16_plus",
+        VersionBand::Gcc15 => "gcc15",
         VersionBand::Gcc13_14 => "gcc13_14",
         VersionBand::Gcc9_12 => "gcc9_12",
         VersionBand::Unknown => "unknown",
@@ -437,8 +379,7 @@ fn version_band_label(version_band: VersionBand) -> &'static str {
 
 fn support_level_label(level: SupportLevel) -> &'static str {
     match level {
-        SupportLevel::Preview => "preview",
-        SupportLevel::Experimental => "experimental",
+        SupportLevel::InScope => "in_scope",
         SupportLevel::PassthroughOnly => "passthrough_only",
     }
 }
@@ -453,7 +394,7 @@ pub(crate) fn execution_mode_label(mode: ExecutionMode) -> &'static str {
 
 pub(crate) fn fallback_reason_label(reason: FallbackReason) -> &'static str {
     match reason {
-        FallbackReason::UnsupportedTier => "unsupported_tier",
+        FallbackReason::UnsupportedVersionBand => "unsupported_version_band",
         FallbackReason::IncompatibleSink => "incompatible_sink",
         FallbackReason::UserOptOut => "user_opt_out",
         FallbackReason::ShadowMode => "shadow_mode",
@@ -529,7 +470,7 @@ mod tests {
 
     #[test]
     fn selects_passthrough_with_reason_for_hard_conflict() {
-        let decision = select_mode(SupportTier::A, None, true);
+        let decision = select_mode(VersionBand::Gcc15, None, true);
         assert_eq!(decision.mode, ExecutionMode::Passthrough);
         assert_eq!(
             decision.fallback_reason,
@@ -545,55 +486,50 @@ mod tests {
 
     #[test]
     fn annotates_shadow_mode_with_reason() {
-        let decision = select_mode(SupportTier::B, Some(ExecutionMode::Shadow), false);
+        let decision = select_mode(VersionBand::Gcc13_14, Some(ExecutionMode::Shadow), false);
         assert_eq!(decision.mode, ExecutionMode::Shadow);
         assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
         assert!(
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "selected_mode=shadow_native_text")
+                .any(|entry| entry == "selected_mode=shadow")
         );
     }
 
     #[test]
-    fn selects_tier_b_native_text_render_by_default() {
-        let decision = select_mode(SupportTier::B, None, false);
+    fn selects_in_scope_render_by_default() {
+        let decision = select_mode(VersionBand::Gcc13_14, None, false);
         assert_eq!(decision.mode, ExecutionMode::Render);
         assert_eq!(decision.fallback_reason, None);
         assert!(
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "default_mode=render_native_text")
+                .any(|entry| entry == "selected_mode=render")
         );
     }
 
     #[test]
-    fn announces_tier_b_native_text_default_render() {
-        let decision = select_mode(SupportTier::B, None, false);
+    fn omits_notice_for_default_in_scope_render() {
+        let decision = select_mode(VersionBand::Gcc13_14, None, false);
+        assert_eq!(compatibility_scope_notice(VersionBand::Gcc13_14, &decision), None);
+    }
+
+    #[test]
+    fn announces_in_scope_shadow_mode() {
+        let decision = select_mode(VersionBand::Gcc13_14, Some(ExecutionMode::Shadow), false);
         assert_eq!(
-            compatibility_scope_notice(SupportTier::B, &decision),
+            compatibility_scope_notice(VersionBand::Gcc13_14, &decision),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
             )
         );
     }
 
     #[test]
-    fn announces_tier_b_compatibility_shadow() {
-        let decision = select_mode(SupportTier::B, Some(ExecutionMode::Shadow), false);
-        assert_eq!(
-            compatibility_scope_notice(SupportTier::B, &decision),
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
-            )
-        );
-    }
-
-    #[test]
-    fn selects_single_sink_structured_when_requested_for_tier_b_render() {
-        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::B);
+    fn selects_single_sink_structured_when_requested_for_gcc13_render() {
+        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14);
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(
             select_processing_path_for_seam(
@@ -606,8 +542,8 @@ mod tests {
     }
 
     #[test]
-    fn announces_single_sink_structured_tradeoff_for_tier_b() {
-        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::B);
+    fn announces_single_sink_structured_tradeoff_for_gcc13_render() {
+        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14);
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(
             compatibility_scope_notice_for_path(
@@ -616,13 +552,13 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
             )
         );
     }
 
     #[test]
-    fn selects_band_c_native_text_render_by_default() {
+    fn selects_gcc9_native_text_render_by_default() {
         let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12);
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(decision.mode, ExecutionMode::Render);
@@ -631,12 +567,12 @@ mod tests {
             decision
                 .decision_log
                 .iter()
-                .any(|entry| entry == "default_mode=render_native_text")
+                .any(|entry| entry == "selected_mode=render")
         );
     }
 
     #[test]
-    fn announces_band_c_native_text_default_render() {
+    fn omits_notice_for_default_gcc9_render() {
         let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12);
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(
@@ -645,14 +581,12 @@ mod tests {
                 &decision,
                 ProcessingPath::NativeTextCapture
             ),
-            Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
-            )
+            None
         );
     }
 
     #[test]
-    fn announces_single_sink_structured_tradeoff_for_band_c() {
+    fn announces_single_sink_structured_tradeoff_for_gcc9_render() {
         let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc9_12);
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(
@@ -662,18 +596,18 @@ mod tests {
                 ProcessingPath::SingleSinkStructured
             ),
             Some(
-                "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+                "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
             )
         );
     }
 
     #[test]
     fn announces_out_of_scope_unknown_passthrough() {
-        let decision = select_mode(SupportTier::C, None, false);
+        let decision = select_mode(VersionBand::Unknown, None, false);
         assert_eq!(
-            compatibility_scope_notice(SupportTier::C, &decision),
+            compatibility_scope_notice(VersionBand::Unknown, &decision),
             Some(
-                "gcc-formed: version band=unknown support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_tier; this compiler version is outside the current product bands and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until a supported VersionBand is confirmed."
+                "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
             )
         );
     }
@@ -742,7 +676,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_vocabulary_seam_preserves_primary_structured_render() {
+    fn probe_vocabulary_seam_preserves_in_scope_structured_render() {
         let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: "/tmp/fake-gcc".into(),
@@ -755,7 +689,6 @@ mod tests {
             version_string: "gcc (Fake) 15.2.0".to_string(),
             major: 15,
             minor: 2,
-            support_tier: SupportTier::A,
             driver_kind: diag_backend_probe::DriverKind::Gcc,
             add_output_sarif_supported: true,
             version_probe_key: diag_backend_probe::ProbeKey {
@@ -769,9 +702,10 @@ mod tests {
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(decision.mode, ExecutionMode::Render);
         assert_eq!(decision.fallback_reason, None);
-        assert!(seam.should_inject_sarif(decision.mode));
+        assert!(seam.should_inject_sarif(decision.mode, ProcessingPath::DualSinkStructured));
         assert!(seam.should_preserve_tty_color(
             decision.mode,
+            ProcessingPath::DualSinkStructured,
             &RenderCapabilities {
                 stream_kind: StreamKind::Tty,
                 width_columns: Some(100),
@@ -785,7 +719,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_vocabulary_seam_preserves_tier_b_shadow_escape_hatch() {
+    fn probe_vocabulary_seam_preserves_gcc13_shadow_escape_hatch() {
         let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: "/tmp/fake-gcc".into(),
@@ -798,7 +732,6 @@ mod tests {
             version_string: "gcc (Fake) 13.3.0".to_string(),
             major: 13,
             minor: 3,
-            support_tier: SupportTier::B,
             driver_kind: diag_backend_probe::DriverKind::Gcc,
             add_output_sarif_supported: false,
             version_probe_key: diag_backend_probe::ProbeKey {
@@ -812,12 +745,15 @@ mod tests {
         let decision = select_mode_for_seam(&seam, Some(ExecutionMode::Shadow), false);
         assert_eq!(decision.mode, ExecutionMode::Shadow);
         assert_eq!(decision.fallback_reason, Some(FallbackReason::ShadowMode));
-        assert!(!seam.should_inject_sarif(decision.mode));
+        assert!(!seam.should_inject_sarif(
+            decision.mode,
+            ProcessingPath::NativeTextCapture
+        ));
     }
 
     #[test]
     fn tty_color_preservation_requires_tty_and_no_user_override() {
-        let seam = CliCompatibilitySeam::from_support_tier(SupportTier::A);
+        let seam = CliCompatibilitySeam::from_version_band(VersionBand::Gcc15);
         let tty_capabilities = RenderCapabilities {
             stream_kind: StreamKind::Tty,
             width_columns: Some(100),
@@ -827,9 +763,15 @@ mod tests {
             interactive: true,
         };
 
-        assert!(seam.should_preserve_tty_color(ExecutionMode::Render, &tty_capabilities, &[]));
+        assert!(seam.should_preserve_tty_color(
+            ExecutionMode::Render,
+            ProcessingPath::DualSinkStructured,
+            &tty_capabilities,
+            &[]
+        ));
         assert!(!seam.should_preserve_tty_color(
             ExecutionMode::Render,
+            ProcessingPath::DualSinkStructured,
             &RenderCapabilities {
                 stream_kind: StreamKind::Pipe,
                 ..tty_capabilities
@@ -838,6 +780,7 @@ mod tests {
         ));
         assert!(!seam.should_preserve_tty_color(
             ExecutionMode::Render,
+            ProcessingPath::DualSinkStructured,
             &tty_capabilities,
             &[OsString::from("-fdiagnostics-color=never")]
         ));

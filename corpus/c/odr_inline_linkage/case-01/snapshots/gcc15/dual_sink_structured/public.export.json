@@ -1,0 +1,145 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc15"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-odr_inline_linkage-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "odr_inline_linkage",
+        "first_action": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
+        "headline": "ODR violation or inline linkage mismatch",
+        "message": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^",
+        "phase": "link",
+        "primary_location": {
+          "column": 5,
+          "line": 1,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "linker",
+            "first_action": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "message": "src/helper.c:1:6: note: return value type mismatch\n    1 | long helper(long value) {\n      |      ^",
+            "phase": "link",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/helper.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "linker",
+            "first_action": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "message": "src/helper.c:1:6: note: type 'long int' should match type 'int'",
+            "phase": "link",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/helper.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "linker",
+            "first_action": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "message": "src/helper.c:1:6: note: 'helper' was previously declared here",
+            "phase": "link",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/helper.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "linker",
+            "first_action": "check the missing/duplicate symbol and the object or library inputs",
+            "headline": "linker reported a failure",
+            "message": "src/helper.c:1:6: note: code may be misoptimized unless '-fno-strict-aliasing' is used",
+            "phase": "link",
+            "primary_location": {
+              "column": 6,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/helper.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 5,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 1,
+      "note_count": 4,
+      "uncertain_count": 0,
+      "warning_count": 1
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

@@ -13,14 +13,6 @@ from string import Template
 
 SCHEMA_VERSION = 3
 
-LEGACY_SUPPORT_TIER_MAP = {
-    "repository_gate": ("repository", None),
-    "release_candidate_gate": ("release_candidate", None),
-    "gcc15_primary": ("reference_path", "gcc15_plus"),
-    "gcc13_compatibility": ("matrix", "gcc13_14"),
-    "gcc14_compatibility": ("matrix", "gcc13_14"),
-}
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -48,12 +40,6 @@ def parse_args() -> argparse.Namespace:
         "--matrix-version-band",
         default=None,
         help="Optional nightly matrix version band such as gcc13_14.",
-    )
-    parser.add_argument(
-        "--matrix-support-tier",
-        dest="legacy_matrix_support_tier",
-        default=None,
-        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--release-blocker",
@@ -93,29 +79,12 @@ def substitute(value, mapping):
     return value
 
 
-def legacy_gate_metadata(legacy_support_tier: str | None) -> tuple[str | None, str | None]:
-    if legacy_support_tier is None:
-        return None, None
-    return LEGACY_SUPPORT_TIER_MAP.get(legacy_support_tier, (legacy_support_tier, None))
-
-
 def resolve_matrix_version_band(args: argparse.Namespace) -> str | None:
-    if args.matrix_version_band is not None:
-        return args.matrix_version_band
-    _, version_band = legacy_gate_metadata(args.legacy_matrix_support_tier)
-    return version_band
+    return args.matrix_version_band
 
 
 def resolve_step_metadata(step: dict, mapping: dict) -> tuple[str | None, str | None]:
-    gate_scope = substitute(step.get("gate_scope"), mapping)
-    version_band = substitute(step.get("version_band"), mapping)
-    legacy_support_tier = substitute(step.get("support_tier"), mapping)
-    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(legacy_support_tier)
-    if gate_scope is None:
-        gate_scope = legacy_gate_scope
-    if version_band is None:
-        version_band = legacy_version_band
-    return gate_scope, version_band
+    return substitute(step.get("gate_scope"), mapping), substitute(step.get("version_band"), mapping)
 
 
 def ensure_gate_dirs(report_root: Path) -> tuple[Path, Path, Path]:
@@ -160,7 +129,6 @@ def build_mapping(args: argparse.Namespace) -> dict:
         "SIGNING_KEY_PATH": os.environ.get("SIGNING_KEY_PATH", ""),
         "PACKAGE_VERSION": os.environ.get("PACKAGE_VERSION", ""),
         "MATRIX_GCC_VERSION": args.matrix_gcc_version or "",
-        "MATRIX_SUPPORT_TIER": args.legacy_matrix_support_tier or "",
         "MATRIX_VERSION_BAND": resolve_matrix_version_band(args) or "",
         "RELEASE_BLOCKER": args.release_blocker or "",
     }
@@ -171,8 +139,6 @@ def build_child_env(args: argparse.Namespace) -> dict:
     env["REPORT_ROOT"] = args.report_root
     if args.matrix_gcc_version is not None:
         env["MATRIX_GCC_VERSION"] = args.matrix_gcc_version
-    if args.legacy_matrix_support_tier is not None:
-        env["MATRIX_SUPPORT_TIER"] = args.legacy_matrix_support_tier
     matrix_version_band = resolve_matrix_version_band(args)
     if matrix_version_band is not None:
         env["MATRIX_VERSION_BAND"] = matrix_version_band

@@ -1,0 +1,83 @@
+{
+  "execution": {
+    "document_completeness": "partial",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc15"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-cpp-exception_handling-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "cpp",
+    "primary_tool": {
+      "name": "g++",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "exception_handling",
+        "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
+        "headline": "exception handling configuration or usage error",
+        "message": "exception handling disabled, use '[-fexceptions](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/Code-Gen-Options.html#index-fexceptions)' to enable",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 11,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
+        "confidence": "high",
+        "family": "exception_handling",
+        "first_action": "enable -fexceptions/-frtti or adjust the exception specification",
+        "headline": "exception handling configuration or usage error",
+        "message": "src/main.cpp:2:11: error: exception handling disabled, use '-fexceptions' to enable\nsrc/main.cpp: In function 'void f()':\n    2 |     throw 1;\n      |           ^",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 11,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.cpp",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 2,
+      "duplicate_count": 0,
+      "error_count": 2,
+      "independent_root_count": 2,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 0
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

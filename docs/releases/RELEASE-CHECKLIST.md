@@ -47,17 +47,18 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - Use the exact canonical wording in [docs/support/SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) for release notes, release bodies, README summaries, and templates.
 
 ## Explicit Non-Goals
 
 - Do not label `0.2.0-beta.N` artifacts as `1.0.0-rc.N` or `1.0.0 stable`.
-- Do not claim that all `VersionBand` values have identical guarantees before the path-aware quality gates exist.
+- Do not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
+- Do not claim that every diagnostic family or capability path already has identical evidence across the in-scope bands.
 - Do not widen the support boundary beyond `SUPPORT-BOUNDARY.md`.
 - Do not expand production claims to non-Linux artifacts.
 - Do not claim that raw fallback has been eliminated.

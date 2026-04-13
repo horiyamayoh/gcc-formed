@@ -1,0 +1,63 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc15"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-string_character-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "string_character",
+        "first_action": "check for unintended multi-character constants, trigraphs, or unterminated strings",
+        "headline": "character or string literal issue",
+        "message": "multi-character character constant",
+        "phase": "parse",
+        "primary_location": {
+          "column": 13,
+          "line": 2,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 1,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 1,
+      "note_count": 0,
+      "uncertain_count": 0,
+      "warning_count": 1
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

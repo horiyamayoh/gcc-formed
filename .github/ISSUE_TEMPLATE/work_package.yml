@@ -32,9 +32,10 @@ body:
     attributes:
       label: Affected band
       options:
-        - label: GCC15+
+        - label: GCC15
         - label: GCC13-14
         - label: GCC9-12
+        - label: GCC16+ / Unknown
         - label: Cross-cutting
   - type: checkboxes
     id: processing_path

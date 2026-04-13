@@ -13,16 +13,11 @@ BUILD_ENVIRONMENT_SCHEMA_VERSION = 1
 REPLAY_STOP_SHIP_SCHEMA_VERSION = 1
 BUILD_ENVIRONMENT_STEP_SECTIONS = {
     "capture-host-build-environment": "host",
+    "capture-gcc12-ci-environment": "ci_image",
+    "capture-gcc13-ci-environment": "ci_image",
     "capture-gcc15-ci-environment": "ci_image",
     "capture-reference-ci-environment": "ci_image",
     "capture-matrix-ci-environment": "ci_image",
-}
-LEGACY_SUPPORT_TIER_MAP = {
-    "repository_gate": ("repository", None),
-    "release_candidate_gate": ("release_candidate", None),
-    "gcc15_primary": ("reference_path", "gcc15_plus"),
-    "gcc13_compatibility": ("matrix", "gcc13_14"),
-    "gcc14_compatibility": ("matrix", "gcc13_14"),
 }
 
 
@@ -43,12 +38,6 @@ def parse_args() -> argparse.Namespace:
         "--matrix-version-band",
         default=None,
         help="Optional nightly matrix version band such as gcc13_14.",
-    )
-    parser.add_argument(
-        "--matrix-support-tier",
-        dest="legacy_matrix_support_tier",
-        default=None,
-        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--release-blocker",
@@ -88,17 +77,8 @@ def substitute(value, mapping):
     return value
 
 
-def legacy_gate_metadata(legacy_support_tier: str | None) -> tuple[str | None, str | None]:
-    if legacy_support_tier is None:
-        return None, None
-    return LEGACY_SUPPORT_TIER_MAP.get(legacy_support_tier, (legacy_support_tier, None))
-
-
 def resolve_matrix_version_band(args: argparse.Namespace) -> str | None:
-    if args.matrix_version_band is not None:
-        return args.matrix_version_band
-    _, version_band = legacy_gate_metadata(args.legacy_matrix_support_tier)
-    return version_band
+    return args.matrix_version_band
 
 
 def policy_skips_step(step: dict, args: argparse.Namespace) -> bool:
@@ -106,43 +86,25 @@ def policy_skips_step(step: dict, args: argparse.Namespace) -> bool:
     if policy == "release_blocker_only":
         return args.release_blocker == "false"
     if policy == "reference_path_only":
-        return resolve_matrix_version_band(args) not in {None, "gcc15_plus"}
+        return resolve_matrix_version_band(args) not in {None, "gcc15"}
     return False
 
 
 def resolve_step_metadata(step: dict, mapping: dict) -> tuple[str | None, str | None]:
-    gate_scope = substitute(step.get("gate_scope"), mapping)
-    version_band = substitute(step.get("version_band"), mapping)
-    legacy_support_tier = substitute(step.get("support_tier"), mapping)
-    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(legacy_support_tier)
-    if gate_scope is None:
-        gate_scope = legacy_gate_scope
-    if version_band is None:
-        version_band = legacy_version_band
-    return gate_scope, version_band
+    return substitute(step.get("gate_scope"), mapping), substitute(step.get("version_band"), mapping)
 
 
 def normalize_status_payload(payload: dict) -> dict:
     normalized = dict(payload)
-    legacy_gate_scope, legacy_version_band = legacy_gate_metadata(payload.get("support_tier"))
     normalized["gate_scope"] = payload.get("gate_scope")
     normalized["version_band"] = payload.get("version_band")
-    if normalized["gate_scope"] is None:
-        normalized["gate_scope"] = legacy_gate_scope
-    if normalized["version_band"] is None:
-        normalized["version_band"] = legacy_version_band
     matrix = dict(payload.get("matrix") or {})
-    _, legacy_matrix_version_band = legacy_gate_metadata(matrix.get("support_tier"))
-    matrix_version_band = matrix.get("version_band")
-    if matrix_version_band is None:
-        matrix_version_band = legacy_matrix_version_band
     normalized["matrix"] = {
         "gcc_version": matrix.get("gcc_version"),
-        "version_band": matrix_version_band,
+        "version_band": matrix.get("version_band"),
         "release_blocker": matrix.get("release_blocker"),
     }
     normalized["schema_version"] = payload.get("schema_version", SCHEMA_VERSION)
-    normalized.pop("support_tier", None)
     return normalized
 
 
@@ -158,7 +120,6 @@ def build_mapping(args: argparse.Namespace) -> dict:
         "SIGNING_KEY_PATH": os.environ.get("SIGNING_KEY_PATH", ""),
         "PACKAGE_VERSION": os.environ.get("PACKAGE_VERSION", ""),
         "MATRIX_GCC_VERSION": args.matrix_gcc_version or "",
-        "MATRIX_SUPPORT_TIER": args.legacy_matrix_support_tier or "",
         "MATRIX_VERSION_BAND": resolve_matrix_version_band(args) or "",
         "RELEASE_BLOCKER": args.release_blocker,
     }

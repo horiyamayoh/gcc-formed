@@ -32,7 +32,6 @@ class GateSummaryTest(unittest.TestCase):
         exit_code: int | None,
         gate_scope: str | None = "repository",
         version_band: str | None = None,
-        legacy_support_tier: str | None = None,
         artifact_paths: list[str] | None = None,
     ) -> dict:
         payload = {
@@ -64,8 +63,6 @@ class GateSummaryTest(unittest.TestCase):
                 "release_blocker": "true",
             },
         }
-        if legacy_support_tier is not None:
-            payload["support_tier"] = legacy_support_tier
         return payload
 
     def run_gate_summary(
@@ -229,7 +226,7 @@ class GateSummaryTest(unittest.TestCase):
                 any("build environment artifact missing" in anomaly for anomaly in summary["anomalies"])
             )
 
-    def test_gate_summary_normalizes_legacy_support_tier_fields(self) -> None:
+    def test_gate_summary_preserves_explicit_gate_scope_and_version_band_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             report_root = root / "reports"
@@ -245,10 +242,11 @@ class GateSummaryTest(unittest.TestCase):
                         {
                             "id": "legacy-step",
                             "order": 1,
-                            "name": "Legacy step",
+                            "name": "Matrix step",
                             "policy": "always",
                             "failure_classification": "product",
-                            "support_tier": "gcc15_primary",
+                            "gate_scope": "matrix",
+                            "version_band": "gcc13_14",
                         }
                     ],
                 },
@@ -258,13 +256,12 @@ class GateSummaryTest(unittest.TestCase):
                 self.make_status_payload(
                     step_id="legacy-step",
                     order=1,
-                    name="Legacy step",
+                    name="Matrix step",
                     failure_classification="product",
                     status="success",
                     exit_code=0,
-                    gate_scope=None,
-                    version_band=None,
-                    legacy_support_tier="gcc15_primary",
+                    gate_scope="matrix",
+                    version_band="gcc13_14",
                 ),
             )
 
@@ -274,8 +271,8 @@ class GateSummaryTest(unittest.TestCase):
             summary = json.loads(
                 (report_root / "gate" / "gate-summary.json").read_text(encoding="utf-8")
             )
-            self.assertEqual(summary["steps"][0]["gate_scope"], "reference_path")
-            self.assertEqual(summary["steps"][0]["version_band"], "gcc15_plus")
+            self.assertEqual(summary["steps"][0]["gate_scope"], "matrix")
+            self.assertEqual(summary["steps"][0]["version_band"], "gcc13_14")
 
     def test_gate_summary_surfaces_machine_readable_path_aware_blockers(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -513,37 +510,41 @@ class CheckedInPlanTest(unittest.TestCase):
                 self.assertIn("$REPORT_ROOT/gate/replay-stop-ship.json", stop_ship["artifact_paths"])
                 self.assertGreater(stop_ship["order"], steps_by_id[prerequisite_id]["order"])
 
-    def test_pr_gate_plan_uses_reference_path_metadata_for_gcc15_plus_slice(self) -> None:
+    def test_pr_gate_plan_uses_matrix_metadata_for_gcc9_12_gcc13_14_and_gcc15(self) -> None:
         plan = self.load_plan("ci/plans/pr-gate.json")
         steps_by_id = {step["id"]: step for step in plan["steps"]}
-        for step_id in [
-            "build-reference-ci-image",
-            "capture-reference-ci-environment",
-            "representative-acceptance-replay",
-            "path-aware-replay-stop-ship",
-            "build-wrapper-binary-reference-image",
-            "wrapper-self-check-reference-image",
-            "representative-reference-snapshot-check",
-        ]:
+        expected_matrix_steps = {
+            "build-gcc12-ci-image": "gcc9_12",
+            "capture-gcc12-ci-environment": "gcc9_12",
+            "build-wrapper-binary-gcc12-image": "gcc9_12",
+            "wrapper-self-check-gcc12-image": "gcc9_12",
+            "representative-gcc12-snapshot-check": "gcc9_12",
+            "build-gcc13-ci-image": "gcc13_14",
+            "capture-gcc13-ci-environment": "gcc13_14",
+            "build-wrapper-binary-gcc13-image": "gcc13_14",
+            "wrapper-self-check-gcc13-image": "gcc13_14",
+            "representative-gcc13-snapshot-check": "gcc13_14",
+            "build-gcc15-ci-image": "gcc15",
+            "capture-gcc15-ci-environment": "gcc15",
+            "build-wrapper-binary-gcc15-image": "gcc15",
+            "wrapper-self-check-gcc15-image": "gcc15",
+            "representative-gcc15-snapshot-check": "gcc15",
+        }
+        for step_id, version_band in expected_matrix_steps.items():
             with self.subTest(step_id=step_id):
                 step = steps_by_id[step_id]
-                self.assertEqual(step["gate_scope"], "reference_path")
-                self.assertEqual(step["version_band"], "gcc15_plus")
+                self.assertEqual(step["gate_scope"], "matrix")
+                self.assertEqual(step["version_band"], version_band)
                 self.assertNotIn("support_tier", step)
-        for step_id in [
-            "build-reference-ci-image",
-            "capture-reference-ci-environment",
-            "build-wrapper-binary-reference-image",
-            "wrapper-self-check-reference-image",
-            "representative-reference-snapshot-check",
-        ]:
+        for step_id in ["representative-acceptance-replay", "path-aware-replay-stop-ship"]:
             with self.subTest(step_id=step_id):
-                self.assertIn("reference-path", steps_by_id[step_id]["name"])
-        self.assertNotIn("build-gcc15-ci-image", steps_by_id)
-        self.assertNotIn("capture-gcc15-ci-environment", steps_by_id)
-        self.assertNotIn("build-wrapper-binary-gcc15-image", steps_by_id)
-        self.assertNotIn("wrapper-self-check-gcc15-image", steps_by_id)
-        self.assertNotIn("representative-gcc15-snapshot-check", steps_by_id)
+                self.assertEqual(steps_by_id[step_id]["gate_scope"], "matrix")
+                self.assertNotIn("support_tier", steps_by_id[step_id])
+        self.assertNotIn("build-reference-ci-image", steps_by_id)
+        self.assertNotIn("capture-reference-ci-environment", steps_by_id)
+        self.assertNotIn("build-wrapper-binary-reference-image", steps_by_id)
+        self.assertNotIn("wrapper-self-check-reference-image", steps_by_id)
+        self.assertNotIn("representative-reference-snapshot-check", steps_by_id)
 
     def test_checked_in_plans_use_gate_scope_and_drop_legacy_support_tier(self) -> None:
         for relative_path in [
@@ -628,24 +629,45 @@ class CheckedInWorkflowTest(unittest.TestCase):
                 self.assertIn("python3 ci/run_gate_step.py", workflow)
                 self.assertNotIn("python3 ci/gate_step.py", workflow)
 
-    def test_pr_workflow_uses_reference_path_naming_instead_of_gcc15_labels(self) -> None:
+    def test_pr_workflow_uses_parity_matrix_step_names(self) -> None:
         workflow = (REPO_ROOT / ".github" / "workflows" / "pr.yml").read_text(encoding="utf-8")
-        self.assertIn("Build GCC 15 reference-path CI image", workflow)
-        self.assertIn("Capture GCC 15 reference-path CI environment", workflow)
-        self.assertIn("Build wrapper binary in reference-path image", workflow)
-        self.assertIn("Wrapper self-check in reference-path image", workflow)
-        self.assertIn("Representative reference-path snapshot check", workflow)
-        self.assertIn("--step-id build-reference-ci-image", workflow)
-        self.assertIn("--step-id capture-reference-ci-environment", workflow)
-        self.assertIn("--step-id build-wrapper-binary-reference-image", workflow)
-        self.assertIn("--step-id wrapper-self-check-reference-image", workflow)
-        self.assertIn("--step-id representative-reference-snapshot-check", workflow)
-        self.assertNotIn("Build GCC 15 CI image", workflow)
-        self.assertNotIn("Capture GCC 15 CI environment", workflow)
-        self.assertNotIn("Representative GCC 15 snapshot check", workflow)
-        self.assertNotIn("--step-id build-gcc15-ci-image", workflow)
-        self.assertNotIn("--step-id capture-gcc15-ci-environment", workflow)
-        self.assertNotIn("--step-id representative-gcc15-snapshot-check", workflow)
+        for snippet in [
+            "Build GCC 12 CI image",
+            "Capture GCC 12 CI environment",
+            "Build wrapper binary in GCC 12 image",
+            "Wrapper self-check in GCC 12 image",
+            "Representative GCC 12 snapshot check",
+            "Build GCC 13 CI image",
+            "Capture GCC 13 CI environment",
+            "Build wrapper binary in GCC 13 image",
+            "Wrapper self-check in GCC 13 image",
+            "Representative GCC 13 snapshot check",
+            "Build GCC 15 CI image",
+            "Capture GCC 15 CI environment",
+            "Build wrapper binary in GCC 15 image",
+            "Wrapper self-check in GCC 15 image",
+            "Representative GCC 15 snapshot check",
+            "--step-id build-gcc12-ci-image",
+            "--step-id capture-gcc12-ci-environment",
+            "--step-id build-wrapper-binary-gcc12-image",
+            "--step-id wrapper-self-check-gcc12-image",
+            "--step-id representative-gcc12-snapshot-check",
+            "--step-id build-gcc13-ci-image",
+            "--step-id capture-gcc13-ci-environment",
+            "--step-id build-wrapper-binary-gcc13-image",
+            "--step-id wrapper-self-check-gcc13-image",
+            "--step-id representative-gcc13-snapshot-check",
+            "--step-id build-gcc15-ci-image",
+            "--step-id capture-gcc15-ci-environment",
+            "--step-id build-wrapper-binary-gcc15-image",
+            "--step-id wrapper-self-check-gcc15-image",
+            "--step-id representative-gcc15-snapshot-check",
+        ]:
+            with self.subTest(snippet=snippet):
+                self.assertIn(snippet, workflow)
+        self.assertNotIn("reference-path", workflow)
+        self.assertNotIn("--step-id build-reference-ci-image", workflow)
+        self.assertNotIn("--step-id representative-reference-snapshot-check", workflow)
 
     def test_nightly_workflow_uses_matrix_version_band_metadata(self) -> None:
         workflow = (
@@ -688,7 +710,7 @@ class CheckedInWorkflowTest(unittest.TestCase):
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "release-beta.yml"
         ).read_text(encoding="utf-8")
-        self.assertIn("Representative reference-path snapshot check", workflow)
+        self.assertIn("Representative GCC 15 release-lane snapshot check", workflow)
         self.assertIn("Path-aware replay stop-ship contract", workflow)
         self.assertIn("ci/public_surface.py render-release-body", workflow)
         self.assertIn("ci/gate_replay_contract.py", workflow)
@@ -698,12 +720,13 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn("--support-tier", workflow)
         self.assertIn("replay-stop-ship.json", workflow)
         self.assertNotIn('cat > "$RELEASE_NOTES_PATH" <<EOF', workflow)
-        self.assertNotIn("Representative GCC 15 snapshot check", workflow)
+        self.assertIn("--version-band gcc15", workflow)
+        self.assertNotIn("gcc15_plus", workflow)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
         step_names = self.extract_step_names(".github/workflows/release-beta.yml")
         self.assertLess(step_names.index("Representative acceptance replay"), step_names.index("Path-aware replay stop-ship contract"))
-        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Representative reference-path snapshot check"))
+        self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Representative GCC 15 release-lane snapshot check"))
         self.assertLess(step_names.index("Assemble GitHub Release bundles"), step_names.index("Write release provenance"))
         self.assertLess(step_names.index("Write release provenance"), step_names.index("Write release notes"))
         self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub prerelease"))

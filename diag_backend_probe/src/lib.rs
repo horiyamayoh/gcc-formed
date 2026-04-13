@@ -21,24 +21,14 @@ pub enum DriverKind {
     Gxx,
 }
 
-/// Tiered classification of backend support quality.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SupportTier {
-    /// Full structured diagnostics support (GCC 15+).
-    A,
-    /// Partial structured diagnostics support (GCC 13-14).
-    B,
-    /// Minimal support, legacy versions only (GCC 9-12).
-    C,
-}
-
 /// Broad version band grouping for capability mapping.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum VersionBand {
-    /// GCC 15 and newer.
-    Gcc15Plus,
+    /// GCC 16 and newer, currently outside the in-scope parity contract.
+    Gcc16Plus,
+    /// GCC 15.
+    Gcc15,
     /// GCC 13 through 14.
     Gcc13_14,
     /// GCC 9 through 12.
@@ -51,10 +41,8 @@ pub enum VersionBand {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SupportLevel {
-    /// Full feature set available as a preview.
-    Preview,
-    /// Partial feature set with known limitations.
-    Experimental,
+    /// Backend is inside the GCC 9-15 public parity contract.
+    InScope,
     /// Only unmodified passthrough execution is supported.
     PassthroughOnly,
 }
@@ -177,8 +165,6 @@ pub struct ProbeResult {
     pub major: u32,
     /// Parsed minor version number.
     pub minor: u32,
-    /// Support tier derived from the major version.
-    pub support_tier: SupportTier,
     /// Whether the backend is a C or C++ driver.
     pub driver_kind: DriverKind,
     /// Whether the backend supports `-fdiagnostics-add-output=sarif`.
@@ -398,9 +384,8 @@ pub fn probe_backend(path: &Path, invoked_as: String) -> Result<ProbeResult, Pro
         version_string,
         major,
         minor,
-        support_tier: support_tier_for_major(major),
         driver_kind: driver_kind_for_path(path),
-        add_output_sarif_supported: major >= 15,
+        add_output_sarif_supported: major == 15,
         version_probe_key: key,
     })
 }
@@ -441,19 +426,11 @@ pub fn backend_topology_policy() -> Vec<BackendTopologyPolicyEntry> {
     ]
 }
 
-/// Maps a GCC major version to its support tier.
-pub fn support_tier_for_major(major: u32) -> SupportTier {
-    match major {
-        15.. => SupportTier::A,
-        13 | 14 => SupportTier::B,
-        _ => SupportTier::C,
-    }
-}
-
 /// Maps a GCC major version to its version band.
 pub fn version_band_for_major(major: u32) -> VersionBand {
     match major {
-        15.. => VersionBand::Gcc15Plus,
+        16.. => VersionBand::Gcc16Plus,
+        15 => VersionBand::Gcc15,
         13 | 14 => VersionBand::Gcc13_14,
         9..=12 => VersionBand::Gcc9_12,
         _ => VersionBand::Unknown,
@@ -463,24 +440,26 @@ pub fn version_band_for_major(major: u32) -> VersionBand {
 /// Returns the support level for a given version band.
 pub fn support_level_for_version_band(version_band: VersionBand) -> SupportLevel {
     match version_band {
-        VersionBand::Gcc15Plus => SupportLevel::Preview,
-        VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => SupportLevel::Experimental,
-        VersionBand::Unknown => SupportLevel::PassthroughOnly,
+        VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {
+            SupportLevel::InScope
+        }
+        VersionBand::Gcc16Plus | VersionBand::Unknown => SupportLevel::PassthroughOnly,
     }
 }
 
 /// Returns the default processing path for a given version band.
 pub fn default_processing_path_for_version_band(version_band: VersionBand) -> ProcessingPath {
     match version_band {
-        VersionBand::Gcc15Plus => ProcessingPath::DualSinkStructured,
+        VersionBand::Gcc15 => ProcessingPath::DualSinkStructured,
         VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => ProcessingPath::NativeTextCapture,
-        VersionBand::Unknown => ProcessingPath::Passthrough,
+        VersionBand::Gcc16Plus | VersionBand::Unknown => ProcessingPath::Passthrough,
     }
 }
 
 /// Builds a capability profile from a GCC major version number.
 pub fn capability_profile_for_major(major: u32) -> CapabilityProfile {
-    capability_profile_for_version_band(version_band_for_major(major), major >= 15)
+    let version_band = version_band_for_major(major);
+    capability_profile_for_version_band(version_band, matches!(version_band, VersionBand::Gcc15))
 }
 
 /// Builds a capability profile from a completed probe result.
@@ -494,11 +473,11 @@ fn capability_profile_for_version_band(
 ) -> CapabilityProfile {
     // Keep the new vocabulary behind a probe-local compatibility seam until a
     // later issue installs dedicated path/capability probing.
-    let sarif_diagnostics = matches!(version_band, VersionBand::Gcc15Plus | VersionBand::Gcc13_14);
-    let dual_sink = matches!(version_band, VersionBand::Gcc15Plus) && add_output_sarif_supported;
+    let sarif_diagnostics = matches!(version_band, VersionBand::Gcc15 | VersionBand::Gcc13_14);
+    let dual_sink = matches!(version_band, VersionBand::Gcc15) && add_output_sarif_supported;
 
     match version_band {
-        VersionBand::Gcc15Plus => CapabilityProfile {
+        VersionBand::Gcc15 => CapabilityProfile {
             version_band,
             support_level: support_level_for_version_band(version_band),
             native_text_capture: true,
@@ -551,13 +530,13 @@ fn capability_profile_for_version_band(
                 ProcessingPath::Passthrough,
             ]),
         },
-        VersionBand::Unknown => CapabilityProfile {
+        VersionBand::Gcc16Plus | VersionBand::Unknown => CapabilityProfile {
             version_band,
             support_level: support_level_for_version_band(version_band),
-            native_text_capture: true,
+            native_text_capture: false,
             json_diagnostics: false,
-            sarif_diagnostics,
-            dual_sink,
+            sarif_diagnostics: false,
+            dual_sink: false,
             tty_color_control: false,
             caret_control: false,
             parseable_fixits: false,
@@ -747,15 +726,9 @@ mod tests {
     }
 
     #[test]
-    fn maps_support_tiers() {
-        assert_eq!(support_tier_for_major(15), SupportTier::A);
-        assert_eq!(support_tier_for_major(13), SupportTier::B);
-        assert_eq!(support_tier_for_major(12), SupportTier::C);
-    }
-
-    #[test]
     fn maps_version_bands() {
-        assert_eq!(version_band_for_major(15), VersionBand::Gcc15Plus);
+        assert_eq!(version_band_for_major(16), VersionBand::Gcc16Plus);
+        assert_eq!(version_band_for_major(15), VersionBand::Gcc15);
         assert_eq!(version_band_for_major(13), VersionBand::Gcc13_14);
         assert_eq!(version_band_for_major(9), VersionBand::Gcc9_12);
         assert_eq!(version_band_for_major(8), VersionBand::Unknown);
@@ -764,24 +737,32 @@ mod tests {
     #[test]
     fn maps_support_levels_and_default_processing_paths_from_version_bands() {
         assert_eq!(
-            support_level_for_version_band(VersionBand::Gcc15Plus),
-            SupportLevel::Preview
+            support_level_for_version_band(VersionBand::Gcc15),
+            SupportLevel::InScope
         );
         assert_eq!(
             support_level_for_version_band(VersionBand::Gcc13_14),
-            SupportLevel::Experimental
+            SupportLevel::InScope
+        );
+        assert_eq!(
+            support_level_for_version_band(VersionBand::Gcc16Plus),
+            SupportLevel::PassthroughOnly
         );
         assert_eq!(
             support_level_for_version_band(VersionBand::Unknown),
             SupportLevel::PassthroughOnly
         );
         assert_eq!(
-            default_processing_path_for_version_band(VersionBand::Gcc15Plus),
+            default_processing_path_for_version_band(VersionBand::Gcc15),
             ProcessingPath::DualSinkStructured
         );
         assert_eq!(
             default_processing_path_for_version_band(VersionBand::Gcc13_14),
             ProcessingPath::NativeTextCapture
+        );
+        assert_eq!(
+            default_processing_path_for_version_band(VersionBand::Gcc16Plus),
+            ProcessingPath::Passthrough
         );
     }
 
@@ -789,7 +770,7 @@ mod tests {
     fn maps_band_specific_support_levels_and_default_processing_paths() {
         assert_eq!(
             support_level_for_version_band(VersionBand::Gcc9_12),
-            SupportLevel::Experimental
+            SupportLevel::InScope
         );
         assert_eq!(
             support_level_for_version_band(VersionBand::Unknown),
@@ -808,8 +789,8 @@ mod tests {
     #[test]
     fn builds_capability_profiles_without_mutating_legacy_surface() {
         let gcc15 = capability_profile_for_major(15);
-        assert_eq!(gcc15.version_band, VersionBand::Gcc15Plus);
-        assert_eq!(gcc15.support_level, SupportLevel::Preview);
+        assert_eq!(gcc15.version_band, VersionBand::Gcc15);
+        assert_eq!(gcc15.support_level, SupportLevel::InScope);
         assert!(gcc15.sarif_diagnostics);
         assert!(gcc15.dual_sink);
         assert!(gcc15.tty_color_control);
@@ -822,7 +803,7 @@ mod tests {
 
         let gcc13 = capability_profile_for_major(13);
         assert_eq!(gcc13.version_band, VersionBand::Gcc13_14);
-        assert_eq!(gcc13.support_level, SupportLevel::Experimental);
+        assert_eq!(gcc13.support_level, SupportLevel::InScope);
         assert!(!gcc13.json_diagnostics);
         assert!(gcc13.sarif_diagnostics);
         assert!(!gcc13.dual_sink);
@@ -844,7 +825,7 @@ mod tests {
 
         let gcc12 = capability_profile_for_major(12);
         assert_eq!(gcc12.version_band, VersionBand::Gcc9_12);
-        assert_eq!(gcc12.support_level, SupportLevel::Experimental);
+        assert_eq!(gcc12.support_level, SupportLevel::InScope);
         assert!(gcc12.json_diagnostics);
         assert_eq!(
             gcc12.default_processing_path,
@@ -887,7 +868,6 @@ mod tests {
             version_string: "gcc (GCC) 15.1.0".to_string(),
             major: 15,
             minor: 1,
-            support_tier: SupportTier::A,
             driver_kind: DriverKind::Gcc,
             add_output_sarif_supported: true,
             version_probe_key: ProbeKey {
@@ -898,14 +878,13 @@ mod tests {
             },
         };
 
-        assert_eq!(probe.version_band(), VersionBand::Gcc15Plus);
-        assert_eq!(probe.support_level(), SupportLevel::Preview);
+        assert_eq!(probe.version_band(), VersionBand::Gcc15);
+        assert_eq!(probe.support_level(), SupportLevel::InScope);
         assert_eq!(
             probe.default_processing_path(),
             ProcessingPath::DualSinkStructured
         );
         assert!(probe.capability_profile().dual_sink);
-        assert_eq!(probe.support_tier, SupportTier::A);
         assert!(probe.add_output_sarif_supported);
     }
 
@@ -918,7 +897,6 @@ mod tests {
             version_string: "gcc (GCC) 12.3.0".to_string(),
             major: 12,
             minor: 3,
-            support_tier: SupportTier::C,
             driver_kind: DriverKind::Gcc,
             add_output_sarif_supported: false,
             version_probe_key: ProbeKey {
@@ -930,7 +908,7 @@ mod tests {
         };
 
         assert_eq!(probe.version_band(), VersionBand::Gcc9_12);
-        assert_eq!(probe.support_level(), SupportLevel::Experimental);
+        assert_eq!(probe.support_level(), SupportLevel::InScope);
         assert_eq!(
             probe.default_processing_path(),
             ProcessingPath::NativeTextCapture
@@ -954,7 +932,6 @@ mod tests {
             version_string: "gcc (GCC) 13.3.0".to_string(),
             major: 13,
             minor: 3,
-            support_tier: SupportTier::B,
             driver_kind: DriverKind::Gcc,
             add_output_sarif_supported: false,
             version_probe_key: ProbeKey {
@@ -1141,17 +1118,16 @@ exit 0
     #[test]
     fn maps_version_band_boundaries_for_all_supported_cutoffs() {
         let cases = [
-            (8, SupportTier::C, VersionBand::Unknown),
-            (9, SupportTier::C, VersionBand::Gcc9_12),
-            (12, SupportTier::C, VersionBand::Gcc9_12),
-            (13, SupportTier::B, VersionBand::Gcc13_14),
-            (14, SupportTier::B, VersionBand::Gcc13_14),
-            (15, SupportTier::A, VersionBand::Gcc15Plus),
-            (16, SupportTier::A, VersionBand::Gcc15Plus),
+            (8, VersionBand::Unknown),
+            (9, VersionBand::Gcc9_12),
+            (12, VersionBand::Gcc9_12),
+            (13, VersionBand::Gcc13_14),
+            (14, VersionBand::Gcc13_14),
+            (15, VersionBand::Gcc15),
+            (16, VersionBand::Gcc16Plus),
         ];
 
-        for (major, expected_tier, expected_band) in cases {
-            assert_eq!(support_tier_for_major(major), expected_tier);
+        for (major, expected_band) in cases {
             assert_eq!(version_band_for_major(major), expected_band);
         }
     }
@@ -1160,7 +1136,7 @@ exit 0
     fn capability_profiles_follow_band_specific_contracts() {
         let gcc9 = capability_profile_for_major(9);
         assert_eq!(gcc9.version_band, VersionBand::Gcc9_12);
-        assert_eq!(gcc9.support_level, SupportLevel::Experimental);
+        assert_eq!(gcc9.support_level, SupportLevel::InScope);
         assert!(gcc9.native_text_capture);
         assert!(gcc9.json_diagnostics);
         assert!(!gcc9.sarif_diagnostics);
@@ -1175,7 +1151,7 @@ exit 0
 
         let gcc14 = capability_profile_for_major(14);
         assert_eq!(gcc14.version_band, VersionBand::Gcc13_14);
-        assert_eq!(gcc14.support_level, SupportLevel::Experimental);
+        assert_eq!(gcc14.support_level, SupportLevel::InScope);
         assert!(gcc14.native_text_capture);
         assert!(!gcc14.json_diagnostics);
         assert!(gcc14.sarif_diagnostics);
@@ -1190,16 +1166,13 @@ exit 0
         );
 
         let gcc16 = capability_profile_for_major(16);
-        assert_eq!(gcc16.version_band, VersionBand::Gcc15Plus);
-        assert_eq!(gcc16.support_level, SupportLevel::Preview);
-        assert!(gcc16.sarif_diagnostics);
-        assert!(gcc16.dual_sink);
+        assert_eq!(gcc16.version_band, VersionBand::Gcc16Plus);
+        assert_eq!(gcc16.support_level, SupportLevel::PassthroughOnly);
+        assert!(!gcc16.sarif_diagnostics);
+        assert!(!gcc16.dual_sink);
         assert_eq!(
             gcc16.allowed_processing_paths,
-            BTreeSet::from([
-                ProcessingPath::DualSinkStructured,
-                ProcessingPath::Passthrough
-            ])
+            BTreeSet::from([ProcessingPath::Passthrough])
         );
 
         let unknown = capability_profile_for_major(7);

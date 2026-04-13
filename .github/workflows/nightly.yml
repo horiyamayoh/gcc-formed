@@ -29,7 +29,7 @@ jobs:
             release_blocker: false
           - gcc_image: gcc:15
             gcc_label: gcc15
-            version_band: gcc15_plus
+            version_band: gcc15
             release_blocker: true
     env:
       GATE_PLAN: ci/plans/nightly-gate.json

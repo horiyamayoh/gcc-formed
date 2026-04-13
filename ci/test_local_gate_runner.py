@@ -44,7 +44,7 @@ class LocalGateRunnerTest(unittest.TestCase):
                 "nightly-gate",
                 local_mode=True,
                 matrix_gcc_version="gcc:15",
-                matrix_version_band="gcc15_plus",
+                matrix_version_band="gcc15",
                 release_blocker="true",
             )
             self.assertEqual(env["REPORT_ROOT"], str(report_root))
@@ -151,7 +151,7 @@ class LocalGateRunnerTest(unittest.TestCase):
                     {
                         "lane": "gcc15",
                         "gcc_image": "gcc:15",
-                        "version_band": "gcc15_plus",
+                        "version_band": "gcc15",
                         "release_blocker": "true",
                         "overall_status": "failure",
                         "overall_failure_classification": "product",

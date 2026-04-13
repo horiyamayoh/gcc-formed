@@ -70,7 +70,7 @@ The public export is a single JSON object with the following top-level fields.
 
 | Field | Required | Meaning |
 |---|---:|---|
-| `schema_version` | yes | Public export schema version. Current value: `1.0.0-alpha.1`. |
+| `schema_version` | yes | Public export schema version. Current value: `2.0.0-alpha.1`. |
 | `kind` | yes | Export kind discriminator. Current value: `gcc_formed_public_diagnostic_export`. |
 | `status` | yes | `available` or `unavailable`. |
 | `producer` | yes | Wrapper identity that emitted the export. |
@@ -118,6 +118,7 @@ If present, `primary_tool` may contain:
 - `version_band`
 - `processing_path`
 - `support_level`
+- `allowed_processing_paths`
 
 It may additionally contain:
 
@@ -126,7 +127,7 @@ It may additionally contain:
 - `fallback_reason`
 - `document_completeness`
 
-Current `version_band` labels are the current-authority machine labels such as `gcc15_plus`, `gcc13_14`, `gcc9_12`, and `unknown`.
+Current `version_band` labels are the current-authority machine labels such as `gcc16_plus`, `gcc15`, `gcc13_14`, `gcc9_12`, and `unknown`.
 
 Current `processing_path` labels are current-authority machine labels such as:
 
@@ -137,9 +138,12 @@ Current `processing_path` labels are current-authority machine labels such as:
 
 Current `support_level` labels are current-authority machine labels such as:
 
-- `preview`
-- `experimental`
+- `in_scope`
 - `passthrough_only`
+
+`version_band` and `processing_path` remain observability metadata. They must not be used to infer weaker public value claims inside the current `GCC 9-15` contract.
+
+`allowed_processing_paths` lists the capability-valid path labels for the resolved `version_band`, so machine consumers can reason about path availability without inferring a band hierarchy from `support_level`.
 
 ### 4.4 `result`
 
@@ -245,11 +249,12 @@ python3 -m json.tool diagnostic-export.json >/dev/null
 
 ```bash
 jq -e '
-  .schema_version == "1.0.0-alpha.1"
+  .schema_version == "2.0.0-alpha.1"
   and .kind == "gcc_formed_public_diagnostic_export"
   and .execution.version_band != null
   and .execution.processing_path != null
   and .execution.support_level != null
+  and (.execution.allowed_processing_paths | type) == "array"
 ' diagnostic-export.json
 ```
 

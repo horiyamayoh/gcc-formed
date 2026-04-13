@@ -83,9 +83,10 @@
 
 ## Path Impact
 
-- [ ] `GCC15+`
+- [ ] `GCC15`
 - [ ] `GCC13-14`
 - [ ] `GCC9-12`
+- [ ] `GCC16+`
 - [ ] `Unknown` / passthrough only
 - ProcessingPath selection changed:
 - RawPreservationLevel changed:

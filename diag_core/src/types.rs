@@ -46,8 +46,8 @@ pub enum DocumentCompleteness {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum FallbackReason {
-    /// Compiler version or configuration is not in a supported tier.
-    UnsupportedTier,
+    /// Compiler version band is outside the current public contract.
+    UnsupportedVersionBand,
     /// The output sink cannot render structured diagnostics.
     IncompatibleSink,
     /// Pipeline is running in shadow/observation mode only.
@@ -72,7 +72,7 @@ impl FallbackReason {
     /// Returns the `snake_case` string representation of this reason.
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::UnsupportedTier => "unsupported_tier",
+            Self::UnsupportedVersionBand => "unsupported_version_band",
             Self::IncompatibleSink => "incompatible_sink",
             Self::ShadowMode => "shadow_mode",
             Self::SarifMissing => "sarif_missing",

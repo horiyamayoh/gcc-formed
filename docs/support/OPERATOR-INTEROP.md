@@ -74,18 +74,18 @@ For a direct wrapper invocation, `--formed-mode=passthrough` is the explicit byp
 
 ## VersionBand Routing
 
-- `GCC15+`: keep direct `CC` / `CXX` replacement as the default insertion shape. If you need one cache or remote-exec launcher, keep it behind the wrapper.
-- `GCC13-14`: `native_text_capture` is the default first-class product path. Keep `SingleSinkStructured` opt-in, keep at most one wrapper-owned backend launcher behind the wrapper, and use raw `gcc` / `g++` or `--formed-mode=passthrough` if the topology is not proven.
-- `GCC9-12`: `native_text_capture` is the default first-class product path and explicit `SingleSinkStructured` JSON remains opt-in. Prefer C-first compile / type / link / include-path / macro / preprocessor cases, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` when the topology or fidelity is not proven.
+- `GCC15`: keep direct `CC` / `CXX` replacement as the default insertion shape. `DualSinkStructured` is the default capability profile, but the public contract is the same one used across `GCC 9-15`.
+- `GCC13-14`: the shared in-scope contract still applies. `NativeTextCapture` is the default capability profile, `SingleSinkStructured` remains explicit, and you should keep at most one wrapper-owned backend launcher behind the wrapper.
+- `GCC9-12`: the shared in-scope contract still applies. Prefer `NativeTextCapture` for ordinary runs, use explicit JSON `SingleSinkStructured` when needed, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` only when the topology or trust level is not proven.
 - `Unknown`: use raw `gcc` / `g++` or `--formed-mode=passthrough` until a supported `VersionBand` is confirmed.
 
 ## Shared Operator Guidance
 
 Self-check and runtime notices use the same operator-next-step wording below.
 
-- `GCC15+`: keep direct `CC` / `CXX` replacement, and keep at most one wrapper-owned backend launcher behind the wrapper.
-- `GCC13-14`: for C-first Make / CMake builds, set `CC=gcc-formed` and `CXX=g++-formed`; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` if the topology is not proven.
-- `GCC9-12`: same topology guidance as `GCC13-14`, but prefer `NativeTextCapture` for ordinary runs and use explicit `SingleSinkStructured` when you need JSON.
+- `GCC15`: keep direct `CC` / `CXX` replacement, and keep at most one wrapper-owned backend launcher behind the wrapper.
+- `GCC13-14`: for C-first Make / CMake builds, set `CC=gcc-formed` and `CXX=g++-formed`; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` only if the topology is not proven.
+- `GCC9-12`: same topology guidance as `GCC13-14`, but prefer `NativeTextCapture` for ordinary runs and use explicit JSON `SingleSinkStructured` when you need machine-readable structured capture.
 - `Unknown`: use raw `gcc` / `g++` or `--formed-mode=passthrough` until a supported `VersionBand` is confirmed.
 
 The release doc keeps rollback and uninstall close to the install instructions:

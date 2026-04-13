@@ -2444,7 +2444,7 @@ pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
     }
 
     match fixture_support_band(fixture) {
-        VersionBand::Gcc15Plus => ProcessingPath::DualSinkStructured,
+        VersionBand::Gcc15 => ProcessingPath::DualSinkStructured,
         VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {
             if fixture.invoke.expected_mode == "passthrough"
                 || fixture.expectations.expected_mode == "passthrough"
@@ -2454,13 +2454,14 @@ pub(crate) fn fixture_processing_path(fixture: &Fixture) -> ProcessingPath {
                 ProcessingPath::NativeTextCapture
             }
         }
-        VersionBand::Unknown => ProcessingPath::Passthrough,
+        VersionBand::Gcc16Plus | VersionBand::Unknown => ProcessingPath::Passthrough,
     }
 }
 
 fn parse_version_band_label(label: &str) -> Option<VersionBand> {
     match label.trim().to_ascii_lowercase().as_str() {
-        "gcc15_plus" => Some(VersionBand::Gcc15Plus),
+        "gcc16_plus" => Some(VersionBand::Gcc16Plus),
+        "gcc15" | "gcc15_plus" => Some(VersionBand::Gcc15),
         "gcc13_14" => Some(VersionBand::Gcc13_14),
         "gcc9_12" => Some(VersionBand::Gcc9_12),
         "unknown" => Some(VersionBand::Unknown),
@@ -2481,7 +2482,8 @@ fn fixture_compatible_with_version_band(fixture: &Fixture, runtime_band: Version
 
 fn inferred_fixture_support_band(major_version_selector: &str) -> VersionBand {
     match major_version_selector.parse::<u32>().ok() {
-        Some(major) if major >= 15 => VersionBand::Gcc15Plus,
+        Some(major) if major >= 16 => VersionBand::Gcc16Plus,
+        Some(15) => VersionBand::Gcc15,
         Some(13 | 14) => VersionBand::Gcc13_14,
         Some(9..=12) => VersionBand::Gcc9_12,
         _ => VersionBand::Unknown,
@@ -2526,7 +2528,8 @@ pub(crate) fn fallback_contract_for_fixture(fixture: &Fixture) -> FallbackContra
 
 pub(crate) fn version_band_label(band: VersionBand) -> &'static str {
     match band {
-        VersionBand::Gcc15Plus => "gcc15_plus",
+        VersionBand::Gcc16Plus => "gcc16_plus",
+        VersionBand::Gcc15 => "gcc15",
         VersionBand::Gcc13_14 => "gcc13_14",
         VersionBand::Gcc9_12 => "gcc9_12",
         VersionBand::Unknown => "unknown",
@@ -2745,6 +2748,7 @@ pub(crate) fn anti_collision_report_for(
 
 pub(crate) fn required_representative_band_paths() -> Vec<String> {
     vec![
+        "gcc15/dual_sink_structured".to_string(),
         "gcc13_14/native_text_capture".to_string(),
         "gcc13_14/single_sink_structured".to_string(),
         "gcc9_12/native_text_capture".to_string(),
@@ -2769,7 +2773,7 @@ pub(crate) fn required_representative_band_path_surfaces() -> Vec<String> {
 
 pub(crate) fn required_anti_collision_band_paths() -> Vec<String> {
     vec![
-        "gcc15_plus/dual_sink_structured".to_string(),
+        "gcc15/dual_sink_structured".to_string(),
         "gcc13_14/native_text_capture".to_string(),
         "gcc13_14/single_sink_structured".to_string(),
         "gcc9_12/native_text_capture".to_string(),
@@ -3604,14 +3608,14 @@ mod tests {
         fallback: Option<ExpectedFallback>,
     ) -> Fixture {
         let version_band = match major_version_selector {
-            "15" => "gcc15_plus",
+            "16" => "gcc16_plus",
+            "15" => "gcc15",
             "13" | "14" => "gcc13_14",
             "9" | "10" | "11" | "12" => "gcc9_12",
             _ => "unknown",
         };
         let support_level = match version_band {
-            "gcc15_plus" => "preview",
-            "gcc13_14" | "gcc9_12" => "experimental",
+            "gcc15" | "gcc13_14" | "gcc9_12" => "in_scope",
             _ => "passthrough_only",
         };
         let processing_path = tags
@@ -3620,7 +3624,7 @@ mod tests {
             .unwrap_or_else(|| {
                 if expected_mode == "passthrough" || version_band == "unknown" {
                     "passthrough"
-                } else if version_band == "gcc15_plus" {
+                } else if version_band == "gcc15" {
                     "dual_sink_structured"
                 } else {
                     "native_text_capture"
@@ -3709,7 +3713,12 @@ mod tests {
             execution: PublicExportExecution {
                 version_band: "gcc13_14".to_string(),
                 processing_path: "native_text_capture".to_string(),
-                support_level: "experimental".to_string(),
+                support_level: "in_scope".to_string(),
+                allowed_processing_paths: vec![
+                    "native_text_capture".to_string(),
+                    "single_sink_structured".to_string(),
+                    "passthrough".to_string(),
+                ],
                 source_authority: Some("residual_text".to_string()),
                 fallback_grade: Some("compatibility".to_string()),
                 fallback_reason: None,
@@ -3849,6 +3858,7 @@ mod tests {
         assert_eq!(
             coverage.missing_required_band_paths,
             vec![
+                "gcc15/dual_sink_structured".to_string(),
                 "gcc13_14/single_sink_structured".to_string(),
                 "gcc9_12/native_text_capture".to_string(),
                 "gcc9_12/single_sink_structured".to_string(),
@@ -3917,6 +3927,9 @@ mod tests {
         assert_eq!(
             coverage.missing_required_band_path_surfaces,
             vec![
+                "gcc15/dual_sink_structured/default".to_string(),
+                "gcc15/dual_sink_structured/ci".to_string(),
+                "gcc15/dual_sink_structured/debug".to_string(),
                 "gcc13_14/native_text_capture/ci".to_string(),
                 "gcc13_14/native_text_capture/debug".to_string(),
                 "gcc13_14/single_sink_structured/default".to_string(),
@@ -3981,7 +3994,7 @@ mod tests {
         assert_eq!(
             report.missing_required_band_paths,
             vec![
-                "gcc15_plus/dual_sink_structured".to_string(),
+                "gcc15/dual_sink_structured".to_string(),
                 "gcc13_14/single_sink_structured".to_string(),
                 "gcc9_12/native_text_capture".to_string(),
                 "gcc9_12/single_sink_structured".to_string(),
@@ -4006,7 +4019,7 @@ mod tests {
                 "representative",
                 "anti_collision",
                 "anti_collision:same_file_dual_syntax",
-                "band:gcc15_plus",
+                "band:gcc15",
                 "processing_path:dual_sink_structured",
             ],
             Some(ExpectedFallback::Forbidden),
@@ -4088,7 +4101,7 @@ mod tests {
             "render",
             &[
                 "representative",
-                "band:gcc15_plus",
+                "band:gcc15",
                 "processing_path:dual_sink_structured",
             ],
             Some(ExpectedFallback::Forbidden),
@@ -4122,7 +4135,7 @@ mod tests {
         ));
         assert!(fixture_compatible_with_version_band(
             &band_a_fixture,
-            VersionBand::Gcc15Plus
+            VersionBand::Gcc15
         ));
         assert!(fixture_compatible_with_version_band(
             &band_b_fixture,
@@ -4134,7 +4147,7 @@ mod tests {
         ));
         assert!(!fixture_compatible_with_version_band(
             &band_b_fixture,
-            VersionBand::Gcc15Plus
+            VersionBand::Gcc15
         ));
         assert!(fixture_compatible_with_version_band(
             &band_c_fixture,

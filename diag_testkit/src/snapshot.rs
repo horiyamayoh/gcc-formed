@@ -1700,7 +1700,7 @@ mod tests {
     "fallback_grade": "compatibility",
     "processing_path": "native_text_capture",
     "source_authority": "residual_text",
-    "support_level": "experimental",
+    "support_level": "in_scope",
     "version_band": "gcc13_14"
   },
   "invocation": {
@@ -1756,7 +1756,7 @@ mod tests {
     "fallback_grade": "compatibility",
     "processing_path": "native_text_capture",
     "source_authority": "residual_text",
-    "support_level": "experimental",
+    "support_level": "in_scope",
     "version_band": "gcc13_14"
   },
   "invocation": {
@@ -1857,8 +1857,8 @@ mod tests {
     "fallback_grade": "native",
     "processing_path": "dual_sink_structured",
     "source_authority": "compiler",
-    "support_level": "preview",
-    "version_band": "gcc15_plus"
+    "support_level": "in_scope",
+    "version_band": "gcc15"
   },
   "invocation": {
     "exit_status": 1,
@@ -1901,8 +1901,8 @@ mod tests {
     "fallback_grade": "native",
     "processing_path": "dual_sink_structured",
     "source_authority": "compiler",
-    "support_level": "preview",
-    "version_band": "gcc15_plus"
+    "support_level": "in_scope",
+    "version_band": "gcc15"
   },
   "invocation": {
     "exit_status": 1,

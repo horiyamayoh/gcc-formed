@@ -1,7 +1,7 @@
 language: c
 target_compiler_family: gcc
-version_band: gcc15_plus
-support_level: preview
+version_band: gcc15
+support_level: in_scope
 major_version_selector: '15'
 argv:
 - -c

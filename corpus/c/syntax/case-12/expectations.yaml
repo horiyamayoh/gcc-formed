@@ -2,7 +2,7 @@ schema_version: 1
 fixture_id: c/syntax/case-12
 version_band: gcc13_14
 processing_path: native_text_capture
-support_level: experimental
+support_level: in_scope
 expected_mode: render
 semantic:
   family: syntax

@@ -114,9 +114,8 @@ collect2: error: ld returned 1 exit status
 
 `gcc-formed` は、次の原則を repo 全体の正本として採用する。
 
-- **GCC 15+ は最良の reference path だが、唯一の product path ではない。**
-- **GCC 13–14 と GCC 9–12 も first-class product bands である。**  
-  保証や fidelity は異なってよいが、issue / test / quality gate / roadmap 上の正規対象から外してはならない。
+- **GCC 15・GCC 13–14・GCC 9–12 は 1 つの in-scope public contract を共有する。**
+- **VersionBand と ProcessingPath は observability metadata であり、GCC 9–15 の価値序列を表さない。**
 - **capture path は複数でも、UX 原則は 1 つである。**
 - **raw fallback は shipped contract の一部である。**  
   wrapper は、根拠なく compiler-owned facts を隠してはならない。
@@ -130,13 +129,14 @@ collect2: error: ld returned 1 exit status
 SupportLevel / ProcessingPath / RawPreservationLevel の正本は [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md) に置く。  
 README では要点だけを再掲する。
 
-Representative corpus / replay gates でも、`GCC9-12` は `NativeTextCapture` と explicit `SingleSinkStructured` (JSON) を別 path として扱う。
+Representative corpus / replay gates でも、`GCC15/DualSinkStructured`、`GCC13-14/NativeTextCapture`、`GCC13-14/SingleSinkStructured`、`GCC9-12/NativeTextCapture`、`GCC9-12/SingleSinkStructured` を別 capability path として扱う。
 
 | VersionBand | 典型的な ProcessingPath | 現在の beta support level | 位置づけ |
 |---|---|---|---|
-| GCC 15+ | `DualSinkStructured` | `Preview` | 最高 fidelity の reference path |
-| GCC 13–14 | `SingleSinkStructured` / `NativeTextCapture` | `Experimental` | in-scope product path。reference path より保証は狭い |
-| GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `Experimental` | in-scope product path。価値の幅はより限定的 |
+| GCC 15 | `DualSinkStructured` | `InScope` | GCC 9–15 parity contract の一部。dual-sink が既定 capability |
+| GCC 13–14 | `SingleSinkStructured` / `NativeTextCapture` | `InScope` | GCC 9–15 parity contract の一部。native text が既定 capability |
+| GCC 9–12 | `SingleSinkStructured` (JSON) / `NativeTextCapture` | `InScope` | GCC 9–15 parity contract の一部。JSON single-sink は explicit |
+| GCC 16+ / Unknown | `Passthrough` | `PassthroughOnly` | out-of-scope。別途 evidence が揃うまで fail-open を優先 |
 | Unknown / other | `Passthrough` | `PassthroughOnly` | fail-open と provenance 保持を優先 |
 
 operator guidance は [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md)、既知の制約は [docs/support/KNOWN-LIMITATIONS.md](docs/support/KNOWN-LIMITATIONS.md) を参照する。  
@@ -192,13 +192,13 @@ gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 vNext では、repo の主語を単一 tier から外し、次の 4 概念に分ける。
 
 - **VersionBand**  
-  `GCC15+` / `GCC13-14` / `GCC9-12` / `Unknown`
+  `GCC16+` / `GCC15` / `GCC13-14` / `GCC9-12` / `Unknown`
 - **CapabilityProfile**  
   `dual_sink`, `sarif`, `json`, `native_text_capture`, `tty_color_control`, `caret_control`, `parseable_fixits` など
 - **ProcessingPath**  
   `DualSinkStructured` / `SingleSinkStructured` / `NativeTextCapture` / `Passthrough`
 - **SupportLevel**  
-  `Preview` / `Experimental` / `PassthroughOnly`
+  `InScope` / `PassthroughOnly`
 
 重要なのは、**GCC 15 を特別扱いしてよいが、GCC 15 だけを“プロダクト”にしてはならない**という点である。
 

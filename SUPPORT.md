@@ -12,12 +12,10 @@ Keep the canonical wording below aligned with `SUPPORT-BOUNDARY.md`.
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `GCC13-14` remains a first-class beta path inside that narrower contract.
-- `GCC9-12` is a product path with narrower guarantees and different capture constraints.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 This file is still the routing page. The detailed support procedure lives in the linked runbooks.
@@ -35,10 +33,10 @@ This file is still the routing page. The detailed support procedure lives in the
 
 ## VersionBand / ProcessingPath Routing
 
-- `GCC15+`: highest-priority reference path. Treat regressions here as product-path issues.
-- `GCC13-14`: in-scope first-class beta path. Check whether the observed path was `NativeTextCapture` or `SingleSinkStructured`, and evaluate the complaint against the current support boundary before treating it as a stop-ship regression.
-- `GCC9-12`: in-scope `Experimental` path with narrower expected wins. Fail-open behavior or honest passthrough may still be the correct result.
-- `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
+- `GCC15`: in-scope. `DualSinkStructured` is the default capability profile, but the public contract is the same one used across `GCC 9-15`.
+- `GCC13-14`: in-scope. Check whether the observed path was `NativeTextCapture` or explicit `SingleSinkStructured`, and evaluate the complaint against the shared support boundary rather than a lower-value band contract.
+- `GCC9-12`: in-scope. Check whether the observed path was `NativeTextCapture` or explicit JSON `SingleSinkStructured`; honest passthrough remains valid only when it is the most trustworthy result, not because the band is treated as lower-value.
+- `GCC16+` / `Unknown`: `PassthroughOnly` until proven otherwise. Prioritize build correctness, provenance, and recovery over enhancement.
 
 Runtime and trace output use `VersionBand`, `ProcessingPath`, and `SupportLevel` as the canonical public labels. Use `--formed-self-check` for the current operator guidance, and keep [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md) as the shared next-step reference for older GCC and C-first builds.
 

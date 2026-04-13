@@ -11,10 +11,10 @@ Security support statements should be read inside the same support boundary docu
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 This file defines the reporting path and response expectations. It does not widen the product support posture beyond the canonical support boundary.

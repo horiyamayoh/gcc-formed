@@ -296,7 +296,7 @@ renderer は概念上、以下の入力と出力を持つ。
 
 - `used_fallback = true` のとき、renderer は `fallback_reason` を埋めるべきである。
 - `fallback_reason` は free-form string ではなく、reason-coded taxonomy を使うべきである。
-- 少なくとも `unsupported_tier`, `incompatible_sink`, `shadow_mode`, `sarif_missing`, `sarif_parse_failed`, `residual_only`, `renderer_low_confidence`, `internal_error`, `timeout_or_budget`, `user_opt_out` を表現可能であるべきである。
+- 少なくとも `unsupported_version_band`, `incompatible_sink`, `shadow_mode`, `sarif_missing`, `sarif_parse_failed`, `residual_only`, `renderer_low_confidence`, `internal_error`, `timeout_or_budget`, `user_opt_out` を表現可能であるべきである。
 - trace / replay / snapshot report はこの taxonomy をそのまま再利用してよい。
 
 ---

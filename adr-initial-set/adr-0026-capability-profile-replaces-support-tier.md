@@ -19,7 +19,7 @@ superseded_by: []
 
 ## Context
 
-現行 repo の `SupportTier::A/B/C` は、GCC version band、structured diagnostics capability、runtime path、user-visible quality claim、fallback expectation を 1 つの概念に押し込めている。そのため `GCC15+` / `GCC13-14` / `GCC9-12` の差を説明できても、「何ができるか」と「何を public に約束するか」を分離できない。
+現行 repo の `SupportTier::A/B/C` は、GCC version band、structured diagnostics capability、runtime path、user-visible quality claim、fallback expectation を 1 つの概念に押し込めている。そのため `GCC15` / `GCC13-14` / `GCC9-12` の差を説明できても、「何ができるか」と「何を public に約束するか」を分離できない。
 
 vNext では、GCC 15 を privileged path として扱いつつ、GCC 13–14 と GCC 9–12 も first-class product bands として扱う必要がある。単一 tier の public vocabulary ではその設計を支えられない。
 

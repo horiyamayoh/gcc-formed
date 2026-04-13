@@ -8,12 +8,13 @@ CANONICAL_LINES = [
     "- Linux first.",
     "- `x86_64-unknown-linux-musl` is the primary production artifact.",
     "- The terminal renderer is the primary user-facing surface.",
-    "- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.",
-    "- `GCC15+` is the primary fidelity reference path.",
+    "- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.",
     (
-        "- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees "
-        "and different capture constraints."
+        "- `VersionBand` and `ProcessingPath` remain observability metadata; "
+        "they do not encode unequal user value inside `GCC 9-15`."
     ),
+    "- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.",
+    "- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.",
     (
         "- Raw fallback remains part of the shipped contract when the wrapper cannot "
         "produce a clearly better, trustworthy result."
@@ -42,8 +43,8 @@ README_REQUIRED_SNIPPETS = [
     "[docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)",
     "[docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)",
     "[docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md)",
-    "**GCC 15+ は最良の reference path だが、唯一の product path ではない。**",
-    "**GCC 13–14 と GCC 9–12 も first-class product bands である。**",
+    "**GCC 15・GCC 13–14・GCC 9–12 は 1 つの in-scope public contract を共有する。**",
+    "**VersionBand と ProcessingPath は observability metadata であり、GCC 9–15 の価値序列を表さない。**",
     "**raw fallback は shipped contract の一部である。**",
     "**default TTY は native GCC より読みにくくなってはならない。**",
 ]
@@ -84,7 +85,7 @@ class SupportBoundaryDocsTest(unittest.TestCase):
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, text)
         self.assertIn("| VersionBand |", text)
-        self.assertIn("| GCC 15+ |", text)
+        self.assertIn("| GCC 15 |", text)
         self.assertIn("SupportLevel / ProcessingPath / RawPreservationLevel", text)
         self.assertIn(
             "GCC diagnostic UX wrapper for GCC 9-15 that keeps terminal output shorter, root-cause-first, and fail-open.",

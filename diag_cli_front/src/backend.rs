@@ -76,7 +76,9 @@ fn build_capture_plan(
     forwarded_args: &[OsString],
 ) -> CapturePlan {
     let structured_capture = match processing_path {
-        ProcessingPath::DualSinkStructured if compatibility_seam.should_inject_sarif(mode) => {
+        ProcessingPath::DualSinkStructured
+            if compatibility_seam.should_inject_sarif(mode, processing_path) =>
+        {
             StructuredCapturePolicy::SarifFile
         }
         ProcessingPath::SingleSinkStructured if compatibility_seam.prefers_json_single_sink() => {
@@ -105,6 +107,7 @@ fn build_capture_plan(
         native_text_capture,
         preserve_native_color: compatibility_seam.should_preserve_tty_color(
             mode,
+            processing_path,
             capabilities,
             forwarded_args,
         ),
@@ -197,7 +200,7 @@ pub(crate) fn backend_binary_name(backend: &ProbeResult) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diag_backend_probe::{SupportTier, VersionBand};
+    use diag_backend_probe::VersionBand;
 
     fn tty_capabilities() -> RenderCapabilities {
         RenderCapabilities {
@@ -224,7 +227,7 @@ mod tests {
     #[test]
     fn tier_a_render_plan_keeps_dual_sink_capture() {
         let plan = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::A),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc15),
             ExecutionMode::Render,
             ProcessingPath::DualSinkStructured,
             RetentionPolicy::OnWrapperFailure,
@@ -248,7 +251,7 @@ mod tests {
     #[test]
     fn tier_b_shadow_plan_keeps_native_text_capture() {
         let plan = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Shadow,
             ProcessingPath::NativeTextCapture,
             RetentionPolicy::OnWrapperFailure,
@@ -292,7 +295,7 @@ mod tests {
     #[test]
     fn passthrough_plan_only_tees_when_retention_or_debug_requires_it() {
         let passthrough = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Passthrough,
             ProcessingPath::Passthrough,
             RetentionPolicy::OnWrapperFailure,
@@ -308,7 +311,7 @@ mod tests {
         assert!(!passthrough.preserve_native_color);
 
         let retained = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Passthrough,
             ProcessingPath::Passthrough,
             RetentionPolicy::Always,
@@ -322,7 +325,7 @@ mod tests {
         );
 
         let debug_capture_ref = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Passthrough,
             ProcessingPath::Passthrough,
             RetentionPolicy::OnWrapperFailure,
@@ -339,7 +342,7 @@ mod tests {
     #[test]
     fn tier_b_single_sink_structured_plan_uses_explicit_sarif_file_capture() {
         let plan = build_capture_plan(
-            &CliCompatibilitySeam::from_support_tier(SupportTier::B),
+            &CliCompatibilitySeam::from_version_band(VersionBand::Gcc13_14),
             ExecutionMode::Render,
             ProcessingPath::SingleSinkStructured,
             RetentionPolicy::OnWrapperFailure,

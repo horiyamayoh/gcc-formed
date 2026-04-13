@@ -547,7 +547,7 @@ mod tests {
 
     fn sample_cascade_context() -> CascadeContext {
         CascadeContext {
-            version_band: VersionBand::Gcc15Plus,
+            version_band: VersionBand::Gcc15,
             processing_path: ProcessingPath::DualSinkStructured,
             source_authority: SourceAuthority::Structured,
             fallback_grade: FallbackGrade::None,

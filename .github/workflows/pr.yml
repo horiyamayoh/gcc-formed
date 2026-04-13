@@ -49,17 +49,41 @@ jobs:
             --workflow pr-gate \
             --step-id capture-host-build-environment \
             --report-root "$REPORT_ROOT"
-      - name: Build GCC 15 reference-path CI image
+      - name: Build GCC 12 CI image
         run: |
           python3 ci/run_gate_step.py \
             --workflow pr-gate \
-            --step-id build-reference-ci-image \
+            --step-id build-gcc12-ci-image \
             --report-root "$REPORT_ROOT"
-      - name: Capture GCC 15 reference-path CI environment
+      - name: Capture GCC 12 CI environment
         run: |
           python3 ci/run_gate_step.py \
             --workflow pr-gate \
-            --step-id capture-reference-ci-environment \
+            --step-id capture-gcc12-ci-environment \
+            --report-root "$REPORT_ROOT"
+      - name: Build GCC 13 CI image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id build-gcc13-ci-image \
+            --report-root "$REPORT_ROOT"
+      - name: Capture GCC 13 CI environment
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id capture-gcc13-ci-environment \
+            --report-root "$REPORT_ROOT"
+      - name: Build GCC 15 CI image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id build-gcc15-ci-image \
+            --report-root "$REPORT_ROOT"
+      - name: Capture GCC 15 CI environment
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id capture-gcc15-ci-environment \
             --report-root "$REPORT_ROOT"
       - name: cargo xtask check
         run: |
@@ -81,23 +105,59 @@ jobs:
             --workflow pr-gate \
             --step-id path-aware-replay-stop-ship \
             --report-root "$REPORT_ROOT"
-      - name: Build wrapper binary in reference-path image
+      - name: Build wrapper binary in GCC 12 image
         run: |
           python3 ci/run_gate_step.py \
             --workflow pr-gate \
-            --step-id build-wrapper-binary-reference-image \
+            --step-id build-wrapper-binary-gcc12-image \
             --report-root "$REPORT_ROOT"
-      - name: Wrapper self-check in reference-path image
+      - name: Wrapper self-check in GCC 12 image
         run: |
           python3 ci/run_gate_step.py \
             --workflow pr-gate \
-            --step-id wrapper-self-check-reference-image \
+            --step-id wrapper-self-check-gcc12-image \
             --report-root "$REPORT_ROOT"
-      - name: Representative reference-path snapshot check
+      - name: Representative GCC 12 snapshot check
         run: |
           python3 ci/run_gate_step.py \
             --workflow pr-gate \
-            --step-id representative-reference-snapshot-check \
+            --step-id representative-gcc12-snapshot-check \
+            --report-root "$REPORT_ROOT"
+      - name: Build wrapper binary in GCC 13 image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id build-wrapper-binary-gcc13-image \
+            --report-root "$REPORT_ROOT"
+      - name: Wrapper self-check in GCC 13 image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id wrapper-self-check-gcc13-image \
+            --report-root "$REPORT_ROOT"
+      - name: Representative GCC 13 snapshot check
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id representative-gcc13-snapshot-check \
+            --report-root "$REPORT_ROOT"
+      - name: Build wrapper binary in GCC 15 image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id build-wrapper-binary-gcc15-image \
+            --report-root "$REPORT_ROOT"
+      - name: Wrapper self-check in GCC 15 image
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id wrapper-self-check-gcc15-image \
+            --report-root "$REPORT_ROOT"
+      - name: Representative GCC 15 snapshot check
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id representative-gcc15-snapshot-check \
             --report-root "$REPORT_ROOT"
       - name: Vendor dependency tree
         run: |

@@ -1,0 +1,83 @@
+{
+  "execution": {
+    "document_completeness": "complete",
+    "fallback_grade": "none",
+    "processing_path": "dual_sink_structured",
+    "source_authority": "structured",
+    "support_level": "in_scope",
+    "version_band": "gcc15"
+  },
+  "invocation": {
+    "exit_status": 1,
+    "invocation_id": "fixture-c-sanitizer_buffer-case-01",
+    "invoked_as": "gcc-formed",
+    "language_mode": "c",
+    "primary_tool": {
+      "name": "gcc",
+      "vendor": "GNU",
+      "version": "15.x"
+    },
+    "wrapper_mode": "terminal"
+  },
+  "kind": "gcc_formed_public_diagnostic_export",
+  "producer": {
+    "name": "gcc-formed",
+    "version": "snapshot"
+  },
+  "result": {
+    "diagnostics": [
+      {
+        "confidence": "high",
+        "family": "sanitizer_buffer",
+        "first_action": "check buffer sizes and ensure source and destination do not overlap",
+        "headline": "potential buffer overflow or memory overlap",
+        "message": "'%s' directive writing 6 bytes into a region of size 4",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 22,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "warning"
+      },
+      {
+        "confidence": "low",
+        "family": "unknown",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "'sprintf' output 7 bytes into a destination of size 4",
+        "message": "'sprintf' output 7 bytes into a destination of size 4",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 5,
+          "line": 5,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "semantic_role": "root",
+        "severity": "note"
+      }
+    ],
+    "summary": {
+      "dependent_follow_on_count": 0,
+      "diagnostic_count": 2,
+      "duplicate_count": 0,
+      "error_count": 0,
+      "independent_root_count": 1,
+      "note_count": 1,
+      "uncertain_count": 1,
+      "warning_count": 1
+    }
+  },
+  "schema_version": "1.0.0-alpha.1",
+  "status": "available"
+}

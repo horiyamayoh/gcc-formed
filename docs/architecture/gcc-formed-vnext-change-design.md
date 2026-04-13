@@ -58,7 +58,7 @@ superseded_by: []
 vNext では設計の主語を「Tier」から外し、次の 3 層へ切り替える。
 
 - **VersionBand**  
-  `GCC15+` / `GCC13-14` / `GCC9-12`
+  `GCC16+` / `GCC15` / `GCC13-14` / `GCC9-12` / `Unknown`
 - **CapabilityProfile**  
   `dual_sink`, `sarif`, `json`, `native_text`, `color_control`, `caret_control`, `fixits`, `locale_stabilization` などの具体能力
 - **ProcessingPath**  
@@ -285,11 +285,8 @@ CapabilityProfile
 
 ユーザーへの約束の強さ。
 
-- `Primary`
-- `Supported`
-- `Conservative`
-- `Experimental`
-- `Unsupported`
+- `InScope`
+- `PassthroughOnly`
 
 #### FallbackGrade
 

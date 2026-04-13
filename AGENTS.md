@@ -59,6 +59,6 @@ If runtime or old docs still mention `SupportTier`, translate it into the curren
 
 ## Explicit Warning
 
-If a document says `GCC15-first`, `compatibility-only`, or otherwise treats GCC 15 as the only real product path, and that document is not marked `current-authority`, do not use it as the current architecture.
+If a document says `GCC15-first`, `compatibility-only`, or otherwise treats `GCC15` as the only real product path or gives `GCC13-14` / `GCC9-12` weaker public value claims, and that document is not marked `current-authority`, do not use it as the current architecture.
 
-The repo was historically GCC15-first. The current vNext direction is multi-band across `GCC15+`, `GCC13-14`, and `GCC9-12`.
+The repo was historically GCC15-first. The current vNext direction is one `GCC 9-15` public contract across `GCC15`, `GCC13-14`, and `GCC9-12`, with `GCC16+` and unknown compilers remaining out of scope until separately evidenced.

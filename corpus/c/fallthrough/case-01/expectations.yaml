@@ -1,8 +1,8 @@
 schema_version: 1
 fixture_id: c/fallthrough/case-01
-version_band: gcc15_plus
+version_band: gcc15
 processing_path: dual_sink_structured
-support_level: preview
+support_level: in_scope
 expected_mode: render
 semantic:
   family: fallthrough

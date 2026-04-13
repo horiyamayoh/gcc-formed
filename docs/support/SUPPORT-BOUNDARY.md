@@ -25,7 +25,8 @@ Keep `README.md`, release notes, support docs, contribution docs, and GitHub tem
 
 Compiler band used to reason about product scope.
 
-- `GCC15+`
+- `GCC16+`
+- `GCC15`
 - `GCC13-14`
 - `GCC9-12`
 - `Unknown`
@@ -43,8 +44,7 @@ Resolved execution path used by the wrapper.
 
 Public quality claim for the current artifact line.
 
-- `Preview`
-- `Experimental`
+- `InScope`
 - `PassthroughOnly`
 
 ### RawPreservationLevel
@@ -62,12 +62,10 @@ How much native / raw compiler output is preserved in the same run.
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+`, `GCC13-14`, and `GCC9-12` are all in-scope product bands.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are product paths with narrower guarantees and different capture constraints.
-- `GCC13-14` is a first-class beta product band inside that narrower contract.
-- They are part of the product surface, not merely incidental fallback behavior.
-- `ProcessingPath` and `RawPreservationLevel` may differ by band and by invocation.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
+- `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
+- Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - `subject_blocks_v1` is the current beta default terminal preset; `legacy_v1` remains supported as an explicit rollback / compatibility preset via `render.presentation = "legacy_v1"` or `--formed-presentation=legacy_v1`.
 - `cascade.max_expanded_independent_roots` remains a deprecated compatibility knob; visible-root behavior belongs to presentation/session policy, not cascade semantics.
 - Representative corpus may carry review-only `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
@@ -80,16 +78,17 @@ How much native / raw compiler output is preserved in the same run.
 
 | VersionBand | Typical ProcessingPath | RawPreservationLevel | SupportLevel | Current expectation |
 |---|---|---|---|---|
-| `GCC15+` | `DualSinkStructured` | `NativeAndStructuredSameRun` | `Preview` | Highest-fidelity reference path |
-| `GCC13-14` | `NativeTextCapture`, `SingleSinkStructured` | path-dependent; do not assume same-run native+structured | `Experimental` | First-class beta path with narrower fidelity than GCC15+ |
-| `GCC9-12` | `SingleSinkStructured` (JSON), `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `Experimental` | Wins on simple / type / linker / basic-template cases |
+| `GCC15` | `DualSinkStructured` | `NativeAndStructuredSameRun` | `InScope` | Same public contract as other in-scope bands; dual-sink is the default capability profile |
+| `GCC13-14` | `NativeTextCapture`, `SingleSinkStructured` | path-dependent; do not assume same-run native+structured | `InScope` | Same public contract as other in-scope bands; native text is the default capability profile |
+| `GCC9-12` | `SingleSinkStructured` (JSON), `NativeTextCapture` | path-dependent; do not assume same-run native+structured | `InScope` | Same public contract as other in-scope bands; JSON single-sink remains explicit |
+| `GCC16+` | `Passthrough` | `RawOnly` | `PassthroughOnly` | Outside the current `GCC 9-15` contract until separately evidenced |
 | `Unknown` | `Passthrough` | `RawOnly` | `PassthroughOnly` | Do not break the build or hide facts |
 
 ### Interpretive notes
 
-- “first-class product band” means: present in specs, tests, issue taxonomy, quality gates, roadmap, and corpus tagging.
-- Representative corpus / replay gates must track `GCC9-12/NativeTextCapture` and `GCC9-12/SingleSinkStructured` (JSON) separately, not fold them into GCC15+/GCC13-14 assumptions.
-- It does **not** mean that all bands have identical fidelity or identical raw-preservation guarantees.
+- “shared in-scope public contract” means: present in specs, tests, issue taxonomy, quality gates, roadmap, and corpus tagging with one public value claim across `GCC 9-15`.
+- Representative corpus / replay gates must track `GCC15/DualSinkStructured`, `GCC13-14/NativeTextCapture`, `GCC13-14/SingleSinkStructured`, `GCC9-12/NativeTextCapture`, and `GCC9-12/SingleSinkStructured` separately as capability coverage, not as unequal product tiers.
+- Capture mechanisms and same-run raw-preservation guarantees may differ by capability profile even when the public contract is shared.
 - If a run resolves to `Passthrough`, that is still a valid shipped behavior when it is the most trustworthy choice.
 
 ---
@@ -109,7 +108,7 @@ A beta or release-candidate build must be held if any of the following are true 
 ## 5. Explicitly outside the current boundary
 
 - Non-Linux production artifacts
-- Claims that all VersionBands have identical guarantees
+- Claims that `GCC16+` or unknown gcc-like compilers are already in the same public contract as `GCC 9-15`
 - Claims that every GCC diagnostic family is already improved
 - Elimination of passthrough or raw fallback
 - Stable / GA promises beyond what this document explicitly states

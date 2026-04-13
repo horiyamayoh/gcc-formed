@@ -51,15 +51,15 @@ fn render_mode_writes_public_json_to_file() {
         .stderr(predicate::str::contains("help: fix the first parser error"));
 
     let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
-    assert_eq!(export["schema_version"], "1.0.0-alpha.1");
+    assert_eq!(export["schema_version"], "2.0.0-alpha.1");
     assert_eq!(export["kind"], "gcc_formed_public_diagnostic_export");
     assert_eq!(export["status"], "available");
-    assert_eq!(export["execution"]["version_band"], "gcc15_plus");
+    assert_eq!(export["execution"]["version_band"], "gcc15");
     assert_eq!(
         export["execution"]["processing_path"],
         "dual_sink_structured"
     );
-    assert_eq!(export["execution"]["support_level"], "preview");
+    assert_eq!(export["execution"]["support_level"], "in_scope");
     assert_eq!(export["execution"]["source_authority"], "structured");
     assert_eq!(export["execution"]["fallback_grade"], "none");
     assert!(export["execution"]["fallback_reason"].is_null());
@@ -319,7 +319,7 @@ fn shadows_with_fake_gcc13_backend_and_honest_notice() {
     );
     assert_eq!(
         trace["environment_summary"]["support_level"],
-        "experimental"
+        "in_scope"
     );
     assert_eq!(trace["fallback_reason"], "shadow_mode");
     assert_eq!(
@@ -383,7 +383,7 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
     );
     assert_eq!(
         trace["environment_summary"]["support_level"],
-        "experimental"
+        "in_scope"
     );
     assert!(trace["fallback_reason"].is_null());
     assert_eq!(
@@ -644,9 +644,6 @@ main.c:4:1: note: extra opaque detail\n",
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            expected_tier_c_native_text_notice(),
-        ))
         .stderr(predicate::str::contains("error: showing a conservative wrapper view").not())
         .stderr(predicate::str::contains("note: fallback reason =").not())
         .stderr(predicate::str::contains("opaque compiler wording here"));
@@ -867,12 +864,12 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         trace["environment_summary"]["backend_version"].as_str(),
         Some("gcc (Fake) 15.2.0")
     );
-    assert_eq!(trace["environment_summary"]["version_band"], "gcc15_plus");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc15");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
         "dual_sink_structured"
     );
-    assert_eq!(trace["environment_summary"]["support_level"], "preview");
+    assert_eq!(trace["environment_summary"]["support_level"], "in_scope");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
@@ -1141,7 +1138,7 @@ fn trace_bundle_archive_is_written_to_explicit_user_path_with_manifest_and_repla
     )
     .unwrap();
     assert_eq!(manifest["kind"], "gcc_formed_trace_bundle_manifest");
-    assert_eq!(manifest["version_band"], "gcc15_plus");
+    assert_eq!(manifest["version_band"], "gcc15");
     assert_eq!(manifest["processing_path"], "dual_sink_structured");
     assert_eq!(manifest["output_path_kind"], "user_specified");
     assert_eq!(manifest["redaction"]["class"], "restricted");
@@ -1337,9 +1334,9 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
         Some(expected_backend_path.as_str())
     );
     assert!(report["backend"]["support_tier"].is_null());
-    assert_eq!(report["backend"]["version_band"], "gcc15_plus");
+    assert_eq!(report["backend"]["version_band"], "gcc15");
     assert_eq!(report["backend"]["processing_path"], "dual_sink_structured");
-    assert_eq!(report["backend"]["support_level"], "preview");
+    assert_eq!(report["backend"]["support_level"], "in_scope");
     assert_eq!(
         report["operator_guidance"]["summary"].as_str(),
         Some(
@@ -1348,7 +1345,7 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     );
     assert_eq!(
         report["operator_guidance"]["representative_limitations"][0],
-        "GCC15+ remains the highest-fidelity reference path."
+        "dual_sink_structured is the default capture path on this backend capability profile."
     );
     assert_eq!(
         report["operator_guidance"]["actionable_next_steps"][0],
@@ -1356,18 +1353,18 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     );
     let rollout_cases = report["rollout_matrix"]["cases"].as_array().unwrap();
     assert!(rollout_cases.iter().any(|case| {
-        case["version_band"] == "gcc15_plus"
+        case["version_band"] == "gcc15"
             && case["requested_mode"].is_null()
             && case["selected_mode"] == "render"
             && case["processing_path"] == "dual_sink_structured"
-            && case["support_level"] == "preview"
+            && case["support_level"] == "in_scope"
     }));
     assert!(rollout_cases.iter().any(|case| {
         case["version_band"] == "gcc13_14"
             && case["requested_mode"] == "shadow"
             && case["selected_mode"] == "shadow"
             && case["processing_path"] == "native_text_capture"
-            && case["support_level"] == "experimental"
+            && case["support_level"] == "in_scope"
             && case["fallback_reason"] == "shadow_mode"
     }));
     assert!(report["warnings"].as_array().unwrap().is_empty());
@@ -1721,12 +1718,12 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         trace["environment_summary"]["backend_version"].as_str(),
         Some("gcc (Fake) 15.2.0")
     );
-    assert_eq!(trace["environment_summary"]["version_band"], "gcc15_plus");
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc15");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
         "passthrough"
     );
-    assert_eq!(trace["environment_summary"]["support_level"], "preview");
+    assert_eq!(trace["environment_summary"]["support_level"], "in_scope");
     assert!(
         trace["environment_summary"]["injected_flags"]
             .as_array()
@@ -1851,9 +1848,9 @@ fn passthrough_public_json_file_reports_unavailable_reason() {
     assert_eq!(export["status"], "unavailable");
     assert_eq!(export["unavailable_reason"], "passthrough_mode");
     assert!(export["result"].is_null());
-    assert_eq!(export["execution"]["version_band"], "gcc15_plus");
+    assert_eq!(export["execution"]["version_band"], "gcc15");
     assert_eq!(export["execution"]["processing_path"], "passthrough");
-    assert_eq!(export["execution"]["support_level"], "preview");
+    assert_eq!(export["execution"]["support_level"], "in_scope");
     assert_eq!(export["execution"]["fallback_reason"], "incompatible_sink");
 }
 
@@ -1990,23 +1987,23 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
 }
 
 fn expected_tier_b_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+    "note: some compiler details were not fully structured; original diagnostics are preserved"
 }
 
 fn expected_tier_b_single_sink_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+    "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
 }
 
 fn expected_tier_b_shadow_notice() -> &'static str {
-    "gcc-formed: version band=gcc13_14 support level=experimental default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+    "gcc-formed: support level=in_scope; selected mode=shadow; fallback reason=shadow_mode; shadow capture is active under the GCC 9-15 parity contract and emits capability-specific debug metadata without changing the public contract."
 }
 
 fn expected_tier_c_native_text_notice() -> &'static str {
-    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+    "note: some compiler details were not fully structured; original diagnostics are preserved"
 }
 
 fn expected_tier_c_single_sink_notice() -> &'static str {
-    "gcc-formed: version band=gcc9_12 support level=experimental default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+    "gcc-formed: support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
 }
 
 #[cfg(unix)]

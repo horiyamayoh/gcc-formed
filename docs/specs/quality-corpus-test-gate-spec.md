@@ -617,7 +617,7 @@ GCC13-14 / GCC9-12 を first-class beta band として扱う場合、curated cor
 
 Band B / Band C fixture を gate に含めるときは、`VersionBand` を A/B だけで潰さず、`ProcessingPath × Surface` ごとの coverage を集計すること。report は後方互換のため `VersionBand × ProcessingPath` 集計も残してよいが、missing cell の判定は `VersionBand × ProcessingPath × Surface` を正とする。`debug` surface を宣言した fixture は explainability signal と suppressed-group visibility の差分を replay で検証できなければならない。
 
-representative replay には、別途 anti-collision corpus slice を持たせなければならない。anti-collision fixture は `anti_collision` tag と scenario tag を持ち、少なくとも `same_file_dual_syntax`, `syntax_flood_plus_type`, `template_frontier_independent` を 1 件以上ずつ含むこと。Band coverage は `gcc15_plus/dual_sink_structured`, `gcc13_14/native_text_capture`, `gcc13_14/single_sink_structured`, `gcc9_12/native_text_capture`, `gcc9_12/single_sink_structured` を必須とする。
+representative replay には、別途 anti-collision corpus slice を持たせなければならない。anti-collision fixture は `anti_collision` tag と scenario tag を持ち、少なくとも `same_file_dual_syntax`, `syntax_flood_plus_type`, `template_frontier_independent` を 1 件以上ずつ含むこと。Band coverage は `gcc15/dual_sink_structured`, `gcc13_14/native_text_capture`, `gcc13_14/single_sink_structured`, `gcc9_12/native_text_capture`, `gcc9_12/single_sink_structured` を必須とする。
 
 anti-collision replay report は、default surface で `false_hidden_suppression_count == 0` と `independent_root_recall_rate == 1.0` を満たさなければならない。ここで recall は independent root が expanded または summary-only として残った割合を指し、hidden は `visibility_floor != hidden_allowed` の group が default output から完全に消えた件数を指す。
 
@@ -817,25 +817,25 @@ snapshot 更新は単なる `bless` で終えてはならない。
 
 ## 15. Real compiler matrix
 
-real compiler matrix は、`GCC15+` を primary fidelity reference path としつつ、`GCC13-14` と `GCC9-12` も in-scope product bands として path-aware に評価する、という current support boundary を test に写したものである。 [R1][R2]
+real compiler matrix は、`GCC15` / `GCC13-14` / `GCC9-12` を 1 つの in-scope public contractとして path-aware に評価する、という current support boundary を test に写したものである。 [R1][R2]
 
 ### 15.1 compiler version matrix
 
 | Band | 対象 | gate レベル |
 |---|---|---|
-| `GCC15+` reference path | GCC 15 latest patch | PR / nightly / release |
-| `GCC13-14` product path | GCC 14 latest patch | nightly / release |
-| `GCC13-14` product path | GCC 13 latest patch | nightly / release |
-| `GCC9-12` product path | GCC 12 latest patch or distro default | periodic / representative replay gate |
+| `GCC15` representative lane | GCC 15 latest patch | PR / nightly / release |
+| `GCC13-14` representative lane | GCC 13 latest patch | PR / nightly / release |
+| `GCC13-14` additional evidence lane | GCC 14 latest patch | nightly / release |
+| `GCC9-12` representative lane | GCC 12 latest patch or distro default | PR / nightly / release |
 
 ### 15.2 mode matrix
 
 | Version | `render` | `shadow` | `passthrough` | 備考 |
 |---|---|---|---|---|
-| GCC 15+ | MUST | MUST | MUST | primary fidelity reference path |
-| GCC 14 | MUST on `NativeTextCapture`; explicit `SingleSinkStructured` is allowed | MUST(raw-only acceptable) | MUST | first-class beta path / narrower preservation |
-| GCC 13 | MUST on `NativeTextCapture`; explicit `SingleSinkStructured` is allowed | MUST(raw-only acceptable) | MUST | first-class beta path / narrower preservation |
-| GCC 12- | MUST on `NativeTextCapture` useful-subset representative fixtures; explicit `SingleSinkStructured` (JSON) is allowed and MUST be tagged separately | MAY shadow(raw-only) | MUST | in-scope beta path / narrower wins and narrower preservation |
+| GCC 15 | MUST | MUST | MUST | shared in-scope contract; dual-sink default capability |
+| GCC 14 | MUST on `NativeTextCapture`; explicit `SingleSinkStructured` is allowed | MUST | MUST | shared in-scope contract; additional evidence lane inside `gcc13_14` |
+| GCC 13 | MUST on `NativeTextCapture`; explicit `SingleSinkStructured` is allowed | MUST | MUST | shared in-scope contract; representative `gcc13_14` lane |
+| GCC 12 | MUST on `NativeTextCapture` useful-subset representative fixtures; explicit `SingleSinkStructured` (JSON) is allowed and MUST be tagged separately | MUST | MUST | shared in-scope contract; representative `gcc9_12` lane |
 
 Band B / Band C の fixture / gate では、`GCC13-14` / `GCC9-12` をまとめて扱うのではなく、`ProcessingPath × Surface` ごとに `bounded_render` と `honest_fallback` を区別すること。
 
@@ -1387,7 +1387,7 @@ Done 条件:
 
 - seed corpus 20 件以上
 - IR validation と canonical facts snapshot が動く
-- GCC 15+ reference-path E2E が 5 family 以上通る
+- GCC 9-15 representative E2E が 5 family 以上通る
 - performance smoke harness が存在する
 - fuzz seed が 10 件以上ある
 
@@ -1499,7 +1499,7 @@ CI は単に「snapshot mismatch」とだけ出してはならない。
 3. `expectations.yaml` schema を固定する
 4. canonical facts snapshot を出せるようにする
 5. renderer view model snapshot を導入する
-6. GCC 15 E2E subset を組む
+6. GCC 9-15 representative E2E subset を組む
 7. PR gate と nightly gate を最小構成で通す
 8. shadow trace の sanitize 形式を設計する
 9. first expert review を実施し、family taxonomy を調整する
@@ -1524,9 +1524,9 @@ CI は単に「snapshot mismatch」とだけ出してはならない。
 ```yaml
 schema_version: 1
 fixture_id: cpp/templates/no-matching-constructor
-version_band: gcc15_plus
+version_band: gcc15
 processing_path: dual_sink_structured
-support_level: preview
+support_level: in_scope
 expected_mode: render
 
 semantic:

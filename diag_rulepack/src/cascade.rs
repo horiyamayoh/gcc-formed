@@ -156,7 +156,7 @@ impl CascadeRulepack {
         let mut policy = CascadeRedundancyPolicy::default();
 
         match version_band {
-            VersionBand::Gcc15Plus => {}
+            VersionBand::Gcc15 => {}
             VersionBand::Gcc13_14 => {
                 policy.suppress_penalty -= 2;
             }
@@ -164,7 +164,7 @@ impl CascadeRulepack {
                 policy.extra_evidence_points += 1;
                 policy.suppress_penalty -= 5;
             }
-            VersionBand::Unknown => {
+            VersionBand::Gcc16Plus | VersionBand::Unknown => {
                 policy.extra_evidence_points += 1;
                 policy.suppress_penalty -= 10;
             }
@@ -507,7 +507,7 @@ mod tests {
     fn native_text_paths_require_more_hidden_evidence_than_dual_sink_structured() {
         let rulepack = checked_in_cascade_rulepack();
         let dual_sink = rulepack.redundancy_policy(
-            VersionBand::Gcc15Plus,
+            VersionBand::Gcc15,
             ProcessingPath::DualSinkStructured,
             SourceAuthority::Structured,
             FallbackGrade::None,

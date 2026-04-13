@@ -19,7 +19,7 @@ superseded_by: []
 
 ## Context
 
-現行 adapter 境界は実質的に `sarif_path + stderr_text` を中心にしており、`GCC15+` の SARIF path には合うが、`SingleSinkStructured(JSON)` や `NativeTextCapture` を first-class path として扱いにくい。IR 自体はより広い source を受け止められるのに、ingest API が path-aware になっていない。
+現行 adapter 境界は実質的に `sarif_path + stderr_text` を中心にしており、`GCC15` の dual-sink SARIF path には合うが、`SingleSinkStructured(JSON)` や `NativeTextCapture` を first-class path として扱いにくい。IR 自体はより広い source を受け止められるのに、ingest API が path-aware になっていない。
 
 vNext では Path A/B/C を同じ ingest 境界へ流し込み、runtime と adapter の責務を明確に分ける必要がある。
 

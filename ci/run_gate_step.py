@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
         "--release-blocker",
         default="true",
         choices=["true", "false"],
-        help="Whether reference-path-only nightly steps apply.",
+        help="Whether gcc15 release-lane-only nightly steps apply.",
     )
     parser.add_argument(
         "--local",

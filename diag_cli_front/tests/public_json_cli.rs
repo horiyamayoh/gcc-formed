@@ -37,7 +37,7 @@ fn public_json_writes_available_export_to_file() {
     );
     assert_eq!(
         export["execution"]["version_band"].as_str(),
-        Some("gcc15_plus")
+        Some("gcc15")
     );
     assert!(
         export["result"]["summary"]["diagnostic_count"]
@@ -75,7 +75,7 @@ fn public_json_writes_available_export_to_stdout() {
     );
     assert_eq!(
         export["execution"]["version_band"].as_str(),
-        Some("gcc15_plus")
+        Some("gcc15")
     );
     assert!(
         export["result"]["summary"]["error_count"]

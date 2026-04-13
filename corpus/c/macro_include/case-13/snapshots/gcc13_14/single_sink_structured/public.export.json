@@ -4,7 +4,7 @@
     "fallback_grade": "none",
     "processing_path": "single_sink_structured",
     "source_authority": "structured",
-    "support_level": "experimental",
+    "support_level": "in_scope",
     "version_band": "gcc13_14"
   },
   "invocation": {

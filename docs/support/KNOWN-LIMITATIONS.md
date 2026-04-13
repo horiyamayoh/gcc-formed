@@ -23,19 +23,19 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
 - The terminal renderer is the primary user-facing surface.
-- `GCC15+` is the primary fidelity reference path.
-- `GCC13-14` and `GCC9-12` are in-scope product bands, but with narrower guarantees and path-dependent capture constraints.
+- `GCC15`, `GCC13-14`, and `GCC9-12` share one in-scope public contract.
+- `VersionBand` and `ProcessingPath` are observability metadata; they do not justify weaker value claims inside `GCC 9-15`.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - The currently recommended build-system insertion pattern is direct `CC` / `CXX` replacement, optionally with one wrapper-owned backend launcher via `FORMED_BACKEND_LAUNCHER`, `--formed-backend-launcher`, or `[backend].launcher`.
 - The checked-in interop lab is the source of truth for Make / CMake topology guidance. When the lab does not prove a chain, prefer raw `gcc` / `g++` or `--formed-mode=passthrough` rather than adding another launcher layer in front of the wrapper.
 
 ## Known Constraints
 
-- Not every `VersionBand` currently has the same fidelity or the same raw-preservation guarantees.
+- In-scope bands share one public contract, but capture mechanisms, same-run raw-preservation details, and default processing paths still differ by capability.
 - `ProcessingPath` may vary by invocation, diagnostics sink, or explicit mode request.
 - `x86_64-unknown-linux-gnu` remains a compatibility smoke and exception path, not the primary shipped artifact.
-- Older or unknown compiler variants may still resolve conservatively to passthrough behavior.
-- Current runtime and self-check output already use the current vocabulary. The remaining limit is band-dependent fidelity and raw-preservation behavior, not legacy tier wording. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.
+- `GCC16+`, older compilers outside `GCC 9-15`, and unknown gcc-like variants may still resolve conservatively to passthrough behavior.
+- Current runtime and self-check output already use the current vocabulary. The remaining limit is capability-dependent capture behavior, not a public hierarchy between in-scope bands. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.
 - Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
 - The checked-in interop lab covers `make -j`, `cmake --build`, one wrapper-owned backend launcher, depfile generation, response-file pass-through, and stdout-sensitive compiler probes under `eval/interop/`, but that coverage is intentionally narrow and does not prove launcher stacks in front of the wrapper or multi-launcher chains.
 
@@ -52,7 +52,8 @@ You should expect raw fallback when:
 
 ## What Is Not Guaranteed Yet
 
-- Identical guarantees across all `VersionBand` values.
+- Claims that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
+- Perfect parity across every diagnostic family and every capability path.
 - Non-Linux production artifacts.
 - Elimination of passthrough, shadow-mode-like conservative behavior, or raw fallback.
 - Release-candidate or stable artifacts (`1.0.0-rc.N`, `1.0.0`).
@@ -68,4 +69,4 @@ gcc-formed --formed-trace-bundle ...
 gcc-formed --formed-trace-bundle=/secure/local/path ...
 ```
 
-Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory. If runtime output still shows legacy internal classification fields, attach them verbatim as evidence rather than translating them by hand. If you used a user-specified trace path, mention it explicitly and note whether the bundle was redaction-reviewed before sharing.
+Attach the resulting `trace.json`, normalized IR, and preserved `stderr.raw` from the trace directory. If you are working from older artifacts that still show legacy internal classification fields, attach them verbatim as evidence rather than translating them by hand. If you used a user-specified trace path, mention it explicitly and note whether the bundle was redaction-reviewed before sharing.

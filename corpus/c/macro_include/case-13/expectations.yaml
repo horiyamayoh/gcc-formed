@@ -2,7 +2,7 @@ schema_version: 1
 fixture_id: c/macro_include/case-13
 version_band: gcc13_14
 processing_path: single_sink_structured
-support_level: experimental
+support_level: in_scope
 expected_mode: render
 semantic:
   family: scope_declaration
