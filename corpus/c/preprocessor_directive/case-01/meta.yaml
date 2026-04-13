@@ -8,7 +8,18 @@ tags:
   - beta-bar
   - 'band:gcc13_14'
   - 'processing_path:single_sink_structured'
+  - 'surface:default'
+  - 'surface:ci'
+  - 'surface:debug'
   - 'fallback_contract:bounded_render'
+matrix_applicability:
+  version_band: gcc13_14
+  processing_path: single_sink_structured
+  surfaces:
+    - default
+    - ci
+    - debug
+  note: This fixture is the GCC13-14 single_sink_structured preprocessor anchor for the C core/parser/fallback older-band pack.
 ownership: curated
 provenance: hand-authored
 reviewer: codex

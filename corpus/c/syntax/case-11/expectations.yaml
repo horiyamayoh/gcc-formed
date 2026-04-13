@@ -15,12 +15,14 @@ semantic:
 render:
   default:
     first_screenful_max_lines: 24
+    first_action_max_line: 2
     required_substrings:
       - "suggested edit: insert ';' at src/main.c:2:13"
       - "patch: src/main.c"
       - "2 +     return 0;"
   ci:
     first_screenful_max_lines: 16
+    first_action_max_line: 2
     path_first_required: true
     color_meaning_forbidden: true
     required_substrings:

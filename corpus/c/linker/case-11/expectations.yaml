@@ -7,14 +7,17 @@ expected_mode: render
 semantic:
   family: linker
   severity: error
+  first_action_required: true
   raw_provenance_required: true
   fallback: forbidden
   confidence_min: medium
 render:
   default:
     first_screenful_max_lines: 24
+    first_action_max_line: 3
   ci:
     first_screenful_max_lines: 21
+    first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
     required_substrings:

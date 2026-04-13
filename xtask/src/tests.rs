@@ -1,7 +1,10 @@
 use super::*;
+use diag_backend_probe::support_level_for_version_band;
 use diag_core::{DocumentCompleteness, FallbackReason, Origin, Phase, ProvenanceSource};
+use diag_public_export::{PublicExportContext, PublicExportStatus, export_from_document};
 use diag_render::{RenderProfile, build_view_model, render};
 use diag_testkit::{discover, normalize_snapshot_contents};
+use serde_yaml::Value as YamlValue;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
@@ -55,6 +58,33 @@ fn corpus_fixture(fixture_id: &str) -> diag_testkit::Fixture {
         .into_iter()
         .find(|fixture| fixture.fixture_id() == fixture_id)
         .unwrap_or_else(|| panic!("fixture `{fixture_id}` not found"))
+}
+
+fn public_export_for_fixture(
+    fixture: &diag_testkit::Fixture,
+    replay: &ReplayOutcomeAndDocument,
+) -> diag_public_export::PublicDiagnosticExport {
+    export_from_document(
+        &replay.document,
+        &PublicExportContext::from_document(
+            &replay.document,
+            fixture_support_band(fixture),
+            fixture_processing_path(fixture),
+            support_level_for_version_band(fixture_support_band(fixture)),
+            replay.source_authority,
+            replay.fallback_grade,
+            replay.fallback_reason,
+        ),
+    )
+}
+
+fn matrix_applicability_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {
+    let raw = fs::read_to_string(fixture.root.join("meta.yaml")).unwrap();
+    serde_yaml::from_str::<YamlValue>(&raw)
+        .unwrap()
+        .get("matrix_applicability")
+        .cloned()
+        .expect("expected matrix_applicability block")
 }
 
 fn acceptance_summary(
@@ -1028,6 +1058,246 @@ fn acceptance_metrics_use_expectation_denominators() {
     assert_eq!(metrics.first_action_present_rate, 1.0);
     assert_eq!(metrics.family_match_rate, 1.0);
     assert_eq!(metrics.headline_rewritten_rate, 0.5);
+}
+
+#[test]
+fn older_band_core_parser_path_anchors_declare_matrix_applicability() {
+    let cases = [
+        (
+            "c/preprocessor_directive/case-01",
+            vec![
+                FixtureSurface::Default,
+                FixtureSurface::Ci,
+                FixtureSurface::Debug,
+            ],
+            "GCC13-14 single_sink_structured preprocessor anchor",
+        ),
+        (
+            "c/syntax/case-11",
+            vec![FixtureSurface::Default, FixtureSurface::Ci],
+            "GCC9-12 single_sink_structured parser/fix-it anchor",
+        ),
+    ];
+
+    for (fixture_id, expected_surfaces, note_substring) in cases {
+        let fixture = corpus_fixture(fixture_id);
+        assert_eq!(
+            declared_matrix_applicability_surfaces(&fixture).as_deref(),
+            Some(expected_surfaces.as_slice()),
+            "{fixture_id} should declare the expected matrix_applicability surfaces",
+        );
+
+        let matrix = matrix_applicability_for_fixture(&fixture);
+        let note = matrix
+            .get("note")
+            .and_then(YamlValue::as_str)
+            .unwrap_or_default();
+        assert!(
+            note.contains(note_substring),
+            "{fixture_id} should carry a path-scoped applicability note",
+        );
+    }
+}
+
+#[test]
+fn older_band_core_parser_fallback_replays_keep_first_action_disclosure_and_public_export_shape() {
+    for fixture_id in [
+        "c/preprocessor_directive/case-01",
+        "c/macro_include/case-13",
+        "c/partial/case-07",
+        "c/syntax/case-11",
+        "c/syntax/case-12",
+        "c/type/case-11",
+        "c/linker/case-11",
+    ] {
+        let fixture = corpus_fixture(fixture_id);
+        let semantic = fixture.expectations.semantic.as_ref().unwrap();
+        let replay = replay_fixture_document(&fixture).unwrap();
+        let request =
+            render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+        let render_result = render(request).unwrap();
+        let lead_node =
+            lead_node_for_document(&replay.document, &render_result.displayed_group_refs).unwrap();
+
+        if semantic.first_action_required {
+            assert!(
+                lead_node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.first_action_hint.as_deref())
+                    .is_some_and(|hint| !hint.trim().is_empty()),
+                "{fixture_id} should keep a lead first_action_hint",
+            );
+        }
+
+        if let Some(max_line) = fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.first_action_max_line)
+        {
+            let line = first_help_line(&render_result.text).expect("expected help line");
+            assert!(
+                line <= max_line,
+                "{fixture_id} should keep help within line {max_line}, got {line}",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.partial_notice_required)
+            == Some(true)
+        {
+            assert!(
+                contains_partial_notice(&render_result.text),
+                "{fixture_id} should keep the partial notice visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_diagnostics_hint_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_diagnostics_hint(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics hint visible",
+            );
+        }
+
+        if fixture
+            .expectations
+            .render
+            .default
+            .as_ref()
+            .and_then(|expectations| expectations.raw_sub_block_required)
+            == Some(true)
+        {
+            assert!(
+                contains_raw_sub_block(&render_result.text),
+                "{fixture_id} should keep the raw diagnostics sub-block visible",
+            );
+        }
+
+        let export = public_export_for_fixture(&fixture, &replay);
+        assert_eq!(export.status, PublicExportStatus::Available);
+        assert_eq!(
+            export.execution.version_band,
+            fixture.expectations.version_band
+        );
+        assert_eq!(
+            export.execution.processing_path,
+            fixture.expectations.processing_path
+        );
+        assert!(
+            export
+                .execution
+                .allowed_processing_paths
+                .contains(&fixture.expectations.processing_path),
+            "{fixture_id} should list its processing path in allowed_processing_paths",
+        );
+
+        let public_diag = export
+            .result
+            .as_ref()
+            .unwrap()
+            .diagnostics
+            .iter()
+            .find(|diagnostic| diagnostic.family.as_deref() == Some(semantic.family.as_str()))
+            .unwrap_or_else(|| panic!("{fixture_id} should export family {}", semantic.family));
+        assert!(
+            public_diag
+                .headline
+                .as_deref()
+                .is_some_and(|headline| !headline.trim().is_empty()),
+            "{fixture_id} should export a non-empty headline for {}",
+            semantic.family,
+        );
+        if semantic.first_action_required {
+            assert!(
+                public_diag
+                    .first_action
+                    .as_deref()
+                    .is_some_and(|action| !action.trim().is_empty()),
+                "{fixture_id} should export a non-empty first_action for {}",
+                semantic.family,
+            );
+        }
+        if semantic.raw_provenance_required {
+            assert!(
+                !public_diag.provenance_capture_refs.is_empty(),
+                "{fixture_id} should keep capture refs on the exported diagnostic",
+            );
+        }
+    }
+}
+
+#[test]
+fn older_band_honest_fallback_anchor_keeps_disclosure_and_public_export_context() {
+    let fixture = corpus_fixture("c/macro_include/case-01");
+    let replay = replay_fixture_document(&fixture).unwrap();
+    let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
+    let render_result = render(request).unwrap();
+    let export = public_export_for_fixture(&fixture, &replay);
+
+    assert_eq!(export.status, PublicExportStatus::Available);
+    assert_eq!(
+        export.execution.version_band,
+        fixture.expectations.version_band
+    );
+    assert_eq!(
+        export.execution.processing_path,
+        fixture.expectations.processing_path
+    );
+    assert_eq!(
+        export.execution.fallback_grade.as_deref(),
+        Some("fail_open")
+    );
+    assert_eq!(
+        export.execution.fallback_reason.as_deref(),
+        Some("residual_only")
+    );
+    assert!(
+        export
+            .execution
+            .allowed_processing_paths
+            .contains(&fixture.expectations.processing_path),
+        "honest-fallback anchor should keep its processing path in allowed_processing_paths",
+    );
+    assert!(
+        render_result
+            .text
+            .contains("In file included from src/wrapper.h:1,"),
+        "honest-fallback anchor should preserve the include-chain disclosure",
+    );
+    assert!(
+        render_result
+            .text
+            .contains("note: in expansion of macro 'CALL_BAD'"),
+        "honest-fallback anchor should preserve the macro-expansion disclosure",
+    );
+    assert!(
+        export
+            .result
+            .as_ref()
+            .unwrap()
+            .diagnostics
+            .iter()
+            .any(|diagnostic| {
+                diagnostic
+                    .first_action
+                    .as_deref()
+                    .is_some_and(|action| !action.trim().is_empty())
+            }),
+        "honest-fallback anchor should still export actionable first-action text",
+    );
 }
 
 #[test]
