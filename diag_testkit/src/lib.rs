@@ -544,7 +544,7 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
                 fixture.fixture_id()
             )));
         }
-        let snapshot_root = fixture.snapshot_root();
+        let snapshot_root = fixture.declared_snapshot_root();
         let mut required_artifacts = vec![
             "stderr.raw",
             "ir.facts.json",
@@ -591,7 +591,7 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
                     fixture.fixture_id()
                 )));
             }
-            let presentation_root = fixture.presentation_snapshot_root(&preset_id);
+            let presentation_root = snapshot_root.join(&preset_id);
             for relative in [
                 "view.default.json",
                 "render.default.txt",
@@ -1146,6 +1146,35 @@ tags: [syntax]
         assert_eq!(fixture.snapshot_root(), snapshot_root);
         assert_eq!(fixture.authoritative_structured_artifact_name(), None);
         validate_fixture(&fixture).unwrap();
+    }
+
+    #[test]
+    fn promoted_fixture_rejects_legacy_snapshot_root_fallback() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/c/syntax/case-legacy-promoted",
+                language: "c",
+                source_name: "main.c",
+                version_band: "gcc9_12",
+                support_level: "in_scope",
+                major_version_selector: "12",
+                processing_path: "native_text_capture",
+                snapshot_layout: "snapshots/gcc15",
+            },
+        );
+        let legacy_snapshot_root = root.join("snapshots/gcc15");
+        write_required_promoted_artifacts(&legacy_snapshot_root);
+        fs::write(legacy_snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(legacy_snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        assert_eq!(fixture.snapshot_root(), legacy_snapshot_root);
+
+        let error = validate_fixture(&fixture).unwrap_err().to_string();
+        assert!(error.contains("promoted fixture"));
+        assert!(error.contains("snapshots/gcc9_12/native_text_capture/stderr.raw"));
     }
 
     #[test]

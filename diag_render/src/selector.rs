@@ -179,10 +179,10 @@ fn select_episode_groups(
         .any(|episode| {
             !group_analysis_by_ref.contains_key(episode.lead_group_ref.as_str())
                 || !representatives.contains_key(episode.lead_group_ref.as_str())
-                || episode.member_group_refs.iter().any(|member_ref| {
-                    !group_analysis_by_ref.contains_key(member_ref.as_str())
-                        || !representatives.contains_key(member_ref.as_str())
-                })
+                || episode
+                    .member_group_refs
+                    .iter()
+                    .any(|member_ref| !group_analysis_by_ref.contains_key(member_ref.as_str()))
         })
     {
         return None;
@@ -190,7 +190,10 @@ fn select_episode_groups(
 
     let mut visible_group_refs = group_analysis_by_ref
         .values()
-        .filter(|group| should_keep_group_visible(group))
+        .filter(|group| {
+            should_keep_group_visible(group)
+                && representatives.contains_key(group.group_ref.as_str())
+        })
         .map(|group| group.group_ref.as_str())
         .collect::<Vec<_>>();
     if visible_group_refs.is_empty() {
@@ -266,6 +269,9 @@ fn select_episode_groups(
             {
                 continue;
             }
+            let Some(representative) = representatives.get(member_ref.as_str()) else {
+                continue;
+            };
             let group = group_analysis_by_ref
                 .get(member_ref.as_str())
                 .expect("episode member analysis");
@@ -279,12 +285,7 @@ fn select_episode_groups(
                 summarize_member,
                 hide_member,
             ) {
-                summary_only_cards.push(
-                    representatives
-                        .get(member_ref.as_str())
-                        .expect("episode member representative")
-                        .clone(),
-                );
+                summary_only_cards.push(representative.clone());
                 continue;
             }
             match group.role {
@@ -313,6 +314,9 @@ fn select_episode_groups(
 
     for group in group_analysis_by_ref.values() {
         let group_ref = group.group_ref.as_str();
+        if !representatives.contains_key(group_ref) {
+            continue;
+        }
         if visible_group_ref_set.contains(group_ref) || groups_in_episodes.contains(group_ref) {
             continue;
         }

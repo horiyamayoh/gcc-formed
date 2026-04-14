@@ -3925,6 +3925,86 @@ mod tests {
     }
 
     #[test]
+    fn warning_suppression_keeps_episode_aware_selection_for_remaining_failures() {
+        let mut warning = grouped_error_node(
+            "warning",
+            "group-warning",
+            "src/main.c",
+            5,
+            "unused variable 'tmp'",
+        );
+        warning.severity = Severity::Warning;
+        warning.semantic_role = SemanticRole::Supporting;
+
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
+            grouped_error_node(
+                "duplicate",
+                "group-duplicate",
+                "src/main.c",
+                4,
+                "duplicate parse failure",
+            ),
+            warning,
+        ];
+        request.document.document_analysis = Some(document_analysis(
+            vec![episode(
+                "episode-root",
+                "group-root",
+                vec!["group-root", "group-duplicate", "group-warning"],
+                0.97,
+            )],
+            vec![
+                lead_root_group("group-root", "episode-root", 0.97, 0.94),
+                dependent_group(
+                    "group-duplicate",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::Duplicate,
+                ),
+                dependent_group(
+                    "group-warning",
+                    "episode-root",
+                    "group-root",
+                    GroupCascadeRole::FollowOn,
+                ),
+            ],
+        ));
+
+        let selection = select_groups(&request);
+        assert_eq!(selection.cards.len(), 1);
+        assert!(selection.summary_only_cards.is_empty());
+        assert_eq!(selection.suppressed_warning_count, 1);
+        assert_eq!(selection.hidden_group_count, 0);
+        assert_eq!(
+            selection
+                .collapsed_notices_by_group_ref
+                .get("group-root")
+                .cloned()
+                .unwrap(),
+            vec!["omitted 1 duplicate diagnostic(s)".to_string()]
+        );
+
+        let output = render(request).unwrap();
+        assert_eq!(output.displayed_group_refs, vec!["group-root".to_string()]);
+        assert_eq!(output.suppressed_group_count, 0);
+        assert!(
+            output
+                .text
+                .contains("note: omitted 1 duplicate diagnostic(s)")
+        );
+        assert!(
+            output
+                .text
+                .contains("note: suppressed 1 warning(s) while focusing on the failing group")
+        );
+        assert!(!output.text.contains("duplicate parse failure"));
+        assert!(!output.text.contains("unused variable 'tmp'"));
+        assert!(!output.text.contains("other errors:"));
+    }
+
+    #[test]
     fn debug_profile_and_suppressed_count_visibility_change_hidden_output() {
         let diagnostics = vec![
             grouped_error_node("root", "group-root", "src/main.c", 2, "primary failure"),
