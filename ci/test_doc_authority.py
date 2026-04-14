@@ -56,6 +56,13 @@ ALLOWED_BANNED_PHRASE_DOCS = {
 }
 
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+ARCHITECTURE_DOC = Path("docs/architecture/gcc-formed-vnext-change-design.md")
+ARCHITECTURE_STALE_RUNTIME_PHRASES = [
+    "`diag_backend_probe` は `support_tier_for_major` で `15+ -> A`, `13/14 -> B`, それ以外 -> `C` を返し",
+    "`diag_adapter_gcc::ingest` は `sarif_path: Option<&Path>` と `stderr_text: &str` を受け",
+    "| バージョン判定 | `SupportTier` で 15+/13-14/その他 を直結 |",
+    "| ingest | `ingest(sarif_path, stderr_text, ...)` |",
+]
 
 
 def extract_front_matter(text: str) -> dict[str, object]:
@@ -208,6 +215,12 @@ class DocAuthorityTest(unittest.TestCase):
             for target in iter_internal_doc_links(relative_path, text):
                 with self.subTest(source=relative_path.as_posix(), target=target.as_posix()):
                     self.assertTrue((REPO_ROOT / target).exists())
+
+    def test_architecture_doc_avoids_stale_parity_runtime_wording(self) -> None:
+        text = (REPO_ROOT / ARCHITECTURE_DOC).read_text(encoding="utf-8")
+        for phrase in ARCHITECTURE_STALE_RUNTIME_PHRASES:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, text)
 
 
 if __name__ == "__main__":
