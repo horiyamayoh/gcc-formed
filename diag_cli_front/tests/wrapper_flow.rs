@@ -282,6 +282,56 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
 }
 
 #[test]
+fn probe_confirmed_dual_sink_on_fake_gcc13_backend_uses_same_run_structured_path() {
+    let temp = fixture_with_probe_help(
+        "13.3.0",
+        "  -fdiagnostics-add-output=[sarif:version=2.1,file=PATH]",
+    );
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let trace_root = temp.path().join("trace-root");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .env("FORMED_TRACE_DIR", &trace_root)
+        .current_dir(temp.path())
+        .arg("--formed-trace=always")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()).not())
+        .stderr(predicate::str::contains("error: [syntax] syntax error"))
+        .stderr(predicate::str::contains("help: fix the first parser error"))
+        .stderr(predicate::str::contains("raw:\n").not());
+
+    let trace: Value =
+        serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
+    assert_eq!(trace["selected_mode"], "render");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
+    assert!(trace["fallback_reason"].is_null());
+    assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
+    assert_eq!(
+        trace["environment_summary"]["processing_path"],
+        "dual_sink_structured"
+    );
+    assert!(
+        trace["environment_summary"]["injected_flags"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|flag| flag.as_str().is_some_and(
+                |flag| flag.starts_with("-fdiagnostics-add-output=sarif:version=2.1,file=")
+            ))
+    );
+    assert_eq!(
+        trace["parser_result_summary"]["status"].as_str(),
+        Some("parsed")
+    );
+}
+
+#[test]
 fn unsupported_processing_path_request_fails_instead_of_silently_downgrading() {
     let temp = fixture("13.3.0");
     let backend = temp.path().join("fake-gcc");

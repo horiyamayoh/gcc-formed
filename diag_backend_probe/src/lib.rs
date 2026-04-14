@@ -552,7 +552,7 @@ fn capability_facts_for_version_band(
             native_text_capture: true,
             json_diagnostics: false,
             sarif_diagnostics: true,
-            dual_sink: false,
+            dual_sink: add_output_sarif_supported,
             tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
@@ -1078,6 +1078,42 @@ mod tests {
             BTreeSet::from([
                 ProcessingPath::NativeTextCapture,
                 ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ])
+        );
+    }
+
+    #[test]
+    fn band_b_probe_uses_observed_add_output_support_to_enable_dual_sink() {
+        let probe = ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: PathBuf::from("/usr/bin/gcc-14"),
+            execution_topology: direct_topology(),
+            version_string: "gcc (GCC) 14.2.0".to_string(),
+            major: 14,
+            minor: 2,
+            driver_kind: DriverKind::Gcc,
+            add_output_sarif_supported: true,
+            version_probe_key: ProbeKey {
+                realpath: PathBuf::from("/usr/bin/gcc-14"),
+                inode: 14,
+                mtime_seconds: 0,
+                size_bytes: 14,
+            },
+        };
+
+        let profile = probe.capability_profile();
+        assert_eq!(profile.version_band, VersionBand::Gcc13_14);
+        assert!(profile.sarif_diagnostics);
+        assert!(profile.dual_sink);
+        assert_eq!(
+            profile.default_processing_path,
+            ProcessingPath::DualSinkStructured
+        );
+        assert_eq!(
+            profile.allowed_processing_paths,
+            BTreeSet::from([
+                ProcessingPath::DualSinkStructured,
                 ProcessingPath::Passthrough,
             ])
         );

@@ -156,14 +156,7 @@ impl CascadeRulepack {
         let mut policy = CascadeRedundancyPolicy::default();
 
         match version_band {
-            VersionBand::Gcc15 => {}
-            VersionBand::Gcc13_14 => {
-                policy.suppress_penalty -= 2;
-            }
-            VersionBand::Gcc9_12 => {
-                policy.extra_evidence_points += 1;
-                policy.suppress_penalty -= 5;
-            }
+            VersionBand::Gcc15 | VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => {}
             VersionBand::Gcc16Plus | VersionBand::Unknown => {
                 policy.extra_evidence_points += 1;
                 policy.suppress_penalty -= 10;
@@ -542,5 +535,31 @@ mod tests {
             native.dependency_threshold_delta,
             dual_sink.dependency_threshold_delta
         );
+    }
+
+    #[test]
+    fn in_scope_version_bands_keep_the_same_redundancy_policy_for_the_same_capabilities() {
+        let rulepack = checked_in_cascade_rulepack();
+        let gcc15 = rulepack.redundancy_policy(
+            VersionBand::Gcc15,
+            ProcessingPath::NativeTextCapture,
+            SourceAuthority::ResidualText,
+            FallbackGrade::Compatibility,
+        );
+        let gcc13 = rulepack.redundancy_policy(
+            VersionBand::Gcc13_14,
+            ProcessingPath::NativeTextCapture,
+            SourceAuthority::ResidualText,
+            FallbackGrade::Compatibility,
+        );
+        let gcc9 = rulepack.redundancy_policy(
+            VersionBand::Gcc9_12,
+            ProcessingPath::NativeTextCapture,
+            SourceAuthority::ResidualText,
+            FallbackGrade::Compatibility,
+        );
+
+        assert_eq!(gcc13, gcc15);
+        assert_eq!(gcc9, gcc15);
     }
 }
