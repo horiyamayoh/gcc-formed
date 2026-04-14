@@ -10,10 +10,12 @@ schema_version = 1
 profile = "default"
 path_policy = "relative_to_cwd"
 debug_refs = "none"
-# current beta default is subject_blocks_v1; set legacy_v1 only for rollback / compatibility.
-# presentation = "legacy_v1"
-# compatibility alias accepted by the current loader:
-# presentation_preset = "legacy_v1"
+# current beta default is subject_blocks_v2; uncomment only when you need an explicit pin or rollback.
+# presentation = "subject_blocks_v2"  # pin the current beta default explicitly
+# presentation = "subject_blocks_v1"  # rollback to the previous beta default
+# presentation = "legacy_v1"          # rollback to legacy wording / session behavior
+# compatibility alias accepted by the current loader for built-in presets:
+# presentation_preset = "subject_blocks_v2"
 # use a custom presentation file when you need a non-default session / location policy.
 # presentation_file = "/home/me/.config/cc-formed/presentation.toml"
 

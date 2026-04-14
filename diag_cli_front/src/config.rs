@@ -2045,6 +2045,23 @@ mod tests {
     }
 
     #[test]
+    fn example_config_tracks_presentation_default_and_rollback_guidance() {
+        let example = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../config/cc-formed.example.toml"
+        ));
+        let config: ConfigFile = toml::from_str(example).unwrap();
+        let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
+
+        assert!(example.contains("current beta default is subject_blocks_v2"));
+        assert!(example.contains("# presentation = \"subject_blocks_v2\""));
+        assert!(example.contains("# presentation = \"subject_blocks_v1\""));
+        assert!(example.contains("# presentation = \"legacy_v1\""));
+        assert_eq!(resolved.preset_id, "subject_blocks_v2");
+        assert!(!resolved.fell_back_to_default);
+    }
+
+    #[test]
     fn external_v2_presentation_file_is_loaded_and_subject_first_is_config_driven() {
         let temp = tempdir().unwrap();
         let overlay = temp.path().join("presentation-v2.toml");
