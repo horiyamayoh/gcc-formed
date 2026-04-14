@@ -1,0 +1,8 @@
+schema_version = 1
+
+[render]
+profile = "default"
+presentation = "subject_blocks_v2"
+presentation_file = "presentation/dedicated_location.toml"
+path_policy = "relative_to_cwd"
+debug_refs = "none"

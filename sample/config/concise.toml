@@ -1,0 +1,7 @@
+schema_version = 1
+
+[render]
+profile = "concise"
+presentation = "subject_blocks_v2"
+path_policy = "relative_to_cwd"
+debug_refs = "none"

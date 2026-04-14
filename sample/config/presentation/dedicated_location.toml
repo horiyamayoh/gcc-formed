@@ -1,0 +1,20 @@
+kind = "cc_formed_presentation"
+schema_version = 2
+
+[header]
+interactive_format = "{severity}: {subject} [{family}]"
+ci_path_first_format = "{location}: {severity}: {subject} [{family}]"
+
+[labels]
+label_width_mode = "fixed"
+fixed_label_width = 6
+help = "action"
+want = "expect"
+got = "actual"
+via = "route"
+raw = "detail"
+
+[location]
+default_placement = "dedicated_line"
+fallback_order = ["dedicated_line", "header", "evidence", "none"]
+width_soft_limit = 88
