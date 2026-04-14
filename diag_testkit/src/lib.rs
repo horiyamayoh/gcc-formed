@@ -549,6 +549,7 @@ pub fn validate_fixture(fixture: &Fixture) -> Result<(), FixtureError> {
             "stderr.raw",
             "ir.facts.json",
             "ir.analysis.json",
+            "public.export.json",
             "view.default.json",
             "render.default.txt",
             "render.ci.txt",
@@ -918,6 +919,7 @@ tags: [syntax]
             "stderr.raw",
             "ir.facts.json",
             "ir.analysis.json",
+            "public.export.json",
             "view.default.json",
             "render.default.txt",
             "render.ci.txt",
@@ -1177,6 +1179,37 @@ tags: [syntax]
         assert!(error.contains("diagnostics.json"));
 
         fs::write(snapshot_root.join("diagnostics.json"), "{}\n").unwrap();
+        validate_fixture(&fixture).unwrap();
+    }
+
+    #[test]
+    fn promoted_fixture_requires_public_export_snapshot() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let root = write_promoted_fixture(
+            &tempdir,
+            PromotedFixtureSpec {
+                fixture_id: "corpus/c/syntax/case-03",
+                language: "c",
+                source_name: "main.c",
+                version_band: "gcc15",
+                support_level: "in_scope",
+                major_version_selector: "15",
+                processing_path: "dual_sink_structured",
+                snapshot_layout: "snapshots/gcc15/dual_sink_structured",
+            },
+        );
+        let snapshot_root = root.join("snapshots/gcc15/dual_sink_structured");
+        write_required_promoted_artifacts(&snapshot_root);
+        fs::write(snapshot_root.join("diagnostics.sarif"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("view.debug.json"), "{}\n").unwrap();
+        fs::write(snapshot_root.join("render.debug.txt"), "{}\n").unwrap();
+        fs::remove_file(snapshot_root.join("public.export.json")).unwrap();
+
+        let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
+        let error = validate_fixture(&fixture).unwrap_err().to_string();
+        assert!(error.contains("public.export.json"));
+
+        fs::write(snapshot_root.join("public.export.json"), "{}\n").unwrap();
         validate_fixture(&fixture).unwrap();
     }
 

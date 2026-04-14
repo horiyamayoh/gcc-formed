@@ -18,7 +18,7 @@ use crate::trace_bundle::{
 };
 use diag_adapter_contract::{DiagnosticAdapter, IngestPolicy, IngestReport};
 use diag_adapter_gcc::{AdapterError, GccAdapter, producer_for_version};
-use diag_backend_probe::ProbeCache;
+use diag_backend_probe::{ProbeCache, ProcessingPath};
 use diag_capture_runtime::{
     CaptureBundle, ExecutionMode, ExitStatusInfo, cleanup_capture, run_capture,
 };
@@ -81,7 +81,7 @@ fn real_main() -> Result<i32, CliError> {
             &plan.backend,
             exit_code,
             wrapper_surface(),
-            plan.processing_path(),
+            unavailable_processing_path(true, plan.mode(), plan.processing_path()),
             plan.mode_decision.fallback_reason,
         );
         let export = unavailable_export_with_reason(
@@ -120,7 +120,7 @@ fn real_main() -> Result<i32, CliError> {
             &plan.backend,
             exit_code,
             wrapper_surface(),
-            capture.processing_path(),
+            unavailable_processing_path(false, plan.mode(), capture.processing_path()),
             plan.mode_decision.fallback_reason,
         );
         let export = unavailable_export_with_reason(
@@ -292,6 +292,18 @@ fn real_main() -> Result<i32, CliError> {
     }));
     cleanup_capture(&capture)?;
     Ok(exit_code)
+}
+
+fn unavailable_processing_path(
+    is_introspection_like: bool,
+    mode: ExecutionMode,
+    processing_path: ProcessingPath,
+) -> ProcessingPath {
+    if is_introspection_like || matches!(mode, ExecutionMode::Passthrough) {
+        ProcessingPath::Passthrough
+    } else {
+        processing_path
+    }
 }
 
 fn invoke_adapter<A: DiagnosticAdapter>(
@@ -740,5 +752,33 @@ mod tests {
 
         let render_result = render(sample_render_request(document)).unwrap();
         assert!(!render_result.text.is_empty());
+    }
+
+    #[test]
+    fn unavailable_export_uses_passthrough_processing_path_for_introspection_like_invocations() {
+        assert_eq!(
+            unavailable_processing_path(
+                true,
+                ExecutionMode::Render,
+                ProcessingPath::DualSinkStructured
+            ),
+            ProcessingPath::Passthrough
+        );
+        assert_eq!(
+            unavailable_processing_path(
+                false,
+                ExecutionMode::Passthrough,
+                ProcessingPath::NativeTextCapture
+            ),
+            ProcessingPath::Passthrough
+        );
+        assert_eq!(
+            unavailable_processing_path(
+                false,
+                ExecutionMode::Render,
+                ProcessingPath::SingleSinkStructured
+            ),
+            ProcessingPath::SingleSinkStructured
+        );
     }
 }

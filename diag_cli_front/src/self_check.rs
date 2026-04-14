@@ -219,7 +219,8 @@ fn rollout_matrix_cases() -> Vec<serde_json::Value> {
             &compatibility_seam,
             &decision,
             requested_processing_path,
-        );
+        )
+        .expect("rollout matrix only includes supported processing path requests");
         json!({
             "version_band": snake_case_label(&version_band),
             "requested_mode": requested_mode.map(execution_mode_label),

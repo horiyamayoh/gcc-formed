@@ -282,6 +282,29 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
 }
 
 #[test]
+fn unsupported_processing_path_request_fails_instead_of_silently_downgrading() {
+    let temp = fixture("13.3.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-processing-path=dual_sink_structured")
+        .arg("-c")
+        .arg(&source)
+        .assert()
+        .failure()
+        .stdout(predicate::str::is_empty())
+        .stderr(predicate::str::contains(
+            "configuration error: requested processing path `dual_sink_structured` is not supported for this backend",
+        ))
+        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()).not())
+        .stderr(predicate::str::contains("error: [syntax] syntax error").not());
+}
+
+#[test]
 fn shadows_with_fake_gcc13_backend_and_honest_notice() {
     let temp = fixture("13.3.0");
     let backend = temp.path().join("fake-gcc");
@@ -731,6 +754,31 @@ exit 0
         .assert()
         .failure()
         .code(143);
+}
+
+#[test]
+fn introspection_like_public_json_reports_passthrough_processing_path() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let export_path = temp.path().join("artifacts").join("public.json");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg(format!("--formed-public-json={}", export_path.display()))
+        .arg("--version")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("gcc (Fake) 15.2.0"));
+
+    let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
+    assert_eq!(export["status"], "unavailable");
+    assert_eq!(export["unavailable_reason"], "introspection_like");
+    assert_eq!(export["execution"]["version_band"], "gcc15");
+    assert_eq!(export["execution"]["processing_path"], "passthrough");
+    assert_eq!(export["execution"]["support_level"], "in_scope");
+    assert!(export["execution"]["fallback_reason"].is_null());
 }
 
 #[test]

@@ -148,7 +148,8 @@ pub(crate) fn build_execution_plan(
         &compatibility_seam,
         &mode_decision,
         requested_processing_path,
-    );
+    )
+    .map_err(CliError::Config)?;
     let profile = parsed
         .profile
         .or(config.render.profile)

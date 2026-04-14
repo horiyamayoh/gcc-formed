@@ -236,13 +236,8 @@ pub(crate) fn select_processing_path_for_seam(
     seam: &CliCompatibilitySeam,
     decision: &ModeDecision,
     requested: Option<ProcessingPath>,
-) -> ProcessingPath {
+) -> Result<ProcessingPath, String> {
     seam.select_processing_path(decision.mode, requested)
-        .unwrap_or(match decision.mode {
-            ExecutionMode::Passthrough => ProcessingPath::Passthrough,
-            ExecutionMode::Shadow => seam.default_processing_path,
-            ExecutionMode::Render => seam.default_processing_path,
-        })
 }
 
 #[cfg(test)]
@@ -254,7 +249,8 @@ pub(crate) fn compatibility_scope_notice(
     compatibility_scope_notice_for_path(
         &seam,
         decision,
-        select_processing_path_for_seam(&seam, decision, None),
+        select_processing_path_for_seam(&seam, decision, None)
+            .expect("default processing path should remain valid for the seam"),
     )
 }
 
@@ -578,7 +574,8 @@ mod tests {
                 &seam,
                 &decision,
                 Some(ProcessingPath::SingleSinkStructured)
-            ),
+            )
+            .unwrap(),
             ProcessingPath::SingleSinkStructured
         );
     }
@@ -676,7 +673,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_vocabulary_seam_falls_back_to_native_text_when_gcc15_dual_sink_is_unavailable() {
+    fn probe_vocabulary_seam_rejects_dual_sink_when_gcc15_dual_sink_is_unavailable() {
         let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: "/tmp/fake-gcc".into(),
@@ -702,7 +699,7 @@ mod tests {
         let decision = select_mode_for_seam(&seam, None, false);
         assert_eq!(decision.mode, ExecutionMode::Render);
         assert_eq!(
-            select_processing_path_for_seam(&seam, &decision, None),
+            select_processing_path_for_seam(&seam, &decision, None).unwrap(),
             ProcessingPath::NativeTextCapture
         );
         assert_eq!(
@@ -710,16 +707,18 @@ mod tests {
                 &seam,
                 &decision,
                 Some(ProcessingPath::SingleSinkStructured)
-            ),
+            )
+            .unwrap(),
             ProcessingPath::SingleSinkStructured
         );
-        assert_eq!(
-            select_processing_path_for_seam(
-                &seam,
-                &decision,
-                Some(ProcessingPath::DualSinkStructured)
-            ),
-            ProcessingPath::NativeTextCapture
+        let error = select_processing_path_for_seam(
+            &seam,
+            &decision,
+            Some(ProcessingPath::DualSinkStructured),
+        )
+        .unwrap_err();
+        assert!(
+            error.contains("requested processing path `dual_sink_structured` is not supported")
         );
     }
 
