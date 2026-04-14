@@ -9,7 +9,7 @@ tags:
   - 'processing_path:native_text_capture'
   - 'surface:default'
   - 'surface:ci'
-  - 'fallback_contract:bounded_render'
+  - 'fallback_contract:honest_fallback'
 matrix_applicability:
   version_band: gcc13_14
   processing_path: native_text_capture

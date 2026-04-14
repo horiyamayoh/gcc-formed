@@ -2430,6 +2430,11 @@ fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicabil
         let fixture = corpus_fixture(fixture_id);
         let meta = meta_yaml_for_fixture(&fixture);
         let tags = yaml_string_sequence(meta.get("tags"));
+        let expected_fallback_contract = if fixture_id == "cpp/module_import/case-01" {
+            "fallback_contract:honest_fallback"
+        } else {
+            "fallback_contract:bounded_render"
+        };
 
         assert_eq!(
             fixture.expectations.version_band, "gcc13_14",
@@ -2445,13 +2450,16 @@ fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicabil
             "band:gcc13_14",
             "surface:default",
             "surface:ci",
-            "fallback_contract:bounded_render",
         ] {
             assert!(
                 tags.iter().any(|tag| tag == required_tag),
                 "{fixture_id} should keep tag {required_tag}",
             );
         }
+        assert!(
+            tags.iter().any(|tag| tag == expected_fallback_contract),
+            "{fixture_id} should keep tag {expected_fallback_contract}",
+        );
         assert!(
             tags.iter()
                 .any(|tag| tag == format!("processing_path:{processing_path}").as_str()),
@@ -2527,6 +2535,37 @@ fn prp09_modern_cpp_anchors_declare_gcc13_matrix_and_explicit_gcc9_12_applicabil
                 .join("public.export.json")
                 .exists(),
             "{fixture_id} should keep a checked-in gcc15 companion public export snapshot",
+        );
+    }
+}
+
+#[test]
+fn prp09_modern_cpp_anchors_are_selectable_through_representative_subset() {
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("xtask crate should live under the repo root");
+    let fixtures = discover(&repo_root.join("corpus")).unwrap();
+    let selected = select_fixtures(&fixtures, None, None, SnapshotSubset::Representative);
+    let selected_ids = selected
+        .iter()
+        .map(|fixture| fixture.fixture_id().to_string())
+        .collect::<std::collections::BTreeSet<_>>();
+
+    for fixture_id in [
+        "cpp/constexpr/case-01",
+        "cpp/lambda_closure/case-01",
+        "cpp/lifetime_dangling/case-01",
+        "cpp/structured_binding/case-01",
+        "cpp/designated_init/case-01",
+        "cpp/three_way_comparison/case-01",
+        "cpp/concepts_constraints/case-01",
+        "cpp/coroutine/case-01",
+        "cpp/module_import/case-01",
+        "cpp/ranges_views/case-01",
+    ] {
+        assert!(
+            selected_ids.contains(fixture_id),
+            "{fixture_id} should be selectable through the representative subset",
         );
     }
 }

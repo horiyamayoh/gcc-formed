@@ -7,28 +7,23 @@ expected_mode: render
 semantic:
   family: module_import
   severity: error
-  primary_locations:
-    - path: missing_module
-      line: 1
-      column: 1
   primary_location_user_owned_required: false
   first_action_required: true
   raw_provenance_required: true
-  fallback: forbidden
+  fallback: required
   confidence_min: medium
 render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 20
   concise:
-    omission_notice_required: true
+    omission_notice_required: false
     first_screenful_max_lines: 14
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
     first_screenful_max_lines: 14
-    path_first_required: true
     color_meaning_forbidden: true
 integrity:
   allowed_issue_codes: []

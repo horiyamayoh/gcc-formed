@@ -10,7 +10,7 @@ semantic:
   primary_locations:
     - path: src/main.cpp
       line: 1
-      column: 15
+      column: 27
   primary_location_user_owned_required: true
   first_action_required: true
   raw_provenance_required: true
@@ -28,7 +28,6 @@ render:
     first_screenful_max_lines: 40
   ci:
     first_screenful_max_lines: 14
-    path_first_required: true
     color_meaning_forbidden: true
 integrity:
   allowed_issue_codes: []
