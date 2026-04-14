@@ -36,7 +36,7 @@
         "family": "ranges_views",
         "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
         "headline": "C++20 ranges or views error",
-        "message": "no match for ‘operator|’ (operand types are ‘int’ and ‘std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>’)",
+        "message": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')",
         "phase": "constraints",
         "primary_location": {
           "column": 22,
@@ -54,13 +54,13 @@
             "family": "ranges_views",
             "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
             "headline": "C++20 ranges or views error",
-            "message": "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’",
+            "message": "candidate: 'template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)'",
             "phase": "instantiate",
             "primary_location": {
               "column": 7,
-              "line": 896,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 897,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -78,9 +78,9 @@
             "phase": "instantiate",
             "primary_location": {
               "column": 7,
-              "line": 896,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 897,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -98,9 +98,9 @@
             "phase": "semantic",
             "primary_location": {
               "column": 7,
-              "line": 896,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 897,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -114,13 +114,13 @@
             "family": "ranges_views",
             "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
             "headline": "C++20 ranges or views error",
-            "message": "  ‘std::ranges::views::__adaptor::_RangeAdaptorClosure’ is not a base of ‘int’",
+            "message": "  'std::ranges::views::__adaptor::_RangeAdaptorClosure' is not a base of 'int'",
             "phase": "semantic",
             "primary_location": {
               "column": 28,
               "line": 67,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/concepts",
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/concepts",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -134,13 +134,13 @@
             "family": "ranges_views",
             "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
             "headline": "C++20 ranges or views error",
-            "message": "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’",
+            "message": "candidate: 'template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
             "phase": "instantiate",
             "primary_location": {
               "column": 7,
-              "line": 887,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 888,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -158,9 +158,9 @@
             "phase": "instantiate",
             "primary_location": {
               "column": 7,
-              "line": 887,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 888,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -178,9 +178,9 @@
             "phase": "semantic",
             "primary_location": {
               "column": 7,
-              "line": 887,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 888,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -194,13 +194,13 @@
             "family": "concepts_constraints",
             "first_action": "match the required concept or requires-clause against the actual template arguments",
             "headline": "template constraint not satisfied",
-            "message": "the required expression ‘declval<_Adaptor>()((declval<_Args>)()...)’ is invalid",
+            "message": "the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid",
             "phase": "semantic",
             "primary_location": {
               "column": 20,
-              "line": 860,
-              "ownership": "system",
-              "path": "/usr/include/c++/13/ranges",
+              "line": 861,
+              "ownership": "unknown",
+              "path": "/usr/local/include/c++/13.4.0/ranges",
               "role": "primary"
             },
             "provenance_capture_refs": [
@@ -213,8 +213,8 @@
             "confidence": "low",
             "family": "unknown",
             "first_action": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
-            "message": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "headline": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
+            "message": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
             "phase": "semantic",
             "provenance_capture_refs": [
               "diagnostics.sarif"

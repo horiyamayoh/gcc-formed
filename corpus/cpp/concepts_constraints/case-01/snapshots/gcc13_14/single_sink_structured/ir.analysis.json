@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 2922,
+      "size_bytes": 2815,
       "storage": "external_ref"
     }
   ],
@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "concepts_constraints",
         "first_action_hint": "match the required concept or requires-clause against the actual template arguments",
-        "group_ref": "group-92d9522d9923",
+        "group_ref": "group-2a81adc6f6a0",
         "headline": "template constraint not satisfied",
         "matched_conditions": [
           "child_message_contains=constraints not satisfied",
@@ -56,9 +56,9 @@
             "rule_id": "rule.family.template.structured_or_message"
           },
           "fingerprints": {
-            "family": "7225f759cbdff2dbcfaf71d3cb3077b07b5e06f40d46ef368fe03e779795aade",
-            "raw": "006fc41269f40efa77b250bd59bdffda67cf03f35556a239bcfc7449bcdcda21",
-            "structural": "6b51bcf692a33297d6f0f481c8c5bb1076a7227ec7601084d0d2dbd3a2ad9e05"
+            "family": "a2ec8ed4c091aef65aad3b025a7b15dd21c536b741ff52464fd6dff4f482aca5",
+            "raw": "e174c6109eeb4293b60f5f11c80e8d67474d92e849bcc095ad2aa7f6355d5a82",
+            "structural": "6718adccce15dc7bf89b0d730b4ab32388a256c83dc9a1a41cb50d21e91cdf2a"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -85,7 +85,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’"
+            "raw_text": "candidate: 'template<class T>  requires  HasSize<T> int consume(T)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -223,9 +223,9 @@
             "rule_id": "rule.family.concepts_constraints.structured_or_message"
           },
           "fingerprints": {
-            "family": "ee92f505cd2365a0775057fbaec73293d2a1ea6181954776c4049ebbea76c3cf",
-            "raw": "8a512bb5111a2cbac5ba655101ca4bf325a725328366da19228b663b4dc8c71e",
-            "structural": "4bdfc99c13842330b232294f3db96d3e5460af77e5fd146b1003d29ce4dfbac2"
+            "family": "0e79f8d6d5c289b347d6797f5a602b73e07fb0360727c83a9ac0fa8c099648ea",
+            "raw": "76d09b9482eeaa382356bc982fec93f674a8c8a644e070e3b60a6c910eada56a",
+            "structural": "2938fa0badcf7babf27d84d4a75423e0b8102913ff729fc4eca3374f2c1b6537"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -252,7 +252,7 @@
             }
           ],
           "message": {
-            "raw_text": "the required expression ‘value.size()’ is invalid"
+            "raw_text": "the required expression 'value.size()' is invalid"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -271,7 +271,7 @@
             "confidence": 0.3499999940395355,
             "family": "unknown",
             "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "headline": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
             "matched_conditions": [
               "no_family_rule_matched"
             ],
@@ -279,13 +279,13 @@
             "suppression_reason": "generic_fallback"
           },
           "fingerprints": {
-            "family": "be856e8eab5ff00757e650eeec573e191da9ec7a21cdd0e07076c41348965157",
-            "raw": "73a749e002f208674505757ad5eb7c42788aca8a4026f8f56427dee81294ed4c",
-            "structural": "4c539d4e725473084e363bfe9b3710681824d109247f8a36e1e9941b3f845c04"
+            "family": "54e785f3d15035a6bfdb9de67b201e255189937bea76ea5176976658dcd560d8",
+            "raw": "799c1c4557c58f8d2ab7a6363dfee6849da062514cc63ee2d658f08444003e29",
+            "structural": "94f13bf0a2d5935bbd8df4a796d20135e2927b57d9fbbe5eb7fb0f89dc6216ea"
           },
           "id": "sarif-0-0-related-4",
           "message": {
-            "raw_text": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+            "raw_text": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -305,7 +305,7 @@
           "frames": [
             {
               "column": 5,
-              "label": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’",
+              "label": "candidate: 'template<class T>  requires  HasSize<T> int consume(T)'",
               "line": 5,
               "path": "src/main.cpp"
             },
@@ -320,9 +320,9 @@
         }
       ],
       "fingerprints": {
-        "family": "fcdf225212d002116d555d04a8dbae25542edf3714b48419b4a20c0198594240",
-        "raw": "ff46f0158b1f3489bb01f1751306fc1a042cd39766eb5e72bbb65ee3554b7a10",
-        "structural": "adf90a88541aaa2fa4a719baf54c63500f05bc16e6f3fc5c67ce494407d5a783"
+        "family": "60121b9c22ef4a0a59cad6182c9848436eaffc2f5ec158c939d6649e1db81006",
+        "raw": "239812f5231a137ed1c15673f1474059bc835a082023b3bb4b839cc79de98e19",
+        "structural": "fc0534dfdd0cfa7a30e5e6490c6f3ad99a0e3db9c43ad887732a9fd520c5874f"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -349,7 +349,7 @@
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘consume(int)’"
+        "raw_text": "no matching function for call to 'consume(int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -368,13 +368,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.800000011920929,
-          "episode_ref": "episode-70dde84f3528",
+          "confidence": 0.9599999785423279,
+          "episode_ref": "episode-c25d481b3d7a",
           "family": "concepts_constraints",
-          "lead_group_ref": "group-92d9522d9923",
-          "lead_root_score": 0.800000011920929,
+          "lead_group_ref": "group-2a81adc6f6a0",
+          "lead_root_score": 0.9599999785423279,
           "member_group_refs": [
-            "group-92d9522d9923"
+            "group-2a81adc6f6a0"
           ]
         }
       ],
@@ -382,19 +382,19 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-70dde84f3528",
+        "episode_ref": "episode-c25d481b3d7a",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "specific_symbol_or_frontier",
+          "strong_root_family",
           "user_owned_primary"
         ],
-        "group_ref": "group-92d9522d9923",
-        "independence_score": 0.800000011920929,
+        "group_ref": "group-2a81adc6f6a0",
+        "independence_score": 0.9599999785423279,
         "role": "independent_root",
-        "root_score": 0.800000011920929,
-        "summary_likelihood": 0.3800000250339508,
+        "root_score": 0.9599999785423279,
+        "summary_likelihood": 0.36400002241134644,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
@@ -412,8 +412,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "0183ed1809d35c25bc6ccd6c67e0da74ee4808ed37fd3466336f62f7b42413e7",
-    "raw": "bfe0c43ffec610895fee3c744523840183fc03cab1f85a5ab889d00aa062a732",
-    "structural": "28cf33ec2b6064ad7a02f556789f1500265a29b58bce7d40a9f622b93d9e41fe"
+    "raw": "1da4548af11f387ce0d076b8764f65e6dbb0fd9f74387d16bbef306893999afc",
+    "structural": "c9da4590437e0531a3e0eb300a7912503f37d3b3efde838c0d922f9c8732a023"
   },
   "producer": {
     "name": "gcc-formed",

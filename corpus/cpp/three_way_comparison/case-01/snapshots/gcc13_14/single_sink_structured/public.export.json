@@ -36,7 +36,7 @@
         "family": "three_way_comparison",
         "first_action": "ensure all members support <=> or provide a custom comparison operator",
         "headline": "three-way comparison (spaceship) operator error",
-        "message": "no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)",
+        "message": "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')",
         "phase": "semantic",
         "primary_location": {
           "column": 18,

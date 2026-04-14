@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1344,
+      "size_bytes": 1241,
       "storage": "external_ref"
     }
   ],
@@ -33,18 +33,19 @@
         "confidence": 0.8999999761581421,
         "family": "three_way_comparison",
         "first_action_hint": "ensure all members support <=> or provide a custom comparison operator",
-        "group_ref": "group-2ed0237131cd",
+        "group_ref": "group-d0a05bbf354a",
         "headline": "three-way comparison (spaceship) operator error",
         "matched_conditions": [
           "message_contains=operator<=>",
+          "message_contains=no match for 'operator<=>'",
           "phase=semantic"
         ],
         "rule_id": "rule.family.three_way_comparison.message_terms"
       },
       "fingerprints": {
-        "family": "3b2c70de4c8646fabfa8637b85fca6d4da8b382ea026ab5c10f227dd91caa14b",
-        "raw": "5b1bbd34819c35e2f9087aa57ede7feff42db25b2d0188c0315901fd855c4bde",
-        "structural": "459d8268674d66fce316a7f64a147fe3197c92b3fec9f15d9ff7251a8b39b5da"
+        "family": "41efddbcffe98bcfe7625c30016a28083d5c5a780abd5be6fbbdb547d676aa4f",
+        "raw": "7cb10bbd68082dc7d1b29a0e3b376e722e782873fb74546220295d970c6cd674",
+        "structural": "a83c572356f81271615dccc06ae16738e5395a66d130798da9f954504d5ef6f7"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -71,7 +72,7 @@
         }
       ],
       "message": {
-        "raw_text": "no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)"
+        "raw_text": "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -91,12 +92,12 @@
       "episodes": [
         {
           "confidence": 0.7400000095367432,
-          "episode_ref": "episode-2e82b0eba9d3",
+          "episode_ref": "episode-6c7771692526",
           "family": "three_way_comparison",
-          "lead_group_ref": "group-2ed0237131cd",
+          "lead_group_ref": "group-d0a05bbf354a",
           "lead_root_score": 0.7400000095367432,
           "member_group_refs": [
-            "group-2ed0237131cd"
+            "group-d0a05bbf354a"
           ]
         }
       ],
@@ -104,14 +105,14 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-2e82b0eba9d3",
+        "episode_ref": "episode-6c7771692526",
         "evidence_tags": [
           "actionability_short",
           "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-2ed0237131cd",
+        "group_ref": "group-d0a05bbf354a",
         "independence_score": 0.7400000095367432,
         "role": "independent_root",
         "root_score": 0.7400000095367432,
@@ -133,8 +134,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d495fe0dbfe0892244646cf0e3261e27e627aa4a2ad5b3e4d2790a719c03d505",
-    "raw": "ecc57c0d2ed4ffd72326b8cf2d9e98e7981905598b5ddd37370e1dfdff94f5f0",
-    "structural": "57c0fa04428e0861907344339ef6c901660aa09252bbaa22dfaf3ecd359ce89d"
+    "raw": "5112aa5ad13137dab70e96c79a01fde9accea79b14ecb8ff5a2c7839ebbfe2cc",
+    "structural": "8a91754c0943cae69ca980a45c12b5315b64fb67f62a76b8568d12b88c72d8b4"
   },
   "producer": {
     "name": "gcc-formed",

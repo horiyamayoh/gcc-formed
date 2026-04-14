@@ -23,16 +23,16 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 1344,
+      "size_bytes": 1241,
       "storage": "external_ref"
     }
   ],
   "diagnostics": [
     {
       "fingerprints": {
-        "family": "74951522f4bd36acc6194c2aadb55a8a1ac4edc47d8595587c9a4fb2d91700e7",
-        "raw": "5b1bbd34819c35e2f9087aa57ede7feff42db25b2d0188c0315901fd855c4bde",
-        "structural": "c996aada3760471e9ca03e4cf0b7e965e69555d81c6025a4517985ff7c3c04e1"
+        "family": "823fc15ac427c49fd28d03ed17d2c76e5814600e3864df11821b01f5a6e50019",
+        "raw": "7cb10bbd68082dc7d1b29a0e3b376e722e782873fb74546220295d970c6cd674",
+        "structural": "a7495f8890591b5b169dc88079f9923e8d28c03b8fbd52add5fe0f84091ef957"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -59,7 +59,7 @@
         }
       ],
       "message": {
-        "raw_text": "no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)"
+        "raw_text": "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -78,8 +78,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "d699fb03505a8407e64fdfbce965c5c1837105d7a90ebe994408ac34fbd8d711",
-    "structural": "b31a72662977608b4e455655b4bc8768335f00b38b9ff1afaf44b9539dfccad3"
+    "raw": "78c8320246a9e64e8af72ecb8a8f7e009782f56a82ecbc83c61af2da4093f9ef",
+    "structural": "5bd0d6b613575be6ac2e26ced092215118eaae235c3338124b0c3b19939416f9"
   },
   "producer": {
     "name": "gcc-formed",

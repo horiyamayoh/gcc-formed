@@ -20,12 +20,13 @@
       ],
       "family": "three_way_comparison",
       "first_action": "ensure all members support <=> or provide a custom comparison operator",
-      "group_id": "group-2ed0237131cd",
+      "group_id": "group-d0a05bbf354a",
       "matched_conditions": [
         "message_contains=operator<=>",
+        "message_contains=no match for 'operator<=>'",
         "phase=semantic"
       ],
-      "raw_message": "no match for ‘operator<=>’ (operand types are ‘Widget’ and ‘Widget’)",
+      "raw_message": "no match for 'operator<=>' (operand types are 'Widget' and 'Widget')",
       "rule_id": "rule.family.three_way_comparison.message_terms",
       "severity": "error",
       "suppression_reason": null,

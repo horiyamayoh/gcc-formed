@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 290701,
+      "size_bytes": 290924,
       "storage": "external_ref"
     }
   ],
@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "ranges_views",
         "first_action_hint": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
-        "group_ref": "group-462dc815ce79",
+        "group_ref": "group-9e9fa8e96c4d",
         "headline": "C++20 ranges or views error",
         "matched_conditions": [
           "message_contains=std::ranges::",
@@ -55,9 +55,9 @@
             "rule_id": "rule.family.ranges_views.structured_or_message"
           },
           "fingerprints": {
-            "family": "3c95a88a81cf6e1864938b1ed4c7acef7f4f4e91a9b4e71f14698cc62ddb90c7",
-            "raw": "c2bb187368f292a36f33e8be6870d6f9a7aad9fca404b9a3980682e52c9fa70f",
-            "structural": "a3fd86e71f7aa6310fbc6865f8cd4e9d7debdf2bcbcba7686d1c452b6194fc83"
+            "family": "636a133a5570b8b20ade72be06284f16ba120d75715d448da16b158e92dd0faa",
+            "raw": "bdcc37f28d127e668fac20148f9039b9e4a4667ccc8783f5fbcafd8cf2e17cfe",
+            "structural": "694b28c5c5a37133f61793a6ad979ec62ebabe8524c3ec5b2372f377eb738326"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -67,24 +67,24 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 896
+                "line": 897
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:897:7:897:7",
               "role": "primary",
               "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’"
+            "raw_text": "candidate: 'template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -112,9 +112,9 @@
             "rule_id": "rule.family.template.structured_or_message"
           },
           "fingerprints": {
-            "family": "a8f3d2c2e64b6440edce19f180ccec679fd5dbfe059943aac7d2ae5da914f115",
+            "family": "6e2d0651f8bbb44b0c52e9350f599f08b9378e300f62b093c4af163a4d899e3d",
             "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "89a8b4da1eadef21d5e53600eb7cf298447c6770e550a71e278e8dc636593237"
+            "structural": "2377fee9b589d1151c76e9c381a6f6eb13ef239c87e4cbb3b247b9baddde52da"
           },
           "id": "sarif-0-0-related-1",
           "locations": [
@@ -124,18 +124,18 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 896
+                "line": 897
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:897:7:897:7",
               "role": "primary",
               "source_kind": "caret"
             }
@@ -167,9 +167,9 @@
             "rule_id": "rule.family.concepts_constraints.structured_or_message"
           },
           "fingerprints": {
-            "family": "cf4408d11d190fdbe11618f1e3e657b3d3f40b0a78b96960f1adb06835d3e0a3",
+            "family": "88ebfbe04fe4b630b141f46bc24d1b969890f37e71790428606a45bdcfd17c9d",
             "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
-            "structural": "7dac3af51e8d84aa8bc4783c97b233134b3c3ee0353b86bfd60f5ff23ba582ff"
+            "structural": "b4c976ac09a728f2e75b8c9638e40c6e0d9cb5280647e8ee484962c3491a92f9"
           },
           "id": "sarif-0-0-related-2",
           "locations": [
@@ -179,18 +179,18 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 896
+                "line": 897
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:896:7:896:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:897:7:897:7",
               "role": "primary",
               "source_kind": "caret"
             }
@@ -223,9 +223,9 @@
             "rule_id": "rule.family.ranges_views.structured_or_message"
           },
           "fingerprints": {
-            "family": "d42f9d84cee5460fad01e5487ea0848d73a2d641f8680d039a9554aa255591dd",
-            "raw": "ff5c1deb84fb106b82df00afaa850dadc1b8f580054b4b4179a16b419e1e74d9",
-            "structural": "7fd2b0a4e42a968343cb323d413e8d39f8aa845a31109573c441745a1dd74fdb"
+            "family": "b4d2bd9c069077bb99e5dfb1ced2f2b6cca6c62a13b230d811a6c28058ecb39f",
+            "raw": "4944f083e99c162ed8d785c302427fcd1967fbd749e58614d6a15ac50d4fca82",
+            "structural": "3806a6dd34bdb45f075f7bb04f6f7f9a4f2660248ea0df234e88dd52c858239e"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -239,20 +239,20 @@
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/concepts",
+                "path_raw": "/usr/local/include/c++/13.4.0/concepts",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/concepts:67:28:67:28",
+              "id": "loc:/usr/local/include/c++/13.4.0/concepts:67:28:67:28",
               "role": "primary",
               "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "  ‘std::ranges::views::__adaptor::_RangeAdaptorClosure’ is not a base of ‘int’"
+            "raw_text": "  'std::ranges::views::__adaptor::_RangeAdaptorClosure' is not a base of 'int'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -279,9 +279,9 @@
             "rule_id": "rule.family.ranges_views.structured_or_message"
           },
           "fingerprints": {
-            "family": "fe5579050fca570054ee6469e95d00f383561cb5918d4f00d31607bf5483a5f3",
-            "raw": "e72066fc8b39ae6d3b05aeda2eb691b5135666010f31414ccee5ce5e17ab7382",
-            "structural": "72ee277d9faf9f4275ad8ca8bf1d47378fe9cdbd7b6e597ca3d00dba7d0401f4"
+            "family": "c7139903610e22199380e2b92c006ba114f4805e5baec11387b6f28b5cf1ed2a",
+            "raw": "86720904924cc25ee7c4dcf45134d677b449a15ec82774fb825e261a230bec74",
+            "structural": "7fbfcd705b15db69e5269dfee6b6b52be53cb67d6970a17f6d70b2c843ab7971"
           },
           "id": "sarif-0-0-related-4",
           "locations": [
@@ -291,24 +291,24 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 887
+                "line": 888
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:888:7:888:7",
               "role": "primary",
               "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’"
+            "raw_text": "candidate: 'template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -336,9 +336,9 @@
             "rule_id": "rule.family.template.structured_or_message"
           },
           "fingerprints": {
-            "family": "a8f3d2c2e64b6440edce19f180ccec679fd5dbfe059943aac7d2ae5da914f115",
+            "family": "6e2d0651f8bbb44b0c52e9350f599f08b9378e300f62b093c4af163a4d899e3d",
             "raw": "c043e7bb01328b8db3b58930b83ffd4127d0d9b33dd52d7b926ab74de28f3476",
-            "structural": "8522206d1d16a8b4a95dc9bce3d269287a1ae2ac648ad2bd22027151f6ff135a"
+            "structural": "e897a47c0871ede79141e3f1326e704f4c3ad872454dd4cb7160e5732a3c90c1"
           },
           "id": "sarif-0-0-related-5",
           "locations": [
@@ -348,18 +348,18 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 887
+                "line": 888
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:888:7:888:7",
               "role": "primary",
               "source_kind": "caret"
             }
@@ -391,9 +391,9 @@
             "rule_id": "rule.family.concepts_constraints.structured_or_message"
           },
           "fingerprints": {
-            "family": "cf4408d11d190fdbe11618f1e3e657b3d3f40b0a78b96960f1adb06835d3e0a3",
+            "family": "88ebfbe04fe4b630b141f46bc24d1b969890f37e71790428606a45bdcfd17c9d",
             "raw": "894c9d447d26dfc11e9bf6ba91d1b6a45a6cbdd7fcc7809f46e60cf79adf160f",
-            "structural": "3669295b88b2db47b8a504ab014b8ab3e489c34392c6a0df3c9a03d62e4a76aa"
+            "structural": "e24b48a5a55d0aa38bccd39c5bacba734dbb4493d0c540a9d66398c4f59bc782"
           },
           "id": "sarif-0-0-related-6",
           "locations": [
@@ -403,18 +403,18 @@
                 "column_native": 7,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 887
+                "line": 888
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:887:7:887:7",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:888:7:888:7",
               "role": "primary",
               "source_kind": "caret"
             }
@@ -446,9 +446,9 @@
             "rule_id": "rule.family.concepts_constraints.structured_or_message"
           },
           "fingerprints": {
-            "family": "667e21874725ef1704031f3d09b53c66b02dde1aafe1f803ec1129691684f10e",
-            "raw": "5269bcbbdb4bbf30e1db411a7ef9fe05a2317c7156298e0e089b75f5d21b2b12",
-            "structural": "138bd9540aa513650a00dbf36ea63e0d88acad9cdd38b95029200c2738b362af"
+            "family": "d37f4305a12962d9fd4549e155d27c6fd463c1243fcd3b54900e79f8d37d1c5b",
+            "raw": "941ce967e137230d8004aa4c4b8746fc3cb660780325c5951730bd22684ace30",
+            "structural": "83636f5933edaae8159b2b2bfd2c4ea75283ba222bf5067e3b10e811b3bd1006"
           },
           "id": "sarif-0-0-related-7",
           "locations": [
@@ -458,24 +458,24 @@
                 "column_native": 20,
                 "column_native_unit": "display",
                 "column_origin": 1,
-                "line": 860
+                "line": 861
               },
               "file": {
                 "ownership": {
-                  "owner": "system",
-                  "reason": "system_path"
+                  "owner": "unknown",
+                  "reason": "unknown"
                 },
                 "path_kind": "absolute",
-                "path_raw": "/usr/include/c++/13/ranges",
+                "path_raw": "/usr/local/include/c++/13.4.0/ranges",
                 "path_style": "posix"
               },
-              "id": "loc:/usr/include/c++/13/ranges:860:20:860:20",
+              "id": "loc:/usr/local/include/c++/13.4.0/ranges:861:20:861:20",
               "role": "primary",
               "source_kind": "caret"
             }
           ],
           "message": {
-            "raw_text": "the required expression ‘declval<_Adaptor>()((declval<_Args>)()...)’ is invalid"
+            "raw_text": "the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -494,7 +494,7 @@
             "confidence": 0.3499999940395355,
             "family": "unknown",
             "first_action_hint": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "headline": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
             "matched_conditions": [
               "no_family_rule_matched"
             ],
@@ -502,13 +502,13 @@
             "suppression_reason": "generic_fallback"
           },
           "fingerprints": {
-            "family": "be856e8eab5ff00757e650eeec573e191da9ec7a21cdd0e07076c41348965157",
-            "raw": "73a749e002f208674505757ad5eb7c42788aca8a4026f8f56427dee81294ed4c",
-            "structural": "92ff8dca750a77c1b7ad05fe4a89ee7ad17fbe3fa8f98b007d0debe84e14155f"
+            "family": "54e785f3d15035a6bfdb9de67b201e255189937bea76ea5176976658dcd560d8",
+            "raw": "799c1c4557c58f8d2ab7a6363dfee6849da062514cc63ee2d658f08444003e29",
+            "structural": "469dc6f41f62ae48d603551977c9f838a8c69160a952b24b931c4732595cdaed"
           },
           "id": "sarif-0-0-related-8",
           "message": {
-            "raw_text": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+            "raw_text": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -528,36 +528,36 @@
           "frames": [
             {
               "column": 7,
-              "label": "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’",
-              "line": 896,
-              "path": "/usr/include/c++/13/ranges"
+              "label": "candidate: 'template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)'",
+              "line": 897,
+              "path": "/usr/local/include/c++/13.4.0/ranges"
             },
             {
               "column": 7,
               "label": "template argument deduction/substitution failed:",
-              "line": 896,
-              "path": "/usr/include/c++/13/ranges"
+              "line": 897,
+              "path": "/usr/local/include/c++/13.4.0/ranges"
             },
             {
               "column": 7,
-              "label": "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’",
-              "line": 887,
-              "path": "/usr/include/c++/13/ranges"
+              "label": "candidate: 'template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+              "line": 888,
+              "path": "/usr/local/include/c++/13.4.0/ranges"
             },
             {
               "column": 7,
               "label": "template argument deduction/substitution failed:",
-              "line": 887,
-              "path": "/usr/include/c++/13/ranges"
+              "line": 888,
+              "path": "/usr/local/include/c++/13.4.0/ranges"
             }
           ],
           "kind": "template_instantiation"
         }
       ],
       "fingerprints": {
-        "family": "d69be474787c0efad12c0a18aef67bb4db7ca7ef2a937f850029e63ef58720dc",
-        "raw": "ab649e07f7db4fae92e98f94d1998dc2d4ce5c15b9092cbd4ada697ae63f8c2b",
-        "structural": "42c392b566555725aa7c52e947332fa2aa0aecb2cde7aecb81810bd92825beeb"
+        "family": "87f01c0f2db75b6e5cfa7392177a1e9eb98501007c7818c2bd1cd7cb77d961da",
+        "raw": "1dda075658fe70b259962df6489b00e1fc405aea7010fd6cb30173a6a04ea77c",
+        "structural": "1791f877b0c7bc983d7c7cea632599dd768cd5ad8683fb94c3075513c1313f0d"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -584,7 +584,7 @@
         }
       ],
       "message": {
-        "raw_text": "no match for ‘operator|’ (operand types are ‘int’ and ‘std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>’)"
+        "raw_text": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -604,12 +604,12 @@
       "episodes": [
         {
           "confidence": 0.800000011920929,
-          "episode_ref": "episode-594f5397950f",
+          "episode_ref": "episode-baecce1d75d8",
           "family": "ranges_views",
-          "lead_group_ref": "group-462dc815ce79",
+          "lead_group_ref": "group-9e9fa8e96c4d",
           "lead_root_score": 0.800000011920929,
           "member_group_refs": [
-            "group-462dc815ce79"
+            "group-9e9fa8e96c4d"
           ]
         }
       ],
@@ -617,7 +617,7 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-594f5397950f",
+        "episode_ref": "episode-baecce1d75d8",
         "evidence_tags": [
           "actionability_short",
           "classified_family",
@@ -625,7 +625,7 @@
           "specific_symbol_or_frontier",
           "user_owned_primary"
         ],
-        "group_ref": "group-462dc815ce79",
+        "group_ref": "group-9e9fa8e96c4d",
         "independence_score": 0.800000011920929,
         "role": "independent_root",
         "root_score": 0.800000011920929,
@@ -647,8 +647,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "9c76abfb51078ae7ad2617a07e6df87d9726456e14d767f67a52a69cb81c3360",
-    "raw": "c46cbf11f582305b24e0694d4504ed001e41e5b452c9dfc72383c90129c6de56",
-    "structural": "ca616a9bd84e76f241dba43e5aa816289849f7c14e7b0f5464b996f879bbc4be"
+    "raw": "d1fd8a81c06066f6da22f35bafa91318c06773fc77c3dabdbb0f4a0f1dd68219",
+    "structural": "86d8ab63a0904c162cef0bd09710bc9a6dcb08ed7f965f54c5fd513cfbc52e4f"
   },
   "producer": {
     "name": "gcc-formed",

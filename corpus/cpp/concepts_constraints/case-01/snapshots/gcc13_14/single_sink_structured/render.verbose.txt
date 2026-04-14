@@ -1,12 +1,12 @@
 error: [type_mismatch] template constraint not satisfied @ src/main.cpp:8:12
 help: match the required concept or requires-clause against the actual template arguments
-want: HasSize<T>
+want: value.size()
 got : int
 via : template<class T>  requires  HasSize<T> int consume(T) @ src/main.cpp:5:5  +4 notes
 | src/main.cpp:8:12
 |     return consume(1);
 |            ^
-template: src/main.cpp:5:5 candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’
+template: src/main.cpp:5:5 candidate: 'template<class T>  requires  HasSize<T> int consume(T)'
 template: src/main.cpp:5:5 template argument deduction/substitution failed:
 debug: rule_id=rule.family.concepts_constraints.structured_or_message
 debug: matched_conditions=child_message_contains=constraints not satisfied, child_message_contains=the required expression, phase=constraints

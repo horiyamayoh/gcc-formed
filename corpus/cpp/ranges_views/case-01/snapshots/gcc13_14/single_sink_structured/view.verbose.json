@@ -3,13 +3,13 @@
     {
       "canonical_location": "src/main.cpp:4:22",
       "child_notes": [
-        "candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’",
+        "candidate: 'template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)'",
         "template argument deduction/substitution failed:",
         "constraints not satisfied",
-        "‘std::ranges::views::__adaptor::_RangeAdaptorClosure’ is not a base of ‘int’",
-        "candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’",
-        "the required expression ‘declval<_Adaptor>()((declval<_Args>)()...)’ is invalid",
-        "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+        "'std::ranges::views::__adaptor::_RangeAdaptorClosure' is not a base of 'int'",
+        "candidate: 'template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+        "the required expression 'declval<_Adaptor>()((declval<_Args>)()...)' is invalid",
+        "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
       ],
       "collapsed_notices": [
         "omitted 2 additional note(s)"
@@ -17,10 +17,10 @@
       "confidence_label": "certain",
       "confidence_notice": null,
       "context_lines": [
-        "template: /usr/include/c++/13/ranges:896:7 candidate: ‘template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)’",
-        "template: /usr/include/c++/13/ranges:896:7 template argument deduction/substitution failed:",
-        "template: /usr/include/c++/13/ranges:887:7 candidate: ‘template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)’",
-        "template: /usr/include/c++/13/ranges:887:7 template argument deduction/substitution failed:"
+        "template: /usr/local/include/c++/13.4.0/ranges:897:7 candidate: 'template<class _Lhs, class _Rhs>  requires (derived_from<_Lhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (derived_from<_Rhs, std::ranges::views::__adaptor::_RangeAdaptorClosure>) constexpr auto std::ranges::views::__adaptor::operator|(_Lhs, _Rhs)'",
+        "template: /usr/local/include/c++/13.4.0/ranges:897:7 template argument deduction/substitution failed:",
+        "template: /usr/local/include/c++/13.4.0/ranges:888:7 candidate: 'template<class _Self, class _Range>  requires (derived_from<typename std::remove_cvref<_Tp>::type, std::ranges::views::__adaptor::_RangeAdaptorClosure>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+        "template: /usr/local/include/c++/13.4.0/ranges:888:7 template argument deduction/substitution failed:"
       ],
       "excerpts": [
         {
@@ -35,12 +35,12 @@
       ],
       "family": "ranges_views",
       "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
-      "group_id": "group-462dc815ce79",
+      "group_id": "group-9e9fa8e96c4d",
       "matched_conditions": [
         "message_contains=std::ranges::",
         "child_message_contains=std::ranges::"
       ],
-      "raw_message": "no match for ‘operator|’ (operand types are ‘int’ and ‘std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>’)",
+      "raw_message": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')",
       "rule_id": "rule.family.ranges_views.structured_or_message",
       "severity": "error",
       "suppression_reason": null,

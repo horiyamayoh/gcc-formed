@@ -23,7 +23,7 @@
         "name": "g++",
         "vendor": "GNU"
       },
-      "size_bytes": 2922,
+      "size_bytes": 2815,
       "storage": "external_ref"
     }
   ],
@@ -32,9 +32,9 @@
       "children": [
         {
           "fingerprints": {
-            "family": "1cf56da2aeea6006774b927f456c1b2069bdb01111063cbe6580c97893791f86",
-            "raw": "006fc41269f40efa77b250bd59bdffda67cf03f35556a239bcfc7449bcdcda21",
-            "structural": "8fae3d4aa62780c79336457478366d19550f41ffca5f1f6031b8d2395c3d794b"
+            "family": "4046c4e1413b278c8f06f73fff4a02d3584fee092a81bed672f5f2dad264d5fd",
+            "raw": "e174c6109eeb4293b60f5f11c80e8d67474d92e849bcc095ad2aa7f6355d5a82",
+            "structural": "32b7e014f990b69766f8cc8ac7558a8c5821e27a44ba5ab04442a57d884b94c8"
           },
           "id": "sarif-0-0-related-0",
           "locations": [
@@ -61,7 +61,7 @@
             }
           ],
           "message": {
-            "raw_text": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’"
+            "raw_text": "candidate: 'template<class T>  requires  HasSize<T> int consume(T)'"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -167,9 +167,9 @@
         },
         {
           "fingerprints": {
-            "family": "256f7b65d3cfb3baaa40c7029ab747c7ccaca648e6fd74ab2bad3ab9039ae97a",
-            "raw": "8a512bb5111a2cbac5ba655101ca4bf325a725328366da19228b663b4dc8c71e",
-            "structural": "f2bba8c9da3a2ea49e0381f5aafc020e806ca498de838208bf26666baca89a59"
+            "family": "1a5a99af23d30052fd234a84ef6100382b7923aabafb530936746aecd00802d5",
+            "raw": "76d09b9482eeaa382356bc982fec93f674a8c8a644e070e3b60a6c910eada56a",
+            "structural": "372037ff173c274fdf4391ca7941058f80343c334756f6183c4a34514c674592"
           },
           "id": "sarif-0-0-related-3",
           "locations": [
@@ -196,7 +196,7 @@
             }
           ],
           "message": {
-            "raw_text": "the required expression ‘value.size()’ is invalid"
+            "raw_text": "the required expression 'value.size()' is invalid"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -212,13 +212,13 @@
         },
         {
           "fingerprints": {
-            "family": "be856e8eab5ff00757e650eeec573e191da9ec7a21cdd0e07076c41348965157",
-            "raw": "73a749e002f208674505757ad5eb7c42788aca8a4026f8f56427dee81294ed4c",
-            "structural": "843b953679f7f795a7507b682543e61428a0bf05b8a98805b07721421db5ca32"
+            "family": "54e785f3d15035a6bfdb9de67b201e255189937bea76ea5176976658dcd560d8",
+            "raw": "799c1c4557c58f8d2ab7a6363dfee6849da062514cc63ee2d658f08444003e29",
+            "structural": "6fc6108d1217740dfcc7a581d52c26004886b57283c4764c869221dfd96d11f4"
           },
           "id": "sarif-0-0-related-4",
           "message": {
-            "raw_text": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail"
+            "raw_text": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail"
           },
           "node_completeness": "partial",
           "origin": "gcc",
@@ -238,7 +238,7 @@
           "frames": [
             {
               "column": 5,
-              "label": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’",
+              "label": "candidate: 'template<class T>  requires  HasSize<T> int consume(T)'",
               "line": 5,
               "path": "src/main.cpp"
             },
@@ -253,9 +253,9 @@
         }
       ],
       "fingerprints": {
-        "family": "16077737944fd8d9a57a8b0ec79248bf525a5a86aa25aeff69d7a4b7dd51afd6",
-        "raw": "ff46f0158b1f3489bb01f1751306fc1a042cd39766eb5e72bbb65ee3554b7a10",
-        "structural": "68fd3867eeccf34ed145d108580b16059c6d07aeab68db8b2a9d7d26b53e03e4"
+        "family": "72004a6783f611d64d5d265cdde703693cbd143e7794c2968bfb95fa08656a13",
+        "raw": "239812f5231a137ed1c15673f1474059bc835a082023b3bb4b839cc79de98e19",
+        "structural": "f1015dd56f900cf7f0071a2d556ff57c6fe6067f2d2fd3df941f7eab45e3c765"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -282,7 +282,7 @@
         }
       ],
       "message": {
-        "raw_text": "no matching function for call to ‘consume(int)’"
+        "raw_text": "no matching function for call to 'consume(int)'"
       },
       "node_completeness": "complete",
       "origin": "gcc",
@@ -301,8 +301,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "95495e6031d2c09e2a8f386e21d75c2b91405d92d22258a979b2ff428db06498",
-    "structural": "1aae2674e6b2f801c99dcc57c1d0709fc4370eff92ace670310115b564f93b0c"
+    "raw": "1aeede26445223a8bbd78282d1907468ed77145c393eec5199bcd3055b09d0d1",
+    "structural": "1b259c7392dad2ad0ea507c6c399598276306402a46bf1f86a8933a9dbd27d85"
   },
   "producer": {
     "name": "gcc-formed",

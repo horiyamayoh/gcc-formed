@@ -36,7 +36,7 @@
         "family": "concepts_constraints",
         "first_action": "match the required concept or requires-clause against the actual template arguments",
         "headline": "template constraint not satisfied",
-        "message": "no matching function for call to ‘consume(int)’",
+        "message": "no matching function for call to 'consume(int)'",
         "phase": "constraints",
         "primary_location": {
           "column": 12,
@@ -54,7 +54,7 @@
             "family": "template",
             "first_action": "start from the first user-owned template frame and match template arguments",
             "headline": "template instantiation failed",
-            "message": "candidate: ‘template<class T>  requires  HasSize<T> int consume(T)’",
+            "message": "candidate: 'template<class T>  requires  HasSize<T> int consume(T)'",
             "phase": "instantiate",
             "primary_location": {
               "column": 5,
@@ -114,7 +114,7 @@
             "family": "concepts_constraints",
             "first_action": "match the required concept or requires-clause against the actual template arguments",
             "headline": "template constraint not satisfied",
-            "message": "the required expression ‘value.size()’ is invalid",
+            "message": "the required expression 'value.size()' is invalid",
             "phase": "semantic",
             "primary_location": {
               "column": 39,
@@ -133,8 +133,8 @@
             "confidence": "low",
             "family": "unknown",
             "first_action": "inspect the preserved raw diagnostics for the first corrective action",
-            "headline": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
-            "message": "set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail",
+            "headline": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
+            "message": "set '-fconcepts-diagnostics-depth=' to at least 2 for more detail",
             "phase": "semantic",
             "provenance_capture_refs": [
               "diagnostics.sarif"
