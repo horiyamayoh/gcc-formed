@@ -80,18 +80,41 @@ fn public_export_for_fixture(
     fixture: &diag_testkit::Fixture,
     replay: &ReplayOutcomeAndDocument,
 ) -> diag_public_export::PublicDiagnosticExport {
+    let version_band = fixture_support_band(fixture);
     export_from_document(
         &replay.document,
         &PublicExportContext::from_document(
             &replay.document,
-            fixture_support_band(fixture),
+            version_band,
             fixture_processing_path(fixture),
-            support_level_for_version_band(fixture_support_band(fixture)),
+            support_level_for_version_band(version_band),
+            representative_allowed_processing_paths(version_band),
             replay.source_authority,
             replay.fallback_grade,
             replay.fallback_reason,
         ),
     )
+}
+
+fn representative_allowed_processing_paths(
+    version_band: diag_backend_probe::VersionBand,
+) -> Vec<diag_backend_probe::ProcessingPath> {
+    match version_band {
+        diag_backend_probe::VersionBand::Gcc15 => vec![
+            diag_backend_probe::ProcessingPath::DualSinkStructured,
+            diag_backend_probe::ProcessingPath::Passthrough,
+        ],
+        diag_backend_probe::VersionBand::Gcc13_14 | diag_backend_probe::VersionBand::Gcc9_12 => {
+            vec![
+                diag_backend_probe::ProcessingPath::SingleSinkStructured,
+                diag_backend_probe::ProcessingPath::NativeTextCapture,
+                diag_backend_probe::ProcessingPath::Passthrough,
+            ]
+        }
+        diag_backend_probe::VersionBand::Gcc16Plus | diag_backend_probe::VersionBand::Unknown => {
+            vec![diag_backend_probe::ProcessingPath::Passthrough]
+        }
+    }
 }
 
 fn meta_yaml_for_fixture(fixture: &diag_testkit::Fixture) -> YamlValue {

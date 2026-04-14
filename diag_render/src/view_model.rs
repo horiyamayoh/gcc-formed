@@ -4,7 +4,7 @@ use crate::excerpt::load_excerpt;
 use crate::family::{
     extract_conflict_slots, extract_context_slots, extract_contrast_slots, extract_linker_slots,
     extract_lookup_slots, extract_missing_header_slots, extract_parser_slots,
-    is_conservative_useful_subset_card, summarize_supporting_evidence,
+    summarize_supporting_evidence,
 };
 use crate::path::format_location;
 use crate::presentation::{
@@ -167,7 +167,6 @@ struct SemanticCardInput<'a> {
     title: &'a str,
     first_action: Option<&'a str>,
     canonical_location: Option<&'a str>,
-    conservative_useful_subset: bool,
 }
 
 /// Builds a [`RenderViewModel`] from the selected diagnostic groups.
@@ -233,7 +232,6 @@ fn build_card(
     presentation_policy: &ResolvedPresentationPolicy,
 ) -> RenderGroupCard {
     let policy = render_policy(request.profile);
-    let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
     let confidence = node
         .analysis
         .as_ref()
@@ -258,7 +256,6 @@ fn build_card(
             title: &title,
             first_action: first_action.as_deref(),
             canonical_location: canonical_location.as_deref(),
-            conservative_useful_subset,
         },
     );
     let (context_lines, child_notes, mut collapsed_notices) =
@@ -267,13 +264,9 @@ fn build_card(
         collapsed_notices.extend(selector_notices.iter().cloned());
     }
     let suggestions = build_action_items(request, node);
-    let confidence_notice = if conservative_useful_subset {
-        Some(conservative_band_c_notice().to_string())
-    } else {
-        confidence
-            .requires_low_confidence_notice()
-            .then_some(policy.disclosure.low_confidence_notice.to_string())
-    };
+    let confidence_notice = confidence
+        .requires_low_confidence_notice()
+        .then_some(policy.disclosure.low_confidence_notice.to_string());
     let raw_sub_block = raw_sub_block(request, node);
     RenderGroupCard {
         group_id: render_group_ref(node),
@@ -290,11 +283,7 @@ fn build_card(
         child_notes,
         collapsed_notices,
         suggestions,
-        raw_block_label: if conservative_useful_subset {
-            conservative_raw_block_label().to_string()
-        } else {
-            policy.disclosure.raw_block_label.to_string()
-        },
+        raw_block_label: policy.disclosure.raw_block_label.to_string(),
         raw_sub_block,
         rule_id: node
             .analysis
@@ -359,7 +348,7 @@ fn build_semantic_card(
     }
 
     let mut extracted_family_slots = false;
-    if resolved_presentation.subject_first_header && !input.conservative_useful_subset {
+    if resolved_presentation.subject_first_header {
         for (shape, display_family_override) in semantic_shape_attempts(&resolved_presentation) {
             let Some(extracted_slots) =
                 extract_slots_for_shape(request, node, presentation_policy, shape)
@@ -777,14 +766,6 @@ fn default_session_mode() -> SessionMode {
 
 fn is_default_raw_block_label(label: &str) -> bool {
     label == "raw:"
-}
-
-fn conservative_band_c_notice() -> &'static str {
-    "note: GCC 9-12 native-text summaries are conservative; verify against the preserved raw diagnostics"
-}
-
-fn conservative_raw_block_label() -> &'static str {
-    "raw compiler excerpt:"
 }
 
 fn resolved_session_mode(

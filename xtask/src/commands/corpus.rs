@@ -1408,16 +1408,35 @@ fn public_export_for_fixture(
     replay: &ReplayOutcomeAndDocument,
     fixture: &Fixture,
 ) -> Result<diag_public_export::PublicDiagnosticExport, VerificationFailure> {
+    let version_band = fixture_support_band(fixture);
     let context = PublicExportContext::from_document(
         &replay.document,
-        fixture_support_band(fixture),
+        version_band,
         fixture_processing_path(fixture),
-        support_level_for_version_band(fixture_support_band(fixture)),
+        support_level_for_version_band(version_band),
+        representative_allowed_processing_paths(version_band),
         replay.source_authority,
         replay.fallback_grade,
         replay.fallback_reason,
     );
     Ok(export_from_document(&replay.document, &context))
+}
+
+fn representative_allowed_processing_paths(version_band: VersionBand) -> Vec<ProcessingPath> {
+    match version_band {
+        VersionBand::Gcc15 => {
+            vec![
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough,
+            ]
+        }
+        VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => vec![
+            ProcessingPath::SingleSinkStructured,
+            ProcessingPath::NativeTextCapture,
+            ProcessingPath::Passthrough,
+        ],
+        VersionBand::Gcc16Plus | VersionBand::Unknown => vec![ProcessingPath::Passthrough],
+    }
 }
 
 pub(crate) fn public_export_schema_shape_fingerprint_for_export(

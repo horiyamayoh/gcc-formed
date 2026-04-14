@@ -379,6 +379,7 @@ fn write_public_export_from_bundle_or_replay(
             version_band,
             processing_path,
             support_level,
+            representative_allowed_processing_paths(version_band),
             source_authority,
             fallback_grade,
             fallback_reason.or(trace.fallback_reason),
@@ -386,6 +387,23 @@ fn write_public_export_from_bundle_or_replay(
     );
     fs::write(output_path, export.canonical_json()?)?;
     Ok("reconstructed_from_replay".to_string())
+}
+
+fn representative_allowed_processing_paths(version_band: VersionBand) -> Vec<ProcessingPath> {
+    match version_band {
+        VersionBand::Gcc15 => {
+            vec![
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough,
+            ]
+        }
+        VersionBand::Gcc13_14 | VersionBand::Gcc9_12 => vec![
+            ProcessingPath::SingleSinkStructured,
+            ProcessingPath::NativeTextCapture,
+            ProcessingPath::Passthrough,
+        ],
+        VersionBand::Gcc16Plus | VersionBand::Unknown => vec![ProcessingPath::Passthrough],
+    }
 }
 
 fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T, Box<dyn std::error::Error>> {

@@ -5,327 +5,253 @@
     {
       "kind": "syntax",
       "match_exact": "preprocessor_directive",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "openmp",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "scope_declaration",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "redefinition",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "deleted_function",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "concepts_constraints",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "ranges_views",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "unused",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "return_type",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "fallthrough",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "sanitizer_buffer",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "format_string",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "uninitialized",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "overflow_arithmetic",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "enum_switch",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "analyzer",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "null_pointer",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "conversion_narrowing",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "const_qualifier",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "move_semantics",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "strict_aliasing",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "asm_inline",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "bit_field_packed",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "abi_alignment",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "thread_safety",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "storage_class",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "exception_handling",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "attribute",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "odr_inline_linkage",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "sizeof_allocation",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "pointer_reference",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "structured_binding",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "access_control",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "inheritance_virtual",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "constexpr",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "lambda_closure",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "lifetime_dangling",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "init_order",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "designated_init",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "coroutine",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "module_import",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "deprecated",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "pedantic_compliance",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "three_way_comparison",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "string_character",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "syntax",
       "match_exact": "syntax",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true
+      "specificity_rank": 2
     },
     {
       "kind": "template",
       "match_exact": "template",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true,
-      "conservative_limits": {
-        "verbose": 6,
-        "debug": 6,
-        "default": 3,
-        "concise": 2,
-        "ci": 2,
-        "raw_fallback": 0
-      }
+      "specificity_rank": 2
     },
     {
       "kind": "macro_include",
       "match_exact": "macro_include",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": false
+      "specificity_rank": 2
     },
     {
       "kind": "type_overload",
       "match_exact": "type_overload",
-      "specificity_rank": 2,
-      "band_c_conservative_useful_subset": true,
-      "conservative_limits": {
-        "verbose": 3,
-        "debug": 3,
-        "default": 2,
-        "concise": 1,
-        "ci": 1,
-        "raw_fallback": 0
-      }
+      "specificity_rank": 2
     },
     {
       "kind": "linker",
       "match_prefix": "linker.",
       "exclude_exact": "linker.file_format_or_relocation",
-      "specificity_rank": 3,
-      "band_c_conservative_useful_subset": true,
-      "conservative_limits": {
-        "verbose": 2,
-        "debug": 2,
-        "default": 1,
-        "concise": 1,
-        "ci": 1,
-        "raw_fallback": 0
-      }
+      "specificity_rank": 3
     }
   ]
 }

@@ -187,6 +187,11 @@ fn real_main() -> Result<i32, CliError> {
             plan.backend.version_band(),
             capture.processing_path(),
             plan.backend.support_level(),
+            plan.backend
+                .capability_profile()
+                .allowed_processing_paths
+                .iter()
+                .copied(),
             ingest_trace.source_authority,
             ingest_trace.fallback_grade,
             plan.mode_decision
@@ -259,6 +264,11 @@ fn real_main() -> Result<i32, CliError> {
         plan.backend.version_band(),
         capture.processing_path(),
         plan.backend.support_level(),
+        plan.backend
+            .capability_profile()
+            .allowed_processing_paths
+            .iter()
+            .copied(),
         ingest_trace.source_authority,
         ingest_trace.fallback_grade,
         effective_fallback_reason,

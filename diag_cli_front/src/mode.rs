@@ -288,9 +288,27 @@ pub(crate) fn compatibility_scope_notice_for_path(
     }
 }
 
-pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> OperatorGuidance {
-    match version_band {
-        VersionBand::Gcc15 => OperatorGuidance {
+pub(crate) fn operator_guidance_for_seam(seam: &CliCompatibilitySeam) -> OperatorGuidance {
+    if !seam.is_in_scope() {
+        return OperatorGuidance {
+            summary: "operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
+            representative_limitations: &[
+                "this compiler version is outside the current GCC 9-15 contract.",
+                "conservative raw diagnostics will be preserved.",
+            ],
+            actionable_next_steps: &[
+                "Use raw gcc/g++ for production builds until an in-scope VersionBand is confirmed.",
+                "Use --formed-mode=passthrough when you need the wrapper path for triage only.",
+            ],
+            c_first_focus_areas: &[],
+        };
+    }
+
+    if matches!(
+        seam.default_processing_path,
+        ProcessingPath::DualSinkStructured
+    ) {
+        return OperatorGuidance {
             summary: "operator next step=keep direct CC/CXX replacement, and keep at most one wrapper-owned backend launcher behind the wrapper.",
             representative_limitations: &[
                 "dual_sink_structured is the default capture path on this backend capability profile.",
@@ -301,31 +319,20 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
                 "If you need one cache or remote-exec launcher, keep it behind the wrapper.",
             ],
             c_first_focus_areas: &["compile", "type", "macro_include", "linker"],
-        },
-        VersionBand::Gcc13_14 => OperatorGuidance {
-            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            representative_limitations: &[
-                "native_text_capture is the default capture path on this backend capability profile.",
-                "single_sink_structured remains available as an explicit structured capture path.",
-                "raw native diagnostics may not be preserved in the same run when explicit structured capture is active.",
-            ],
-            actionable_next_steps: &[
-                "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
-                "Keep at most one wrapper-owned backend launcher behind the wrapper.",
-                "Use raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ],
-            c_first_focus_areas: &["compile", "link", "include_path", "macro", "preprocessor"],
-        },
+        };
+    }
+
+    match seam.version_band {
         VersionBand::Gcc9_12 => OperatorGuidance {
-            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
+            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper; select single_sink_structured only when you need explicit machine-readable structured capture for that run; and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             representative_limitations: &[
                 "native_text_capture is the default capture path on this backend capability profile.",
-                "single_sink_structured remains available as an explicit JSON capture path.",
-                "raw native diagnostics may not be preserved in the same run when explicit structured capture is active.",
+                "single_sink_structured remains available as an explicit structured capture path; the artifact format stays capability-specific.",
+                "same-run native diagnostics may not be preserved when explicit structured capture is active.",
             ],
             actionable_next_steps: &[
                 "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
-                "Prefer native_text_capture for ordinary runs and opt into single_sink_structured when you need JSON.",
+                "Keep the backend default path unless you explicitly need machine-readable structured capture for that run.",
                 "Use raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ],
             c_first_focus_areas: &[
@@ -337,19 +344,28 @@ pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> O
                 "preprocessor",
             ],
         },
-        VersionBand::Gcc16Plus | VersionBand::Unknown => OperatorGuidance {
-            summary: "operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
+        VersionBand::Gcc15 | VersionBand::Gcc13_14 => OperatorGuidance {
+            summary: "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper; select single_sink_structured only when you need explicit machine-readable structured capture for that run; and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             representative_limitations: &[
-                "this compiler version is outside the current GCC 9-15 contract.",
-                "conservative raw diagnostics will be preserved.",
+                "native_text_capture is the default capture path on this backend capability profile.",
+                "single_sink_structured remains available as an explicit structured capture path.",
+                "same-run native diagnostics may not be preserved when explicit structured capture is active.",
             ],
             actionable_next_steps: &[
-                "Use raw gcc/g++ for production builds until an in-scope VersionBand is confirmed.",
-                "Use --formed-mode=passthrough when you need the wrapper path for triage only.",
+                "Set CC=gcc-formed and CXX=g++-formed for direct Make / CMake insertion.",
+                "Keep the backend default path unless you explicitly need machine-readable structured capture for that run.",
+                "Use raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
             ],
-            c_first_focus_areas: &[],
+            c_first_focus_areas: &["compile", "link", "include_path", "macro", "preprocessor"],
         },
+        VersionBand::Gcc16Plus | VersionBand::Unknown => unreachable!("handled above"),
     }
+}
+
+#[cfg(test)]
+pub(crate) fn operator_guidance_for_version_band(version_band: VersionBand) -> OperatorGuidance {
+    let seam = CliCompatibilitySeam::from_version_band(version_band);
+    operator_guidance_for_seam(&seam)
 }
 
 fn representative_major_for_band(version_band: VersionBand) -> u32 {
@@ -628,6 +644,27 @@ mod tests {
     }
 
     #[test]
+    fn older_in_scope_operator_guidance_is_path_first() {
+        let gcc13 = operator_guidance_for_version_band(VersionBand::Gcc13_14);
+        let gcc9 = operator_guidance_for_version_band(VersionBand::Gcc9_12);
+
+        assert_eq!(gcc13.summary, gcc9.summary);
+        assert!(gcc13.summary.contains("select single_sink_structured only when you need explicit machine-readable structured capture for that run"));
+        assert!(!gcc13.summary.contains("ordinary runs"));
+        assert!(
+            gcc13
+                .actionable_next_steps
+                .iter()
+                .any(|step| step.contains("Keep the backend default path unless you explicitly need machine-readable structured capture"))
+        );
+        assert!(
+            gcc9.representative_limitations
+                .iter()
+                .any(|limit| limit.contains("artifact format stays capability-specific"))
+        );
+    }
+
+    #[test]
     fn announces_out_of_scope_unknown_passthrough() {
         let decision = select_mode(VersionBand::Unknown, None, false);
         assert_eq!(
@@ -683,6 +720,46 @@ mod tests {
                 Some(ProcessingPath::DualSinkStructured)
             ),
             ProcessingPath::NativeTextCapture
+        );
+    }
+
+    #[test]
+    fn operator_guidance_uses_probe_capabilities_when_gcc15_dual_sink_is_unavailable() {
+        let seam = CliCompatibilitySeam::from_probe(&ProbeResult {
+            requested_backend: "gcc-formed".to_string(),
+            resolved_path: "/tmp/fake-gcc".into(),
+            execution_topology: diag_backend_probe::ActiveBackendTopology {
+                policy_version: diag_backend_probe::BACKEND_TOPOLOGY_POLICY_VERSION.to_string(),
+                kind: diag_backend_probe::BackendTopologyKind::Direct,
+                launcher_path: None,
+                disposition: diag_backend_probe::BackendTopologyDisposition::Supported,
+            },
+            version_string: "gcc (Fake) 15.2.0".to_string(),
+            major: 15,
+            minor: 2,
+            driver_kind: diag_backend_probe::DriverKind::Gcc,
+            add_output_sarif_supported: false,
+            version_probe_key: diag_backend_probe::ProbeKey {
+                realpath: "/tmp/fake-gcc".into(),
+                inode: 2,
+                mtime_seconds: 1,
+                size_bytes: 1,
+            },
+        });
+
+        let guidance = operator_guidance_for_seam(&seam);
+
+        assert_eq!(
+            guidance.summary,
+            "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper; select single_sink_structured only when you need explicit machine-readable structured capture for that run; and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+        );
+        assert_eq!(
+            guidance.representative_limitations[0],
+            "native_text_capture is the default capture path on this backend capability profile."
+        );
+        assert_eq!(
+            guidance.actionable_next_steps[1],
+            "Keep the backend default path unless you explicitly need machine-readable structured capture for that run."
         );
     }
 

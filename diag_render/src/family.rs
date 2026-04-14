@@ -2,17 +2,14 @@ use crate::budget::budget_for;
 use crate::excerpt::source_line_text;
 use crate::path::format_location;
 use crate::{RenderProfile, RenderRequest};
-use diag_core::{
-    ContextChainKind, ContextFrame, DiagnosticNode, DocumentCompleteness, NodeCompleteness,
-    Ownership, ProvenanceSource, SemanticRole,
-};
+use diag_core::{ContextChainKind, ContextFrame, DiagnosticNode, Ownership, SemanticRole};
 use diag_rulepack::{
     RenderRulepack, RendererFamilyKind, RendererFamilyPolicy, checked_in_rulepack,
 };
 use std::path::Path;
 
 /// Collected supporting context lines, child notes, and collapse notices for a diagnostic card.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct SupportingEvidence {
     /// Context lines derived from context chains (template, macro, include, linker).
     pub context_lines: Vec<String>,
@@ -128,63 +125,22 @@ pub(crate) fn renderer_specificity_rank(node: &DiagnosticNode) -> u8 {
         .unwrap_or(0)
 }
 
-pub(crate) fn is_conservative_useful_subset_card(
-    request: &RenderRequest,
-    node: &DiagnosticNode,
-) -> bool {
-    renderer_family_policy(node).is_some_and(|policy| policy.band_c_conservative_useful_subset)
-        && matches!(band_c_gcc_major(request), Some(9..=12))
-        && matches!(
-            request.document.document_completeness,
-            DocumentCompleteness::Partial
-        )
-        && matches!(
-            node.node_completeness,
-            NodeCompleteness::Partial | NodeCompleteness::Passthrough
-        )
-        && matches!(node.provenance.source, ProvenanceSource::ResidualText)
-        && matches!(
-            node.analysis
-                .as_ref()
-                .map(|analysis| analysis.disclosure_confidence()),
-            Some(diag_core::DisclosureConfidence::Possible)
-                | Some(diag_core::DisclosureConfidence::Hidden)
-                | None
-        )
-}
-
 /// Summarizes supporting evidence (context chains, child notes) for a diagnostic node.
 pub fn summarize_supporting_evidence(
     request: &RenderRequest,
     node: &DiagnosticNode,
 ) -> SupportingEvidence {
     let budget = budget_for(request.profile);
-    let conservative_useful_subset = is_conservative_useful_subset_card(request, node);
 
     match renderer_family_kind(node) {
-        RendererFamilyKind::Template => summarize_template(
-            request,
-            node,
-            constrained_template_frames(
-                request,
-                budget.template_frames,
-                conservative_useful_subset,
-            ),
-        ),
+        RendererFamilyKind::Template => summarize_template(request, node, budget.template_frames),
         RendererFamilyKind::MacroInclude => {
             summarize_macro_include(request, node, budget.macro_include_frames)
         }
-        RendererFamilyKind::TypeOverload => summarize_overload(
-            request,
-            node,
-            constrained_candidate_notes(
-                request,
-                budget.candidate_notes,
-                conservative_useful_subset,
-            ),
-            conservative_useful_subset,
-        ),
-        RendererFamilyKind::Linker => summarize_linker(request, node, conservative_useful_subset),
+        RendererFamilyKind::TypeOverload => {
+            summarize_overload(request, node, budget.candidate_notes)
+        }
+        RendererFamilyKind::Linker => summarize_linker(request, node),
         _ => summarize_generic(request, node),
     }
 }
@@ -306,7 +262,6 @@ fn summarize_overload(
     request: &RenderRequest,
     node: &DiagnosticNode,
     note_limit: usize,
-    conservative: bool,
 ) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     let mut rendered = node
@@ -322,11 +277,7 @@ fn summarize_overload(
                 .map(|location| format!(" at {}", format_location(request, location)))
                 .unwrap_or_default();
             let candidate_like = note_is_candidate_like(&note);
-            let rendered = if conservative && note.starts_with("candidate ") {
-                format!("{note}{location}")
-            } else if conservative {
-                format!("compiler note: {note}{location}")
-            } else if note.starts_with("candidate ") {
+            let rendered = if note.starts_with("candidate ") {
                 format!("because: {note}{location}")
             } else {
                 format!("because: {note}")
@@ -372,11 +323,7 @@ fn summarize_overload(
     evidence
 }
 
-fn summarize_linker(
-    request: &RenderRequest,
-    node: &DiagnosticNode,
-    conservative: bool,
-) -> SupportingEvidence {
+fn summarize_linker(request: &RenderRequest, node: &DiagnosticNode) -> SupportingEvidence {
     let mut evidence = SupportingEvidence::default();
     if let Some(symbol) = node
         .symbol_context
@@ -401,10 +348,7 @@ fn summarize_linker(
                 .cmp(&linker_object_rank(request, left))
                 .then_with(|| left.cmp(right))
         });
-        for object in related_objects
-            .into_iter()
-            .take(linker_object_limit(request, conservative))
-        {
+        for object in related_objects.into_iter().take(3) {
             push_unique(
                 &mut evidence.context_lines,
                 format!("linker: referenced from {object}"),
@@ -1853,80 +1797,6 @@ fn linker_object_rank(request: &RenderRequest, object: &str) -> u8 {
     1
 }
 
-fn band_c_gcc_major(request: &RenderRequest) -> Option<u32> {
-    request
-        .document
-        .run
-        .primary_tool
-        .version
-        .as_deref()
-        .and_then(|version| {
-            version
-                .split(|ch: char| !ch.is_ascii_digit())
-                .find(|part| !part.is_empty())
-        })
-        .and_then(|major| major.parse().ok())
-}
-
-fn constrained_template_frames(
-    request: &RenderRequest,
-    default_limit: usize,
-    conservative: bool,
-) -> usize {
-    if !conservative {
-        return default_limit;
-    }
-
-    default_limit.min(
-        render_rulepack()
-            .policy_for_kind(RendererFamilyKind::Template)
-            .and_then(|policy| conservative_limit(policy, request.profile))
-            .unwrap_or(default_limit),
-    )
-}
-
-fn constrained_candidate_notes(
-    request: &RenderRequest,
-    default_limit: usize,
-    conservative: bool,
-) -> usize {
-    if !conservative {
-        return default_limit;
-    }
-
-    default_limit.min(
-        render_rulepack()
-            .policy_for_kind(RendererFamilyKind::TypeOverload)
-            .and_then(|policy| conservative_limit(policy, request.profile))
-            .unwrap_or(default_limit),
-    )
-}
-
-fn linker_object_limit(request: &RenderRequest, conservative: bool) -> usize {
-    if !conservative {
-        return 3;
-    }
-
-    render_rulepack()
-        .policy_for_kind(RendererFamilyKind::Linker)
-        .and_then(|policy| conservative_limit(policy, request.profile))
-        .unwrap_or(3)
-}
-
-fn conservative_limit(policy: &RendererFamilyPolicy, profile: RenderProfile) -> Option<usize> {
-    policy
-        .conservative_limits
-        .as_ref()
-        .map(|limits| match profile {
-            RenderProfile::Verbose => limits.verbose,
-            RenderProfile::Debug => limits.debug,
-            RenderProfile::Default => limits.default,
-            RenderProfile::Concise => limits.concise,
-            RenderProfile::Ci => limits.ci,
-            RenderProfile::RawFallback => limits.raw_fallback,
-        })
-}
-
 fn push_index(indices: &mut Vec<usize>, index: usize) {
     if !indices.contains(&index) {
         indices.push(index);
@@ -1957,9 +1827,9 @@ mod tests {
     };
     use diag_core::{
         AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChain,
-        DiagnosticDocument, LanguageMode, Location, MessageText, NodeCompleteness, Origin,
-        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
-        Severity, SymbolContext, ToolInfo, WrapperSurface,
+        DiagnosticDocument, DocumentCompleteness, LanguageMode, Location, MessageText,
+        NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource,
+        RunInfo, SemanticRole, Severity, SymbolContext, ToolInfo, WrapperSurface,
     };
     use std::fs;
 
@@ -2344,51 +2214,6 @@ mod tests {
             renderer_family_kind(&sample_node("linker.file_format_or_relocation")),
             RendererFamilyKind::Unknown
         );
-    }
-
-    #[test]
-    fn conservative_useful_subset_respects_rulepack_family_flags() {
-        let mut request = sample_request();
-        request.document.run.primary_tool.version = Some("12.3.0".to_string());
-        request.document.document_completeness = DocumentCompleteness::Partial;
-
-        let mut template = sample_node("template");
-        template.node_completeness = NodeCompleteness::Partial;
-        template.provenance.source = ProvenanceSource::ResidualText;
-        template
-            .analysis
-            .as_mut()
-            .unwrap()
-            .set_confidence_bucket(Confidence::Low);
-        assert!(is_conservative_useful_subset_card(&request, &template));
-
-        let mut macro_include = sample_node("macro_include");
-        macro_include.node_completeness = NodeCompleteness::Partial;
-        macro_include.provenance.source = ProvenanceSource::ResidualText;
-        macro_include
-            .analysis
-            .as_mut()
-            .unwrap()
-            .set_confidence_bucket(Confidence::Low);
-        assert!(!is_conservative_useful_subset_card(
-            &request,
-            &macro_include
-        ));
-    }
-
-    #[test]
-    fn conservative_limits_come_from_rulepack_policy() {
-        let mut request = sample_request();
-        request.profile = RenderProfile::Ci;
-
-        assert_eq!(constrained_template_frames(&request, 20, true), 2);
-        assert_eq!(constrained_candidate_notes(&request, 8, true), 1);
-        assert_eq!(linker_object_limit(&request, true), 1);
-
-        request.profile = RenderProfile::Debug;
-        assert_eq!(constrained_template_frames(&request, 30, true), 6);
-        assert_eq!(constrained_candidate_notes(&request, 20, true), 3);
-        assert_eq!(linker_object_limit(&request, true), 2);
     }
 
     #[test]

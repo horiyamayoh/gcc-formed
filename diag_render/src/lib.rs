@@ -4160,7 +4160,7 @@ mod tests {
     }
 
     #[test]
-    fn band_c_useful_subset_render_strengthens_notice_and_raw_label() {
+    fn in_scope_partial_residual_render_keeps_shared_disclosure_surface() {
         let mut request = sample_request();
         request.document.run.primary_tool.version = Some("12.2.0".to_string());
         request.document.document_completeness = DocumentCompleteness::Partial;
@@ -4205,22 +4205,27 @@ mod tests {
             fingerprints: None,
         }];
 
-        let output = legacy_render(request);
+        let mut newer_band = request.clone();
+        newer_band.document.run.primary_tool.version = Some("15.2.0".to_string());
 
-        assert!(output.text.contains(
-            "note: GCC 9-12 native-text summaries are conservative; verify against the preserved raw diagnostics"
+        let older_output = legacy_render(request);
+        let newer_output = legacy_render(newer_band);
+
+        assert_eq!(older_output.text, newer_output.text);
+        assert!(older_output.text.contains(
+            "note: wrapper confidence is low; verify against the preserved raw diagnostics"
         ));
-        assert!(output.text.contains("raw compiler excerpt:"));
+        assert!(older_output.text.contains("raw:"));
         assert!(
-            output
+            older_output
                 .text
-                .contains("candidate 1: 'void takes(int, int)' at src/main.cpp:2:6")
+                .contains("because: candidate 1: 'void takes(int, int)' at src/main.cpp:2:6")
         );
-        assert!(!output.text.contains("because:"));
+        assert!(!older_output.text.contains("raw compiler excerpt:"));
         assert!(
-            !output
+            !older_output
                 .text
-                .contains("help: compare the expected type and actual argument at the call site")
+                .contains("GCC 9-12 native-text summaries are conservative")
         );
     }
 
@@ -4406,7 +4411,7 @@ mod tests {
     }
 
     #[test]
-    fn band_c_template_supporting_evidence_uses_tighter_budget() {
+    fn template_supporting_evidence_budget_is_band_neutral_for_in_scope_residual_cards() {
         let mut request = sample_request();
         request.document.run.primary_tool.version = Some("12.3.0".to_string());
         request.document.document_completeness = DocumentCompleteness::Partial;
@@ -4429,12 +4434,20 @@ mod tests {
                 .collect(),
         }];
 
-        let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
-        assert_eq!(evidence.context_lines[0], "while instantiating:");
-        assert_eq!(evidence.context_lines.len(), 5);
+        let mut newer_band = request.clone();
+        newer_band.document.run.primary_tool.version = Some("15.2.0".to_string());
+
+        let older_evidence =
+            summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        let newer_evidence =
+            summarize_supporting_evidence(&newer_band, &newer_band.document.diagnostics[0]);
+
+        assert_eq!(older_evidence, newer_evidence);
+        assert_eq!(older_evidence.context_lines[0], "while instantiating:");
+        assert_eq!(older_evidence.context_lines.len(), 7);
         assert_eq!(
-            evidence.context_lines[4],
-            "omitted 4 internal template frames"
+            older_evidence.context_lines[6],
+            "omitted 2 internal template frames"
         );
     }
 
@@ -4591,7 +4604,7 @@ mod tests {
     }
 
     #[test]
-    fn band_c_overload_supporting_evidence_stays_neutral() {
+    fn overload_supporting_evidence_is_band_neutral_for_in_scope_residual_cards() {
         let mut request = sample_request();
         request.document.run.primary_tool.version = Some("12.1.0".to_string());
         request.document.document_completeness = DocumentCompleteness::Partial;
@@ -4628,10 +4641,17 @@ mod tests {
             fingerprints: None,
         }];
 
+        let mut newer_band = request.clone();
+        newer_band.document.run.primary_tool.version = Some("15.2.0".to_string());
+
         let evidence = summarize_supporting_evidence(&request, &request.document.diagnostics[0]);
+        let newer_evidence =
+            summarize_supporting_evidence(&newer_band, &newer_band.document.diagnostics[0]);
+
+        assert_eq!(evidence, newer_evidence);
         assert_eq!(
             evidence.context_lines,
-            vec!["candidate 1: 'void takes(int, int)' at src/main.cpp:2:6"]
+            vec!["because: candidate 1: 'void takes(int, int)' at src/main.cpp:2:6"]
         );
     }
 

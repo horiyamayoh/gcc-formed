@@ -1362,6 +1362,53 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     assert_optional_launcher_topology(&report["backend"], &expected_backend_path);
 }
 
+#[test]
+fn self_check_uses_probe_derived_operator_guidance_when_dual_sink_is_unavailable() {
+    let temp = fixture_with_probe_help(
+        "15.2.0",
+        "  -fdiagnostics-format=[text|sarif-file|json-file]",
+    );
+    let backend = temp.path().join("fake-gcc");
+
+    let assert = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .current_dir(temp.path())
+        .arg("--formed-self-check")
+        .assert()
+        .success();
+
+    let report: Value = serde_json::from_slice(&assert.get_output().stdout).unwrap();
+
+    assert_eq!(report["backend"]["version_band"], "gcc15");
+    assert_eq!(
+        report["backend"]["default_processing_path"],
+        "native_text_capture"
+    );
+    assert_eq!(
+        report["backend"]["allowed_processing_paths"],
+        serde_json::json!([
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough"
+        ])
+    );
+    assert_eq!(
+        report["operator_guidance"]["summary"].as_str(),
+        Some(
+            "operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper; select single_sink_structured only when you need explicit machine-readable structured capture for that run; and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven."
+        )
+    );
+    assert_eq!(
+        report["operator_guidance"]["representative_limitations"][0],
+        "native_text_capture is the default capture path on this backend capability profile."
+    );
+    assert_eq!(
+        report["operator_guidance"]["actionable_next_steps"][1],
+        "Keep the backend default path unless you explicitly need machine-readable structured capture for that run."
+    );
+}
+
 #[cfg(unix)]
 #[test]
 fn launcher_chain_executes_through_wrapper_and_keeps_child_argv_raw() {
@@ -2014,22 +2061,42 @@ fn assert_private_file(path: &std::path::Path) {
 }
 
 fn fixture(version: &str) -> TempDir {
-    fixture_with_sarif_mode(version, "valid")
+    fixture_with_probe_help_and_sarif_mode_and_stderr(
+        version,
+        "",
+        "valid",
+        "main.c:4:1: error: expected ';' before '}' token\n",
+    )
 }
 
 fn fixture_with_stderr(version: &str, stderr: &str) -> TempDir {
-    fixture_with_sarif_mode_and_stderr(version, "valid", stderr)
+    fixture_with_probe_help_and_sarif_mode_and_stderr(version, "", "valid", stderr)
 }
 
 fn fixture_with_sarif_mode(version: &str, sarif_mode: &str) -> TempDir {
-    fixture_with_sarif_mode_and_stderr(
+    fixture_with_probe_help_and_sarif_mode_and_stderr(
         version,
+        "",
         sarif_mode,
         "main.c:4:1: error: expected ';' before '}' token\n",
     )
 }
 
-fn fixture_with_sarif_mode_and_stderr(version: &str, sarif_mode: &str, stderr: &str) -> TempDir {
+fn fixture_with_probe_help(version: &str, help_common: &str) -> TempDir {
+    fixture_with_probe_help_and_sarif_mode_and_stderr(
+        version,
+        help_common,
+        "valid",
+        "main.c:4:1: error: expected ';' before '}' token\n",
+    )
+}
+
+fn fixture_with_probe_help_and_sarif_mode_and_stderr(
+    version: &str,
+    help_common: &str,
+    sarif_mode: &str,
+    stderr: &str,
+) -> TempDir {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("main.c"), "int main(void) { return 0 }\n").unwrap();
     fs::write(temp.path().join("main.cpp"), "int main() { return 0; }\n").unwrap();
@@ -2039,6 +2106,12 @@ fn fixture_with_sarif_mode_and_stderr(version: &str, sarif_mode: &str, stderr: &
 set -euo pipefail
 if [[ "${{1:-}}" == "--version" ]]; then
   echo "gcc (Fake) {version}"
+  exit 0
+fi
+if [[ "${{1:-}}" == "--help=common" ]]; then
+  cat <<'HELP'
+{help_common}
+HELP
   exit 0
 fi
 	sarif=""

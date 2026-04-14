@@ -191,6 +191,47 @@ fn public_json_keeps_required_execution_fields_across_representative_band_paths(
 }
 
 #[test]
+fn public_json_uses_probe_derived_allowed_paths_when_gcc15_dual_sink_is_unavailable() {
+    let fixture = public_json_fixture_with_help(
+        "15.2.0",
+        "  -fdiagnostics-format=[text|sarif-file|json-file]",
+    );
+    let public_json = fixture.temp.path().join("public.json");
+
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &fixture.backend)
+        .current_dir(fixture.temp.path())
+        .arg("--formed-mode=render")
+        .arg(format!("--formed-public-json={}", public_json.display()))
+        .arg("-c")
+        .arg(&fixture.source)
+        .assert()
+        .failure();
+
+    let export = parse_json_file(&public_json);
+    assert_required_execution_fields(
+        &export,
+        "gcc15",
+        "native_text_capture",
+        "in_scope",
+        &[
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough",
+        ],
+    );
+    assert_eq!(
+        export["execution"]["source_authority"].as_str(),
+        Some("residual_text")
+    );
+    assert_eq!(
+        export["execution"]["fallback_grade"].as_str(),
+        Some("compatibility")
+    );
+}
+
+#[test]
 fn public_json_writes_unavailable_export_for_passthrough_mode() {
     let export = run_public_json_export("15.2.0", "passthrough", &[]);
     assert_eq!(
@@ -222,11 +263,15 @@ struct PublicJsonFixture {
 }
 
 fn public_json_fixture(version: &str) -> PublicJsonFixture {
+    public_json_fixture_with_help(version, "")
+}
+
+fn public_json_fixture_with_help(version: &str, help_common: &str) -> PublicJsonFixture {
     let temp = tempfile::tempdir().unwrap();
     let backend = temp.path().join("fake-gcc");
     let source = temp.path().join("main.c");
     fs::write(&source, "int main(void) { return 0 }\n").unwrap();
-    write_executable_script(&backend, &fake_backend_script(version));
+    write_executable_script(&backend, &fake_backend_script(version, help_common));
 
     PublicJsonFixture {
         temp,
@@ -235,12 +280,18 @@ fn public_json_fixture(version: &str) -> PublicJsonFixture {
     }
 }
 
-fn fake_backend_script(version: &str) -> String {
+fn fake_backend_script(version: &str, help_common: &str) -> String {
     format!(
         r#"#!/usr/bin/env bash
 set -euo pipefail
 if [[ "${{1:-}}" == "--version" ]]; then
   echo "gcc (Fake) {version}"
+  exit 0
+fi
+if [[ "${{1:-}}" == "--help=common" ]]; then
+  cat <<'HELP'
+{help_common}
+HELP
   exit 0
 fi
 structured_path=""

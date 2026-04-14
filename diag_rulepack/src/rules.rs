@@ -227,7 +227,7 @@ pub struct PassthroughResidualSeed {
 // Render section types
 // ---------------------------------------------------------------------------
 
-/// Render rulepack defining per-family rendering policies and profile limits.
+/// Render rulepack defining per-family rendering policies.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RenderRulepack {
     /// Schema version identifier for this render rulepack format.
@@ -272,28 +272,6 @@ pub struct RendererFamilyPolicy {
     pub exclude_exact: Option<String>,
     /// Specificity rank for tie-breaking when multiple policies match.
     pub specificity_rank: u8,
-    /// Whether Band-C conservative mode considers this family useful.
-    pub band_c_conservative_useful_subset: bool,
-    /// Optional per-profile child note display limits.
-    #[serde(default)]
-    pub conservative_limits: Option<ProfileLimitPolicy>,
-}
-
-/// Per-profile maximum child note counts for conservative rendering.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct ProfileLimitPolicy {
-    /// Limit for the verbose output profile.
-    pub verbose: usize,
-    /// Limit for the debug output profile.
-    pub debug: usize,
-    /// Limit for the default output profile.
-    pub default: usize,
-    /// Limit for the concise output profile.
-    pub concise: usize,
-    /// Limit for the CI output profile.
-    pub ci: usize,
-    /// Fallback limit used for raw output.
-    pub raw_fallback: usize,
 }
 
 // ---------------------------------------------------------------------------

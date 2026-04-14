@@ -3,7 +3,7 @@ use crate::backend::{env_backend_override, env_launcher_override};
 use crate::error::CliError;
 use crate::mode::{
     CliCompatibilitySeam, compatibility_scope_notice_for_path, execution_mode_label,
-    fallback_reason_label, operator_guidance_for_version_band, select_mode_for_seam,
+    fallback_reason_label, operator_guidance_for_seam, select_mode_for_seam,
     select_processing_path_for_seam,
 };
 use diag_backend_probe::{
@@ -88,7 +88,7 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
             wrapper_path: env::current_exe().ok(),
         })
         .map_err(|e| CliError::Backend(e.to_string()))?;
-    let operator_guidance = operator_guidance_for_version_band(backend.version_band());
+    let operator_guidance = operator_guidance_for_seam(&CliCompatibilitySeam::from_probe(&backend));
 
     paths.ensure_dirs()?;
     let state_access = probe_write_access(&paths.state_root);

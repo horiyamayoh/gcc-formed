@@ -1,4 +1,4 @@
-use diag_backend_probe::{ProcessingPath, SupportLevel, VersionBand, capability_profile_for_major};
+use diag_backend_probe::{ProcessingPath, SupportLevel, VersionBand};
 use diag_core::{
     Confidence, DiagnosticDocument, DiagnosticNode, FallbackGrade, FallbackReason, Ownership,
     Suggestion,
@@ -179,15 +179,20 @@ pub struct PublicExportContext {
 }
 
 impl PublicExportContext {
-    pub fn from_document(
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_document<I>(
         document: &DiagnosticDocument,
         version_band: VersionBand,
         processing_path: ProcessingPath,
         support_level: SupportLevel,
+        allowed_processing_paths: I,
         source_authority: diag_core::SourceAuthority,
         fallback_grade: FallbackGrade,
         fallback_reason: Option<FallbackReason>,
-    ) -> Self {
+    ) -> Self
+    where
+        I: IntoIterator<Item = ProcessingPath>,
+    {
         Self {
             producer: PublicExportProducer {
                 name: document.producer.name.clone(),
@@ -209,9 +214,7 @@ impl PublicExportContext {
             version_band,
             processing_path,
             support_level,
-            allowed_processing_paths: default_allowed_processing_paths_for_version_band(
-                version_band,
-            ),
+            allowed_processing_paths: allowed_processing_paths.into_iter().collect(),
             source_authority: Some(source_authority),
             fallback_grade: Some(fallback_grade),
             fallback_reason,
@@ -455,25 +458,6 @@ fn label<T: Serialize>(value: T) -> String {
         .ok()
         .and_then(|value| value.as_str().map(|value| value.to_string()))
         .unwrap_or_else(|| "unknown".to_string())
-}
-
-fn default_allowed_processing_paths_for_version_band(
-    version_band: VersionBand,
-) -> Vec<ProcessingPath> {
-    capability_profile_for_major(representative_major_for_band(version_band))
-        .allowed_processing_paths
-        .into_iter()
-        .collect()
-}
-
-fn representative_major_for_band(version_band: VersionBand) -> u32 {
-    match version_band {
-        VersionBand::Gcc16Plus => 16,
-        VersionBand::Gcc15 => 15,
-        VersionBand::Gcc13_14 => 13,
-        VersionBand::Gcc9_12 => 9,
-        VersionBand::Unknown => 0,
-    }
 }
 
 #[cfg(test)]
@@ -734,6 +718,11 @@ mod tests {
             VersionBand::Gcc13_14,
             ProcessingPath::NativeTextCapture,
             SupportLevel::InScope,
+            [
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::Passthrough,
+            ],
             diag_core::SourceAuthority::ResidualText,
             FallbackGrade::Compatibility,
             None,
@@ -749,6 +738,11 @@ mod tests {
             VersionBand::Gcc13_14,
             ProcessingPath::NativeTextCapture,
             SupportLevel::InScope,
+            [
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::Passthrough,
+            ],
             diag_core::SourceAuthority::ResidualText,
             FallbackGrade::Compatibility,
             None,
@@ -862,6 +856,10 @@ mod tests {
             VersionBand::Gcc15,
             ProcessingPath::DualSinkStructured,
             SupportLevel::InScope,
+            [
+                ProcessingPath::DualSinkStructured,
+                ProcessingPath::Passthrough,
+            ],
             diag_core::SourceAuthority::Structured,
             FallbackGrade::None,
             None,
@@ -909,15 +907,15 @@ mod tests {
             VersionBand::Gcc15,
             ProcessingPath::NativeTextCapture,
             SupportLevel::InScope,
+            [
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
+                ProcessingPath::Passthrough,
+            ],
             diag_core::SourceAuthority::ResidualText,
             FallbackGrade::Compatibility,
             None,
-        )
-        .with_allowed_processing_paths([
-            ProcessingPath::NativeTextCapture,
-            ProcessingPath::SingleSinkStructured,
-            ProcessingPath::Passthrough,
-        ]);
+        );
 
         let export = export_from_document(&document, &context);
 
@@ -940,6 +938,10 @@ mod tests {
                 VersionBand::Gcc15,
                 ProcessingPath::DualSinkStructured,
                 SupportLevel::InScope,
+                [
+                    ProcessingPath::DualSinkStructured,
+                    ProcessingPath::Passthrough,
+                ],
                 diag_core::SourceAuthority::Structured,
                 FallbackGrade::None,
                 None,
@@ -949,6 +951,11 @@ mod tests {
                 VersionBand::Gcc13_14,
                 ProcessingPath::NativeTextCapture,
                 SupportLevel::InScope,
+                [
+                    ProcessingPath::SingleSinkStructured,
+                    ProcessingPath::NativeTextCapture,
+                    ProcessingPath::Passthrough,
+                ],
                 diag_core::SourceAuthority::ResidualText,
                 FallbackGrade::Compatibility,
                 None,
@@ -958,6 +965,11 @@ mod tests {
                 VersionBand::Gcc9_12,
                 ProcessingPath::SingleSinkStructured,
                 SupportLevel::InScope,
+                [
+                    ProcessingPath::SingleSinkStructured,
+                    ProcessingPath::NativeTextCapture,
+                    ProcessingPath::Passthrough,
+                ],
                 diag_core::SourceAuthority::Structured,
                 FallbackGrade::None,
                 None,

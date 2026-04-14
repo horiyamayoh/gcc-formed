@@ -8,7 +8,7 @@
 //! - [`LoadedRulepack`] -- a fully validated, ready-to-use rule pack bundle.
 //! - [`EnrichRulepack`] -- family-level match rules and confidence policies.
 //! - [`ResidualRulepack`] -- wording templates and residual classification seeds.
-//! - [`RenderRulepack`] -- per-family rendering policies and profile limits.
+//! - [`RenderRulepack`] -- per-family rendering policies.
 
 mod cascade;
 mod manifest;
@@ -346,5 +346,14 @@ mod tests {
             }
             other => panic!("unexpected error: {other:?}"),
         }
+    }
+
+    #[test]
+    fn checked_in_render_rulepack_does_not_reintroduce_band_specific_downgrade_keys() {
+        let render_rulepack =
+            fs::read_to_string(checked_in_rules_dir().join("render.rulepack.json")).unwrap();
+
+        assert!(!render_rulepack.contains("band_c_conservative_useful_subset"));
+        assert!(!render_rulepack.contains("conservative_limits"));
     }
 }
