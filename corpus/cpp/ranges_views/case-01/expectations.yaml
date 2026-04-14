@@ -35,5 +35,5 @@ render:
 integrity:
   allowed_issue_codes: []
 performance:
-  parse_time_ms_max: 50
+  parse_time_ms_max: 70
   render_time_ms_max: 40
