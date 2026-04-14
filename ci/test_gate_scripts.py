@@ -602,6 +602,39 @@ class CheckedInPlanTest(unittest.TestCase):
             with self.subTest(step_id=step_id):
                 self.assertEqual(steps_by_id[step_id]["policy"], "release_lane_only")
 
+    def test_run_gate_step_help_keeps_release_blocker_wording_path_neutral(self) -> None:
+        completed = subprocess.run(
+            ["python3", str(REPO_ROOT / "ci" / "run_gate_step.py"), "--help"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn(
+            "release-only nightly packaging/signing/install",
+            completed.stdout,
+        )
+        self.assertIn(
+            "smoke steps apply for the selected matrix lane",
+            completed.stdout,
+        )
+        self.assertNotIn("gcc15 release-lane-only", completed.stdout)
+
+    def test_ci_readme_keeps_release_lane_wording_parity_first(self) -> None:
+        text = (REPO_ROOT / "ci" / "README.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "packaging / signing / install smoke だけであり、shared diagnostic contract の優位 path を意味しない",
+            text,
+        )
+        self.assertIn(
+            "release-only packaging / signing / install smoke steps だけが `gcc15` lane 以外で `skipped_by_policy` になる",
+            text,
+        )
+        self.assertNotIn("reference path", text)
+
 
 class CheckedInWorkflowTest(unittest.TestCase):
     def extract_gate_step_ids(self, workflow_relative_path: str) -> list[str]:
