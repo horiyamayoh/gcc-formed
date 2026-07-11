@@ -228,9 +228,6 @@ fn ingest_bundle_with_gcc_adapter(
         ),
     };
     materialize_capture_artifacts(&mut document, bundle);
-    if has_authoritative_structured {
-        augment_context_chains_from_stderr(&mut document, stderr_text);
-    }
 
     let residual_nodes = dedup_structured_residual_duplicates(
         &document,
@@ -254,6 +251,11 @@ fn ingest_bundle_with_gcc_adapter(
         }
         document.diagnostics.extend(residual_nodes);
     }
+    // Context lines are trustworthy only when the bounded stderr parser
+    // recognizes GCC's include/macro/template grammar.  Apply them after
+    // residual nodes are materialized so NativeTextCapture receives the same
+    // context enrichment as structured paths.
+    augment_context_chains_from_stderr(&mut document, stderr_text);
     document.refresh_fingerprints();
 
     let (fallback_grade, fallback_reason) = match structured_input {

@@ -2262,6 +2262,97 @@ src/other.c:8:9: note: in expansion of macro 'FETCH_B'\n";
     }
 
     #[test]
+    fn native_text_ingest_augments_include_and_macro_context() {
+        let run = base_run_info();
+        let stderr = "\
+In file included from src/wrapper.h:1,\n\
+                 from src/main.c:1:\n\
+src/config.h:1:23: error: missing symbol\n\
+src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'\n";
+        let bundle = compatibility_bundle_from_legacy_inputs(None, stderr, &run);
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        let root = report
+            .document
+            .diagnostics
+            .iter()
+            .find(|node| node.message.raw_text.contains("missing symbol"))
+            .unwrap();
+        assert!(root.context_chains.iter().any(|chain| {
+            matches!(chain.kind, ContextChainKind::Include)
+                && chain
+                    .frames
+                    .iter()
+                    .any(|frame| frame.path.as_deref() == Some("src/wrapper.h"))
+        }));
+        assert!(root.context_chains.iter().any(|chain| {
+            matches!(chain.kind, ContextChainKind::MacroExpansion)
+                && chain
+                    .frames
+                    .iter()
+                    .any(|frame| frame.label.contains("FETCH_VALUE"))
+        }));
+        assert!(report.document.validate().is_ok());
+    }
+
+    #[test]
+    fn native_text_ingest_augments_template_instantiation_context() {
+        let run = RunInfo {
+            argv_redacted: vec!["g++".to_string()],
+            primary_tool: tool_for_backend("g++", Some("13.2.0".to_string())),
+            language_mode: Some(LanguageMode::Cpp),
+            ..base_run_info()
+        };
+        let stderr = "\
+src/header.hpp: In instantiation of 'void expect_ptr(T*) [with T = int]':\n\
+src/main.cpp:8:15: note:   required from here\n\
+src/header.hpp:3:7: error: no matching function for call to 'expect_ptr(int&)'\n";
+        let bundle = compatibility_bundle_from_legacy_inputs(None, stderr, &run);
+
+        let report = ingest_bundle(
+            &bundle,
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        let root = report
+            .document
+            .diagnostics
+            .iter()
+            .find(|node| node.message.raw_text.contains("no matching function"))
+            .unwrap();
+        let template = root
+            .context_chains
+            .iter()
+            .find(|chain| matches!(chain.kind, ContextChainKind::TemplateInstantiation))
+            .unwrap();
+        assert!(template.frames.iter().any(|frame| {
+            frame.label.contains("In instantiation of")
+                && frame.path.as_deref() == Some("src/header.hpp")
+        }));
+        assert!(
+            template
+                .frames
+                .iter()
+                .any(|frame| frame.label.contains("required from here"))
+        );
+        assert!(report.document.validate().is_ok());
+    }
+
+    #[test]
     fn ingest_bundle_augments_template_context_from_stderr_instantiation_frames() {
         let run = RunInfo {
             argv_redacted: vec!["g++".to_string()],

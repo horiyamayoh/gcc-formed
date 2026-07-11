@@ -33,6 +33,40 @@
         "structural": "0cf1cff6634e26da48e73352e3f3459f8cfd973205886cd52f658a11ce663cfd"
       },
       "id": "residual-passthrough",
+      "context_chains": [
+        {
+          "frames": [
+            {
+              "label": "In file included from src/wrapper.h:1,",
+              "line": 1,
+              "path": "src/wrapper.h"
+            },
+            {
+              "label": "from src/main.c:1:",
+              "line": 1,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "include"
+        },
+        {
+          "frames": [
+            {
+              "column": 25,
+              "label": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'",
+              "line": 3,
+              "path": "src/main.c"
+            },
+            {
+              "column": 25,
+              "label": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'",
+              "line": 3,
+              "path": "src/main.c"
+            }
+          ],
+          "kind": "macro_expansion"
+        }
+      ],
       "message": {
         "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
       },
