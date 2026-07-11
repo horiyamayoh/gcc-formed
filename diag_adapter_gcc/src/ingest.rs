@@ -1,5 +1,6 @@
 //! Ingestion orchestration for GCC diagnostic artifacts.
 
+use crate::evidence::materialize_evidence_graph;
 use crate::fallback::{failed_document, fallback_document, passthrough_document, passthrough_node};
 use crate::gcc_json::from_gcc_json_artifact;
 use crate::sarif::from_sarif_artifact;
@@ -237,6 +238,14 @@ fn ingest_bundle_with_gcc_adapter(
         !matches!(node.semantic_role, SemanticRole::Passthrough)
             && !matches!(node.node_completeness, NodeCompleteness::Passthrough)
     });
+    if has_authoritative_structured && has_renderable_residual {
+        document.integrity_issues.push(IntegrityIssue {
+            severity: IssueSeverity::Warning,
+            stage: IssueStage::Normalize,
+            message: "structured and native-text diagnostic sinks disagree; preserving both evidence sets".to_string(),
+            provenance: Some(Provenance { source: ProvenanceSource::Policy, capture_refs: bundle.capture_artifacts().iter().map(|capture| capture.id.clone()).collect() }),
+        });
+    }
     let residual_contract = residual_contract_for(stderr_text, has_renderable_residual);
     if document.diagnostics.is_empty() && residual_nodes.is_empty() && !stderr_text.is_empty() {
         if !matches!(document.document_completeness, DocumentCompleteness::Failed) {
@@ -257,6 +266,7 @@ fn ingest_bundle_with_gcc_adapter(
     // context enrichment as structured paths.
     augment_context_chains_from_stderr(&mut document, stderr_text);
     document.refresh_fingerprints();
+    materialize_evidence_graph(&mut document);
 
     let (fallback_grade, fallback_reason) = match structured_input {
         StructuredInput::None | StructuredInput::Unsupported(_) => residual_outcome_for_contract(

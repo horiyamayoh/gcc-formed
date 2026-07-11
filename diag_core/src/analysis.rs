@@ -152,6 +152,9 @@ pub struct EvidenceEdge {
 #[serde(rename_all = "snake_case")]
 pub enum EvidenceAuthority {
     CompilerDeclared,
+    StructuredAdapterDerived,
+    TextParserDerived,
+    Heuristic,
     WrapperInferred,
 }
 

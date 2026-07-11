@@ -11,6 +11,7 @@
 mod canonicalize;
 mod classify;
 mod context;
+mod evidence;
 mod fallback;
 mod fixits;
 mod gcc_json;
@@ -98,9 +99,9 @@ mod tests {
     use diag_core::WrapperSurface;
     use diag_core::{
         ArtifactKind, ArtifactStorage, CaptureArtifact, Confidence, ContextChainKind,
-        DocumentCompleteness, FallbackGrade, FallbackReason, LanguageMode, NodeCompleteness,
-        Origin, Phase, ProvenanceSource, RunInfo, SemanticRole, Severity, SourceAuthority,
-        SuggestionApplicability,
+        DocumentCompleteness, EvidenceAuthority, EvidenceTarget, FallbackGrade, FallbackReason,
+        LanguageMode, NodeCompleteness, Origin, Phase, ProvenanceSource, RunInfo, SemanticRole,
+        Severity, SourceAuthority, SuggestionApplicability,
     };
     use diag_rulepack::checked_in_rulepack_version;
     use std::fs;
@@ -486,6 +487,15 @@ mod tests {
         assert_eq!(suggestions[0].edits[0].start_line, 4);
         assert_eq!(suggestions[0].edits[0].end_line, 4);
         assert_eq!(suggestions[0].edits[0].replacement, ";");
+        assert_eq!(suggestions[0].edits[0].column_origin, Some(1));
+        assert_eq!(
+            suggestions[0].edits[0].column_unit,
+            Some(diag_core::ColumnUnit::Utf16CodeUnit)
+        );
+        assert_eq!(
+            suggestions[0].edits[0].boundary,
+            diag_core::BoundarySemantics::HalfOpen
+        );
         assert_eq!(suggestions[0].edits[1].path, "include/common.h");
         assert_eq!(suggestions[0].edits[1].replacement, "static ");
     }
@@ -578,6 +588,15 @@ mod tests {
             SuggestionApplicability::MachineApplicable
         );
         assert_eq!(suggestions[0].edits[0].replacement, ";");
+        assert_eq!(suggestions[0].edits[0].column_origin, Some(1));
+        assert_eq!(
+            suggestions[0].edits[0].column_unit,
+            Some(diag_core::ColumnUnit::Display)
+        );
+        assert_eq!(
+            suggestions[0].edits[0].boundary,
+            diag_core::BoundarySemantics::HalfOpen
+        );
         assert_eq!(suggestions[1].edits[0].start_column, 5);
         assert_eq!(suggestions[1].edits[0].end_column, 11);
         assert_eq!(suggestions[1].edits[0].replacement, "return");
@@ -1290,6 +1309,14 @@ mod tests {
 
         let root = &document.diagnostics[0];
         assert_eq!(root.phase, Phase::Instantiate);
+        assert!(
+            root.analysis
+                .as_ref()
+                .unwrap()
+                .matched_conditions
+                .iter()
+                .any(|value| value == "controlling_option=-Wtemplate-body")
+        );
         assert!(
             root.context_chains
                 .iter()
@@ -2046,6 +2073,21 @@ mod tests {
         assert_eq!(report.document.diagnostics.len(), 1);
         assert_eq!(report.document.captures.len(), 1);
         assert_eq!(report.document.captures[0].id, "diagnostics.sarif");
+        let repair = report
+            .document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert!(
+            repair
+                .evidence_graph
+                .edges
+                .iter()
+                .any(|edge| edge.authority == EvidenceAuthority::CompilerDeclared)
+        );
         assert!(report.document.validate().is_ok());
     }
 
@@ -2487,6 +2529,42 @@ src/main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n";
                     .raw_text
                     .contains("'missing_symbol' undeclared")
         }));
+        let repair = report
+            .document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert!(
+            repair
+                .evidence_graph
+                .edges
+                .iter()
+                .any(|edge| edge.authority == EvidenceAuthority::CompilerDeclared)
+        );
+        assert!(
+            repair
+                .evidence_graph
+                .edges
+                .iter()
+                .any(|edge| edge.authority == EvidenceAuthority::TextParserDerived)
+        );
+        assert!(
+            repair
+                .evidence_graph
+                .evidence
+                .iter()
+                .any(|item| matches!(item.target, EvidenceTarget::RawChunk { .. }))
+        );
+        assert!(
+            report
+                .document
+                .integrity_issues
+                .iter()
+                .any(|issue| issue.message.contains("sinks disagree"))
+        );
         assert!(report.document.diagnostics.iter().any(|node| {
             node.provenance.source == ProvenanceSource::ResidualText
                 && node
@@ -2994,6 +3072,21 @@ main.c:(.text+0x15): undefined reference to `foo`\n";
         }));
         assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
         assert_eq!(report.fallback_reason, Some(FallbackReason::ResidualOnly));
+        let repair = report
+            .document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert!(
+            repair
+                .evidence_graph
+                .evidence
+                .iter()
+                .any(|item| item.unresolved)
+        );
     }
 
     #[test]

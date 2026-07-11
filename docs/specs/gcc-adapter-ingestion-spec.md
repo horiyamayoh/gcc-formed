@@ -14,6 +14,17 @@ superseded_by: []
 
 # gcc-formed GCC Adapter / Ingestion 仕様書
 
+## Evidence authority and reversibility
+
+| Processing path | hierarchy authority | raw reversibility | available evidence |
+|---|---|---|---|
+| `DualSinkStructured` | `compiler_declared` for SARIF child/related relations; stderr augmentation remains `text_parser_derived` | structured capture refs plus exact stderr byte chunks when matched | child order, labeled ranges, fix-its, context/control-flow, options |
+| `SingleSinkStructured` | `compiler_declared` for GCC JSON/SARIF structure | structured artifact refs; native text when captured | child order, ranges, half-open fix-its, options, context |
+| `NativeTextCapture` | `text_parser_derived`; never compiler-declared from wording | exact raw stderr capture and matched byte chunks | bounded parser nodes, ordered include/macro/template frames, explicit partial completeness |
+| `Passthrough` | unresolved/heuristic only | exact whole raw capture | unresolved evidence envelope without invented structure |
+
+Every ingested node has capture provenance. Evidence graph records refer to existing nodes/captures/raw chunks; structured and text authorities serialize distinctly. SARIF fix-it columns retain 1-origin UTF-16 units and GCC JSON fix-its retain 1-origin display units, both with half-open boundaries. Locations retain raw/display paths, labels, source point units/origins, and source ordering. Controlling options are retained as machine-readable analysis evidence. When authoritative structured and renderable text facts disagree, both remain and an integrity warning is emitted; neither sink silently mutates the other.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

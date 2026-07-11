@@ -177,6 +177,11 @@ fn gcc_json_diagnostic_to_node(
                 .matched_conditions
                 .into_iter()
                 .map(Into::into)
+                .chain(
+                    gcc_json_option(&diagnostic).map(|option| {
+                        std::borrow::Cow::Owned(format!("controlling_option={option}"))
+                    }),
+                )
                 .collect(),
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
@@ -306,6 +311,9 @@ fn parse_fixit_text_edit(fixit: &Value) -> Option<TextEdit> {
         start_column: gcc_json_point_column(start)?,
         end_line: gcc_json_point_line(end)?,
         end_column: gcc_json_point_column(end)?,
+        column_origin: Some(1),
+        column_unit: Some(diag_core::ColumnUnit::Display),
+        boundary: diag_core::BoundarySemantics::HalfOpen,
         replacement: fixit.get("string")?.as_str()?.to_string(),
     };
 

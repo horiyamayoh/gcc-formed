@@ -134,8 +134,21 @@ pub struct TextEdit {
     pub end_line: u32,
     /// 1-based end column of the region to replace.
     pub end_column: u32,
+    /// Origin of edit columns when declared by the source format.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub column_origin: Option<u32>,
+    /// Unit used by edit columns when known.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub column_unit: Option<crate::ColumnUnit>,
+    /// Fix-it end boundary semantics.
+    #[serde(default = "default_edit_boundary")]
+    pub boundary: crate::BoundarySemantics,
     /// Text to insert in place of the removed region.
     pub replacement: String,
+}
+
+fn default_edit_boundary() -> crate::BoundarySemantics {
+    crate::BoundarySemantics::HalfOpen
 }
 
 /// A chain of contextual frames (e.g. include stack, template instantiation trace).

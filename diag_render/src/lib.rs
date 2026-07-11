@@ -341,13 +341,13 @@ mod tests {
     use crate::family::summarize_supporting_evidence;
     use crate::selector::select_groups;
     use diag_core::{
-        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, CompressionLevel,
-        ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticEpisode,
-        DocumentAnalysis, DocumentCompleteness, EpisodeGraph, GroupCascadeAnalysis,
-        GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
-        ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity, Suggestion,
-        SuggestionApplicability, SuppressedCountVisibility, SymbolContext, TextEdit, ToolInfo,
-        VisibilityFloor,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, BoundarySemantics, CaptureArtifact,
+        CompressionLevel, ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument,
+        DiagnosticEpisode, DocumentAnalysis, DocumentCompleteness, EpisodeGraph,
+        GroupCascadeAnalysis, GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin,
+        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
+        Severity, Suggestion, SuggestionApplicability, SuppressedCountVisibility, SymbolContext,
+        TextEdit, ToolInfo, VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -722,6 +722,9 @@ mod tests {
                 start_column: 13,
                 end_line: 2,
                 end_column: 13,
+                column_origin: None,
+                column_unit: None,
+                boundary: BoundarySemantics::HalfOpen,
                 replacement: ";".to_string(),
             }],
         )];
@@ -765,6 +768,9 @@ mod tests {
                 start_column: 8,
                 end_line: 4,
                 end_column: 13,
+                column_origin: None,
+                column_unit: None,
+                boundary: BoundarySemantics::HalfOpen,
                 replacement: "ready".to_string(),
             }],
         )];
@@ -803,6 +809,9 @@ mod tests {
                 start_column: 1,
                 end_line: 1,
                 end_column: 6,
+                column_origin: None,
+                column_unit: None,
+                boundary: BoundarySemantics::HalfOpen,
                 replacement: "result".to_string(),
             }],
         )];

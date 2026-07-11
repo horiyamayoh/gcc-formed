@@ -261,6 +261,11 @@ fn result_to_node(
                 .matched_conditions
                 .into_iter()
                 .map(Into::into)
+                .chain(
+                    sarif_warning_option(&result).map(|option| {
+                        std::borrow::Cow::Owned(format!("controlling_option={option}"))
+                    }),
+                )
                 .collect(),
             suppression_reason: family_decision.suppression_reason,
             collapsed_child_ids: Vec::new(),
@@ -486,6 +491,9 @@ fn parse_replacement(path: &str, replacement: &Value) -> Option<TextEdit> {
         start_column,
         end_line: json_u32(deleted_region, "endLine").unwrap_or(start_line),
         end_column,
+        column_origin: Some(1),
+        column_unit: Some(diag_core::ColumnUnit::Utf16CodeUnit),
+        boundary: diag_core::BoundarySemantics::HalfOpen,
         replacement: replacement_text,
     };
 
