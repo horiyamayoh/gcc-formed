@@ -18,6 +18,10 @@ superseded_by: []
 
 Raw compiler facts remain immutable and analysis is additive. `DiagnosticEvidenceGraph` and derived `RepairUnit` layers must preserve raw capture references. Every hidden evidence node must be reachable from exactly one visible RepairUnit; tentative or unresolved evidence is visible by default. `false merge` means combining independently repairable oracle defects, `false split` means dividing evidence resolved by one oracle repair, and `fact loss` means losing a reversible path to a compiler-owned fact. Runtime counterfactual compilation is forbidden; it is a test-oracle concern only.
 
+`DocumentAnalysis.repair_analysis` is optional and coexists with legacy `episode_graph` / `group_analysis`. Its evidence records reference existing diagnostic nodes, captures, or bounded raw chunks; it does not copy or mutate compiler facts. Edges serialize `authority` (`compiler_declared` or `wrapper_inferred`) separately from typed `proof_class` (`proven`, `strong`, `tentative`, `unresolved`). Units carry lead/member evidence, repair anchors, observability, grounded-action refs, visibility floor, raw capture refs, rationale edges, and compatibility refs. Tentative/unresolved units are always `never_hidden`.
+
+Validation rejects dangling/self references, duplicate evidence/edge/unit refs, missing raw provenance, invalid raw chunks, and hidden evidence not owned by exactly one visible unit. Analysis snapshots canonicalize graph/unit/ref ordering; facts-only snapshots remove the entire derived analysis. Oracle-only defect IDs never enter runtime IR.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

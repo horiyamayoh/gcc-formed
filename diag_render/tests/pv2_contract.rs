@@ -274,6 +274,7 @@ fn document_analysis(
         },
         group_analysis,
         stats: Default::default(),
+        repair_analysis: None,
     }
 }
 

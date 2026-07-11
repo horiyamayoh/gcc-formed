@@ -14,6 +14,10 @@ superseded_by: []
 
 # Public Machine-Readable Diagnostic Surface
 
+## Internal RepairUnit boundary
+
+`DiagnosticEvidenceGraph`, internal RepairUnit rationale edges, proof tags, legacy group/episode mappings, and oracle defect IDs are beta-internal IR and are not added to the public JSON contract by ADR-0037/#205. Public export remains projection-based and backward compatible. A later public RepairUnit surface requires an explicit schema/version decision; terminal text and internal snapshots must not be scraped as a substitute.
+
 This document defines the public JSON export contract for deterministic consumers of `gcc-formed`.
 
 The internal `Diagnostic IR` remains the product core. The public JSON export is a versioned projection of that internal model for CI, agents, wrappers, and other machine consumers. It is the public automation contract. It is not a promise that the internal IR, trace bundle, or terminal text are stable public interfaces.

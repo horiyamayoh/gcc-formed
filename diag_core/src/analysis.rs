@@ -85,6 +85,171 @@ pub struct DocumentAnalysis {
     /// Aggregate counts for the cascade analysis result.
     #[serde(default)]
     pub stats: CascadeStats,
+    /// Additive lossless evidence graph and RepairUnit analysis.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub repair_analysis: Option<RepairUnitAnalysis>,
+}
+
+/// Lossless evidence graph plus derived repair units. Runtime facts remain in
+/// `DiagnosticDocument`; this structure contains references and analysis only.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct RepairUnitAnalysis {
+    #[serde(default)]
+    pub evidence_graph: DiagnosticEvidenceGraph,
+    #[serde(default)]
+    pub repair_units: Vec<RepairUnit>,
+    #[serde(default)]
+    pub stats: RepairUnitStats,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct DiagnosticEvidenceGraph {
+    #[serde(default)]
+    pub evidence: Vec<EvidenceRecord>,
+    #[serde(default)]
+    pub edges: Vec<EvidenceEdge>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EvidenceRecord {
+    pub evidence_ref: String,
+    pub target: EvidenceTarget,
+    #[serde(default)]
+    pub hidden: bool,
+    #[serde(default)]
+    pub unresolved: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum EvidenceTarget {
+    DiagnosticNode {
+        node_ref: String,
+    },
+    Capture {
+        capture_ref: String,
+    },
+    RawChunk {
+        capture_ref: String,
+        start: u64,
+        end: u64,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct EvidenceEdge {
+    pub edge_ref: String,
+    pub from_evidence_ref: String,
+    pub to_evidence_ref: String,
+    pub kind: EvidenceEdgeKind,
+    pub authority: EvidenceAuthority,
+    pub proof_class: RepairProofClass,
+    #[serde(default)]
+    pub evidence_tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceAuthority {
+    CompilerDeclared,
+    WrapperInferred,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceEdgeKind {
+    CompilerHierarchy,
+    SameFixitSpan,
+    ContextFrontier,
+    SymbolRelation,
+    ExactDuplicate,
+    InferredDependency,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RepairProofClass {
+    Proven,
+    Strong,
+    Tentative,
+    Unresolved,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepairUnit {
+    pub repair_unit_ref: String,
+    pub visible: bool,
+    pub lead_evidence_ref: String,
+    #[serde(default)]
+    pub member_evidence_refs: Vec<String>,
+    #[serde(default)]
+    pub primary_repair_anchors: Vec<String>,
+    #[serde(default)]
+    pub alternate_repair_anchors: Vec<String>,
+    pub proof_class: RepairProofClass,
+    pub observability: RepairObservability,
+    #[serde(default)]
+    pub grounded_action_refs: Vec<String>,
+    pub visibility_floor: VisibilityFloor,
+    #[serde(default)]
+    pub raw_capture_refs: Vec<String>,
+    #[serde(default)]
+    pub rationale_edge_refs: Vec<String>,
+    #[serde(default)]
+    pub legacy_group_refs: Vec<String>,
+    #[serde(default)]
+    pub legacy_episode_refs: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RepairObservability {
+    Observable,
+    Composite,
+    CompilerUnobservable,
+    Unresolved,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct RepairUnitStats {
+    pub visible_unit_count: u32,
+    pub unresolved_evidence_count: u32,
+    pub merged_evidence_count: u32,
+    pub exact_duplicate_count: u32,
+    pub referenced_fact_count: u32,
+    pub total_fact_count: u32,
+}
+
+impl RepairUnitAnalysis {
+    /// Canonicalize all graph/unit collections for deterministic snapshots and fingerprints.
+    pub fn canonicalize(&mut self) {
+        self.evidence_graph
+            .evidence
+            .sort_by(|a, b| a.evidence_ref.cmp(&b.evidence_ref));
+        self.evidence_graph
+            .edges
+            .sort_by(|a, b| a.edge_ref.cmp(&b.edge_ref));
+        self.repair_units
+            .sort_by(|a, b| a.repair_unit_ref.cmp(&b.repair_unit_ref));
+        for unit in &mut self.repair_units {
+            unit.member_evidence_refs.sort();
+            unit.member_evidence_refs.dedup();
+            unit.primary_repair_anchors.sort();
+            unit.primary_repair_anchors.dedup();
+            unit.alternate_repair_anchors.sort();
+            unit.alternate_repair_anchors.dedup();
+            unit.grounded_action_refs.sort();
+            unit.grounded_action_refs.dedup();
+            unit.raw_capture_refs.sort();
+            unit.raw_capture_refs.dedup();
+            unit.rationale_edge_refs.sort();
+            unit.rationale_edge_refs.dedup();
+            unit.legacy_group_refs.sort();
+            unit.legacy_group_refs.dedup();
+            unit.legacy_episode_refs.sort();
+            unit.legacy_episode_refs.dedup();
+        }
+    }
 }
 
 /// Graph describing how logical diagnostic groups relate to each other.

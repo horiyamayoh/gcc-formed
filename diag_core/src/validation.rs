@@ -4,9 +4,10 @@ use semver::Version;
 
 use crate::{
     ArtifactKind, ArtifactStorage, DiagnosticDocument, DiagnosticNode, DocumentAnalysis,
-    DocumentCompleteness, EpisodeGraph, EpisodeRelation, GroupCascadeAnalysis, GroupCascadeRole,
-    IntegrityIssue, Location, NodeCompleteness, Phase, Provenance, ProvenanceSource, SemanticRole,
-    ValidationErrors, VisibilityFloor,
+    DocumentCompleteness, EpisodeGraph, EpisodeRelation, EvidenceTarget, GroupCascadeAnalysis,
+    GroupCascadeRole, IntegrityIssue, Location, NodeCompleteness, Phase, Provenance,
+    ProvenanceSource, RepairProofClass, RepairUnitAnalysis, SemanticRole, ValidationErrors,
+    VisibilityFloor,
 };
 
 impl DiagnosticDocument {
@@ -109,7 +110,7 @@ impl DiagnosticDocument {
             );
         }
         if let Some(document_analysis) = self.document_analysis.as_ref() {
-            validate_document_analysis(document_analysis, &mut errors);
+            validate_document_analysis(document_analysis, &capture_ids, &node_ids, &mut errors);
         }
         if errors.is_empty() {
             Ok(())
@@ -381,7 +382,12 @@ fn collect_descendant_node_ids(node: &DiagnosticNode, ids: &mut HashSet<String>)
     }
 }
 
-fn validate_document_analysis(document_analysis: &DocumentAnalysis, errors: &mut Vec<String>) {
+fn validate_document_analysis(
+    document_analysis: &DocumentAnalysis,
+    capture_ids: &HashSet<String>,
+    node_ids: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
     let mut group_refs = HashSet::new();
     let mut episode_members_by_ref: HashMap<String, HashSet<String>> = HashMap::new();
     let mut episode_lead_by_ref: HashMap<String, String> = HashMap::new();
@@ -426,6 +432,154 @@ fn validate_document_analysis(document_analysis: &DocumentAnalysis, errors: &mut
             &episode_lead_by_ref,
             errors,
         );
+    }
+    if let Some(repair_analysis) = &document_analysis.repair_analysis {
+        validate_repair_analysis(repair_analysis, capture_ids, node_ids, errors);
+    }
+}
+
+fn validate_repair_analysis(
+    analysis: &RepairUnitAnalysis,
+    capture_ids: &HashSet<String>,
+    node_ids: &HashSet<String>,
+    errors: &mut Vec<String>,
+) {
+    let mut evidence_refs = HashSet::new();
+    for evidence in &analysis.evidence_graph.evidence {
+        if !evidence_refs.insert(evidence.evidence_ref.clone()) {
+            errors.push(format!("duplicate evidence_ref {}", evidence.evidence_ref));
+        }
+        match &evidence.target {
+            EvidenceTarget::DiagnosticNode { node_ref } if !node_ids.contains(node_ref) => errors
+                .push(format!(
+                    "evidence {} dangling node_ref {}",
+                    evidence.evidence_ref, node_ref
+                )),
+            EvidenceTarget::Capture { capture_ref }
+            | EvidenceTarget::RawChunk { capture_ref, .. }
+                if !capture_ids.contains(capture_ref) =>
+            {
+                errors.push(format!(
+                    "evidence {} dangling capture_ref {}",
+                    evidence.evidence_ref, capture_ref
+                ))
+            }
+            EvidenceTarget::RawChunk { start, end, .. } if start >= end => errors.push(format!(
+                "evidence {} raw chunk must have start < end",
+                evidence.evidence_ref
+            )),
+            _ => {}
+        }
+    }
+    let mut edge_refs = HashSet::new();
+    for edge in &analysis.evidence_graph.edges {
+        if !edge_refs.insert(edge.edge_ref.clone()) {
+            errors.push(format!("duplicate edge_ref {}", edge.edge_ref));
+        }
+        if edge.from_evidence_ref == edge.to_evidence_ref {
+            errors.push(format!(
+                "evidence edge {} must not self-reference",
+                edge.edge_ref
+            ));
+        }
+        for reference in [&edge.from_evidence_ref, &edge.to_evidence_ref] {
+            if !evidence_refs.contains(reference) {
+                errors.push(format!(
+                    "edge {} dangling evidence ref {}",
+                    edge.edge_ref, reference
+                ));
+            }
+        }
+    }
+    let mut unit_refs = HashSet::new();
+    let mut hidden_membership: HashMap<String, usize> = HashMap::new();
+    for unit in &analysis.repair_units {
+        if !unit_refs.insert(unit.repair_unit_ref.clone()) {
+            errors.push(format!(
+                "duplicate repair_unit_ref {}",
+                unit.repair_unit_ref
+            ));
+        }
+        if !evidence_refs.contains(&unit.lead_evidence_ref) {
+            errors.push(format!(
+                "repair unit {} dangling lead evidence {}",
+                unit.repair_unit_ref, unit.lead_evidence_ref
+            ));
+        }
+        let members = unit
+            .member_evidence_refs
+            .iter()
+            .cloned()
+            .collect::<HashSet<_>>();
+        if members.len() != unit.member_evidence_refs.len() {
+            errors.push(format!(
+                "repair unit {} member refs must be unique",
+                unit.repair_unit_ref
+            ));
+        }
+        if !members.contains(&unit.lead_evidence_ref) {
+            errors.push(format!(
+                "repair unit {} lead must be a member",
+                unit.repair_unit_ref
+            ));
+        }
+        for member in &unit.member_evidence_refs {
+            if !evidence_refs.contains(member) {
+                errors.push(format!(
+                    "repair unit {} dangling member {}",
+                    unit.repair_unit_ref, member
+                ));
+            } else if unit.visible {
+                *hidden_membership.entry(member.clone()).or_insert(0) += 1;
+            }
+        }
+        if unit.raw_capture_refs.is_empty() {
+            errors.push(format!(
+                "repair unit {} requires raw provenance",
+                unit.repair_unit_ref
+            ));
+        }
+        for capture in &unit.raw_capture_refs {
+            if !capture_ids.contains(capture) {
+                errors.push(format!(
+                    "repair unit {} dangling raw capture {}",
+                    unit.repair_unit_ref, capture
+                ));
+            }
+        }
+        for edge in &unit.rationale_edge_refs {
+            if !edge_refs.contains(edge) {
+                errors.push(format!(
+                    "repair unit {} dangling rationale edge {}",
+                    unit.repair_unit_ref, edge
+                ));
+            }
+        }
+        if matches!(
+            unit.proof_class,
+            RepairProofClass::Tentative | RepairProofClass::Unresolved
+        ) && unit.visibility_floor != VisibilityFloor::NeverHidden
+        {
+            errors.push(format!(
+                "repair unit {} tentative/unresolved must be never_hidden",
+                unit.repair_unit_ref
+            ));
+        }
+    }
+    for evidence in &analysis.evidence_graph.evidence {
+        if evidence.hidden
+            && !evidence.unresolved
+            && hidden_membership
+                .get(&evidence.evidence_ref)
+                .copied()
+                .unwrap_or(0)
+                != 1
+        {
+            errors.push(format!(
+                "hidden evidence {} must belong to exactly one visible repair unit",
+                evidence.evidence_ref
+            ));
+        }
     }
 }
 

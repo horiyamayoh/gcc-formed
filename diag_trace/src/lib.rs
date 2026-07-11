@@ -1318,6 +1318,7 @@ mod tests {
                     duplicate_count: 0,
                     uncertain_count: 0,
                 },
+                repair_analysis: None,
             }),
             fingerprints: None,
         };

@@ -698,6 +698,7 @@ mod tests {
             },
             group_analysis,
             stats: Default::default(),
+            repair_analysis: None,
         }
     }
 

@@ -602,6 +602,7 @@ fn build_document_analysis(
         },
         group_analysis,
         stats,
+        repair_analysis: None,
     }
 }
 

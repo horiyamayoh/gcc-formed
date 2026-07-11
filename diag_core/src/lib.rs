@@ -181,7 +181,134 @@ mod tests {
                 duplicate_count: 0,
                 uncertain_count: 0,
             },
+            repair_analysis: None,
         }
+    }
+
+    fn sample_repair_analysis() -> RepairUnitAnalysis {
+        RepairUnitAnalysis {
+            evidence_graph: DiagnosticEvidenceGraph {
+                evidence: vec![
+                    EvidenceRecord {
+                        evidence_ref: "evidence-raw".into(),
+                        target: EvidenceTarget::Capture {
+                            capture_ref: "stderr.raw".into(),
+                        },
+                        hidden: false,
+                        unresolved: false,
+                    },
+                    EvidenceRecord {
+                        evidence_ref: "evidence-root".into(),
+                        target: EvidenceTarget::DiagnosticNode {
+                            node_ref: "root-1".into(),
+                        },
+                        hidden: false,
+                        unresolved: false,
+                    },
+                ],
+                edges: vec![EvidenceEdge {
+                    edge_ref: "edge-hierarchy".into(),
+                    from_evidence_ref: "evidence-root".into(),
+                    to_evidence_ref: "evidence-raw".into(),
+                    kind: EvidenceEdgeKind::CompilerHierarchy,
+                    authority: EvidenceAuthority::CompilerDeclared,
+                    proof_class: RepairProofClass::Proven,
+                    evidence_tags: vec!["compiler_child".into()],
+                }],
+            },
+            repair_units: vec![RepairUnit {
+                repair_unit_ref: "repair-1".into(),
+                visible: true,
+                lead_evidence_ref: "evidence-root".into(),
+                member_evidence_refs: vec!["evidence-root".into(), "evidence-raw".into()],
+                primary_repair_anchors: vec!["src/main.c:4:1".into()],
+                alternate_repair_anchors: vec![],
+                proof_class: RepairProofClass::Proven,
+                observability: RepairObservability::Observable,
+                grounded_action_refs: vec![],
+                visibility_floor: VisibilityFloor::NeverHidden,
+                raw_capture_refs: vec!["stderr.raw".into()],
+                rationale_edge_refs: vec!["edge-hierarchy".into()],
+                legacy_group_refs: vec!["group-1".into()],
+                legacy_episode_refs: vec!["episode-1".into()],
+            }],
+            stats: RepairUnitStats {
+                visible_unit_count: 1,
+                unresolved_evidence_count: 0,
+                merged_evidence_count: 2,
+                exact_duplicate_count: 0,
+                referenced_fact_count: 2,
+                total_fact_count: 2,
+            },
+        }
+    }
+
+    #[test]
+    fn repair_analysis_round_trips_and_facts_snapshot_excludes_it() {
+        let mut document = sample_document();
+        let mut legacy = sample_document_analysis();
+        legacy.repair_analysis = Some(sample_repair_analysis());
+        document.document_analysis = Some(legacy);
+        assert!(document.validate().is_ok());
+        let json = document.canonical_json().unwrap();
+        let decoded: DiagnosticDocument = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded, document);
+        let facts = snapshot_json(&document, SnapshotKind::FactsOnly).unwrap();
+        let analysis = snapshot_json(&document, SnapshotKind::AnalysisIncluded).unwrap();
+        assert!(!facts.contains("repair_units"));
+        assert!(analysis.contains("repair_units"));
+        assert!(analysis.contains("compiler_declared"));
+    }
+
+    #[test]
+    fn repair_analysis_validation_rejects_dangling_duplicate_and_hidden_orphan() {
+        let mut document = sample_document();
+        let mut repair = sample_repair_analysis();
+        repair.evidence_graph.evidence[0].hidden = true;
+        repair.evidence_graph.evidence[0].evidence_ref = "dangling-hidden".into();
+        repair.repair_units.push(repair.repair_units[0].clone());
+        let mut legacy = sample_document_analysis();
+        legacy.repair_analysis = Some(repair);
+        document.document_analysis = Some(legacy);
+        let errors = document.validate().unwrap_err().errors.join("\n");
+        assert!(errors.contains("duplicate repair_unit_ref"));
+        assert!(errors.contains("dangling member"));
+        assert!(errors.contains("hidden evidence dangling-hidden"));
+    }
+
+    #[test]
+    fn tentative_units_must_never_hide_and_edges_must_not_self_reference() {
+        let mut document = sample_document();
+        let mut repair = sample_repair_analysis();
+        repair.repair_units[0].proof_class = RepairProofClass::Tentative;
+        repair.repair_units[0].visibility_floor = VisibilityFloor::HiddenAllowed;
+        repair.evidence_graph.edges[0].to_evidence_ref = "evidence-root".into();
+        let mut legacy = sample_document_analysis();
+        legacy.repair_analysis = Some(repair);
+        document.document_analysis = Some(legacy);
+        let errors = document.validate().unwrap_err().errors.join("\n");
+        assert!(errors.contains("must not self-reference"));
+        assert!(errors.contains("tentative/unresolved must be never_hidden"));
+    }
+
+    #[test]
+    fn repair_analysis_snapshot_order_is_canonical() {
+        let mut left = sample_document();
+        let mut right = sample_document();
+        let ordered = sample_repair_analysis();
+        let mut reversed = ordered.clone();
+        reversed.evidence_graph.evidence.reverse();
+        reversed.repair_units[0].member_evidence_refs.reverse();
+        let mut left_analysis = sample_document_analysis();
+        left_analysis.repair_analysis = Some(ordered);
+        let mut right_analysis = sample_document_analysis();
+        right_analysis.repair_analysis = Some(reversed);
+        left.document_analysis = Some(left_analysis);
+        right.document_analysis = Some(right_analysis);
+        assert_eq!(
+            snapshot_json(&left, SnapshotKind::AnalysisIncluded).unwrap(),
+            snapshot_json(&right, SnapshotKind::AnalysisIncluded).unwrap()
+        );
     }
 
     #[test]

@@ -121,6 +121,12 @@ pub fn normalize_for_snapshot_kind(
             strip_analysis(diagnostic);
         }
         copy.document_analysis = None;
+    } else if let Some(repair) = copy
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    {
+        repair.canonicalize();
     }
     copy.refresh_fingerprints();
     copy
