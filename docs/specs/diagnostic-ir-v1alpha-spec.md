@@ -837,6 +837,21 @@ cannot-merge signal である。fix-it がない weak native-text evidence は r
 は product が発見・推測する対象ではない。unterminated literal/comment も compiler が示した最初の
 location/edit より後の anchor を発明してはならない。
 
+#### Call-site and expansion frontier relation
+
+Structured diagnostics may form a `ContextFrontier / Proven` must-link only when both the complete
+template/macro frontier and the user invocation anchor are identical. The same declaration/frontier
+at different call-site anchors is a cannot-merge signal. Residual-text reconstructed frontiers are
+`Strong` review evidence and cannot reduce visible unit count by themselves. Compiler child
+candidates, requirement notes, and declaration evidence remain members of the triggering unit.
+
+The invocation/expression location is the primary correction anchor. Template declaration, macro
+definition, macro expansion, include, and vendor/system frames remain alternate anchors and raw
+traceable context; ownership alone never deletes them. When macro definition versus invocation
+responsibility is ambiguous, both anchors remain available and the unit stays `never_hidden` unless
+stronger compiler evidence establishes otherwise. Expected/actual facts require labeled structured
+ranges or signatures and must not be synthesized from a family/message category.
+
 ### 15.3 `EpisodeGraph`
 
 | フィールド | 型 | 必須 | 意味 |

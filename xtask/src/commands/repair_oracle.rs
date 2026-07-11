@@ -110,15 +110,17 @@ pub(crate) fn run_repair_oracle(
             continue;
         }
         if options.filter.as_deref().is_some_and(|filter| {
-            !spec.fixture_id.contains(filter)
-                && !spec
-                    .diagnostic_shape
-                    .as_deref()
-                    .is_some_and(|value| value.contains(filter))
-                && !spec
-                    .trap_kind
-                    .as_deref()
-                    .is_some_and(|value| value.contains(filter))
+            !filter.split(',').map(str::trim).any(|term| {
+                spec.fixture_id.contains(term)
+                    || spec
+                        .diagnostic_shape
+                        .as_deref()
+                        .is_some_and(|value| value.contains(term))
+                    || spec
+                        .trap_kind
+                        .as_deref()
+                        .is_some_and(|value| value.contains(term))
+            })
         }) {
             continue;
         }

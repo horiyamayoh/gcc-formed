@@ -13,6 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub fn infer_repair_units(document: &mut DiagnosticDocument) {
     ensure_evidence_records(document);
     add_syntax_fixit_edges(document);
+    add_structural_frontier_edges(document);
     add_exact_duplicate_edges(document);
 
     let Some(graph) = document
@@ -136,6 +137,15 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
             .collect::<Vec<_>>();
         location_anchors.sort();
         location_anchors.dedup();
+        let mut context_anchors = members
+            .iter()
+            .filter_map(|reference| node_map.get(reference))
+            .flat_map(|node| node.context_chains.iter())
+            .flat_map(|chain| chain.frames.iter())
+            .filter_map(context_frame_anchor)
+            .collect::<Vec<_>>();
+        context_anchors.sort();
+        context_anchors.dedup();
         let mut grounded_actions = grounded_actions(&members, &node_map);
         grounded_actions.sort();
         grounded_actions.dedup();
@@ -157,7 +167,10 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
             } else {
                 fixit_anchors
             },
-            alternate_repair_anchors: location_anchors,
+            alternate_repair_anchors: location_anchors
+                .into_iter()
+                .chain(context_anchors)
+                .collect(),
             proof_class,
             observability: if rationale_edges.is_empty() {
                 RepairObservability::Unresolved
@@ -231,6 +244,7 @@ fn is_must_link(edge: &EvidenceEdge) -> bool {
             edge.kind,
             EvidenceEdgeKind::CompilerHierarchy
                 | EvidenceEdgeKind::SameFixitSpan
+                | EvidenceEdgeKind::ContextFrontier
                 | EvidenceEdgeKind::ExactDuplicate
                 | EvidenceEdgeKind::SymbolRelation
         )
@@ -345,6 +359,95 @@ fn grounded_actions(members: &[String], nodes: &BTreeMap<String, &DiagnosticNode
         }
     }
     actions
+}
+
+fn add_structural_frontier_edges(document: &mut DiagnosticDocument) {
+    let mut buckets = BTreeMap::<String, Vec<(String, RepairProofClass)>>::new();
+    for node in &document.diagnostics {
+        let Some(invocation_anchor) = repair_anchor(node) else {
+            continue;
+        };
+        for chain in &node.context_chains {
+            if !matches!(
+                chain.kind,
+                diag_core::ContextChainKind::TemplateInstantiation
+                    | diag_core::ContextChainKind::MacroExpansion
+            ) {
+                continue;
+            }
+            let frontier = chain
+                .frames
+                .iter()
+                .filter_map(context_frame_anchor)
+                .collect::<Vec<_>>()
+                .join(">");
+            if frontier.is_empty() {
+                continue;
+            }
+            let proof = if matches!(
+                node.provenance.source,
+                diag_core::ProvenanceSource::ResidualText
+            ) {
+                RepairProofClass::Strong
+            } else {
+                RepairProofClass::Proven
+            };
+            buckets
+                .entry(format!("{:?}|{invocation_anchor}|{frontier}", chain.kind))
+                .or_default()
+                .push((format!("node:{}", node.id), proof));
+        }
+    }
+    let Some(repair) = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    else {
+        return;
+    };
+    for (frontier, mut refs) in buckets {
+        refs.sort_by(|left, right| left.0.cmp(&right.0));
+        refs.dedup_by(|left, right| left.0 == right.0);
+        for right in refs.iter().skip(1) {
+            let left = &refs[0];
+            let proof = if left.1 == RepairProofClass::Proven && right.1 == RepairProofClass::Proven
+            {
+                RepairProofClass::Proven
+            } else {
+                RepairProofClass::Strong
+            };
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("frontier:{}->{}:{frontier}", left.0, right.0),
+                from_evidence_ref: left.0.clone(),
+                to_evidence_ref: right.0.clone(),
+                kind: EvidenceEdgeKind::ContextFrontier,
+                authority: if proof == RepairProofClass::Proven {
+                    EvidenceAuthority::StructuredAdapterDerived
+                } else {
+                    EvidenceAuthority::TextParserDerived
+                },
+                proof_class: proof,
+                evidence_tags: vec!["same_invocation_anchor_and_frontier".into()],
+            });
+        }
+    }
+    repair
+        .evidence_graph
+        .edges
+        .sort_by(|left, right| left.edge_ref.cmp(&right.edge_ref));
+    repair
+        .evidence_graph
+        .edges
+        .dedup_by(|left, right| left.edge_ref == right.edge_ref);
+}
+
+fn context_frame_anchor(frame: &diag_core::ContextFrame) -> Option<String> {
+    Some(format!(
+        "{}:{}:{}",
+        frame.path.as_deref()?,
+        frame.line?,
+        frame.column.unwrap_or(1)
+    ))
 }
 
 fn add_exact_duplicate_edges(document: &mut DiagnosticDocument) {

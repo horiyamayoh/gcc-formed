@@ -2391,7 +2391,12 @@ pub(crate) fn select_fixtures<'a>(
         })
         .filter(|fixture| {
             family_filter
-                .map(|needle| fixture.family_key() == needle)
+                .map(|needles| {
+                    needles
+                        .split(',')
+                        .map(str::trim)
+                        .any(|needle| fixture.family_key() == needle)
+                })
                 .unwrap_or(true)
         })
         .filter(|fixture| match subset {

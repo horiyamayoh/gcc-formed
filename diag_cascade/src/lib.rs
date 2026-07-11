@@ -820,6 +820,204 @@ mod tests {
         assert!(unit.grounded_action_refs.is_empty());
     }
 
+    fn template_frontier(path: &str, line: u32) -> ContextChain {
+        ContextChain {
+            kind: ContextChainKind::TemplateInstantiation,
+            frames: vec![ContextFrame {
+                label: "structured instantiation frame".into(),
+                path: Some(path.into()),
+                line: Some(line),
+                column: Some(5),
+            }],
+        }
+    }
+
+    #[test]
+    fn semantic_same_call_site_and_frontier_form_one_unit() {
+        let mut primary = sample_node(
+            "call-primary",
+            "wording a",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        let mut requirement = sample_node(
+            "call-requirement",
+            "totally different wording",
+            Origin::Gcc,
+            Phase::Constraints,
+            "concepts",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        primary
+            .context_chains
+            .push(template_frontier("src/main.cpp", 12));
+        requirement
+            .context_chains
+            .push(template_frontier("src/main.cpp", 12));
+        let mut document = sample_document(vec![primary, requirement]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        assert_eq!(repair.repair_units[0].member_evidence_refs.len(), 2);
+        assert!(
+            repair.repair_units[0]
+                .alternate_repair_anchors
+                .contains(&"src/main.cpp:12:5".into())
+        );
+    }
+
+    #[test]
+    fn semantic_same_template_at_two_call_sites_remains_two_units() {
+        let mut first = sample_node(
+            "call-one",
+            "same wording",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        let mut second = sample_node(
+            "call-two",
+            "same wording",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "template",
+            Some("src/main.cpp"),
+            Some(13),
+            Ownership::User,
+        );
+        first
+            .context_chains
+            .push(template_frontier("include/template.hpp", 40));
+        second
+            .context_chains
+            .push(template_frontier("include/template.hpp", 40));
+        let mut document = sample_document(vec![first, second]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 2);
+        assert!(repair.repair_units.iter().all(|unit| unit.visible));
+    }
+
+    #[test]
+    fn semantic_residual_frontier_is_reviewable_and_does_not_merge() {
+        let mut first = sample_node(
+            "native-one",
+            "localized a",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "unknown",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        let mut second = sample_node(
+            "native-two",
+            "localized b",
+            Origin::Gcc,
+            Phase::Instantiate,
+            "unknown",
+            Some("src/main.cpp"),
+            Some(12),
+            Ownership::User,
+        );
+        first.provenance.source = ProvenanceSource::ResidualText;
+        second.provenance.source = ProvenanceSource::ResidualText;
+        first
+            .context_chains
+            .push(template_frontier("src/main.cpp", 12));
+        second
+            .context_chains
+            .push(template_frontier("src/main.cpp", 12));
+        let mut document = sample_document(vec![first, second]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 2);
+        assert!(repair.evidence_graph.edges.iter().any(|edge| edge.kind
+            == diag_core::EvidenceEdgeKind::ContextFrontier
+            && edge.proof_class == RepairProofClass::Strong));
+    }
+
+    #[test]
+    fn semantic_macro_keeps_invocation_and_definition_anchors() {
+        let mut node = sample_node(
+            "macro",
+            "macro diagnostic",
+            Origin::Gcc,
+            Phase::Preprocess,
+            "unknown",
+            Some("src/main.c"),
+            Some(8),
+            Ownership::User,
+        );
+        node.context_chains.push(ContextChain {
+            kind: ContextChainKind::MacroExpansion,
+            frames: vec![
+                ContextFrame {
+                    label: "invocation".into(),
+                    path: Some("src/main.c".into()),
+                    line: Some(8),
+                    column: Some(3),
+                },
+                ContextFrame {
+                    label: "definition".into(),
+                    path: Some("include/macros.h".into()),
+                    line: Some(2),
+                    column: Some(1),
+                },
+            ],
+        });
+        let mut document = sample_document(vec![node]);
+        infer_repair_units(&mut document);
+        let unit = &document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap()
+            .repair_units[0];
+        assert_eq!(unit.primary_repair_anchors, ["src/main.c:8:1"]);
+        assert!(
+            unit.alternate_repair_anchors
+                .contains(&"src/main.c:8:3".into())
+        );
+        assert!(
+            unit.alternate_repair_anchors
+                .contains(&"include/macros.h:2:1".into())
+        );
+        assert_eq!(
+            unit.visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+    }
+
     #[test]
     fn logical_group_extraction_is_deterministic() {
         let mut same_file_left = sample_node(
