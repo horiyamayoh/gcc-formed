@@ -72,12 +72,7 @@ superseded_by: []
 | [ADR-0034](./adr-0034-presentation-v2-subject-first-blocks.md) | Presentation V2 subject-first blocks stay separate from the machine contract | Accepted | subject-first block grammar と machine contract の境界を固定する |
 | [ADR-0035](./adr-0035-gcc-9-15-public-contract-parity.md) | GCC 9-15 share one public contract | Accepted | in-scope bands の public hierarchy を止める |
 | [ADR-0036](./adr-0036-presentation-v2-default-promotion-and-rollback.md) | Presentation V2 becomes the beta default while preserving explicit rollback presets | Accepted | default promotion と rollback preset の current baseline を固定する |
-
-### Proposed ADRs awaiting human review
-
-| ADR | Title | Status | 目的 |
-|---|---|---|---|
-| [ADR-0037](./adr-0037-repair-unit-product-identity.md) | RepairUnit is the product identity | Proposed | independently actionable repair unitを表示 identity として固定する。#202 reviewer sign-off 待ち |
+| [ADR-0037](./adr-0037-repair-unit-product-identity.md) | RepairUnit is the product identity | Accepted | independently actionable repair unit を表示 identity として固定する |
 
 ### Historical-Only Superseded ADRs
 

@@ -14,6 +14,10 @@ superseded_by: []
 
 # gcc-formed Quality / Corpus / Test Gate 仕様書
 
+## RepairUnit correctness vocabulary
+
+RepairUnit correctness is gated by observable-unit count, false merge, false split, and fact loss rather than family-table completeness. Counterfactual repair patches may establish causal ground truth in test harnesses; product runtime must not patch or recompile source. Unknown-family rate and family count are inventory signals, not completion criteria.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

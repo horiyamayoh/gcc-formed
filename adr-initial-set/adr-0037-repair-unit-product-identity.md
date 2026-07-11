@@ -1,16 +1,16 @@
 ---
 doc_role: current-authority
-lifecycle_status: proposed
+lifecycle_status: accepted-baseline
 audience: both
-use_for: Review of RepairUnit identity before IR and renderer implementation.
-do_not_use_for: Driving implementation until reviewer sign-off changes this ADR to Accepted.
+use_for: RepairUnit identity, observable-defect scope, suppression proof, and migration decisions.
+do_not_use_for: Historical score-first or family-completeness behavior.
 supersedes: []
 superseded_by: []
 ---
 
 # ADR-0037: RepairUnit is the product identity
 
-- Status: **Proposed — human reviewer sign-off required**
+- Status: **Accepted**
 - Date: 2026-07-11
 - Issue: #202
 
@@ -74,7 +74,7 @@ The corpus moves toward repair patches and causal labels; inference favors separ
 ## Acceptance record
 
 - Authoring and conflict check: complete
-- Human reviewer: **pending**
-- Review decision/date: **pending**
+- Human reviewer: repository owner (`horiyamayoh`)
+- Review decision/date: **Approved, 2026-07-11**
 
-This ADR must not be marked Accepted, and #203–#218 must not treat it as authority, until a human reviewer records approval.
+Approval authorizes #203–#218 to use this ADR as current authority without further migration pauses.

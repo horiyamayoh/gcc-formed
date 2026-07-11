@@ -21,6 +21,10 @@ Keep `README.md`, release notes, support docs, contribution docs, and GitHub tem
 
 ## 1. Canonical vocabulary
 
+### RepairUnit and observable defect
+
+`RepairUnit` is the product identity for one visible diagnostic item: evidence from the current invocation resolved by the same minimal edit, or evidence kept separate because independence cannot be disproved. An `observable defect` is an independently actionable defect distinguishable from evidence GCC emitted in that invocation. The product does not claim defects the compiler did not observe. Unknown family remains in scope and visible; family completeness is not a correctness metric.
+
 ### VersionBand
 
 Compiler band used to reason about product scope.

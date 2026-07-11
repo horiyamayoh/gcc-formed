@@ -14,6 +14,10 @@ superseded_by: []
 
 # gcc-formed / cc-formed Diagnostic IR v1alpha 仕様書
 
+## RepairUnit migration contract
+
+Raw compiler facts remain immutable and analysis is additive. `DiagnosticEvidenceGraph` and derived `RepairUnit` layers must preserve raw capture references. Every hidden evidence node must be reachable from exactly one visible RepairUnit; tentative or unresolved evidence is visible by default. `false merge` means combining independently repairable oracle defects, `false split` means dividing evidence resolved by one oracle repair, and `fact loss` means losing a reversible path to a compiler-owned fact. Runtime counterfactual compilation is forbidden; it is a test-oracle concern only.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
