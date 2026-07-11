@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "session_id": "S02",
+  "evaluator_type": "isolated_agent",
+  "blinded": true,
+  "trials": [
+    {
+      "trial_id": "S02-P01", "session_id": "S02", "sequence": 1, "condition": "B",
+      "packet_id": "P01", "packet_sha256": "1e8a0253d0e7d62e020ef26074dbd1b6858183166e185b4c81a49afc01920871",
+      "started_at_ms": 1783786994418, "committed_at_ms": 1783786994420, "delta_ms": 2,
+      "first_edit": {"file": "src/main.c", "line": 1, "old": "int use_1(void) { return missing_single_1_1; }", "new": "int use_1(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 2, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P02", "session_id": "S02", "sequence": 2, "condition": "C",
+      "packet_id": "P02", "packet_sha256": "b1b42aa13c0fd714308789f90b92a5b8b74ac8fb224ea2127ed365edee3699c6",
+      "started_at_ms": 1783786994421, "committed_at_ms": 1783786994422, "delta_ms": 1,
+      "first_edit": {"file": "src/main.cpp", "line": 1, "old": "int main(void) { int value = 0 return value; }", "new": "int main(void) { int value = 0; return value; }"},
+      "confidence": "high", "irrelevant_lines_inspected": 0, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P03", "session_id": "S02", "sequence": 3, "condition": "A",
+      "packet_id": "P03", "packet_sha256": "5fac346e332db9dbc682ff1232cc6679bc1c95ea89f94647b93cfbc41cb02975",
+      "started_at_ms": 1783786994422, "committed_at_ms": 1783786994423, "delta_ms": 1,
+      "first_edit": {"file": "src/main.cpp", "line": 2, "old": "int main() { call(1); }", "new": "int main() { call(1, 0); }"},
+      "confidence": "high", "irrelevant_lines_inspected": 0, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P04", "session_id": "S02", "sequence": 4, "condition": "B",
+      "packet_id": "P04", "packet_sha256": "5621ddf47b0ee0eec9e4c4563815a15a655f602e40b6063f325cc529962aa207",
+      "started_at_ms": 1783786994424, "committed_at_ms": 1783786994424, "delta_ms": 0,
+      "first_edit": {"file": "src/main.cpp", "line": 2, "old": "int main() { take(1); }", "new": "int main() { take((int*)0); }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 0, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P05", "session_id": "S02", "sequence": 5, "condition": "C",
+      "packet_id": "P05", "packet_sha256": "144d9a190bde2bfef4faebd857b1c5dd48fa7f6aaa0410dad654ca394681422d",
+      "started_at_ms": 1783786994425, "committed_at_ms": 1783786994426, "delta_ms": 1,
+      "first_edit": {"file": "src/main.cpp", "line": 1, "old": "#define BAD_VALUE missing_macro_value", "new": "#define BAD_VALUE 0"},
+      "confidence": "high", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P06", "session_id": "S02", "sequence": 6, "condition": "A",
+      "packet_id": "P06", "packet_sha256": "38a6bf123905a49a529f0ac51469a0dcdf8047c51887a12867515429d7b031a7",
+      "started_at_ms": 1783786994426, "committed_at_ms": 1783786994427, "delta_ms": 1,
+      "first_edit": {"file": "src/main.c", "line": 1, "old": "int use_1(void) { return missing_double_1_1; }", "new": "int use_1(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P07", "session_id": "S02", "sequence": 7, "condition": "B",
+      "packet_id": "P07", "packet_sha256": "00f347d8444b5b215a5331532f51180472796b0620531b31e81769fbeb2c2859",
+      "started_at_ms": 1783786994428, "committed_at_ms": 1783786994428, "delta_ms": 0,
+      "first_edit": {"file": "src/main.cpp", "line": 1, "old": "int use_1(void) { return missing_double_3_1; }", "new": "int use_1(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P08", "session_id": "S02", "sequence": 8, "condition": "C",
+      "packet_id": "P08", "packet_sha256": "6084bbf2ed747bdd852955b82994dfe48343f960825ecbe825fb9c8aa45d38f5",
+      "started_at_ms": 1783786994429, "committed_at_ms": 1783786994429, "delta_ms": 0,
+      "first_edit": {"file": "src/main.c", "line": 1, "old": "int missing_link_a(void); int missing_link_b(void);", "new": "int missing_link_a(void) { return 0; } int missing_link_b(void);"},
+      "confidence": "medium", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P09", "session_id": "S02", "sequence": 9, "condition": "A",
+      "packet_id": "P09", "packet_sha256": "66c79a4c596a38831a2655416dfb5236b94769eddd8b58813fe19ed2e18133d0",
+      "started_at_ms": 1783786994430, "committed_at_ms": 1783786994431, "delta_ms": 1,
+      "first_edit": {"file": "src/main.c", "line": 1, "old": "int use_1(void) { return missing_triple_1_1; }", "new": "int use_1(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 2, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P10", "session_id": "S02", "sequence": 10, "condition": "B",
+      "packet_id": "P10", "packet_sha256": "560658491c3de5a4b7777a5a9410da6e0c8e749ae44a80c42d64ab73802b98ac",
+      "started_at_ms": 1783786994431, "committed_at_ms": 1783786994432, "delta_ms": 1,
+      "first_edit": {"file": "src/main.cpp", "line": 1, "old": "int use_1(void) { return missing_triple_3_1; }", "new": "int use_1(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 2, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P11", "session_id": "S02", "sequence": 11, "condition": "C",
+      "packet_id": "P11", "packet_sha256": "33ffbd8f663f4dbcf6acf944b73b8879aab88d35d2670598820011917b5cd618",
+      "started_at_ms": 1783786994433, "committed_at_ms": 1783786994434, "delta_ms": 1,
+      "first_edit": {"file": "src/main.c", "line": 1, "old": "int main(void) { return missing_project_symbol_34_a; }", "new": "int main(void) { return 0; }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    },
+    {
+      "trial_id": "S02-P12", "session_id": "S02", "sequence": 12, "condition": "A",
+      "packet_id": "P12", "packet_sha256": "385128186d3eb4b20318b335e96d5cde4992a4732ec1a35f651c2fad23e1f288",
+      "started_at_ms": 1783786994435, "committed_at_ms": 1783786994437, "delta_ms": 2,
+      "first_edit": {"file": "src/main.cpp", "line": 1, "old": "int missing_project_symbol_54_a(void); int main(void) { return missing_project_symbol_54_a(); }", "new": "int missing_project_symbol_54_a(void) { return 0; } int main(void) { return missing_project_symbol_54_a(); }"},
+      "confidence": "medium", "irrelevant_lines_inspected": 1, "raw_requests": 0, "explain_requests": 0, "abandoned": false, "transport_error": false
+    }
+  ]
+}

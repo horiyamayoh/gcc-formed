@@ -128,7 +128,7 @@ def main() -> None:
     Path("/tmp/repair-unit-agent-answer-key.json").write_text(
         json.dumps(answer_key, indent=2) + "\n", encoding="utf-8"
     )
-    for session_index in range(8):
+    for session_index in range(11):
         trials = []
         for packet_index, (base, conditions, packet_sha) in enumerate(public_packets):
             condition = "ABC"[(packet_index + session_index) % 3]
