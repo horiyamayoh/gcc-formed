@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// deliberately absent from this algorithm.
 pub fn infer_repair_units(document: &mut DiagnosticDocument) {
     ensure_evidence_records(document);
+    add_syntax_fixit_edges(document);
     add_exact_duplicate_edges(document);
 
     let Some(graph) = document
@@ -119,13 +120,25 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
             .map(|edge| edge.proof_class)
             .min_by_key(proof_rank)
             .unwrap_or(RepairProofClass::Unresolved);
-        let mut anchors = members
+        let mut fixit_anchors = members
+            .iter()
+            .filter_map(|reference| node_map.get(reference))
+            .flat_map(|node| node.suggestions.iter())
+            .flat_map(|suggestion| suggestion.edits.iter())
+            .map(edit_anchor)
+            .collect::<Vec<_>>();
+        fixit_anchors.sort();
+        fixit_anchors.dedup();
+        let mut location_anchors = members
             .iter()
             .filter_map(|reference| node_map.get(reference))
             .filter_map(|node| repair_anchor(node))
             .collect::<Vec<_>>();
-        anchors.sort();
-        anchors.dedup();
+        location_anchors.sort();
+        location_anchors.dedup();
+        let mut grounded_actions = grounded_actions(&members, &node_map);
+        grounded_actions.sort();
+        grounded_actions.dedup();
         let mut raw_refs = members
             .iter()
             .filter_map(|reference| node_map.get(reference))
@@ -139,15 +152,19 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
             visible: true,
             lead_evidence_ref: lead,
             member_evidence_refs: members,
-            primary_repair_anchors: anchors,
-            alternate_repair_anchors: Vec::new(),
+            primary_repair_anchors: if fixit_anchors.is_empty() {
+                location_anchors.clone()
+            } else {
+                fixit_anchors
+            },
+            alternate_repair_anchors: location_anchors,
             proof_class,
             observability: if rationale_edges.is_empty() {
                 RepairObservability::Unresolved
             } else {
                 RepairObservability::Observable
             },
-            grounded_action_refs: Vec::new(),
+            grounded_action_refs: grounded_actions,
             visibility_floor: if matches!(
                 proof_class,
                 RepairProofClass::Tentative | RepairProofClass::Unresolved
@@ -226,7 +243,10 @@ fn independent_anchor_conflict(
     right: &str,
     kind: EvidenceEdgeKind,
 ) -> bool {
-    if kind == EvidenceEdgeKind::ExactDuplicate {
+    if matches!(
+        kind,
+        EvidenceEdgeKind::ExactDuplicate | EvidenceEdgeKind::SameFixitSpan
+    ) {
         return false;
     }
     let left_anchors = union.anchors(left);
@@ -234,6 +254,97 @@ fn independent_anchor_conflict(
     !left_anchors.is_empty()
         && !right_anchors.is_empty()
         && left_anchors.is_disjoint(&right_anchors)
+}
+
+fn add_syntax_fixit_edges(document: &mut DiagnosticDocument) {
+    let mut edits = BTreeMap::<String, Vec<String>>::new();
+    for node in &document.diagnostics {
+        collect_syntax_edits(node, &mut edits);
+    }
+    let Some(repair) = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    else {
+        return;
+    };
+    for (edit_key, mut refs) in edits {
+        refs.sort();
+        refs.dedup();
+        for right in refs.iter().skip(1) {
+            let left = &refs[0];
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("same-fixit:{left}->{right}:{edit_key}"),
+                from_evidence_ref: left.clone(),
+                to_evidence_ref: right.clone(),
+                kind: EvidenceEdgeKind::SameFixitSpan,
+                authority: EvidenceAuthority::CompilerDeclared,
+                proof_class: RepairProofClass::Proven,
+                evidence_tags: vec!["compiler_fixit_exact_edit".into()],
+            });
+        }
+    }
+    repair
+        .evidence_graph
+        .edges
+        .sort_by(|left, right| left.edge_ref.cmp(&right.edge_ref));
+    repair
+        .evidence_graph
+        .edges
+        .dedup_by(|left, right| left.edge_ref == right.edge_ref);
+}
+
+fn collect_syntax_edits(node: &DiagnosticNode, out: &mut BTreeMap<String, Vec<String>>) {
+    if matches!(
+        node.phase,
+        diag_core::Phase::Parse | diag_core::Phase::Preprocess
+    ) {
+        for suggestion in &node.suggestions {
+            for edit in &suggestion.edits {
+                out.entry(edit_identity(edit))
+                    .or_default()
+                    .push(format!("node:{}", node.id));
+            }
+        }
+    }
+    for child in &node.children {
+        collect_syntax_edits(child, out);
+    }
+}
+
+fn edit_identity(edit: &diag_core::TextEdit) -> String {
+    format!(
+        "{}:{}:{}:{}:{}:{:?}:{}",
+        edit.path,
+        edit.start_line,
+        edit.start_column,
+        edit.end_line,
+        edit.end_column,
+        edit.boundary,
+        edit.replacement
+    )
+}
+
+fn edit_anchor(edit: &diag_core::TextEdit) -> String {
+    format!(
+        "{}:{}:{}-{}:{}",
+        edit.path, edit.start_line, edit.start_column, edit.end_line, edit.end_column
+    )
+}
+
+fn grounded_actions(members: &[String], nodes: &BTreeMap<String, &DiagnosticNode>) -> Vec<String> {
+    let mut actions = Vec::new();
+    for reference in members {
+        let Some(node) = nodes.get(reference) else {
+            continue;
+        };
+        for (suggestion_index, suggestion) in node.suggestions.iter().enumerate() {
+            for edit_index in 0..suggestion.edits.len() {
+                actions.push(format!("fixit:{reference}:{suggestion_index}:{edit_index}"));
+            }
+        }
+    }
+    actions
 }
 
 fn add_exact_duplicate_edges(document: &mut DiagnosticDocument) {

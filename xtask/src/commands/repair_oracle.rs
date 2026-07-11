@@ -9,6 +9,7 @@ use std::process::Command;
 pub(crate) struct RepairOracleOptions {
     pub(crate) root: PathBuf,
     pub(crate) fixture: Option<String>,
+    pub(crate) filter: Option<String>,
     pub(crate) check: bool,
 }
 
@@ -108,6 +109,19 @@ pub(crate) fn run_repair_oracle(
         {
             continue;
         }
+        if options.filter.as_deref().is_some_and(|filter| {
+            !spec.fixture_id.contains(filter)
+                && !spec
+                    .diagnostic_shape
+                    .as_deref()
+                    .is_some_and(|value| value.contains(filter))
+                && !spec
+                    .trap_kind
+                    .as_deref()
+                    .is_some_and(|value| value.contains(filter))
+        }) {
+            continue;
+        }
         selected += 1;
         let report = evaluate(path.parent().unwrap(), &spec)?;
         coverage.push(CoverageEntry::new(&spec, &report));
@@ -126,16 +140,18 @@ pub(crate) fn run_repair_oracle(
     if selected == 0 {
         return Err("no matching repair-oracle fixtures".into());
     }
-    let coverage_path = options.root.join("repair-unit-coverage.json");
-    let coverage_bytes = canonical_json(&CoverageReport::new(coverage))?;
-    if options.check {
-        let expected = fs::read(&coverage_path)
-            .map_err(|_| format!("missing coverage output {}", coverage_path.display()))?;
-        if expected != coverage_bytes {
-            return Err("repair-unit coverage report drift".into());
+    if options.fixture.is_none() && options.filter.is_none() {
+        let coverage_path = options.root.join("repair-unit-coverage.json");
+        let coverage_bytes = canonical_json(&CoverageReport::new(coverage))?;
+        if options.check {
+            let expected = fs::read(&coverage_path)
+                .map_err(|_| format!("missing coverage output {}", coverage_path.display()))?;
+            if expected != coverage_bytes {
+                return Err("repair-unit coverage report drift".into());
+            }
+        } else {
+            fs::write(coverage_path, coverage_bytes)?;
         }
-    } else {
-        fs::write(coverage_path, coverage_bytes)?;
     }
     println!("repair oracle verified fixtures: {selected}");
     Ok(())

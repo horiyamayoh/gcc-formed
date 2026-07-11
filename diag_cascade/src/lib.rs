@@ -100,12 +100,14 @@ pub fn analyze_document(
 mod tests {
     use super::*;
     use diag_core::{
-        AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
-        ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
-        LanguageMode, Location, LocationRole, MessageText, NodeCompleteness, Origin, Ownership,
-        Phase, ProducerInfo, Provenance, ProvenanceSource, RepairProofClass, RunInfo, SemanticRole,
-        Severity, SymbolContext, ToolInfo, WrapperSurface,
+        AnalysisOverlay, ArtifactKind, ArtifactStorage, BoundarySemantics, CaptureArtifact,
+        ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticNode,
+        DocumentCompleteness, LanguageMode, Location, LocationRole, MessageText, NodeCompleteness,
+        Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RepairProofClass,
+        RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability, SymbolContext,
+        TextEdit, ToolInfo, WrapperSurface,
     };
+    use std::collections::BTreeSet;
 
     fn sample_document(diagnostics: Vec<DiagnosticNode>) -> DiagnosticDocument {
         DiagnosticDocument {
@@ -638,6 +640,184 @@ mod tests {
             assert_eq!(repair.stats.referenced_fact_count, count as u32);
             eprintln!("repair-unit inference nodes={count} elapsed={elapsed:?}");
         }
+    }
+
+    fn insertion(path: &str, line: u32, column: u32, replacement: &str) -> Suggestion {
+        Suggestion {
+            label: "compiler fix-it".into(),
+            applicability: SuggestionApplicability::MachineApplicable,
+            edits: vec![TextEdit {
+                path: path.into(),
+                start_line: line,
+                start_column: column,
+                end_line: line,
+                end_column: column,
+                column_origin: Some(1),
+                column_unit: Some(diag_core::ColumnUnit::Display),
+                boundary: BoundarySemantics::Point,
+                replacement: replacement.into(),
+            }],
+        }
+    }
+
+    #[test]
+    fn syntax_same_fixit_merges_follow_on_and_surfaces_grounded_action() {
+        let mut root = sample_node(
+            "syntax-root",
+            "primary parse error",
+            Origin::Gcc,
+            Phase::Parse,
+            "unknown",
+            Some("src/main.c"),
+            Some(4),
+            Ownership::User,
+        );
+        let mut follow_on = sample_node(
+            "syntax-follow",
+            "recovery error",
+            Origin::Gcc,
+            Phase::Parse,
+            "different",
+            Some("src/main.c"),
+            Some(5),
+            Ownership::User,
+        );
+        root.suggestions.push(insertion("src/main.c", 4, 12, ";"));
+        follow_on
+            .suggestions
+            .push(insertion("src/main.c", 4, 12, ";"));
+        let mut document = sample_document(vec![root, follow_on]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        let unit = &repair.repair_units[0];
+        assert_eq!(unit.primary_repair_anchors, ["src/main.c:4:12-4:12"]);
+        assert_eq!(unit.grounded_action_refs.len(), 2);
+        assert!(
+            unit.rationale_edge_refs
+                .iter()
+                .any(|edge| edge.starts_with("same-fixit:"))
+        );
+        assert_eq!(unit.raw_capture_refs, ["stderr.raw"]);
+    }
+
+    #[test]
+    fn syntax_non_overlapping_fixits_remain_distinct_inside_eight_lines() {
+        let mut first = sample_node(
+            "semicolon-1",
+            "parse error",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(4),
+            Ownership::User,
+        );
+        let mut second = sample_node(
+            "semicolon-2",
+            "parse error",
+            Origin::Gcc,
+            Phase::Parse,
+            "syntax",
+            Some("src/main.c"),
+            Some(7),
+            Ownership::User,
+        );
+        first.suggestions.push(insertion("src/main.c", 4, 10, ";"));
+        second.suggestions.push(insertion("src/main.c", 7, 10, ";"));
+        let mut document = sample_document(vec![first, second]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 2);
+        assert!(repair.repair_units.iter().all(|unit| unit.visible));
+        assert_eq!(
+            repair
+                .repair_units
+                .iter()
+                .flat_map(|unit| &unit.primary_repair_anchors)
+                .collect::<BTreeSet<_>>()
+                .len(),
+            2
+        );
+    }
+
+    #[test]
+    fn syntax_observed_one_two_three_repairs_match_visible_unit_count() {
+        for count in 1..=3usize {
+            let nodes = (0..count)
+                .map(|index| {
+                    let mut node = sample_node(
+                        &format!("semicolon-{index}"),
+                        "localized parser diagnostic",
+                        Origin::Gcc,
+                        Phase::Parse,
+                        "unknown",
+                        Some("./src/main.c"),
+                        Some(index as u32 + 2),
+                        Ownership::User,
+                    );
+                    node.suggestions
+                        .push(insertion("./src/main.c", index as u32 + 2, 9, ";"));
+                    node
+                })
+                .collect();
+            let mut document = sample_document(nodes);
+            infer_repair_units(&mut document);
+            let repair = document
+                .document_analysis
+                .as_ref()
+                .unwrap()
+                .repair_analysis
+                .as_ref()
+                .unwrap();
+            assert_eq!(repair.stats.visible_unit_count, count as u32);
+            assert_eq!(repair.repair_units.len(), count);
+        }
+    }
+
+    #[test]
+    fn weak_native_syntax_without_fixit_remains_unresolved_and_visible() {
+        let mut node = sample_node(
+            "native-weak",
+            "opaque localized parser output",
+            Origin::Gcc,
+            Phase::Parse,
+            "unknown",
+            Some("src/main.c"),
+            Some(2),
+            Ownership::User,
+        );
+        node.node_completeness = NodeCompleteness::Partial;
+        node.provenance.source = ProvenanceSource::ResidualText;
+        let mut document = sample_document(vec![node]);
+        infer_repair_units(&mut document);
+        let unit = &document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap()
+            .repair_units[0];
+        assert!(unit.visible);
+        assert_eq!(unit.proof_class, RepairProofClass::Unresolved);
+        assert_eq!(
+            unit.visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+        assert!(unit.grounded_action_refs.is_empty());
     }
 
     #[test]

@@ -154,6 +154,9 @@ enum Commands {
         fixture: Option<String>,
         #[arg(long)]
         family: Option<String>,
+        /// Alias for selecting fixtures by family/path substring.
+        #[arg(long)]
+        filter: Option<String>,
         #[arg(long, value_enum, default_value_t = SnapshotSubset::All)]
         subset: SnapshotSubset,
         #[arg(long)]
@@ -170,6 +173,8 @@ enum Commands {
         root: PathBuf,
         #[arg(long)]
         fixture: Option<String>,
+        #[arg(long)]
+        filter: Option<String>,
         #[arg(long)]
         check: bool,
     },
@@ -496,12 +501,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             root,
             fixture,
             family,
+            filter,
             subset,
             report_dir,
         } => run_replay(
             &root,
             fixture.as_deref(),
-            family.as_deref(),
+            filter.as_deref().or(family.as_deref()),
             subset,
             report_dir.as_deref(),
         )?,
@@ -512,11 +518,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::RepairOracle {
             root,
             fixture,
+            filter,
             check,
         } => {
             run_repair_oracle(RepairOracleOptions {
                 root,
                 fixture,
+                filter,
                 check,
             })?;
         }
