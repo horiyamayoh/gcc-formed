@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "public_contract": "gcc9_15",
+  "majors": [
+    {"major": 9, "version_band": "gcc9_12", "pr": "proxy", "nightly": "proxy", "proxy_major": 12},
+    {"major": 10, "version_band": "gcc9_12", "pr": "proxy", "nightly": "proxy", "proxy_major": 12},
+    {"major": 11, "version_band": "gcc9_12", "pr": "proxy", "nightly": "proxy", "proxy_major": 12},
+    {"major": 12, "version_band": "gcc9_12", "pr": "direct", "nightly": "direct"},
+    {"major": 13, "version_band": "gcc13_14", "pr": "direct", "nightly": "direct"},
+    {"major": 14, "version_band": "gcc13_14", "pr": "proxy", "nightly": "direct", "proxy_major": 13},
+    {"major": 15, "version_band": "gcc15", "pr": "direct", "nightly": "direct"}
+  ],
+  "report_contract": {
+    "nightly_matrix_summary": "matrix-summary.json",
+    "direct_lane_labels": ["gcc12", "gcc13", "gcc14", "gcc15"],
+    "proxy_is_not_direct_evidence": true
+  }
+}

@@ -830,5 +830,30 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub release"))
 
 
+class MajorEvidencePolicyTest(unittest.TestCase):
+    def test_policy_covers_every_gcc9_15_major_and_matches_live_lanes(self) -> None:
+        policy = json.loads(
+            (REPO_ROOT / "ci" / "major-evidence-policy.json").read_text(encoding="utf-8")
+        )
+        majors = {entry["major"]: entry for entry in policy["majors"]}
+        self.assertEqual(set(majors), set(range(9, 16)))
+        self.assertEqual(
+            {major for major, entry in majors.items() if entry["pr"] == "direct"},
+            {12, 13, 15},
+        )
+        self.assertEqual(
+            {major for major, entry in majors.items() if entry["nightly"] == "direct"},
+            {12, 13, 14, 15},
+        )
+        self.assertEqual(
+            set(policy["report_contract"]["direct_lane_labels"]),
+            set(gate_catalog.NIGHTLY_LANES),
+        )
+        self.assertTrue(policy["report_contract"]["proxy_is_not_direct_evidence"])
+        for major, entry in majors.items():
+            if entry["pr"] == "proxy" or entry["nightly"] == "proxy":
+                self.assertIn(entry["proxy_major"], majors, major)
+
+
 if __name__ == "__main__":
     unittest.main()
