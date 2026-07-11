@@ -1,0 +1,6 @@
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -1,2 +1,2 @@
+ void call(int, int);
+-int main() { call(1); }
++int main() { call(1, 2); }

@@ -1,0 +1,21 @@
+schema_version = 1
+fixture_id = "repair-unit-exact-count/double/case-07"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.c", "-o", "main.o"]
+language = "c"
+diagnostic_shape = "adjacent_same_family"
+trap_kind = "false_merge"
+oracle_repair_unit_count = 2
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc15_representative_justified"
+
+[[defects]]
+defect_id = "double-07-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.c:1"]
+
+[[defects]]
+defect_id = "double-07-defect-2"
+patch = "repairs/defect-2.patch"
+primary_repair_anchors = ["src/main.c:1"]

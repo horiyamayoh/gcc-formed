@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -21,6 +21,18 @@ struct OracleSpec {
     args: Vec<String>,
     #[serde(default)]
     defects: Vec<DefectSpec>,
+    #[serde(default)]
+    language: Option<String>,
+    #[serde(default)]
+    diagnostic_shape: Option<String>,
+    #[serde(default)]
+    trap_kind: Option<String>,
+    #[serde(default)]
+    version_evidence: Option<String>,
+    #[serde(default)]
+    reviewer: Option<String>,
+    #[serde(default)]
+    owner: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -45,6 +57,8 @@ fn yes() -> bool {
 struct RunEvidence {
     exit_status: i32,
     command: Vec<String>,
+    raw_top_level_count: usize,
+    raw_evidence_count: usize,
     diagnostic_fingerprints: Vec<String>,
 }
 
@@ -84,6 +98,7 @@ pub(crate) fn run_repair_oracle(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let specs = discover_specs(&options.root)?;
     let mut selected = 0usize;
+    let mut coverage = Vec::new();
     for path in specs {
         let spec: OracleSpec = toml::from_str(&fs::read_to_string(&path)?)?;
         if options
@@ -95,6 +110,7 @@ pub(crate) fn run_repair_oracle(
         }
         selected += 1;
         let report = evaluate(path.parent().unwrap(), &spec)?;
+        coverage.push(CoverageEntry::new(&spec, &report));
         let output = path.parent().unwrap().join("causal-map.json");
         let bytes = canonical_json(&report)?;
         if options.check {
@@ -110,8 +126,115 @@ pub(crate) fn run_repair_oracle(
     if selected == 0 {
         return Err("no matching repair-oracle fixtures".into());
     }
+    let coverage_path = options.root.join("repair-unit-coverage.json");
+    let coverage_bytes = canonical_json(&CoverageReport::new(coverage))?;
+    if options.check {
+        let expected = fs::read(&coverage_path)
+            .map_err(|_| format!("missing coverage output {}", coverage_path.display()))?;
+        if expected != coverage_bytes {
+            return Err("repair-unit coverage report drift".into());
+        }
+    } else {
+        fs::write(coverage_path, coverage_bytes)?;
+    }
     println!("repair oracle verified fixtures: {selected}");
     Ok(())
+}
+
+#[derive(Debug, Serialize)]
+struct CoverageEntry {
+    fixture_id: String,
+    language: Option<String>,
+    defect_count: usize,
+    diagnostic_shape: Option<String>,
+    trap_kind: Option<String>,
+    version_evidence: Option<String>,
+    reviewer: Option<String>,
+    owner: Option<String>,
+    raw_top_level_count: usize,
+    raw_evidence_count: usize,
+    oracle_repair_unit_count: usize,
+    formed_visible_block_count: Option<usize>,
+    baseline_classification: String,
+}
+
+impl CoverageEntry {
+    fn new(spec: &OracleSpec, report: &CausalMap) -> Self {
+        let oracle = report.baseline_comparison.oracle_repair_unit_count;
+        let formed = report.baseline_comparison.current_formed_visible_count;
+        let baseline_classification = match formed {
+            Some(value) if value > oracle => "false_split",
+            Some(value) if value < oracle => "false_merge_or_hidden",
+            Some(_) => "exact",
+            None => "formed_unavailable",
+        }
+        .to_string();
+        Self {
+            fixture_id: spec.fixture_id.clone(),
+            language: spec.language.clone(),
+            defect_count: spec.defects.len(),
+            diagnostic_shape: spec.diagnostic_shape.clone(),
+            trap_kind: spec.trap_kind.clone(),
+            version_evidence: spec.version_evidence.clone(),
+            reviewer: spec.reviewer.clone(),
+            owner: spec.owner.clone(),
+            raw_top_level_count: report.baseline.raw_top_level_count,
+            raw_evidence_count: report.baseline.raw_evidence_count,
+            oracle_repair_unit_count: oracle,
+            formed_visible_block_count: formed,
+            baseline_classification,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct CoverageReport {
+    schema_version: u32,
+    fixture_count: usize,
+    counts_by_defect_count: BTreeMap<usize, usize>,
+    false_split_trap_count: usize,
+    false_merge_trap_count: usize,
+    languages: BTreeSet<String>,
+    version_evidence: BTreeSet<String>,
+    fixtures: Vec<CoverageEntry>,
+}
+
+impl CoverageReport {
+    fn new(fixtures: Vec<CoverageEntry>) -> Self {
+        let mut counts = BTreeMap::new();
+        let mut languages = BTreeSet::new();
+        let mut versions = BTreeSet::new();
+        for fixture in &fixtures {
+            *counts.entry(fixture.defect_count).or_insert(0) += 1;
+            if let Some(value) = &fixture.language {
+                languages.insert(value.clone());
+            }
+            if let Some(value) = &fixture.version_evidence {
+                versions.insert(value.clone());
+            }
+        }
+        let false_split_trap_count = fixtures
+            .iter()
+            .filter(|f| {
+                f.trap_kind.as_deref() == Some("false_split")
+                    && f.raw_evidence_count > f.oracle_repair_unit_count
+            })
+            .count();
+        let false_merge_trap_count = fixtures
+            .iter()
+            .filter(|f| f.trap_kind.as_deref() == Some("false_merge") && f.defect_count > 1)
+            .count();
+        Self {
+            schema_version: 1,
+            fixture_count: fixtures.len(),
+            counts_by_defect_count: counts,
+            false_split_trap_count,
+            false_merge_trap_count,
+            languages,
+            version_evidence: versions,
+            fixtures,
+        }
+    }
 }
 
 fn discover_specs(root: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
@@ -246,12 +369,24 @@ fn run_in_copy(
         .current_dir(temp.path())
         .output()?;
     let stderr = String::from_utf8_lossy(&output.stderr);
+    let raw_top_level_count = stderr
+        .lines()
+        .filter(|line| line.contains(": error:") || line.contains(": warning:"))
+        .count();
+    let raw_evidence_count = stderr
+        .lines()
+        .filter(|line| {
+            line.contains(": error:") || line.contains(": warning:") || line.contains(": note:")
+        })
+        .count();
     let fingerprints = diagnostic_fingerprints(&stderr);
     Ok(RunEvidence {
         exit_status: output.status.code().unwrap_or(128),
         command: std::iter::once(spec.compiler.clone())
             .chain(spec.args.clone())
             .collect(),
+        raw_top_level_count,
+        raw_evidence_count,
         diagnostic_fingerprints: fingerprints,
     })
 }

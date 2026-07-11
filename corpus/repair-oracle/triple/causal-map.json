@@ -12,6 +12,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 3,
+    "raw_evidence_count": 4,
     "diagnostic_fingerprints": [
       "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3",
       "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32",
@@ -38,6 +40,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 2,
+        "raw_evidence_count": 3,
         "diagnostic_fingerprints": [
           "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3",
           "c96748111504c8f13d4e019297656f112c70854cc084afce878138241e2bd6a4"
@@ -70,6 +74,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 2,
+        "raw_evidence_count": 3,
         "diagnostic_fingerprints": [
           "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32",
           "9fbac95f1e643a8a7cbc27b65afcb987f65023531a814fc095eb30ba9d0d8739"
@@ -99,6 +105,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 2,
+        "raw_evidence_count": 3,
         "diagnostic_fingerprints": [
           "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3",
           "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
@@ -121,6 +129,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
     "diagnostic_fingerprints": []
   },
   "independent_patch_order_stable": true,

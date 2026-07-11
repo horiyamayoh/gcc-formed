@@ -1,0 +1,6 @@
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -1,2 +1,2 @@
+-#define BAD_VALUE missing_macro_value
++#define BAD_VALUE 0
+ int main(void) { return BAD_VALUE; }

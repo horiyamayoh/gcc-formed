@@ -1,0 +1,26 @@
+schema_version = 1
+fixture_id = "repair-unit-exact-count/triple/case-06"
+compiler = "g++"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.cpp", "-o", "main.o"]
+language = "cpp"
+diagnostic_shape = "adjacent_same_family"
+trap_kind = "false_merge"
+oracle_repair_unit_count = 3
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc14_representative_justified"
+
+[[defects]]
+defect_id = "triple-06-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.cpp:1"]
+
+[[defects]]
+defect_id = "triple-06-defect-2"
+patch = "repairs/defect-2.patch"
+primary_repair_anchors = ["src/main.cpp:1"]
+
+[[defects]]
+defect_id = "triple-06-defect-3"
+patch = "repairs/defect-3.patch"
+primary_repair_anchors = ["src/main.cpp:1"]

@@ -11,6 +11,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 1,
+    "raw_evidence_count": 2,
     "diagnostic_fingerprints": [
       "7bf0c702d4b2e19df6f2f09cd6dc1ab85668299dcb711c2a1ad52804469f8710"
     ]
@@ -34,6 +36,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 0,
+        "raw_evidence_count": 0,
         "diagnostic_fingerprints": []
       },
       "disappeared_fingerprints": [
@@ -52,6 +56,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
     "diagnostic_fingerprints": []
   },
   "independent_patch_order_stable": true,

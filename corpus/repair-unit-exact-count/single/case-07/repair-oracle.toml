@@ -1,0 +1,16 @@
+schema_version = 1
+fixture_id = "repair-unit-exact-count/single/case-07"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.c", "-o", "main.o"]
+language = "c"
+diagnostic_shape = "repeated_evidence"
+trap_kind = "false_split"
+oracle_repair_unit_count = 1
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc15_representative_justified"
+
+[[defects]]
+defect_id = "single-07-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.c:1"]

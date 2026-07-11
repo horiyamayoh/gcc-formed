@@ -1,0 +1,5 @@
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -1 +1 @@
+-int main(void) { int value = 0 return value; }
++int main(void) { int value = 0; return value; }

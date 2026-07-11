@@ -12,6 +12,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 2,
+    "raw_evidence_count": 3,
     "diagnostic_fingerprints": [
       "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3",
       "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
@@ -37,6 +39,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 2,
         "diagnostic_fingerprints": [
           "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3"
         ]
@@ -65,6 +69,8 @@
           "-o",
           "main.o"
         ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 2,
         "diagnostic_fingerprints": [
           "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
         ]
@@ -86,6 +92,8 @@
       "-o",
       "main.o"
     ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
     "diagnostic_fingerprints": []
   },
   "independent_patch_order_stable": true,
