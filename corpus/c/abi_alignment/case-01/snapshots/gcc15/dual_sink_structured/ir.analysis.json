@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "abi_alignment",
         "first_action_hint": "check struct packing, alignment attributes, and target-specific ABI requirements",
-        "group_ref": "group-13412f9430a0",
+        "group_ref": "group-00b5762ad288",
         "headline": "ABI or alignment compatibility issue",
         "matched_conditions": [
           "message_contains=cast increases required alignment",
@@ -45,7 +45,7 @@
       "fingerprints": {
         "family": "7aae1d02a66549c81ebcbd3ed17e9b9bbfb50d2a521fe2da07ec3f4e155553fb",
         "raw": "a34d9798e53dfc4869e109991568f8cccc55b6fb267413d10243e2501e6f71d8",
-        "structural": "d0210d865fd9505fcedfe463146877b21a5cc52ced94905c498e50dc6cc12a04"
+        "structural": "3a0c0b2c4d21ad41f32db5a0819658087ff94012f60a76119e2ce8b7d5e95779"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -91,13 +91,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.7400000095367432,
-          "episode_ref": "episode-8b9f394d367e",
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-b6cb2701ae8d",
           "family": "abi_alignment",
-          "lead_group_ref": "group-13412f9430a0",
-          "lead_root_score": 0.7400000095367432,
+          "lead_group_ref": "group-00b5762ad288",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-13412f9430a0"
+            "group-00b5762ad288"
           ]
         }
       ],
@@ -105,24 +105,103 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-8b9f394d367e",
+        "episode_ref": "episode-b6cb2701ae8d",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-13412f9430a0",
-        "independence_score": 0.7400000095367432,
+        "group_ref": "group-00b5762ad288",
+        "independence_score": 0.6799999475479126,
         "role": "independent_root",
-        "root_score": 0.7400000095367432,
-        "summary_likelihood": 0.38600000739097595,
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0"
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.c:6:12"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:sarif-0-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:sarif-0-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.c:6:12"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "diagnostics.sarif"
+          ],
+          "repair_unit_ref": "repair-unit:node-sarif-0-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 3,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -134,8 +213,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "3797d7365c4b092e394c4f600cc79a55fc372a9f553086e4f6744352f5293054",
-    "raw": "a5815fea8729d58a48544e2eb02af9987111519b8f1e75cf1259b326bbcc0d67",
-    "structural": "cca287a52574959a336803a65d557c3f5f3c711e33c1ffe4212fb7a5cb5500a9"
+    "raw": "7dd544b68452e215208f14066285f43de694f0dc0632f9d4903c928ff528ad2c",
+    "structural": "b9f118968641c8dada76221dc12c8f8c72a926f64292e79d57d4dcbdb84d1fac"
   },
   "producer": {
     "name": "gcc-formed",

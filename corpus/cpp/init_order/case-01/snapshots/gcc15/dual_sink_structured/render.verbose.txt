@@ -24,4 +24,3 @@ raw :   when initialized here
 debug: rule_id=rule.family.unknown
 debug: matched_conditions=no_family_rule_matched
 debug: suppression_reason=generic_fallback
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

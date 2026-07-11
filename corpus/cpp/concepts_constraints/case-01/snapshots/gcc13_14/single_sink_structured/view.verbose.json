@@ -23,7 +23,7 @@
       ],
       "family": "concepts_constraints",
       "first_action": "match the required concept or requires-clause against the actual template arguments",
-      "group_id": "group-2a81adc6f6a0",
+      "group_id": "group-aa381a0dd2f7",
       "matched_conditions": [
         "child_message_contains=constraints not satisfied",
         "child_message_contains=the required expression",
@@ -39,6 +39,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

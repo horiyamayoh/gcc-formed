@@ -20,7 +20,7 @@
       ],
       "family": "const_qualifier",
       "first_action": "make the destination const-correct or remove the const from the source",
-      "group_id": "group-dcb0de028b80",
+      "group_id": "group-5de17b6a160c",
       "matched_conditions": [
         "message_contains=discards 'const' qualifier",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

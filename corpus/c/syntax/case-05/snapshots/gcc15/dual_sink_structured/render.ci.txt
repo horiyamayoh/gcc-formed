@@ -1,6 +1,5 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-src/main.c:2:18: error: [syntax] syntax error
-help: fix the first parser error at the user-owned location
+src/main.c:2:18: error: [syntax] expected ')' before ';' token
 want: )
 near: ; token
 | src/main.c:2:18
@@ -11,8 +10,7 @@ suggested edit: insert ')' at src/main.c:2:18
   2 -     return (1 + 2;
   2 +     return (1 + 2);
 
-src/main.c:2:19: error: [syntax] syntax error
-help: fix the first parser error at the user-owned location
+src/main.c:2:19: error: [syntax] expected ';' before '}}' token
 want: ;
 near: }} token
 | src/main.c:2:19
@@ -23,13 +21,14 @@ suggested edit: insert ';' at src/main.c:2:19
   2 -     return (1 + 2;
   2 +     return (1 + 2;;
 
-src/main.c:2:19: error: [syntax] syntax error
-help: fix the first parser error at the user-owned location
+src/main.c:2:19: error: [syntax] expected ';' before '}' token
+    2 |     return (1 + 2;
+      |                   ^
+      |                   ;
+    3 | }
+      | ~
 want: ;
 near: } token
 | src/main.c:2:19
 |     return (1 + 2;
 |                   ^
-raw:
-  src/main.c:2:19: error: expected ';' before '}' token
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

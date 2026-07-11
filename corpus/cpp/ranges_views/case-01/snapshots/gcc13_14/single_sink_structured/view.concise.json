@@ -29,8 +29,8 @@
         }
       ],
       "family": "ranges_views",
-      "first_action": "check that the range/iterator models the required concept (input_range, forward_range, etc.)",
-      "group_id": "group-9e9fa8e96c4d",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4+node-sarif-0-0-related-5+node-sarif-0-0-related-6+node-sarif-0-0-related-7+node-sarif-0-0-related-8",
       "matched_conditions": [
         "message_contains=std::ranges::",
         "child_message_contains=std::ranges::"
@@ -39,12 +39,12 @@
       "rule_id": "rule.family.ranges_views.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "C++20 ranges or views error"
+      "title": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

@@ -1,5 +1,4 @@
-src/main.c:3:25: error: [macro_include] error surfaced through macro/include context
-help: inspect the user-owned macro invocation or include edge that reaches the failing line
+src/main.c:3:25: error: [macro_include] 'missing_symbol' undeclared (first use in this function)
 from: invocation of 'FETCH_VALUE' @ src/main.c:3:25
 via : src/wrapper.h:1
 | src/main.c:3:25
@@ -7,4 +6,4 @@ via : src/wrapper.h:1
 |                         ^
 from include chain:
   - src/wrapper.h:1 included from src/main.c:1
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

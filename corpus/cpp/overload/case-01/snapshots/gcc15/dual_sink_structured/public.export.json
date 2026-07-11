@@ -133,6 +133,32 @@
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:sarif-0-0",
+        "member_evidence_refs": [
+          "node:sarif-0-0",
+          "node:sarif-0-0-related-1",
+          "node:sarif-0-0-related-2",
+          "node:sarif-0-0-related-3",
+          "node:sarif-0-0-related-4"
+        ],
+        "observability": "observable",
+        "proof_class": "proven",
+        "rationale_edge_refs": [
+          "hierarchy:node:sarif-0-0->node:sarif-0-0-related-1",
+          "hierarchy:node:sarif-0-0->node:sarif-0-0-related-2",
+          "hierarchy:node:sarif-0-0->node:sarif-0-0-related-3",
+          "hierarchy:node:sarif-0-0->node:sarif-0-0-related-4"
+        ],
+        "raw_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "repair_unit_ref": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4",
+        "visibility_floor": "hidden_allowed",
+        "visible": true
+      }
+    ],
     "summary": {
       "dependent_follow_on_count": 0,
       "diagnostic_count": 5,
@@ -144,6 +170,6 @@
       "warning_count": 0
     }
   },
-  "schema_version": "2.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

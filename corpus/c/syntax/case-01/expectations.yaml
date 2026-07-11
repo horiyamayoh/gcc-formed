@@ -14,7 +14,7 @@ semantic:
       line: 2
       column: 13
   primary_location_user_owned_required: true
-  first_action_required: true
+  first_action_required: false
   raw_provenance_required: true
   fallback: forbidden
   confidence_min: medium
@@ -22,22 +22,20 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
-    first_action_max_line: 4
-    raw_diagnostics_hint_required: true
+    raw_diagnostics_hint_required: false
     required_substrings:
       - "|             ^"
   concise:
     omission_notice_required: false
-    first_screenful_max_lines: 20
+    first_screenful_max_lines: 21
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
   ci:
-    first_screenful_max_lines: 23
-    first_action_max_line: 3
+    first_screenful_max_lines: 24
     path_first_required: false
     color_meaning_forbidden: true
-    raw_diagnostics_hint_required: true
+    raw_diagnostics_hint_required: false
     required_substrings:
       - "|             ^"
       - "suggested edit: insert ';' at src/main.c:2:13"

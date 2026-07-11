@@ -20,7 +20,7 @@
       ],
       "family": "string_character",
       "first_action": "check for unintended multi-character constants, trigraphs, or unterminated strings",
-      "group_id": "group-0dca8a67ffc5",
+      "group_id": "group-bb9f871c4ba8",
       "matched_conditions": [
         "message_contains=multi-character character constant",
         "phase=parse"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

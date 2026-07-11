@@ -19,8 +19,8 @@
         }
       ],
       "family": "asm_inline",
-      "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "group-8de1e6e83fb3",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "message_contains=impossible constraint in",
         "phase=codegen"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.asm_inline.message_terms",
       "severity": "error",
       "suppression_reason": null,
-      "title": "inline assembly constraint error"
+      "title": "impossible constraint in ‘asm’"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

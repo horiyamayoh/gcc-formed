@@ -1,7 +1,16 @@
-src/main.c:3:40: error: [macro_include] error surfaced through macro/include context
-help: inspect the user-owned macro invocation or include edge that reaches the failing line
+note: some compiler details were not fully structured; original diagnostics are preserved
+src/main.c:3:40: error: [macro_include] 'Box' has no member named 'missing'
 from: invocation of 'READ_FIELD' @ src/main.c:3:40
 | src/main.c:3:40
 | int main(void) { Box box = {1}; return READ_FIELD(box); }
 |                                        ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+
+src/main.c:1:33: error: [macro_include] 'Box' has no member named 'missing'
+src/main.c: In function 'main':
+    1 | #define READ_FIELD(item) ((item).missing)
+      |                                 ^
+raw : src/main.c:1:33: error: 'Box' has no member named 'missing'
+| src/main.c:1:33
+| #define READ_FIELD(item) ((item).missing)
+|                                 ^
+through macro expansion: preserved macro/include context

@@ -1,5 +1,9 @@
 {
   "execution": {
+    "allowed_processing_paths": [
+      "dual_sink_structured",
+      "passthrough"
+    ],
     "document_completeness": "complete",
     "fallback_grade": "none",
     "processing_path": "dual_sink_structured",
@@ -67,17 +71,47 @@
         "severity": "note"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:sarif-0-0",
+        "member_evidence_refs": [
+          "node:sarif-0-0"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "repair_unit_ref": "repair-unit:node-sarif-0-0",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      },
+      {
+        "lead_evidence_ref": "node:sarif-0-1",
+        "member_evidence_refs": [
+          "node:sarif-0-1"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "repair_unit_ref": "repair-unit:node-sarif-0-1",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      }
+    ],
     "summary": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 1,
       "diagnostic_count": 2,
       "duplicate_count": 0,
       "error_count": 0,
       "independent_root_count": 1,
       "note_count": 1,
-      "uncertain_count": 1,
+      "uncertain_count": 0,
       "warning_count": 1
     }
   },
-  "schema_version": "1.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

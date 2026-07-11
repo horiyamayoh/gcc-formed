@@ -20,7 +20,7 @@
         "confidence": 0.8999999761581421,
         "family": "lambda_closure",
         "first_action_hint": "add the variable to the capture list or specify a default capture mode [=] or [&]",
-        "group_ref": "group-1c87eaea533f",
+        "group_ref": "group-99adee4036cd",
         "headline": "lambda capture error",
         "matched_conditions": [
           "message_contains=is not captured",
@@ -145,7 +145,7 @@
       "fingerprints": {
         "family": "816e795f222993afc419c2221f026656fa3a47b75ab38efc64118d146edb2290",
         "raw": "de0cc5cdd1f58a9de108a1253e16be6b0e4df7c89afbd6d27f924357060d6e70",
-        "structural": "58c838a2ed5f658586f2a9eacd99b7d6b61b3850c9b42f309e166c9b8bbefa97"
+        "structural": "600ad55567c2cfbc6e0d33296a4a92a05eda2bb413a11b1b968bc26eebb8ce7b"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -191,13 +191,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.7400000095367432,
-          "episode_ref": "episode-191de9c7fa7c",
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-909e9b584171",
           "family": "lambda_closure",
-          "lead_group_ref": "group-1c87eaea533f",
-          "lead_root_score": 0.7400000095367432,
+          "lead_group_ref": "group-99adee4036cd",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-1c87eaea533f"
+            "group-99adee4036cd"
           ]
         }
       ],
@@ -205,24 +205,200 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-191de9c7fa7c",
+        "episode_ref": "episode-909e9b584171",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-1c87eaea533f",
-        "independence_score": 0.7400000095367432,
+        "group_ref": "group-99adee4036cd",
+        "independence_score": 0.6799999475479126,
         "role": "independent_root",
-        "root_score": 0.7400000095367432,
-        "summary_likelihood": 0.38600000739097595,
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-1"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-2",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-2"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-2->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-1->raw:residual-compiler-0-child-1:stderr.raw:184:321",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:184:321"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-2->raw:residual-compiler-0-child-2:stderr.raw:322:424",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-2:stderr.raw:322:424"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:184:321",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 321,
+              "kind": "raw_chunk",
+              "start": 184
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-2:stderr.raw:322:424",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 424,
+              "kind": "raw_chunk",
+              "start": 322
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:3:33"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.cpp:3:33"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 6,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -234,8 +410,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b61d764c5bb4174212ed02ea3723521f9fd197390a6d24305cf1269356e60033",
-    "raw": "125b4b7efb1d35d7b1ba5276cc5e6bc0f3fe942250987bf878ad35d039dae604",
-    "structural": "df2edfa262c7c5a25fe765d7ecb6132b90b48d4bd8fc95f38eb0e0ddd3df0db7"
+    "raw": "3974442c6e0c5393610495858906036117aba8e410c9f8b86a0dc9f0c0913405",
+    "structural": "9b95f7b6508ade5e4010b3a66d57e8409480fc32ad8d3085cdc13343229cb7f8"
   },
   "producer": {
     "name": "gcc-formed",

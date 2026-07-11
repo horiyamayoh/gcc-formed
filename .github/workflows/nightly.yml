@@ -266,6 +266,15 @@ jobs:
             --matrix-gcc-version "$MATRIX_GCC_VERSION" \
             --matrix-version-band "$MATRIX_VERSION_BAND" \
             --release-blocker "$RELEASE_BLOCKER"
+      - name: RepairUnit full exact-count quality gate
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow nightly-gate \
+            --step-id repair-unit-quality-gate \
+            --report-root "$REPORT_ROOT" \
+            --matrix-gcc-version "$MATRIX_GCC_VERSION" \
+            --matrix-version-band "$MATRIX_VERSION_BAND" \
+            --release-blocker "$RELEASE_BLOCKER"
       - name: Gate summary
         if: always()
         run: |

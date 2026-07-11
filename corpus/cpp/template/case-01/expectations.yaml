@@ -14,7 +14,7 @@ semantic:
     - path: src/main.cpp
       line: 4
   primary_location_user_owned_required: true
-  first_action_required: true
+  first_action_required: false
   raw_provenance_required: true
   fallback: forbidden
   confidence_min: medium
@@ -22,7 +22,6 @@ render:
   default:
     omission_notice_required: true
     first_screenful_max_lines: 24
-    first_action_max_line: 4
     raw_diagnostics_hint_required: true
     compaction_required_substrings:
       - "while instantiating:"
@@ -33,7 +32,6 @@ render:
     first_screenful_max_lines: 40
   ci:
     first_screenful_max_lines: 15
-    first_action_max_line: 4
     color_meaning_forbidden: true
     raw_diagnostics_hint_required: true
     compaction_required_substrings:

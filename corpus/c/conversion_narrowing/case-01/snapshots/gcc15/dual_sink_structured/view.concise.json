@@ -19,8 +19,8 @@
         }
       ],
       "family": "conversion_narrowing",
-      "first_action": "add an explicit cast or change the variable type to match",
-      "group_id": "group-b0a509e73831",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=different signedness",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.conversion_narrowing.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "implicit or narrowing conversion detected"
+      "title": "comparison of integer expressions of different signedness: 'int' and 'unsigned int'"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

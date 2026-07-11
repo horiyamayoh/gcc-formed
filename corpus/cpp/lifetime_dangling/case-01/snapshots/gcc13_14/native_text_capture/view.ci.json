@@ -21,26 +21,23 @@
         }
       ],
       "family": "lifetime_dangling",
-      "first_action": "return by value instead of by pointer/reference, or extend the object lifetime",
-      "group_id": "group-35fa8bb9112d",
+      "first_action": null,
+      "group_id": "repair-unit:node-residual-compiler-0",
       "matched_conditions": [
         "message_contains=address of local variable",
         "message_contains=return-local-addr",
         "phase=semantic"
       ],
       "raw_message": "src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]\nsrc/main.cpp: In function ‘int* make_ptr()’:\n    3 |     return &value;\n      |            ^~~~~~",
-      "raw_sub_block": [
-        "src/main.cpp:3:12: warning: address of local variable ‘value’ returned [-Wreturn-local-addr]"
-      ],
       "rule_id": "rule.family.lifetime_dangling.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "dangling pointer or reference to local"
+      "title": "address of local variable ‘value’ returned [-Wreturn-local-addr]\nsrc/main.cpp: In function ‘int* make_ptr()’:\n    3 |     return &value;\n      |            ^~~~~~"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

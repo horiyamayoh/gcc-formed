@@ -1,8 +1,7 @@
-src/main.cpp:4:12: warning: [deprecated] use of deprecated feature
-help: replace the deprecated API with the recommended alternative or silence the warning intentionally
+src/main.cpp:4:12: warning: [deprecated] 'int old_api()' is deprecated: use new_api
 raw : 'int old_api()' is deprecated: use new_api
 | src/main.cpp:4:12
 |     return old_api();
 |            ^
 note: declared here
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

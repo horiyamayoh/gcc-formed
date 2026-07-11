@@ -1,8 +1,6 @@
-error: [missing_name] identifier not found in scope @ src/main.cpp:2:12
-help: check for typos, missing #include, or missing namespace qualifier
+error: [missing_name] 'missing_value' was not declared in this scope @ src/main.cpp:2:12
 name: missing_value
 use : return missing_value;
 | src/main.cpp:2:12
 |     return missing_value;
 |            ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

@@ -22,7 +22,7 @@
       ],
       "family": "preprocessor_directive",
       "first_action": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
-      "group_id": "group-3689c3635616",
+      "group_id": "group-1c435e01eb9c",
       "matched_conditions": [
         "message_contains=#error",
         "phase=preprocess"
@@ -37,6 +37,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

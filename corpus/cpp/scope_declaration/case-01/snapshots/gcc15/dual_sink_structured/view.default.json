@@ -19,8 +19,8 @@
         }
       ],
       "family": "scope_declaration",
-      "first_action": "check for typos, missing #include, or missing namespace qualifier",
-      "group_id": "group-1c7e2fdaa2c4",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=was not declared in this scope",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.scope_declaration.message_terms",
       "severity": "error",
       "suppression_reason": null,
-      "title": "identifier not found in scope"
+      "title": "'missing_value' was not declared in this scope"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

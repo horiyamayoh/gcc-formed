@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
-        "group_ref": "group-910491983009",
+        "group_ref": "group-7b1a4b16d2be",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "child_role=candidate",
@@ -495,7 +495,7 @@
       "fingerprints": {
         "family": "c27aaced0b9e5541c8fa546e86f31f2cee31851c688875a65347f78d48358fb8",
         "raw": "2cc54fb9f623b0e79f1f9ab056536acd11be226db6f5238d90a265e9b0f668e1",
-        "structural": "4cb094aa751264a65c1f35ca2a4df850546d6e22f8fb705422733a15d3f94782"
+        "structural": "ef9bb585921c5322d308559acdbcec5ad722a76c9096e2e8dbff636f1bc8f99d"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -541,7 +541,7 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
-        "group_ref": "group-987c1b15f911",
+        "group_ref": "group-a5b2caf2f4eb",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "message_contains=invalid conversion",
@@ -552,7 +552,7 @@
       "fingerprints": {
         "family": "35dec7a0c731f910a6863ac146c741bc6332a2d6ebcceb80a773cbcef30ee46d",
         "raw": "53b7fbbd6c92c8e867be535471bb63f503f1f511576aeaf351f777f969e62898",
-        "structural": "053344445cc95cdd653968a8e733da4ce2f2051122815730d7d9e2d667fcbea2"
+        "structural": "fd0019e452e161c2f68356300f3048af6810f94f090a7a94d6d70a7479cd6524"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -598,7 +598,7 @@
         "confidence": 0.8999999761581421,
         "family": "pointer_reference",
         "first_action_hint": "provide the full type definition via #include or fix the value category",
-        "group_ref": "group-ce50ecc7e81d",
+        "group_ref": "group-9825882f9881",
         "headline": "invalid pointer or reference operation",
         "matched_conditions": [
           "message_contains=cannot bind",
@@ -723,7 +723,7 @@
       "fingerprints": {
         "family": "b02b8edfdbd1d539766b365f0bfb494d4962bee0e91b7e15dbe764913295a6c7",
         "raw": "9ca9277e96c5d25161cd9dab4ab560bc894e13cbd4ee8654503c93ace77f2301",
-        "structural": "dd8c138b885b66020923a5f138a08433633b290e71859633e134c59c932e69e1"
+        "structural": "4ebcfed054df1bcb501e9a93c422a52a63cc7b2adf4f95080c43347a9c5282fa"
       },
       "id": "residual-compiler-2",
       "locations": [
@@ -769,7 +769,7 @@
         "confidence": 0.6499999761581421,
         "family": "type_overload",
         "first_action_hint": "compare the expected type and actual argument at the call site",
-        "group_ref": "group-1fcef13373e2",
+        "group_ref": "group-eda49707e5ef",
         "headline": "type or overload mismatch",
         "matched_conditions": [
           "message_contains=invalid conversion",
@@ -780,7 +780,7 @@
       "fingerprints": {
         "family": "c86e534f4e9c1707b9b4a84acaadd0989ed0211c2dbd3cdfb81f5587573dd8d4",
         "raw": "0548fa6a2283d78010ac9121a1bc7fd9ee44afb25844563aba72db0f4b6285ad",
-        "structural": "933feff96f88c01324dc28f3b62c8abd074fa1938718ef31ddaa4b3480835154"
+        "structural": "7ad7dc23adf27b08007c872d881b4c9f248f8d57d8edfad30ae04262b5cafd4b"
       },
       "id": "residual-compiler-3",
       "locations": [
@@ -826,7 +826,7 @@
         "confidence": 0.8999999761581421,
         "family": "pointer_reference",
         "first_action_hint": "provide the full type definition via #include or fix the value category",
-        "group_ref": "group-2c241b94af21",
+        "group_ref": "group-80c859cd1dca",
         "headline": "invalid pointer or reference operation",
         "matched_conditions": [
           "message_contains=cannot bind",
@@ -837,7 +837,7 @@
       "fingerprints": {
         "family": "c52b6e8043f3ef6f32816ca64484c87aac312c157107c08b68e44e57a8ad45f1",
         "raw": "d5429e48a3afd96224675646c0a32ff6e63017300c943b9503afa27168039adb",
-        "structural": "af79ccae9c8c4745389b025f03296f1c4dd5d59764ebbdad895fbee1ff142bf0"
+        "structural": "55f3baccf58e05ea142cf379c04c1f2128988bfeeb3853880533841b9b246381"
       },
       "id": "residual-compiler-4",
       "locations": [
@@ -883,154 +883,885 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.8999999761581421,
-          "episode_ref": "episode-c463e6d6dbbb",
+          "confidence": 0.9299999475479126,
+          "episode_ref": "episode-68baa682a8c7",
           "family": "type_overload",
-          "lead_group_ref": "group-910491983009",
-          "lead_root_score": 0.8999999761581421,
+          "lead_group_ref": "group-7b1a4b16d2be",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-910491983009"
+            "group-7b1a4b16d2be",
+            "group-a5b2caf2f4eb",
+            "group-9825882f9881"
           ]
         },
         {
-          "confidence": 0.8700000047683716,
-          "episode_ref": "episode-60b26c4dd110",
+          "confidence": 0.5999999642372131,
+          "episode_ref": "episode-116c8ce40296",
           "family": "type_overload",
-          "lead_group_ref": "group-987c1b15f911",
-          "lead_root_score": 0.8700000047683716,
+          "lead_group_ref": "group-eda49707e5ef",
+          "lead_root_score": 0.5999999642372131,
           "member_group_refs": [
-            "group-987c1b15f911"
+            "group-eda49707e5ef"
           ]
         },
         {
-          "confidence": 0.6800000071525574,
-          "episode_ref": "episode-f30e8088ef27",
+          "confidence": 0.5999999642372131,
+          "episode_ref": "episode-a50de75da88e",
           "family": "pointer_reference",
-          "lead_group_ref": "group-ce50ecc7e81d",
-          "lead_root_score": 0.6800000071525574,
+          "lead_group_ref": "group-80c859cd1dca",
+          "lead_root_score": 0.5999999642372131,
           "member_group_refs": [
-            "group-ce50ecc7e81d"
-          ]
-        },
-        {
-          "confidence": 0.8199999928474426,
-          "episode_ref": "episode-0a7c79b35961",
-          "family": "type_overload",
-          "lead_group_ref": "group-1fcef13373e2",
-          "lead_root_score": 0.8199999928474426,
-          "member_group_refs": [
-            "group-1fcef13373e2"
-          ]
-        },
-        {
-          "confidence": 0.6600000262260437,
-          "episode_ref": "episode-3b22c5c66140",
-          "family": "pointer_reference",
-          "lead_group_ref": "group-2c241b94af21",
-          "lead_root_score": 0.6600000262260437,
-          "member_group_refs": [
-            "group-2c241b94af21"
+            "group-80c859cd1dca"
           ]
         }
       ],
-      "relations": []
+      "relations": [
+        {
+          "confidence": 0.85999995470047,
+          "evidence_tags": [
+            "earlier_ordinal",
+            "higher_root_competitor",
+            "partial_child",
+            "same_primary_file_bucket",
+            "same_translation_unit"
+          ],
+          "from_group_ref": "group-7b1a4b16d2be",
+          "kind": "cascade",
+          "to_group_ref": "group-a5b2caf2f4eb"
+        },
+        {
+          "confidence": 1.0,
+          "evidence_tags": [
+            "earlier_ordinal",
+            "parent_root_advantage",
+            "partial_child",
+            "same_primary_file_bucket",
+            "same_translation_unit"
+          ],
+          "from_group_ref": "group-7b1a4b16d2be",
+          "kind": "cascade",
+          "to_group_ref": "group-9825882f9881"
+        }
+      ]
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-c463e6d6dbbb",
+        "episode_ref": "episode-68baa682a8c7",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
-          "strong_root_family",
           "user_owned_primary"
         ],
-        "group_ref": "group-910491983009",
-        "independence_score": 0.8999999761581421,
-        "role": "independent_root",
-        "root_score": 0.8999999761581421,
-        "summary_likelihood": 0.3700000047683716,
-        "suppress_likelihood": 0.18000000715255737,
+        "group_ref": "group-7b1a4b16d2be",
+        "independence_score": 0.7200000286102295,
+        "role": "lead_root",
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.18000000715255737,
+        "suppress_likelihood": 0.07999999821186066,
         "visibility_floor": "never_hidden"
       },
       {
-        "episode_ref": "episode-60b26c4dd110",
+        "best_parent_group_ref": "group-7b1a4b16d2be",
+        "episode_ref": "episode-68baa682a8c7",
         "evidence_tags": [
           "actionability_short",
+          "earlier_ordinal",
           "early_invocation",
-          "strong_root_family",
+          "higher_root_competitor",
+          "partial_child",
+          "same_primary_file_bucket",
+          "same_translation_unit",
           "user_owned_primary"
         ],
-        "group_ref": "group-987c1b15f911",
-        "independence_score": 0.8700000047683716,
-        "role": "independent_root",
-        "root_score": 0.8700000047683716,
-        "summary_likelihood": 0.37300002574920654,
-        "suppress_likelihood": 0.18000000715255737,
-        "visibility_floor": "never_hidden"
+        "group_ref": "group-a5b2caf2f4eb",
+        "independence_score": 0.26100000739097595,
+        "role": "follow_on",
+        "root_score": 0.6499999761581421,
+        "summary_likelihood": 0.6632000207901001,
+        "suppress_likelihood": 0.6600000262260437,
+        "visibility_floor": "summary_or_expanded_only"
       },
       {
-        "episode_ref": "episode-f30e8088ef27",
+        "best_parent_group_ref": "group-7b1a4b16d2be",
+        "episode_ref": "episode-68baa682a8c7",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
+          "earlier_ordinal",
           "early_invocation",
+          "parent_root_advantage",
+          "partial_child",
+          "same_primary_file_bucket",
+          "same_translation_unit",
           "user_owned_primary"
         ],
-        "group_ref": "group-ce50ecc7e81d",
-        "independence_score": 0.6800000071525574,
-        "role": "independent_root",
-        "root_score": 0.6800000071525574,
-        "summary_likelihood": 0.3920000195503235,
-        "suppress_likelihood": 0.18000000715255737,
+        "group_ref": "group-9825882f9881",
+        "independence_score": 0.23999999463558197,
+        "role": "follow_on",
+        "root_score": 0.6199999451637268,
+        "summary_likelihood": 0.6800000071525574,
+        "suppress_likelihood": 0.6600000262260437,
+        "visibility_floor": "summary_or_expanded_only"
+      },
+      {
+        "best_parent_group_ref": "group-7b1a4b16d2be",
+        "episode_ref": "episode-116c8ce40296",
+        "evidence_tags": [
+          "actionability_short",
+          "earlier_ordinal",
+          "parent_root_advantage",
+          "partial_child",
+          "same_primary_file_bucket",
+          "user_owned_primary",
+          "weak_parent_margin"
+        ],
+        "group_ref": "group-eda49707e5ef",
+        "independence_score": 0.5999999642372131,
+        "role": "uncertain",
+        "root_score": 0.5999999642372131,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
         "visibility_floor": "never_hidden"
       },
       {
-        "episode_ref": "episode-0a7c79b35961",
+        "best_parent_group_ref": "group-7b1a4b16d2be",
+        "episode_ref": "episode-a50de75da88e",
         "evidence_tags": [
           "actionability_short",
-          "strong_root_family",
-          "user_owned_primary"
+          "earlier_ordinal",
+          "parent_root_advantage",
+          "partial_child",
+          "same_primary_file_bucket",
+          "user_owned_primary",
+          "weak_parent_margin"
         ],
-        "group_ref": "group-1fcef13373e2",
-        "independence_score": 0.8199999928474426,
-        "role": "independent_root",
-        "root_score": 0.8199999928474426,
-        "summary_likelihood": 0.37800002098083496,
-        "suppress_likelihood": 0.18000000715255737,
-        "visibility_floor": "never_hidden"
-      },
-      {
-        "episode_ref": "episode-3b22c5c66140",
-        "evidence_tags": [
-          "actionability_short",
-          "classified_family",
-          "user_owned_primary"
-        ],
-        "group_ref": "group-2c241b94af21",
-        "independence_score": 0.6600000262260437,
-        "role": "independent_root",
-        "root_score": 0.6600000262260437,
-        "summary_likelihood": 0.39400002360343933,
-        "suppress_likelihood": 0.18000000715255737,
+        "group_ref": "group-80c859cd1dca",
+        "independence_score": 0.5999999642372131,
+        "role": "uncertain",
+        "root_score": 0.5999999642372131,
+        "summary_likelihood": 0.5799999833106995,
+        "suppress_likelihood": 0.25999999046325684,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-2->node:residual-compiler-2-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-2-child-1"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-2->node:residual-compiler-2-child-2",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-2-child-2"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-1"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-2",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-2"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-3",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-3"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-4",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-4"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-5",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-5"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-6",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-6"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-7",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-7"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:sarif-0-0->node:sarif-0-0-related-8",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0-related-8"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-2->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-2-child-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-2-child-2->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-3->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-4->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-1->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-2->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-3->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-4->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-5->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-5",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-6->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-6",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-7->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-7",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0-related-8->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0-related-8",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "structured_adapter_derived",
+            "edge_ref": "source-token:node:residual-compiler-1->node:residual-compiler-2:src/main.cpp|value",
+            "evidence_tags": [
+              "exact_labeled_source_range"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "symbol_relation",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:residual-compiler-2"
+          },
+          {
+            "authority": "structured_adapter_derived",
+            "edge_ref": "source-token:node:residual-compiler-1->node:residual-compiler-3:src/main.cpp|value",
+            "evidence_tags": [
+              "exact_labeled_source_range"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "symbol_relation",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:residual-compiler-3"
+          },
+          {
+            "authority": "structured_adapter_derived",
+            "edge_ref": "source-token:node:residual-compiler-1->node:residual-compiler-4:src/main.cpp|value",
+            "evidence_tags": [
+              "exact_labeled_source_range"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "symbol_relation",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:residual-compiler-4"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-1->raw:residual-compiler-1:stderr.raw:428:631",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-1:stderr.raw:428:631"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-2->raw:residual-compiler-2:stderr.raw:632:699",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-2:stderr.raw:632:699"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-2-child-1->raw:residual-compiler-2-child-1:stderr.raw:700:831",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-2-child-1:stderr.raw:700:831"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-2-child-2->raw:residual-compiler-2-child-2:stderr.raw:832:901",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-2-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-2-child-2:stderr.raw:832:901"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-3->raw:residual-compiler-3:stderr.raw:902:1110",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-3:stderr.raw:902:1110"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-4->raw:residual-compiler-4:stderr.raw:1111:1188",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-4:stderr.raw:1111:1188"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-2-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-2-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-2-child-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-2-child-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-3",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-3"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-4",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-4"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-3",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-3"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-4",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-4"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-5",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-5"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-6",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-6"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-7",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-7"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0-related-8",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0-related-8"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-1:stderr.raw:428:631",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 631,
+              "kind": "raw_chunk",
+              "start": 428
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-2-child-1:stderr.raw:700:831",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 831,
+              "kind": "raw_chunk",
+              "start": 700
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-2-child-2:stderr.raw:832:901",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 901,
+              "kind": "raw_chunk",
+              "start": 832
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-2:stderr.raw:632:699",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 699,
+              "kind": "raw_chunk",
+              "start": 632
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-3:stderr.raw:902:1110",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 1110,
+              "kind": "raw_chunk",
+              "start": 902
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-4:stderr.raw:1111:1188",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 1188,
+              "kind": "raw_chunk",
+              "start": 1111
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:6:15"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-1",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-1",
+            "node:residual-compiler-2",
+            "node:residual-compiler-3",
+            "node:residual-compiler-4"
+          ],
+          "observability": "observable",
+          "primary_repair_anchors": [
+            "src/main.cpp:6:15"
+          ],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "source-token:node:residual-compiler-1->node:residual-compiler-2:src/main.cpp|value",
+            "source-token:node:residual-compiler-1->node:residual-compiler-3:src/main.cpp|value",
+            "source-token:node:residual-compiler-1->node:residual-compiler-4:src/main.cpp|value"
+          ],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-1+node-residual-compiler-2+node-residual-compiler-3+node-residual-compiler-4",
+          "visibility_floor": "hidden_allowed",
+          "visible": true
+        },
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:1:6",
+            "src/main.cpp:2:6",
+            "src/main.cpp:6:15",
+            "src/main.cpp:6:5"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:sarif-0-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:sarif-0-0",
+            "node:sarif-0-0-related-1",
+            "node:sarif-0-0-related-2",
+            "node:sarif-0-0-related-3",
+            "node:sarif-0-0-related-4",
+            "node:sarif-0-0-related-5",
+            "node:sarif-0-0-related-6",
+            "node:sarif-0-0-related-7",
+            "node:sarif-0-0-related-8"
+          ],
+          "observability": "observable",
+          "primary_repair_anchors": [
+            "src/main.cpp:1:6",
+            "src/main.cpp:2:6",
+            "src/main.cpp:6:15",
+            "src/main.cpp:6:5"
+          ],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-1",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-2",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-3",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-4",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-5",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-6",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-7",
+            "hierarchy:node:sarif-0-0->node:sarif-0-0-related-8"
+          ],
+          "raw_capture_refs": [
+            "diagnostics.sarif"
+          ],
+          "repair_unit_ref": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4+node-sarif-0-0-related-5+node-sarif-0-0-related-6+node-sarif-0-0-related-7+node-sarif-0-0-related-8",
+          "visibility_floor": "hidden_allowed",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 11,
+        "referenced_fact_count": 13,
+        "total_fact_count": 23,
+        "unresolved_evidence_count": 0,
+        "visible_unit_count": 2
+      }
+    },
     "stats": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 2,
       "duplicate_count": 0,
-      "independent_root_count": 5,
-      "uncertain_count": 0
+      "independent_root_count": 1,
+      "uncertain_count": 2
     }
   },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "5b7deb6bc05f63e07f7da55cf267ad7281b8106da695cf603d6f3f8ad3f29855",
-    "raw": "d805deefc4ed3254d63dbc85b40343c9e2e094e848490b8e74112450a81bd6e9",
-    "structural": "ac7fd5d92eb428ee57e62772084dfb34854f2a64af382d1cc4c98da1fcb25a8c"
+    "raw": "350ac3e6b9d085accb07d1ce3b5acafee0a5e32cbb885a0cfed6d025d76189e6",
+    "structural": "0f5cf5913d79c1ab1ff19e6cf4284f2a3f09f6ec2445860e0fa1baa4bd4e36bc"
   },
+  "integrity_issues": [
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
+    }
+  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",

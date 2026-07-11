@@ -22,7 +22,7 @@
       ],
       "family": "sizeof_allocation",
       "first_action": "check whether sizeof is applied to the intended type rather than a pointer",
-      "group_id": "group-c58bd4116a27",
+      "group_id": "group-48b862a8996e",
       "matched_conditions": [
         "message_contains='sizeof' on array function parameter",
         "message_contains=will return size of",
@@ -38,6 +38,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

@@ -7,4 +7,4 @@ raw : 'sizeof' on array function parameter 'values' will return size of 'int *'
 note: declared here
 debug: rule_id=rule.family.sizeof_allocation.message_terms
 debug: matched_conditions=message_contains='sizeof' on array function parameter, message_contains=will return size of, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

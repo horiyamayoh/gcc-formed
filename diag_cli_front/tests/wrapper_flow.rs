@@ -741,16 +741,16 @@ main.c:4:1: note: extra opaque detail\n",
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
     assert_eq!(trace["selected_mode"], "render");
-    assert_eq!(trace["wrapper_verdict"], "render_fallback");
+    assert_eq!(trace["wrapper_verdict"], "rendered");
     assert_eq!(trace["environment_summary"]["version_band"], "gcc9_12");
-    assert_eq!(trace["fallback_reason"], "residual_only");
+    assert!(trace["fallback_reason"].is_null());
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("fallback")
+        Some("compatibility")
     );
     assert_eq!(
         trace["parser_result_summary"]["document_completeness"].as_str(),
-        Some("passthrough")
+        Some("partial")
     );
     assert!(
         trace["decision_log"]
@@ -764,12 +764,12 @@ main.c:4:1: note: extra opaque detail\n",
             .as_array()
             .unwrap()
             .iter()
-            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=fail_open"))
+            .any(|entry| entry.as_str() == Some("ingest_fallback_grade=compatibility"))
     );
 }
 
 #[test]
-fn verbose_profile_keeps_residual_fallback_reason_visible() {
+fn verbose_profile_keeps_generic_residual_evidence_visible() {
     let temp = fixture_with_stderr(
         "12.2.0",
         "\
@@ -788,12 +788,8 @@ main.c:4:1: note: extra opaque detail\n",
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "error: showing a conservative wrapper view",
-        ))
-        .stderr(predicate::str::contains(
-            "note: fallback reason = residual_only",
-        ))
+        .stderr(predicate::str::contains("error: [compiler.residual]"))
+        .stderr(predicate::str::contains("note: fallback reason =").not())
         .stderr(predicate::str::contains(
             "raw:\n  main.c:4:1: error: opaque compiler wording here",
         ));

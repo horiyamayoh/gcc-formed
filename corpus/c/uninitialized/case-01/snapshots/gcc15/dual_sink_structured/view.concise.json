@@ -21,8 +21,8 @@
         }
       ],
       "family": "uninitialized",
-      "first_action": "initialize the variable at its declaration or before first use",
-      "group_id": "group-993a8e94aab9",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "matched_conditions": [
         "message_contains=may be used uninitialized",
         "phase=semantic"
@@ -31,12 +31,12 @@
       "rule_id": "rule.family.uninitialized.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "variable used without initialization"
+      "title": "'value' may be used uninitialized"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

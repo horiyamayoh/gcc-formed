@@ -1,14 +1,13 @@
-error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:17
-help: compare the expected type and actual argument at the call site
+error: [type_mismatch] invalid conversion from 'const char*' to 'short int' @ src/main.cpp:5:17
 raw : invalid conversion from 'const char*' to 'short int'
 | src/main.cpp:5:17
 |     takes_short("x");
 |                 ^~
 debug: rule_id=rule.family.type_overload.structured_or_message
 debug: matched_conditions=message_contains=invalid conversion, phase=semantic
-debug-facts: group_ref=group-f0d86376e771, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-3f02c305e274
-debug-facts: evidence_tags=actionability_short, early_invocation, strong_root_family, user_owned_primary
-debug-raw: provenance_capture_refs=diagnostics.json
+explain: repair_unit=repair-unit:node-json-0 proof=Unresolved visibility=NeverHidden
+explain: member=node:json-0 target=DiagnosticNode { node_ref: "json-0" } unresolved=false
+explain: raw_capture=diagnostics.json
 
 note: [unknown]   initializing argument 1 of 'void takes_short(short int)' @ src/main.cpp:1:18
 note: wrapper confidence is low; verify against the preserved raw diagnostics
@@ -19,7 +18,6 @@ raw :   initializing argument 1 of 'void takes_short(short int)'
 debug: rule_id=rule.family.unknown
 debug: matched_conditions=no_family_rule_matched
 debug: suppression_reason=generic_fallback
-debug-facts: group_ref=group-f44638368e33, role=uncertain, visibility_floor=never_hidden, episode_ref=episode-1e3c4b005005
-debug-facts: evidence_tags=actionability_short, early_invocation, generic_follow_on, user_owned_primary
-debug-raw: provenance_capture_refs=diagnostics.json
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+explain: repair_unit=repair-unit:node-json-1 proof=Unresolved visibility=NeverHidden
+explain: member=node:json-1 target=DiagnosticNode { node_ref: "json-1" } unresolved=false
+explain: raw_capture=diagnostics.json

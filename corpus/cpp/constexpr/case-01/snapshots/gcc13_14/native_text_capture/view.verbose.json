@@ -22,7 +22,7 @@
       ],
       "family": "constexpr",
       "first_action": "ensure all expressions and function calls in the constexpr context are constant-evaluable",
-      "group_id": "group-a7138dad0c39",
+      "group_id": "group-5fdfe009c6a0",
       "matched_conditions": [
         "message_contains=static assertion failed",
         "message_contains=static_assert",
@@ -43,6 +43,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

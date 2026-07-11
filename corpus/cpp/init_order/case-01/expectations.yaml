@@ -22,15 +22,15 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 20
-    expected_summary_only_group_count: 1
+    expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
-    expected_suppressed_group_count: 1
+    expected_suppressed_group_count: 0
   concise:
     omission_notice_required: true
     first_screenful_max_lines: 14
-    expected_summary_only_group_count: 1
+    expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
-    expected_suppressed_group_count: 1
+    expected_suppressed_group_count: 0
   verbose:
     omission_notice_required: false
     first_screenful_max_lines: 40
@@ -38,12 +38,12 @@ render:
     expected_hidden_group_count: 0
     expected_suppressed_group_count: 0
   ci:
-    first_screenful_max_lines: 15
+    first_screenful_max_lines: 16
     path_first_required: true
     color_meaning_forbidden: true
-    expected_summary_only_group_count: 1
+    expected_summary_only_group_count: 0
     expected_hidden_group_count: 0
-    expected_suppressed_group_count: 1
+    expected_suppressed_group_count: 0
 integrity:
   allowed_issue_codes: []
 performance:

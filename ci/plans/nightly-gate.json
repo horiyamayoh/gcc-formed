@@ -316,6 +316,19 @@
         "$REPORT_ROOT/release/cargo-deny.txt"
       ],
       "gate_scope": "repository"
+    },
+    {
+      "id": "repair-unit-quality-gate",
+      "order": 22,
+      "name": "RepairUnit full exact-count quality gate",
+      "policy": "always",
+      "failure_classification": "product",
+      "command": "cargo xtask repair-oracle --root corpus --check && cargo xtask quality-report --root corpus --format json > \"$REPORT_ROOT/gate/repair-unit-quality.json\"",
+      "fixture": "repair-oracle:all",
+      "gcc_version": "${MATRIX_GCC_VERSION}",
+      "artifact_paths": ["$REPORT_ROOT/gate/repair-unit-quality.json"],
+      "gate_scope": "matrix",
+      "version_band": "${MATRIX_VERSION_BAND}"
     }
   ]
 }

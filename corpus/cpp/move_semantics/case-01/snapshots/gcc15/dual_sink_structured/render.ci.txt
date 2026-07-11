@@ -1,8 +1,7 @@
-src/main.cpp:7:12: warning: [move_semantics] unnecessary or incorrect move operation
-help: remove the std::move to allow copy elision, or fix the value category
+src/main.cpp:7:12: warning: [move_semantics] moving a local object in a return statement prevents copy elision
 raw : moving a local object in a return statement prevents copy elision
 | src/main.cpp:7:12
 |     return std::move(value);
 |            ^
 note: remove 'std::move' call
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

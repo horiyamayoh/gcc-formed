@@ -24,8 +24,8 @@
         }
       ],
       "family": "template",
-      "first_action": "start from the first user-owned template frame and match template arguments",
-      "group_id": "group-790be06bdf24",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3",
       "matched_conditions": [
         "context=template_instantiation",
         "child_note_kind=template_context",
@@ -38,12 +38,12 @@
       "rule_id": "rule.family.template.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "template instantiation failed"
+      "title": "no matching function for call to 'combine(int, const char [2])'"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

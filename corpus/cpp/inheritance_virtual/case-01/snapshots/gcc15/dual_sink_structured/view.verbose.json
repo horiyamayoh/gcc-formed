@@ -23,7 +23,7 @@
       ],
       "family": "inheritance_virtual",
       "first_action": "implement all pure virtual functions or fix the class hierarchy",
-      "group_id": "group-775fa7767837",
+      "group_id": "group-c70d67ea6509",
       "matched_conditions": [
         "message_contains=abstract type",
         "phase=semantic"
@@ -38,6 +38,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

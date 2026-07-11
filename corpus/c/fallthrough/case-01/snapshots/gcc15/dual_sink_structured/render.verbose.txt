@@ -7,4 +7,4 @@ raw : this statement may fall through
 note: here
 debug: rule_id=rule.family.fallthrough.message_terms
 debug: matched_conditions=message_contains=this statement may fall through, message_contains=may fall through, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

@@ -13,4 +13,3 @@ raw:
         |          ^~~~~~
 debug: rule_id=rule.family.structured_binding.message_terms
 debug: matched_conditions=message_contains=name provided for structured binding, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

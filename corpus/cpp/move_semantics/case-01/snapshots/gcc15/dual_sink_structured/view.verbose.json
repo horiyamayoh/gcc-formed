@@ -22,7 +22,7 @@
       ],
       "family": "move_semantics",
       "first_action": "remove the std::move to allow copy elision, or fix the value category",
-      "group_id": "group-253b4a7b0a5b",
+      "group_id": "group-acd23385db2b",
       "matched_conditions": [
         "message_contains=moving a local object in a return",
         "phase=semantic"
@@ -37,6 +37,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

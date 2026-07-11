@@ -20,7 +20,7 @@
         "confidence": 0.6499999761581421,
         "family": "module_import",
         "first_action_hint": "build or export the requested module interface before importing it",
-        "group_ref": "group-e51b73d28d30",
+        "group_ref": "group-e2d380a6c43a",
         "headline": "C++20 module import error",
         "matched_conditions": [
           "message_contains=failed to read compiled module",
@@ -31,7 +31,7 @@
       "fingerprints": {
         "family": "97d1af1cd78fe6232b67f5301d1789c27691c6b1727f41db590953106311d3b6",
         "raw": "c5d5695b02911007c222928ddb9dfc53c377f6dc2775dd6e001d29439dc8038b",
-        "structural": "064be45cb283f0e2c4deaf12b3f3d8e769eb12a32b0e1542e90a97f301e740e4"
+        "structural": "acca669768a0447d689490babad10c38e57610d8f4aed2b6a4dcd87a23f6a1e9"
       },
       "id": "residual-passthrough",
       "message": {
@@ -54,13 +54,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.46000000834465027,
-          "episode_ref": "episode-829d56431349",
+          "confidence": 0.4000000059604645,
+          "episode_ref": "episode-fb35e96abdb6",
           "family": "module_import",
-          "lead_group_ref": "group-e51b73d28d30",
-          "lead_root_score": 0.46000000834465027,
+          "lead_group_ref": "group-e2d380a6c43a",
+          "lead_root_score": 0.4000000059604645,
           "member_group_refs": [
-            "group-e51b73d28d30"
+            "group-e2d380a6c43a"
           ]
         }
       ],
@@ -68,17 +68,16 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-829d56431349",
+        "episode_ref": "episode-fb35e96abdb6",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "no_primary_location"
         ],
-        "group_ref": "group-e51b73d28d30",
-        "independence_score": 0.46000000834465027,
+        "group_ref": "group-e2d380a6c43a",
+        "independence_score": 0.4399999976158142,
         "role": "uncertain",
-        "root_score": 0.46000000834465027,
+        "root_score": 0.4000000059604645,
         "summary_likelihood": 0.5799999833106995,
         "suppress_likelihood": 0.25999999046325684,
         "visibility_floor": "never_hidden"
@@ -86,6 +85,95 @@
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-passthrough->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-passthrough",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-passthrough->raw:residual-passthrough:stderr.raw:0:365",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-passthrough",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-passthrough:stderr.raw:0:365"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-passthrough",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-passthrough"
+            },
+            "unresolved": true
+          },
+          {
+            "evidence_ref": "raw:residual-passthrough:stderr.raw:0:365",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 365,
+              "kind": "raw_chunk",
+              "start": 0
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-passthrough",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-passthrough"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-passthrough",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 3,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -97,8 +185,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "124744772988e68197d235084492097aada9f47effa3edf13374504044d02dee",
-    "raw": "08e90353582874892e0fba0660e5b7728ab200fa6e2e04908a8c78b1020c4390",
-    "structural": "052d252ce0e574af70513e86c668c103a6db4e3e39fd0108fd92ffaa75197953"
+    "raw": "836487ee61f81d6d7030a8c883745f755af4c90a75acb736739c27c9a5f9665b",
+    "structural": "1fd1b88b966c53251f6dc634eb3b3efe63cbd8838a7cfe86843c0244555db058"
   },
   "producer": {
     "name": "gcc-formed",

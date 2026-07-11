@@ -1,7 +1,5 @@
-src/main.c:2:0: warning: [syntax] OpenMP directive or clause error
-help: check the variable data-sharing clause or enable -fopenmp
+src/main.c:2:0: warning: [syntax] ignoring ‘#pragma omp for’
 raw : ignoring ‘#pragma omp for’
 | src/main.c:2:0
 | #pragma omp for
 | ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

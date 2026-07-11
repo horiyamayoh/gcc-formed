@@ -22,7 +22,7 @@
       ],
       "family": "structured_binding",
       "first_action": "ensure the type is decomposable and the number of bindings matches the member count",
-      "group_id": "group-e2a636de30cb",
+      "group_id": "group-2201258f9b3e",
       "matched_conditions": [
         "message_contains=name provided for structured binding",
         "phase=semantic"
@@ -43,6 +43,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

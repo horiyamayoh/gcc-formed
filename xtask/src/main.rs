@@ -5,7 +5,7 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*,
+    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*, rc_gate::*, release::*,
     repair_oracle::*, stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
@@ -177,6 +177,12 @@ enum Commands {
         filter: Option<String>,
         #[arg(long)]
         check: bool,
+    },
+    QualityReport {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(long, default_value = "json")]
+        format: String,
     },
     Snapshot {
         #[arg(long, default_value = "corpus")]
@@ -527,6 +533,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 filter,
                 check,
             })?;
+        }
+        Commands::QualityReport { root, format } => {
+            run_quality_report(QualityReportOptions { root, format })?;
         }
         Commands::Snapshot {
             root,

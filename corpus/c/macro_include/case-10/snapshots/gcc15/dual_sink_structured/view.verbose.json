@@ -20,7 +20,7 @@
       ],
       "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "group-94d6c9018be2",
+      "group_id": "group-0777b3b47d0d",
       "matched_conditions": [
         "context=macro_expansion"
       ],
@@ -34,6 +34,14 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  }
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
+  },
+  "summary_only_groups": [
+    {
+      "canonical_location": "src/main.c:1:33",
+      "group_id": "group-d8e1c8362876",
+      "severity": "error",
+      "title": "error surfaced through macro/include context"
+    }
+  ]
 }

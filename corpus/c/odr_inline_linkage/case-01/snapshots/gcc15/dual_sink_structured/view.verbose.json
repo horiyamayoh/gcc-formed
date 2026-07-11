@@ -20,7 +20,7 @@
       ],
       "family": "odr_inline_linkage",
       "first_action": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
-      "group_id": "group-a5fdd288eb9b",
+      "group_id": "group-9e5c4160c129",
       "matched_conditions": [
         "message_contains=does not match original declaration",
         "message_contains=lto-type-mismatch",
@@ -41,6 +41,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

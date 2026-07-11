@@ -1,8 +1,19 @@
-src/main.c:9:12: error: [macro_include] error surfaced through macro/include context
-help: inspect the user-owned macro invocation or include edge that reaches the failing line
+note: some compiler details were not fully structured; original diagnostics are preserved
+src/main.c:9:12: error: [macro_include] 'Box' has no member named 'missing_field'
 from: invocation of 'READ_MISSING' @ src/main.c:9:12
-via : include src/wrapper.h:1 <- src/main.c:1
+via : src/wrapper.h:1
 | src/main.c:9:12
 |     return READ_MISSING(box);
 |            ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+from include chain:
+  - src/wrapper.h:1 included from src/main.c:1
+
+src/config.h:1:33: error: [macro_include] 'Box' has no member named 'missing_field'
+src/main.c: In function 'main':
+    1 | #define READ_MISSING(box) ((box).missing_field)
+      |                                 ^
+raw : src/config.h:1:33: error: 'Box' has no member named 'missing_field'
+| src/config.h:1:33
+| #define READ_MISSING(box) ((box).missing_field)
+|                                 ^
+through macro expansion: preserved macro/include context

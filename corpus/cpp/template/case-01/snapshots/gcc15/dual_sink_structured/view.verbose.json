@@ -26,7 +26,7 @@
       ],
       "family": "template",
       "first_action": "start from the first user-owned template frame and match template arguments",
-      "group_id": "group-c2954ae4d36e",
+      "group_id": "group-622cd961c678",
       "matched_conditions": [
         "context=template_instantiation",
         "child_note_kind=template_context",
@@ -45,6 +45,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

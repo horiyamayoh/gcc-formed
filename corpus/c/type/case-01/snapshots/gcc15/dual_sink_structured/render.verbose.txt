@@ -8,4 +8,4 @@ via : takes_int
 |                      ^
 debug: rule_id=rule.family.type_overload.structured_or_message
 debug: matched_conditions=message_contains=passing argument, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

@@ -20,7 +20,7 @@
       ],
       "family": "asm_inline",
       "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "group-8de1e6e83fb3",
+      "group_id": "group-1137ad32bab5",
       "matched_conditions": [
         "message_contains=impossible constraint in",
         "phase=codegen"
@@ -51,7 +51,7 @@
       ],
       "family": "asm_inline",
       "first_action": "check the asm constraint letters and ensure registers/operands match the template",
-      "group_id": "group-d48624c5088d",
+      "group_id": "group-5f6a7b0892b4",
       "matched_conditions": [
         "message_contains=does not match constraints",
         "phase=codegen"
@@ -66,6 +66,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

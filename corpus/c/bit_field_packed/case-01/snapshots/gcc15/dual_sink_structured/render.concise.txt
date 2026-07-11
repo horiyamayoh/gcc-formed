@@ -1,7 +1,5 @@
-warning: [bit_field_packed] bit-field or packed struct issue @ src/main.c:7:12
-help: check field width against the declared type or avoid taking address of packed members
-raw : taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value
+warning: [bit_field_packed] taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value
+raw : taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value @ src/main.c:7:12
 | src/main.c:7:12
 |     return &packet->value;
 |            ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

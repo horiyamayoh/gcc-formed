@@ -8,23 +8,7 @@ from: src/main.cpp:3:5 NoCopy(const NoCopy&) = delete;
 |     ^
 debug: rule_id=rule.family.deleted_function.message_terms
 debug: matched_conditions=message_contains=use of deleted function, phase=semantic
-
-note: [type_mismatch] type or overload mismatch @ src/main.cpp:10:5
-help: compare the expected type and actual argument at the call site
-raw : use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates
-| src/main.cpp:10:5
-|     take(value);
-|     ^
-debug: rule_id=rule.family.type_overload.structured_or_message
-debug: matched_conditions=message_contains=candidate, phase=semantic
-
-note: [unknown] initializing argument 1 of 'void take(NoCopy)' @ src/main.cpp:6:11
-note: wrapper confidence is low; verify against the preserved raw diagnostics
-raw : initializing argument 1 of 'void take(NoCopy)'
-| src/main.cpp:6:11
-| void take(NoCopy value) {}
-|           ^
-debug: rule_id=rule.family.unknown
-debug: matched_conditions=no_family_rule_matched
-debug: suppression_reason=generic_fallback
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+other diagnostics:
+  - src/main.cpp:10:5: note: type or overload mismatch
+  - src/main.cpp:6:11: note: initializing argument 1 of 'void take(NoCopy)'
+details: --formed-explain | raw: --formed-raw

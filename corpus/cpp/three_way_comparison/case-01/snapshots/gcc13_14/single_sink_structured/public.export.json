@@ -52,6 +52,22 @@
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:sarif-0-0",
+        "member_evidence_refs": [
+          "node:sarif-0-0"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "diagnostics.sarif"
+        ],
+        "repair_unit_ref": "repair-unit:node-sarif-0-0",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      }
+    ],
     "summary": {
       "dependent_follow_on_count": 0,
       "diagnostic_count": 1,
@@ -63,6 +79,6 @@
       "warning_count": 0
     }
   },
-  "schema_version": "2.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

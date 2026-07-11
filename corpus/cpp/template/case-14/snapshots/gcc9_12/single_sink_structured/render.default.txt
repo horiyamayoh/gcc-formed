@@ -1,5 +1,11 @@
-error: [template] template instantiation failed @ src/main.cpp:7:22
-help: start from the first user-owned template frame and match template arguments
+error: [template] class template argument deduction failed: @ src/main.cpp:7:22
+raw : class template argument deduction failed:
+| src/main.cpp:7:22
+|     Pair value(1, "x");
+|                      ^
+while instantiating:
+
+error: [template] no matching function for call to 'Pair(int, const char [2])' @ src/main.cpp:7:22
 raw : no matching function for call to 'Pair(int, const char [2])'
 | src/main.cpp:7:22
 |     Pair value(1, "x");
@@ -9,12 +15,4 @@ while instantiating:
   - src/main.cpp:7:22 deduced conflicting types for parameter 'T' ('int' and 'const char*')
   - src/main.cpp:2:8 candidate: 'template<class T> Pair(Pair<T>)-> Pair<T>'
 omitted 1 internal template frames
-
-error: [template] template instantiation failed @ src/main.cpp:7:22
-help: start from the first user-owned template frame and match template arguments
-raw : class template argument deduction failed:
-| src/main.cpp:7:22
-|     Pair value(1, "x");
-|                      ^
-while instantiating:
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

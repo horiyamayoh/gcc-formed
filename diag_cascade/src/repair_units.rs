@@ -14,6 +14,7 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
     ensure_evidence_records(document);
     add_syntax_fixit_edges(document);
     add_structural_frontier_edges(document);
+    add_labeled_source_token_edges(document);
     add_linker_symbol_edges(document);
     add_exact_duplicate_edges(document);
 
@@ -482,6 +483,129 @@ fn context_frame_anchor(frame: &diag_core::ContextFrame) -> Option<String> {
     ))
 }
 
+fn add_labeled_source_token_edges(document: &mut DiagnosticDocument) {
+    let cwd = document
+        .run
+        .cwd_display
+        .as_deref()
+        .map(std::path::Path::new);
+    let mut tokens = BTreeMap::<String, Vec<String>>::new();
+    for node in &document.diagnostics {
+        if !matches!(
+            node.phase,
+            diag_core::Phase::Semantic
+                | diag_core::Phase::Instantiate
+                | diag_core::Phase::Constraints
+        ) {
+            continue;
+        }
+        for location in &node.locations {
+            let Some(token) = source_token_for_location(location, cwd) else {
+                continue;
+            };
+            tokens
+                .entry(format!("{}|{token}", location.file.path_raw))
+                .or_default()
+                .push(format!("node:{}", node.id));
+        }
+    }
+    let Some(repair) = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    else {
+        return;
+    };
+    for (token, mut refs) in tokens {
+        refs.sort();
+        refs.dedup();
+        for right in refs.iter().skip(1) {
+            let left = &refs[0];
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("source-token:{left}->{right}:{token}"),
+                from_evidence_ref: left.clone(),
+                to_evidence_ref: right.clone(),
+                kind: EvidenceEdgeKind::SymbolRelation,
+                authority: EvidenceAuthority::StructuredAdapterDerived,
+                proof_class: RepairProofClass::Proven,
+                evidence_tags: vec!["exact_labeled_source_range".into()],
+            });
+        }
+    }
+    repair
+        .evidence_graph
+        .edges
+        .sort_by(|left, right| left.edge_ref.cmp(&right.edge_ref));
+    repair
+        .evidence_graph
+        .edges
+        .dedup_by(|left, right| left.edge_ref == right.edge_ref);
+}
+
+fn source_token_for_location(
+    location: &diag_core::Location,
+    cwd: Option<&std::path::Path>,
+) -> Option<String> {
+    let path = std::path::Path::new(&location.file.path_raw);
+    let path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        cwd?.join(path)
+    };
+    let source = std::fs::read_to_string(path).ok()?;
+    let (line_number, mut start, mut end) = if let Some(range) = location.range.as_ref() {
+        if range.start.line != range.end.line {
+            return None;
+        }
+        let origin = range.start.column_origin.unwrap_or(1);
+        let start = range
+            .start
+            .column_byte
+            .or(range.start.column_native)?
+            .saturating_sub(origin) as usize;
+        let mut end = range
+            .end
+            .column_byte
+            .or(range.end.column_native)?
+            .saturating_sub(origin) as usize;
+        if range.boundary_semantics == diag_core::BoundarySemantics::InclusiveEnd {
+            end = end.saturating_add(1);
+        }
+        (range.start.line, start, end)
+    } else {
+        let anchor = location.anchor.as_ref()?;
+        let origin = anchor.column_origin.unwrap_or(1);
+        let caret = anchor
+            .column_byte
+            .or(anchor.column_native)?
+            .saturating_sub(origin) as usize;
+        (anchor.line, caret, caret)
+    };
+    let line = source.lines().nth(line_number.saturating_sub(1) as usize)?;
+    if start == end {
+        while start > 0 {
+            let character = line[..start].chars().next_back()?;
+            if !is_source_symbol_character(character) {
+                break;
+            }
+            start -= character.len_utf8();
+        }
+        while end < line.len() {
+            let character = line[end..].chars().next()?;
+            if !is_source_symbol_character(character) {
+                break;
+            }
+            end += character.len_utf8();
+        }
+    }
+    let token = line.get(start..end)?.trim();
+    (!token.is_empty() && token.chars().all(is_source_symbol_character)).then(|| token.to_string())
+}
+
+fn is_source_symbol_character(character: char) -> bool {
+    character.is_alphanumeric() || "_:$~".contains(character)
+}
+
 fn add_linker_symbol_edges(document: &mut DiagnosticDocument) {
     let mut symbols = BTreeMap::<String, Vec<(String, EvidenceAuthority)>>::new();
     let mut concrete = Vec::new();
@@ -491,7 +615,10 @@ fn add_linker_symbol_edges(document: &mut DiagnosticDocument) {
             continue;
         }
         let reference = format!("node:{}", node.id);
-        if node.origin == diag_core::Origin::Driver && node.symbol_context.is_none() {
+        if (node.origin == diag_core::Origin::Driver
+            || node.semantic_role == diag_core::SemanticRole::Passthrough)
+            && node.symbol_context.is_none()
+        {
             summaries.push(reference);
             continue;
         }

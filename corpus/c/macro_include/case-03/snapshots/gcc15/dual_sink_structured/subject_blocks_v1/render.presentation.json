@@ -3,7 +3,7 @@
     {
       "canonical_location": "src/main.c:3:25",
       "display_family": "macro_include",
-      "group_id": "group-d890bfb119c0",
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "internal_family": "macro_include",
       "presentation": {
         "display_family": "macro_include",
@@ -34,11 +34,6 @@
       "severity": "error",
       "slots": [
         {
-          "label": "help",
-          "slot": "first_action",
-          "value": "inspect the user-owned macro invocation or include edge that reaches the failing line"
-        },
-        {
           "label": "from",
           "slot": "from",
           "value": "invocation of 'FETCH_VALUE' @ src/main.c:3:25"
@@ -49,8 +44,8 @@
           "value": "src/wrapper.h:1"
         }
       ],
-      "subject": "error surfaced through macro/include context",
-      "title": "error surfaced through macro/include context"
+      "subject": "'missing_symbol' undeclared (first use in this function)",
+      "title": "'missing_symbol' undeclared (first use in this function)"
     }
   ],
   "fell_back_to_default": false,
@@ -59,7 +54,7 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "policy_session_mode": "all_visible_blocks",
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw",
     "resolved_session_mode": "all_visible_blocks"
   }
 }

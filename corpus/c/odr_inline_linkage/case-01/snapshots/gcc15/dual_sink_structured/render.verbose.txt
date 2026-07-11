@@ -12,4 +12,3 @@ raw:
         |     ^
 debug: rule_id=rule.family.odr_inline_linkage.message_terms
 debug: matched_conditions=message_contains=does not match original declaration, message_contains=lto-type-mismatch, phase=link
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

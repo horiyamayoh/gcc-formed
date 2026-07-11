@@ -20,7 +20,7 @@
       ],
       "family": "pedantic_compliance",
       "first_action": "use the standard-conforming alternative or pass the required -std= flag",
-      "group_id": "group-f45c2089a6a6",
+      "group_id": "group-cc2f663513bc",
       "matched_conditions": [
         "message_contains=iso c90 forbids",
         "message_contains=variable length array",
@@ -52,7 +52,7 @@
       ],
       "family": "uninitialized",
       "first_action": "initialize the variable at its declaration or before first use",
-      "group_id": "group-26423017510a",
+      "group_id": "group-dfd278f23681",
       "matched_conditions": [
         "message_contains=is used uninitialized",
         "phase=semantic"
@@ -67,6 +67,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

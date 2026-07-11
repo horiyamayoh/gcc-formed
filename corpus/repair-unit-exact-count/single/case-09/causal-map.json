@@ -66,7 +66,13 @@
   "independent_patch_order_stable": true,
   "baseline_comparison": {
     "raw_gcc_diagnostic_count": 1,
-    "current_formed_visible_count": 2,
+    "current_formed_visible_count": 1,
+    "current_formed_displayed_block_count": 1,
+    "current_formed_repair_unit_count": 1,
+    "hidden_independent_evidence_count": 0,
+    "orphan_hidden_evidence_count": 0,
+    "raw_fact_coverage_numerator": 1,
+    "raw_fact_coverage_denominator": 1,
     "oracle_repair_unit_count": 1
   },
   "ambiguity": []

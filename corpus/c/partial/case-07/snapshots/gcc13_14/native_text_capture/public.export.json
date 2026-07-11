@@ -71,6 +71,28 @@
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:residual-1",
+        "member_evidence_refs": [
+          "node:residual-0",
+          "node:residual-1",
+          "node:residual-passthrough"
+        ],
+        "observability": "observable",
+        "proof_class": "proven",
+        "rationale_edge_refs": [
+          "linker-summary:node:residual-1->node:residual-0",
+          "linker-summary:node:residual-1->node:residual-passthrough"
+        ],
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-0+node-residual-1+node-residual-passthrough",
+        "visibility_floor": "hidden_allowed",
+        "visible": true
+      }
+    ],
     "summary": {
       "dependent_follow_on_count": 0,
       "diagnostic_count": 3,
@@ -82,6 +104,6 @@
       "warning_count": 0
     }
   },
-  "schema_version": "2.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

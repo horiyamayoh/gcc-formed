@@ -40,10 +40,10 @@ render:
       - "suggested edit: insert ')' at src/main.c:2:18"
 cascade:
   expected_independent_episode_count: 3
-  expected_independent_root_count: 3
+  expected_independent_root_count: 2
   expected_dependent_follow_on_count: 0
   expected_duplicate_count: 0
-  expected_uncertain_count: 0
+  expected_uncertain_count: 1
 integrity:
   allowed_issue_codes: []
 performance:

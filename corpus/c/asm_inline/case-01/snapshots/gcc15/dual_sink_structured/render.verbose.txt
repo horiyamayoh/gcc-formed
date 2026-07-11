@@ -15,4 +15,3 @@ raw : ‘asm’ operand 0 probably does not match constraints
 |     ^
 debug: rule_id=rule.family.asm_inline.message_terms
 debug: matched_conditions=message_contains=does not match constraints, phase=codegen
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

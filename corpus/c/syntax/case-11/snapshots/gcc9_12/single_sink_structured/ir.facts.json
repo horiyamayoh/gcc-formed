@@ -32,7 +32,7 @@
       "fingerprints": {
         "family": "3060873b053553fed80af662ad552c4b4e68eaba67b848fd7c7645a78ef6fd24",
         "raw": "f7f61f654ae8f7b1d31ee984f605a7f126997670adcb3c2ed9bb2ab78e62455d",
-        "structural": "8e71a36cebdb0e547a4a1352c17d1e42ff90b789b72197d556353b0058789cdf"
+        "structural": "e71eb7aa0e553052b1580f26d2a079d1f80408f2c64dba32890af4d4f91f7a90"
       },
       "id": "json-0",
       "locations": [
@@ -77,6 +77,9 @@
           "applicability": "machine_applicable",
           "edits": [
             {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "display",
               "end_column": 13,
               "end_line": 2,
               "path": "src/main.c",
@@ -94,8 +97,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "15df9d2f2eddbf4485a1c2637850d82d3bc490a2ad5c5de2b64abc7ba4b88b04",
-    "structural": "4cc94a9887022ddab916339bae7e45d38f018bbb033cd49c28c80a0fca2e885c"
+    "raw": "4eff55ce53c65c8b1000677c17f37bb5f48a79d486c12817933b2628b78f2de5",
+    "structural": "8286a42fdedb86458978da55f5e7ffb030bf7af0fe77fd99ac80db6c81f42f84"
   },
   "producer": {
     "name": "gcc-formed",

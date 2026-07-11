@@ -50,12 +50,11 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     let mut compiler_block = None::<CompilerResidualBlock>;
     let mut compiler_preamble = Vec::<String>::new();
     let compiler_diagnostic = Regex::new(
-        r"^(?P<path>[[:alnum:]_./+-]+):(?P<line>\d+):(?P<column>\d+): (?P<severity>fatal error|error|warning|note): (?P<message>.+)$",
+        r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+): (?P<severity>fatal error|error|warning|note): (?P<message>.+)$",
     )
     .expect("regex");
     let compiler_preamble_line =
-        Regex::new(r"^(?P<path>[[:alnum:]_./+-]+): (?P<message>In .+|At global scope:)$")
-            .expect("regex");
+        Regex::new(r"^(?P<path>.+?): (?P<message>In .+|At global scope:)$").expect("regex");
     let linker_matchers = compiled_linker_seeds();
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
@@ -219,22 +218,15 @@ fn ingest_compiler_diagnostic_line(
     flush_compiler_block(compiler_nodes, passthrough, current_block);
     let seed = compiler_residual_seed(&capture["message"]);
     let raw_lines = vec![line.to_string()];
-    if seed.kind == CompilerResidualKind::Unknown {
-        *current_block = Some(CompilerResidualBlock {
-            node: None,
-            raw_lines,
-        });
-    } else {
-        *current_block = Some(CompilerResidualBlock {
-            node: Some(compiler_diagnostic_node(
-                compiler_nodes.len(),
-                line,
-                capture,
-                seed,
-            )),
-            raw_lines,
-        });
-    }
+    *current_block = Some(CompilerResidualBlock {
+        node: Some(compiler_diagnostic_node(
+            compiler_nodes.len(),
+            line,
+            capture,
+            seed,
+        )),
+        raw_lines,
+    });
 }
 
 fn flush_compiler_block(
@@ -730,6 +722,25 @@ fn parse_locations(lines: &[String]) -> Vec<Location> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_repeated_gcc_identifier_errors_with_function_preambles() {
+        let stderr = "/tmp/project/src/main.c: In function ‘use_1’:\n/tmp/project/src/main.c:1:26: error: ‘missing’ undeclared (first use in this function)\n    1 | return missing;\n      |        ^~~~~~~\n/tmp/project/src/main.c: In function ‘use_2’:\n/tmp/project/src/main.c:2:26: error: ‘missing’ undeclared (first use in this function)\n    2 | return missing;\n      |        ^~~~~~~\n";
+        let nodes = classify(stderr, true);
+        assert_eq!(
+            nodes
+                .iter()
+                .filter(|node| node.semantic_role == SemanticRole::Root)
+                .count(),
+            2,
+            "{nodes:#?}"
+        );
+        assert!(
+            !nodes
+                .iter()
+                .any(|node| node.semantic_role == SemanticRole::Passthrough)
+        );
+    }
     use diag_rulepack::LinkerResidualKind;
 
     #[test]
@@ -1680,20 +1691,26 @@ totally unstructured compiler output\n";
     }
 
     #[test]
-    fn keeps_unclassified_compiler_diagnostics_in_passthrough_bucket() {
+    fn keeps_unclassified_compiler_diagnostics_as_honest_generic_nodes() {
         let stderr = "\
 main.c:4:1: error: unsupported compiler wording here\n\
 main.c:4:1: note: extra opaque detail\n";
         let nodes = classify(stderr, true);
         assert_eq!(nodes.len(), 1);
-        assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Root);
+        assert_eq!(nodes[0].node_completeness, NodeCompleteness::Partial);
         assert!(
             nodes[0]
                 .message
                 .raw_text
                 .contains("unsupported compiler wording")
         );
-        assert!(nodes[0].message.raw_text.contains("extra opaque detail"));
+        assert!(
+            nodes[0]
+                .children
+                .iter()
+                .any(|child| child.message.raw_text.contains("extra opaque detail"))
+        );
     }
 
     #[test]

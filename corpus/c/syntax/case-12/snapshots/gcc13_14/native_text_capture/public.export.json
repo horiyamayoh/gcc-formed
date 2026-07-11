@@ -72,30 +72,81 @@
         "severity": "error"
       },
       {
-        "confidence": "medium",
-        "family": "linker",
-        "first_action": "check the missing/duplicate symbol and the object or library inputs",
-        "headline": "linker reported a failure",
+        "confidence": "low",
+        "family": "compiler.residual",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "invalid operands to binary + (have ‘int *’ and ‘char *’)",
         "message": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *",
-        "phase": "link",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 16,
+          "line": 10,
+          "ownership": "user",
+          "path": "src/main.c",
+          "role": "primary"
+        },
         "provenance_capture_refs": [
           "stderr.raw"
         ],
-        "semantic_role": "passthrough",
+        "semantic_role": "root",
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:residual-compiler-0",
+        "member_evidence_refs": [
+          "node:residual-compiler-0"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      },
+      {
+        "lead_evidence_ref": "node:residual-compiler-1",
+        "member_evidence_refs": [
+          "node:residual-compiler-1"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-1",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      },
+      {
+        "lead_evidence_ref": "node:residual-compiler-2",
+        "member_evidence_refs": [
+          "node:residual-compiler-2"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-2",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      }
+    ],
     "summary": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 1,
       "diagnostic_count": 3,
       "duplicate_count": 0,
       "error_count": 3,
       "independent_root_count": 2,
       "note_count": 0,
-      "uncertain_count": 1,
+      "uncertain_count": 0,
       "warning_count": 0
     }
   },
-  "schema_version": "2.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

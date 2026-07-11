@@ -21,8 +21,8 @@
         }
       ],
       "family": "deprecated",
-      "first_action": "replace the deprecated API with the recommended alternative or silence the warning intentionally",
-      "group_id": "group-6951db409cd8",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "matched_conditions": [
         "message_contains=is deprecated",
         "phase=semantic"
@@ -31,12 +31,12 @@
       "rule_id": "rule.family.deprecated.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "use of deprecated feature"
+      "title": "'int old_api()' is deprecated: use new_api"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

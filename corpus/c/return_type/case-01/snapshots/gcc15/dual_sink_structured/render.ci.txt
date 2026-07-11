@@ -1,7 +1,5 @@
-src/main.c:2:1: warning: [return_type] missing or incorrect return statement
-help: add a return statement to all control-flow paths of the non-void function
+src/main.c:2:1: warning: [return_type] control reaches end of non-void function
 raw : control reaches end of non-void function
 | src/main.c:2:1
 | }
 | ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

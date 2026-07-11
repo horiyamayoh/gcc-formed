@@ -230,10 +230,18 @@ fn ingest_bundle_with_gcc_adapter(
     };
     materialize_capture_artifacts(&mut document, bundle);
 
-    let residual_nodes = dedup_structured_residual_duplicates(
+    let mut residual_nodes = dedup_structured_residual_duplicates(
         &document,
         classify(stderr_text, !has_authoritative_structured),
     );
+    if has_authoritative_structured {
+        residual_nodes.retain(|node| {
+            node.analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref())
+                != Some("compiler.residual")
+        });
+    }
     let has_renderable_residual = residual_nodes.iter().any(|node| {
         !matches!(node.semantic_role, SemanticRole::Passthrough)
             && !matches!(node.node_completeness, NodeCompleteness::Passthrough)

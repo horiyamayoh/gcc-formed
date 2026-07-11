@@ -10,4 +10,4 @@ template: src/main.cpp:5:5 candidate: 'template<class T>  requires  HasSize<T> i
 template: src/main.cpp:5:5 template argument deduction/substitution failed:
 debug: rule_id=rule.family.concepts_constraints.structured_or_message
 debug: matched_conditions=child_message_contains=constraints not satisfied, child_message_contains=the required expression, phase=constraints
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

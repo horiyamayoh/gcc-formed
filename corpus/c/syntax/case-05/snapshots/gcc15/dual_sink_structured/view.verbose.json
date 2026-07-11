@@ -20,7 +20,7 @@
       ],
       "family": "syntax",
       "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-f6c2d6e105be",
+      "group_id": "group-2d7395c72476",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -59,7 +59,7 @@
       ],
       "family": "syntax",
       "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-7359321864f4",
+      "group_id": "group-1f05ef2b20cc",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -98,7 +98,7 @@
       ],
       "family": "syntax",
       "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-114ea2e0d577",
+      "group_id": "group-740a946172d8",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -120,6 +120,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

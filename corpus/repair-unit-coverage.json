@@ -32,6 +32,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -47,6 +53,12 @@
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 1,
       "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 1,
+      "raw_fact_coverage_denominator": 1,
       "baseline_classification": "exact"
     },
     {
@@ -62,6 +74,12 @@
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 3,
       "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
       "baseline_classification": "exact"
     },
     {
@@ -77,6 +95,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -92,6 +116,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -107,6 +137,12 @@
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -122,6 +158,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -137,6 +179,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -152,6 +200,12 @@
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -167,6 +221,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -182,6 +242,12 @@
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -197,6 +263,12 @@
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 2,
       "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 2,
+      "raw_fact_coverage_denominator": 2,
       "baseline_classification": "exact"
     },
     {
@@ -211,8 +283,14 @@
       "raw_top_level_count": 1,
       "raw_evidence_count": 1,
       "oracle_repair_unit_count": 2,
-      "formed_visible_block_count": 6,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 2,
+      "formed_visible_repair_unit_count": 2,
+      "formed_total_repair_unit_count": 2,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 4,
+      "raw_fact_coverage_denominator": 4,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-01",
@@ -226,8 +304,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-02",
@@ -241,8 +325,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-03",
@@ -256,8 +346,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-04",
@@ -271,8 +367,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-05",
@@ -286,8 +388,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-06",
@@ -301,8 +409,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-07",
@@ -316,8 +430,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-08",
@@ -331,8 +451,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-09",
@@ -346,8 +472,14 @@
       "raw_top_level_count": 1,
       "raw_evidence_count": 1,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 1,
+      "raw_fact_coverage_denominator": 1,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-10",
@@ -362,6 +494,12 @@
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 1,
       "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 1,
+      "raw_fact_coverage_denominator": 1,
       "baseline_classification": "exact"
     },
     {
@@ -376,8 +514,14 @@
       "raw_top_level_count": 1,
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 3,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 1,
+      "raw_fact_coverage_denominator": 1,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/single/case-12",
@@ -391,8 +535,14 @@
       "raw_top_level_count": 1,
       "raw_evidence_count": 2,
       "oracle_repair_unit_count": 1,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_split"
+      "formed_visible_block_count": 1,
+      "formed_visible_repair_unit_count": 1,
+      "formed_total_repair_unit_count": 1,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 1,
+      "raw_fact_coverage_denominator": 1,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/triple/case-01",
@@ -407,6 +557,12 @@
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 3,
       "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
       "baseline_classification": "exact"
     },
     {
@@ -422,6 +578,12 @@
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 3,
       "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
       "baseline_classification": "exact"
     },
     {
@@ -436,8 +598,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 3,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_merge_or_hidden"
+      "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     },
     {
       "fixture_id": "repair-unit-exact-count/triple/case-04",
@@ -452,6 +620,12 @@
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 3,
       "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
       "baseline_classification": "exact"
     },
     {
@@ -467,6 +641,12 @@
       "raw_evidence_count": 4,
       "oracle_repair_unit_count": 3,
       "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
       "baseline_classification": "exact"
     },
     {
@@ -481,8 +661,14 @@
       "raw_top_level_count": 3,
       "raw_evidence_count": 3,
       "oracle_repair_unit_count": 3,
-      "formed_visible_block_count": 2,
-      "baseline_classification": "false_merge_or_hidden"
+      "formed_visible_block_count": 3,
+      "formed_visible_repair_unit_count": 3,
+      "formed_total_repair_unit_count": 3,
+      "hidden_independent_evidence_count": 0,
+      "orphan_hidden_evidence_count": 0,
+      "raw_fact_coverage_numerator": 3,
+      "raw_fact_coverage_denominator": 3,
+      "baseline_classification": "exact"
     }
   ]
 }

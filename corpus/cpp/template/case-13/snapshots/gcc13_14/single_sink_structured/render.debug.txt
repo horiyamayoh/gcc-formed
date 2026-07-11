@@ -1,5 +1,4 @@
-error: [template] template instantiation failed @ src/main.cpp:6:5
-help: start from the first user-owned template frame and match template arguments
+error: [template] no matching function for call to 'expect_ptr(int&)' @ src/main.cpp:6:5
 raw : no matching function for call to 'expect_ptr(int&)'
 | src/main.cpp:6:5
 |     expect_ptr(value);
@@ -9,7 +8,13 @@ while instantiating:
   - src/main.cpp:2:6 template argument deduction/substitution failed:
 debug: rule_id=rule.family.template.structured_or_message
 debug: matched_conditions=context=template_instantiation, child_note_kind=template_context, child_message_contains=template, child_message_contains=deduction/substitution, phase=instantiate
-debug-facts: group_ref=group-419d6d5d1efa, role=independent_root, visibility_floor=never_hidden, episode_ref=episode-971133a6ed24
-debug-facts: evidence_tags=actionability_short, early_invocation, specific_symbol_or_frontier, strong_root_family, user_owned_primary
-debug-raw: provenance_capture_refs=diagnostics.sarif
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+explain: repair_unit=repair-unit:node-sarif-0-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3 proof=Proven visibility=HiddenAllowed
+explain: member=node:sarif-0-0 target=DiagnosticNode { node_ref: "sarif-0-0" } unresolved=false
+explain: member=node:sarif-0-0-related-1 target=DiagnosticNode { node_ref: "sarif-0-0-related-1" } unresolved=false
+explain: member=node:sarif-0-0-related-2 target=DiagnosticNode { node_ref: "sarif-0-0-related-2" } unresolved=false
+explain: member=node:sarif-0-0-related-3 target=DiagnosticNode { node_ref: "sarif-0-0-related-3" } unresolved=false
+explain: raw_capture=diagnostics.sarif
+explain: relation=hierarchy:node:sarif-0-0->node:sarif-0-0-related-1 kind=CompilerHierarchy authority=CompilerDeclared proof=Proven tags=preserved_child_order
+explain: relation=hierarchy:node:sarif-0-0->node:sarif-0-0-related-2 kind=CompilerHierarchy authority=CompilerDeclared proof=Proven tags=preserved_child_order
+explain: relation=hierarchy:node:sarif-0-0->node:sarif-0-0-related-3 kind=CompilerHierarchy authority=CompilerDeclared proof=Proven tags=preserved_child_order
+details: --formed-explain | raw: --formed-raw

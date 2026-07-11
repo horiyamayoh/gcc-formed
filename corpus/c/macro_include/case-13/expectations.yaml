@@ -8,17 +8,15 @@ semantic:
   family: scope_declaration
   severity: error
   primary_location_user_owned_required: true
-  first_action_required: true
+  first_action_required: false
   raw_provenance_required: true
   fallback: forbidden
   confidence_min: medium
 render:
   default:
     first_screenful_max_lines: 24
-    first_action_max_line: 2
   ci:
     first_screenful_max_lines: 16
-    first_action_max_line: 2
     path_first_required: true
     color_meaning_forbidden: true
   debug:

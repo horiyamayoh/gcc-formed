@@ -20,7 +20,7 @@
       ],
       "family": "pointer_reference",
       "first_action": "provide the full type definition via #include or fix the value category",
-      "group_id": "group-97482ffed137",
+      "group_id": "group-b9cb428cf1be",
       "matched_conditions": [
         "message_contains=incomplete type",
         "message_contains=invalid use of incomplete type",
@@ -36,6 +36,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

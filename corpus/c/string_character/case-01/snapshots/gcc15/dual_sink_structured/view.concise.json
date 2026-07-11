@@ -19,8 +19,8 @@
         }
       ],
       "family": "string_character",
-      "first_action": "check for unintended multi-character constants, trigraphs, or unterminated strings",
-      "group_id": "group-0dca8a67ffc5",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=multi-character character constant",
         "phase=parse"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.string_character.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "character or string literal issue"
+      "title": "multi-character character constant"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

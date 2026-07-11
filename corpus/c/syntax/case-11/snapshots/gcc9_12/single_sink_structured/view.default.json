@@ -19,8 +19,8 @@
         }
       ],
       "family": "syntax",
-      "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-114ea2e0d577",
+      "first_action": null,
+      "group_id": "repair-unit:node-json-0",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -42,12 +42,12 @@
         }
       ],
       "suppression_reason": null,
-      "title": "syntax error"
+      "title": "expected ';' before '}' token"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

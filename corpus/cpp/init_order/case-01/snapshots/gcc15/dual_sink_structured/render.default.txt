@@ -1,5 +1,4 @@
-warning: [init_order] initialization order or aggregate init issue @ src/main.cpp:3:9
-help: reorder member initializers to match declaration order, or fix the initializer list
+warning: [init_order] 'Example::value' will be initialized after @ src/main.cpp:3:9
 raw : 'Example::value' will be initialized after
 | src/main.cpp:3:9
 |     int value;
@@ -10,6 +9,9 @@ raw :   'int Example::count'
 | src/main.cpp:2:9
 |     int count;
 |         ^
-other warnings:
-  - src/main.cpp:5:5: warning:   when initialized here
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+warning: [unknown]   when initialized here @ src/main.cpp:5:5
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw :   when initialized here
+| src/main.cpp:5:5
+|     Example() : value(1), count(2) {}
+|     ^

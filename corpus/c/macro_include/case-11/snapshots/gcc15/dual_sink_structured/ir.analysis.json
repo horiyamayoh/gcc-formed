@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "macro_include",
         "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-        "group_ref": "group-6284fdd54911",
+        "group_ref": "group-0db21a2a9909",
         "headline": "error surfaced through macro/include context",
         "matched_conditions": [
           "context=macro_expansion",
@@ -72,7 +72,7 @@
       "fingerprints": {
         "family": "d233e77377443463da664a19c09e120634caf6d4d7c692599f9104ff306efadc",
         "raw": "daf01a75b3b8077e90d5ca8953352a4a190554729538855d19ba0c47769d4f14",
-        "structural": "e2477a36bac3d813883e010df0d4dec2fd8c2b23d60fa3828f8b75ee65b88f5a"
+        "structural": "f2c3acf7b4eddd347a09314272e205e329effd286d6613b22cac3f7d202cc001"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -112,19 +112,143 @@
       },
       "semantic_role": "root",
       "severity": "error"
+    },
+    {
+      "analysis": {
+        "confidence": 0.8999999761581421,
+        "family": "macro_include",
+        "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+        "group_ref": "group-f2ea3a31cc20",
+        "headline": "error surfaced through macro/include context",
+        "matched_conditions": [
+          "child_note_kind=macro_expansion",
+          "child_message_contains=macro"
+        ],
+        "rule_id": "rule.family.macro_include.structured_or_message"
+      },
+      "children": [
+        {
+          "analysis": {
+            "confidence": 0.6499999761581421,
+            "family": "macro_include",
+            "first_action_hint": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+            "headline": "error surfaced through macro/include context",
+            "matched_conditions": [
+              "message_contains=macro"
+            ],
+            "rule_id": "rule.family.macro_include.structured_or_message"
+          },
+          "fingerprints": {
+            "family": "d7da55ec6234c35ee09a723b39cb6f4bc902f4ea2d2622897ca5e7863d2863df",
+            "raw": "d4aa9f975839873391f28b95d96ad845a8c7179700b12e501052fc118a4d16b8",
+            "structural": "7c0c5ffdea7dcd9ee2a017ee037eef1de59184d0bc409634bf1f47ba3978d7bd"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 12,
+                "column_native": 12,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 9
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:9:12:9:12",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.c:9:12: note: in expansion of macro 'READ_MISSING'\n    9 |     return READ_MISSING(box);\n      |            ^~~~~~~~~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
+      "fingerprints": {
+        "family": "0d555e556cf64754fd8f6bde521da8096abe105c410c6d7a015cbf4281dbf9ad",
+        "raw": "ffbc044e1b6017a793f49574a53b3e63a7d2ce45967f067e255a107e8d5d77f8",
+        "structural": "86f8b56229a5270511cd73a089a2bdde21cedd2165de21c0e56a3bb5e183fc0f"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 33,
+            "column_native": 33,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/config.h",
+            "path_style": "posix"
+          },
+          "id": "loc:src/config.h:1:33:1:33",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
+      "message": {
+        "raw_text": "src/config.h:1:33: error: 'Box' has no member named 'missing_field'\nsrc/main.c: In function 'main':\n    1 | #define READ_MISSING(box) ((box).missing_field)\n      |                                 ^"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
     }
   ],
   "document_analysis": {
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.9599999785423279,
-          "episode_ref": "episode-4dfc72d930e0",
+          "confidence": 0.7399999499320984,
+          "episode_ref": "episode-7991a619c4ac",
           "family": "macro_include",
-          "lead_group_ref": "group-6284fdd54911",
-          "lead_root_score": 0.9599999785423279,
+          "lead_group_ref": "group-0db21a2a9909",
+          "lead_root_score": 0.7399999499320984,
           "member_group_refs": [
-            "group-6284fdd54911"
+            "group-0db21a2a9909"
+          ]
+        },
+        {
+          "confidence": 0.6499999761581421,
+          "episode_ref": "episode-1c3ec1d34ea4",
+          "family": "macro_include",
+          "lead_group_ref": "group-f2ea3a31cc20",
+          "lead_root_score": 0.6499999761581421,
+          "member_group_refs": [
+            "group-f2ea3a31cc20"
           ]
         }
       ],
@@ -132,39 +256,246 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-4dfc72d930e0",
+        "episode_ref": "episode-7991a619c4ac",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
           "specific_symbol_or_frontier",
-          "strong_root_family",
           "user_owned_primary"
         ],
-        "group_ref": "group-6284fdd54911",
-        "independence_score": 0.9599999785423279,
+        "group_ref": "group-0db21a2a9909",
+        "independence_score": 0.7399999499320984,
         "role": "independent_root",
-        "root_score": 0.9599999785423279,
-        "summary_likelihood": 0.36400002241134644,
+        "root_score": 0.7399999499320984,
+        "summary_likelihood": 0.38600000739097595,
+        "suppress_likelihood": 0.18000000715255737,
+        "visibility_floor": "never_hidden"
+      },
+      {
+        "episode_ref": "episode-1c3ec1d34ea4",
+        "evidence_tags": [
+          "actionability_short",
+          "early_invocation",
+          "user_owned_primary"
+        ],
+        "group_ref": "group-f2ea3a31cc20",
+        "independence_score": 0.6499999761581421,
+        "role": "independent_root",
+        "root_score": 0.6499999761581421,
+        "summary_likelihood": 0.39500001072883606,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-1"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-1->raw:residual-compiler-0-child-1:stderr.raw:273:402",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:273:402"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:273:402",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 402,
+              "kind": "raw_chunk",
+              "start": 273
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/config.h:1:33"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/config.h:1:33"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        },
+        {
+          "alternate_repair_anchors": [
+            "src/main.c:1:1",
+            "src/main.c:9:12",
+            "src/wrapper.h:1:1"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:sarif-0-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:sarif-0-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.c:9:12"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "diagnostics.sarif"
+          ],
+          "repair_unit_ref": "repair-unit:node-sarif-0-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 2,
+        "total_fact_count": 6,
+        "unresolved_evidence_count": 2,
+        "visible_unit_count": 2
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
-      "independent_root_count": 1,
+      "independent_root_count": 2,
       "uncertain_count": 0
     }
   },
-  "document_completeness": "complete",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "1cf9291b79f4e626bd6e2d4e66a7b02ba964d22fe6346b3495af5f6f1b7f29c9",
-    "raw": "9e9964af426b7e15a786b4e91bf4096608cdff958dad4e1a4c46e7eac69d3d04",
-    "structural": "57f3bff82a41a96119617b232d6ee985b452d33d39f76d8f275f4df39fea86d7"
+    "family": "20173077a22b2f663c9fecb1a5546ee7ac89b2f92586f1beae8ab288230137c3",
+    "raw": "3383f3cd917541b4b960d15927f11e36add1147a2d856a4926f04b0d15ac567b",
+    "structural": "34ec2079ea7a13d0fe27d9a9282f858f9003621304d6e78ba28e096297a3eb23"
   },
+  "integrity_issues": [
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
+    }
+  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",

@@ -1,7 +1,5 @@
-src/main.cpp:5:12: warning: [enum_switch] enum or switch coverage issue
-help: add missing case labels or a default case to handle all enum values
+src/main.cpp:5:12: warning: [enum_switch] enumeration value 'Blue' not handled in switch
 raw : enumeration value 'Blue' not handled in switch
 | src/main.cpp:5:12
 |     switch (color) {
 |            ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

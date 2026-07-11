@@ -3090,7 +3090,7 @@ main.c:(.text+0x15): undefined reference to `foo`\n";
     }
 
     #[test]
-    fn ingest_bundle_fail_opens_on_opaque_compiler_residuals() {
+    fn ingest_bundle_preserves_opaque_compiler_residuals_as_compatibility_nodes() {
         let run = base_run_info();
         let stderr = "\
 src/main.c:4:1: error: opaque compiler wording here\n\
@@ -3105,15 +3105,15 @@ src/main.c:4:1: note: extra opaque detail\n";
         .unwrap();
 
         assert_eq!(report.source_authority, SourceAuthority::ResidualText);
-        assert_eq!(report.fallback_grade, FallbackGrade::FailOpen);
+        assert_eq!(report.fallback_grade, FallbackGrade::Compatibility);
         assert_eq!(report.confidence_ceiling, Confidence::Low);
-        assert_eq!(report.fallback_reason, Some(FallbackReason::ResidualOnly));
+        assert_eq!(report.fallback_reason, None);
         assert_eq!(
             report.document.document_completeness,
-            DocumentCompleteness::Passthrough
+            DocumentCompleteness::Partial
         );
         assert!(report.document.diagnostics.iter().any(|node| {
-            matches!(node.semantic_role, SemanticRole::Passthrough)
+            matches!(node.semantic_role, SemanticRole::Root)
                 && node
                     .message
                     .raw_text

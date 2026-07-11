@@ -19,8 +19,8 @@
         }
       ],
       "family": "abi_alignment",
-      "first_action": "check struct packing, alignment attributes, and target-specific ABI requirements",
-      "group_id": "group-13412f9430a0",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=cast increases required alignment",
         "message_contains=increases required alignment of target type",
@@ -30,12 +30,12 @@
       "rule_id": "rule.family.abi_alignment.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "ABI or alignment compatibility issue"
+      "title": "cast increases required alignment of target type"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

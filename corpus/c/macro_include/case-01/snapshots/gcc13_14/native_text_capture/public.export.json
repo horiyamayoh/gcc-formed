@@ -5,9 +5,8 @@
       "native_text_capture",
       "passthrough"
     ],
-    "document_completeness": "passthrough",
-    "fallback_grade": "fail_open",
-    "fallback_reason": "residual_only",
+    "document_completeness": "partial",
+    "fallback_grade": "compatibility",
     "processing_path": "native_text_capture",
     "source_authority": "residual_text",
     "support_level": "in_scope",
@@ -33,11 +32,93 @@
   "result": {
     "diagnostics": [
       {
+        "confidence": "high",
+        "family": "compiler.residual",
+        "first_action": "inspect the preserved raw diagnostics for the first corrective action",
+        "headline": "'missing_symbol' undeclared (first use in this function)",
+        "message": "src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~",
+        "phase": "semantic",
+        "primary_location": {
+          "column": 20,
+          "line": 1,
+          "ownership": "user",
+          "path": "src/config.h",
+          "role": "primary"
+        },
+        "provenance_capture_refs": [
+          "stderr.raw"
+        ],
+        "related_diagnostics": [
+          {
+            "confidence": "medium",
+            "family": "macro_include",
+            "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+            "headline": "error surfaced through macro/include context",
+            "message": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 25,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "syntax",
+            "first_action": "fix the first parser error at the user-owned location",
+            "headline": "syntax error",
+            "message": "src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 20,
+              "line": 1,
+              "ownership": "user",
+              "path": "src/config.h",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          },
+          {
+            "confidence": "medium",
+            "family": "macro_include",
+            "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
+            "headline": "error surfaced through macro/include context",
+            "message": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~",
+            "phase": "semantic",
+            "primary_location": {
+              "column": 25,
+              "line": 3,
+              "ownership": "user",
+              "path": "src/main.c",
+              "role": "primary"
+            },
+            "provenance_capture_refs": [
+              "stderr.raw"
+            ],
+            "semantic_role": "supporting",
+            "severity": "note"
+          }
+        ],
+        "semantic_role": "root",
+        "severity": "error"
+      },
+      {
         "confidence": "medium",
         "family": "linker",
         "first_action": "check the missing/duplicate symbol and the object or library inputs",
         "headline": "linker reported a failure",
-        "message": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~",
+        "message": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:",
         "phase": "link",
         "provenance_capture_refs": [
           "stderr.raw"
@@ -46,17 +127,47 @@
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:residual-compiler-0",
+        "member_evidence_refs": [
+          "node:residual-compiler-0"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      },
+      {
+        "lead_evidence_ref": "node:residual-passthrough",
+        "member_evidence_refs": [
+          "node:residual-passthrough"
+        ],
+        "observability": "unresolved",
+        "proof_class": "unresolved",
+        "raw_capture_refs": [
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-passthrough",
+        "visibility_floor": "never_hidden",
+        "visible": true
+      }
+    ],
     "summary": {
       "dependent_follow_on_count": 0,
-      "diagnostic_count": 1,
+      "diagnostic_count": 5,
       "duplicate_count": 0,
-      "error_count": 1,
-      "independent_root_count": 0,
-      "note_count": 0,
+      "error_count": 2,
+      "independent_root_count": 1,
+      "note_count": 3,
       "uncertain_count": 1,
       "warning_count": 0
     }
   },
-  "schema_version": "2.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

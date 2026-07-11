@@ -20,7 +20,7 @@
       ],
       "family": "coroutine",
       "first_action": "define a valid promise_type or align the coroutine return type with the coroutine body",
-      "group_id": "group-afc1b3a86d20",
+      "group_id": "group-029f9c9ed5bb",
       "matched_conditions": [
         "message_contains=promise type",
         "message_contains=coroutine",
@@ -36,6 +36,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

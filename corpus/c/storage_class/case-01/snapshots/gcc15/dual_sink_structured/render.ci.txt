@@ -1,8 +1,7 @@
-src/main.c:2:12: error: [syntax] storage class or linkage conflict
-help: use a single consistent storage class specifier and linkage for the declaration
+src/main.c:2:12: error: [syntax] static declaration of 'value' follows non-static declaration
 raw : static declaration of 'value' follows non-static declaration
 | src/main.c:2:12
 | static int value;
 |            ^
 note: previous declaration of 'value' with type 'int'
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

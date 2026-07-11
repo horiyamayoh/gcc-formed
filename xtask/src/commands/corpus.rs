@@ -8,8 +8,8 @@ use diag_capture_runtime::{
 use diag_cascade::{CascadeContext, DocumentAnalyzer, SafeDocumentAnalyzer};
 use diag_core::{
     ArtifactKind, ArtifactStorage, CaptureArtifact, DiagnosticDocument, FallbackGrade,
-    FallbackReason, GroupCascadeRole, LanguageMode, Ownership, RunInfo, SnapshotKind,
-    SourceAuthority, VisibilityFloor, WrapperSurface, fingerprint_for, snapshot_json,
+    FallbackReason, GroupCascadeRole, LanguageMode, Ownership, RepairObservability, RunInfo,
+    SnapshotKind, SourceAuthority, VisibilityFloor, WrapperSurface, fingerprint_for, snapshot_json,
 };
 use diag_enrich::enrich_document;
 use diag_public_export::{PublicExportContext, export_from_document};
@@ -1532,6 +1532,40 @@ pub(crate) fn anti_collision_visibility_summary(
     let Some(document_analysis) = document.document_analysis.as_ref() else {
         return AntiCollisionVisibilitySummary::default();
     };
+
+    if let Some(repair) = document_analysis.repair_analysis.as_ref() {
+        let independent = repair
+            .repair_units
+            .iter()
+            .filter(|unit| {
+                matches!(
+                    unit.observability,
+                    RepairObservability::Observable | RepairObservability::Unresolved
+                )
+            })
+            .collect::<Vec<_>>();
+        let mut hidden_independent_root_group_refs = independent
+            .iter()
+            .filter(|unit| !unit.visible)
+            .map(|unit| unit.repair_unit_ref.clone())
+            .collect::<Vec<_>>();
+        let mut hidden_visibility_protected_group_refs = repair
+            .repair_units
+            .iter()
+            .filter(|unit| unit.visibility_floor != VisibilityFloor::HiddenAllowed && !unit.visible)
+            .map(|unit| unit.repair_unit_ref.clone())
+            .collect::<Vec<_>>();
+        hidden_independent_root_group_refs.sort();
+        hidden_visibility_protected_group_refs.sort();
+        return AntiCollisionVisibilitySummary {
+            independent_root_total_count: independent.len(),
+            independent_root_recalled_count: independent
+                .len()
+                .saturating_sub(hidden_independent_root_group_refs.len()),
+            hidden_independent_root_group_refs,
+            hidden_visibility_protected_group_refs,
+        };
+    }
 
     let mut visible_group_refs = render_result
         .displayed_group_refs

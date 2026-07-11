@@ -19,8 +19,8 @@
         }
       ],
       "family": "format_string",
-      "first_action": "match the format specifier to the argument type, or use type-safe I/O",
-      "group_id": "group-8eb909e7713f",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=format '%",
         "phase=semantic"
@@ -41,12 +41,12 @@
         }
       ],
       "suppression_reason": null,
-      "title": "format string type mismatch"
+      "title": "format '%d' expects argument of type 'int', but argument 2 has type 'char *'"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

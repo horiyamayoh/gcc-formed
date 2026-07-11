@@ -20,6 +20,10 @@ RepairUnit correctness is gated by observable-unit count, false merge, false spl
 
 The test oracle contract is `repair-oracle.toml` plus canonical `causal-map.json`. It runs baseline, each repair, full repair, and reverse repair order in a temporary copy; non-commutative repairs use explicit interaction groups. Stable defect IDs survive compiler wording drift, while diagnostic alignment combines normalized diagnostic content with the declared repair/anchor/provenance rather than full-message equality. `cargo xtask repair-oracle --root corpus/repair-oracle --check` is the deterministic gate.
 
+For an observable oracle set \(O\), visible RepairUnit set \(V\), and displayed block set \(B\), the normative metrics are `count_drift = |B| - |O|`, `observable_unit_recall = |matched(O,V)| / |O|`, and `visible_unit_precision = |matched(O,V)| / |V|`. A false split exists when one oracle unit maps to more than one visible unit; a false merge exists when one visible unit contains evidence assigned to more than one independent oracle unit. `raw_fact_coverage` uses all oracle-relevant raw facts as its denominator. Compiler-unobservable defects are reported separately and MUST NOT enter any success denominator.
+
+Every curated false merge, false split, hidden independent fact, orphan hidden fact, silent fact loss, or displayed/visible count mismatch is a product blocker. Tentative or unresolved evidence MUST remain visible. PR runs the representative oracle scope; nightly runs the available compiler-band/path matrix; RC requires the full suite. The resulting `repair-unit-quality.json` is the RepairUnit source of truth and is consumed beside, rather than duplicated by, the machine-readable parity blockers defined in the native-parity contract. Counterfactual recompilation is harness-only and MUST NOT be reachable from product runtime.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

@@ -21,8 +21,8 @@
         }
       ],
       "family": "preprocessor_directive",
-      "first_action": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics",
-      "group_id": "group-3689c3635616",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=#error",
         "phase=preprocess"
@@ -31,12 +31,12 @@
       "rule_id": "rule.family.preprocessor_directive.message_terms",
       "severity": "error",
       "suppression_reason": null,
-      "title": "preprocessor directive error"
+      "title": "#error macro guard missing"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

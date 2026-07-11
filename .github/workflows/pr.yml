@@ -220,6 +220,12 @@ jobs:
             --workflow pr-gate \
             --step-id dependency-and-license-gate \
             --report-root "$REPORT_ROOT"
+      - name: RepairUnit exact-count quality gate
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow pr-gate \
+            --step-id repair-unit-quality-gate \
+            --report-root "$REPORT_ROOT"
       - name: Gate summary
         if: always()
         run: |

@@ -23,7 +23,7 @@
       ],
       "family": "macro_include",
       "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "group-d890bfb119c0",
+      "group_id": "group-1cdf8fc3b2fe",
       "matched_conditions": [
         "context=macro_expansion",
         "context=include"
@@ -38,6 +38,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

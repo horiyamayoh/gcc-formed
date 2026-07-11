@@ -1,8 +1,19 @@
-error: [macro_include] error surfaced through macro/include context @ src/main.c:9:12
-help: inspect the user-owned macro invocation or include edge that reaches the failing line
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: [macro_include] 'Counter' has no member named 'count' @ src/main.c:9:12
 from: invocation of 'OUTER_ACCESS' @ src/main.c:9:12
 via : src/config.h:2:29 in expansion of macro 'INNER_ACCESS'
 | src/main.c:9:12
 |     return OUTER_ACCESS(counter);
 |            ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+from include chain:
+  - src/wrapper.h:1 included from src/main.c:1
+
+error: [macro_include] 'Counter' has no member named 'count'
+src/main.c: In function 'main':
+    1 | #define INNER_ACCESS(value) ((value).count)
+      |                                     ^
+raw : src/config.h:1:37: error: 'Counter' has no member named 'count' @ src/config.h:1:37
+| src/config.h:1:37
+| #define INNER_ACCESS(value) ((value).count)
+|                                     ^
+through macro expansion: preserved macro/include context

@@ -3,11 +3,18 @@
     {
       "canonical_location": "src/main.c:1:2",
       "display_family": "syntax",
-      "group_id": "group-3689c3635616",
+      "group_id": "repair-unit:node-sarif-0-0",
       "internal_family": "preprocessor_directive",
       "presentation": {
         "display_family": "syntax",
+        "evidence_label_width": 4,
         "fell_back_to_generic_template": true,
+        "header": {
+          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
+          "interactive_format": "{severity}: [{family}] {subject}",
+          "subject_first": true,
+          "unknown_family": "generic"
+        },
         "location_policy": {
           "default_placement": "inline_suffix",
           "fallback_order": [
@@ -15,8 +22,11 @@
             "evidence_suffix",
             "excerpt_header",
             "none"
-          ]
+          ],
+          "inline_suffix_format": " @ {location}",
+          "width_soft_limit": 100
         },
+        "semantic_shape": "generic",
         "subject_first_header": true,
         "template_id": "generic_block"
       },
@@ -24,18 +34,13 @@
       "severity": "error",
       "slots": [
         {
-          "label": "help",
-          "slot": "first_action",
-          "value": "inspect the failing preprocessor directive or disabled branch expression in the preserved raw diagnostics"
-        },
-        {
           "label": "raw",
-          "slot": "why_raw",
+          "slot": "raw",
           "value": "#error macro guard missing"
         }
       ],
-      "subject": "preprocessor directive error",
-      "title": "preprocessor directive error"
+      "subject": "#error macro guard missing",
+      "title": "#error macro guard missing"
     }
   ],
   "fell_back_to_default": false,
@@ -44,7 +49,6 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "policy_session_mode": "all_visible_blocks",
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
     "resolved_session_mode": "all_visible_blocks"
   }
 }

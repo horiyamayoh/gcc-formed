@@ -20,7 +20,7 @@
       ],
       "family": "attribute",
       "first_action": "check the attribute spelling, placement, and argument requirements",
-      "group_id": "group-977e6ad932e5",
+      "group_id": "group-a1261e25ae96",
       "matched_conditions": [
         "message_contains=attribute directive ignored",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

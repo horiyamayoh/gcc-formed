@@ -12,4 +12,3 @@ raw:
         |               ~~~~~~~~~~~~^~~~
 debug: rule_id=rule.family.constexpr.message_terms
 debug: matched_conditions=message_contains=static assertion failed, message_contains=static_assert, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

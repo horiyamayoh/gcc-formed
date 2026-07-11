@@ -19,8 +19,8 @@
         }
       ],
       "family": "pointer_reference",
-      "first_action": "provide the full type definition via #include or fix the value category",
-      "group_id": "group-97482ffed137",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "matched_conditions": [
         "message_contains=incomplete type",
         "message_contains=invalid use of incomplete type",
@@ -30,12 +30,12 @@
       "rule_id": "rule.family.pointer_reference.message_terms",
       "severity": "error",
       "suppression_reason": null,
-      "title": "invalid pointer or reference operation"
+      "title": "invalid use of incomplete type 'struct Node'"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

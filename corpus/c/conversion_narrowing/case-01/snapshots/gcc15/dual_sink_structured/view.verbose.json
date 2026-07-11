@@ -20,7 +20,7 @@
       ],
       "family": "conversion_narrowing",
       "first_action": "add an explicit cast or change the variable type to match",
-      "group_id": "group-b0a509e73831",
+      "group_id": "group-b1187f9cd713",
       "matched_conditions": [
         "message_contains=different signedness",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

@@ -1,7 +1,5 @@
-warning: [string_character] character or string literal issue @ src/main.c:2:13
-help: check for unintended multi-character constants, trigraphs, or unterminated strings
+warning: [string_character] multi-character character constant @ src/main.c:2:13
 raw : multi-character character constant
 | src/main.c:2:13
 |     int c = 'ab';
 |             ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

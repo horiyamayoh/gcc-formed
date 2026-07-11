@@ -32,7 +32,7 @@
       "fingerprints": {
         "family": "8030cad6ffda694d1895716f07594f16cf6dcbf0f30f3f3e529edec2c4c44f71",
         "raw": "c78247e922f416b818ca000c698b640b44069e0fef1396c08dd1a2ef1983b088",
-        "structural": "6b1b12bc512161ec3cca7ef5fe80bf6820c2784eabd56d41d11c634983fa21ad"
+        "structural": "630a17974b30fa01549f8d289ccf91bc3a96653b08a3c26962e2b684ba366dae"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -77,6 +77,9 @@
           "applicability": "machine_applicable",
           "edits": [
             {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "utf16_code_unit",
               "end_column": 18,
               "end_line": 2,
               "path": "src/main.c",
@@ -93,7 +96,7 @@
       "fingerprints": {
         "family": "3fdd2af0bf4d5ddbdb90d78eec183f9476d2231708fdae17ce6ef8709e45e038",
         "raw": "f6f2d6d7c79b8e8d81336555a9437186b8098e421729ffa94fa4995b21e75a84",
-        "structural": "5c11f8ce50ec8d112e74bf570e742e2047512230ee1310d11dddb7403901f240"
+        "structural": "85b67922758fbf78c60080bff1eae33b4afe4440dada9bae4a70c3afa1034861"
       },
       "id": "sarif-0-1",
       "locations": [
@@ -138,6 +141,9 @@
           "applicability": "machine_applicable",
           "edits": [
             {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "utf16_code_unit",
               "end_column": 19,
               "end_line": 2,
               "path": "src/main.c",
@@ -200,9 +206,23 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "f9612aa4c89531aae1fd97925a76ed8063a805854f22473b1c1676138ba377f2",
-    "structural": "a884455ad6c521d8bfea66b78b2347bb1703ba6cd78558142baa76408b31471e"
+    "raw": "547b35e33d7dc80c906bb8f71e13c1d9d58594f687ba952ae1216faae8cf0794",
+    "structural": "67be658124da15255d1e16af7e2b1e0139af5193212a8a762f528646faaf2b5c"
   },
+  "integrity_issues": [
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
+    }
+  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",

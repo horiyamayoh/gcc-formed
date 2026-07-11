@@ -1,30 +1,32 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-error: [syntax] syntax error @ src/main.c:2:10
-help: fix the first parser error at the user-owned location
-want: )
+error: [syntax] expected ‘)’ before ‘{’ token
+src/main.c: In function ‘broken_if’:
+    2 |     if (1 {
+      |        ~ ^~
+      |          )
+want: ) @ src/main.c:2:10
 near: { token
 | src/main.c:2:10
 |     if (1 {
 |          ^
-raw:
-  src/main.c:2:10: error: expected ‘)’ before ‘{’ token
-  src/main.c: In function ‘broken_if’:
 
-error: [syntax] syntax error @ src/main.c:6:1
-help: fix the first parser error at the user-owned location
+error: [syntax] expected expression before ‘}’ token
+    6 | }
+      | ^ @ src/main.c:6:1
 want: expression
 near: } token
 | src/main.c:6:1
 | }
 | ^
-raw:
-  src/main.c:6:1: error: expected expression before ‘}’ token
-      6 | }
 
-error: [linker] linker reported a failure
-help: check the missing/duplicate symbol and the object or library inputs
-raw : src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)
-raw:
-  src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)
-  src/main.c: In function ‘broken_type’:
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+error: [compiler.residual] invalid operands to binary + (have ‘int *’ and ‘char *’)
+src/main.c: In function ‘broken_type’:
+   10 |     return ptr + "x";
+      |                ^
+      |                |
+      |                char *
+note: wrapper confidence is low; verify against the preserved raw diagnostics
+raw : src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’) @ src/main.c:10:16
+| src/main.c:10:16
+|     return ptr + "x";
+|                ^

@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "odr_inline_linkage",
         "first_action_hint": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
-        "group_ref": "group-a5fdd288eb9b",
+        "group_ref": "group-9e5c4160c129",
         "headline": "ODR violation or inline linkage mismatch",
         "matched_conditions": [
           "message_contains=does not match original declaration",
@@ -267,7 +267,7 @@
       "fingerprints": {
         "family": "90feb22b7f6c1c565ddad526a35b70728062e7ce30517948da0ca5eaa2fc4905",
         "raw": "fcc00be86462d4b33e939eb10b11a11555b81912dc3bc532f2af16ed1de2a43c",
-        "structural": "3b93fac1230f9ed114cd1427e71eaefe4e2b9e3b7f0f972e56b0de3d5ee2bdc8"
+        "structural": "f079d058d93c792263fb7f5bcdf0614b35c6d3a1dd8c499bc60fd9cd429b3804"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -313,13 +313,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.7400000095367432,
-          "episode_ref": "episode-b8dc8a30f05a",
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-87ba6d1d5c2c",
           "family": "odr_inline_linkage",
-          "lead_group_ref": "group-a5fdd288eb9b",
-          "lead_root_score": 0.7400000095367432,
+          "lead_group_ref": "group-9e5c4160c129",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-a5fdd288eb9b"
+            "group-9e5c4160c129"
           ]
         }
       ],
@@ -327,24 +327,337 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-b8dc8a30f05a",
+        "episode_ref": "episode-87ba6d1d5c2c",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-a5fdd288eb9b",
-        "independence_score": 0.7400000095367432,
+        "group_ref": "group-9e5c4160c129",
+        "independence_score": 0.6799999475479126,
         "role": "independent_root",
-        "root_score": 0.7400000095367432,
-        "summary_likelihood": 0.38600000739097595,
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-1"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-2",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-2"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-3",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-3"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-4",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-4"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-2->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-3->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-4->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0->raw:residual-compiler-0:stderr.raw:0:144",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0:stderr.raw:0:144"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-1->raw:residual-compiler-0-child-1:stderr.raw:145:244",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:145:244"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-2->raw:residual-compiler-0-child-2:stderr.raw:245:308",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-2:stderr.raw:245:308"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-3->raw:residual-compiler-0-child-3:stderr.raw:309:370",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-3:stderr.raw:309:370"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-4->raw:residual-compiler-0-child-4:stderr.raw:371:457",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-4:stderr.raw:371:457"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-3",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-3"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-4",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-4"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:145:244",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 244,
+              "kind": "raw_chunk",
+              "start": 145
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-2:stderr.raw:245:308",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 308,
+              "kind": "raw_chunk",
+              "start": 245
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-3:stderr.raw:309:370",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 370,
+              "kind": "raw_chunk",
+              "start": 309
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-4:stderr.raw:371:457",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 457,
+              "kind": "raw_chunk",
+              "start": 371
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0:stderr.raw:0:144",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 144,
+              "kind": "raw_chunk",
+              "start": 0
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.c:1:5"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.c:1:5"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 12,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -356,8 +669,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b7b71de73b60c4dc5487b287e852aa402b1b818208c78ef3de6e883faa439110",
-    "raw": "a55a5702ddad0b4203b987fa7b8c429f0f362e4e6d5bdaa8241863bcc7b45fe5",
-    "structural": "d62b31d6e8a631631f37d3ef0be46ab62b9af2af1b2ad30a97238e99641171b0"
+    "raw": "366f894390d9a299f73e64e87c2c8719a2a571bb8d2c87986a6c7c5dde2523ea",
+    "structural": "f862a2be41c131deea4b359b679d8b3cc69717596e812ca9242c961e6a10d884"
   },
   "integrity_issues": [
     {
@@ -370,6 +683,18 @@
       },
       "severity": "warning",
       "stage": "parse"
+    },
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
     }
   ],
   "producer": {

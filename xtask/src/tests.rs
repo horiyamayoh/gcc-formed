@@ -1570,7 +1570,7 @@ fn older_band_core_parser_fallback_replays_keep_first_action_disclosure_and_publ
 }
 
 #[test]
-fn older_band_honest_fallback_anchor_keeps_disclosure_and_public_export_context() {
+fn older_band_compatibility_anchor_keeps_disclosure_and_public_export_context() {
     let fixture = corpus_fixture("c/macro_include/case-01");
     let replay = replay_fixture_document(&fixture).unwrap();
     let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Default);
@@ -1588,12 +1588,9 @@ fn older_band_honest_fallback_anchor_keeps_disclosure_and_public_export_context(
     );
     assert_eq!(
         export.execution.fallback_grade.as_deref(),
-        Some("fail_open")
+        Some("compatibility")
     );
-    assert_eq!(
-        export.execution.fallback_reason.as_deref(),
-        Some("residual_only")
-    );
+    assert_eq!(export.execution.fallback_reason.as_deref(), None);
     assert!(
         export
             .execution

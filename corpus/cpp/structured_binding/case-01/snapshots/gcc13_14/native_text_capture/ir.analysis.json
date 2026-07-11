@@ -20,7 +20,7 @@
         "confidence": 0.8999999761581421,
         "family": "structured_binding",
         "first_action_hint": "ensure the type is decomposable and the number of bindings matches the member count",
-        "group_ref": "group-e2a636de30cb",
+        "group_ref": "group-2201258f9b3e",
         "headline": "structured binding decomposition error",
         "matched_conditions": [
           "message_contains=name provided for structured binding",
@@ -89,7 +89,7 @@
       "fingerprints": {
         "family": "083c07fcc6aa2008a35a80b51e500edc3c84f95fe1c11160f3ea557b8e6d7cf7",
         "raw": "b911a6d1aa38b5da522819595b3e9aac98c9634f69eb15897a9dd959791ab7e1",
-        "structural": "2a3e1b93231dae6b53a66c4b87080da2c224de383307adfb92608d16db83c475"
+        "structural": "20ab84d4cac809eb41d342d321f3d7f128be26ae40fd4a041273691cce5761bd"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -135,13 +135,13 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.7400000095367432,
-          "episode_ref": "episode-4a7695ffa88f",
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-7cc314fc7598",
           "family": "structured_binding",
-          "lead_group_ref": "group-e2a636de30cb",
-          "lead_root_score": 0.7400000095367432,
+          "lead_group_ref": "group-2201258f9b3e",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-e2a636de30cb"
+            "group-2201258f9b3e"
           ]
         }
       ],
@@ -149,24 +149,147 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-4a7695ffa88f",
+        "episode_ref": "episode-7cc314fc7598",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-e2a636de30cb",
-        "independence_score": 0.7400000095367432,
+        "group_ref": "group-2201258f9b3e",
+        "independence_score": 0.6799999475479126,
         "role": "independent_root",
-        "root_score": 0.7400000095367432,
-        "summary_likelihood": 0.38600000739097595,
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "hierarchy:node:residual-compiler-0->node:residual-compiler-0-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "compiler_hierarchy",
+            "proof_class": "strong",
+            "to_evidence_ref": "node:residual-compiler-0-child-1"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0-child-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-compiler-0-child-1->raw:residual-compiler-0-child-1:stderr.raw:170:238",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:170:238"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-compiler-0-child-1:stderr.raw:170:238",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 238,
+              "kind": "raw_chunk",
+              "start": 170
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:8:10"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.cpp:8:10"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 4,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -178,8 +301,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "6fd56d003f2585ee0cc47a280d0df9122863af7b948d353590828a7d3efca180",
-    "raw": "faab6d5922a377c2cb3b34bfa401eb4dd77d300f652bd9b1120fdebce1f4db53",
-    "structural": "6ed95fabb89cd4b6d6ce9d85801097fc6bc57e68486fb707bc61cc1a3e2c2b06"
+    "raw": "d970ae19f494ec0fea11697f92160c915e6588c46ec03b06229a2ace53a47e1b",
+    "structural": "a0acf5d838a3b3b66fda5bf44a03d5310a71c88b82990ce5265d90f6255c42dd"
   },
   "producer": {
     "name": "gcc-formed",

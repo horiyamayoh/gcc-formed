@@ -1,8 +1,7 @@
-src/main.c:5:9: warning: [fallthrough] implicit fallthrough between switch cases
-help: add a break, return, or [[fallthrough]] attribute between cases
+src/main.c:5:9: warning: [fallthrough] this statement may fall through
 raw : this statement may fall through
 | src/main.c:5:9
 |         value = 1;
 |         ^
 note: here
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

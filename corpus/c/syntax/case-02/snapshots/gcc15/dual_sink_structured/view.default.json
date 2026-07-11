@@ -19,8 +19,8 @@
         }
       ],
       "family": "syntax",
-      "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-e8f332ff1920",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -30,12 +30,12 @@
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "syntax error"
+      "title": "expected expression before ';' token"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

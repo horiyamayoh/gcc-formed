@@ -7,4 +7,4 @@ prev: src/main.c:1:5 int counter = 0;
 |     ^
 debug: rule_id=rule.family.redefinition.message_terms
 debug: matched_conditions=message_contains=redefinition of, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

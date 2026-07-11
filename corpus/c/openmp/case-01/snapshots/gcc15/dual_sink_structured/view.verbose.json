@@ -20,7 +20,7 @@
       ],
       "family": "openmp",
       "first_action": "check the variable data-sharing clause or enable -fopenmp",
-      "group_id": "group-6542eac7c070",
+      "group_id": "group-07447816658f",
       "matched_conditions": [
         "message_contains=#pragma omp",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

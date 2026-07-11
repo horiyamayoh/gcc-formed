@@ -20,7 +20,7 @@
       ],
       "family": "overflow_arithmetic",
       "first_action": "check the operand types and value ranges to prevent undefined behavior",
-      "group_id": "group-6c2a8d8caed3",
+      "group_id": "group-5b4e3167075c",
       "matched_conditions": [
         "message_contains=division by zero",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

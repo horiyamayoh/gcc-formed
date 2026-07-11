@@ -18,4 +18,4 @@ note: set '-fconcepts-diagnostics-depth=' to at least 2 for more detail
 note: omitted 2 additional note(s)
 debug: rule_id=rule.family.ranges_views.structured_or_message
 debug: matched_conditions=message_contains=std::ranges::, child_message_contains=std::ranges::
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

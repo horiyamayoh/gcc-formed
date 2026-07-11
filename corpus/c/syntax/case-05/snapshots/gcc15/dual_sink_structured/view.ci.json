@@ -19,8 +19,8 @@
         }
       ],
       "family": "syntax",
-      "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-f6c2d6e105be",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -42,7 +42,7 @@
         }
       ],
       "suppression_reason": null,
-      "title": "syntax error"
+      "title": "expected ')' before ';' token"
     },
     {
       "canonical_location": "src/main.c:2:19",
@@ -63,8 +63,8 @@
         }
       ],
       "family": "syntax",
-      "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-7359321864f4",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
@@ -86,7 +86,7 @@
         }
       ],
       "suppression_reason": null,
-      "title": "syntax error"
+      "title": "expected ';' before '}}' token"
     },
     {
       "canonical_location": "src/main.c:2:19",
@@ -107,26 +107,23 @@
         }
       ],
       "family": "syntax",
-      "first_action": "fix the first parser error at the user-owned location",
-      "group_id": "group-114ea2e0d577",
+      "first_action": null,
+      "group_id": "repair-unit:node-residual-compiler-1",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
         "phase=parse"
       ],
       "raw_message": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  ",
-      "raw_sub_block": [
-        "src/main.c:2:19: error: expected ';' before '}' token"
-      ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "syntax error"
+      "title": "expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

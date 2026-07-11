@@ -1,5 +1,4 @@
-src/main.cpp:5:5: error: [template] template instantiation failed
-help: start from the first user-owned template frame and match template arguments
+src/main.cpp:5:5: error: [template] no matching function for call to 'combine(int, const char [2])'
 raw : no matching function for call to 'combine(int, const char [2])'
 | src/main.cpp:5:5
 |     combine(1, "x");
@@ -8,4 +7,4 @@ while instantiating:
   - src/main.cpp:2:6 candidate 1: 'template<class T> void combine(T, T)'
   - src/main.cpp:5:5 deduced conflicting types for parameter 'T' ('int' and 'const char*')
 omitted 3 internal template frames
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

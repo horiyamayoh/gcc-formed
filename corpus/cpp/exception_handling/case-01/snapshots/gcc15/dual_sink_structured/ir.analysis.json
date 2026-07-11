@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "exception_handling",
         "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
-        "group_ref": "group-f8f7907d4f37",
+        "group_ref": "group-aa88196706e7",
         "headline": "exception handling configuration or usage error",
         "matched_conditions": [
           "message_contains=exception handling disabled",
@@ -44,7 +44,7 @@
       "fingerprints": {
         "family": "efacc6557db4e7655e9a302106276f9a77588ac2cd88cdf3a54a65d60a83ca52",
         "raw": "2bb0dbe4dadf26347f9f8bc05c990d55d861ec71fa87bfcc293141d90025634b",
-        "structural": "f55bbeab1edf18586b1c78c8c3408ca313a4363134d0ba6ebb830bd21bd1a946"
+        "structural": "ebe44518f65483958ef3c5d56038026cc4c2084ecf949fdd429a398aef461b3f"
       },
       "id": "sarif-0-0",
       "locations": [
@@ -90,7 +90,7 @@
         "confidence": 0.8999999761581421,
         "family": "exception_handling",
         "first_action_hint": "enable -fexceptions/-frtti or adjust the exception specification",
-        "group_ref": "group-d5434686d596",
+        "group_ref": "group-95abcb754ae5",
         "headline": "exception handling configuration or usage error",
         "matched_conditions": [
           "message_contains=exception handling disabled",
@@ -102,7 +102,7 @@
       "fingerprints": {
         "family": "670f7ad14d9a2b21399d202caf961916bdeac46b0e2819fd90df46d0d3e1938a",
         "raw": "47ca9094f3029091cb6484d955d52847d3ffb39ce69b5f582b30f5804634630f",
-        "structural": "f3c4aef798075d6e59bb314af6eab71ec87617fc2eccccb4d40b650e0399f627"
+        "structural": "d1a5bdda1fbe9150f26c85cfe73fcf978af6a087a6818d77e185264685f718e0"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -148,68 +148,192 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.7400000095367432,
-          "episode_ref": "episode-27af6d542e6e",
+          "confidence": 0.85999995470047,
+          "episode_ref": "episode-da1ffb39c70c",
           "family": "exception_handling",
-          "lead_group_ref": "group-f8f7907d4f37",
-          "lead_root_score": 0.7400000095367432,
+          "lead_group_ref": "group-aa88196706e7",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-f8f7907d4f37"
-          ]
-        },
-        {
-          "confidence": 0.7100000381469727,
-          "episode_ref": "episode-6ead607c5a92",
-          "family": "exception_handling",
-          "lead_group_ref": "group-d5434686d596",
-          "lead_root_score": 0.7100000381469727,
-          "member_group_refs": [
-            "group-d5434686d596"
+            "group-aa88196706e7",
+            "group-95abcb754ae5"
           ]
         }
       ],
-      "relations": []
+      "relations": [
+        {
+          "confidence": 0.85999995470047,
+          "evidence_tags": [
+            "earlier_ordinal",
+            "higher_root_competitor",
+            "partial_child",
+            "same_primary_file_bucket",
+            "same_translation_unit"
+          ],
+          "from_group_ref": "group-aa88196706e7",
+          "kind": "cascade",
+          "to_group_ref": "group-95abcb754ae5"
+        }
+      ]
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-27af6d542e6e",
+        "episode_ref": "episode-da1ffb39c70c",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
           "early_invocation",
           "user_owned_primary"
         ],
-        "group_ref": "group-f8f7907d4f37",
-        "independence_score": 0.7400000095367432,
-        "role": "independent_root",
-        "root_score": 0.7400000095367432,
-        "summary_likelihood": 0.38600000739097595,
-        "suppress_likelihood": 0.18000000715255737,
+        "group_ref": "group-aa88196706e7",
+        "independence_score": 0.7200000286102295,
+        "role": "lead_root",
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.18000000715255737,
+        "suppress_likelihood": 0.07999999821186066,
         "visibility_floor": "never_hidden"
       },
       {
-        "episode_ref": "episode-6ead607c5a92",
+        "best_parent_group_ref": "group-aa88196706e7",
+        "episode_ref": "episode-da1ffb39c70c",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
+          "earlier_ordinal",
           "early_invocation",
+          "higher_root_competitor",
+          "partial_child",
+          "same_primary_file_bucket",
+          "same_translation_unit",
           "user_owned_primary"
         ],
-        "group_ref": "group-d5434686d596",
-        "independence_score": 0.7100000381469727,
-        "role": "independent_root",
-        "root_score": 0.7100000381469727,
-        "summary_likelihood": 0.3889999985694885,
-        "suppress_likelihood": 0.18000000715255737,
-        "visibility_floor": "never_hidden"
+        "group_ref": "group-95abcb754ae5",
+        "independence_score": 0.26100000739097595,
+        "role": "follow_on",
+        "root_score": 0.6499999761581421,
+        "summary_likelihood": 0.6632000207901001,
+        "suppress_likelihood": 0.6600000262260437,
+        "visibility_floor": "summary_or_expanded_only"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-compiler-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:sarif-0-0->capture:diagnostics.sarif",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:sarif-0-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "structured_adapter_derived",
+            "edge_ref": "source-token:node:residual-compiler-0->node:sarif-0-0:src/main.cpp|1",
+            "evidence_tags": [
+              "exact_labeled_source_range"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "symbol_relation",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-compiler-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-compiler-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:sarif-0-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "sarif-0-0"
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:2:11"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-compiler-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-compiler-0",
+            "node:sarif-0-0"
+          ],
+          "observability": "observable",
+          "primary_repair_anchors": [
+            "src/main.cpp:2:11"
+          ],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "source-token:node:residual-compiler-0->node:sarif-0-0:src/main.cpp|1"
+          ],
+          "raw_capture_refs": [
+            "diagnostics.sarif",
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0+node-sarif-0-0",
+          "visibility_floor": "hidden_allowed",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 1,
+        "referenced_fact_count": 2,
+        "total_fact_count": 4,
+        "unresolved_evidence_count": 0,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 1,
       "duplicate_count": 0,
-      "independent_root_count": 2,
+      "independent_root_count": 1,
       "uncertain_count": 0
     }
   },
@@ -217,9 +341,23 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "b60e439f34400a5057db80fa2712aa30ed430e3201171322ae0fad7698a6c311",
-    "raw": "da1150a494282f8ef02410793eaeac50f2fc294a01572efcaa63116e587cec86",
-    "structural": "9306bdcd526e1e531758b88f82c59d87716a5fad9491ae67e4028a00d6dc45c1"
+    "raw": "778e9eb721bcef33603d51f67f26b5c6dc09164d04882911328b66ee2a2ba6e3",
+    "structural": "9b27a80ff278aa16198e40f362da584c708b7ebaad14b905b2e0f6cc8a26cbb5"
   },
+  "integrity_issues": [
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
+    }
+  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",

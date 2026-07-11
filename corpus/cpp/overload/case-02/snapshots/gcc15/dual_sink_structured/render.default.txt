@@ -1,5 +1,4 @@
-error: [type_mismatch] type or overload mismatch @ src/main.cpp:3:49
-help: compare the expected type and actual argument at the call site
+error: [type_mismatch] invalid conversion from 'const char*' to 'int' @ src/main.cpp:3:49
 raw : invalid conversion from 'const char*' to 'int'
 | src/main.cpp:3:49
 | int main() { const char *value = "x"; takes_int(value); }
@@ -11,4 +10,3 @@ raw : initializing argument 1 of 'void takes_int(int)'
 | src/main.cpp:1:16
 | void takes_int(int);
 |                ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

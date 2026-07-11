@@ -19,8 +19,8 @@
         }
       ],
       "family": "type_overload",
-      "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "group-a4a09fcbb8da",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "matched_conditions": [
         "message_contains=passing argument",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.type_overload.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "type or overload mismatch"
+      "title": "passing argument 1 of 'takes_int' makes integer from pointer without a cast"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

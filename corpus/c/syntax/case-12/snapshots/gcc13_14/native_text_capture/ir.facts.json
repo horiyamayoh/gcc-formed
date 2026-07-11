@@ -107,24 +107,47 @@
     },
     {
       "fingerprints": {
-        "family": "bcdd4c42c9c39c1a7d3ff75a684273a6893529567133103d107c58e9c6563ce4",
+        "family": "17fb2d5dc062b4bce830f6dacdac2e0d153f9bf3e981bbd0d2924f7005208909",
         "raw": "32563a825120eda8e15665eefd97dad2804c975062073cce75913d1049e236c7",
-        "structural": "0b9d01f07ed3440c47892bcdfb0a2446ced1304e49b62b6c4b4498b78e88a0c0"
+        "structural": "7585925f744118dbcb7876339dce09b8cc08219b268154461114a2b4c51c44f0"
       },
-      "id": "residual-passthrough",
+      "id": "residual-compiler-2",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 16,
+            "column_native": 16,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 10
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/main.c",
+            "path_style": "posix"
+          },
+          "id": "loc:src/main.c:10:16:10:16",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
       "message": {
         "raw_text": "src/main.c:10:16: error: invalid operands to binary + (have ‘int *’ and ‘char *’)\nsrc/main.c: In function ‘broken_type’:\n   10 |     return ptr + \"x\";\n      |                ^\n      |                |\n      |                char *"
       },
-      "node_completeness": "passthrough",
-      "origin": "external_tool",
-      "phase": "link",
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
       "provenance": {
         "capture_refs": [
           "stderr.raw"
         ],
         "source": "residual_text"
       },
-      "semantic_role": "passthrough",
+      "semantic_role": "root",
       "severity": "error"
     }
   ],
@@ -132,8 +155,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "d3e97b11e03537d70d568461f62ecb2ec3149c7014c95d41034acfcd83c8bf8f",
-    "structural": "283202bbf5c29fa0bc0be976223ffae64e9a2e1d326546f999f9d2090f699c28"
+    "raw": "54fc7777856424293fc8777166da6de1cabba79471434b302166f4eee9008f41",
+    "structural": "03643f9452d1b01a06604600a723d11b345136e4bc3e4895a5f248001633ab1d"
   },
   "producer": {
     "name": "gcc-formed",

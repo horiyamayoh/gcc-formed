@@ -480,6 +480,10 @@ EXECUTION_CATALOG = {
             )
         ),
         "cargo-xtask-check": StepExecution("cargo xtask check"),
+        "repair-unit-quality-gate": StepExecution(
+            'cargo xtask repair-oracle --root corpus --check && '
+            'cargo xtask quality-report --root corpus --format json > "$REPORT_ROOT/gate/repair-unit-quality.json"'
+        ),
         "representative-acceptance-replay": StepExecution(
             'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
         ),
@@ -556,6 +560,10 @@ EXECUTION_CATALOG = {
             capture_ci_environment_command('"$MATRIX_GCC_VERSION"')
         ),
         "cargo-test-workspace": StepExecution("cargo test --workspace"),
+        "repair-unit-quality-gate": StepExecution(
+            'cargo xtask repair-oracle --root corpus --check && '
+            'cargo xtask quality-report --root corpus --format json > "$REPORT_ROOT/gate/repair-unit-quality.json"'
+        ),
         "representative-acceptance-replay": StepExecution(
             'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
         ),
@@ -603,6 +611,10 @@ EXECUTION_CATALOG = {
             '--metrics-manual-report eval/rc/metrics-manual-eval.json '
             '--issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz '
             '--ux-signoff-report eval/rc/ux-signoff.json --allow-pending-manual-checks'
+        ),
+        "repair-unit-quality-gate": StepExecution(
+            'cargo xtask repair-oracle --root corpus --check && '
+            'cargo xtask quality-report --root corpus --format json > "$REPORT_ROOT/gate/repair-unit-quality.json"'
         ),
         "path-aware-replay-stop-ship": StepExecution(
             'python3 ci/parity_gap_report.py --root corpus --output "$REPORT_ROOT/gate/parity-gaps.json" && '

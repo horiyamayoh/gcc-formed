@@ -33,7 +33,7 @@
         "confidence": 0.6499999761581421,
         "family": "collect2_summary",
         "first_action_hint": "inspect the linker diagnostics immediately above this summary",
-        "group_ref": "group-ac2f5a684011",
+        "group_ref": "group-61a7f50f6184",
         "headline": "driver reported a linker failure summary",
         "matched_conditions": [
           "phase=link",
@@ -51,7 +51,7 @@
       "fingerprints": {
         "family": "e736395337f576d965269dccb524b7736319719dd47225bd9dce6a12061f2141",
         "raw": "e5bddaefc406e018e6f82a2576345caa319ccc60ba561a56b6deea3cd4257aae",
-        "structural": "72c85554f5bfe35bfbb70f1710b38b8182b3ede9d9be72a99ee249578e1b52a1"
+        "structural": "0f4827331cc6a88ff2c2ad743eea3adb8f88b836a46de740abd108e8c995f899"
       },
       "id": "residual-0",
       "message": {
@@ -74,7 +74,7 @@
         "confidence": 0.6499999761581421,
         "family": "linker.multiple_definition",
         "first_action_hint": "remove the duplicate definition or make the symbol internal to one translation unit",
-        "group_ref": "group-c37207e6ba9e",
+        "group_ref": "group-1937c5e778b6",
         "headline": "multiple definition of `duplicate`",
         "matched_conditions": [
           "phase=link",
@@ -94,7 +94,7 @@
       "fingerprints": {
         "family": "28fe16eca0514e0e55e5d7714620c877226850cdc7e76c657e8063f865e136d7",
         "raw": "bd8ba8437f6d6add5418059fbb45038f5664dc5db3fdee74a69ded4a212fbc6c",
-        "structural": "645ef1c7f46687592fcffcefd9266962ed532ee2a916541daa86053aebb9e4ed"
+        "structural": "b8d56f299a7360b62334e2a370563fa034b38e259cbb8d7780db1252dff10e2c"
       },
       "id": "residual-1",
       "message": {
@@ -120,81 +120,244 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 1.4901161193847656e-8,
-          "episode_ref": "episode-da5205a3f6d2",
-          "family": "collect2_summary",
-          "lead_group_ref": "group-ac2f5a684011",
-          "lead_root_score": 1.4901161193847656e-8,
-          "member_group_refs": [
-            "group-ac2f5a684011"
-          ]
-        },
-        {
-          "confidence": 0.39000001549720764,
-          "episode_ref": "episode-740607356a8e",
+          "confidence": 1.0,
+          "episode_ref": "episode-b8e3c0508611",
           "family": "linker.multiple_definition",
-          "lead_group_ref": "group-c37207e6ba9e",
+          "lead_group_ref": "group-1937c5e778b6",
           "lead_root_score": 0.39000001549720764,
           "member_group_refs": [
-            "group-c37207e6ba9e"
+            "group-61a7f50f6184",
+            "group-1937c5e778b6"
           ]
         }
       ],
-      "relations": []
+      "relations": [
+        {
+          "confidence": 1.0,
+          "evidence_tags": [
+            "earlier_ordinal",
+            "generic_linker_wrapper_child",
+            "linker_summary_window",
+            "parent_root_advantage",
+            "partial_child"
+          ],
+          "from_group_ref": "group-1937c5e778b6",
+          "kind": "cascade",
+          "to_group_ref": "group-61a7f50f6184"
+        }
+      ]
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-da5205a3f6d2",
+        "best_parent_group_ref": "group-1937c5e778b6",
+        "episode_ref": "episode-b8e3c0508611",
         "evidence_tags": [
           "actionability_short",
-          "classified_family",
+          "earlier_ordinal",
           "early_invocation",
-          "generic_follow_on",
           "generic_linker_wrapper",
-          "no_primary_location"
+          "generic_linker_wrapper_child",
+          "linker_summary_window",
+          "no_primary_location",
+          "parent_root_advantage",
+          "partial_child"
         ],
-        "group_ref": "group-ac2f5a684011",
-        "independence_score": 0.4399999976158142,
-        "role": "uncertain",
-        "root_score": 1.4901161193847656e-8,
-        "summary_likelihood": 0.5799999833106995,
-        "suppress_likelihood": 0.25999999046325684,
-        "visibility_floor": "never_hidden"
+        "group_ref": "group-61a7f50f6184",
+        "independence_score": 0.23999999463558197,
+        "role": "follow_on",
+        "root_score": 0.20000000298023224,
+        "summary_likelihood": 0.6800000071525574,
+        "suppress_likelihood": 0.7599999904632568,
+        "visibility_floor": "hidden_allowed"
       },
       {
-        "episode_ref": "episode-740607356a8e",
+        "episode_ref": "episode-b8e3c0508611",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
           "generic_follow_on",
           "no_primary_location",
           "specific_symbol_or_frontier",
-          "strong_root_family"
+          "strong_root_structure"
         ],
-        "group_ref": "group-c37207e6ba9e",
-        "independence_score": 0.4399999976158142,
-        "role": "uncertain",
+        "group_ref": "group-1937c5e778b6",
+        "independence_score": 0.7200000286102295,
+        "role": "lead_root",
         "root_score": 0.39000001549720764,
-        "summary_likelihood": 0.5799999833106995,
-        "suppress_likelihood": 0.25999999046325684,
+        "summary_likelihood": 0.18000000715255737,
+        "suppress_likelihood": 0.07999999821186066,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "wrapper_inferred",
+            "edge_ref": "linker-summary:node:residual-1->node:residual-0",
+            "evidence_tags": [
+              "driver_exit_summary"
+            ],
+            "from_evidence_ref": "node:residual-1",
+            "kind": "inferred_dependency",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:residual-0"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-0->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "provenance:node:residual-1->capture:stderr.raw",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:residual-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:stderr.raw"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-0->raw:residual-0:stderr.raw:168:210",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-0:stderr.raw:168:210"
+          },
+          {
+            "authority": "text_parser_derived",
+            "edge_ref": "span:node:residual-1->raw:residual-1:stderr.raw:55:167",
+            "evidence_tags": [
+              "exact_raw_byte_span"
+            ],
+            "from_evidence_ref": "node:residual-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "raw:residual-1:stderr.raw:55:167"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.sarif",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.sarif",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:residual-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "residual-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-0:stderr.raw:168:210",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 210,
+              "kind": "raw_chunk",
+              "start": 168
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "raw:residual-1:stderr.raw:55:167",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "end": 167,
+              "kind": "raw_chunk",
+              "start": 55
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:residual-1",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:residual-0",
+            "node:residual-1"
+          ],
+          "observability": "observable",
+          "primary_repair_anchors": [],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "linker-summary:node:residual-1->node:residual-0"
+          ],
+          "raw_capture_refs": [
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-0+node-residual-1",
+          "visibility_floor": "hidden_allowed",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 1,
+        "referenced_fact_count": 2,
+        "total_fact_count": 6,
+        "unresolved_evidence_count": 0,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 1,
       "duplicate_count": 0,
-      "independent_root_count": 0,
-      "uncertain_count": 2
+      "independent_root_count": 1,
+      "uncertain_count": 0
     }
   },
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "fc23e1ca9c546ff736874a4fe3bd165d6d67b67eb6918b7e0ec4d7b506bab970",
-    "raw": "ead6f9b90412f4bf3f6bb714e44ded887b909cd63afbcafa5e2759bb38b7049f",
-    "structural": "94948ee422a4b355ede261880a470ade929cbd6cd85319ec677ecb9a12d25c91"
+    "raw": "ac98ba6fc37dc09437c81cd4965c68e912359e867a907355fc57b2447609eb0c",
+    "structural": "3a08ad6a709b4d82b78dc5a4923502c4880405151bf476d3d6685b21cab8e07a"
   },
   "integrity_issues": [
     {
@@ -207,6 +370,18 @@
       },
       "severity": "warning",
       "stage": "parse"
+    },
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
     }
   ],
   "producer": {

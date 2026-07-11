@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
-        "group_ref": "group-90f933919d1b",
+        "group_ref": "group-fdd6c3e5a8dc",
         "headline": "template instantiation failed",
         "matched_conditions": [
           "context=template_instantiation",
@@ -50,7 +50,7 @@
       "fingerprints": {
         "family": "04902793a5e1d730f0710d529e694e3ac8a6015380933796d2ff26b05d8d1d20",
         "raw": "9b17fe64b2221a611e281b923c6f327aeb3abcc19170d85f6f630f0397e4f22d",
-        "structural": "31f1ed72991081f12c50a51a949a5ef01b19eb6c7fb06ccb4b8c6659f4132065"
+        "structural": "25677a5a4e80685905638c72f0b1ccef67110363879938f1c4908954797171f0"
       },
       "id": "json-0",
       "locations": [
@@ -96,7 +96,7 @@
         "confidence": 0.8999999761581421,
         "family": "template",
         "first_action_hint": "start from the first user-owned template frame and match template arguments",
-        "group_ref": "group-3082625d4a2a",
+        "group_ref": "group-c03955402324",
         "headline": "template instantiation failed",
         "matched_conditions": [
           "context=template_instantiation",
@@ -517,7 +517,7 @@
       "fingerprints": {
         "family": "09256558066c5ee1aec63e6e5c2df5485b04e1c009f7041b0fcb67009ced2c0b",
         "raw": "ff00e2c8a0879c2c6b786bbc970f68bc432cc616bbf2ac3b3e5c3dc07d1185ef",
-        "structural": "e9d629f14e852bcb239c7ae9cf6eed0ee2e34da313601ccd4557a08442ee0a66"
+        "structural": "95994411911fd2ee3bda70fb613d62e55900514baea743ef5f14bffa9e9f1a68"
       },
       "id": "json-1",
       "locations": [
@@ -563,23 +563,23 @@
     "episode_graph": {
       "episodes": [
         {
-          "confidence": 0.8999999761581421,
-          "episode_ref": "episode-995481d3dc24",
+          "confidence": 0.6799999475479126,
+          "episode_ref": "episode-2f28ea95d4dc",
           "family": "template",
-          "lead_group_ref": "group-90f933919d1b",
-          "lead_root_score": 0.8999999761581421,
+          "lead_group_ref": "group-fdd6c3e5a8dc",
+          "lead_root_score": 0.6799999475479126,
           "member_group_refs": [
-            "group-90f933919d1b"
+            "group-fdd6c3e5a8dc"
           ]
         },
         {
-          "confidence": 0.9300000071525574,
-          "episode_ref": "episode-b5cac3930b08",
+          "confidence": 0.7099999785423279,
+          "episode_ref": "episode-9204b800d27a",
           "family": "template",
-          "lead_group_ref": "group-3082625d4a2a",
-          "lead_root_score": 0.9300000071525574,
+          "lead_group_ref": "group-c03955402324",
+          "lead_root_score": 0.7099999785423279,
           "member_group_refs": [
-            "group-3082625d4a2a"
+            "group-c03955402324"
           ]
         }
       ],
@@ -587,41 +587,333 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-995481d3dc24",
+        "episode_ref": "episode-2f28ea95d4dc",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
-          "strong_root_family",
           "user_owned_primary"
         ],
-        "group_ref": "group-90f933919d1b",
-        "independence_score": 0.8999999761581421,
+        "group_ref": "group-fdd6c3e5a8dc",
+        "independence_score": 0.6799999475479126,
         "role": "independent_root",
-        "root_score": 0.8999999761581421,
-        "summary_likelihood": 0.3700000047683716,
+        "root_score": 0.6799999475479126,
+        "summary_likelihood": 0.3920000195503235,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       },
       {
-        "episode_ref": "episode-b5cac3930b08",
+        "episode_ref": "episode-9204b800d27a",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
           "specific_symbol_or_frontier",
-          "strong_root_family",
           "user_owned_primary"
         ],
-        "group_ref": "group-3082625d4a2a",
-        "independence_score": 0.9300000071525574,
+        "group_ref": "group-c03955402324",
+        "independence_score": 0.7099999785423279,
         "role": "independent_root",
-        "root_score": 0.9300000071525574,
-        "summary_likelihood": 0.367000013589859,
+        "root_score": 0.7099999785423279,
+        "summary_likelihood": 0.3890000283718109,
         "suppress_likelihood": 0.18000000715255737,
         "visibility_floor": "never_hidden"
       }
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:json-1->node:json-1-child-0",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:json-1-child-0"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:json-1->node:json-1-child-1",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:json-1-child-1"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:json-1->node:json-1-child-2",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:json-1-child-2"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:json-1->node:json-1-child-3",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:json-1-child-3"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "hierarchy:node:json-1->node:json-1-child-4",
+            "evidence_tags": [
+              "preserved_child_order"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "compiler_hierarchy",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:json-1-child-4"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-0->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1-child-0->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1-child-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1-child-1->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1-child-1",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1-child-2->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1-child-2",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1-child-3->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1-child-3",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-1-child-4->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-1-child-4",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.json",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.json",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1-child-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1-child-0"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1-child-1",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1-child-1"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1-child-2",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1-child-2"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1-child-3",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1-child-3"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-1-child-4",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-1-child-4"
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:7:22"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:json-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:json-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.cpp:7:22"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "diagnostics.json"
+          ],
+          "repair_unit_ref": "repair-unit:node-json-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        },
+        {
+          "alternate_repair_anchors": [
+            "src/main.cpp:2:8",
+            "src/main.cpp:3:5",
+            "src/main.cpp:7:22"
+          ],
+          "grounded_action_refs": [],
+          "lead_evidence_ref": "node:json-1",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:json-1",
+            "node:json-1-child-0",
+            "node:json-1-child-1",
+            "node:json-1-child-2",
+            "node:json-1-child-3",
+            "node:json-1-child-4"
+          ],
+          "observability": "observable",
+          "primary_repair_anchors": [
+            "src/main.cpp:2:8",
+            "src/main.cpp:3:5",
+            "src/main.cpp:7:22"
+          ],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "hierarchy:node:json-1->node:json-1-child-0",
+            "hierarchy:node:json-1->node:json-1-child-1",
+            "hierarchy:node:json-1->node:json-1-child-2",
+            "hierarchy:node:json-1->node:json-1-child-3",
+            "hierarchy:node:json-1->node:json-1-child-4"
+          ],
+          "raw_capture_refs": [
+            "diagnostics.json"
+          ],
+          "repair_unit_ref": "repair-unit:node-json-1+node-json-1-child-0+node-json-1-child-1+node-json-1-child-2+node-json-1-child-3+node-json-1-child-4",
+          "visibility_floor": "hidden_allowed",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 5,
+        "referenced_fact_count": 7,
+        "total_fact_count": 9,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 2
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -633,8 +925,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "ae45ec062c4b1d86e8f82d5eb8e2d33153638a4981250f7a5a3cccbf68a1b5c7",
-    "raw": "6652df1bba070113a93667bb23d19b001a6adf838e1893cbd42f38ad3c6f08bb",
-    "structural": "ce9a7d908f851d76d8e58e009fff8f429951db82527f60e884810167a2d18c1b"
+    "raw": "dc73f3e4de9c26efb6568d392e13c9e35c2a5ac30cde536412e42b2b06dc995b",
+    "structural": "46f6792c4fa2406120601bf606287646f94cba5e93db9cb98aef111e46fd0f48"
   },
   "producer": {
     "name": "gcc-formed",

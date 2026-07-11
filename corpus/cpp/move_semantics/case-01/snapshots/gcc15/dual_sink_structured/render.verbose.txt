@@ -7,4 +7,4 @@ raw : moving a local object in a return statement prevents copy elision
 note: remove 'std::move' call
 debug: rule_id=rule.family.move_semantics.message_terms
 debug: matched_conditions=message_contains=moving a local object in a return, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

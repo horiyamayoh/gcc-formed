@@ -20,7 +20,7 @@
       ],
       "family": "three_way_comparison",
       "first_action": "ensure all members support <=> or provide a custom comparison operator",
-      "group_id": "group-d0a05bbf354a",
+      "group_id": "group-990de902a590",
       "matched_conditions": [
         "message_contains=operator<=>",
         "message_contains=no match for 'operator<=>'",
@@ -36,6 +36,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

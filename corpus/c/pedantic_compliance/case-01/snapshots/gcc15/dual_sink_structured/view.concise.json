@@ -19,8 +19,8 @@
         }
       ],
       "family": "pedantic_compliance",
-      "first_action": "use the standard-conforming alternative or pass the required -std= flag",
-      "group_id": "group-f45c2089a6a6",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=iso c90 forbids",
         "message_contains=variable length array",
@@ -30,7 +30,7 @@
       "rule_id": "rule.family.pedantic_compliance.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "non-standard or non-portable extension used"
+      "title": "ISO C90 forbids variable length array 'values'"
     },
     {
       "canonical_location": "src/main.c:4:12",
@@ -51,8 +51,8 @@
         }
       ],
       "family": "uninitialized",
-      "first_action": "initialize the variable at its declaration or before first use",
-      "group_id": "group-26423017510a",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "message_contains=is used uninitialized",
         "phase=semantic"
@@ -61,12 +61,12 @@
       "rule_id": "rule.family.uninitialized.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "variable used without initialization"
+      "title": "'*values[0]' is used uninitialized"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

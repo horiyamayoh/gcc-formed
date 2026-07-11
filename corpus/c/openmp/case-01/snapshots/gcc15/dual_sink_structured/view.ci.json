@@ -19,8 +19,8 @@
         }
       ],
       "family": "openmp",
-      "first_action": "check the variable data-sharing clause or enable -fopenmp",
-      "group_id": "group-6542eac7c070",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=#pragma omp",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.openmp.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "OpenMP directive or clause error"
+      "title": "ignoring ‘#pragma omp for’"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

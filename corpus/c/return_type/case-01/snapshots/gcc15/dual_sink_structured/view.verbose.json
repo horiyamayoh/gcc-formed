@@ -20,7 +20,7 @@
       ],
       "family": "return_type",
       "first_action": "add a return statement to all control-flow paths of the non-void function",
-      "group_id": "group-9211d2c7c5a8",
+      "group_id": "group-80bdef0ac018",
       "matched_conditions": [
         "message_contains=control reaches end of non-void function",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

@@ -19,8 +19,8 @@
         }
       ],
       "family": "type_overload",
-      "first_action": "compare the expected type and actual argument at the call site",
-      "group_id": "group-987c1b15f911",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=invalid conversion",
         "phase=semantic"
@@ -29,7 +29,7 @@
       "rule_id": "rule.family.type_overload.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "type or overload mismatch"
+      "title": "invalid conversion from 'const char*' to 'int'"
     },
     {
       "canonical_location": "src/main.cpp:1:16",
@@ -51,7 +51,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "group-3396c86af585",
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "no_family_rule_matched"
       ],
@@ -65,6 +65,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

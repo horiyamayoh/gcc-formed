@@ -1,6 +1,5 @@
-warning: [type_mismatch] format string type mismatch @ src/main.c:4:13
-help: match the format specifier to the argument type, or use type-safe I/O
-want: int
+warning: [type_mismatch] format '%d' expects argument of type 'int', but argument 2 has type 'char *'
+want: int @ src/main.c:4:13
 got : char *
 via : format '%d'
 | src/main.c:4:13
@@ -10,4 +9,3 @@ suggested edit: replace text with '%s' at src/main.c:4:13-15
   patch: src/main.c
   4 -     printf("%d\n", "x");
   4 +     printf("%s\n", "x");
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

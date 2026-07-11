@@ -8,4 +8,4 @@ via : void takes(int, int) @ src/main.cpp:1:6  +3 candidates
 |     ^
 debug: rule_id=rule.family.type_overload.structured_or_message
 debug: matched_conditions=child_role=candidate, message_contains=no matching, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

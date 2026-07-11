@@ -261,7 +261,7 @@
   "fingerprints": {
     "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
     "raw": "d92446be6da991d7e33b867f0defecb6788ea6c040f12b12f674de0e6ec1c43c",
-    "structural": "0e4f20fd93c94b2d31b139fcc1eb5c5e6b2ceaca50573a89ebc12105163cd2e7"
+    "structural": "d7b738fe622865e1f76a6dfb51d3368a7a017dacf4b80840888c780340b37276"
   },
   "integrity_issues": [
     {
@@ -274,6 +274,18 @@
       },
       "severity": "warning",
       "stage": "parse"
+    },
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
     }
   ],
   "producer": {

@@ -20,7 +20,7 @@
       ],
       "family": "designated_init",
       "first_action": "reorder the designators to match the declaration order or check the member name",
-      "group_id": "group-6e2d9a57bc26",
+      "group_id": "group-b4991cf90476",
       "matched_conditions": [
         "message_contains=designator order for field",
         "message_contains=does not match declaration order",
@@ -42,6 +42,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

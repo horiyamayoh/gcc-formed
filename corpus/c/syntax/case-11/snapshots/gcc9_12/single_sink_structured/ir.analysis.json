@@ -33,7 +33,7 @@
         "confidence": 0.8999999761581421,
         "family": "syntax",
         "first_action_hint": "fix the first parser error at the user-owned location",
-        "group_ref": "group-114ea2e0d577",
+        "group_ref": "group-740a946172d8",
         "headline": "syntax error",
         "matched_conditions": [
           "message_contains=expected",
@@ -45,7 +45,7 @@
       "fingerprints": {
         "family": "c3cc41a9f04fc34c799ce7c0e6d9b501bff74f9f458cff5238f57fca8d85fa8d",
         "raw": "f7f61f654ae8f7b1d31ee984f605a7f126997670adcb3c2ed9bb2ab78e62455d",
-        "structural": "efc32db002a386fd3d40413f580432e9e9db2e7c3ba371457e410af3babbbe6c"
+        "structural": "b3de31d74fa02abdcfc04091c529188f92e9be401e3b518aaf2ea78ad567c5d1"
       },
       "id": "json-0",
       "locations": [
@@ -90,6 +90,9 @@
           "applicability": "machine_applicable",
           "edits": [
             {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "display",
               "end_column": 13,
               "end_line": 2,
               "path": "src/main.c",
@@ -108,12 +111,12 @@
       "episodes": [
         {
           "confidence": 0.8999999761581421,
-          "episode_ref": "episode-1fbbc6249733",
+          "episode_ref": "episode-3ffdf456cda3",
           "family": "syntax",
-          "lead_group_ref": "group-114ea2e0d577",
+          "lead_group_ref": "group-740a946172d8",
           "lead_root_score": 0.8999999761581421,
           "member_group_refs": [
-            "group-114ea2e0d577"
+            "group-740a946172d8"
           ]
         }
       ],
@@ -121,14 +124,14 @@
     },
     "group_analysis": [
       {
-        "episode_ref": "episode-1fbbc6249733",
+        "episode_ref": "episode-3ffdf456cda3",
         "evidence_tags": [
           "actionability_short",
           "early_invocation",
-          "strong_root_family",
+          "strong_root_structure",
           "user_owned_primary"
         ],
-        "group_ref": "group-114ea2e0d577",
+        "group_ref": "group-740a946172d8",
         "independence_score": 0.8999999761581421,
         "role": "independent_root",
         "root_score": 0.8999999761581421,
@@ -139,6 +142,88 @@
     ],
     "policy_profile": "default-aggressive",
     "producer_version": "0.2.0-beta.1",
+    "repair_analysis": {
+      "evidence_graph": {
+        "edges": [
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "provenance:node:json-0->capture:diagnostics.json",
+            "evidence_tags": [
+              "raw_provenance"
+            ],
+            "from_evidence_ref": "node:json-0",
+            "kind": "context_frontier",
+            "proof_class": "proven",
+            "to_evidence_ref": "capture:diagnostics.json"
+          }
+        ],
+        "evidence": [
+          {
+            "evidence_ref": "capture:diagnostics.json",
+            "hidden": false,
+            "target": {
+              "capture_ref": "diagnostics.json",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "capture:stderr.raw",
+            "hidden": false,
+            "target": {
+              "capture_ref": "stderr.raw",
+              "kind": "capture"
+            },
+            "unresolved": false
+          },
+          {
+            "evidence_ref": "node:json-0",
+            "hidden": false,
+            "target": {
+              "kind": "diagnostic_node",
+              "node_ref": "json-0"
+            },
+            "unresolved": false
+          }
+        ]
+      },
+      "repair_units": [
+        {
+          "alternate_repair_anchors": [
+            "src/main.c:2:13"
+          ],
+          "grounded_action_refs": [
+            "fixit:node:json-0:0:0"
+          ],
+          "lead_evidence_ref": "node:json-0",
+          "legacy_episode_refs": [],
+          "legacy_group_refs": [],
+          "member_evidence_refs": [
+            "node:json-0"
+          ],
+          "observability": "unresolved",
+          "primary_repair_anchors": [
+            "src/main.c:2:13-2:13"
+          ],
+          "proof_class": "unresolved",
+          "rationale_edge_refs": [],
+          "raw_capture_refs": [
+            "diagnostics.json"
+          ],
+          "repair_unit_ref": "repair-unit:node-json-0",
+          "visibility_floor": "never_hidden",
+          "visible": true
+        }
+      ],
+      "stats": {
+        "exact_duplicate_count": 0,
+        "merged_evidence_count": 0,
+        "referenced_fact_count": 1,
+        "total_fact_count": 3,
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 1
+      }
+    },
     "stats": {
       "dependent_follow_on_count": 0,
       "duplicate_count": 0,
@@ -150,8 +235,8 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "122015ffa6be1a3f7e4cfd1b8cb653d43ec6bc8c10e2081eafe5dbc6843c9164",
-    "raw": "e943327ba794d3af0a05506e3ed8a4b6a9eeebb374346b83e82e7816b200695b",
-    "structural": "db2f13554b3df8bb826d624215143e1504f0b1adcd807ac70c93d5a583218c44"
+    "raw": "077e41e0b22fede81770603d3b9098a46ae2d59fc666384c5fa3bec4d409addf",
+    "structural": "37f845f0818d8e646b67cb67cd8072b6f84baffd1cb8067a7d86329da85dec8a"
   },
   "producer": {
     "name": "gcc-formed",

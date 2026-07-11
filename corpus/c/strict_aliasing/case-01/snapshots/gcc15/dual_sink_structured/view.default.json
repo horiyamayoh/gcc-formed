@@ -19,8 +19,8 @@
         }
       ],
       "family": "strict_aliasing",
-      "first_action": "use memcpy or a union for type punning instead of pointer casts",
-      "group_id": "group-f73615d2a675",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=strict-aliasing",
         "message_contains=type-punned pointer",
@@ -32,12 +32,12 @@
       "rule_id": "rule.family.strict_aliasing.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "strict aliasing rule violation"
+      "title": "dereferencing type-punned pointer will break strict-aliasing rules"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

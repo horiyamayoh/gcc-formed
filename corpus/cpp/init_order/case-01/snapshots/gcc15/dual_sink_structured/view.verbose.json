@@ -20,7 +20,7 @@
       ],
       "family": "init_order",
       "first_action": "reorder member initializers to match declaration order, or fix the initializer list",
-      "group_id": "group-4fe83b216034",
+      "group_id": "group-017989192594",
       "matched_conditions": [
         "message_contains=will be initialized after",
         "phase=semantic"
@@ -51,7 +51,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "group-47fde0da878b",
+      "group_id": "group-ccfe0ab7aadc",
       "matched_conditions": [
         "no_family_rule_matched"
       ],
@@ -81,7 +81,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "group-59815819bad1",
+      "group_id": "group-656492cc3b86",
       "matched_conditions": [
         "no_family_rule_matched"
       ],
@@ -95,6 +95,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

@@ -16,12 +16,143 @@
   ],
   "diagnostics": [
     {
-      "fingerprints": {
-        "family": "719fec99f01464b783d5c5538cff6c341663b8defacbd9251595a656443a45fd",
-        "raw": "543eb67cc20b759187567c3a43ee83f7ddddf884a398571d5958258f2f8e969d",
-        "structural": "9fdfa46191f79e9e094fb7e0e9544ba8fcf688f6cf4a3f6c850064ea8e86d87a"
-      },
-      "id": "residual-passthrough",
+      "children": [
+        {
+          "fingerprints": {
+            "family": "fa220ec142bea7661f5ec8ba9755b83f76d85cb41567956a246d338a50932aa4",
+            "raw": "60a02ee8d54925f7c0637e2eb7feecb6c65b8133ffa31b16930bb28339b5d3e9",
+            "structural": "97c5f3e5f7f2f6e8dc3545be8382590b799345a685a32880c25acd918a2cfc27"
+          },
+          "id": "residual-compiler-0-child-1",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 25,
+                "column_native": 25,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:3:25:3:25",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "92833b9a7eb44d14c04c89e5bbe32e41b610b2e2c28323b8b78cdc7023f52768",
+            "raw": "0dd6edd698b5e3630d1e324a2379b8321c4aae492e86275c7667d719888c6fad",
+            "structural": "b17d735ed8e8bdf1d9aac80cea16fb27a7574de035d82fd0f707af5a647eb7bd"
+          },
+          "id": "residual-compiler-0-child-2",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 20,
+                "column_native": 20,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 1
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/config.h",
+                "path_style": "posix"
+              },
+              "id": "loc:src/config.h:1:20:1:20",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        },
+        {
+          "fingerprints": {
+            "family": "fa220ec142bea7661f5ec8ba9755b83f76d85cb41567956a246d338a50932aa4",
+            "raw": "60a02ee8d54925f7c0637e2eb7feecb6c65b8133ffa31b16930bb28339b5d3e9",
+            "structural": "b270a5f3b31cdb400bcb2217270816cc897e593331a45f743348b1e69ea1bc67"
+          },
+          "id": "residual-compiler-0-child-3",
+          "locations": [
+            {
+              "anchor": {
+                "column_display": 25,
+                "column_native": 25,
+                "column_native_unit": "display",
+                "column_origin": 1,
+                "line": 3
+              },
+              "file": {
+                "ownership": {
+                  "owner": "user",
+                  "reason": "user_workspace"
+                },
+                "path_kind": "relative",
+                "path_raw": "src/main.c",
+                "path_style": "posix"
+              },
+              "id": "loc:src/main.c:3:25:3:25",
+              "role": "primary",
+              "source_kind": "caret"
+            }
+          ],
+          "message": {
+            "raw_text": "src/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+          },
+          "node_completeness": "partial",
+          "origin": "gcc",
+          "phase": "semantic",
+          "provenance": {
+            "capture_refs": [
+              "stderr.raw"
+            ],
+            "source": "residual_text"
+          },
+          "semantic_role": "supporting",
+          "severity": "note"
+        }
+      ],
       "context_chains": [
         {
           "frames": [
@@ -56,8 +187,59 @@
           "kind": "macro_expansion"
         }
       ],
+      "fingerprints": {
+        "family": "cfd1e9db4e7f85ddeab95f2ce1afa59a44d6619adbe216b588259390ec461ec6",
+        "raw": "d60c7383c1d3b13055bea03ac3072413b6c09c0f57528c4ff166b178f438492d",
+        "structural": "7ded77eaa9f3f7cb1e7a1e866e880762e55c51bf288b1e28b70e18f44746c7f6"
+      },
+      "id": "residual-compiler-0",
+      "locations": [
+        {
+          "anchor": {
+            "column_display": 20,
+            "column_native": 20,
+            "column_native_unit": "display",
+            "column_origin": 1,
+            "line": 1
+          },
+          "file": {
+            "ownership": {
+              "owner": "user",
+              "reason": "user_workspace"
+            },
+            "path_kind": "relative",
+            "path_raw": "src/config.h",
+            "path_style": "posix"
+          },
+          "id": "loc:src/config.h:1:20:1:20",
+          "role": "primary",
+          "source_kind": "caret"
+        }
+      ],
       "message": {
-        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~\nsrc/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~\nsrc/main.c:3:25: note: in expansion of macro 'CALL_BAD'\n    3 | int main(void) { return CALL_BAD(); }\n      |                         ^~~~~~~~"
+        "raw_text": "src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~"
+      },
+      "node_completeness": "partial",
+      "origin": "gcc",
+      "phase": "semantic",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw"
+        ],
+        "source": "residual_text"
+      },
+      "semantic_role": "root",
+      "severity": "error"
+    },
+    {
+      "fingerprints": {
+        "family": "b5b75e9723e54ebdb540d4c68c69378d839d1f8d24904a6e2a4a3c6c83a0e69c",
+        "raw": "a21af6e689720e22061693d2bc300f49a871e72e331f8143ff7bfeda8e651b4a",
+        "structural": "066f81fdb183413d55a136e29d7815ad9058552a2e930632c3800b3d9ffe9d0d"
+      },
+      "id": "residual-passthrough",
+      "message": {
+        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:"
       },
       "node_completeness": "passthrough",
       "origin": "external_tool",
@@ -72,12 +254,12 @@
       "severity": "error"
     }
   ],
-  "document_completeness": "passthrough",
+  "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
-    "raw": "532dbea54da3b9e586087e9a3c027c4418502b53db184a19c8735e8538f63abb",
-    "structural": "498cac9d8fa80b2ee96f80247642980c3af0243b821237d6eadc745ca2b684c9"
+    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
+    "raw": "ee181c99533f3370814e378d0b485757f85cb57b1b1b49a80397d03c7a41bb34",
+    "structural": "d8def20649ee6673e88fcfc181da11a24c32486d9929199aab68a6af0757e1f3"
   },
   "producer": {
     "name": "gcc-formed",

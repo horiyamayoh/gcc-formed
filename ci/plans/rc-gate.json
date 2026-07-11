@@ -76,6 +76,18 @@
         "$REPORT_ROOT/gate/replay-stop-ship.json"
       ],
       "gate_scope": "release_candidate"
+    },
+    {
+      "id": "repair-unit-quality-gate",
+      "order": 5,
+      "name": "RepairUnit release exact-count quality gate",
+      "policy": "always",
+      "failure_classification": "product",
+      "command": "cargo xtask repair-oracle --root corpus --check && cargo xtask quality-report --root corpus --format json > \"$REPORT_ROOT/gate/repair-unit-quality.json\"",
+      "fixture": "repair-oracle:all",
+      "gcc_version": "host",
+      "artifact_paths": ["$REPORT_ROOT/gate/repair-unit-quality.json"],
+      "gate_scope": "release_candidate"
     }
   ]
 }

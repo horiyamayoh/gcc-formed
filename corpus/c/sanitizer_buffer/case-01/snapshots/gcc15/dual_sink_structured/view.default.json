@@ -19,8 +19,8 @@
         }
       ],
       "family": "sanitizer_buffer",
-      "first_action": "check buffer sizes and ensure source and destination do not overlap",
-      "group_id": "group-2dfd3eb0126f",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=bytes into a region of size",
         "phase=semantic"
@@ -29,7 +29,7 @@
       "rule_id": "rule.family.sanitizer_buffer.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "potential buffer overflow or memory overlap"
+      "title": "'%s' directive writing 6 bytes into a region of size 4"
     },
     {
       "canonical_location": "src/main.c:5:5",
@@ -51,7 +51,7 @@
       ],
       "family": "unknown",
       "first_action": null,
-      "group_id": "group-b9d5d7b03a58",
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "no_family_rule_matched"
       ],
@@ -65,6 +65,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

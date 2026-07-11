@@ -22,8 +22,8 @@
         }
       ],
       "family": "macro_include",
-      "first_action": "inspect the user-owned macro invocation or include edge that reaches the failing line",
-      "group_id": "group-d890bfb119c0",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
       "matched_conditions": [
         "context=macro_expansion",
         "context=include"
@@ -32,12 +32,12 @@
       "rule_id": "rule.family.macro_include.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "error surfaced through macro/include context"
+      "title": "'missing_symbol' undeclared (first use in this function)"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

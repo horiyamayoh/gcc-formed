@@ -1,10 +1,9 @@
-src/main.cpp:5:16: error: [incomplete_type] invalid pointer or reference operation
-help: provide the full type definition via #include or fix the value category
+src/main.cpp:5:16: error: [incomplete_type] invalid use of incomplete type 'struct Node'
 name: struct Node
 use : return node->value;
-need: complete definition of 'struct Node'
+need: full type definition
 from: src/main.cpp:1:8 struct Node;
 | src/main.cpp:5:16
 |     return node->value;
 |                ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

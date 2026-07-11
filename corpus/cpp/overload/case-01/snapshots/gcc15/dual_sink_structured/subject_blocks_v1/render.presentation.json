@@ -3,7 +3,7 @@
     {
       "canonical_location": "src/main.cpp:5:5",
       "display_family": "type_mismatch",
-      "group_id": "group-fb462edc9599",
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4",
       "internal_family": "type_overload",
       "presentation": {
         "display_family": "type_mismatch",
@@ -34,11 +34,6 @@
       "severity": "error",
       "slots": [
         {
-          "label": "help",
-          "slot": "first_action",
-          "value": "compare the expected type and actual argument at the call site"
-        },
-        {
           "label": "want",
           "slot": "want",
           "value": "int, int"
@@ -54,8 +49,8 @@
           "value": "void takes(int, int) @ src/main.cpp:1:6  +3 candidates"
         }
       ],
-      "subject": "type or overload mismatch",
-      "title": "type or overload mismatch"
+      "subject": "no matching function for call to 'takes(int)'",
+      "title": "no matching function for call to 'takes(int)'"
     }
   ],
   "fell_back_to_default": false,
@@ -64,7 +59,7 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "policy_session_mode": "all_visible_blocks",
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw",
     "resolved_session_mode": "all_visible_blocks"
   }
 }

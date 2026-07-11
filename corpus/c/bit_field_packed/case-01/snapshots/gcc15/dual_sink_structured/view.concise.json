@@ -19,8 +19,8 @@
         }
       ],
       "family": "bit_field_packed",
-      "first_action": "check field width against the declared type or avoid taking address of packed members",
-      "group_id": "group-13dd5979df58",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=taking address of packed member",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.bit_field_packed.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "bit-field or packed struct issue"
+      "title": "taking address of packed member of ‘struct Packet’ may result in an unaligned pointer value"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

@@ -8,4 +8,4 @@ note: because the following virtual functions are pure within 'Derived':
 note: 'virtual int Base::value() const'
 debug: rule_id=rule.family.inheritance_virtual.message_terms
 debug: matched_conditions=message_contains=abstract type, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

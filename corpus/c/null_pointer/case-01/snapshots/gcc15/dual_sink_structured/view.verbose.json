@@ -20,7 +20,7 @@
       ],
       "family": "null_pointer",
       "first_action": "remove the redundant null check or guard the dereference with a null check",
-      "group_id": "group-52bb58f188c5",
+      "group_id": "group-98396020e43f",
       "matched_conditions": [
         "message_contains=will always evaluate as 'true'",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

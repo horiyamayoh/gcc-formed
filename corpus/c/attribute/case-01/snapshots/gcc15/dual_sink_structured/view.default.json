@@ -19,8 +19,8 @@
         }
       ],
       "family": "attribute",
-      "first_action": "check the attribute spelling, placement, and argument requirements",
-      "group_id": "group-977e6ad932e5",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0",
       "matched_conditions": [
         "message_contains=attribute directive ignored",
         "phase=semantic"
@@ -29,12 +29,12 @@
       "rule_id": "rule.family.attribute.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "function or type attribute issue"
+      "title": "'unknown_attr' attribute directive ignored"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

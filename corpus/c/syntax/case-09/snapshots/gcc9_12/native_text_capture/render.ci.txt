@@ -1,21 +1,20 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-src/main.c:2:10: error: [syntax] syntax error
-help: fix the first parser error at the user-owned location
+src/main.c:2:10: error: [syntax] expected ')' before '{' token
+src/main.c: In function 'main':
+    2 |     if (1 {
+      |        ~ ^~
+      |          )
 want: )
 near: { token
 | src/main.c:2:10
 |     if (1 {
 |          ^
-raw:
-  src/main.c:2:10: error: expected ')' before '{' token
 
-src/main.c:5:1: error: [syntax] syntax error
-help: fix the first parser error at the user-owned location
+src/main.c:5:1: error: [syntax] expected expression before '}' token
+    5 | }
+      | ^
 want: expression
 near: } token
 | src/main.c:5:1
 | }
 | ^
-raw:
-  src/main.c:5:1: error: expected expression before '}' token
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

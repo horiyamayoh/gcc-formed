@@ -1,15 +1,20 @@
-In file included from src/wrapper.h:1,
-                 from src/main.c:1:
+note: some compiler details were not fully structured; original diagnostics are preserved
+src/config.h:1:20: error: [compiler.residual] 'missing_symbol' undeclared (first use in this function)
 src/main.c: In function 'main':
-src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)
     1 | #define CALL_BAD() missing_symbol
       |                    ^~~~~~~~~~~~~~
-src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
-    3 | int main(void) { return CALL_BAD(); }
-      |                         ^~~~~~~~
-src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in
-    1 | #define CALL_BAD() missing_symbol
-      |                    ^~~~~~~~~~~~~~
-src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
-    3 | int main(void) { return CALL_BAD(); }
-      |                         ^~~~~~~~
+raw : src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)
+| src/config.h:1:20
+| #define CALL_BAD() missing_symbol
+|                    ^
+include: In file included from src/wrapper.h:1
+include: src/main.c:1 from src/main.c:1:
+macro: src/main.c:3:25 in expansion of macro 'CALL_BAD'
+note: src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
+note: src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in
+note: omitted 1 additional note(s)
+
+error: [linker] In file included from src/wrapper.h:1,
+                 from src/main.c:1:
+raw : In file included from src/wrapper.h:1,
+details: --formed-explain | raw: --formed-raw

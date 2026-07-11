@@ -20,7 +20,7 @@
       ],
       "family": "bit_field_packed",
       "first_action": "check field width against the declared type or avoid taking address of packed members",
-      "group_id": "group-13dd5979df58",
+      "group_id": "group-0ed73b989c36",
       "matched_conditions": [
         "message_contains=taking address of packed member",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

@@ -20,7 +20,7 @@
       ],
       "family": "enum_switch",
       "first_action": "add missing case labels or a default case to handle all enum values",
-      "group_id": "group-fc0b05c731dc",
+      "group_id": "group-839bbe18fb6c",
       "matched_conditions": [
         "message_contains=not handled in switch",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

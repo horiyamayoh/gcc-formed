@@ -2,6 +2,38 @@
   "cards": [
     {
       "canonical_location": "src/main.c:6:5",
+      "child_notes": [
+        "call to 'free' here"
+      ],
+      "collapsed_notices": [],
+      "confidence_label": "possible",
+      "confidence_notice": "note: wrapper confidence is low; verify against the preserved raw diagnostics",
+      "context_lines": [],
+      "excerpts": [
+        {
+          "annotations": [
+            "    ^"
+          ],
+          "lines": [
+            "    free(ptr);"
+          ],
+          "location": "src/main.c:6:5"
+        }
+      ],
+      "family": "unknown",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0",
+      "matched_conditions": [
+        "no_family_rule_matched"
+      ],
+      "raw_message": "pointer 'ptr' used after 'free'",
+      "rule_id": "rule.family.unknown",
+      "severity": "warning",
+      "suppression_reason": "generic_fallback",
+      "title": "pointer 'ptr' used after 'free'"
+    },
+    {
+      "canonical_location": "src/main.c:6:5",
       "child_notes": [],
       "collapsed_notices": [],
       "confidence_label": "certain",
@@ -23,8 +55,8 @@
         }
       ],
       "family": "analyzer",
-      "first_action": "follow the analyzer event path and fix the first invalid state transition",
-      "group_id": "group-45db1889640a",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-1",
       "matched_conditions": [
         "message_contains=double-'free'",
         "phase=analyze"
@@ -33,7 +65,7 @@
       "rule_id": "rule.family.analyzer.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "static analysis found a potential defect"
+      "title": "double-'free' of 'ptr'"
     },
     {
       "canonical_location": "src/main.c:6:5",
@@ -54,35 +86,23 @@
         }
       ],
       "family": "analyzer",
-      "first_action": "follow the analyzer event path and fix the first invalid state transition",
-      "group_id": "group-89b7e9e8cfaf",
+      "first_action": null,
+      "group_id": "repair-unit:node-residual-compiler-1",
       "matched_conditions": [
         "message_contains=double-'free'",
         "message_contains=-wanalyzer-",
         "phase=analyze"
       ],
       "raw_message": "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\n  'main': events 1-3\n    4 |     int *ptr = malloc(sizeof(int));\n      |                ^~~~~~~~~~~~~~~~~~~\n      |                |\n      |                (1) allocated here\n    5 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (2) first 'free' here\n      |     (3) ⚠️  second 'free' here; first 'free' was at (2)",
-      "raw_sub_block": [
-        "src/main.c:6:5: warning: double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]",
-        "    6 |     free(ptr);"
-      ],
       "rule_id": "rule.family.analyzer.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "static analysis found a potential defect"
+      "title": "double-'free' of 'ptr' [CWE-415] [-Wanalyzer-double-free]\n    6 |     free(ptr);\n      |     ^~~~~~~~~\n  'main': events 1-3\n    4 |     int *ptr = malloc(sizeof(int));\n      |                ^~~~~~~~~~~~~~~~~~~\n      |                |\n      |                (1) allocated here\n    5 |     free(ptr);\n      |     ~~~~~~~~~   \n      |     |\n      |     (2) first 'free' here\n      |     (3) ⚠️  second 'free' here; first 'free' was at (2)"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-  },
-  "summary_only_groups": [
-    {
-      "canonical_location": "src/main.c:6:5",
-      "group_id": "group-eae4c78bfc51",
-      "severity": "warning",
-      "title": "pointer 'ptr' used after 'free'"
-    }
-  ]
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
+  }
 }

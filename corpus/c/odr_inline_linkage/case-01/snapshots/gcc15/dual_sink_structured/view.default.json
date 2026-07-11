@@ -21,27 +21,23 @@
         }
       ],
       "family": "odr_inline_linkage",
-      "first_action": "ensure the inline function is defined in a header or fix the type mismatch across TUs",
-      "group_id": "group-a5fdd288eb9b",
+      "first_action": null,
+      "group_id": "repair-unit:node-residual-compiler-0",
       "matched_conditions": [
         "message_contains=does not match original declaration",
         "message_contains=lto-type-mismatch",
         "phase=link"
       ],
       "raw_message": "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^",
-      "raw_sub_block": [
-        "src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]",
-        "    1 | int helper(int value);"
-      ],
       "rule_id": "rule.family.odr_inline_linkage.message_terms",
       "severity": "warning",
       "suppression_reason": null,
-      "title": "ODR violation or inline linkage mismatch"
+      "title": "type of 'helper' does not match original declaration [-Wlto-type-mismatch]\n    1 | int helper(int value);\n      |     ^"
     }
   ],
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": true,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

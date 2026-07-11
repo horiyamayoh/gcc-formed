@@ -20,7 +20,7 @@
       ],
       "family": "scope_declaration",
       "first_action": "check for typos, missing #include, or missing namespace qualifier",
-      "group_id": "group-1c7e2fdaa2c4",
+      "group_id": "group-0f2ec1605eff",
       "matched_conditions": [
         "message_contains=was not declared in this scope",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

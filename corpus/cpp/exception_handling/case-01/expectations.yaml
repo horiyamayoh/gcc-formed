@@ -8,6 +8,7 @@ semantic:
   family: exception_handling
   severity: error
   lead_group_any_of:
+    - residual-compiler-0
     - sarif-0-0
   primary_locations:
     - path: src/main.cpp

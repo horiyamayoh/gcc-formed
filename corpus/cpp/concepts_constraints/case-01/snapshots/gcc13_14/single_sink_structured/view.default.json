@@ -24,8 +24,8 @@
         }
       ],
       "family": "concepts_constraints",
-      "first_action": "match the required concept or requires-clause against the actual template arguments",
-      "group_id": "group-2a81adc6f6a0",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4",
       "matched_conditions": [
         "child_message_contains=constraints not satisfied",
         "child_message_contains=the required expression",
@@ -35,12 +35,12 @@
       "rule_id": "rule.family.concepts_constraints.structured_or_message",
       "severity": "error",
       "suppression_reason": null,
-      "title": "template constraint not satisfied"
+      "title": "no matching function for call to 'consume(int)'"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

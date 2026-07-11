@@ -214,8 +214,22 @@
   "fingerprints": {
     "family": "fdd728b2528713332e21812c6a72549c3b317bdc5d720383e17f598daa5eee37",
     "raw": "99d194a3be833f3af781f1150e9d249f67fcff8efce527e9c723297b881bfef9",
-    "structural": "c302008532708b122dd2f700c7253b37ab52f1656abf4288b56cff0b617cfc9a"
+    "structural": "f8c3c4dd061d6dcc0180e17ce4342c2b5a5b028517abb493f96f38508ed59614"
   },
+  "integrity_issues": [
+    {
+      "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
+      "provenance": {
+        "capture_refs": [
+          "stderr.raw",
+          "diagnostics.sarif"
+        ],
+        "source": "policy"
+      },
+      "severity": "warning",
+      "stage": "normalize"
+    }
+  ],
   "producer": {
     "name": "gcc-formed",
     "rulepack_version": "phase1",

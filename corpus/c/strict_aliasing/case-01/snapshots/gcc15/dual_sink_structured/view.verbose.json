@@ -20,7 +20,7 @@
       ],
       "family": "strict_aliasing",
       "first_action": "use memcpy or a union for type punning instead of pointer casts",
-      "group_id": "group-f73615d2a675",
+      "group_id": "group-36e6aa3c6542",
       "matched_conditions": [
         "message_contains=strict-aliasing",
         "message_contains=type-punned pointer",
@@ -38,6 +38,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }

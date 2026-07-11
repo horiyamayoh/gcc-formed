@@ -22,8 +22,8 @@
         }
       ],
       "family": "inheritance_virtual",
-      "first_action": "implement all pure virtual functions or fix the class hierarchy",
-      "group_id": "group-775fa7767837",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0+node-sarif-0-0-related-1",
       "matched_conditions": [
         "message_contains=abstract type",
         "phase=semantic"
@@ -32,12 +32,12 @@
       "rule_id": "rule.family.inheritance_virtual.message_terms",
       "severity": "error",
       "suppression_reason": null,
-      "title": "inheritance or virtual function error"
+      "title": "cannot declare variable 'value' to be of abstract type 'Derived'"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

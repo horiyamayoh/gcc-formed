@@ -1,5 +1,4 @@
-src/main.cpp:5:17: error: [type_mismatch] type or overload mismatch
-help: compare the expected type and actual argument at the call site
+src/main.cpp:5:17: error: [type_mismatch] invalid conversion from 'const char*' to 'short int'
 raw : invalid conversion from 'const char*' to 'short int'
 | src/main.cpp:5:17
 |     takes_short("x");
@@ -11,4 +10,3 @@ raw :   initializing argument 1 of 'void takes_short(short int)'
 | src/main.cpp:1:18
 | void takes_short(short);
 |                  ^~~~
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

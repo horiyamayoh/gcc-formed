@@ -6,4 +6,3 @@ raw : 'unknown_attr' attribute directive ignored
 | ^
 debug: rule_id=rule.family.attribute.message_terms
 debug: matched_conditions=message_contains=attribute directive ignored, phase=semantic
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

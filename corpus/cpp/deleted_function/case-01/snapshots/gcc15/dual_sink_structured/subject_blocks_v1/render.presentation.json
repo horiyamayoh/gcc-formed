@@ -3,7 +3,7 @@
     {
       "canonical_location": "src/main.cpp:10:5",
       "display_family": "unavailable_api",
-      "group_id": "group-c2ba4f91897a",
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0+node-sarif-0-1",
       "internal_family": "deleted_function",
       "presentation": {
         "display_family": "unavailable_api",
@@ -34,11 +34,6 @@
       "severity": "error",
       "slots": [
         {
-          "label": "help",
-          "slot": "first_action",
-          "value": "check whether the type is movable/copyable, or provide the required special member"
-        },
-        {
           "label": "name",
           "slot": "name",
           "value": "NoCopy::NoCopy(const NoCopy&)"
@@ -54,59 +49,12 @@
           "value": "src/main.cpp:3:5 NoCopy(const NoCopy&) = delete;"
         }
       ],
-      "subject": "use of a deleted or unavailable function",
-      "title": "use of a deleted or unavailable function"
-    },
-    {
-      "canonical_location": "src/main.cpp:10:5",
-      "display_family": "type_mismatch",
-      "group_id": "group-bf691203aed4",
-      "internal_family": "type_overload",
-      "presentation": {
-        "display_family": "type_mismatch",
-        "evidence_label_width": 4,
-        "fell_back_to_generic_template": true,
-        "header": {
-          "ci_path_first_format": "{location}: {severity}: [{family}] {subject}",
-          "interactive_format": "{severity}: [{family}] {subject}",
-          "subject_first": true,
-          "unknown_family": "generic"
-        },
-        "location_policy": {
-          "default_placement": "inline_suffix",
-          "fallback_order": [
-            "header_suffix",
-            "evidence_suffix",
-            "excerpt_header",
-            "none"
-          ],
-          "inline_suffix_format": " @ {location}",
-          "width_soft_limit": 100
-        },
-        "semantic_shape": "generic",
-        "subject_first_header": true,
-        "template_id": "generic_block"
-      },
-      "raw_message": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates",
-      "severity": "note",
-      "slots": [
-        {
-          "label": "help",
-          "slot": "first_action",
-          "value": "compare the expected type and actual argument at the call site"
-        },
-        {
-          "label": "raw",
-          "slot": "raw",
-          "value": "use '[-fdiagnostics-all-candidates](https://gcc.gnu.org/onlinedocs/gcc-15.2.0/gcc/C_002b_002b-Dialect-Options.html#index-fdiagnostics-all-candidates)' to display considered candidates"
-        }
-      ],
-      "subject": "type or overload mismatch",
-      "title": "type or overload mismatch"
+      "subject": "use of deleted function 'NoCopy::NoCopy(const NoCopy&)'",
+      "title": "use of deleted function 'NoCopy::NoCopy(const NoCopy&)'"
     },
     {
       "canonical_location": "src/main.cpp:6:11",
-      "group_id": "group-d84feff7273f",
+      "group_id": "repair-unit:node-sarif-0-2",
       "internal_family": "unknown",
       "presentation": {
         "evidence_label_width": 4,
@@ -151,7 +99,7 @@
     "failure_kind": "compile_failure",
     "partial_notice": false,
     "policy_session_mode": "all_visible_blocks",
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw",
     "resolved_session_mode": "all_visible_blocks"
   }
 }

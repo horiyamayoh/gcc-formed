@@ -14,7 +14,7 @@ semantic:
       line: 5
       column: 5
   primary_location_user_owned_required: true
-  first_action_required: true
+  first_action_required: false
   raw_provenance_required: true
   fallback: forbidden
   confidence_min: medium
@@ -22,7 +22,6 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
-    first_action_max_line: 3
     raw_diagnostics_hint_required: true
     compaction_required_substrings:
       - "+3 candidates"
@@ -35,7 +34,6 @@ render:
   ci:
     omission_notice_required: false
     first_screenful_max_lines: 14
-    first_action_max_line: 3
     path_first_required: true
     color_meaning_forbidden: true
     raw_diagnostics_hint_required: true

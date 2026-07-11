@@ -44,6 +44,12 @@ jobs:
             --workflow rc-gate \
             --step-id path-aware-replay-stop-ship \
             --report-root "$REPORT_ROOT"
+      - name: RepairUnit release exact-count quality gate
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
+            --step-id repair-unit-quality-gate \
+            --report-root "$REPORT_ROOT"
       - name: Gate summary
         if: always()
         run: |

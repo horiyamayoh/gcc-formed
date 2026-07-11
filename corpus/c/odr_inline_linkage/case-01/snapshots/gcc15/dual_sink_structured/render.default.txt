@@ -1,13 +1,11 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
-warning: [redefinition] ODR violation or inline linkage mismatch @ src/main.c:1:5
-help: ensure the inline function is defined in a header or fix the type mismatch across TUs
-now : src/main.c:1:5 int helper(int value);
+warning: [redefinition] type of 'helper' does not match original declaration [-Wlto-type-mismatch]
+    1 | int helper(int value);
+      |     ^
+now : src/main.c:1:5 int helper(int value); @ src/main.c:1:5
 prev: src/helper.c:1:6 long helper(long value) {
 | src/main.c:1:5
 | int helper(int value);
 |     ^
 note: omitted 1 additional note(s)
-raw:
-  src/main.c:1:5: warning: type of 'helper' does not match original declaration [-Wlto-type-mismatch]
-      1 | int helper(int value);
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw

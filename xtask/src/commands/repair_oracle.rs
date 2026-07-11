@@ -91,7 +91,24 @@ struct CausalMap {
 struct BaselineComparison {
     raw_gcc_diagnostic_count: usize,
     current_formed_visible_count: Option<usize>,
+    current_formed_displayed_block_count: Option<usize>,
+    current_formed_repair_unit_count: Option<usize>,
+    hidden_independent_evidence_count: Option<usize>,
+    orphan_hidden_evidence_count: Option<usize>,
+    raw_fact_coverage_numerator: Option<usize>,
+    raw_fact_coverage_denominator: Option<usize>,
     oracle_repair_unit_count: usize,
+}
+
+#[derive(Debug, Clone, Default)]
+struct FormedObservation {
+    displayed_block_count: usize,
+    repair_unit_count: usize,
+    visible_repair_unit_count: usize,
+    hidden_independent_evidence_count: usize,
+    orphan_hidden_evidence_count: usize,
+    raw_fact_coverage_numerator: usize,
+    raw_fact_coverage_denominator: usize,
 }
 
 pub(crate) fn run_repair_oracle(
@@ -173,13 +190,21 @@ struct CoverageEntry {
     raw_evidence_count: usize,
     oracle_repair_unit_count: usize,
     formed_visible_block_count: Option<usize>,
+    formed_visible_repair_unit_count: Option<usize>,
+    formed_total_repair_unit_count: Option<usize>,
+    hidden_independent_evidence_count: Option<usize>,
+    orphan_hidden_evidence_count: Option<usize>,
+    raw_fact_coverage_numerator: Option<usize>,
+    raw_fact_coverage_denominator: Option<usize>,
     baseline_classification: String,
 }
 
 impl CoverageEntry {
     fn new(spec: &OracleSpec, report: &CausalMap) -> Self {
         let oracle = report.baseline_comparison.oracle_repair_unit_count;
-        let formed = report.baseline_comparison.current_formed_visible_count;
+        let formed = report
+            .baseline_comparison
+            .current_formed_displayed_block_count;
         let baseline_classification = match formed {
             Some(value) if value > oracle => "false_split",
             Some(value) if value < oracle => "false_merge_or_hidden",
@@ -200,6 +225,18 @@ impl CoverageEntry {
             raw_evidence_count: report.baseline.raw_evidence_count,
             oracle_repair_unit_count: oracle,
             formed_visible_block_count: formed,
+            formed_visible_repair_unit_count: report
+                .baseline_comparison
+                .current_formed_visible_count,
+            formed_total_repair_unit_count: report
+                .baseline_comparison
+                .current_formed_repair_unit_count,
+            hidden_independent_evidence_count: report
+                .baseline_comparison
+                .hidden_independent_evidence_count,
+            orphan_hidden_evidence_count: report.baseline_comparison.orphan_hidden_evidence_count,
+            raw_fact_coverage_numerator: report.baseline_comparison.raw_fact_coverage_numerator,
+            raw_fact_coverage_denominator: report.baseline_comparison.raw_fact_coverage_denominator,
             baseline_classification,
         }
     }
@@ -285,7 +322,7 @@ fn evaluate(root: &Path, spec: &OracleSpec) -> Result<CausalMap, Box<dyn std::er
     }
     let baseline = run_in_copy(root, spec, &[])?;
     let raw_gcc_diagnostic_count = baseline.diagnostic_fingerprints.len();
-    let current_formed_visible_count = run_formed_count_in_copy(root, spec)?;
+    let formed = run_formed_observation_in_copy(root, spec)?;
     let baseline_set = baseline
         .diagnostic_fingerprints
         .iter()
@@ -354,7 +391,27 @@ fn evaluate(root: &Path, spec: &OracleSpec) -> Result<CausalMap, Box<dyn std::er
         independent_patch_order_stable,
         baseline_comparison: BaselineComparison {
             raw_gcc_diagnostic_count,
-            current_formed_visible_count,
+            current_formed_visible_count: formed
+                .as_ref()
+                .map(|observation| observation.visible_repair_unit_count),
+            current_formed_displayed_block_count: formed
+                .as_ref()
+                .map(|observation| observation.displayed_block_count),
+            current_formed_repair_unit_count: formed
+                .as_ref()
+                .map(|observation| observation.repair_unit_count),
+            hidden_independent_evidence_count: formed
+                .as_ref()
+                .map(|observation| observation.hidden_independent_evidence_count),
+            orphan_hidden_evidence_count: formed
+                .as_ref()
+                .map(|observation| observation.orphan_hidden_evidence_count),
+            raw_fact_coverage_numerator: formed
+                .as_ref()
+                .map(|observation| observation.raw_fact_coverage_numerator),
+            raw_fact_coverage_denominator: formed
+                .as_ref()
+                .map(|observation| observation.raw_fact_coverage_denominator),
             oracle_repair_unit_count: spec
                 .defects
                 .iter()
@@ -409,10 +466,10 @@ fn run_in_copy(
     })
 }
 
-fn run_formed_count_in_copy(
+fn run_formed_observation_in_copy(
     root: &Path,
     spec: &OracleSpec,
-) -> Result<Option<usize>, Box<dyn std::error::Error>> {
+) -> Result<Option<FormedObservation>, Box<dyn std::error::Error>> {
     let executable = std::env::current_exe()?;
     let Some(directory) = executable.parent() else {
         return Ok(None);
@@ -430,16 +487,70 @@ fn run_formed_count_in_copy(
     let backend = String::from_utf8(backend.stdout)?.trim().to_string();
     let temp = tempfile::tempdir()?;
     copy_tree(root, temp.path())?;
+    let public_json = temp.path().join("formed-public.json");
     let output = Command::new(wrapper)
+        .arg("--formed-explain")
+        .arg(format!("--formed-public-json={}", public_json.display()))
         .args(&spec.args)
         .env("FORMED_BACKEND_GCC", backend)
         .current_dir(temp.path())
         .output()?;
-    let visible = String::from_utf8_lossy(&output.stderr)
+    let explain_count = String::from_utf8_lossy(&output.stderr)
         .lines()
-        .filter(|line| line.starts_with("error:") || line.contains(": error:"))
+        .filter(|line| line.starts_with("explain: repair_unit="))
         .count();
-    Ok(Some(visible))
+    if explain_count == 0 || !public_json.is_file() {
+        return Ok(None);
+    }
+    let export: serde_json::Value = serde_json::from_slice(&fs::read(public_json)?)?;
+    let result = export.get("result").ok_or("public export omitted result")?;
+    let diagnostics = result
+        .get("diagnostics")
+        .and_then(serde_json::Value::as_array)
+        .ok_or("public export omitted diagnostics")?;
+    let units = result
+        .get("repair_units")
+        .and_then(serde_json::Value::as_array)
+        .ok_or("public export omitted repair_units")?;
+    let mut members = BTreeSet::new();
+    let mut hidden_independent = 0usize;
+    let mut raw_covered_members = BTreeSet::new();
+    let mut visible = 0usize;
+    for unit in units {
+        let is_visible = unit.get("visible").and_then(serde_json::Value::as_bool) == Some(true);
+        visible += usize::from(is_visible);
+        let proof = unit.get("proof_class").and_then(serde_json::Value::as_str);
+        let observability = unit
+            .get("observability")
+            .and_then(serde_json::Value::as_str);
+        if !is_visible && (proof != Some("proven") || observability != Some("dependent")) {
+            hidden_independent += 1;
+        }
+        let has_raw = unit
+            .get("raw_capture_refs")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|refs| !refs.is_empty());
+        if let Some(refs) = unit
+            .get("member_evidence_refs")
+            .and_then(serde_json::Value::as_array)
+        {
+            for reference in refs.iter().filter_map(serde_json::Value::as_str) {
+                members.insert(reference.to_string());
+                if has_raw {
+                    raw_covered_members.insert(reference.to_string());
+                }
+            }
+        }
+    }
+    Ok(Some(FormedObservation {
+        displayed_block_count: explain_count,
+        repair_unit_count: units.len(),
+        visible_repair_unit_count: visible,
+        hidden_independent_evidence_count: hidden_independent,
+        orphan_hidden_evidence_count: diagnostics.len().saturating_sub(members.len()),
+        raw_fact_coverage_numerator: raw_covered_members.len().min(diagnostics.len()),
+        raw_fact_coverage_denominator: diagnostics.len(),
+    }))
 }
 
 fn diagnostic_fingerprints(stderr: &str) -> Vec<String> {

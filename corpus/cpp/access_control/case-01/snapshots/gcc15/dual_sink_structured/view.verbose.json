@@ -20,7 +20,7 @@
       ],
       "family": "access_control",
       "first_action": "use a public interface, add a friend declaration, or change access specifier",
-      "group_id": "group-ff1c9a416a16",
+      "group_id": "group-5825025ec8fc",
       "matched_conditions": [
         "message_contains=is private within this context",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

@@ -1,5 +1,9 @@
 {
   "execution": {
+    "allowed_processing_paths": [
+      "dual_sink_structured",
+      "passthrough"
+    ],
     "document_completeness": "partial",
     "fallback_grade": "none",
     "processing_path": "dual_sink_structured",
@@ -67,17 +71,38 @@
         "severity": "error"
       }
     ],
+    "repair_units": [
+      {
+        "lead_evidence_ref": "node:residual-compiler-0",
+        "member_evidence_refs": [
+          "node:residual-compiler-0",
+          "node:sarif-0-0"
+        ],
+        "observability": "observable",
+        "proof_class": "proven",
+        "rationale_edge_refs": [
+          "source-token:node:residual-compiler-0->node:sarif-0-0:src/main.cpp|1"
+        ],
+        "raw_capture_refs": [
+          "diagnostics.sarif",
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-0+node-sarif-0-0",
+        "visibility_floor": "hidden_allowed",
+        "visible": true
+      }
+    ],
     "summary": {
-      "dependent_follow_on_count": 0,
+      "dependent_follow_on_count": 1,
       "diagnostic_count": 2,
       "duplicate_count": 0,
       "error_count": 2,
-      "independent_root_count": 2,
+      "independent_root_count": 1,
       "note_count": 0,
       "uncertain_count": 0,
       "warning_count": 0
     }
   },
-  "schema_version": "1.0.0-alpha.1",
+  "schema_version": "2.1.0-alpha.1",
   "status": "available"
 }

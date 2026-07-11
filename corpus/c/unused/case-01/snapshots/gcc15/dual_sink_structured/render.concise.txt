@@ -1,7 +1,5 @@
-warning: [unused] unused declaration detected @ src/main.c:2:9
-help: remove the unused declaration or prefix with underscore if intentional
+warning: [unused] unused variable 'temporary' @ src/main.c:2:9
 raw : unused variable 'temporary'
 | src/main.c:2:9
 |     int temporary = 0;
 |         ^
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output

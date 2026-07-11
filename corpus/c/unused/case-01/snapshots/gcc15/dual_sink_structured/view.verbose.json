@@ -20,7 +20,7 @@
       ],
       "family": "unused",
       "first_action": "remove the unused declaration or prefix with underscore if intentional",
-      "group_id": "group-4f7393f271b9",
+      "group_id": "group-3f8b7855f1bb",
       "matched_conditions": [
         "message_contains=unused variable",
         "phase=semantic"
@@ -35,6 +35,6 @@
   "summary": {
     "failure_kind": "warnings_only",
     "partial_notice": false,
-    "raw_diagnostics_hint": "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
+    "raw_diagnostics_hint": null
   }
 }
