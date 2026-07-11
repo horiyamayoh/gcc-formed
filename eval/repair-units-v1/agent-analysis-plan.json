@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "study": "repair-units-v1-agent",
+  "design_approved_by_owner": true,
+  "minimum_independent_sessions": 8,
+  "trials_per_session": 12,
+  "minimum_valid_trials": 96,
+  "conditions_per_session": {"A": 4, "B": 4, "C": 4},
+  "time_non_inferiority_ratio": 1.1,
+  "correctness_non_inferiority_points": 0.05,
+  "target_accuracy_non_inferiority_points": 0.05,
+  "mislead_stop_ship_threshold": 0,
+  "retain_all_started_trials": true,
+  "bootstrap_seed": 2171,
+  "bootstrap_iterations": 10000,
+  "human_generalizability_claimed": false
+}
