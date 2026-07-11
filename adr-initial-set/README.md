@@ -73,6 +73,7 @@ superseded_by: []
 | [ADR-0035](./adr-0035-gcc-9-15-public-contract-parity.md) | GCC 9-15 share one public contract | Accepted | in-scope bands の public hierarchy を止める |
 | [ADR-0036](./adr-0036-presentation-v2-default-promotion-and-rollback.md) | Presentation V2 becomes the beta default while preserving explicit rollback presets | Accepted | default promotion と rollback preset の current baseline を固定する |
 | [ADR-0037](./adr-0037-repair-unit-product-identity.md) | RepairUnit is the product identity | Accepted | independently actionable repair unit を表示 identity として固定する |
+| [ADR-0038](./adr-0038-repair-unit-default-promotion-deferred.md) | Keep RepairUnit out of the beta default without user evidence | Accepted | 人間非劣化が未証明の間は現 default を維持し、再検討条件を固定する |
 
 ### Historical-Only Superseded ADRs
 
