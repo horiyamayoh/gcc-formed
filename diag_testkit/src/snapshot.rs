@@ -307,7 +307,35 @@ fn normalize_snapshot_text(contents: &str) -> String {
     let contents = normalize_gcc_docs_versioned_urls(&contents);
     let contents = normalize_gcc_quote_style(&contents);
     let contents = normalize_volatile_compiler_text(&contents);
-    normalize_transient_line_numbers(&contents)
+    let contents = normalize_transient_line_numbers(&contents);
+    normalize_related_location_ordinals(&contents)
+}
+
+fn normalize_related_location_ordinals(contents: &str) -> String {
+    let mut normalized = String::with_capacity(contents.len());
+    let mut remaining = contents;
+    let marker = "-related-";
+    while let Some(offset) = remaining.find(marker) {
+        let marker_end = offset + marker.len();
+        normalized.push_str(&remaining[..marker_end]);
+        let tail = &remaining[marker_end..];
+        let digit_len = tail
+            .chars()
+            .take_while(|ch| ch.is_ascii_digit())
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if digit_len == 0 {
+            remaining = tail;
+            continue;
+        }
+        // GCC patch releases may reorder equivalent SARIF relatedLocations.
+        // Their array ordinal is not an identity contract; list multiplicity,
+        // parent/root identity, and every non-ordinal field remain compared.
+        normalized.push('N');
+        remaining = &tail[digit_len..];
+    }
+    normalized.push_str(remaining);
+    normalized
 }
 
 fn normalize_gcc_docs_versioned_urls(contents: &str) -> String {
@@ -1960,6 +1988,26 @@ mod tests {
     }
 
     #[test]
+    fn normalizes_related_location_ordinals_without_hiding_member_count() {
+        let expected =
+            "members=node:sarif-0-0-related-1,node:sarif-0-0-related-2,node:sarif-0-0-related-3\n";
+        let reordered =
+            "members=node:sarif-0-0-related-0,node:sarif-0-0-related-1,node:sarif-0-0-related-2\n";
+        let missing = "members=node:sarif-0-0-related-0,node:sarif-0-0-related-1\n";
+
+        let reordered_comparison =
+            compare_snapshot_contents(Path::new("render.debug.txt"), expected, reordered).unwrap();
+        let missing_comparison =
+            compare_snapshot_contents(Path::new("render.debug.txt"), expected, missing).unwrap();
+
+        assert_eq!(
+            reordered_comparison.diff_kind,
+            SnapshotDiffKind::NormalizationOnly
+        );
+        assert_eq!(missing_comparison.diff_kind, SnapshotDiffKind::Semantic);
+    }
+
+    #[test]
     fn normalizes_nested_public_export_messages_before_compare() {
         let expected = include_str!(
             "../../corpus/cpp/template/case-15/snapshots/gcc13_14/single_sink_structured/public.export.json"
@@ -1976,6 +2024,24 @@ mod tests {
 
         let comparison =
             compare_snapshot_contents(Path::new("public.export.json"), expected, &actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+    }
+
+    #[test]
+    fn normalizes_gcc13_related_location_reordering_in_repair_unit_export() {
+        let expected = include_str!(
+            "../../corpus/cpp/template/case-13/snapshots/gcc13_14/single_sink_structured/public.export.json"
+        );
+        let reordered = expected
+            .replace("-related-1", "-related-X")
+            .replace("-related-2", "-related-1")
+            .replace("-related-3", "-related-2")
+            .replace("-related-X", "-related-0");
+
+        let comparison =
+            compare_snapshot_contents(Path::new("public.export.json"), expected, &reordered)
+                .unwrap();
 
         assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
     }
