@@ -1,3 +1,4 @@
+pub(crate) mod build_system_smoke;
 pub(crate) mod check;
 pub(crate) mod ci_gate;
 pub(crate) mod corpus;

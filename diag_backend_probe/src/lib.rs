@@ -758,12 +758,14 @@ fn validate_backend_topology(
             ProbeError::RecursiveTopology("failed to canonicalize wrapper path".to_string())
         })?;
     if let Some(wrapper_path) = wrapper_path.as_deref() {
-        if compiler_path == wrapper_path {
+        if compiler_path == wrapper_path || same_executable(compiler_path, wrapper_path) {
             return Err(ProbeError::RecursiveTopology(
                 "backend compiler resolves to the wrapper binary".to_string(),
             ));
         }
-        if launcher_path.is_some_and(|launcher| launcher == wrapper_path) {
+        if launcher_path.is_some_and(|launcher| {
+            launcher == wrapper_path || same_executable(launcher, wrapper_path)
+        }) {
             return Err(ProbeError::RecursiveTopology(
                 "backend launcher resolves to the wrapper binary".to_string(),
             ));
@@ -775,6 +777,21 @@ fn validate_backend_topology(
         ));
     }
     Ok(())
+}
+
+fn same_executable(left: &Path, right: &Path) -> bool {
+    let (Ok(left), Ok(right)) = (fs::metadata(left), fs::metadata(right)) else {
+        return false;
+    };
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        left.dev() == right.dev() && left.ino() == right.ino()
+    }
+    #[cfg(not(unix))]
+    {
+        false
+    }
 }
 
 /// Resolved launcher/compiler paths for one invocation.
@@ -805,6 +822,18 @@ mod tests {
     fn picks_cplusplus_driver_from_invocation_name() {
         assert_eq!(default_backend_name("g++-formed"), "g++");
         assert_eq!(default_backend_name("gcc-formed"), "gcc");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_hardlink_backend_recursion() {
+        let temp = tempfile::tempdir().unwrap();
+        let wrapper = temp.path().join("gcc-formed");
+        let backend = temp.path().join("gcc");
+        fs::write(&wrapper, "wrapper").unwrap();
+        fs::hard_link(&wrapper, &backend).unwrap();
+        let error = validate_backend_topology(&backend, None, Some(&wrapper)).unwrap_err();
+        assert!(matches!(error, ProbeError::RecursiveTopology(_)));
     }
 
     #[test]

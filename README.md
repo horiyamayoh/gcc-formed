@@ -276,12 +276,15 @@ Path-aware の実装が進んだら、band ごとの replay / snapshot / quality
 
 The current lab-proven build-system insertion path is direct `CC` / `CXX` replacement. Start there, and if you need one cache / remote-exec launcher, place it behind the wrapper with `FORMED_BACKEND_LAUNCHER`.
 
+No backend environment variable is required: `gcc-formed` resolves `gcc`, and `g++-formed` resolves `g++`, while skipping and rejecting wrapper recursion. Normal operation has three concepts: no flag for the RepairUnit view, `--formed-raw` for native diagnostics/emergency rollback, and `--formed-explain` for complete membership and rationale. `FORMED_BACKEND_GCC=/absolute/path` remains an advanced recovery override.
+
+The compatibility spelling `--formed-mode=passthrough` remains accepted during the beta migration window; new operator instructions use `--formed-raw`.
+
 ### Make
 
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 make -j
 ```
 
@@ -290,7 +293,6 @@ Optional single backend launcher:
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
 make -j
 ```
@@ -304,7 +306,7 @@ cmake -S . -B build -G "Unix Makefiles" \
 cmake --build build -j
 ```
 
-If the wrapper is not yet proven for a build, fall back to raw `gcc` / `g++` for that build or use `--formed-mode=passthrough` on a direct invocation. Do not put ccache / distcc / sccache-style launchers in front of the wrapper, and do not build a multi-launcher chain.
+If the wrapper is not yet proven for a build, fall back to raw `gcc` / `g++` for that build or use `--formed-raw` on a direct invocation. Do not put ccache / distcc / sccache-style launchers in front of the wrapper, and do not build a multi-launcher chain.
 
 `--formed-self-check` and the runtime notices use the same current-vocabulary operator guidance. The self-check output keeps a shared `summary`, `representative_limitations`, `actionable_next_steps`, and `c_first_focus_areas`; the same band-specific next-step wording is documented in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md).
 

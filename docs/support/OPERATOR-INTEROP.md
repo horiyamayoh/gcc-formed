@@ -25,12 +25,15 @@ In both cases, `make` or `cmake` owns only the outer build orchestration. The wr
 
 ## Quickstart
 
+The invoked alias selects the language driver without configuration: `gcc-formed` resolves `gcc`, and `g++-formed` resolves `g++`. `FORMED_BACKEND_GCC` is optional advanced/recovery configuration for pinning an exact backend. Direct, symlink, hardlink, and launcher recursion are rejected with an actionable backend error.
+
+The primary user modes are default, `--formed-raw`, and `--formed-explain`. Profile, presentation, processing-path, and cascade controls remain compatibility-window surfaces and are documented outside the quickstart.
+
 ### Make
 
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 make -j
 ```
 
@@ -41,7 +44,6 @@ If you need one cache / remote-exec-style launcher, put it behind the wrapper in
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
 make -j
 ```
@@ -58,7 +60,6 @@ cmake --build build -j
 The same launcher shape works with CMake because the build-system insertion still stays at `gcc-formed` / `g++-formed`:
 
 ```bash
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
 cmake -S . -B build -G "Unix Makefiles" \
   -DCMAKE_C_COMPILER=gcc-formed \
@@ -70,13 +71,13 @@ cmake --build build -j
 
 If a build is not yet proven, fall back to raw `gcc` / `g++` for that build.
 
-For a direct wrapper invocation, `--formed-mode=passthrough` is the explicit bypass path.
+For a direct wrapper invocation, `--formed-raw` is the explicit bypass path.
 
 ## VersionBand Routing
 
 - `GCC15`, `GCC13-14`, `GCC9-12`: the shared in-scope contract applies. Keep direct `CC` / `CXX` replacement as the default insertion shape, keep at most one wrapper-owned backend launcher behind the wrapper, and route operator decisions by the observed `ProcessingPath` rather than by a product-value hierarchy between bands.
 - For in-scope runs, `DualSinkStructured`, `NativeTextCapture`, and explicit `SingleSinkStructured` are capability shapes, not different user-value tiers.
-- `Unknown`: use raw `gcc` / `g++` or `--formed-mode=passthrough` until a supported `VersionBand` is confirmed.
+- `Unknown`: use raw `gcc` / `g++` or `--formed-raw` until a supported `VersionBand` is confirmed.
 
 ## Shared Operator Guidance
 
@@ -84,9 +85,9 @@ Self-check and runtime notices use the same operator-next-step wording below.
 
 Public JSON and self-check spell `SupportLevel` with the stable machine labels `in_scope` and `passthrough_only`. Treat those labels as scope/applicability markers only, not as a value hierarchy between in-scope bands.
 
-- `GCC15`, `GCC13-14`, `GCC9-12`: set `CC=gcc-formed` and `CXX=g++-formed`, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw `gcc` / `g++` or `--formed-mode=passthrough` only if the topology is not proven.
+- `GCC15`, `GCC13-14`, `GCC9-12`: set `CC=gcc-formed` and `CXX=g++-formed`, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw `gcc` / `g++` or `--formed-raw` only if the topology is not proven.
 - For in-scope older GCC runs, prefer `NativeTextCapture` for ordinary runs and use explicit `SingleSinkStructured` only when you need machine-readable structured capture.
-- `Unknown`: use raw `gcc` / `g++` or `--formed-mode=passthrough` until a supported `VersionBand` is confirmed.
+- `Unknown`: use raw `gcc` / `g++` or `--formed-raw` until a supported `VersionBand` is confirmed.
 
 The release doc keeps rollback and uninstall close to the install instructions:
 
@@ -101,7 +102,7 @@ Versioned beta policy for this issue scope:
 | Direct `CC` / `CXX` wrapper insertion into Make or CMake | Supported and lab-proven | Use first |
 | Direct `CC` / `CXX` wrapper insertion plus one wrapper-owned backend launcher via `--formed-backend-launcher`, `FORMED_BACKEND_LAUNCHER`, or `[backend].launcher` | Supported and lab-proven | Supported for one concrete launcher executable behind the wrapper |
 | Raw `gcc` / `g++` build without the wrapper | Supported fallback | Use for triage or rollback |
-| Direct wrapper invocation with `--formed-mode=passthrough` | Supported escape hatch | Use when you need the wrapper path but not the renderer |
+| Direct wrapper invocation with `--formed-raw` | Supported escape hatch | Use when you need the wrapper path but not the renderer |
 | ccache / distcc / sccache / other launcher stack in front of the wrapper | Unsupported | Do not recommend |
 | `CC="ccache gcc-formed"` / `CMAKE_<LANG>_COMPILER_LAUNCHER=ccache` / similar build-system-managed launcher-before-wrapper topologies | Unsupported | Keep the wrapper as the compiler entrypoint instead |
 | Wrapper behind another launcher or multi-launcher backend chain | Unsupported | Configure at most one launcher executable |

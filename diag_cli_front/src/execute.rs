@@ -83,9 +83,10 @@ fn real_main() -> Result<i32, CliError> {
             .iter()
             .any(|argument| argument == "--help")
         {
-            println!(
-                "gcc-formed disclosure: --formed-raw (exact compiler output), --formed-explain (all RepairUnit evidence)"
-            );
+            println!("gcc-formed: use as a drop-in gcc/g++ command (default: RepairUnit view)");
+            println!("  --formed-raw      native compiler diagnostics / emergency rollback");
+            println!("  --formed-explain  default view plus complete membership and rationale");
+            println!("  --formed-self-check  resolved backend, version, path, and limitations");
         }
         let exit_code =
             passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?)?;

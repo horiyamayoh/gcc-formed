@@ -5,8 +5,8 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*, rc_gate::*,
-    real_project::*, release::*, repair_oracle::*, stable::*, trace_bundle::*,
+    build_system_smoke::*, check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*,
+    rc_gate::*, real_project::*, release::*, repair_oracle::*, stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -25,6 +25,12 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    BuildSystemSmoke {
+        #[arg(long)]
+        make: bool,
+        #[arg(long)]
+        cmake: bool,
+    },
     RealProjectCorpus {
         #[command(subcommand)]
         command: RealProjectCorpusCommand,
@@ -281,6 +287,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Check => run_check()?,
+        Commands::BuildSystemSmoke { make, cmake } => {
+            run_build_system_smoke(BuildSystemSmokeOptions { make, cmake })?
+        }
         Commands::RealProjectCorpus { command } => match command {
             RealProjectCorpusCommand::Verify { root } => {
                 verify_real_project_corpus(RealProjectVerifyOptions { root })?

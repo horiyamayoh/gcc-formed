@@ -87,12 +87,15 @@ If you want detached-signature verification during install, read `signing_key_id
 
 This beta is intended to slot into existing GCC build systems. The current interop lab proves direct wrapper insertion and one wrapper-owned backend launcher behind the wrapper.
 
+Backend resolution is zero-config for the normal aliases. Use `FORMED_BACKEND_GCC` only to pin a backend during advanced recovery; `--formed-raw` is the one-flag emergency diagnostic rollback.
+
+The legacy `--formed-mode=passthrough` spelling remains a compatibility-window alias but is not part of the primary user vocabulary.
+
 ### Make
 
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 make -j
 ```
 
@@ -101,7 +104,6 @@ Optional single backend launcher behind the wrapper:
 ```bash
 export CC=gcc-formed
 export CXX=g++-formed
-export FORMED_BACKEND_GCC="$(command -v gcc)"
 export FORMED_BACKEND_LAUNCHER="/absolute/path/to/ccache"
 make -j
 ```
@@ -115,7 +117,7 @@ cmake -S . -B build -G "Unix Makefiles" \
 cmake --build build -j
 ```
 
-If a build is not yet proven, switch that build back to raw `gcc` / `g++` or use `--formed-mode=passthrough` on a direct invocation. Do not use ccache / distcc / sccache-style launcher stacks in front of the wrapper, and do not configure multi-launcher chains.
+If a build is not yet proven, switch that build back to raw `gcc` / `g++` or use `--formed-raw` on a direct invocation. Do not use ccache / distcc / sccache-style launcher stacks in front of the wrapper, and do not configure multi-launcher chains.
 
 The current topology policy is documented in [OPERATOR-INTEROP.md](../support/OPERATOR-INTEROP.md).
 
