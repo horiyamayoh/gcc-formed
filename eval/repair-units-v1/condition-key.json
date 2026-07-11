@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "A": "native_gcc",
+  "B": "subject_blocks_v2",
+  "C": "repair_units_v1"
+}

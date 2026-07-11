@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "study": "repair-units-v1-agent-evaluator",
+  "valid_sessions": 8,
+  "valid_trials": 96,
+  "excluded_confirmatory_trials": 0,
+  "condition_key": {
+    "A": "native_gcc",
+    "B": "subject_blocks_v2",
+    "C": "repair_units_v1"
+  },
+  "metrics": {
+    "native_gcc": {
+      "trials": 32,
+      "first_edit_correct_rate": 1.0,
+      "first_fix_success_rate": 1.0,
+      "median_time_ms": 6490.0,
+      "high_confidence_misleads": 0
+    },
+    "subject_blocks_v2": {
+      "trials": 32,
+      "first_edit_correct_rate": 1.0,
+      "first_fix_success_rate": 1.0,
+      "median_time_ms": 6113.0,
+      "high_confidence_misleads": 0
+    },
+    "repair_units_v1": {
+      "trials": 32,
+      "first_edit_correct_rate": 1.0,
+      "first_fix_success_rate": 1.0,
+      "median_time_ms": 6729.0,
+      "high_confidence_misleads": 0
+    }
+  },
+  "descriptive_candidate_minus_native": {
+    "first_edit_correct_rate": 0.0,
+    "first_fix_success_rate": 0.0,
+    "median_time_ratio": 1.0368258859784283
+  },
+  "preregistered_simple_time_ratio": 0.9567278287461773,
+  "preregistered_simple_time_ratio_ci95": [
+    0.49092756568442447,
+    2.03843867644145
+  ],
+  "recommendation": "inconclusive",
+  "promotion_blocked": true,
+  "limitations": [
+    "Agent evaluators are not human participants.",
+    "Latency includes model and tool transport and is environment-specific.",
+    "Correctness requires both an official repair anchor and measured compiler-diagnostic improvement."
+  ]
+}
