@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "condition_key_sha256": "0d1f1a436d1964d653522835abb77219ddfa5522d9e1f251ed6d1b8db2388f6c",
+  "packets": [
+    {
+      "packet_id": "P01",
+      "fixture_id": "repair-unit-exact-count/single/case-02",
+      "packet_sha256": "db85e30f152c700519871455f29f04075ab307cf4b2d4e2727a153817b5f786b",
+      "condition_output_hashes": {
+        "A": "f92bf3b68c3259078870da80594237eb39f307f915f1054554557d481db3d4c6",
+        "B": "80243881047b1b1539faaf8e5987bc848d574ac8bd1434283ee3a220c83c9d10",
+        "C": "80243881047b1b1539faaf8e5987bc848d574ac8bd1434283ee3a220c83c9d10"
+      }
+    },
+    {
+      "packet_id": "P02",
+      "fixture_id": "repair-unit-exact-count/single/case-03",
+      "packet_sha256": "d32de056943eca5b9960e4fd687ba479d5eab7a6227e3d6f03df106a0839b4c5",
+      "condition_output_hashes": {
+        "A": "7a52dbf39a0277a6438c90d4ff43158cd64f29d06be606e6c28b40c010f546cb",
+        "B": "66f06401300e463e3d4e0c00b1da1d3e541f1a1756759f09c27696af555f59ab",
+        "C": "66f06401300e463e3d4e0c00b1da1d3e541f1a1756759f09c27696af555f59ab"
+      }
+    },
+    {
+      "packet_id": "P03",
+      "fixture_id": "repair-unit-exact-count/single/case-04",
+      "packet_sha256": "9393cf9297b79734f0bb1ea22a8d8afb0a05f2e0503e5e5d5712414c0f1d4574",
+      "condition_output_hashes": {
+        "A": "2bc6619651f91cdafcc080de3ba94c3c6eb3ed3d4bcd1985e3bef65a4fd278d7",
+        "B": "10c2fae79c94dd2d2ac9bb67976d075b8f12c966439f5e41ffd07e500562e2b8",
+        "C": "10c2fae79c94dd2d2ac9bb67976d075b8f12c966439f5e41ffd07e500562e2b8"
+      }
+    },
+    {
+      "packet_id": "P04",
+      "fixture_id": "repair-unit-exact-count/single/case-08",
+      "packet_sha256": "6edc3d93420e27d82074711724044f0102ad9db7b329a24f6befbaf1b05d1447",
+      "condition_output_hashes": {
+        "A": "8c8f4d98f9f90071c26244ecd7e3ad610f667de794240a8b540bd7ddda7fdeb8",
+        "B": "0d07416dfc70467b5e9e74fc0bc34fcfe1ba9db5102aa4c9960d3420684471a7",
+        "C": "0d07416dfc70467b5e9e74fc0bc34fcfe1ba9db5102aa4c9960d3420684471a7"
+      }
+    },
+    {
+      "packet_id": "P05",
+      "fixture_id": "repair-unit-exact-count/double/case-02",
+      "packet_sha256": "9f00e7d3d71f8631811c29a0930cc314eea16824e0d603777dbfe38c9a6df73c",
+      "condition_output_hashes": {
+        "A": "c2871ea9445e7d5edb44ec1872b4a5a1dea2ff3c9f762a9ef2b8745c54f63498",
+        "B": "21bb34c6a17bdbb9b5f53b2d92b5b8a4f34c0c2157c5f0c92e8b6cef7ff4571d",
+        "C": "21bb34c6a17bdbb9b5f53b2d92b5b8a4f34c0c2157c5f0c92e8b6cef7ff4571d"
+      }
+    },
+    {
+      "packet_id": "P06",
+      "fixture_id": "repair-unit-exact-count/double/case-06",
+      "packet_sha256": "4c3e2e6de19718f860910fe640ef1c07772d3abaf8613ee5024cd4b3580930b1",
+      "condition_output_hashes": {
+        "A": "ee5e4df8b3686f679706fec43144251093891bdb893845c8d3b0dde4f1a3123c",
+        "B": "7fb15cc915c3f40da696f83c2bf860b3569ee086aa264ae265a859b208b4ff62",
+        "C": "7fb15cc915c3f40da696f83c2bf860b3569ee086aa264ae265a859b208b4ff62"
+      }
+    },
+    {
+      "packet_id": "P07",
+      "fixture_id": "repair-unit-exact-count/triple/case-02",
+      "packet_sha256": "7f660b5dfd56f5f35698a1fddb053d5a5d95afbc982a9cae75991bb62662319f",
+      "condition_output_hashes": {
+        "A": "f242929ce672f50513cad9d34eacb0bfe020325b8ce68cd28ef1021961b5db82",
+        "B": "68a41048b4f6fdde1be6237d866581bef3de19431e8058c9c63a02ed1efd1b14",
+        "C": "68a41048b4f6fdde1be6237d866581bef3de19431e8058c9c63a02ed1efd1b14"
+      }
+    },
+    {
+      "packet_id": "P08",
+      "fixture_id": "repair-unit-exact-count/triple/case-06",
+      "packet_sha256": "e59e1d3f11d7d6f3056982508b09167f5b435a38b9d6786bf672e65e5c7eec53",
+      "condition_output_hashes": {
+        "A": "cf781c1ec8a50168b59369f7b0c599af85a1df285e33d0048acf060acc04c4a7",
+        "B": "711312924d23d32df4cffd7dfd896f9379964a66101a62e9e3e55984ee09f9dc",
+        "C": "711312924d23d32df4cffd7dfd896f9379964a66101a62e9e3e55984ee09f9dc"
+      }
+    },
+    {
+      "packet_id": "P09",
+      "fixture_id": "direct-link-order-c/case-04",
+      "packet_sha256": "aec837d2597bdeab7a18084dad1c25d0feb7ef1451fd62cde75090ea15ae3522",
+      "condition_output_hashes": {
+        "A": "c2c2a3bb604e83c93a239d3e2d8c06f412dc811fe08cdb3d19d83b2723263416",
+        "B": "8153fe8a688eac87fa6282b77ed10243d9a658a33a5c566b370443df6586be87",
+        "C": "8153fe8a688eac87fa6282b77ed10243d9a658a33a5c566b370443df6586be87"
+      }
+    },
+    {
+      "packet_id": "P10",
+      "fixture_id": "make-generated-c/case-04",
+      "packet_sha256": "3d4a2c3d6df1eef6bba75f0a9cbf2568eeb2fc9156d102f7bc9f736a76620e4b",
+      "condition_output_hashes": {
+        "A": "cbfb7cda104ff85fd2abfac1242d465591975beb5121f6f676f8decc4701d217",
+        "B": "faeab3a7e94f36ad18f07393c7ab0c86b9ff76d40fb2b32cd2d7b0079023670d",
+        "C": "faeab3a7e94f36ad18f07393c7ab0c86b9ff76d40fb2b32cd2d7b0079023670d"
+      }
+    },
+    {
+      "packet_id": "P11",
+      "fixture_id": "make-werror-c/case-04",
+      "packet_sha256": "16fa858a59a277db305d29585c1482d6ede3272ed23b0d61eee5afd1a8bd866e",
+      "condition_output_hashes": {
+        "A": "378bc50ebfe25972f1cc3b8e0cff5aa97b6e881c05f614e4592a6fb00427cf46",
+        "B": "64c8e97e9f5fa92c60287539f9182328bade6759a580d11f4d567a9508146a75",
+        "C": "64c8e97e9f5fa92c60287539f9182328bade6759a580d11f4d567a9508146a75"
+      }
+    },
+    {
+      "packet_id": "P12",
+      "fixture_id": "cmake-frontier-cpp/case-04",
+      "packet_sha256": "0dc5475fdd61252bd92f43f6053bc1cb3bf42160919770263779e77b86a87628",
+      "condition_output_hashes": {
+        "A": "a5017510ffa3335e0edd63b1684b6f0a3bed0f9aafdd8d1dcb9c711773884e86",
+        "B": "ec6bc7811a5bccf111c9f4cbfe209614fddbe583ce410f1bb90d306cd61a13f4",
+        "C": "ec6bc7811a5bccf111c9f4cbfe209614fddbe583ce410f1bb90d306cd61a13f4"
+      }
+    }
+  ]
+}

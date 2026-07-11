@@ -16,6 +16,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 ROOT = Path(__file__).resolve().parent
 WRAPPER = REPO / "target/debug/gcc-formed"
+SESSION_COUNT = 11
+SESSION_OFFSET = 0
+ANSWER_KEY_PATH = Path("/tmp/repair-unit-agent-answer-key.json")
+CONDITION_KEY_PATH = Path("/tmp/repair-unit-agent-condition-key.json")
 
 FIXTURES = [
     "corpus/repair-unit-exact-count/single/case-01",
@@ -125,10 +129,10 @@ def main() -> None:
     (ROOT / "agent-packet-freeze.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )
-    Path("/tmp/repair-unit-agent-answer-key.json").write_text(
+    ANSWER_KEY_PATH.write_text(
         json.dumps(answer_key, indent=2) + "\n", encoding="utf-8"
     )
-    for session_index in range(11):
+    for session_index in range(SESSION_COUNT):
         trials = []
         for packet_index, (base, conditions, packet_sha) in enumerate(public_packets):
             condition = "ABC"[(packet_index + session_index) % 3]
@@ -137,15 +141,15 @@ def main() -> None:
             trials.append(trial)
         session = {
             "schema_version": 1,
-            "session_id": f"S{session_index + 1:02d}",
+            "session_id": f"S{session_index + 1 + SESSION_OFFSET:02d}",
             "evaluator_type": "isolated_agent",
             "blinded": True,
             "trials": trials,
         }
-        (sessions_dir / f"S{session_index + 1:02d}.json").write_text(
+        (sessions_dir / f"S{session_index + 1 + SESSION_OFFSET:02d}.json").write_text(
             json.dumps(session, indent=2) + "\n", encoding="utf-8"
         )
-    Path("/tmp/repair-unit-agent-condition-key.json").write_text(
+    CONDITION_KEY_PATH.write_text(
         json.dumps({"schema_version": 1, **condition_key}, indent=2) + "\n",
         encoding="utf-8",
     )
