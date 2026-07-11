@@ -69,7 +69,7 @@
       "name": "Replay stop-ship contract",
       "policy": "always",
       "failure_classification": "product",
-      "command": "python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/rc-gate/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
+      "command": "python3 ci/parity_gap_report.py --root corpus --output \"$REPORT_ROOT/gate/parity-gaps.json\" && python3 ci/gate_replay_contract.py --replay-report \"$REPORT_ROOT/rc-gate/replay-report.json\" --output \"$REPORT_ROOT/gate/replay-stop-ship.json\"",
       "fixture": "subset:all",
       "gcc_version": "host",
       "artifact_paths": [

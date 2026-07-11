@@ -100,3 +100,5 @@ plan files は step order, gate scope / version-band classification, synthetic s
 実コマンドの正本は `ci/gate_catalog.py` と `ci/run_gate_step.py` にあり、checked-in workflows と `ci/run_local_gate.py` の両方がそこを通る。`nightly` を local 実行するときは `cargo xtask ci-gate --workflow nightly --matrix-lane gcc12|gcc13|gcc14|gcc15|all` を使い、lane ごとの report root に加えて top-level `matrix-summary.json` / `matrix-summary.md` を出力する。top-level summary は missing `VersionBand × ProcessingPath × Surface` cell と path-aware regression を lane 付きで列挙する。
 
 major 単位の direct / proxy policy は `major-evidence-policy.json` を正本とする。PR は GCC12/13/15 を直接実行し、GCC14 は GCC13 proxy、GCC9/10/11 は GCC12 proxy として明示する。nightly は GCC12/13/14/15 を直接実行する。`matrix-summary.json` の lane label とこの policy を合わせて読むことで、band coverage を個別 major の直接 evidence と誤認しない。proxy は direct evidence として数えてはならない。
+
+`parity_gap_report.py` は corpus の既存 `older_band_applicability` と `matrix_applicability` を直接読み、`gate/parity-gaps.json` を出力する。documentary family gap と debug omission は informational として残し、cell の `parity_critical: true` または `required_surfaces` で必須化された欠落は CI failure にする。別の gap 台帳を作らず、既存 metadata 自体を blocker policy の入力にする。

@@ -484,6 +484,7 @@ EXECUTION_CATALOG = {
             'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
         ),
         "path-aware-replay-stop-ship": StepExecution(
+            'python3 ci/parity_gap_report.py --root corpus --output "$REPORT_ROOT/gate/parity-gaps.json" && '
             'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" '
             '--output "$REPORT_ROOT/gate/replay-stop-ship.json"',
             run_condition="after_step_not_skipped",
@@ -559,6 +560,7 @@ EXECUTION_CATALOG = {
             'cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"'
         ),
         "path-aware-replay-stop-ship": StepExecution(
+            'python3 ci/parity_gap_report.py --root corpus --output "$REPORT_ROOT/gate/parity-gaps.json" && '
             'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/replay/replay-report.json" '
             '--output "$REPORT_ROOT/gate/replay-stop-ship.json"',
             run_condition="after_step_not_skipped",
@@ -603,6 +605,7 @@ EXECUTION_CATALOG = {
             '--ux-signoff-report eval/rc/ux-signoff.json --allow-pending-manual-checks'
         ),
         "path-aware-replay-stop-ship": StepExecution(
+            'python3 ci/parity_gap_report.py --root corpus --output "$REPORT_ROOT/gate/parity-gaps.json" && '
             'python3 ci/gate_replay_contract.py --replay-report "$REPORT_ROOT/rc-gate/replay-report.json" '
             '--output "$REPORT_ROOT/gate/replay-stop-ship.json"',
             run_condition="after_step_not_skipped",
