@@ -798,6 +798,7 @@ analysis overlay は、core facts を消さずに次を表現する。
 | `episode_graph` | `EpisodeGraph` | MUST | group 間 relation と episode clustering |
 | `group_analysis` | array<`GroupCascadeAnalysis`> | MUST | group ごとの cascade role / score / visibility floor |
 | `stats` | `CascadeStats` | MUST | independent/follow-on/duplicate/uncertain の集計 |
+| `repair_analysis` | `RepairUnitAnalysis` | MAY | lossless evidence graph と proof-constrained repair partition |
 
 #### `DocumentAnalysis` の規則
 
@@ -807,6 +808,21 @@ analysis overlay は、core facts を消さずに次を表現する。
 - `episode_graph.relations` は循環してはならない。
 - `episode_graph.episodes[*].lead_group_ref` は同一 episode の `member_group_refs` に含まれていなければならない。
 - `group_analysis[*].episode_ref` がある場合、その episode は当該 group を `member_group_refs` に含めていなければならない。
+- `episode_graph` と `group_analysis` は compatibility/shadow surface である。default product identity は
+  `repair_analysis.repair_units` であり、float score だけで unit の merge/hide を決めてはならない。
+
+### 15.2.1 `RepairUnitAnalysis`
+
+`DiagnosticEvidenceGraph` の `proven` edge のうち compiler hierarchy、same fix-it span、
+exact duplicate、adapter-proven symbol relation のみが must-link closure を形成できる。
+`strong` / `tentative` / `unresolved` relation は rank・review evidence として保持するが、
+それだけで visible unit 数を減らしてはならない。異なる independent repair anchor を持つ
+component を must-link が横断する場合、merge を拒否して analyze-stage integrity issue を残す。
+
+各 visible unit は全 member evidence ref、raw capture ref、merge rationale edge ref を保持する。
+inference failure または unresolved evidence は top-level diagnostic ごとの `never_hidden` unit に
+fail-open する。family、localized wording、file proximity、emission order、float threshold は
+must-link proof ではない。
 
 ### 15.3 `EpisodeGraph`
 

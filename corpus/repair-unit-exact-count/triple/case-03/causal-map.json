@@ -133,7 +133,7 @@
   "independent_patch_order_stable": true,
   "baseline_comparison": {
     "raw_gcc_diagnostic_count": 3,
-    "current_formed_visible_count": 6,
+    "current_formed_visible_count": 2,
     "oracle_repair_unit_count": 3
   },
   "ambiguity": []

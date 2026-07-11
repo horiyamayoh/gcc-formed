@@ -18,7 +18,7 @@ pub use logical_group::{
 pub use prefilter::{
     CandidatePair, CandidateReason, TRANSLATION_UNIT_ORDINAL_WINDOW, candidate_pairs,
 };
-pub use repair_units::seed_repair_units_without_family;
+pub use repair_units::{infer_repair_units, seed_repair_units_without_family};
 
 use diag_backend_probe::{ProcessingPath, VersionBand};
 use diag_core::{CascadePolicySnapshot, DiagnosticDocument, FallbackGrade, SourceAuthority};
@@ -103,8 +103,8 @@ mod tests {
         AnalysisOverlay, ArtifactKind, ArtifactStorage, CaptureArtifact, ContextChain,
         ContextChainKind, ContextFrame, DiagnosticDocument, DiagnosticNode, DocumentCompleteness,
         LanguageMode, Location, LocationRole, MessageText, NodeCompleteness, Origin, Ownership,
-        Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole, Severity,
-        SymbolContext, ToolInfo, WrapperSurface,
+        Phase, ProducerInfo, Provenance, ProvenanceSource, RepairProofClass, RunInfo, SemanticRole,
+        Severity, SymbolContext, ToolInfo, WrapperSurface,
     };
 
     fn sample_document(diagnostics: Vec<DiagnosticNode>) -> DiagnosticDocument {
@@ -379,6 +379,265 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(project(&left), project(&right));
+        assert_eq!(project(&left).len(), 2);
+    }
+
+    #[test]
+    fn exact_duplicates_collapse_and_retain_both_evidence_refs() {
+        let nodes = vec![
+            sample_node(
+                "dup-a",
+                "same",
+                Origin::Gcc,
+                Phase::Semantic,
+                "x",
+                Some("a.c"),
+                Some(3),
+                Ownership::User,
+            ),
+            sample_node(
+                "dup-b",
+                "same",
+                Origin::Gcc,
+                Phase::Semantic,
+                "y",
+                Some("a.c"),
+                Some(3),
+                Ownership::User,
+            ),
+        ];
+        let mut document = sample_document(nodes);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        assert_eq!(
+            repair.repair_units[0].member_evidence_refs,
+            vec!["node:dup-a", "node:dup-b"]
+        );
+        assert_eq!(repair.stats.exact_duplicate_count, 1);
+        document.validate().unwrap();
+    }
+
+    #[test]
+    fn tentative_relation_never_reduces_visible_unit_count() {
+        let nodes = vec![
+            sample_node(
+                "left",
+                "left",
+                Origin::Gcc,
+                Phase::Semantic,
+                "x",
+                Some("a.c"),
+                Some(3),
+                Ownership::User,
+            ),
+            sample_node(
+                "right",
+                "right",
+                Origin::Gcc,
+                Phase::Semantic,
+                "x",
+                Some("a.c"),
+                Some(4),
+                Ownership::User,
+            ),
+        ];
+        let mut document = sample_document(nodes);
+        infer_repair_units(&mut document);
+        document
+            .document_analysis
+            .as_mut()
+            .unwrap()
+            .repair_analysis
+            .as_mut()
+            .unwrap()
+            .evidence_graph
+            .edges
+            .push(diag_core::EvidenceEdge {
+                edge_ref: "tentative:left->right".into(),
+                from_evidence_ref: "node:left".into(),
+                to_evidence_ref: "node:right".into(),
+                kind: diag_core::EvidenceEdgeKind::InferredDependency,
+                authority: diag_core::EvidenceAuthority::Heuristic,
+                proof_class: RepairProofClass::Tentative,
+                evidence_tags: vec!["same_bucket".into()],
+            });
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.stats.visible_unit_count, 2);
+        assert!(repair.repair_units.iter().all(|unit| unit.visible));
+    }
+
+    #[test]
+    fn compiler_child_tree_merges_but_independent_root_child_does_not() {
+        let mut parent = sample_node(
+            "parent",
+            "root",
+            Origin::Gcc,
+            Phase::Semantic,
+            "x",
+            Some("a.c"),
+            Some(3),
+            Ownership::User,
+        );
+        let mut note = sample_node(
+            "note",
+            "detail",
+            Origin::Gcc,
+            Phase::Semantic,
+            "x",
+            Some("a.c"),
+            Some(8),
+            Ownership::User,
+        );
+        note.semantic_role = SemanticRole::Supporting;
+        parent.children.push(note);
+        let mut document = sample_document(vec![parent]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        assert_eq!(repair.repair_units[0].member_evidence_refs.len(), 2);
+
+        let mut parent = sample_node(
+            "parent-2",
+            "root",
+            Origin::Gcc,
+            Phase::Semantic,
+            "x",
+            Some("a.c"),
+            Some(3),
+            Ownership::User,
+        );
+        let child_root = sample_node(
+            "child-root",
+            "other root",
+            Origin::Gcc,
+            Phase::Semantic,
+            "x",
+            Some("a.c"),
+            Some(8),
+            Ownership::User,
+        );
+        parent.children.push(child_root);
+        let mut document = sample_document(vec![parent]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 2);
+        assert!(
+            repair
+                .repair_units
+                .iter()
+                .any(|unit| unit.member_evidence_refs == ["node:parent-2"])
+        );
+        assert!(
+            repair
+                .repair_units
+                .iter()
+                .any(|unit| unit.member_evidence_refs == ["node:child-root"])
+        );
+        assert!(
+            document
+                .integrity_issues
+                .iter()
+                .any(|issue| issue.message.contains("must-link rejected"))
+        );
+    }
+
+    #[test]
+    fn inference_is_deterministic_under_repeated_runs() {
+        let nodes = vec![
+            sample_node(
+                "b",
+                "b",
+                Origin::Gcc,
+                Phase::Parse,
+                "unknown",
+                Some("b.c"),
+                Some(9),
+                Ownership::User,
+            ),
+            sample_node(
+                "a",
+                "a",
+                Origin::Gcc,
+                Phase::Link,
+                "unknown",
+                Some("a.c"),
+                Some(1),
+                Ownership::User,
+            ),
+        ];
+        let mut document = sample_document(nodes);
+        infer_repair_units(&mut document);
+        let first = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .clone();
+        infer_repair_units(&mut document);
+        assert_eq!(
+            document.document_analysis.as_ref().unwrap().repair_analysis,
+            first
+        );
+    }
+
+    #[test]
+    fn inference_is_bounded_for_100_1000_and_10000_evidence_nodes() {
+        for count in [100usize, 1_000, 10_000] {
+            let nodes = (0..count)
+                .map(|index| {
+                    sample_node(
+                        &format!("node-{index:05}"),
+                        "unclassified diagnostic",
+                        Origin::Gcc,
+                        Phase::Semantic,
+                        "unknown",
+                        Some("src/main.c"),
+                        Some(index as u32 + 1),
+                        Ownership::User,
+                    )
+                })
+                .collect();
+            let mut document = sample_document(nodes);
+            let started = std::time::Instant::now();
+            infer_repair_units(&mut document);
+            let elapsed = started.elapsed();
+            let repair = document
+                .document_analysis
+                .as_ref()
+                .unwrap()
+                .repair_analysis
+                .as_ref()
+                .unwrap();
+            assert_eq!(repair.repair_units.len(), count);
+            assert_eq!(repair.stats.referenced_fact_count, count as u32);
+            eprintln!("repair-unit inference nodes={count} elapsed={elapsed:?}");
+        }
     }
 
     #[test]

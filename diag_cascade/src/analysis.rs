@@ -45,8 +45,14 @@ impl DocumentAnalyzer for SafeDocumentAnalyzer {
         context: &CascadeContext,
         policy: &CascadePolicySnapshot,
     ) -> Result<CascadeReport, CascadeError> {
-        let analysis = materialize_document_analysis(document, context, policy);
+        let preserved_repair = document
+            .document_analysis
+            .as_mut()
+            .and_then(|analysis| analysis.repair_analysis.take());
+        let mut analysis = materialize_document_analysis(document, context, policy);
+        analysis.repair_analysis = preserved_repair;
         document.document_analysis = Some(analysis);
+        crate::infer_repair_units(document);
         Ok(CascadeReport {
             document_analysis_present: true,
         })

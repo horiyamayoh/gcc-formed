@@ -1,15 +1,308 @@
 use diag_core::{
-    DiagnosticDocument, DiagnosticNode, EvidenceRecord, EvidenceTarget, RepairObservability,
+    DiagnosticDocument, DiagnosticNode, EvidenceAuthority, EvidenceEdge, EvidenceEdgeKind,
+    EvidenceRecord, EvidenceTarget, IntegrityIssue, IssueSeverity, IssueStage, RepairObservability,
     RepairProofClass, RepairUnit, RepairUnitAnalysis, RepairUnitStats, VisibilityFloor,
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-/// Conservative family-independent `RepairUnit` seed API.
+/// Runs deterministic, evidence-constrained `RepairUnit` inference.
 ///
-/// Every compiler top-level diagnostic remains visible until structural
-/// evidence proves membership. Family and localized wording are never read.
+/// Only proof-bearing structural edges may reduce the visible unit count.
+/// Family names, normalized messages, proximity, ordering, and float scores are
+/// deliberately absent from this algorithm.
+pub fn infer_repair_units(document: &mut DiagnosticDocument) {
+    ensure_evidence_records(document);
+    add_exact_duplicate_edges(document);
+
+    let Some(graph) = document
+        .document_analysis
+        .as_ref()
+        .and_then(|analysis| analysis.repair_analysis.as_ref())
+        .map(|repair| repair.evidence_graph.clone())
+    else {
+        return;
+    };
+
+    let node_map = all_nodes(document);
+    let top_level_refs = document
+        .diagnostics
+        .iter()
+        .map(|node| format!("node:{}", node.id))
+        .collect::<BTreeSet<_>>();
+    let mut union = DisjointSet::new(
+        graph
+            .evidence
+            .iter()
+            .filter_map(node_evidence_ref)
+            .collect(),
+    );
+    for (reference, node) in &node_map {
+        if (top_level_refs.contains(reference)
+            || node.semantic_role == diag_core::SemanticRole::Root)
+            && let Some(anchor) = repair_anchor(node)
+        {
+            union.add_anchor(reference, anchor);
+        }
+    }
+    let mut rationale = BTreeMap::<String, Vec<String>>::new();
+    let mut conflicts = Vec::new();
+
+    for edge in &graph.edges {
+        if !is_must_link(edge) {
+            continue;
+        }
+        let left = edge.from_evidence_ref.as_str();
+        let right = edge.to_evidence_ref.as_str();
+        if !union.contains(left) || !union.contains(right) {
+            continue;
+        }
+        if independent_anchor_conflict(&union, left, right, edge.kind) {
+            conflicts.push(edge.edge_ref.clone());
+            continue;
+        }
+        let root = union.union(left, right);
+        rationale
+            .entry(root)
+            .or_default()
+            .push(edge.edge_ref.clone());
+    }
+
+    let mut components = BTreeMap::<String, Vec<String>>::new();
+    for node_ref in union.items() {
+        let root = union.find(node_ref);
+        components.entry(root).or_default().push(node_ref.clone());
+    }
+
+    let mut units = Vec::new();
+    let mut exact_duplicate_count = 0u32;
+    for mut members in components.into_values() {
+        members.sort();
+        let unit_roots = members
+            .iter()
+            .filter(|reference| {
+                top_level_refs.contains(*reference)
+                    || node_map
+                        .get(*reference)
+                        .is_some_and(|node| node.semantic_role == diag_core::SemanticRole::Root)
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        if unit_roots.is_empty() {
+            continue;
+        }
+        let lead = unit_roots[0].clone();
+        let member_set = members.iter().cloned().collect::<BTreeSet<_>>();
+        let mut rationale_edges = graph
+            .edges
+            .iter()
+            .filter(|edge| {
+                member_set.contains(&edge.from_evidence_ref)
+                    && member_set.contains(&edge.to_evidence_ref)
+                    && is_must_link(edge)
+            })
+            .map(|edge| edge.edge_ref.clone())
+            .collect::<Vec<_>>();
+        rationale_edges.sort();
+        rationale_edges.dedup();
+        exact_duplicate_count += graph
+            .edges
+            .iter()
+            .filter(|edge| {
+                edge.kind == EvidenceEdgeKind::ExactDuplicate
+                    && rationale_edges.contains(&edge.edge_ref)
+            })
+            .count() as u32;
+
+        let proof_class = rationale_edges
+            .iter()
+            .filter_map(|edge_ref| graph.edges.iter().find(|edge| &edge.edge_ref == edge_ref))
+            .map(|edge| edge.proof_class)
+            .min_by_key(proof_rank)
+            .unwrap_or(RepairProofClass::Unresolved);
+        let mut anchors = members
+            .iter()
+            .filter_map(|reference| node_map.get(reference))
+            .filter_map(|node| repair_anchor(node))
+            .collect::<Vec<_>>();
+        anchors.sort();
+        anchors.dedup();
+        let mut raw_refs = members
+            .iter()
+            .filter_map(|reference| node_map.get(reference))
+            .flat_map(|node| node.provenance.capture_refs.iter().cloned())
+            .collect::<Vec<_>>();
+        raw_refs.sort();
+        raw_refs.dedup();
+
+        units.push(RepairUnit {
+            repair_unit_ref: format!("repair-unit:{}", stable_component_key(&members)),
+            visible: true,
+            lead_evidence_ref: lead,
+            member_evidence_refs: members,
+            primary_repair_anchors: anchors,
+            alternate_repair_anchors: Vec::new(),
+            proof_class,
+            observability: if rationale_edges.is_empty() {
+                RepairObservability::Unresolved
+            } else {
+                RepairObservability::Observable
+            },
+            grounded_action_refs: Vec::new(),
+            visibility_floor: if matches!(
+                proof_class,
+                RepairProofClass::Tentative | RepairProofClass::Unresolved
+            ) {
+                VisibilityFloor::NeverHidden
+            } else {
+                VisibilityFloor::HiddenAllowed
+            },
+            raw_capture_refs: raw_refs,
+            rationale_edge_refs: rationale_edges,
+            legacy_group_refs: Vec::new(),
+            legacy_episode_refs: Vec::new(),
+        });
+    }
+    units.sort_by(|left, right| left.repair_unit_ref.cmp(&right.repair_unit_ref));
+
+    let referenced = units
+        .iter()
+        .flat_map(|unit| unit.member_evidence_refs.iter())
+        .collect::<BTreeSet<_>>()
+        .len() as u32;
+    let unresolved = units
+        .iter()
+        .filter(|unit| unit.proof_class == RepairProofClass::Unresolved)
+        .map(|unit| unit.member_evidence_refs.len() as u32)
+        .sum();
+    for edge_ref in conflicts {
+        document.integrity_issues.push(IntegrityIssue {
+            severity: IssueSeverity::Warning,
+            stage: IssueStage::Analyze,
+            message: format!(
+                "RepairUnit must-link rejected by independent repair-anchor constraint: {edge_ref}"
+            ),
+            provenance: None,
+        });
+    }
+    let repair = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+        .expect("evidence graph was initialized");
+    repair.stats = RepairUnitStats {
+        visible_unit_count: units.len() as u32,
+        unresolved_evidence_count: unresolved,
+        merged_evidence_count: units
+            .iter()
+            .map(|unit| unit.member_evidence_refs.len().saturating_sub(1) as u32)
+            .sum(),
+        exact_duplicate_count,
+        referenced_fact_count: referenced,
+        total_fact_count: repair.evidence_graph.evidence.len() as u32,
+    };
+    repair.repair_units = units;
+}
+
+/// Compatibility name for callers that only require family-independent seeds.
 pub fn seed_repair_units_without_family(document: &mut DiagnosticDocument) {
-    let mut seed_evidence = document
+    infer_repair_units(document);
+}
+
+fn is_must_link(edge: &EvidenceEdge) -> bool {
+    edge.proof_class == RepairProofClass::Proven
+        && matches!(
+            edge.kind,
+            EvidenceEdgeKind::CompilerHierarchy
+                | EvidenceEdgeKind::SameFixitSpan
+                | EvidenceEdgeKind::ExactDuplicate
+                | EvidenceEdgeKind::SymbolRelation
+        )
+        && !matches!(edge.authority, EvidenceAuthority::Heuristic)
+}
+
+fn independent_anchor_conflict(
+    union: &DisjointSet,
+    left: &str,
+    right: &str,
+    kind: EvidenceEdgeKind,
+) -> bool {
+    if kind == EvidenceEdgeKind::ExactDuplicate {
+        return false;
+    }
+    let left_anchors = union.anchors(left);
+    let right_anchors = union.anchors(right);
+    !left_anchors.is_empty()
+        && !right_anchors.is_empty()
+        && left_anchors.is_disjoint(&right_anchors)
+}
+
+fn add_exact_duplicate_edges(document: &mut DiagnosticDocument) {
+    let mut buckets = BTreeMap::<String, Vec<String>>::new();
+    for node in &document.diagnostics {
+        buckets
+            .entry(exact_identity(node))
+            .or_default()
+            .push(format!("node:{}", node.id));
+    }
+    let Some(repair) = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    else {
+        return;
+    };
+    for refs in buckets.into_values().filter(|refs| refs.len() > 1) {
+        for right in refs.iter().skip(1) {
+            let left = &refs[0];
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("exact-duplicate:{left}->{right}"),
+                from_evidence_ref: left.clone(),
+                to_evidence_ref: right.clone(),
+                kind: EvidenceEdgeKind::ExactDuplicate,
+                authority: EvidenceAuthority::StructuredAdapterDerived,
+                proof_class: RepairProofClass::Proven,
+                evidence_tags: vec!["full_structural_identity".into()],
+            });
+        }
+    }
+    repair
+        .evidence_graph
+        .edges
+        .sort_by(|left, right| left.edge_ref.cmp(&right.edge_ref));
+    repair
+        .evidence_graph
+        .edges
+        .dedup_by(|left, right| left.edge_ref == right.edge_ref);
+}
+
+fn exact_identity(node: &DiagnosticNode) -> String {
+    let locations = node
+        .locations
+        .iter()
+        .map(|location| format!("{:?}", location))
+        .collect::<Vec<_>>()
+        .join("|");
+    format!(
+        "{:?}|{:?}|{:?}|{:?}|{}|{}",
+        node.origin,
+        node.phase,
+        node.severity,
+        node.semantic_role,
+        node.message.raw_text,
+        locations
+    )
+}
+
+fn ensure_evidence_records(document: &mut DiagnosticDocument) {
+    let existing = document
+        .document_analysis
+        .as_ref()
+        .and_then(|analysis| analysis.repair_analysis.as_ref())
+        .is_some_and(|repair| !repair.evidence_graph.evidence.is_empty());
+    if existing {
+        return;
+    }
+    let mut evidence = document
         .captures
         .iter()
         .map(|capture| EvidenceRecord {
@@ -21,107 +314,153 @@ pub fn seed_repair_units_without_family(document: &mut DiagnosticDocument) {
             unresolved: false,
         })
         .collect::<Vec<_>>();
+    let mut edges = Vec::new();
     for node in &document.diagnostics {
-        collect_evidence_records(node, &mut seed_evidence);
+        collect_node_records(node, None, &mut evidence, &mut edges);
     }
-    let analysis = document
+    evidence.sort_by(|left, right| left.evidence_ref.cmp(&right.evidence_ref));
+    let repair = document
         .document_analysis
-        .get_or_insert_with(Default::default);
-    let repair = analysis
+        .get_or_insert_with(Default::default)
         .repair_analysis
         .get_or_insert_with(RepairUnitAnalysis::default);
-    if repair.evidence_graph.evidence.is_empty() {
-        repair.evidence_graph.evidence = seed_evidence;
-    }
-    let available = repair
-        .evidence_graph
-        .evidence
-        .iter()
-        .map(|item| item.evidence_ref.as_str())
-        .collect::<BTreeSet<_>>();
-    let mut units = Vec::new();
-    for node in &document.diagnostics {
-        let lead = format!("node:{}", node.id);
-        let mut members = Vec::new();
-        collect_node_evidence(node, &available, &mut members);
-        if !members.contains(&lead) {
-            members.push(lead.clone());
-        }
-        members.sort();
-        members.dedup();
-        let mut raw = Vec::new();
-        collect_capture_refs(node, &mut raw);
-        raw.sort();
-        raw.dedup();
-        units.push(RepairUnit {
-            repair_unit_ref: format!("repair-unit:{}", node.id),
-            visible: true,
-            lead_evidence_ref: lead,
-            member_evidence_refs: members,
-            primary_repair_anchors: node
-                .primary_location()
-                .map(|location| {
-                    vec![format!(
-                        "{}:{}:{}",
-                        location.path_raw(),
-                        location.line(),
-                        location.column()
-                    )]
-                })
-                .unwrap_or_default(),
-            alternate_repair_anchors: Vec::new(),
-            proof_class: RepairProofClass::Unresolved,
-            observability: RepairObservability::Unresolved,
-            grounded_action_refs: Vec::new(),
-            visibility_floor: VisibilityFloor::NeverHidden,
-            raw_capture_refs: raw,
-            rationale_edge_refs: Vec::new(),
-            legacy_group_refs: Vec::new(),
-            legacy_episode_refs: Vec::new(),
-        });
-    }
-    units.sort_by(|a, b| a.repair_unit_ref.cmp(&b.repair_unit_ref));
-    repair.stats = RepairUnitStats {
-        visible_unit_count: units.len() as u32,
-        unresolved_evidence_count: units
-            .iter()
-            .map(|unit| unit.member_evidence_refs.len() as u32)
-            .sum(),
-        merged_evidence_count: 0,
-        exact_duplicate_count: 0,
-        referenced_fact_count: repair.evidence_graph.evidence.len() as u32,
-        total_fact_count: repair.evidence_graph.evidence.len() as u32,
-    };
-    repair.repair_units = units;
+    repair.evidence_graph.evidence = evidence;
+    repair.evidence_graph.edges = edges;
 }
 
-fn collect_evidence_records(node: &DiagnosticNode, out: &mut Vec<EvidenceRecord>) {
-    out.push(EvidenceRecord {
-        evidence_ref: format!("node:{}", node.id),
+fn collect_node_records(
+    node: &DiagnosticNode,
+    parent: Option<&str>,
+    evidence: &mut Vec<EvidenceRecord>,
+    edges: &mut Vec<EvidenceEdge>,
+) {
+    let reference = format!("node:{}", node.id);
+    evidence.push(EvidenceRecord {
+        evidence_ref: reference.clone(),
         target: EvidenceTarget::DiagnosticNode {
             node_ref: node.id.clone(),
         },
         hidden: false,
         unresolved: false,
     });
+    if let Some(parent) = parent {
+        edges.push(EvidenceEdge {
+            edge_ref: format!("hierarchy:{parent}->{reference}"),
+            from_evidence_ref: parent.into(),
+            to_evidence_ref: reference.clone(),
+            kind: EvidenceEdgeKind::CompilerHierarchy,
+            authority: EvidenceAuthority::CompilerDeclared,
+            proof_class: RepairProofClass::Proven,
+            evidence_tags: vec!["compiler_child_tree".into()],
+        });
+    }
     for child in &node.children {
-        collect_evidence_records(child, out);
+        collect_node_records(child, Some(&reference), evidence, edges);
     }
 }
 
-fn collect_node_evidence(node: &DiagnosticNode, available: &BTreeSet<&str>, out: &mut Vec<String>) {
-    let reference = format!("node:{}", node.id);
-    if available.contains(reference.as_str()) {
-        out.push(reference);
+fn all_nodes(document: &DiagnosticDocument) -> BTreeMap<String, &DiagnosticNode> {
+    fn visit<'a>(node: &'a DiagnosticNode, out: &mut BTreeMap<String, &'a DiagnosticNode>) {
+        out.insert(format!("node:{}", node.id), node);
+        for child in &node.children {
+            visit(child, out);
+        }
     }
-    for child in &node.children {
-        collect_node_evidence(child, available, out);
+    let mut nodes = BTreeMap::new();
+    for node in &document.diagnostics {
+        visit(node, &mut nodes);
+    }
+    nodes
+}
+
+fn repair_anchor(node: &DiagnosticNode) -> Option<String> {
+    node.primary_location().map(|location| {
+        format!(
+            "{}:{}:{}",
+            location.path_raw(),
+            location.line(),
+            location.column()
+        )
+    })
+}
+
+fn node_evidence_ref(record: &EvidenceRecord) -> Option<String> {
+    matches!(record.target, EvidenceTarget::DiagnosticNode { .. })
+        .then(|| record.evidence_ref.clone())
+}
+
+fn proof_rank(proof: &RepairProofClass) -> u8 {
+    match proof {
+        RepairProofClass::Proven => 3,
+        RepairProofClass::Strong => 2,
+        RepairProofClass::Tentative => 1,
+        RepairProofClass::Unresolved => 0,
     }
 }
 
-fn collect_capture_refs(node: &DiagnosticNode, out: &mut Vec<String>) {
-    out.extend(node.provenance.capture_refs.iter().cloned());
-    for child in &node.children {
-        collect_capture_refs(child, out);
+fn stable_component_key(members: &[String]) -> String {
+    members.join("+").replace(':', "-")
+}
+
+#[derive(Debug)]
+struct DisjointSet {
+    parents: BTreeMap<String, String>,
+    anchors: BTreeMap<String, BTreeSet<String>>,
+}
+
+impl DisjointSet {
+    fn new(items: Vec<String>) -> Self {
+        Self {
+            parents: items.into_iter().map(|item| (item.clone(), item)).collect(),
+            anchors: BTreeMap::new(),
+        }
+    }
+
+    fn find(&self, item: &str) -> String {
+        let mut current = item;
+        while let Some(parent) = self.parents.get(current) {
+            if parent == current {
+                return current.to_string();
+            }
+            current = parent;
+        }
+        item.to_string()
+    }
+
+    fn contains(&self, item: &str) -> bool {
+        self.parents.contains_key(item)
+    }
+
+    fn union(&mut self, left: &str, right: &str) -> String {
+        let left_root = self.find(left);
+        let right_root = self.find(right);
+        let (root, child) = if left_root <= right_root {
+            (left_root, right_root)
+        } else {
+            (right_root, left_root)
+        };
+        let child_anchors = self.anchors.remove(&child).unwrap_or_default();
+        self.parents.insert(child, root.clone());
+        self.anchors
+            .entry(root.clone())
+            .or_default()
+            .extend(child_anchors);
+        root
+    }
+
+    fn add_anchor(&mut self, item: &str, anchor: String) {
+        let root = self.find(item);
+        self.anchors.entry(root).or_default().insert(anchor);
+    }
+
+    fn anchors(&self, item: &str) -> BTreeSet<String> {
+        self.anchors
+            .get(&self.find(item))
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    fn items(&self) -> impl Iterator<Item = &String> {
+        self.parents.keys()
     }
 }
