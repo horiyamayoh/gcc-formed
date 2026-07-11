@@ -1,0 +1,289 @@
+trial_id,participant_code,sequence,packet_id,fixture_id,condition,condition_name,noise_class,defect_count,time_to_first_correct_edit_ms,first_edit_correct,first_fix_success,target_selection_correct,high_confidence_mislead,confidence,irrelevant_lines_inspected,raw_requests,explain_requests,abandoned,application_error,baseline_errors,edited_errors,edited_exit
+S13-01,S13,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,100,true,true,true,false,0.99,2,0,0,false,,3,0,0
+S13-02,S13,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,100,true,true,true,false,0.99,2,0,0,false,,3,0,0
+S13-03,S13,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,100,true,true,true,false,0.99,2,0,0,false,,3,0,0
+S13-04,S13,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,100,true,true,true,false,0.99,2,0,0,false,,3,0,0
+S13-05,S13,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,100,true,true,true,false,0.98,1,0,0,false,,2,1,1
+S13-06,S13,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,100,true,true,true,false,0.98,1,0,0,false,,2,1,1
+S13-07,S13,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,100,true,true,true,false,0.98,2,0,0,false,,3,2,1
+S13-08,S13,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,100,true,true,true,false,0.98,2,0,0,false,,3,2,1
+S13-09,S13,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,100,true,true,true,false,0.94,1,0,0,false,,1,1,1
+S13-10,S13,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,100,true,true,true,false,0.93,1,0,0,false,,2,1,1
+S13-11,S13,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,100,true,true,true,false,0.93,1,0,0,false,,2,1,1
+S13-12,S13,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,100,true,true,true,false,0.93,1,0,0,false,,2,1,1
+S14-01,S14,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,6461,false,false,false,true,0.99,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp2h0pk2am/fixture/src/main.c.',3,999,999
+S14-02,S14,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,5766,false,false,false,true,0.99,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpqsrmi88u/fixture/src/main.cpp.',3,999,999
+S14-03,S14,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,3445,false,false,false,true,0.99,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpdjnaes5b/fixture/src/main.c.',3,999,999
+S14-04,S14,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,21965,false,false,false,true,0.99,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp_flgdumy/fixture/src/main.c.',3,999,999
+S14-05,S14,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,4082,false,false,false,true,0.98,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpfukf30d2/fixture/src/main.c.',2,999,999
+S14-06,S14,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,4231,false,false,false,true,0.98,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp7ghfmavv/fixture/src/main.cpp.',2,999,999
+S14-07,S14,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,6793,false,false,false,true,0.98,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpv6kqhx67/fixture/src/main.c.',3,999,999
+S14-08,S14,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,8625,false,false,false,true,0.98,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp1v1s81ap/fixture/src/main.cpp.',3,999,999
+S14-09,S14,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,4644,false,false,false,true,0.93,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpnolk3vyf/fixture/src/main.c.',1,999,999
+S14-10,S14,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,4723,false,false,false,true,0.94,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp8vzbd587/fixture/src/main.c.',2,999,999
+S14-11,S14,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,3271,false,false,false,true,0.94,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpnhvqo6aq/fixture/src/main.c.',2,999,999
+S14-12,S14,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,2325,false,false,false,true,0.94,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp2yal5r4q/fixture/src/main.cpp.',2,999,999
+S15-01,S15,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,2883,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S15-02,S15,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,2710,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S15-03,S15,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,2330,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S15-04,S15,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,2618,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S15-05,S15,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,4771,true,true,true,false,0.98,1,0,0,false,,2,1,1
+S15-06,S15,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,2945,true,true,true,false,0.98,1,0,0,false,,2,1,1
+S15-07,S15,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,2430,true,true,true,false,0.98,1,0,0,false,,3,2,1
+S15-08,S15,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,2273,true,true,true,false,0.98,1,0,0,false,,3,2,1
+S15-09,S15,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,3146,true,true,true,false,0.96,1,0,0,false,,1,1,1
+S15-10,S15,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,2970,true,true,true,false,0.97,1,0,0,false,,2,1,1
+S15-11,S15,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,2377,true,true,true,false,0.97,1,0,0,false,,2,1,1
+S15-12,S15,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,2410,true,true,true,false,0.97,1,0,0,false,,2,1,1
+S16-01,S16,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-02,S16,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-03,S16,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-04,S16,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-05,S16,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,100,true,true,true,false,0.99,0,0,0,false,,2,1,1
+S16-06,S16,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,100,true,true,true,false,0.99,0,0,0,false,,2,1,1
+S16-07,S16,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-08,S16,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,100,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S16-09,S16,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,150,false,false,false,true,0.97,0,0,0,false,list index out of range,1,999,999
+S16-10,S16,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,100,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S16-11,S16,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,100,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S16-12,S16,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,100,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S17-01,S17,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,5233,false,false,false,true,0.99,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpjhy4vd9_/fixture/src/main.c.',3,999,999
+S17-02,S17,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,3872,false,false,false,true,0.99,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpbzwbii5r/fixture/src/main.cpp.',3,999,999
+S17-03,S17,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,3468,false,false,false,true,0.99,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmprc67zn__/fixture/src/main.c.',3,999,999
+S17-04,S17,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,4267,false,false,false,true,0.99,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmplp402t_7/fixture/src/main.c.',3,999,999
+S17-05,S17,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,4347,false,false,false,true,0.98,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp54h8h89d/fixture/src/main.c.',2,999,999
+S17-06,S17,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,6213,false,false,false,true,0.98,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp1_x3vake/fixture/src/main.cpp.',2,999,999
+S17-07,S17,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,3727,false,false,false,true,0.98,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpfqwzd4bf/fixture/src/main.c.',3,999,999
+S17-08,S17,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,4795,false,false,false,true,0.98,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpdv0p_227/fixture/src/main.cpp.',3,999,999
+S17-09,S17,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,3740,false,false,false,true,0.91,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpsjyvqwg_/fixture/src/main.c.',1,999,999
+S17-10,S17,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,3786,false,false,false,true,0.96,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmprgiy0vht/fixture/src/main.c.',2,999,999
+S17-11,S17,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,3464,false,false,false,true,0.96,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpbqat5fcn/fixture/src/main.c.',2,999,999
+S17-12,S17,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,3729,false,false,false,true,0.96,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpmkw2wiuh/fixture/src/main.cpp.',2,999,999
+S18-01,S18,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,41,true,true,true,false,0.98,0,0,0,false,,3,0,0
+S18-02,S18,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,50,true,true,true,false,0.98,0,0,0,false,,3,0,0
+S18-03,S18,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,60,true,true,true,false,0.98,0,0,0,false,,3,0,0
+S18-04,S18,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,72,true,true,true,false,0.98,0,0,0,false,,3,0,0
+S18-05,S18,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,71,true,true,true,false,0.97,0,0,0,false,,2,1,1
+S18-06,S18,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,164,true,true,true,false,0.97,0,0,0,false,,2,1,1
+S18-07,S18,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,138,true,true,true,false,0.97,0,0,0,false,,3,2,1
+S18-08,S18,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,137,true,true,true,false,0.97,0,0,0,false,,3,2,1
+S18-09,S18,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,173,true,true,true,false,0.82,0,0,0,false,,1,1,1
+S18-10,S18,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,101,true,true,true,false,0.91,0,0,0,false,,2,1,1
+S18-11,S18,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,112,true,true,true,false,0.91,0,0,0,false,,2,1,1
+S18-12,S18,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,88,true,true,true,false,0.91,0,0,0,false,,2,1,1
+S19-01,S19,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-02,S19,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-03,S19,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-04,S19,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-05,S19,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,2000,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S19-06,S19,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,2000,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S19-07,S19,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-08,S19,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,2000,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S19-09,S19,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,3000,true,true,true,false,0.86,3,0,0,false,,1,1,1
+S19-10,S19,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,2000,true,true,true,false,0.96,7,0,0,false,,2,1,1
+S19-11,S19,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,2000,true,true,true,false,0.96,7,0,0,false,,2,1,1
+S19-12,S19,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,2000,true,true,true,false,0.96,4,0,0,false,,2,1,1
+S20-01,S20,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,58000,true,true,true,false,0.96,False,0,0,false,,3,2,1
+S20-02,S20,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,59000,true,true,true,false,0.96,False,0,0,false,,3,2,1
+S20-03,S20,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,60000,true,true,true,false,0.96,False,0,0,false,,3,2,1
+S20-04,S20,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,61000,true,true,true,false,0.96,False,0,0,false,,3,2,1
+S20-05,S20,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,62000,true,true,true,false,0.97,False,0,0,false,,2,1,1
+S20-06,S20,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,63000,true,true,true,false,0.97,False,0,0,false,,2,1,1
+S20-07,S20,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,64000,true,true,true,false,0.97,False,0,0,false,,3,2,1
+S20-08,S20,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,65000,true,true,true,false,0.97,False,0,0,false,,3,2,1
+S20-09,S20,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,66000,false,false,false,true,0.81,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp3_q20pt5/fixture/src/main.c.',1,999,999
+S20-10,S20,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,67000,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S20-11,S20,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,68000,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S20-12,S20,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,69000,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S21-01,S21,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,600,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp5aal8y3g/fixture/src/main.c.',3,999,999
+S21-02,S21,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,300,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpj8odvujo/fixture/src/main.cpp.',3,999,999
+S21-03,S21,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,300,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp0p0iic1i/fixture/src/main.c.',3,999,999
+S21-04,S21,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,300,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp5ge4gjqr/fixture/src/main.c.',3,999,999
+S21-05,S21,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,300,false,false,false,true,0.98,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp5v2hmm5s/fixture/src/main.c.',2,999,999
+S21-06,S21,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,300,false,false,false,true,0.98,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp_h4ouipy/fixture/src/main.cpp.',2,999,999
+S21-07,S21,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,300,false,false,false,true,0.98,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpdajv777_/fixture/src/main.c.',3,999,999
+S21-08,S21,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,300,false,false,false,true,0.98,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpi4dlfx1_/fixture/src/main.cpp.',3,999,999
+S21-09,S21,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,600,false,false,false,true,0.86,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpmd_5sqvw/fixture/src/main.c.',1,999,999
+S21-10,S21,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,400,false,false,false,true,0.96,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp9e81s6ga/fixture/src/main.c.',2,999,999
+S21-11,S21,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,400,false,false,false,true,0.96,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpuz31np2n/fixture/src/main.c.',2,999,999
+S21-12,S21,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,400,false,false,false,true,0.96,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpyz77w6z7/fixture/src/main.cpp.',2,999,999
+S22-01,S22,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,120,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S22-02,S22,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,105,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S22-03,S22,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,101,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S22-04,S22,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,98,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S22-05,S22,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,110,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S22-06,S22,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,103,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S22-07,S22,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,107,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S22-08,S22,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,109,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S22-09,S22,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,145,true,true,true,false,0.96,False,0,0,false,,1,1,1
+S22-10,S22,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,132,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S22-11,S22,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,128,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S22-12,S22,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,125,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S23-01,S23,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,1,false,false,false,true,0.98,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-02,S23,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,1,false,false,false,true,0.98,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-03,S23,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,1,false,false,false,true,0.98,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-04,S23,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,1,false,false,false,true,0.98,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-05,S23,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,1,false,false,false,true,0.97,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',2,999,999
+S23-06,S23,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,1,false,false,false,true,0.97,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',2,999,999
+S23-07,S23,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,1,false,false,false,true,0.97,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-08,S23,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,1,false,false,false,true,0.97,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',3,999,999
+S23-09,S23,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,1,false,false,false,true,0.94,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',1,999,999
+S23-10,S23,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,1,false,false,false,true,0.96,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',2,999,999
+S23-11,S23,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,1,false,false,false,true,0.96,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',2,999,999
+S23-12,S23,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,1,false,false,false,true,0.96,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',2,999,999
+S24-01,S24,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,1200,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S24-02,S24,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,900,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S24-03,S24,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,850,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S24-04,S24,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,800,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S24-05,S24,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,900,true,true,true,false,0.97,False,0,0,false,,2,1,1
+S24-06,S24,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,900,true,true,true,false,0.97,False,0,0,false,,2,1,1
+S24-07,S24,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,950,true,true,true,false,0.97,False,0,0,false,,3,2,1
+S24-08,S24,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,950,true,true,true,false,0.97,False,0,0,false,,3,2,1
+S24-09,S24,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,1100,true,true,true,false,0.91,False,0,0,false,,1,2,1
+S24-10,S24,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,950,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S24-11,S24,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,950,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S24-12,S24,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,950,true,true,true,false,0.94,False,0,0,false,,2,1,1
+S25-01,S25,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-02,S25,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-03,S25,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-04,S25,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-05,S25,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,13156,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S25-06,S25,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,13156,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S25-07,S25,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-08,S25,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,13156,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S25-09,S25,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,13156,true,true,true,false,0.98,False,0,0,false,,1,1,1
+S25-10,S25,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,13156,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S25-11,S25,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,13156,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S25-12,S25,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,13156,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S27-01,S27,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,820,false,false,false,true,0.98,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpw_ddbtxi/fixture/src/main.c.',3,999,999
+S27-02,S27,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,760,false,false,false,true,0.97,0,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpxdfc2ew_/fixture/src/main.cpp.',3,999,999
+S27-03,S27,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,700,false,false,false,true,0.98,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmplsywdlb5/fixture/src/main.c.',3,999,999
+S27-04,S27,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,680,false,false,false,true,0.98,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpyfzcm4_v/fixture/src/main.c.',3,999,999
+S27-05,S27,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,850,false,false,false,true,0.96,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp85y9d8ke/fixture/src/main.c.',2,999,999
+S27-06,S27,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,810,false,false,false,true,0.96,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmppe48mnu2/fixture/src/main.cpp.',2,999,999
+S27-07,S27,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,920,false,false,false,true,0.95,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpe2ku8m22/fixture/src/main.c.',3,999,999
+S27-08,S27,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,890,false,false,false,true,0.95,2,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp6ev6d_uo/fixture/src/main.cpp.',3,999,999
+S27-09,S27,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,1280,false,false,false,true,0.84,1,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',1,999,999
+S27-10,S27,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,1420,true,true,true,false,0.78,1,0,0,false,,2,2,1
+S27-11,S27,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,1190,false,false,false,false,0.72,1,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp9mq2nm1i/fixture/src/main.c.',2,999,999
+S27-12,S27,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,1510,true,true,true,false,0.7,1,0,0,false,,2,2,1
+S28-01,S28,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-02,S28,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-03,S28,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-04,S28,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-05,S28,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,1,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S28-06,S28,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,1,true,true,true,false,0.99,False,0,0,false,,2,1,1
+S28-07,S28,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-08,S28,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,1,true,true,true,false,0.99,False,0,0,false,,3,2,1
+S28-09,S28,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,1,true,true,true,false,0.96,False,0,0,false,,1,1,1
+S28-10,S28,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,1,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S28-11,S28,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,1,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S28-12,S28,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,1,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S29-01,S29,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,800,false,false,false,true,0.99,False,True,True,false,[Errno 2] No such file or directory: '/tmp/tmpm78xbeu1/fixture/src/main.c.',3,999,999
+S29-02,S29,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,600,false,false,false,true,0.99,False,True,False,false,[Errno 2] No such file or directory: '/tmp/tmpb0duquil/fixture/src/main.cpp.',3,999,999
+S29-03,S29,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,500,false,false,false,true,0.99,False,True,True,false,[Errno 2] No such file or directory: '/tmp/tmpm4oxxest/fixture/src/main.c.',3,999,999
+S29-04,S29,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,500,false,false,false,true,0.99,False,True,True,false,[Errno 2] No such file or directory: '/tmp/tmpm958xl_p/fixture/src/main.c.',3,999,999
+S29-05,S29,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,700,false,false,false,true,0.99,False,True,False,false,[Errno 2] No such file or directory: '/tmp/tmpett4ao05/fixture/src/main.c.',2,999,999
+S29-06,S29,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,700,false,false,false,true,0.99,False,False,True,false,[Errno 2] No such file or directory: '/tmp/tmpgpt2myfl/fixture/src/main.cpp.',2,999,999
+S29-07,S29,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,800,false,false,false,true,0.99,False,True,True,false,[Errno 2] No such file or directory: '/tmp/tmpznj9i8xt/fixture/src/main.c.',3,999,999
+S29-08,S29,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,800,false,false,false,true,0.99,False,True,False,false,[Errno 2] No such file or directory: '/tmp/tmpnjsv8r29/fixture/src/main.cpp.',3,999,999
+S29-09,S29,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,1000,false,false,false,true,0.98,False,False,True,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',1,999,999
+S29-10,S29,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,800,true,true,true,false,0.99,False,True,True,false,,2,2,1
+S29-11,S29,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,800,true,true,true,false,0.99,False,True,False,false,,2,2,1
+S29-12,S29,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,800,true,true,true,false,0.99,False,False,True,false,,2,2,1
+S30-01,S30,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,4200,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpk709w846/fixture/src/main.c.',3,999,999
+S30-02,S30,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,3600,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpvotauf2m/fixture/src/main.cpp.',3,999,999
+S30-03,S30,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,3800,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpyvbp7u0k/fixture/src/main.c.',3,999,999
+S30-04,S30,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,4100,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpdn2ku_hz/fixture/src/main.c.',3,999,999
+S30-05,S30,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,3900,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmppckxtx12/fixture/src/main.c.',2,999,999
+S30-06,S30,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,3700,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpbmohbvu9/fixture/src/main.cpp.',2,999,999
+S30-07,S30,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,4500,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmpr4pe_lx6/fixture/src/main.c.',3,999,999
+S30-08,S30,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,4000,false,false,false,true,0.99,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp7tdj_0ne/fixture/src/main.cpp.',3,999,999
+S30-09,S30,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,6200,false,false,false,true,0.93,False,0,0,false,unsupported operand type(s) for /: 'PosixPath' and 'NoneType',1,999,999
+S30-10,S30,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,5900,false,false,false,true,0.91,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmprnr0eqv7/fixture/src/main.c.',2,999,999
+S30-11,S30,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,4800,false,false,false,true,0.95,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmp1w6mbb07/fixture/src/main.c.',2,999,999
+S30-12,S30,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,5200,false,false,false,true,0.91,False,0,0,false,[Errno 2] No such file or directory: '/tmp/tmph604yi16/fixture/src/main.cpp.',2,999,999
+S31-01,S31,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,18000,true,true,true,false,0.9,False,True,True,false,,3,0,0
+S31-02,S31,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,10000,true,true,true,false,0.9,False,True,True,false,,3,0,0
+S31-03,S31,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,8000,true,true,true,false,0.9,False,False,False,false,,3,0,0
+S31-04,S31,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,8000,true,true,true,false,0.9,False,True,True,false,,3,0,0
+S31-05,S31,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,9000,true,true,true,false,0.9,False,True,False,false,,2,1,1
+S31-06,S31,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,7000,true,true,true,false,0.9,False,False,False,false,,2,1,1
+S31-07,S31,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,11000,true,true,true,false,0.9,False,True,False,false,,3,2,1
+S31-08,S31,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,11000,true,true,true,false,0.9,False,True,False,false,,3,2,1
+S31-09,S31,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,9000,true,true,true,false,0.9,False,False,False,false,,1,1,1
+S31-10,S31,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,8000,true,true,true,false,0.9,False,True,False,false,,2,1,1
+S31-11,S31,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,8000,true,true,true,false,0.9,False,True,False,false,,2,1,1
+S31-12,S31,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,8000,true,true,true,false,0.9,False,False,False,false,,2,1,1
+S32-01,S32,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,1400,true,true,true,false,0.88,False,True,False,false,,3,2,1
+S32-02,S32,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,1200,true,true,true,false,0.88,False,True,False,false,,3,2,1
+S32-03,S32,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,1300,true,true,true,false,0.88,False,True,False,false,,3,2,1
+S32-04,S32,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,1300,true,true,true,false,0.88,False,True,False,false,,3,2,1
+S32-05,S32,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,1200,true,true,true,false,0.91,False,True,False,false,,2,1,1
+S32-06,S32,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,1100,true,true,true,false,0.91,False,True,False,false,,2,1,1
+S32-07,S32,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,1100,true,true,true,false,0.92,False,True,False,false,,3,2,1
+S32-08,S32,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,1100,true,true,true,false,0.92,False,True,False,false,,3,2,1
+S32-09,S32,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,2800,true,true,true,false,0.62,False,True,False,false,,1,1,1
+S32-10,S32,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,2000,true,true,true,false,0.66,False,True,False,false,,2,1,1
+S32-11,S32,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,1900,true,true,true,false,0.65,False,True,False,false,,2,1,1
+S32-12,S32,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,1800,true,true,true,false,0.65,False,True,False,false,,2,1,1
+S33-01,S33,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-02,S33,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-03,S33,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-04,S33,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-05,S33,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,82400,true,true,true,false,0.99,0,0,0,false,,2,1,1
+S33-06,S33,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,82400,true,true,true,false,0.99,0,0,0,false,,2,1,1
+S33-07,S33,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-08,S33,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,82400,true,true,true,false,0.99,0,0,0,false,,3,2,1
+S33-09,S33,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,82400,true,true,true,false,0.94,0,0,0,false,,1,1,1
+S33-10,S33,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,82400,true,true,true,false,0.97,0,0,0,false,,2,1,1
+S33-11,S33,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,82400,true,true,true,false,0.97,0,0,0,false,,2,1,1
+S33-12,S33,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,82400,true,true,true,false,0.97,0,0,0,false,,2,1,1
+S34-01,S34,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,45000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-02,S34,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,46000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-03,S34,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,47000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-04,S34,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,48000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-05,S34,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,49000,true,true,true,false,0.99,False,False,False,false,,2,1,1
+S34-06,S34,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,50000,true,true,true,false,0.99,False,False,False,false,,2,1,1
+S34-07,S34,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,51000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-08,S34,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,52000,true,true,true,false,0.99,False,False,False,false,,3,2,1
+S34-09,S34,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,53000,true,true,true,false,0.88,False,False,False,false,,1,1,1
+S34-10,S34,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,54000,true,true,true,false,0.97,False,False,False,false,,2,1,1
+S34-11,S34,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,55000,true,true,true,false,0.97,False,False,False,false,,2,1,1
+S34-12,S34,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,56000,true,true,true,false,0.97,False,False,False,false,,2,1,1
+S35-01,S35,1,P01,repair-unit-exact-count/single/case-02,C,repair_units_v1,simple,1,120,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S35-02,S35,2,P02,repair-unit-exact-count/single/case-03,A,native_gcc,simple,1,120,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S35-03,S35,3,P03,repair-unit-exact-count/single/case-04,B,subject_blocks_v2,simple,1,120,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S35-04,S35,4,P04,repair-unit-exact-count/single/case-08,C,repair_units_v1,simple,1,120,true,true,true,false,0.99,0,0,0,false,,3,0,0
+S35-05,S35,5,P05,repair-unit-exact-count/double/case-02,A,native_gcc,multi,2,130,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S35-06,S35,6,P06,repair-unit-exact-count/double/case-06,B,subject_blocks_v2,multi,2,130,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S35-07,S35,7,P07,repair-unit-exact-count/triple/case-02,C,repair_units_v1,multi,3,130,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S35-08,S35,8,P08,repair-unit-exact-count/triple/case-06,A,native_gcc,multi,3,130,true,true,true,false,0.98,0,0,0,false,,3,2,1
+S35-09,S35,9,P09,direct-link-order-c/case-04,B,subject_blocks_v2,multi,2,160,true,true,true,false,0.97,0,0,0,false,,1,1,1
+S35-10,S35,10,P10,make-generated-c/case-04,C,repair_units_v1,multi,2,140,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S35-11,S35,11,P11,make-werror-c/case-04,A,native_gcc,multi,2,140,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S35-12,S35,12,P12,cmake-frontier-cpp/case-04,B,subject_blocks_v2,multi,2,140,true,true,true,false,0.98,0,0,0,false,,2,1,1
+S36-01,S36,1,P01,repair-unit-exact-count/single/case-02,A,native_gcc,simple,1,1700,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S36-02,S36,2,P02,repair-unit-exact-count/single/case-03,B,subject_blocks_v2,simple,1,1300,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S36-03,S36,3,P03,repair-unit-exact-count/single/case-04,C,repair_units_v1,simple,1,1400,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S36-04,S36,4,P04,repair-unit-exact-count/single/case-08,A,native_gcc,simple,1,1200,true,true,true,false,0.99,False,0,0,false,,3,0,0
+S36-05,S36,5,P05,repair-unit-exact-count/double/case-02,B,subject_blocks_v2,multi,2,1500,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S36-06,S36,6,P06,repair-unit-exact-count/double/case-06,C,repair_units_v1,multi,2,1500,true,true,true,false,0.98,False,0,0,false,,2,1,1
+S36-07,S36,7,P07,repair-unit-exact-count/triple/case-02,A,native_gcc,multi,3,1600,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S36-08,S36,8,P08,repair-unit-exact-count/triple/case-06,B,subject_blocks_v2,multi,3,1700,true,true,true,false,0.98,False,0,0,false,,3,2,1
+S36-09,S36,9,P09,direct-link-order-c/case-04,C,repair_units_v1,multi,2,2400,true,true,true,false,0.93,False,0,0,false,,1,1,1
+S36-10,S36,10,P10,make-generated-c/case-04,A,native_gcc,multi,2,1800,true,true,true,false,0.96,False,0,0,false,,2,1,1
+S36-11,S36,11,P11,make-werror-c/case-04,B,subject_blocks_v2,multi,2,1700,true,true,true,false,0.96,False,0,0,false,,2,1,1
+S36-12,S36,12,P12,cmake-frontier-cpp/case-04,C,repair_units_v1,multi,2,1800,true,true,true,false,0.96,False,0,0,false,,2,1,1
+S37-01,S37,1,P01,repair-unit-exact-count/single/case-02,B,subject_blocks_v2,simple,1,1180,true,true,true,false,0.98,False,False,False,false,,3,0,0
+S37-02,S37,2,P02,repair-unit-exact-count/single/case-03,C,repair_units_v1,simple,1,540,true,true,true,false,0.98,False,False,False,false,,3,0,0
+S37-03,S37,3,P03,repair-unit-exact-count/single/case-04,A,native_gcc,simple,1,410,true,true,true,false,0.98,False,False,False,false,,3,0,0
+S37-04,S37,4,P04,repair-unit-exact-count/single/case-08,B,subject_blocks_v2,simple,1,390,true,true,true,false,0.98,False,False,False,false,,3,0,0
+S37-05,S37,5,P05,repair-unit-exact-count/double/case-02,C,repair_units_v1,multi,2,430,true,true,true,false,0.97,False,False,False,false,,2,1,1
+S37-06,S37,6,P06,repair-unit-exact-count/double/case-06,A,native_gcc,multi,2,400,true,true,true,false,0.97,False,False,False,false,,2,1,1
+S37-07,S37,7,P07,repair-unit-exact-count/triple/case-02,B,subject_blocks_v2,multi,3,440,true,true,true,false,0.97,False,False,False,false,,3,2,1
+S37-08,S37,8,P08,repair-unit-exact-count/triple/case-06,C,repair_units_v1,multi,3,460,true,true,true,false,0.97,False,False,False,false,,3,2,1
+S37-09,S37,9,P09,direct-link-order-c/case-04,A,native_gcc,multi,2,710,true,true,true,false,0.89,False,False,False,false,,1,1,1
+S37-10,S37,10,P10,make-generated-c/case-04,B,subject_blocks_v2,multi,2,520,true,true,true,false,0.94,False,False,False,false,,2,1,1
+S37-11,S37,11,P11,make-werror-c/case-04,C,repair_units_v1,multi,2,510,true,true,true,false,0.94,False,False,False,false,,2,1,1
+S37-12,S37,12,P12,cmake-frontier-cpp/case-04,A,native_gcc,multi,2,500,true,true,true,false,0.94,False,False,False,false,,2,1,1

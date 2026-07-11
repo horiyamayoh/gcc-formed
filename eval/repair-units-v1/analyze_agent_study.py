@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-import csv, hashlib, json, random, re, shutil, statistics, subprocess, tempfile, tomllib
+import argparse, csv, hashlib, json, random, re, shutil, statistics, subprocess, tempfile, tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,14 +27,38 @@ def fixture(packet):
 
 def edit_of(row):
     edit = row.get("first_edit") or row.get("edit")
-    if edit: return edit
+    if isinstance(edit, dict): return edit
+    if isinstance(edit, str):
+        file_match=re.search(r"src/[A-Za-z0-9_.+/-]+",edit)
+        line_match=re.search(r"(?:line\s+|:)(\d+)",edit)
+        quoted=re.findall(r"`([^`]+)`",edit)
+        replace=re.search(r"replace\s+([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)\s+with\s+([^\s.]+)",edit,re.I)
+        if len(quoted)>=2 and "replace" in edit.lower(): old,new=quoted[0],quoted[1]
+        elif replace: old,new=replace.group(1),replace.group(2)
+        elif quoted: old,new="",quoted[-1]
+        else: old,new="",edit
+        return {"file":file_match.group(0) if file_match else None,
+                "line":int(line_match.group(1)) if line_match else 1,"old":old,"new":new}
     return {"file": row.get("file"), "line": row.get("line"), "old": row.get("old"), "new": row.get("new")}
 
 
 def elapsed_ms(row):
     if row.get("delta_ms") is not None: return max(1, round(float(row["delta_ms"])))
     timing = row.get("timing", {})
+    if isinstance(timing, (int, float)): return max(1, round(float(timing)*1000))
+    if row.get("elapsed_ms") is not None: return max(1, round(float(row["elapsed_ms"])))
+    for key in ("time_to_first_edit_ms", "time_to_first_minimal_edit_ms", "timing_ms"):
+        if row.get(key) is not None: return max(1, round(float(row[key])))
+    for key in ("time_to_first_edit_seconds", "timing_seconds"):
+        if row.get(key) is not None: return max(1, round(float(row[key])*1000))
+    if row.get("timing_delta_ms") is not None: return max(1, round(float(row["timing_delta_ms"])))
+    if row.get("started_at_ms") is not None and row.get("committed_at_ms") is not None:
+        return max(1, round(float(row["committed_at_ms"])-float(row["started_at_ms"])))
     if timing.get("delta_ms") is not None: return max(1, round(float(timing["delta_ms"])))
+    if timing.get("first_edit_ms") is not None and len(timing) == 2:
+        return max(1, round(float(timing["first_edit_ms"])))
+    if timing.get("delta") is not None:
+        value=float(timing["delta"]); return max(1, round(value*1000 if value < 1000 else value))
     if timing.get("elapsed_ns") is not None: return max(1, round(float(timing["elapsed_ns"])*1e-6))
     pairs = [("start_ms", "first_edit_ms", 1), ("started_at", "committed_at", 1000),
              ("started_ns", "committed_ns", 1e-6)]
@@ -73,18 +97,24 @@ def compile_fixture(base: Path, oracle: dict):
 
 
 def main():
-    answer = json.loads(Path("/tmp/repair-unit-agent-answer-key.json").read_text())
-    mapping = json.loads(Path("/tmp/repair-unit-agent-condition-key.json").read_text())
+    parser=argparse.ArgumentParser(); parser.add_argument("--replication-v2",action="store_true"); args=parser.parse_args()
+    data_root = STUDY / "agent-replication-v2" if args.replication_v2 else STUDY
+    answer_path=Path("/tmp/repair-unit-agent-replication-answer-key.json" if args.replication_v2 else "/tmp/repair-unit-agent-answer-key.json")
+    condition_path=Path("/tmp/repair-unit-agent-replication-condition-key.json" if args.replication_v2 else "/tmp/repair-unit-agent-condition-key.json")
+    answer = json.loads(answer_path.read_text())
+    mapping = json.loads(condition_path.read_text())
     packets = {p["packet_id"]: p for p in answer["packets"]}
     normalized = []
     compile_cache = {}
-    for filename in FILES:
+    filenames=([f"S{i:02d}.json" for i in range(13,26)] + [f"S{i:02d}.json" for i in range(27,38)]) if args.replication_v2 else FILES
+    for filename in filenames:
         session = filename.split(".")[0].split("-")[0]
-        raw_path = STUDY / "agent-results" / filename
-        session_packet = json.loads((STUDY / "agent-sessions" / f"{session}.json").read_text())
+        raw_path = data_root / "agent-results" / filename
+        session_packet = json.loads((data_root / "agent-sessions" / f"{session}.json").read_text())
         for pos, row in enumerate(rows(json.loads(raw_path.read_text())), 1):
-            packet = packets[row["packet_id"]]
-            blinded_condition = row.get("condition") or session_packet["trials"][pos-1]["condition"]
+            scheduled=session_packet["trials"][pos-1]
+            packet = packets[scheduled["packet_id"]]
+            blinded_condition = session_packet["trials"][pos-1]["condition"]
             src = fixture(packet)
             oracle = tomllib.loads((src / "repair-oracle.toml").read_text())
             if src not in compile_cache:
@@ -117,7 +147,9 @@ def main():
             confidence = {"high": .9, "medium": .6, "low": .3}.get(
                 str(raw_confidence).lower(), raw_confidence)
             confidence = float(confidence)
-            irrelevant = row.get("irrelevant_lines_inspected", row.get("irrelevant_lines", []))
+            irrelevant = row.get("irrelevant_lines_inspected", row.get("irrelevant_lines",
+                         row.get("irrelevant", row.get("irrelevant_diagnostic_lines",
+                         row.get("irrelevant_diagnostics", row.get("irrelevant_diagnostic_count", []))))))
             if isinstance(irrelevant, list): irrelevant = len(irrelevant)
             normalized.append({
                 "trial_id": f"{session}-{pos:02d}", "participant_code": session,
@@ -129,12 +161,13 @@ def main():
                 "target_selection_correct": str(on_anchor if packet["defect_count"] > 1 else correct).lower(),
                 "high_confidence_mislead": str(confidence >= .8 and not correct).lower(),
                 "confidence": confidence, "irrelevant_lines_inspected": irrelevant,
-                "raw_requests": row.get("raw_requests", 0), "explain_requests": row.get("explain_requests", 0),
+                "raw_requests": row.get("raw_requests", row.get("raw", row.get("raw0", 0)) if isinstance(row.get("raw", row.get("raw0",0)),int) else 0),
+                "explain_requests": row.get("explain_requests", row.get("explain", row.get("explain0", 0)) if isinstance(row.get("explain", row.get("explain0",0)),int) else 0),
                 "abandoned": str(bool(row.get("abandoned"))).lower(), "application_error": application_error,
                 "baseline_errors": baseline[1], "edited_errors": outcome[1], "edited_exit": outcome[0],
             })
-    out = STUDY / "agent-analysis"; out.mkdir(exist_ok=True)
-    with (STUDY / "agent-trials.csv").open("w", newline="") as fh:
+    out = data_root / "agent-analysis"; out.mkdir(exist_ok=True)
+    with (data_root / "agent-trials.csv").open("w", newline="") as fh:
         writer=csv.DictWriter(fh, fieldnames=normalized[0]); writer.writeheader(); writer.writerows(normalized)
     by = {name:[r for r in normalized if r["condition_name"] == name]
           for name in ("native_gcc","subject_blocks_v2","repair_units_v1")}
@@ -158,8 +191,10 @@ def main():
     passed=(time_ci[1] <= plan["time_non_inferiority_ratio"] and
             candidate["first_edit_correct_rate"]-native["first_edit_correct_rate"] >= -plan["correctness_non_inferiority_points"] and
             candidate["high_confidence_misleads"] <= plan["mislead_stop_ship_threshold"])
-    report={"schema_version":1,"study":"repair-units-v1-agent-evaluator","valid_sessions":8,
-            "valid_trials":len(normalized),"excluded_confirmatory_trials":0,
+    report={"schema_version":1,"study":"repair-units-v1-agent-evaluator",
+            "valid_sessions":24 if args.replication_v2 else 8,
+            "valid_trials":len(normalized),"excluded_started_sessions":["S12","S26"] if args.replication_v2 else [],
+            "excluded_started_trials":24 if args.replication_v2 else 0,
             "condition_key":{k:mapping[k] for k in "ABC"},"metrics":metrics,
             "descriptive_candidate_minus_native":{
               "first_edit_correct_rate":candidate["first_edit_correct_rate"]-native["first_edit_correct_rate"],
@@ -171,9 +206,10 @@ def main():
             "promotion_blocked":not passed,
             "limitations":["Agent evaluators are not human participants.",
               "Latency includes model and tool transport and is environment-specific.",
+              "Evaluator result schemas varied; textual edits were deterministically normalized without changing raw records.",
               "Correctness requires both an official repair anchor and measured compiler-diagnostic improvement."]}
     (out/"scoring-report.json").write_text(json.dumps(report,indent=2)+"\n")
-    (STUDY/"condition-key.json").write_text(json.dumps({k:mapping[k] for k in ("schema_version","A","B","C")},indent=2)+"\n")
+    (data_root/"condition-key.json").write_text(json.dumps({k:mapping[k] for k in ("schema_version","A","B","C")},indent=2)+"\n")
     print(json.dumps(report,indent=2))
 
 if __name__ == "__main__": main()

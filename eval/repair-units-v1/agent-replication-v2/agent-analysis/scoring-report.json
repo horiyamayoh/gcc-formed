@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "study": "repair-units-v1-agent-evaluator",
+  "valid_sessions": 24,
+  "valid_trials": 288,
+  "excluded_started_sessions": [
+    "S12",
+    "S26"
+  ],
+  "excluded_started_trials": 24,
+  "condition_key": {
+    "A": "native_gcc",
+    "B": "subject_blocks_v2",
+    "C": "repair_units_v1"
+  },
+  "metrics": {
+    "native_gcc": {
+      "trials": 96,
+      "first_edit_correct_rate": 0.71875,
+      "first_fix_success_rate": 0.71875,
+      "median_time_ms": 1200.0,
+      "high_confidence_misleads": 27
+    },
+    "subject_blocks_v2": {
+      "trials": 96,
+      "first_edit_correct_rate": 0.7083333333333334,
+      "first_fix_success_rate": 0.7083333333333334,
+      "median_time_ms": 1185.0,
+      "high_confidence_misleads": 27
+    },
+    "repair_units_v1": {
+      "trials": 96,
+      "first_edit_correct_rate": 0.7291666666666666,
+      "first_fix_success_rate": 0.7291666666666666,
+      "median_time_ms": 1290.0,
+      "high_confidence_misleads": 26
+    }
+  },
+  "descriptive_candidate_minus_native": {
+    "first_edit_correct_rate": 0.01041666666666663,
+    "first_fix_success_rate": 0.01041666666666663,
+    "median_time_ratio": 1.075
+  },
+  "preregistered_simple_time_ratio": 1.0833333333333333,
+  "preregistered_simple_time_ratio_ci95": [
+    0.25,
+    3.8
+  ],
+  "recommendation": "inconclusive",
+  "promotion_blocked": true,
+  "limitations": [
+    "Agent evaluators are not human participants.",
+    "Latency includes model and tool transport and is environment-specific.",
+    "Evaluator result schemas varied; textual edits were deterministically normalized without changing raw records.",
+    "Correctness requires both an official repair anchor and measured compiler-diagnostic improvement."
+  ]
+}
