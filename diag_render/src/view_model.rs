@@ -1,4 +1,3 @@
-use crate::RenderRequest;
 use crate::budget::render_policy;
 use crate::excerpt::load_excerpt;
 use crate::family::{
@@ -16,6 +15,7 @@ use crate::selector::{
     should_materialize_episode_member_as_summary_for_profile,
 };
 use crate::suggestion::build_action_items;
+use crate::{RenderProfile, RenderRequest};
 use diag_core::{
     CompressionLevel, DiagnosticNode, DisclosureConfidence, DocumentCompleteness,
     GroupCascadeAnalysis, GroupCascadeRole, NodeCompleteness, Severity, SuggestionApplicability,
@@ -238,8 +238,21 @@ fn build_card(
         .map(|analysis| analysis.disclosure_confidence())
         .unwrap_or(DisclosureConfidence::Hidden);
     let confidence_label = confidence_label(confidence).to_string();
-    let title = select_title(node, confidence);
-    let first_action = select_first_action(node, confidence);
+    let repair_unit_card = node
+        .analysis
+        .as_ref()
+        .and_then(|analysis| analysis.group_ref.as_deref())
+        .is_some_and(|reference| reference.starts_with("repair-unit:"));
+    let title = if repair_unit_card {
+        compiler_message_text(&node.message.raw_text, &node.severity)
+    } else {
+        select_title(node, confidence)
+    };
+    let first_action = if repair_unit_card {
+        None
+    } else {
+        select_first_action(node, confidence)
+    };
     let family = node
         .analysis
         .as_ref()
@@ -267,7 +280,15 @@ fn build_card(
     let confidence_notice = confidence
         .requires_low_confidence_notice()
         .then_some(policy.disclosure.low_confidence_notice.to_string());
-    let raw_sub_block = raw_sub_block(request, node);
+    let raw_sub_block = if repair_unit_card
+        && matches!(
+            request.profile,
+            RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci
+        ) {
+        Vec::new()
+    } else {
+        raw_sub_block(request, node)
+    };
     RenderGroupCard {
         group_id: render_group_ref(node),
         severity: severity_label(&node.severity).to_string(),
@@ -307,6 +328,14 @@ fn build_card(
         cascade_debug: cascade_debug_info(request, node, false),
         semantic_card,
     }
+}
+
+fn compiler_message_text(raw: &str, severity: &diag_core::Severity) -> String {
+    let marker = format!(": {}:", severity_label(severity));
+    raw.rsplit_once(&marker)
+        .map(|(_, message)| message.trim().to_string())
+        .filter(|message| !message.is_empty())
+        .unwrap_or_else(|| raw.to_string())
 }
 
 fn build_summary_only_group(request: &RenderRequest, node: &DiagnosticNode) -> SummaryOnlyGroup {

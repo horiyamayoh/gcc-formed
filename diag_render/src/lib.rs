@@ -343,11 +343,12 @@ mod tests {
     use diag_core::{
         AnalysisOverlay, ArtifactKind, ArtifactStorage, BoundarySemantics, CaptureArtifact,
         CompressionLevel, ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument,
-        DiagnosticEpisode, DocumentAnalysis, DocumentCompleteness, EpisodeGraph,
-        GroupCascadeAnalysis, GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin,
-        Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource, RunInfo, SemanticRole,
-        Severity, Suggestion, SuggestionApplicability, SuppressedCountVisibility, SymbolContext,
-        TextEdit, ToolInfo, VisibilityFloor,
+        DiagnosticEpisode, DocumentAnalysis, DocumentCompleteness, EpisodeGraph, EvidenceRecord,
+        EvidenceTarget, GroupCascadeAnalysis, GroupCascadeRole, Location, MessageText,
+        NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource,
+        RepairObservability, RepairProofClass, RepairUnit, RepairUnitAnalysis, RepairUnitStats,
+        RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability,
+        SuppressedCountVisibility, SymbolContext, TextEdit, ToolInfo, VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -699,6 +700,174 @@ mod tests {
             group_analysis,
             stats: Default::default(),
             repair_analysis: None,
+        }
+    }
+
+    fn install_repair_units(request: &mut RenderRequest, units: Vec<Vec<&str>>) {
+        let evidence = request
+            .document
+            .diagnostics
+            .iter()
+            .map(|node| EvidenceRecord {
+                evidence_ref: format!("node:{}", node.id),
+                target: EvidenceTarget::DiagnosticNode {
+                    node_ref: node.id.clone(),
+                },
+                hidden: false,
+                unresolved: false,
+            })
+            .collect::<Vec<_>>();
+        let repair_units = units
+            .into_iter()
+            .enumerate()
+            .map(|(index, members)| RepairUnit {
+                repair_unit_ref: format!("repair-unit:{index}"),
+                visible: true,
+                lead_evidence_ref: format!("node:{}", members[0]),
+                member_evidence_refs: members
+                    .into_iter()
+                    .map(|member| format!("node:{member}"))
+                    .collect(),
+                primary_repair_anchors: Vec::new(),
+                alternate_repair_anchors: Vec::new(),
+                proof_class: RepairProofClass::Unresolved,
+                observability: RepairObservability::Unresolved,
+                grounded_action_refs: Vec::new(),
+                visibility_floor: VisibilityFloor::NeverHidden,
+                raw_capture_refs: vec!["stderr.raw".into()],
+                rationale_edge_refs: Vec::new(),
+                legacy_group_refs: Vec::new(),
+                legacy_episode_refs: Vec::new(),
+            })
+            .collect::<Vec<_>>();
+        let visible = repair_units.len() as u32;
+        request.document.document_analysis = Some(DocumentAnalysis {
+            repair_analysis: Some(RepairUnitAnalysis {
+                evidence_graph: diag_core::DiagnosticEvidenceGraph {
+                    evidence,
+                    edges: Vec::new(),
+                },
+                repair_units,
+                stats: RepairUnitStats {
+                    visible_unit_count: visible,
+                    referenced_fact_count: request.document.diagnostics.len() as u32,
+                    total_fact_count: request.document.diagnostics.len() as u32,
+                    ..Default::default()
+                },
+            }),
+            ..Default::default()
+        });
+    }
+
+    #[test]
+    fn default_renders_exactly_one_card_per_visible_repair_unit() {
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node("one", "legacy-one", "src/main.c", 2, "compiler message one"),
+            grouped_error_node("two", "legacy-two", "src/main.c", 3, "compiler message two"),
+            grouped_error_node(
+                "three",
+                "legacy-three",
+                "src/main.c",
+                4,
+                "compiler message three",
+            ),
+        ];
+        install_repair_units(&mut request, vec![vec!["one"], vec!["two"], vec!["three"]]);
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards.len(), 3);
+        assert!(view.summary_only_groups.is_empty());
+        assert_eq!(
+            view.cards
+                .iter()
+                .map(|card| card.raw_message.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "compiler message one",
+                "compiler message two",
+                "compiler message three"
+            ]
+        );
+        assert!(view.cards.iter().all(|card| card.first_action.is_none()));
+        assert!(view.cards.iter().all(|card| card.raw_sub_block.is_empty()));
+    }
+
+    #[test]
+    fn default_merges_member_evidence_inside_one_repair_unit_block() {
+        let mut request = sample_request();
+        request.document.diagnostics = vec![
+            grouped_error_node(
+                "lead",
+                "legacy-lead",
+                "src/main.cpp",
+                2,
+                "specific compiler message",
+            ),
+            grouped_error_node(
+                "candidate",
+                "legacy-candidate",
+                "include/lib.hpp",
+                20,
+                "candidate declaration",
+            ),
+        ];
+        install_repair_units(&mut request, vec![vec!["lead", "candidate"]]);
+        let view = build_view_model(&request).unwrap();
+        assert_eq!(view.cards.len(), 1);
+        assert_eq!(view.cards[0].title, "specific compiler message");
+        assert!(
+            view.cards[0]
+                .child_notes
+                .iter()
+                .any(|line| line.contains("candidate declaration"))
+                || view.cards[0]
+                    .collapsed_notices
+                    .iter()
+                    .any(|line| line.contains("candidate"))
+        );
+    }
+
+    #[test]
+    fn repair_unit_count_and_information_survive_width_unicode_tabs_and_color() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n\treturn 表 + missing;\n}\n",
+        );
+        let mut expected_mentions = None;
+        let ansi_pattern = regex::Regex::new("\\x1b\\[[0-9;]*m").unwrap();
+        for width in [60usize, 80, 100, 140] {
+            for ansi_color in [false, true] {
+                let mut request = sample_request();
+                request.cwd = Some(tempdir.path().to_path_buf());
+                request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+                request.capabilities.width_columns = Some(width);
+                request.capabilities.ansi_color = ansi_color;
+                request.document.diagnostics[0].locations =
+                    vec![sample_location("src/main.c", 2, 17, Ownership::User)];
+                request.document.diagnostics[0].message.raw_text =
+                    "specific unicode diagnostic".into();
+                install_repair_units(&mut request, vec![vec!["root"]]);
+                let view = build_view_model(&request).unwrap();
+                assert_eq!(view.cards.len(), 1);
+                assert_eq!(view.cards[0].raw_message, "specific unicode diagnostic");
+                assert!(view.cards[0].excerpts.iter().any(|excerpt| {
+                    excerpt
+                        .lines
+                        .iter()
+                        .any(|line| line.contains("表 + missing"))
+                }));
+                let output = render(request).unwrap().text;
+                let information = ansi_pattern.replace_all(&output, "").into_owned();
+                let mentions = information.matches("specific unicode diagnostic").count();
+                assert!(mentions > 0);
+                if let Some(expected) = expected_mentions {
+                    assert_eq!(mentions, expected);
+                } else {
+                    expected_mentions = Some(mentions);
+                }
+            }
         }
     }
 

@@ -22,6 +22,19 @@ Default failure output renders exactly one block per visible `RepairUnit`. Suppo
 low-support や omission の合図ではなく、分類語彙に依存せず primary location、raw message、
 structured child、fix-it を提示する互換表示である。
 
+Default/Concise/CI selection consumes `repair_analysis.repair_units` directly: every visible
+`RepairUnit` produces exactly one expanded block, and the renderer must not recompute membership or
+move a visible unit to summary-only to satisfy a line budget. The lead compiler message is the block
+subject; family headline and generic first-action text cannot replace it. Other member diagnostics
+become supporting evidence inside that block, preserving declaration/candidate/frontier/linker
+locations and raw provenance.
+
+Content priority is primary location/severity/compiler message, trustworthy native or reconstructed
+source excerpt with caret/ranges, compiler-grounded edit/facts, minimal supporting evidence, then a
+count only for evidence actually compacted. RepairUnit blocks do not repeat raw sub-blocks or generic
+rerun advice; raw disclosure is a run-level affordance. Passthrough remains byte-faithful. Color may
+add emphasis but never information, and width changes may wrap content without changing unit count.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

@@ -73,6 +73,15 @@ pub fn select_groups_with_presentation_policy(
         });
     }
 
+    if matches!(
+        request.profile,
+        RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci
+    ) && let Some(selection) =
+        select_repair_units(request, &diagnostics, suppressed_warning_count)
+    {
+        return selection;
+    }
+
     if let Some(selection) = select_episode_groups(
         request,
         presentation_policy,
@@ -91,6 +100,97 @@ pub fn select_groups_with_presentation_policy(
         has_failure,
         suppressed_warning_count,
     )
+}
+
+fn select_repair_units(
+    request: &RenderRequest,
+    diagnostics: &[DiagnosticNode],
+    suppressed_warning_count: usize,
+) -> Option<Selection> {
+    let repair = request
+        .document
+        .document_analysis
+        .as_ref()?
+        .repair_analysis
+        .as_ref()?;
+    if repair.repair_units.is_empty() {
+        return None;
+    }
+    let nodes = diagnostic_node_index(&request.document.diagnostics);
+    let order = request
+        .document
+        .diagnostics
+        .iter()
+        .enumerate()
+        .map(|(index, node)| (format!("node:{}", node.id), index))
+        .collect::<BTreeMap<_, _>>();
+    let allowed = diagnostics
+        .iter()
+        .map(|node| node.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut units = repair
+        .repair_units
+        .iter()
+        .filter(|unit| unit.visible)
+        .filter_map(|unit| {
+            let lead_id = unit.lead_evidence_ref.strip_prefix("node:")?;
+            let mut lead = (*nodes.get(lead_id)?).clone();
+            if !allowed.contains(lead.id.as_str()) && matches!(lead.severity, Severity::Warning) {
+                return None;
+            }
+            let existing_children = lead
+                .children
+                .iter()
+                .map(|child| child.id.clone())
+                .collect::<BTreeSet<_>>();
+            for member in &unit.member_evidence_refs {
+                let Some(member_id) = member.strip_prefix("node:") else {
+                    continue;
+                };
+                if member_id == lead.id || existing_children.contains(member_id) {
+                    continue;
+                }
+                if let Some(node) = nodes.get(member_id) {
+                    let mut supporting = (*node).clone();
+                    supporting.semantic_role = SemanticRole::Supporting;
+                    lead.children.push(supporting);
+                }
+            }
+            if let Some(analysis) = lead.analysis.as_mut() {
+                analysis.group_ref = Some(unit.repair_unit_ref.clone());
+            }
+            Some((
+                order
+                    .get(&unit.lead_evidence_ref)
+                    .copied()
+                    .unwrap_or(usize::MAX),
+                unit.repair_unit_ref.clone(),
+                lead,
+            ))
+        })
+        .collect::<Vec<_>>();
+    units.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
+    Some(Selection {
+        cards: units.into_iter().map(|(_, _, node)| node).collect(),
+        summary_only_cards: Vec::new(),
+        suppressed_warning_count,
+        hidden_group_count: 0,
+        collapsed_notices_by_group_ref: BTreeMap::new(),
+    })
+}
+
+fn diagnostic_node_index(diagnostics: &[DiagnosticNode]) -> BTreeMap<String, &DiagnosticNode> {
+    fn visit<'a>(node: &'a DiagnosticNode, out: &mut BTreeMap<String, &'a DiagnosticNode>) {
+        out.insert(node.id.clone(), node);
+        for child in &node.children {
+            visit(child, out);
+        }
+    }
+    let mut nodes = BTreeMap::new();
+    for node in diagnostics {
+        visit(node, &mut nodes);
+    }
+    nodes
 }
 
 fn legacy_select_groups(
