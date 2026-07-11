@@ -282,7 +282,7 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
 }
 
 #[test]
-fn probe_confirmed_dual_sink_on_fake_gcc13_backend_uses_same_run_structured_path() {
+fn probe_confirmed_add_output_on_fake_gcc13_backend_keeps_native_text_default() {
     let temp = fixture_with_probe_help(
         "13.3.0",
         "  -fdiagnostics-add-output=[sarif:version=2.1,file=PATH]",
@@ -301,10 +301,10 @@ fn probe_confirmed_dual_sink_on_fake_gcc13_backend_uses_same_run_structured_path
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()).not())
+        .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
         .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains("help: fix the first parser error"))
-        .stderr(predicate::str::contains("raw:\n").not());
+        .stderr(predicate::str::contains("raw:\n"));
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
@@ -314,10 +314,10 @@ fn probe_confirmed_dual_sink_on_fake_gcc13_backend_uses_same_run_structured_path
     assert_eq!(trace["environment_summary"]["version_band"], "gcc13_14");
     assert_eq!(
         trace["environment_summary"]["processing_path"],
-        "dual_sink_structured"
+        "native_text_capture"
     );
     assert!(
-        trace["environment_summary"]["injected_flags"]
+        !trace["environment_summary"]["injected_flags"]
             .as_array()
             .unwrap()
             .iter()
@@ -327,7 +327,7 @@ fn probe_confirmed_dual_sink_on_fake_gcc13_backend_uses_same_run_structured_path
     );
     assert_eq!(
         trace["parser_result_summary"]["status"].as_str(),
-        Some("parsed")
+        Some("compatibility")
     );
 }
 
@@ -1423,7 +1423,12 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     );
     assert_eq!(
         report["backend"]["allowed_processing_paths"],
-        serde_json::json!(["dual_sink_structured", "passthrough"])
+        serde_json::json!([
+            "dual_sink_structured",
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough"
+        ])
     );
     assert_eq!(report["backend"]["support_level"], "in_scope");
     assert_eq!(

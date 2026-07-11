@@ -41,7 +41,12 @@ fn public_json_writes_available_export_to_file() {
         "gcc15",
         "dual_sink_structured",
         "in_scope",
-        &["dual_sink_structured", "passthrough"],
+        &[
+            "dual_sink_structured",
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough",
+        ],
     );
     assert!(
         export["result"]["summary"]["diagnostic_count"]
@@ -83,7 +88,12 @@ fn public_json_writes_available_export_to_stdout() {
         "gcc15",
         "dual_sink_structured",
         "in_scope",
-        &["dual_sink_structured", "passthrough"],
+        &[
+            "dual_sink_structured",
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough",
+        ],
     );
     assert!(
         export["result"]["summary"]["error_count"]
@@ -100,7 +110,12 @@ fn public_json_keeps_required_execution_fields_across_representative_band_paths(
             Vec::<&str>::new(),
             "gcc15",
             "dual_sink_structured",
-            vec!["dual_sink_structured", "passthrough"],
+            vec![
+                "dual_sink_structured",
+                "single_sink_structured",
+                "native_text_capture",
+                "passthrough",
+            ],
             Some("structured"),
             Some("none"),
         ),
@@ -249,7 +264,12 @@ fn public_json_writes_unavailable_export_for_passthrough_mode() {
         "gcc15",
         "passthrough",
         "in_scope",
-        &["dual_sink_structured", "passthrough"],
+        &[
+            "dual_sink_structured",
+            "single_sink_structured",
+            "native_text_capture",
+            "passthrough",
+        ],
     );
     assert_eq!(export["invocation"]["exit_status"].as_i64(), Some(1));
     assert!(export["execution"]["source_authority"].is_null());

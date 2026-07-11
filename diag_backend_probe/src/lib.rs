@@ -552,7 +552,10 @@ fn capability_facts_for_version_band(
             native_text_capture: true,
             json_diagnostics: false,
             sarif_diagnostics: true,
-            dual_sink: add_output_sarif_supported,
+            // GCC 13-14 stays on the documented native-text default.  An
+            // observed add-output spelling is not enough to promote this
+            // band into the GCC 15 dual-sink product path.
+            dual_sink: false,
             tty_color_control: true,
             caret_control: false,
             parseable_fixits: false,
@@ -613,15 +616,13 @@ fn allowed_processing_paths_for_capability_facts(
     let mut paths = BTreeSet::new();
 
     if capabilities.dual_sink {
-        // Prefer the safest same-run structured path when dual-sink is available.
         paths.insert(ProcessingPath::DualSinkStructured);
-    } else {
-        if capabilities.native_text_capture {
-            paths.insert(ProcessingPath::NativeTextCapture);
-        }
-        if capabilities.sarif_diagnostics || capabilities.json_diagnostics {
-            paths.insert(ProcessingPath::SingleSinkStructured);
-        }
+    }
+    if capabilities.native_text_capture {
+        paths.insert(ProcessingPath::NativeTextCapture);
+    }
+    if capabilities.sarif_diagnostics || capabilities.json_diagnostics {
+        paths.insert(ProcessingPath::SingleSinkStructured);
     }
 
     paths.insert(ProcessingPath::Passthrough);
@@ -1084,7 +1085,7 @@ mod tests {
     }
 
     #[test]
-    fn band_b_probe_uses_observed_add_output_support_to_enable_dual_sink() {
+    fn band_b_probe_does_not_promote_observed_add_output_support_to_dual_sink() {
         let probe = ProbeResult {
             requested_backend: "gcc-formed".to_string(),
             resolved_path: PathBuf::from("/usr/bin/gcc-14"),
@@ -1105,15 +1106,16 @@ mod tests {
         let profile = probe.capability_profile();
         assert_eq!(profile.version_band, VersionBand::Gcc13_14);
         assert!(profile.sarif_diagnostics);
-        assert!(profile.dual_sink);
+        assert!(!profile.dual_sink);
         assert_eq!(
             profile.default_processing_path,
-            ProcessingPath::DualSinkStructured
+            ProcessingPath::NativeTextCapture
         );
         assert_eq!(
             profile.allowed_processing_paths,
             BTreeSet::from([
-                ProcessingPath::DualSinkStructured,
+                ProcessingPath::NativeTextCapture,
+                ProcessingPath::SingleSinkStructured,
                 ProcessingPath::Passthrough,
             ])
         );
