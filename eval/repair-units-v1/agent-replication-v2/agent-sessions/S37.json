@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "session_id": "S37",
+  "evaluator_type": "isolated_agent",
+  "blinded": true,
+  "trials": [
+    {
+      "schema_version": 1,
+      "packet_id": "P01",
+      "fixture_id": "repair-unit-exact-count/single/case-02",
+      "language": "c",
+      "shape": "repeated_evidence",
+      "defect_count": 1,
+      "source_files": {
+        "src/main.c": "int use_1(void) { return missing_single_2_1; }\nint use_2(void) { return missing_single_2_1; }\nint use_3(void) { return missing_single_2_1; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "B",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_single_2_1\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_1\u2019:\n    1 | int use_1(void) { return missing_single_2_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:26: error: \u2018missing_single_2_1\u2019 undeclared (first use in this function) @ main.c:1:26\n| main.c:1:26\n| int use_1(void) { return missing_single_2_1; }\n|                          ^\nnote: src/main.c:1:26: note: each undeclared identifier is reported only once for each function it appears in\nnote: src/main.c:2:26: error: \u2018missing_single_2_1\u2019 undeclared (first use in this function)\nnote: omitted 1 additional note(s)\ndetails: --formed-explain | raw: --formed-raw\n"
+      },
+      "packet_sha256": "db85e30f152c700519871455f29f04075ab307cf4b2d4e2727a153817b5f786b",
+      "trial_sha256": "dc3b57ce74ed9d68c7c319a56b5c510b0573f44ef9a75c13354d7aa8c78ca1e7"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P02",
+      "fixture_id": "repair-unit-exact-count/single/case-03",
+      "language": "cpp",
+      "shape": "repeated_evidence",
+      "defect_count": 1,
+      "source_files": {
+        "src/main.cpp": "int use_1(void) { return missing_single_3_1; }\nint use_2(void) { return missing_single_3_1; }\nint use_3(void) { return missing_single_3_1; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "C",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [missing_name] \u2018missing_single_3_1\u2019 was not declared in this scope\nsrc/main.cpp: In function \u2018int use_1()\u2019:\n    1 | int use_1(void) { return missing_single_3_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nname: missing_single_3_1 @ main.cpp:1:26\nuse : int use_1(void) { return missing_single_3_1; }\n| main.cpp:1:26\n| int use_1(void) { return missing_single_3_1; }\n|                          ^\ndetails: --formed-explain | raw: --formed-raw\n"
+      },
+      "packet_sha256": "d32de056943eca5b9960e4fd687ba479d5eab7a6227e3d6f03df106a0839b4c5",
+      "trial_sha256": "2b85b50d8fefcdb7047e763ab6f4b419c20449d4523287d45dd4d68fc81f5f6b"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P03",
+      "fixture_id": "repair-unit-exact-count/single/case-04",
+      "language": "c",
+      "shape": "repeated_evidence",
+      "defect_count": 1,
+      "source_files": {
+        "src/main.c": "int use_1(void) { return missing_single_4_1; }\nint use_2(void) { return missing_single_4_1; }\nint use_3(void) { return missing_single_4_1; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "A",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "src/main.c: In function \u2018use_1\u2019:\nsrc/main.c:1:26: error: \u2018missing_single_4_1\u2019 undeclared (first use in this function)\n    1 | int use_1(void) { return missing_single_4_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nsrc/main.c:1:26: note: each undeclared identifier is reported only once for each function it appears in\nsrc/main.c: In function \u2018use_2\u2019:\nsrc/main.c:2:26: error: \u2018missing_single_4_1\u2019 undeclared (first use in this function)\n    2 | int use_2(void) { return missing_single_4_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nsrc/main.c: In function \u2018use_3\u2019:\nsrc/main.c:3:26: error: \u2018missing_single_4_1\u2019 undeclared (first use in this function)\n    3 | int use_3(void) { return missing_single_4_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\n"
+      },
+      "packet_sha256": "9393cf9297b79734f0bb1ea22a8d8afb0a05f2e0503e5e5d5712414c0f1d4574",
+      "trial_sha256": "85abbcf09ecf0b02a63f87a58d50e86c8e6e3e70e5c4e07b63d97e82dd3a275e"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P04",
+      "fixture_id": "repair-unit-exact-count/single/case-08",
+      "language": "c",
+      "shape": "repeated_evidence",
+      "defect_count": 1,
+      "source_files": {
+        "src/main.c": "int use_1(void) { return missing_single_8_1; }\nint use_2(void) { return missing_single_8_1; }\nint use_3(void) { return missing_single_8_1; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "B",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_single_8_1\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_1\u2019:\n    1 | int use_1(void) { return missing_single_8_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:26: error: \u2018missing_single_8_1\u2019 undeclared (first use in this function) @ main.c:1:26\n| main.c:1:26\n| int use_1(void) { return missing_single_8_1; }\n|                          ^\nnote: src/main.c:1:26: note: each undeclared identifier is reported only once for each function it appears in\nnote: src/main.c:2:26: error: \u2018missing_single_8_1\u2019 undeclared (first use in this function)\nnote: omitted 1 additional note(s)\ndetails: --formed-explain | raw: --formed-raw\n"
+      },
+      "packet_sha256": "6edc3d93420e27d82074711724044f0102ad9db7b329a24f6befbaf1b05d1447",
+      "trial_sha256": "e21c613e6bb5b9618aa000ed974a08ff94436273e6715340f7cb3c4e22aaf4f8"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P05",
+      "fixture_id": "repair-unit-exact-count/double/case-02",
+      "language": "c",
+      "shape": "adjacent_same_family",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.c": "int use_1(void) { return missing_double_2_1; }\nint use_2(void) { return missing_double_2_2; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "C",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_double_2_1\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_1\u2019:\n    1 | int use_1(void) { return missing_double_2_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:26: error: \u2018missing_double_2_1\u2019 undeclared (first use in this function) @ main.c:1:26\n| main.c:1:26\n| int use_1(void) { return missing_double_2_1; }\n|                          ^\nnote: src/main.c:1:26: note: each undeclared identifier is reported only once for each function it appears in\n\nerror: [compiler.residual] \u2018missing_double_2_2\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_2\u2019:\n    2 | int use_2(void) { return missing_double_2_2; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:2:26: error: \u2018missing_double_2_2\u2019 undeclared (first use in this function) @ main.c:2:26\n| main.c:2:26\n| int use_2(void) { return missing_double_2_2; }\n|                          ^\n"
+      },
+      "packet_sha256": "9f00e7d3d71f8631811c29a0930cc314eea16824e0d603777dbfe38c9a6df73c",
+      "trial_sha256": "658962b400556d4cf2f6b4ad9281529f2b4c16d4a553645234c30e492cbe27bd"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P06",
+      "fixture_id": "repair-unit-exact-count/double/case-06",
+      "language": "cpp",
+      "shape": "adjacent_same_family",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.cpp": "int use_1(void) { return missing_double_6_1; }\nint use_2(void) { return missing_double_6_2; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "A",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "src/main.cpp: In function \u2018int use_1()\u2019:\nsrc/main.cpp:1:26: error: \u2018missing_double_6_1\u2019 was not declared in this scope\n    1 | int use_1(void) { return missing_double_6_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nsrc/main.cpp: In function \u2018int use_2()\u2019:\nsrc/main.cpp:2:26: error: \u2018missing_double_6_2\u2019 was not declared in this scope\n    2 | int use_2(void) { return missing_double_6_2; }\n      |                          ^~~~~~~~~~~~~~~~~~\n"
+      },
+      "packet_sha256": "4c3e2e6de19718f860910fe640ef1c07772d3abaf8613ee5024cd4b3580930b1",
+      "trial_sha256": "32c8383e9eb81113a941ed80d53a5a553b3e2594c4e9ba5a5e64f45b0d0ce633"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P07",
+      "fixture_id": "repair-unit-exact-count/triple/case-02",
+      "language": "c",
+      "shape": "adjacent_same_family",
+      "defect_count": 3,
+      "source_files": {
+        "src/main.c": "int use_1(void) { return missing_triple_2_1; }\nint use_2(void) { return missing_triple_2_2; }\nint use_3(void) { return missing_triple_2_3; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "B",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_triple_2_1\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_1\u2019:\n    1 | int use_1(void) { return missing_triple_2_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:26: error: \u2018missing_triple_2_1\u2019 undeclared (first use in this function) @ main.c:1:26\n| main.c:1:26\n| int use_1(void) { return missing_triple_2_1; }\n|                          ^\nnote: src/main.c:1:26: note: each undeclared identifier is reported only once for each function it appears in\n\nerror: [compiler.residual] \u2018missing_triple_2_2\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_2\u2019:\n    2 | int use_2(void) { return missing_triple_2_2; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:2:26: error: \u2018missing_triple_2_2\u2019 undeclared (first use in this function) @ main.c:2:26\n| main.c:2:26\n| int use_2(void) { return missing_triple_2_2; }\n|                          ^\n\nerror: [compiler.residual] \u2018missing_triple_2_3\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018use_3\u2019:\n    3 | int use_3(void) { return missing_triple_2_3; }\n      |                          ^~~~~~~~~~~~~~~~~~\nraw : src/main.c:3:26: error: \u2018missing_triple_2_3\u2019 undeclared (first use in this function) @ main.c:3:26\n| main.c:3:26\n| int use_3(void) { return missing_triple_2_3; }\n|                          ^\n"
+      },
+      "packet_sha256": "7f660b5dfd56f5f35698a1fddb053d5a5d95afbc982a9cae75991bb62662319f",
+      "trial_sha256": "f190de95beab28e9430c41365e48d6680081b2405b40f757bbb58f1dd863f547"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P08",
+      "fixture_id": "repair-unit-exact-count/triple/case-06",
+      "language": "cpp",
+      "shape": "adjacent_same_family",
+      "defect_count": 3,
+      "source_files": {
+        "src/main.cpp": "int use_1(void) { return missing_triple_6_1; }\nint use_2(void) { return missing_triple_6_2; }\nint use_3(void) { return missing_triple_6_3; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "C",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [missing_name] \u2018missing_triple_6_1\u2019 was not declared in this scope\nsrc/main.cpp: In function \u2018int use_1()\u2019:\n    1 | int use_1(void) { return missing_triple_6_1; }\n      |                          ^~~~~~~~~~~~~~~~~~\nname: missing_triple_6_1 @ main.cpp:1:26\nuse : int use_1(void) { return missing_triple_6_1; }\n| main.cpp:1:26\n| int use_1(void) { return missing_triple_6_1; }\n|                          ^\n\nerror: [missing_name] \u2018missing_triple_6_2\u2019 was not declared in this scope\nsrc/main.cpp: In function \u2018int use_2()\u2019:\n    2 | int use_2(void) { return missing_triple_6_2; }\n      |                          ^~~~~~~~~~~~~~~~~~\nname: missing_triple_6_2 @ main.cpp:2:26\nuse : int use_2(void) { return missing_triple_6_2; }\n| main.cpp:2:26\n| int use_2(void) { return missing_triple_6_2; }\n|                          ^\n\nerror: [missing_name] \u2018missing_triple_6_3\u2019 was not declared in this scope\nsrc/main.cpp: In function \u2018int use_3()\u2019:\n    3 | int use_3(void) { return missing_triple_6_3; }\n      |                          ^~~~~~~~~~~~~~~~~~\nname: missing_triple_6_3 @ main.cpp:3:26\nuse : int use_3(void) { return missing_triple_6_3; }\n| main.cpp:3:26\n| int use_3(void) { return missing_triple_6_3; }\n|                          ^\n"
+      },
+      "packet_sha256": "e59e1d3f11d7d6f3056982508b09167f5b435a38b9d6786bf672e65e5c7eec53",
+      "trial_sha256": "bba92b34c2f4152cfcdbce8b180f8b54788dce0dde232b52c09c012846955473"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P09",
+      "fixture_id": "direct-link-order-c/case-04",
+      "language": "c",
+      "shape": "missing_library_link_order",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.c": "int missing_project_symbol_64_a(void); int main(void) { return missing_project_symbol_64_a(); }\n",
+        "src/worker.c": "int missing_project_symbol_64_b(void); int worker(void) { return missing_project_symbol_64_b(); }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "A",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "/usr/bin/ld: <temp>: in function `main':\nmain.c:(.text+<addr>): undefined reference to `missing_project_symbol_64_a'\n/usr/bin/ld: <temp>: in function `worker':\nworker.c:(.text+<addr>): undefined reference to `missing_project_symbol_64_b'\ncollect2: error: ld returned 1 exit status\n"
+      },
+      "packet_sha256": "aec837d2597bdeab7a18084dad1c25d0feb7ef1451fd62cde75090ea15ae3522",
+      "trial_sha256": "c3553319282f768dcaa5e35a3ad7ae15a4ed706fcdf1e5e56734cdab0c652ca5"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P10",
+      "fixture_id": "make-generated-c/case-04",
+      "language": "c",
+      "shape": "generated_config_header",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.c": "int main(void) { return missing_project_symbol_14_a; }\n",
+        "src/worker.c": "int worker(void) { return missing_project_symbol_14_b; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "B",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_project_symbol_14_a\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018main\u2019:\n    1 | int main(void) { return missing_project_symbol_14_a; }\n      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:25: error: \u2018missing_project_symbol_14_a\u2019 undeclared (first use in this function) @ main.c:1:25\n| main.c:1:25\n| int main(void) { return missing_project_symbol_14_a; }\n|                         ^\nnote: src/main.c:1:25: note: each undeclared identifier is reported only once for each function it appears in\n\nerror: [compiler.residual] \u2018missing_project_symbol_14_b\u2019 undeclared (first use in this function)\nsrc/worker.c: In function \u2018worker\u2019:\n    1 | int worker(void) { return missing_project_symbol_14_b; }\n      |                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nraw : src/worker.c:1:27: error: \u2018missing_project_symbol_14_b\u2019 undeclared (first use in this function) @ worker.c:1:27\n| worker.c:1:27\n| int worker(void) { return missing_project_symbol_14_b; }\n|                           ^\nnote: src/worker.c:1:27: note: each undeclared identifier is reported only once for each function it appears in\n"
+      },
+      "packet_sha256": "3d4a2c3d6df1eef6bba75f0a9cbf2568eeb2fc9156d102f7bc9f736a76620e4b",
+      "trial_sha256": "8f0cdf81f4e5ea3a0629c099752275f1663f1f089aff744d93933b7faf80b670"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P11",
+      "fixture_id": "make-werror-c/case-04",
+      "language": "c",
+      "shape": "warning_as_error",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.c": "int main(void) { return missing_project_symbol_74_a; }\n",
+        "src/worker.c": "int worker(void) { return missing_project_symbol_74_b; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "C",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "note: some compiler details were not fully structured; original diagnostics are preserved\nerror: [compiler.residual] \u2018missing_project_symbol_74_a\u2019 undeclared (first use in this function)\nsrc/main.c: In function \u2018main\u2019:\n    1 | int main(void) { return missing_project_symbol_74_a; }\n      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nraw : src/main.c:1:25: error: \u2018missing_project_symbol_74_a\u2019 undeclared (first use in this function) @ main.c:1:25\n| main.c:1:25\n| int main(void) { return missing_project_symbol_74_a; }\n|                         ^\nnote: src/main.c:1:25: note: each undeclared identifier is reported only once for each function it appears in\n\nerror: [compiler.residual] \u2018missing_project_symbol_74_b\u2019 undeclared (first use in this function)\nsrc/worker.c: In function \u2018worker\u2019:\n    1 | int worker(void) { return missing_project_symbol_74_b; }\n      |                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nraw : src/worker.c:1:27: error: \u2018missing_project_symbol_74_b\u2019 undeclared (first use in this function) @ worker.c:1:27\n| worker.c:1:27\n| int worker(void) { return missing_project_symbol_74_b; }\n|                           ^\nnote: src/worker.c:1:27: note: each undeclared identifier is reported only once for each function it appears in\n"
+      },
+      "packet_sha256": "16fa858a59a277db305d29585c1482d6ede3272ed23b0d61eee5afd1a8bd866e",
+      "trial_sha256": "0a511a5764672e144d10ce3aea639a613a17513ab3b8f74cb3afad212b426561"
+    },
+    {
+      "schema_version": 1,
+      "packet_id": "P12",
+      "fixture_id": "cmake-frontier-cpp/case-04",
+      "language": "cpp",
+      "shape": "system_header_frontier_launcher_path",
+      "defect_count": 2,
+      "source_files": {
+        "src/main.cpp": "int main(void) { return missing_project_symbol_84_a; }\n",
+        "src/worker.cpp": "int worker(void) { return missing_project_symbol_84_b; }\n"
+      },
+      "instruction": "Record the first minimal source edit you would make. Do not request condition identity. Return the edit before any further analysis.",
+      "condition": "A",
+      "diagnostic": {
+        "exit_code": 1,
+        "stdout": "",
+        "stderr": "src/main.cpp: In function \u2018int main()\u2019:\nsrc/main.cpp:1:25: error: \u2018missing_project_symbol_84_a\u2019 was not declared in this scope\n    1 | int main(void) { return missing_project_symbol_84_a; }\n      |                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nsrc/worker.cpp: In function \u2018int worker()\u2019:\nsrc/worker.cpp:1:27: error: \u2018missing_project_symbol_84_b\u2019 was not declared in this scope\n    1 | int worker(void) { return missing_project_symbol_84_b; }\n      |                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+      },
+      "packet_sha256": "0dc5475fdd61252bd92f43f6053bc1cb3bf42160919770263779e77b86a87628",
+      "trial_sha256": "fd0afda1704565179b2fce065198bcb49e2005b27ce0c07d87563148d83ce14e"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ generator.FIXTURES = [
     "corpus/real-project/make-werror-c/case-04",
     "corpus/real-project/cmake-frontier-cpp/case-04",
 ]
-generator.SESSION_COUNT = 24
+generator.SESSION_COUNT = 26
 generator.SESSION_OFFSET = 11
 generator.ANSWER_KEY_PATH = Path("/tmp/repair-unit-agent-replication-answer-key.json")
 generator.CONDITION_KEY_PATH = Path("/tmp/repair-unit-agent-replication-condition-key.json")

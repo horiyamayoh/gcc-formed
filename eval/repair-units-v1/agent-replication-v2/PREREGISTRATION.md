@@ -4,7 +4,12 @@ This replication was frozen after the first confirmatory study returned
 `inconclusive` solely because the simple-task time confidence interval was too
 wide.  It must not replace, exclude, or modify any v1 observation.
 
-- 24 fresh isolated sessions (S12--S35), 12 trials each, 288 trials total.
+- 24 valid fresh isolated sessions are required, 12 trials each, 288 valid
+  trials total.  S12--S35 were frozen initially.  S36--S37 are prospective
+  reserve allocations, frozen before either reserve evaluator starts, because
+  S12 had a recorded pre-extraction transport failure and S26 had a truncated
+  packet hash.  The two invalid sessions remain retained and excluded solely
+  by the pre-existing transport/hash rule.
 - All 12 fixtures are disjoint from v1 and represent different source surface
   forms.  They cover C/C++, one/two/three defects, repeated diagnostics,
   multiple translation/build contexts, warning-as-error, generated input,
