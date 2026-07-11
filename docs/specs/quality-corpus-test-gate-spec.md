@@ -18,6 +18,8 @@ superseded_by: []
 
 RepairUnit correctness is gated by observable-unit count, false merge, false split, and fact loss rather than family-table completeness. Counterfactual repair patches may establish causal ground truth in test harnesses; product runtime must not patch or recompile source. Unknown-family rate and family count are inventory signals, not completion criteria.
 
+The test oracle contract is `repair-oracle.toml` plus canonical `causal-map.json`. It runs baseline, each repair, full repair, and reverse repair order in a temporary copy; non-commutative repairs use explicit interaction groups. Stable defect IDs survive compiler wording drift, while diagnostic alignment combines normalized diagnostic content with the declared repair/anchor/provenance rather than full-message equality. `cargo xtask repair-oracle --root corpus/repair-oracle --check` is the deterministic gate.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

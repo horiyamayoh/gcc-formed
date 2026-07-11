@@ -1,0 +1,7 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -1,3 +1,4 @@
+ int first(void) { return missing_first; }
+ int second(void) { return missing_second; }
++int missing_third = 0;
+ int third(void) { return missing_third; }

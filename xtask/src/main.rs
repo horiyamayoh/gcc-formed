@@ -5,8 +5,8 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*, stable::*,
-    trace_bundle::*,
+    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, rc_gate::*, release::*,
+    repair_oracle::*, stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -164,6 +164,14 @@ enum Commands {
         bundle: PathBuf,
         #[arg(long, default_value = "target/trace-bundle-replay")]
         report_dir: PathBuf,
+    },
+    RepairOracle {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(long)]
+        fixture: Option<String>,
+        #[arg(long)]
+        check: bool,
     },
     Snapshot {
         #[arg(long, default_value = "corpus")]
@@ -500,6 +508,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::ReplayTraceBundle { bundle, report_dir } => {
             let report = run_replay_trace_bundle(&bundle, &report_dir)?;
             eprintln!("{}", serde_json::to_string_pretty(&report)?);
+        }
+        Commands::RepairOracle {
+            root,
+            fixture,
+            check,
+        } => {
+            run_repair_oracle(RepairOracleOptions {
+                root,
+                fixture,
+                check,
+            })?;
         }
         Commands::Snapshot {
             root,

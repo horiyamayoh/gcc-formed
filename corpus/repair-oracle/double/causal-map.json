@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "fixture_id": "repair-oracle/double",
+  "baseline": {
+    "exit_status": 1,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.c",
+      "-o",
+      "main.o"
+    ],
+    "diagnostic_fingerprints": [
+      "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3",
+      "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
+    ]
+  },
+  "defects": [
+    {
+      "defect_id": "missing-first",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/main.c:1"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "gcc",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.c",
+          "-o",
+          "main.o"
+        ],
+        "diagnostic_fingerprints": [
+          "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
+      ],
+      "appeared_fingerprints": []
+    },
+    {
+      "defect_id": "missing-second",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/main.c:2"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "gcc",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.c",
+          "-o",
+          "main.o"
+        ],
+        "diagnostic_fingerprints": [
+          "7695609017cfafcc6ddce91d1c6e7a90aa5e7fde78cef75e50c6d2602f496a32"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "153b65a85a40eac564c4313d0c268c42ae54db692cef6ffc568c6735abcba2e3"
+      ],
+      "appeared_fingerprints": []
+    }
+  ],
+  "fully_repaired": {
+    "exit_status": 0,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.c",
+      "-o",
+      "main.o"
+    ],
+    "diagnostic_fingerprints": []
+  },
+  "independent_patch_order_stable": true,
+  "baseline_comparison": {
+    "raw_gcc_diagnostic_count": 2,
+    "current_formed_visible_count": 2,
+    "oracle_repair_unit_count": 2
+  },
+  "ambiguity": []
+}

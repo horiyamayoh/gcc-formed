@@ -1,0 +1,9 @@
+schema_version = 1
+fixture_id = "repair-oracle/single"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-c", "src/main.c", "-o", "main.o"]
+
+[[defects]]
+defect_id = "missing-one"
+patch = "repairs/one.patch"
+primary_repair_anchors = ["src/main.c:1"]

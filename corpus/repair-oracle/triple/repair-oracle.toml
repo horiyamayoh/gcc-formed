@@ -1,0 +1,19 @@
+schema_version = 1
+fixture_id = "repair-oracle/triple"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.c", "-o", "main.o"]
+
+[[defects]]
+defect_id = "missing-first"
+patch = "repairs/first.patch"
+primary_repair_anchors = ["src/main.c:1"]
+
+[[defects]]
+defect_id = "missing-second"
+patch = "repairs/second.patch"
+primary_repair_anchors = ["src/main.c:2"]
+
+[[defects]]
+defect_id = "missing-third"
+patch = "repairs/third.patch"
+primary_repair_anchors = ["src/main.c:3"]
