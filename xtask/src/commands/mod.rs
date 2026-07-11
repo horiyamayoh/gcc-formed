@@ -5,6 +5,7 @@ pub(crate) mod fuzz;
 pub(crate) mod human_eval;
 pub(crate) mod quality;
 pub(crate) mod rc_gate;
+pub(crate) mod real_project;
 pub(crate) mod release;
 pub(crate) mod repair_oracle;
 pub(crate) mod stable;

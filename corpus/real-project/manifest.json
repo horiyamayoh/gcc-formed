@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "projects": [
+    {
+      "project_id": "make-generated-c",
+      "build_system": "make",
+      "language": "c",
+      "phase": "compile",
+      "scenario_family": "generated_config_header",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "make-generated-c/case-01",
+        "make-generated-c/case-02",
+        "make-generated-c/case-03",
+        "make-generated-c/case-04",
+        "make-generated-c/case-05"
+      ]
+    },
+    {
+      "project_id": "cmake-template-cpp",
+      "build_system": "cmake",
+      "language": "cpp",
+      "phase": "compile",
+      "scenario_family": "template_heavy_cpp",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "cmake-template-cpp/case-01",
+        "cmake-template-cpp/case-02",
+        "cmake-template-cpp/case-03",
+        "cmake-template-cpp/case-04",
+        "cmake-template-cpp/case-05"
+      ]
+    },
+    {
+      "project_id": "direct-multi-tu-c",
+      "build_system": "direct",
+      "language": "c",
+      "phase": "compile",
+      "scenario_family": "repeated_across_translation_units",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "direct-multi-tu-c/case-01",
+        "direct-multi-tu-c/case-02",
+        "direct-multi-tu-c/case-03",
+        "direct-multi-tu-c/case-04",
+        "direct-multi-tu-c/case-05"
+      ]
+    },
+    {
+      "project_id": "make-parallel-c",
+      "build_system": "make",
+      "language": "c",
+      "phase": "compile",
+      "scenario_family": "parallel_independent_files",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "make-parallel-c/case-01",
+        "make-parallel-c/case-02",
+        "make-parallel-c/case-03",
+        "make-parallel-c/case-04",
+        "make-parallel-c/case-05"
+      ]
+    },
+    {
+      "project_id": "cmake-duplicate-symbol-cpp",
+      "build_system": "cmake",
+      "language": "cpp",
+      "phase": "link",
+      "scenario_family": "duplicate_symbol",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "cmake-duplicate-symbol-cpp/case-01",
+        "cmake-duplicate-symbol-cpp/case-02",
+        "cmake-duplicate-symbol-cpp/case-03",
+        "cmake-duplicate-symbol-cpp/case-04",
+        "cmake-duplicate-symbol-cpp/case-05"
+      ]
+    },
+    {
+      "project_id": "direct-link-order-c",
+      "build_system": "direct",
+      "language": "c",
+      "phase": "link",
+      "scenario_family": "missing_library_link_order",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "direct-link-order-c/case-01",
+        "direct-link-order-c/case-02",
+        "direct-link-order-c/case-03",
+        "direct-link-order-c/case-04",
+        "direct-link-order-c/case-05"
+      ]
+    },
+    {
+      "project_id": "make-werror-c",
+      "build_system": "make",
+      "language": "c",
+      "phase": "compile",
+      "scenario_family": "warning_as_error",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "make-werror-c/case-01",
+        "make-werror-c/case-02",
+        "make-werror-c/case-03",
+        "make-werror-c/case-04",
+        "make-werror-c/case-05"
+      ]
+    },
+    {
+      "project_id": "cmake-frontier-cpp",
+      "build_system": "cmake",
+      "language": "cpp",
+      "phase": "compile",
+      "scenario_family": "system_header_frontier_launcher_path",
+      "license": "CC0-1.0",
+      "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+      "redaction": "synthetic relative paths and identifiers only",
+      "reviewer": "horiyamayoh",
+      "repair_owner": "compiler-ux",
+      "network_required": false,
+      "scenarios": [
+        "cmake-frontier-cpp/case-01",
+        "cmake-frontier-cpp/case-02",
+        "cmake-frontier-cpp/case-03",
+        "cmake-frontier-cpp/case-04",
+        "cmake-frontier-cpp/case-05"
+      ]
+    }
+  ],
+  "scenario_count": 40
+}

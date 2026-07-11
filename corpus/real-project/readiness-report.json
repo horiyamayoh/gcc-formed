@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "project_shape_count": 8,
+  "scenario_count": 40,
+  "multi_invocation_scenario_count": 22,
+  "languages": [
+    "c",
+    "cpp"
+  ],
+  "build_systems": [
+    "cmake",
+    "direct",
+    "make"
+  ],
+  "phases": [
+    "compile",
+    "link"
+  ],
+  "license_audit_passed": true,
+  "provenance_audit_passed": true,
+  "redaction_audit_passed": true,
+  "invocation_boundary_audit_passed": true,
+  "network_required": false,
+  "promoted_fixture_count": 40,
+  "oracle_artifact_count": 40,
+  "differential_coverage_report": "repair-unit-coverage.json",
+  "raw_gcc_diagnostic_line_count": 92,
+  "current_default_subject_block_count": 62,
+  "repair_unit_visible_count": 62,
+  "exact_count_fixture_count": 40,
+  "fidelity_fact_coverage": 1.0,
+  "diagnostics_per_subject_block": 1.4838709677419355,
+  "verdict": "pass"
+}

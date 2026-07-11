@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "fixture_id": "direct-link-order-c/case-03",
+  "baseline": {
+    "exit_status": 1,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "src/main.c",
+      "-o",
+      "project-app"
+    ],
+    "raw_top_level_count": 1,
+    "raw_evidence_count": 1,
+    "diagnostic_fingerprints": [
+      "9be1cc278e416a63160a13b813f435621227148dd5d8d5a11f5c7c17cf2884ca"
+    ]
+  },
+  "defects": [
+    {
+      "defect_id": "direct-link-order-c-case-03-defect-1",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/main.c:1"
+      ],
+      "repair_run": {
+        "exit_status": 0,
+        "command": [
+          "gcc",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "src/main.c",
+          "-o",
+          "project-app"
+        ],
+        "raw_top_level_count": 0,
+        "raw_evidence_count": 0,
+        "diagnostic_fingerprints": []
+      },
+      "disappeared_fingerprints": [
+        "9be1cc278e416a63160a13b813f435621227148dd5d8d5a11f5c7c17cf2884ca"
+      ],
+      "appeared_fingerprints": []
+    }
+  ],
+  "fully_repaired": {
+    "exit_status": 0,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "src/main.c",
+      "-o",
+      "project-app"
+    ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
+    "diagnostic_fingerprints": []
+  },
+  "independent_patch_order_stable": true,
+  "baseline_comparison": {
+    "raw_gcc_diagnostic_count": 1,
+    "current_formed_visible_count": 1,
+    "current_formed_displayed_block_count": 1,
+    "current_formed_repair_unit_count": 1,
+    "hidden_independent_evidence_count": 0,
+    "orphan_hidden_evidence_count": 0,
+    "raw_fact_coverage_numerator": 3,
+    "raw_fact_coverage_denominator": 3,
+    "oracle_repair_unit_count": 1
+  },
+  "ambiguity": []
+}

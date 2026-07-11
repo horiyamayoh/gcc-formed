@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "promotion_status": "rejected",
+  "fixture_id": "rejected/unattributed-parallel-stream",
+  "reasons": [
+    "parallel stderr lacks per-invocation attribution",
+    "absolute user path remains in captured evidence",
+    "redistribution license is unverified"
+  ],
+  "promoted": false
+}

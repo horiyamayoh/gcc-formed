@@ -5,8 +5,8 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*, rc_gate::*, release::*,
-    repair_oracle::*, stable::*, trace_bundle::*,
+    check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*, rc_gate::*,
+    real_project::*, release::*, repair_oracle::*, stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -25,6 +25,10 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Check,
+    RealProjectCorpus {
+        #[command(subcommand)]
+        command: RealProjectCorpusCommand,
+    },
     CiGate {
         #[arg(long, value_enum)]
         workflow: CiWorkflow,
@@ -259,6 +263,14 @@ enum Commands {
     SelfCheck,
 }
 
+#[derive(Debug, Subcommand)]
+enum RealProjectCorpusCommand {
+    Verify {
+        #[arg(long, default_value = "corpus/real-project")]
+        root: PathBuf,
+    },
+}
+
 #[derive(Debug, Clone, Copy, ValueEnum, PartialEq, Eq)]
 enum SnapshotSubset {
     All,
@@ -269,6 +281,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
         Commands::Check => run_check()?,
+        Commands::RealProjectCorpus { command } => match command {
+            RealProjectCorpusCommand::Verify { root } => {
+                verify_real_project_corpus(RealProjectVerifyOptions { root })?
+            }
+        },
         Commands::CiGate {
             workflow,
             report_dir,

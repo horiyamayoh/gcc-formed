@@ -1,0 +1,20 @@
+schema_version = 1
+fixture_id = "cmake-template-cpp/case-04"
+compiler = "g++"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.cpp", "src/worker.cpp"]
+language = "cpp"
+diagnostic_shape = "template_heavy_cpp"
+trap_kind = "false_merge"
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc13_14_or_gcc9_12_representative"
+
+[[defects]]
+defect_id = "cmake-template-cpp-case-04-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.cpp:1"]
+
+[[defects]]
+defect_id = "cmake-template-cpp-case-04-defect-2"
+patch = "repairs/defect-2.patch"
+primary_repair_anchors = ["src/worker.cpp:1"]

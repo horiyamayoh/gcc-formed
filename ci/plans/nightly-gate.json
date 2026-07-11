@@ -323,10 +323,10 @@
       "name": "RepairUnit full exact-count quality gate",
       "policy": "always",
       "failure_classification": "product",
-      "command": "cargo xtask repair-oracle --root corpus --check && cargo xtask quality-report --root corpus --format json > \"$REPORT_ROOT/gate/repair-unit-quality.json\"",
+      "command": "cargo xtask repair-oracle --root corpus --check && cargo xtask quality-report --root corpus --format json > \"$REPORT_ROOT/gate/repair-unit-quality.json\" && cargo xtask real-project-corpus verify > \"$REPORT_ROOT/gate/real-project-readiness.json\" && cargo xtask repair-oracle --root corpus/real-project --check && cargo xtask quality-report --root corpus/real-project --format json > \"$REPORT_ROOT/gate/real-project-quality.json\"",
       "fixture": "repair-oracle:all",
       "gcc_version": "${MATRIX_GCC_VERSION}",
-      "artifact_paths": ["$REPORT_ROOT/gate/repair-unit-quality.json"],
+      "artifact_paths": ["$REPORT_ROOT/gate/repair-unit-quality.json", "$REPORT_ROOT/gate/real-project-readiness.json", "$REPORT_ROOT/gate/real-project-quality.json"],
       "gate_scope": "matrix",
       "version_band": "${MATRIX_VERSION_BAND}"
     }

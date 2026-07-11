@@ -1,0 +1,15 @@
+schema_version = 1
+fixture_id = "cmake-frontier-cpp/case-03"
+compiler = "g++"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.cpp"]
+language = "cpp"
+diagnostic_shape = "system_header_frontier_launcher_path"
+trap_kind = "false_split"
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc13_14_or_gcc9_12_representative"
+
+[[defects]]
+defect_id = "cmake-frontier-cpp-case-03-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.cpp:1"]

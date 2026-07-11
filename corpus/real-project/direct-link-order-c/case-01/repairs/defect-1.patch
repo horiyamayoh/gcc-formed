@@ -1,0 +1,5 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -1 +1 @@
+-int missing_project_symbol_61_a(void); int main(void) { return missing_project_symbol_61_a(); }
++int missing_project_symbol_61_a(void) { return 0; } int main(void) { return missing_project_symbol_61_a(); }

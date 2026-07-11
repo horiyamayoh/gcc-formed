@@ -8,6 +8,11 @@ supersedes: []
 superseded_by: []
 ---
 
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: RepairUnit identity, observable-defect scope, suppression proof, and migration decisions.
+> Do not use for: Historical score-first or family-completeness behavior.
+
 # ADR-0037: RepairUnit is the product identity
 
 - Status: **Accepted**

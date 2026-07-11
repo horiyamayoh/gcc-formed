@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "fixture_id": "cmake-frontier-cpp/case-05",
+  "baseline": {
+    "exit_status": 1,
+    "command": [
+      "g++",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.cpp",
+      "src/worker.cpp"
+    ],
+    "raw_top_level_count": 2,
+    "raw_evidence_count": 2,
+    "diagnostic_fingerprints": [
+      "0ea06d8383fdc4abe385bdfdc3c62dbafbd4d19e0c09bed27f9a23b0d60c1c12",
+      "eac1a00bc974a667a7059839400f83659578750b432a3b28dcea90bc4f1942a3"
+    ]
+  },
+  "defects": [
+    {
+      "defect_id": "cmake-frontier-cpp-case-05-defect-1",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/main.cpp:1"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "g++",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.cpp",
+          "src/worker.cpp"
+        ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 1,
+        "diagnostic_fingerprints": [
+          "0ea06d8383fdc4abe385bdfdc3c62dbafbd4d19e0c09bed27f9a23b0d60c1c12"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "eac1a00bc974a667a7059839400f83659578750b432a3b28dcea90bc4f1942a3"
+      ],
+      "appeared_fingerprints": []
+    },
+    {
+      "defect_id": "cmake-frontier-cpp-case-05-defect-2",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/worker.cpp:1"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "g++",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.cpp",
+          "src/worker.cpp"
+        ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 1,
+        "diagnostic_fingerprints": [
+          "eac1a00bc974a667a7059839400f83659578750b432a3b28dcea90bc4f1942a3"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "0ea06d8383fdc4abe385bdfdc3c62dbafbd4d19e0c09bed27f9a23b0d60c1c12"
+      ],
+      "appeared_fingerprints": []
+    }
+  ],
+  "fully_repaired": {
+    "exit_status": 0,
+    "command": [
+      "g++",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.cpp",
+      "src/worker.cpp"
+    ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
+    "diagnostic_fingerprints": []
+  },
+  "independent_patch_order_stable": true,
+  "baseline_comparison": {
+    "raw_gcc_diagnostic_count": 2,
+    "current_formed_visible_count": 2,
+    "current_formed_displayed_block_count": 2,
+    "current_formed_repair_unit_count": 2,
+    "hidden_independent_evidence_count": 0,
+    "orphan_hidden_evidence_count": 0,
+    "raw_fact_coverage_numerator": 2,
+    "raw_fact_coverage_denominator": 2,
+    "oracle_repair_unit_count": 2
+  },
+  "ambiguity": []
+}

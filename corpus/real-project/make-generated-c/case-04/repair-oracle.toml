@@ -1,0 +1,20 @@
+schema_version = 1
+fixture_id = "make-generated-c/case-04"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "-c", "src/main.c", "src/worker.c"]
+language = "c"
+diagnostic_shape = "generated_config_header"
+trap_kind = "false_merge"
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc15_direct"
+
+[[defects]]
+defect_id = "make-generated-c-case-04-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.c:1"]
+
+[[defects]]
+defect_id = "make-generated-c-case-04-defect-2"
+patch = "repairs/defect-2.patch"
+primary_repair_anchors = ["src/worker.c:1"]

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "fixture_id": "make-parallel-c/case-02",
+  "project_id": "make-parallel-c",
+  "build_system": "make",
+  "language": "c",
+  "phase": "compile",
+  "scenario_family": "missing_library_duplicate_symbol_link_order",
+  "multi_invocation": true,
+  "invocation_boundary": "one compiler argv per captured invocation; parallel streams carry invocation_id",
+  "license": "CC0-1.0",
+  "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+  "redaction": "synthetic relative paths and identifiers only",
+  "reviewer": "horiyamayoh",
+  "repair_owner": "compiler-ux",
+  "network_required": false,
+  "promotion_status": "reviewed",
+  "unknown_unresolved_retention": "retain_with_raw_capture"
+}

@@ -8,6 +8,11 @@ supersedes: []
 superseded_by: []
 ---
 
+> [!IMPORTANT]
+> Authority: `current-authority` / `accepted-baseline`
+> Use for: RepairUnit exact-count corpus coverage and review rules.
+> Do not use for: Runtime grouping behavior or family completeness claims.
+
 # RepairUnit exact-count corpus coverage
 
 The authoritative artifact is `corpus/repair-unit-exact-count/repair-unit-coverage.json`; snapshots are secondary.

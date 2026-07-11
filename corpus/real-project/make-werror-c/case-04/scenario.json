@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "fixture_id": "make-werror-c/case-04",
+  "project_id": "make-werror-c",
+  "build_system": "make",
+  "language": "c",
+  "phase": "compile",
+  "scenario_family": "macro_heavy_c",
+  "multi_invocation": true,
+  "invocation_boundary": "one compiler argv per captured invocation; parallel streams carry invocation_id",
+  "license": "CC0-1.0",
+  "provenance": "purpose-built minimized extract modeled on common open-source build topology; no third-party source copied",
+  "redaction": "synthetic relative paths and identifiers only",
+  "reviewer": "horiyamayoh",
+  "repair_owner": "compiler-ux",
+  "network_required": false,
+  "promotion_status": "reviewed",
+  "unknown_unresolved_retention": "retain_with_raw_capture"
+}

@@ -1,0 +1,15 @@
+schema_version = 1
+fixture_id = "direct-link-order-c/case-03"
+compiler = "gcc"
+args = ["-fdiagnostics-color=never", "-fmax-errors=0", "src/main.c", "-o", "project-app"]
+language = "c"
+diagnostic_shape = "missing_library_link_order"
+trap_kind = "false_split"
+reviewer = "horiyamayoh"
+owner = "compiler-ux"
+version_evidence = "gcc13_14_or_gcc9_12_representative"
+
+[[defects]]
+defect_id = "direct-link-order-c-case-03-defect-1"
+patch = "repairs/defect-1.patch"
+primary_repair_anchors = ["src/main.c:1"]

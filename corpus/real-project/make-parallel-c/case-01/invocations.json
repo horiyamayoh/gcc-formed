@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "parallel_capture": true,
+  "attribution_precedes_repair_unit_inference": true,
+  "invocations": [
+    {
+      "invocation_id": "invocation-1",
+      "translation_unit": "src/main.c",
+      "argv": [
+        "gcc",
+        "-fdiagnostics-color=never",
+        "-c",
+        "src/main.c"
+      ],
+      "stderr_span_ref": "raw/1.stderr"
+    },
+    {
+      "invocation_id": "invocation-2",
+      "translation_unit": "src/worker.c",
+      "argv": [
+        "gcc",
+        "-fdiagnostics-color=never",
+        "-c",
+        "src/worker.c"
+      ],
+      "stderr_span_ref": "raw/2.stderr"
+    }
+  ]
+}

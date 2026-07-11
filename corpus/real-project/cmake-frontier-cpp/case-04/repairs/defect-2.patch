@@ -1,0 +1,5 @@
+--- a/src/worker.cpp
++++ b/src/worker.cpp
+@@ -1 +1 @@
+-int worker(void) { return missing_project_symbol_84_b; }
++int worker(void) { return 0; }

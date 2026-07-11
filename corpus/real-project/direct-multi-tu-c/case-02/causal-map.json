@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "fixture_id": "direct-multi-tu-c/case-02",
+  "baseline": {
+    "exit_status": 1,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.c",
+      "src/worker.c"
+    ],
+    "raw_top_level_count": 2,
+    "raw_evidence_count": 4,
+    "diagnostic_fingerprints": [
+      "498ed7d40196f140ee7397931b18f6f0b96a7f7c333716fad6ae3f08629365a8",
+      "eb5bd4b7309b150f389be5e31291d31623a68d03252f0bb59ea5ce6597d34d6e"
+    ]
+  },
+  "defects": [
+    {
+      "defect_id": "direct-multi-tu-c-case-02-defect-1",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/main.c:1"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "gcc",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.c",
+          "src/worker.c"
+        ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 2,
+        "diagnostic_fingerprints": [
+          "eb5bd4b7309b150f389be5e31291d31623a68d03252f0bb59ea5ce6597d34d6e"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "498ed7d40196f140ee7397931b18f6f0b96a7f7c333716fad6ae3f08629365a8"
+      ],
+      "appeared_fingerprints": []
+    },
+    {
+      "defect_id": "direct-multi-tu-c-case-02-defect-2",
+      "independently_applicable": true,
+      "interaction_group": null,
+      "observable": true,
+      "primary_repair_anchors": [
+        "src/worker.c:1"
+      ],
+      "repair_run": {
+        "exit_status": 1,
+        "command": [
+          "gcc",
+          "-fdiagnostics-color=never",
+          "-fmax-errors=0",
+          "-c",
+          "src/main.c",
+          "src/worker.c"
+        ],
+        "raw_top_level_count": 1,
+        "raw_evidence_count": 2,
+        "diagnostic_fingerprints": [
+          "498ed7d40196f140ee7397931b18f6f0b96a7f7c333716fad6ae3f08629365a8"
+        ]
+      },
+      "disappeared_fingerprints": [
+        "eb5bd4b7309b150f389be5e31291d31623a68d03252f0bb59ea5ce6597d34d6e"
+      ],
+      "appeared_fingerprints": []
+    }
+  ],
+  "fully_repaired": {
+    "exit_status": 0,
+    "command": [
+      "gcc",
+      "-fdiagnostics-color=never",
+      "-fmax-errors=0",
+      "-c",
+      "src/main.c",
+      "src/worker.c"
+    ],
+    "raw_top_level_count": 0,
+    "raw_evidence_count": 0,
+    "diagnostic_fingerprints": []
+  },
+  "independent_patch_order_stable": true,
+  "baseline_comparison": {
+    "raw_gcc_diagnostic_count": 2,
+    "current_formed_visible_count": 2,
+    "current_formed_displayed_block_count": 2,
+    "current_formed_repair_unit_count": 2,
+    "hidden_independent_evidence_count": 0,
+    "orphan_hidden_evidence_count": 0,
+    "raw_fact_coverage_numerator": 2,
+    "raw_fact_coverage_denominator": 2,
+    "oracle_repair_unit_count": 2
+  },
+  "ambiguity": []
+}
