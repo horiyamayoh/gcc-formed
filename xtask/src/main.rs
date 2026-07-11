@@ -232,6 +232,10 @@ enum Commands {
         #[arg(long, default_value = "target/human-eval")]
         report_dir: PathBuf,
     },
+    HumanEval {
+        #[command(subcommand)]
+        command: HumanEvalCommand,
+    },
     RcGate {
         #[arg(long, default_value = "corpus")]
         root: PathBuf,
@@ -274,6 +278,24 @@ enum RealProjectCorpusCommand {
     Verify {
         #[arg(long, default_value = "corpus/real-project")]
         root: PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum HumanEvalCommand {
+    Validate {
+        #[arg(long)]
+        study: String,
+    },
+    Export {
+        #[arg(long)]
+        study: String,
+        #[arg(long)]
+        anonymize: bool,
+    },
+    Analyze {
+        #[arg(long)]
+        study: String,
     },
 }
 
@@ -615,6 +637,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }))?
             );
         }
+        Commands::HumanEval { command } => match command {
+            HumanEvalCommand::Validate { study } => {
+                run_human_eval_study_command("validate", &study, false)?
+            }
+            HumanEvalCommand::Export { study, anonymize } => {
+                run_human_eval_study_command("export", &study, anonymize)?
+            }
+            HumanEvalCommand::Analyze { study } => {
+                run_human_eval_study_command("analyze", &study, false)?
+            }
+        },
         Commands::RcGate {
             root,
             report_dir,

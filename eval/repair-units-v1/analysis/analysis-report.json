@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "study": "repair-units-v1",
+  "recommendation": "inconclusive",
+  "promotion_blocked": true,
+  "reasons": [
+    "valid trials 0 < 80",
+    "participants 0 < 8",
+    "condition key is not revealed/valid"
+  ]
+}

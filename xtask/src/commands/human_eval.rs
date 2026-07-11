@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const HUMAN_EVAL_SCHEMA_VERSION: u32 = 4;
@@ -217,6 +218,40 @@ pub(crate) fn run_human_eval_kit(
     )?;
 
     Ok(report)
+}
+
+pub(crate) fn run_human_eval_study_command(
+    command_name: &str,
+    study: &str,
+    anonymize: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if study != "repair-units-v1" {
+        return Err(format!("unknown human-eval study {study}").into());
+    }
+    let root = PathBuf::from("eval").join(study);
+    let script = root.join("study.py");
+    let mut command = Command::new("python3");
+    command
+        .arg(&script)
+        .arg(command_name)
+        .arg("--root")
+        .arg(&root);
+    if command_name == "export" {
+        if !anonymize {
+            return Err("human-eval export requires --anonymize".into());
+        }
+        command
+            .arg("--anonymize")
+            .arg("--output")
+            .arg(root.join("export"));
+    } else if command_name == "analyze" {
+        command.arg("--output").arg(root.join("analysis"));
+    }
+    let status = command.status()?;
+    if !status.success() {
+        return Err(format!("human-eval {command_name} did not pass").into());
+    }
+    Ok(())
 }
 
 pub(crate) fn human_eval_kit_is_complete(report: &HumanEvalKitReport) -> bool {
