@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "session_id": "S09-confirmatory",
+  "trials": [
+    {
+      "trial_index": 0,
+      "packet_id": "P01",
+      "condition": "C",
+      "packet_sha256": "1e8a0253d0e7d62e020ef26074dbd1b6858183166e185b4c81a49afc01920871",
+      "trial_sha256": "bf7d542aa362915053467db61c0db30b6c8c47ac9fee43589235bb07d6f06a28",
+      "started_at": "1783788621.852665461",
+      "first_edit_at": "1783788630.111105596",
+      "edit": {"file": "src/main.c", "start_line": 1, "end_line": 1, "replacement": "int missing_single_1_1 = 0;\nint use_1(void) { return missing_single_1_1; }"},
+      "confidence": 0.99,
+      "irrelevant_lines": ["compiler-details preservation note", "raw diagnostic caret/context", "undeclared-identifier repetition note", "omitted-note count", "details hint"],
+      "raw": "src/main.c:1:26: error: ‘missing_single_1_1’ undeclared (first use in this function)",
+      "explain0": "One undeclared identifier is reused by all three functions; define it once before the functions.",
+      "abandoned": [],
+      "transport_error": null
+    },
+    {
+      "trial_index": 1, "packet_id": "P02", "condition": "A",
+      "packet_sha256": "b1b42aa13c0fd714308789f90b92a5b8b74ac8fb224ea2127ed365edee3699c6", "trial_sha256": "1ee4faedb3a54852ab276e7016911df6f8af23d862939ad3fc5ebde56cc8d9be",
+      "started_at": "1783788644.679863725", "first_edit_at": "1783788649.726466943",
+      "edit": {"file": "src/main.cpp", "start_line": 1, "end_line": 1, "replacement": "int main(void) { int value = 0; return value; }"},
+      "confidence": 1.0, "irrelevant_lines": ["function context", "source echo", "caret"],
+      "raw": "src/main.cpp:1:32: error: expected ‘,’ or ‘;’ before ‘return’", "explain0": "Insert the missing semicolon after the initializer.", "abandoned": [], "transport_error": null
+    },
+    {
+      "trial_index": 2, "packet_id": "P03", "condition": "B", "packet_sha256": "5fac346e332db9dbc682ff1232cc6679bc1c95ea89f94647b93cfbc41cb02975", "trial_sha256": "6f709e6e49e3262a9eca98613f3d896911f73d5a70dd6e3f196b37ed4ade868c",
+      "started_at": "1783788661.260247308", "first_edit_at": "1783788664.276458413",
+      "edit": {"file": "src/main.cpp", "start_line": 2, "end_line": 2, "replacement": "int main() { call(1, 0); }"},
+      "confidence": 0.98, "irrelevant_lines": ["preservation note", "function context", "source/caret renderings", "wrapper-confidence note", "declaration-location note"], "raw": "src/main.cpp:2:18: error: too few arguments to function ‘void call(int, int)’", "explain0": "Supply the missing second int argument.", "abandoned": [], "transport_error": null
+    },
+    {
+      "trial_index": 3, "packet_id": "P04", "condition": "C", "packet_sha256": "5621ddf47b0ee0eec9e4c4563815a15a655f602e40b6063f325cc529962aa207", "trial_sha256": "22de1a7d3b641074c066c6caacb3c9fcdfcd24304ca6c5dea63d4b05fc998487",
+      "started_at": "1783788676.925788256", "first_edit_at": "1783788680.308023020",
+      "edit": {"file": "src/main.cpp", "start_line": 2, "end_line": 2, "replacement": "int main() { int value = 1; take(&value); }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "function context", "source/caret renderings", "internal template frame count"], "raw": "src/main.cpp:2:18: error: no matching function for call to ‘take(int)’", "explain0": "The template requires a pointer; create an int and pass its address.", "abandoned": [], "transport_error": null
+    },
+    {
+      "trial_index": 4, "packet_id": "P05", "condition": "A", "packet_sha256": "144d9a190bde2bfef4faebd857b1c5dd48fa7f6aaa0410dad654ca394681422d", "trial_sha256": "3d60421219823be65e0aec2d7d674e33f34860959f2c51a0cc8a74bf6df23d3a",
+      "started_at": "1783788693.886474014", "first_edit_at": "1783788696.881353876", "edit": {"file": "src/main.cpp", "start_line": 1, "end_line": 1, "replacement": "#define BAD_VALUE 0"},
+      "confidence": 1.0, "irrelevant_lines": ["function context", "source/caret renderings", "macro-expansion note"], "raw": "src/main.cpp:1:19: error: ‘missing_macro_value’ was not declared in this scope", "explain0": "Replace the macro's undeclared replacement token with a valid integer value.", "abandoned": [], "transport_error": null
+    },
+    {
+      "trial_index": 5, "packet_id": "P06", "condition": "B", "packet_sha256": "38a6bf123905a49a529f0ac51469a0dcdf8047c51887a12867515429d7b031a7", "trial_sha256": "9dd3edbb0859f09737974a0f8485e315a0c98cd94246925412c5b18915a42372",
+      "started_at": "1783788710.243007820", "first_edit_at": "1783788712.813428989", "edit": {"file": "src/main.c", "start_line": 1, "end_line": 1, "replacement": "int missing_double_1_1 = 0;\nint use_1(void) { return missing_double_1_1; }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "function contexts", "source/caret renderings", "undeclared-identifier repetition note", "second independent diagnostic for later repair"], "raw": "src/main.c:1:26: error: ‘missing_double_1_1’ undeclared (first use in this function)", "explain0": "First repair the first independent undeclared identifier by defining it before use.", "abandoned": ["repair missing_double_1_2 in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 6, "packet_id": "P07", "condition": "C", "packet_sha256": "00f347d8444b5b215a5331532f51180472796b0620531b31e81769fbeb2c2859", "trial_sha256": "2edc71dc4bd13f1002892f438e104a7375aaacbc8f4c9f6ac1601035463e6a13",
+      "started_at": "1783788725.414143159", "first_edit_at": "1783788728.171120602", "edit": {"file": "src/main.cpp", "start_line": 1, "end_line": 1, "replacement": "int missing_double_3_1 = 0;\nint use_1(void) { return missing_double_3_1; }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "function contexts", "source/name/use/caret renderings", "second independent diagnostic for later repair"], "raw": "‘missing_double_3_1’ was not declared in this scope", "explain0": "Define the first missing name before its first use.", "abandoned": ["repair missing_double_3_2 in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 7, "packet_id": "P08", "condition": "A", "packet_sha256": "6084bbf2ed747bdd852955b82994dfe48343f960825ecbe825fb9c8aa45d38f5", "trial_sha256": "c7b983b87b69831ebce94e0a37b6d3cdeb1f7d9ccfd0b5b8e00ff34cccc2f0b4",
+      "started_at": "1783788740.603060967", "first_edit_at": "1783788743.403895577", "edit": {"file": "src/main.c", "start_line": 1, "end_line": 1, "replacement": "int missing_link_a(void) { return 0; } int missing_link_b(void);"},
+      "confidence": 0.98, "irrelevant_lines": ["temporary object/function context", "normalized addresses", "second undefined reference for later repair", "collect2 summary"], "raw": "main.c:(.text+<addr>): undefined reference to `missing_link_a'", "explain0": "Provide a definition for the first unresolved function.", "abandoned": ["define missing_link_b in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 8, "packet_id": "P09", "condition": "B", "packet_sha256": "66c79a4c596a38831a2655416dfb5236b94769eddd8b58813fe19ed2e18133d0", "trial_sha256": "e254ad310b7653401b36ae9eac4c7b51cdbc11c81dec1f5aecd119be0b87020d",
+      "started_at": "1783788756.198011726", "first_edit_at": "1783788758.993982508", "edit": {"file": "src/main.c", "start_line": 1, "end_line": 1, "replacement": "int missing_triple_1_1 = 0;\nint use_1(void) { return missing_triple_1_1; }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "function contexts", "source/caret renderings", "undeclared-identifier repetition note", "second and third independent diagnostics for later repair"], "raw": "src/main.c:1:26: error: ‘missing_triple_1_1’ undeclared (first use in this function)", "explain0": "Define the first missing identifier before its use.", "abandoned": ["repair missing_triple_1_2 and missing_triple_1_3 in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 9, "packet_id": "P10", "condition": "C", "packet_sha256": "560658491c3de5a4b7777a5a9410da6e0c8e749ae44a80c42d64ab73802b98ac", "trial_sha256": "6cbfe7bdffaf283757614cb01845187d9fcce6a98226a84381541a979c7cf5b4",
+      "started_at": "1783788774.587692828", "first_edit_at": "1783788777.682936385", "edit": {"file": "src/main.cpp", "start_line": 1, "end_line": 1, "replacement": "int missing_triple_3_1 = 0;\nint use_1(void) { return missing_triple_3_1; }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "function contexts", "source/name/use/caret renderings", "second and third independent diagnostics for later repair"], "raw": "‘missing_triple_3_1’ was not declared in this scope", "explain0": "Define the first missing name before its use.", "abandoned": ["repair missing_triple_3_2 and missing_triple_3_3 in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 10, "packet_id": "P11", "condition": "A", "packet_sha256": "33ffbd8f663f4dbcf6acf944b73b8879aab88d35d2670598820011917b5cd618", "trial_sha256": "cfbdfec0df16c1e9221a3363cb63616cc103f3b40bff5ab35480684fecfa7677",
+      "started_at": "1783788794.856343081", "first_edit_at": "1783788799.474391143", "edit": {"file": "src/main.c", "start_line": 1, "end_line": 1, "replacement": "int missing_project_symbol_34_a = 0;\nint main(void) { return missing_project_symbol_34_a; }"},
+      "confidence": 0.99, "irrelevant_lines": ["function contexts", "source/caret renderings", "undeclared-identifier repetition notes", "worker translation-unit diagnostic for later repair"], "raw": "src/main.c:1:25: error: ‘missing_project_symbol_34_a’ undeclared (first use in this function)", "explain0": "Define the missing symbol in the first translation unit before its use.", "abandoned": ["repair src/worker.c in the same edit"], "transport_error": null
+    },
+    {
+      "trial_index": 11, "packet_id": "P12", "condition": "B", "packet_sha256": "385128186d3eb4b20318b335e96d5cde4992a4732ec1a35f651c2fad23e1f288", "trial_sha256": "5c50ef47a60435cad9041478affb72c0fa152695920a667e1a78c95673bdc642",
+      "started_at": "1783788812.040256859", "first_edit_at": "1783788815.216092605", "edit": {"file": "src/main.cpp", "start_line": 1, "end_line": 1, "replacement": "int missing_project_symbol_54_a(void) { return 0; } int main(void) { return missing_project_symbol_54_a(); }"},
+      "confidence": 0.99, "irrelevant_lines": ["preservation note", "normalized address", "symbol/from reformulation", "worker undefined reference for later repair", "details hint"], "raw": "main.cpp:(.text+<addr>): undefined reference to `missing_project_symbol_54_a()'", "explain0": "Replace the first declaration with a definition to satisfy the first unresolved symbol.", "abandoned": ["repair src/worker.cpp in the same edit"], "transport_error": null
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "sequence": 1,
+    "packet_id": "P01",
+    "fixture_id": "repair-unit-exact-count/single/case-01",
+    "edit": {
+      "file": "src/main.c",
+      "line": 1,
+      "old": "missing_single_1_1",
+      "new": "0"
+    },
+    "confidence": 0.98,
+    "start_ms": 1783787297855,
+    "finish_ms": 1783787317296,
+    "delta_ms": 19441,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 2,
+    "packet_id": "P02",
+    "fixture_id": "repair-unit-exact-count/single/case-09",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 1,
+      "old": "0 return",
+      "new": "0; return"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787394881,
+    "finish_ms": 1783787405169,
+    "delta_ms": 10288,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 3,
+    "packet_id": "P03",
+    "fixture_id": "repair-unit-exact-count/single/case-10",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 2,
+      "old": "call(1)",
+      "new": "call(1, 0)"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787486592,
+    "finish_ms": 1783787493928,
+    "delta_ms": 7336,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 4,
+    "packet_id": "P04",
+    "fixture_id": "repair-unit-exact-count/single/case-11",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 2,
+      "old": "take(1)",
+      "new": "take((int*)0)"
+    },
+    "confidence": 0.95,
+    "start_ms": 1783787548848,
+    "finish_ms": 1783787564649,
+    "delta_ms": 15801,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 5,
+    "packet_id": "P05",
+    "fixture_id": "repair-unit-exact-count/single/case-12",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 1,
+      "old": "missing_macro_value",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787621160,
+    "finish_ms": 1783787627417,
+    "delta_ms": 6257,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 6,
+    "packet_id": "P06",
+    "fixture_id": "repair-unit-exact-count/double/case-01",
+    "edit": {
+      "file": "src/main.c",
+      "line": 1,
+      "old": "missing_double_1_1",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787675739,
+    "finish_ms": 1783787684802,
+    "delta_ms": 9063,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 7,
+    "packet_id": "P07",
+    "fixture_id": "repair-unit-exact-count/double/case-03",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 1,
+      "old": "missing_double_3_1",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787726766,
+    "finish_ms": 1783787736322,
+    "delta_ms": 9556,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 8,
+    "packet_id": "P08",
+    "fixture_id": "repair-unit-exact-count/double/case-10",
+    "edit": {
+      "file": "src/main.c",
+      "line": 2,
+      "old": "missing_link_a()",
+      "new": "0"
+    },
+    "confidence": 0.99,
+    "start_ms": 1783787800837,
+    "finish_ms": 1783787807714,
+    "delta_ms": 6877,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 9,
+    "packet_id": "P09",
+    "fixture_id": "repair-unit-exact-count/triple/case-01",
+    "edit": {
+      "file": "src/main.c",
+      "line": 1,
+      "old": "missing_triple_1_1",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787856805,
+    "finish_ms": 1783787863562,
+    "delta_ms": 6757,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 10,
+    "packet_id": "P10",
+    "fixture_id": "repair-unit-exact-count/triple/case-03",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 1,
+      "old": "missing_triple_3_1",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783787936272,
+    "finish_ms": 1783787947310,
+    "delta_ms": 11038,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 11,
+    "packet_id": "P11",
+    "fixture_id": "direct-multi-tu-c/case-04",
+    "edit": {
+      "file": "src/main.c",
+      "line": 1,
+      "old": "missing_project_symbol_34_a",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783788002794,
+    "finish_ms": 1783788010225,
+    "delta_ms": 7431,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  },
+  {
+    "sequence": 12,
+    "packet_id": "P12",
+    "fixture_id": "cmake-duplicate-symbol-cpp/case-04",
+    "edit": {
+      "file": "src/main.cpp",
+      "line": 1,
+      "old": "missing_project_symbol_54_a()",
+      "new": "0"
+    },
+    "confidence": 1.0,
+    "start_ms": 1783788068992,
+    "finish_ms": 1783788076375,
+    "delta_ms": 7383,
+    "irrelevant_lines_inspected": 0,
+    "raw_requests": 0,
+    "explain_requests": 0,
+    "abandoned": false,
+    "transport_error": false
+  }
+]

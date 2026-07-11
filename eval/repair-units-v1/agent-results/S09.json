@@ -1,0 +1,22 @@
+{
+  "session_id": "S09",
+  "transport_error": "trial extraction failed at index 0 because jq is unavailable; stopped immediately to preserve required sequencing",
+  "trials": [
+    {
+      "index": 0,
+      "condition": null,
+      "packet": null,
+      "hash": null,
+      "edit": null,
+      "confidence": null,
+      "timestamp_before_ms": 1783788195881,
+      "timestamp_after_ms": 1783788206567,
+      "delta_ms": 10686,
+      "irrelevant_lines": [],
+      "raw": 0,
+      "explain": 0,
+      "abandoned": true,
+      "transport_error": "jq: command not found"
+    }
+  ]
+}
