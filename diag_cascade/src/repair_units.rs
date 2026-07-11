@@ -14,6 +14,7 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
     ensure_evidence_records(document);
     add_syntax_fixit_edges(document);
     add_structural_frontier_edges(document);
+    add_linker_symbol_edges(document);
     add_exact_duplicate_edges(document);
 
     let Some(graph) = document
@@ -247,8 +248,11 @@ fn is_must_link(edge: &EvidenceEdge) -> bool {
                 | EvidenceEdgeKind::ContextFrontier
                 | EvidenceEdgeKind::ExactDuplicate
                 | EvidenceEdgeKind::SymbolRelation
+                | EvidenceEdgeKind::InferredDependency
         )
         && !matches!(edge.authority, EvidenceAuthority::Heuristic)
+        && (edge.kind != EvidenceEdgeKind::InferredDependency
+            || edge.authority == EvidenceAuthority::WrapperInferred)
 }
 
 fn independent_anchor_conflict(
@@ -259,7 +263,10 @@ fn independent_anchor_conflict(
 ) -> bool {
     if matches!(
         kind,
-        EvidenceEdgeKind::ExactDuplicate | EvidenceEdgeKind::SameFixitSpan
+        EvidenceEdgeKind::ExactDuplicate
+            | EvidenceEdgeKind::SameFixitSpan
+            | EvidenceEdgeKind::SymbolRelation
+            | EvidenceEdgeKind::InferredDependency
     ) {
         return false;
     }
@@ -448,6 +455,99 @@ fn context_frame_anchor(frame: &diag_core::ContextFrame) -> Option<String> {
         frame.line?,
         frame.column.unwrap_or(1)
     ))
+}
+
+fn add_linker_symbol_edges(document: &mut DiagnosticDocument) {
+    let mut symbols = BTreeMap::<String, Vec<(String, EvidenceAuthority)>>::new();
+    let mut concrete = Vec::new();
+    let mut summaries = Vec::new();
+    for node in &document.diagnostics {
+        if node.phase != diag_core::Phase::Link {
+            continue;
+        }
+        let reference = format!("node:{}", node.id);
+        if node.origin == diag_core::Origin::Driver && node.symbol_context.is_none() {
+            summaries.push(reference);
+            continue;
+        }
+        let Some(symbol) = node
+            .symbol_context
+            .as_ref()
+            .and_then(|context| context.primary_symbol.as_deref())
+        else {
+            continue;
+        };
+        concrete.push(reference.clone());
+        symbols.entry(canonical_symbol(symbol)).or_default().push((
+            reference,
+            if matches!(
+                node.provenance.source,
+                diag_core::ProvenanceSource::ResidualText
+            ) {
+                EvidenceAuthority::TextParserDerived
+            } else {
+                EvidenceAuthority::StructuredAdapterDerived
+            },
+        ));
+    }
+    let Some(repair) = document
+        .document_analysis
+        .as_mut()
+        .and_then(|analysis| analysis.repair_analysis.as_mut())
+    else {
+        return;
+    };
+    for (symbol, mut refs) in symbols {
+        refs.sort_by(|left, right| left.0.cmp(&right.0));
+        refs.dedup_by(|left, right| left.0 == right.0);
+        for right in refs.iter().skip(1) {
+            let left = &refs[0];
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("linker-symbol:{}->{}:{symbol}", left.0, right.0),
+                from_evidence_ref: left.0.clone(),
+                to_evidence_ref: right.0.clone(),
+                kind: EvidenceEdgeKind::SymbolRelation,
+                authority: if left.1 == EvidenceAuthority::TextParserDerived
+                    || right.1 == EvidenceAuthority::TextParserDerived
+                {
+                    EvidenceAuthority::TextParserDerived
+                } else {
+                    EvidenceAuthority::StructuredAdapterDerived
+                },
+                proof_class: RepairProofClass::Proven,
+                evidence_tags: vec![format!("canonical_symbol:{symbol}")],
+            });
+        }
+    }
+    if let Some(parent) = concrete.into_iter().min() {
+        for summary in summaries {
+            repair.evidence_graph.edges.push(EvidenceEdge {
+                edge_ref: format!("linker-summary:{parent}->{summary}"),
+                from_evidence_ref: parent.clone(),
+                to_evidence_ref: summary,
+                kind: EvidenceEdgeKind::InferredDependency,
+                authority: EvidenceAuthority::WrapperInferred,
+                proof_class: RepairProofClass::Proven,
+                evidence_tags: vec!["driver_exit_summary".into()],
+            });
+        }
+    }
+    repair
+        .evidence_graph
+        .edges
+        .sort_by(|left, right| left.edge_ref.cmp(&right.edge_ref));
+    repair
+        .evidence_graph
+        .edges
+        .dedup_by(|left, right| left.edge_ref == right.edge_ref);
+}
+
+fn canonical_symbol(symbol: &str) -> String {
+    symbol
+        .trim_matches(|character: char| {
+            character.is_whitespace() || character == '`' || character == '\''
+        })
+        .replace("\u{1b}[0m", "")
 }
 
 fn add_exact_duplicate_edges(document: &mut DiagnosticDocument) {

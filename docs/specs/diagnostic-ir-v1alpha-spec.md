@@ -852,6 +852,20 @@ responsibility is ambiguous, both anchors remain available and the unit stays `n
 stronger compiler evidence establishes otherwise. Expected/actual facts require labeled structured
 ranges or signatures and must not be synthesized from a family/message category.
 
+#### Linker symbol relation
+
+Linker repair identity is the adapter-provided canonical/mangled `primary_symbol` (or explicit
+library/object request identity), not demangled display text, family, line order, or invocation-wide
+phase. All reference/definition nodes for one canonical symbol form a `SymbolRelation / Proven`
+unit while distinct symbols remain distinct. Member locations and related objects are retained.
+Exact repeated lines retain multiplicity through separate evidence refs.
+
+A generic driver exit summary may join one concrete linker unit through a
+`WrapperInferred / Proven` dependency so it creates no extra visible unit. If no concrete linker
+evidence exists, the summary remains an unresolved visible unit. Missing libraries or incompatible
+objects only compose multiple symbols when explicit linker/adapter evidence identifies the shared
+cause; phase/order alone never does. Unknown linker dialects preserve generic units and raw capture.
+
 ### 15.3 `EpisodeGraph`
 
 | フィールド | 型 | 必須 | 意味 |

@@ -1018,6 +1018,151 @@ mod tests {
         );
     }
 
+    fn linker_node(id: &str, symbol: &str, line: u32) -> DiagnosticNode {
+        let mut node = sample_node(
+            id,
+            "linker wording is not identity",
+            Origin::Linker,
+            Phase::Link,
+            "unknown",
+            Some("src/main.c"),
+            Some(line),
+            Ownership::User,
+        );
+        node.symbol_context = Some(SymbolContext {
+            primary_symbol: Some(symbol.into()),
+            related_objects: vec![format!("obj-{line}.o")],
+            archive: None,
+        });
+        node
+    }
+
+    #[test]
+    fn linker_same_symbol_from_multiple_locations_is_one_repair_unit() {
+        let mut document = sample_document(vec![
+            linker_node("ref-a", "_Z7missingv", 4),
+            linker_node("ref-b", "_Z7missingv", 17),
+        ]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        assert_eq!(
+            repair.repair_units[0].member_evidence_refs,
+            ["node:ref-a", "node:ref-b"]
+        );
+        assert_eq!(repair.repair_units[0].primary_repair_anchors.len(), 2);
+    }
+
+    #[test]
+    fn linker_two_symbols_stay_separate_and_driver_summary_adds_no_unit() {
+        let mut summary = sample_node(
+            "driver-summary",
+            "arbitrary localized driver exit",
+            Origin::Driver,
+            Phase::Link,
+            "unknown",
+            None,
+            None,
+            Ownership::Unknown,
+        );
+        summary.node_completeness = NodeCompleteness::Partial;
+        let mut document = sample_document(vec![
+            linker_node("missing-a", "missing_a", 4),
+            linker_node("missing-b", "missing_b", 5),
+            summary,
+        ]);
+        infer_repair_units(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 2);
+        assert!(repair.repair_units.iter().any(|unit| {
+            unit.member_evidence_refs
+                .contains(&"node:driver-summary".into())
+        }));
+        assert_eq!(
+            repair
+                .repair_units
+                .iter()
+                .flat_map(|unit| &unit.member_evidence_refs)
+                .count(),
+            3
+        );
+    }
+
+    #[test]
+    fn linker_summary_only_and_unsupported_dialect_remain_visible() {
+        let mut summary = sample_node(
+            "summary-only",
+            "opaque linker dialect",
+            Origin::Driver,
+            Phase::Link,
+            "unknown",
+            None,
+            None,
+            Ownership::Unknown,
+        );
+        summary.provenance.source = ProvenanceSource::ResidualText;
+        let mut document = sample_document(vec![summary]);
+        infer_repair_units(&mut document);
+        let unit = &document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap()
+            .repair_units[0];
+        assert!(unit.visible);
+        assert_eq!(unit.proof_class, RepairProofClass::Unresolved);
+        assert_eq!(
+            unit.visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+    }
+
+    #[test]
+    fn linker_multiple_definitions_merge_by_canonical_symbol_not_order() {
+        let nodes = vec![
+            linker_node("definition-z", "shared", 20),
+            linker_node("definition-a", "shared", 2),
+        ];
+        let mut forward = sample_document(nodes.clone());
+        let mut reverse = sample_document(nodes.into_iter().rev().collect());
+        infer_repair_units(&mut forward);
+        infer_repair_units(&mut reverse);
+        let project = |document: &DiagnosticDocument| {
+            document
+                .document_analysis
+                .as_ref()
+                .unwrap()
+                .repair_analysis
+                .as_ref()
+                .unwrap()
+                .repair_units
+                .iter()
+                .map(|unit| {
+                    unit.member_evidence_refs
+                        .iter()
+                        .cloned()
+                        .collect::<BTreeSet<_>>()
+                })
+                .collect::<BTreeSet<_>>()
+        };
+        assert_eq!(project(&forward), project(&reverse));
+        assert_eq!(project(&forward).len(), 1);
+    }
+
     #[test]
     fn logical_group_extraction_is_deterministic() {
         let mut same_file_left = sample_node(
