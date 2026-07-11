@@ -491,7 +491,7 @@ fn multi_root_compile_failure_contract_tracks_counts_and_profile_diffs() {
     assert!(
         default_output
             .text
-            .contains("raw: rerun with --formed-profile=raw_fallback")
+            .contains("details: --formed-explain | raw: --formed-raw")
     );
 
     let (_ci_dir, ci_request) = multi_root_compile_failure_case(RenderProfile::Ci);
@@ -559,9 +559,9 @@ fn multi_root_compile_failure_contract_tracks_counts_and_profile_diffs() {
             .contains("note: omitted 1 follow-on diagnostic(s)")
     );
     assert!(
-        verbose_output
+        !verbose_output
             .text
-            .contains("raw: rerun with --formed-profile=raw_fallback")
+            .contains("details: --formed-explain | raw: --formed-raw")
     );
 }
 

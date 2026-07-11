@@ -73,7 +73,7 @@ help: compare the expected type and actual argument at the call site
 want: int, int
 got : int
 via : void takes(int, int) @ src/main.cpp:1:6  +3 candidates
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw
 ```
 
 ### 2. リンカーエラー（C）
@@ -94,7 +94,7 @@ error: [linker] multiple definition of `duplicate`
 help  : remove the duplicate definition or make the symbol internal to one translation unit
 symbol: duplicate
 from  : helper.c:(.text+0x0)
-raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output
+details: --formed-explain | raw: --formed-raw
 ```
 
 ### 3. 改善しない方が誠実なケース（passthrough / fail-open）

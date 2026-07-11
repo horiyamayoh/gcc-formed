@@ -149,7 +149,7 @@ pub fn disclosure_policy_for(profile: RenderProfile) -> DisclosurePolicy {
     DisclosurePolicy {
         partial_document_notice: "note: some compiler details were not fully structured; original diagnostics are preserved",
         low_confidence_notice: "note: wrapper confidence is low; verify against the preserved raw diagnostics",
-        raw_diagnostics_hint: "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output",
+        raw_diagnostics_hint: "details: --formed-explain | raw: --formed-raw",
         truncation_notice: match profile {
             RenderProfile::Debug => {
                 "note: omitted additional details even under --formed-profile=debug; inspect the preserved raw diagnostics"

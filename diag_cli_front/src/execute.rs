@@ -73,7 +73,20 @@ fn real_main() -> Result<i32, CliError> {
         &parsed.forwarded_args,
     )?;
 
+    if parsed.raw_alias {
+        return passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?);
+    }
+
     if is_compiler_introspection(&parsed.forwarded_args) {
+        if parsed
+            .forwarded_args
+            .iter()
+            .any(|argument| argument == "--help")
+        {
+            println!(
+                "gcc-formed disclosure: --formed-raw (exact compiler output), --formed-explain (all RepairUnit evidence)"
+            );
+        }
         let exit_code =
             passthrough_inherit(&plan.backend, &parsed.forwarded_args, &env::current_dir()?)?;
         let export_context = export_context_for_unavailable(

@@ -343,12 +343,13 @@ mod tests {
     use diag_core::{
         AnalysisOverlay, ArtifactKind, ArtifactStorage, BoundarySemantics, CaptureArtifact,
         CompressionLevel, ContextChain, ContextChainKind, ContextFrame, DiagnosticDocument,
-        DiagnosticEpisode, DocumentAnalysis, DocumentCompleteness, EpisodeGraph, EvidenceRecord,
-        EvidenceTarget, GroupCascadeAnalysis, GroupCascadeRole, Location, MessageText,
-        NodeCompleteness, Origin, Ownership, Phase, ProducerInfo, Provenance, ProvenanceSource,
-        RepairObservability, RepairProofClass, RepairUnit, RepairUnitAnalysis, RepairUnitStats,
-        RunInfo, SemanticRole, Severity, Suggestion, SuggestionApplicability,
-        SuppressedCountVisibility, SymbolContext, TextEdit, ToolInfo, VisibilityFloor,
+        DiagnosticEpisode, DocumentAnalysis, DocumentCompleteness, EpisodeGraph, EvidenceAuthority,
+        EvidenceEdge, EvidenceEdgeKind, EvidenceRecord, EvidenceTarget, GroupCascadeAnalysis,
+        GroupCascadeRole, Location, MessageText, NodeCompleteness, Origin, Ownership, Phase,
+        ProducerInfo, Provenance, ProvenanceSource, RepairObservability, RepairProofClass,
+        RepairUnit, RepairUnitAnalysis, RepairUnitStats, RunInfo, SemanticRole, Severity,
+        Suggestion, SuggestionApplicability, SuppressedCountVisibility, SymbolContext, TextEdit,
+        ToolInfo, VisibilityFloor,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -869,6 +870,49 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn explain_prints_complete_repair_membership_raw_refs_and_relation_authority() {
+        let mut request = sample_request();
+        request.profile = RenderProfile::Debug;
+        request.document.diagnostics = vec![
+            grouped_error_node("lead", "legacy-lead", "src/main.c", 2, "lead message"),
+            grouped_error_node(
+                "member",
+                "legacy-member",
+                "src/main.c",
+                2,
+                "member evidence",
+            ),
+        ];
+        install_repair_units(&mut request, vec![vec!["lead", "member"]]);
+        let repair = request
+            .document
+            .document_analysis
+            .as_mut()
+            .unwrap()
+            .repair_analysis
+            .as_mut()
+            .unwrap();
+        repair.evidence_graph.edges.push(EvidenceEdge {
+            edge_ref: "edge:compiler".into(),
+            from_evidence_ref: "node:lead".into(),
+            to_evidence_ref: "node:member".into(),
+            kind: EvidenceEdgeKind::CompilerHierarchy,
+            authority: EvidenceAuthority::CompilerDeclared,
+            proof_class: RepairProofClass::Proven,
+            evidence_tags: vec!["preserved".into()],
+        });
+        repair.repair_units[0]
+            .rationale_edge_refs
+            .push("edge:compiler".into());
+        let output = render(request).unwrap().text;
+        assert!(output.contains("explain: member=node:lead"));
+        assert!(output.contains("explain: member=node:member"));
+        assert!(output.contains("explain: raw_capture=stderr.raw"));
+        assert!(output.contains("authority=CompilerDeclared"));
+        assert!(output.contains("relation=edge:compiler"));
     }
 
     #[test]
@@ -4556,9 +4600,7 @@ mod tests {
         assert!(!output.text.contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved"
         ));
-        assert!(output.text.contains(
-            "raw: rerun with --formed-profile=raw_fallback to inspect the original compiler output"
-        ));
+        assert_eq!(output.text.matches("details: --formed-explain").count(), 1);
     }
 
     #[test]

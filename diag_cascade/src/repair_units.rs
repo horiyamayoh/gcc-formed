@@ -93,8 +93,33 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
         if unit_roots.is_empty() {
             continue;
         }
-        let lead = unit_roots[0].clone();
         let member_set = members.iter().cloned().collect::<BTreeSet<_>>();
+        let dependent_targets = graph
+            .edges
+            .iter()
+            .filter(|edge| {
+                member_set.contains(&edge.from_evidence_ref)
+                    && member_set.contains(&edge.to_evidence_ref)
+                    && is_must_link(edge)
+                    && !matches!(
+                        edge.kind,
+                        EvidenceEdgeKind::ExactDuplicate | EvidenceEdgeKind::SameFixitSpan
+                    )
+            })
+            .map(|edge| edge.to_evidence_ref.as_str())
+            .collect::<BTreeSet<_>>();
+        let lead = unit_roots
+            .iter()
+            .filter(|reference| !dependent_targets.contains(reference.as_str()))
+            .min_by_key(|reference| {
+                document
+                    .diagnostics
+                    .iter()
+                    .position(|node| format!("node:{}", node.id) == **reference)
+                    .unwrap_or(usize::MAX)
+            })
+            .cloned()
+            .unwrap_or_else(|| unit_roots[0].clone());
         let mut rationale_edges = graph
             .edges
             .iter()

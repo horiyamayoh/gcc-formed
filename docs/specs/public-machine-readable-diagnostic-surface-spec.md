@@ -14,9 +14,13 @@ superseded_by: []
 
 # Public Machine-Readable Diagnostic Surface
 
-## Internal RepairUnit boundary
+## Public RepairUnit membership boundary
 
-`DiagnosticEvidenceGraph`, internal RepairUnit rationale edges, proof tags, legacy group/episode mappings, and oracle defect IDs are beta-internal IR and are not added to the public JSON contract by ADR-0037/#205. Public export remains projection-based and backward compatible. A later public RepairUnit surface requires an explicit schema/version decision; terminal text and internal snapshots must not be scraped as a substitute.
+Schema `2.1.0-alpha.1` additively exposes stable RepairUnit membership: unit ref, visibility,
+lead/member evidence refs, raw capture refs, rationale edge refs, proof class, observability, and
+visibility floor. It does not expose float scores, oracle defect IDs, legacy group/episode mappings,
+or internal evidence tags. Detailed relation authority remains an opt-in human explain/debug surface;
+terminal text and internal snapshots must not be scraped as a machine contract.
 
 This document defines the public JSON export contract for deterministic consumers of `gcc-formed`.
 
@@ -74,7 +78,7 @@ The public export is a single JSON object with the following top-level fields.
 
 | Field | Required | Meaning |
 |---|---:|---|
-| `schema_version` | yes | Public export schema version. Current value: `2.0.0-alpha.1`. |
+| `schema_version` | yes | Public export schema version. Current value: `2.1.0-alpha.1`. |
 | `kind` | yes | Export kind discriminator. Current value: `gcc_formed_public_diagnostic_export`. |
 | `status` | yes | `available` or `unavailable`. |
 | `producer` | yes | Wrapper identity that emitted the export. |
@@ -255,7 +259,7 @@ python3 -m json.tool diagnostic-export.json >/dev/null
 
 ```bash
 jq -e '
-  .schema_version == "2.0.0-alpha.1"
+  .schema_version == "2.1.0-alpha.1"
   and .kind == "gcc_formed_public_diagnostic_export"
   and .execution.version_band != null
   and .execution.processing_path != null

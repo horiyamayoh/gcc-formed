@@ -6,7 +6,7 @@ use diag_core::{
 use serde::{Deserialize, Serialize};
 
 pub const PUBLIC_EXPORT_KIND: &str = "gcc_formed_public_diagnostic_export";
-pub const PUBLIC_EXPORT_SCHEMA_VERSION: &str = "2.0.0-alpha.1";
+pub const PUBLIC_EXPORT_SCHEMA_VERSION: &str = "2.1.0-alpha.1";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PublicDiagnosticExport {
@@ -96,6 +96,24 @@ pub struct PublicDiagnosticResult {
     pub summary: PublicDiagnosticSummary,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<PublicDiagnostic>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub repair_units: Vec<PublicRepairUnit>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PublicRepairUnit {
+    pub repair_unit_ref: String,
+    pub visible: bool,
+    pub lead_evidence_ref: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub member_evidence_refs: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub raw_capture_refs: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rationale_edge_refs: Vec<String>,
+    pub proof_class: String,
+    pub observability: String,
+    pub visibility_floor: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -262,6 +280,28 @@ pub fn export_from_document(
                 .iter()
                 .map(public_diagnostic_from_node)
                 .collect(),
+            repair_units: document
+                .document_analysis
+                .as_ref()
+                .and_then(|analysis| analysis.repair_analysis.as_ref())
+                .map(|repair| {
+                    repair
+                        .repair_units
+                        .iter()
+                        .map(|unit| PublicRepairUnit {
+                            repair_unit_ref: unit.repair_unit_ref.clone(),
+                            visible: unit.visible,
+                            lead_evidence_ref: unit.lead_evidence_ref.clone(),
+                            member_evidence_refs: unit.member_evidence_refs.clone(),
+                            raw_capture_refs: unit.raw_capture_refs.clone(),
+                            rationale_edge_refs: unit.rationale_edge_refs.clone(),
+                            proof_class: label(unit.proof_class),
+                            observability: label(unit.observability),
+                            visibility_floor: label(unit.visibility_floor),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
         }),
         unavailable_reason: None,
     }
@@ -667,6 +707,7 @@ mod tests {
                     }],
                     related_diagnostics: vec![sample_related_public_diagnostic()],
                 }],
+                repair_units: Vec::new(),
             }),
             unavailable_reason: None,
         }

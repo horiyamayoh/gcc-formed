@@ -198,6 +198,23 @@ pub fn build(
     let has_failure = rendered_cards
         .iter()
         .any(|card| card.severity == "fatal" || card.severity == "error");
+    let repair_compacted = request
+        .document
+        .document_analysis
+        .as_ref()
+        .and_then(|analysis| analysis.repair_analysis.as_ref())
+        .is_some_and(|repair| {
+            repair
+                .repair_units
+                .iter()
+                .filter(|unit| unit.visible)
+                .any(|unit| unit.member_evidence_refs.len() > 1)
+        });
+    let content_compacted = repair_compacted
+        || rendered_cards
+            .iter()
+            .any(|card| !card.collapsed_notices.is_empty())
+        || !summary_only_cards.is_empty();
     RenderViewModel {
         summary: RenderSessionSummary {
             failure_kind: if has_failure {
@@ -209,11 +226,12 @@ pub fn build(
                 request.document.document_completeness,
                 diag_core::DocumentCompleteness::Complete
             ) && selected_cards_include_incomplete,
-            raw_diagnostics_hint: request
+            raw_diagnostics_hint: (request
                 .document
                 .captures
                 .iter()
                 .any(|capture| capture.id == "stderr.raw")
+                && content_compacted)
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
             session_mode: resolved_session_mode(presentation_policy, has_failure),
         },

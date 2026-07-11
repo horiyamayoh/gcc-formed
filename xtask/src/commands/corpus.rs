@@ -2357,6 +2357,21 @@ pub(crate) fn lead_node_for_document<'a>(
     displayed_group_refs: &[String],
 ) -> Option<&'a diag_core::DiagnosticNode> {
     let lead_group_ref = displayed_group_refs.first()?;
+    if let Some(node_ref) = document
+        .document_analysis
+        .as_ref()
+        .and_then(|analysis| analysis.repair_analysis.as_ref())
+        .and_then(|repair| {
+            repair
+                .repair_units
+                .iter()
+                .find(|unit| unit.repair_unit_ref == *lead_group_ref)
+        })
+        .map(|unit| unit.lead_evidence_ref.as_str())
+        .and_then(|reference| reference.strip_prefix("node:"))
+    {
+        return document.diagnostics.iter().find(|node| node.id == node_ref);
+    }
     document.diagnostics.iter().find(|node| {
         node.id == *lead_group_ref
             || node
@@ -3014,7 +3029,7 @@ pub(crate) fn contains_partial_notice(text: &str) -> bool {
 }
 
 pub(crate) fn contains_raw_diagnostics_hint(text: &str) -> bool {
-    text.contains("raw: rerun with --formed-profile=raw_fallback")
+    text.contains("details: --formed-explain | raw: --formed-raw")
 }
 
 pub(crate) fn contains_raw_sub_block(text: &str) -> bool {

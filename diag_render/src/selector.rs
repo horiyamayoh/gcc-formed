@@ -75,7 +75,7 @@ pub fn select_groups_with_presentation_policy(
 
     if matches!(
         request.profile,
-        RenderProfile::Default | RenderProfile::Concise | RenderProfile::Ci
+        RenderProfile::Default | RenderProfile::Concise | RenderProfile::Debug | RenderProfile::Ci
     ) && let Some(selection) =
         select_repair_units(request, &diagnostics, suppressed_warning_count)
     {

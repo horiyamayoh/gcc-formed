@@ -35,6 +35,12 @@ count only for evidence actually compacted. RepairUnit blocks do not repeat raw 
 rerun advice; raw disclosure is a run-level affordance. Passthrough remains byte-faithful. Color may
 add emphasis but never information, and width changes may wrap content without changing unit count.
 
+The primary user controls are `--formed-raw` (byte-faithful captured compiler output) and
+`--formed-explain` (the same RepairUnit partition with every member/raw ref and rationale authority).
+When compaction occurred, default emits exactly one final
+`details: --formed-explain | raw: --formed-raw` line; otherwise it emits none. The older
+`--formed-profile=raw_fallback`, verbose, and debug profiles remain advanced compatibility aliases.
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`

@@ -45,6 +45,7 @@ pub fn emit(
             }
             if matches!(request.profile, crate::RenderProfile::Debug) {
                 append_cascade_debug_lines(&mut card_lines, "", card.cascade_debug.as_ref());
+                append_repair_unit_explain_lines(request, &card.group_id, &mut card_lines);
             }
         }
         if use_block_local_budget {
@@ -85,6 +86,14 @@ pub fn emit(
     }
     if let Some(raw_hint) = view_model.summary.raw_diagnostics_hint.as_ref() {
         lines.push(raw_hint.clone());
+    } else if hidden_group_count > 0
+        && request
+            .document
+            .captures
+            .iter()
+            .any(|capture| capture.id == "stderr.raw")
+    {
+        lines.push(policy.disclosure.raw_diagnostics_hint.to_string());
     }
     if matches!(request.debug_refs, DebugRefs::TraceId) {
         lines.push(format!("trace: {}", request.document.run.invocation_id));
@@ -124,6 +133,65 @@ pub fn emit(
         suppressed_warning_count,
         truncation_occurred,
         render_issues: Vec::new(),
+    }
+}
+
+fn append_repair_unit_explain_lines(
+    request: &RenderRequest,
+    repair_unit_ref: &str,
+    lines: &mut Vec<String>,
+) {
+    let Some(repair) = request
+        .document
+        .document_analysis
+        .as_ref()
+        .and_then(|analysis| analysis.repair_analysis.as_ref())
+    else {
+        return;
+    };
+    let Some(unit) = repair
+        .repair_units
+        .iter()
+        .find(|unit| unit.repair_unit_ref == repair_unit_ref)
+    else {
+        return;
+    };
+    lines.push(format!(
+        "explain: repair_unit={} proof={:?} visibility={:?}",
+        unit.repair_unit_ref, unit.proof_class, unit.visibility_floor
+    ));
+    for member in &unit.member_evidence_refs {
+        if let Some(record) = repair
+            .evidence_graph
+            .evidence
+            .iter()
+            .find(|record| &record.evidence_ref == member)
+        {
+            lines.push(format!(
+                "explain: member={} target={:?} unresolved={}",
+                member, record.target, record.unresolved
+            ));
+        }
+    }
+    for capture in &unit.raw_capture_refs {
+        lines.push(format!("explain: raw_capture={capture}"));
+    }
+    for edge_ref in &unit.rationale_edge_refs {
+        if let Some(edge) = repair
+            .evidence_graph
+            .edges
+            .iter()
+            .find(|edge| &edge.edge_ref == edge_ref)
+        {
+            lines.push(format!(
+                "explain: relation={} kind={:?} authority={:?} proof={:?} tags={}",
+                edge.edge_ref,
+                edge.kind,
+                edge.authority,
+                edge.proof_class,
+                edge.evidence_tags.join(",")
+            ));
+        }
     }
 }
 

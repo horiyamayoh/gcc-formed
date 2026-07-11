@@ -13,6 +13,31 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 
 #[test]
+fn formed_raw_alias_is_byte_faithful_and_preserves_exit_status() {
+    let temp = fixture("15.2.0");
+    let backend = temp.path().join("fake-gcc");
+    let source = temp.path().join("main.c");
+    let direct = std::process::Command::new(&backend)
+        .arg("-c")
+        .arg(&source)
+        .current_dir(temp.path())
+        .output()
+        .unwrap();
+    let wrapped = Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .env("FORMED_BACKEND_GCC", &backend)
+        .arg("--formed-raw")
+        .arg("-c")
+        .arg(&source)
+        .current_dir(temp.path())
+        .output()
+        .unwrap();
+    assert_eq!(wrapped.status.code(), direct.status.code());
+    assert_eq!(wrapped.stdout, direct.stdout);
+    assert_eq!(wrapped.stderr, direct.stderr);
+}
+
+#[test]
 fn renders_with_fake_gcc15_backend() {
     let temp = fixture("15.2.0");
     let backend = temp.path().join("fake-gcc");
@@ -26,8 +51,10 @@ fn renders_with_fake_gcc15_backend() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
-        .stderr(predicate::str::contains("help: fix the first parser error"));
+        .stderr(predicate::str::contains(
+            "error: [syntax] expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("want: ;"));
 }
 
 #[test]
@@ -47,11 +74,13 @@ fn render_mode_writes_public_json_to_file() {
         .assert()
         .failure()
         .stdout(predicate::str::is_empty())
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
-        .stderr(predicate::str::contains("help: fix the first parser error"));
+        .stderr(predicate::str::contains(
+            "error: [syntax] expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("want: ;"));
 
     let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
-    assert_eq!(export["schema_version"], "2.0.0-alpha.1");
+    assert_eq!(export["schema_version"], "2.1.0-alpha.1");
     assert_eq!(export["kind"], "gcc_formed_public_diagnostic_export");
     assert_eq!(export["status"], "available");
     assert_eq!(export["execution"]["version_band"], "gcc15");
@@ -85,8 +114,10 @@ fn safe_public_json_stdout_emits_json_without_interleaving_render_output() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
-        .stderr(predicate::str::contains("help: fix the first parser error"));
+        .stderr(predicate::str::contains(
+            "error: [syntax] expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("want: ;"));
 
     let stdout = String::from_utf8(assert.get_output().stdout.clone()).unwrap();
     let export: Value = serde_json::from_str(&stdout).unwrap();
@@ -145,14 +176,12 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
-            "error: [syntax] syntax error @ main.c:4:1",
+            "expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
+            "want: ;",
         ))
-        .stderr(predicate::str::contains(
-            "raw:\n  main.c:4:1: error: expected ';' before '}' token",
-        ))
+        .stderr(predicate::str::contains("raw:\n").not())
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
@@ -208,14 +237,12 @@ fn renders_with_fake_gcc13_backend_on_native_text_ci_profile() {
         .stderr(predicate::str::contains(
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
-        .stderr(predicate::str::contains("main.c:4:1: error: [syntax] syntax error"))
+        .stderr(predicate::str::contains("main.c:4:1: error: [syntax] expected ';' before '}' token"))
         .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
+            "want: ;",
         ))
-        .stderr(predicate::str::contains(
-            "raw:\n  main.c:4:1: error: expected ';' before '}' token",
-        ))
-        .stderr(predicate::str::contains("error: [syntax] syntax error @ main.c:4:1").not())
+        .stderr(predicate::str::contains("raw:\n").not())
+        .stderr(predicate::str::contains("syntax error @").not())
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 }
 
@@ -238,10 +265,10 @@ fn renders_with_explicit_single_sink_structured_on_fake_gcc13_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc13_single_sink_notice()))
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
+            "error: [syntax] expected ';' before '}' token",
         ))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
@@ -302,9 +329,11 @@ fn probe_confirmed_add_output_on_fake_gcc13_backend_keeps_native_text_default() 
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
-        .stderr(predicate::str::contains("help: fix the first parser error"))
-        .stderr(predicate::str::contains("raw:\n"));
+        .stderr(predicate::str::contains(
+            "error: [syntax] expected ';' before '}' token",
+        ))
+        .stderr(predicate::str::contains("want: ;"))
+        .stderr(predicate::str::contains("raw:\n").not());
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
@@ -351,7 +380,7 @@ fn unsupported_processing_path_request_fails_instead_of_silently_downgrading() {
             "configuration error: requested processing path `dual_sink_structured` is not supported for this backend",
         ))
         .stderr(predicate::str::contains(expected_gcc13_native_text_notice()).not())
-        .stderr(predicate::str::contains("error: [syntax] syntax error").not());
+        .stderr(predicate::str::contains("error: [syntax] expected ';' before '}' token").not());
 }
 
 #[test]
@@ -432,10 +461,10 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
+            "expected ';' before '}' token",
         ))
         .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
+            "want: ;",
         ))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
@@ -494,10 +523,10 @@ fn renders_with_explicit_single_sink_structured_json_on_fake_gcc12_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc9_single_sink_notice()))
-        .stderr(predicate::str::contains("error: [syntax] syntax error"))
         .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
+            "error: [syntax] expected ';' before '}' token",
         ))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
@@ -573,7 +602,7 @@ fn missing_single_sink_json_falls_back_honestly_on_fake_gcc12_backend() {
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
+            "expected ';' before '}' token",
         ));
 
     let trace: Value =
@@ -643,10 +672,10 @@ main.cpp:2:6: note: candidate 1: 'void takes(int, int)'\n",
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
-        .stderr(predicate::str::contains("type or overload mismatch"))
         .stderr(predicate::str::contains(
-            "compare the expected type and actual argument at the call site",
+            "no matching function for call to 'takes(int)'",
         ))
+        .stderr(predicate::str::contains("want: int, int"))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
@@ -855,9 +884,7 @@ fn dumpdir_compile_flags_do_not_trigger_introspection_passthrough() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
-        .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
-        ));
+        .stderr(predicate::str::contains("want: ;"));
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
@@ -896,9 +923,7 @@ fn empty_backend_env_falls_back_to_path_backend() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
-        .stderr(predicate::str::contains(
-            "help: fix the first parser error at the user-owned location",
-        ))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("backend resolution failed").not());
 
     let trace: Value =
@@ -1306,9 +1331,7 @@ fn auto_trace_bundle_uses_state_root_and_remains_useful_for_passthrough_mode() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("note: trace bundle saved to"))
-        .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
-        ));
+        .stderr(predicate::str::contains("expected ';' before '}' token"));
 
     let bundle_dir = state_root.join("traces").join("bundles");
     let bundle_path = fs::read_dir(&bundle_dir)
@@ -1845,9 +1868,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
-        ))
+        .stderr(predicate::str::contains("expected ';' before '}' token"))
         .stderr(predicate::str::contains("help:").not());
 
     let trace: Value =
@@ -1949,7 +1970,7 @@ fn hard_conflict_passthrough_still_emits_trace_bundle() {
     assert!(
         fs::read_to_string(retained_dir.join("stderr.raw"))
             .unwrap()
-            .contains("main.c:4:1: error: expected ';' before '}' token")
+            .contains("expected ';' before '}' token")
     );
 
     let invocation: Value =
@@ -1980,9 +2001,7 @@ fn passthrough_public_json_file_reports_unavailable_reason() {
         .arg(&source)
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
-        ))
+        .stderr(predicate::str::contains("expected ';' before '}' token"))
         .stderr(predicate::str::contains("help:").not());
 
     let export: Value = serde_json::from_str(&fs::read_to_string(&export_path).unwrap()).unwrap();
@@ -2016,7 +2035,7 @@ fn missing_sarif_falls_back_with_reason_coded_trace() {
             "note: some compiler details were not fully structured; original diagnostics are preserved",
         ))
         .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
+            "expected ';' before '}' token",
         ));
 
     let trace: Value =
@@ -2077,9 +2096,7 @@ fn invalid_sarif_falls_back_with_reason_coded_trace() {
         .stderr(predicate::str::contains(
             "error: showing a conservative wrapper view",
         ))
-        .stderr(predicate::str::contains(
-            "main.c:4:1: error: expected ';' before '}' token",
-        ));
+        .stderr(predicate::str::contains("expected ';' before '}' token"));
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();

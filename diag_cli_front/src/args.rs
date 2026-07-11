@@ -12,6 +12,7 @@ pub(crate) struct ParsedArgs {
     pub(crate) mode: Option<ExecutionMode>,
     pub(crate) processing_path: Option<ProcessingPath>,
     pub(crate) profile: Option<RenderProfile>,
+    pub(crate) raw_alias: bool,
     pub(crate) presentation: Option<String>,
     pub(crate) presentation_file: Option<PathBuf>,
     pub(crate) backend: Option<PathBuf>,
@@ -41,6 +42,11 @@ impl ParsedArgs {
                 parsed.processing_path = Some(parse_processing_path(path)?);
             } else if let Some(profile) = value.strip_prefix("--formed-profile=") {
                 parsed.profile = Some(parse_profile(profile)?);
+            } else if value == "--formed-raw" {
+                parsed.profile = Some(RenderProfile::RawFallback);
+                parsed.raw_alias = true;
+            } else if value == "--formed-explain" {
+                parsed.profile = Some(RenderProfile::Debug);
             } else if let Some(presentation) = value.strip_prefix("--formed-presentation=") {
                 parsed.presentation = Some(presentation.to_string());
             } else if let Some(presentation) = value.strip_prefix("--formed-presentation-preset=") {
@@ -359,6 +365,27 @@ mod tests {
 
         assert_eq!(parsed.profile, Some(RenderProfile::Debug));
         assert_eq!(parsed.forwarded_args, vec![OsString::from("main.c")]);
+    }
+
+    #[test]
+    fn raw_and_explain_aliases_select_compatibility_profiles_without_forwarding() {
+        let raw = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-raw"),
+            OsString::from("main.c"),
+        ])
+        .unwrap();
+        assert_eq!(raw.profile, Some(RenderProfile::RawFallback));
+        assert_eq!(raw.forwarded_args, [OsString::from("main.c")]);
+
+        let explain = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-explain"),
+            OsString::from("main.c"),
+        ])
+        .unwrap();
+        assert_eq!(explain.profile, Some(RenderProfile::Debug));
+        assert_eq!(explain.forwarded_args, [OsString::from("main.c")]);
     }
 
     #[test]
