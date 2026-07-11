@@ -28,6 +28,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
 - `subject_blocks_v2` is the current beta default terminal preset; pin `subject_blocks_v1` or `legacy_v1` explicitly if you need the previous beta default or the legacy wording during migration review.
+- RepairUnit remains the semantic diagnostic foundation and an evaluated preview, but its proposed no-config default promotion was rejected for this beta because the human non-inferiority gate could not recruit participants and independent-agent timing remained inconclusive. See [the promotion decision](REPAIR-UNIT-PROMOTION-DECISION.md) and ADR-0038.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 
 ### Highlights
@@ -55,6 +56,7 @@ This document uses artifact semver for release headings. Artifact `0.2.0-beta.1`
 - Current beta artifacts do not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
 - Internal capture mechanisms and same-run raw-preservation details still vary by capability even when the public contract is shared.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy render.
+- Human usability non-inferiority for a RepairUnit default has not been established; automated causal correctness evidence must not be cited as a substitute.
 - See [KNOWN-LIMITATIONS.md](../support/KNOWN-LIMITATIONS.md) for the detailed support boundary and fallback semantics, and [PUBLIC-BETA-RELEASE.md](PUBLIC-BETA-RELEASE.md) for the public artifact and install story.
 
 ## 0.1.0
