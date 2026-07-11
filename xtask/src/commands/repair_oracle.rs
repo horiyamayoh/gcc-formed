@@ -431,7 +431,7 @@ fn diagnostic_fingerprints(stderr: &str) -> Vec<String> {
             line.contains(" error:") || line.contains(": error:") || line.contains(" warning:")
         })
         .map(|line| {
-            let normalized = line.splitn(4, ':').skip(3).next().unwrap_or(line).trim();
+            let normalized = line.splitn(4, ':').nth(3).unwrap_or(line).trim();
             format!("{:x}", Sha256::digest(normalized.as_bytes()))
         })
         .collect::<Vec<_>>();

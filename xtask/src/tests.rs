@@ -1192,8 +1192,8 @@ fn asm_inline_case_01_prefers_the_failing_error_in_verbose_view() {
     assert_eq!(
         render_result.displayed_group_refs,
         vec![
-            "group-8de1e6e83fb3".to_string(),
-            "group-d48624c5088d".to_string()
+            "group-1137ad32bab5".to_string(),
+            "group-5f6a7b0892b4".to_string()
         ]
     );
 }
@@ -1204,10 +1204,10 @@ fn init_order_case_01_keeps_declaration_order_evidence_expanded_and_initializer_
     let fixture = corpus_fixture("cpp/init_order/case-01");
     let replay = replay_fixture_document(&fixture).unwrap();
     let visible_group_refs = vec![
-        "group-4fe83b216034".to_string(),
-        "group-47fde0da878b".to_string(),
+        "group-017989192594".to_string(),
+        "group-ccfe0ab7aadc".to_string(),
     ];
-    let summary_only_group_refs = vec!["group-59815819bad1".to_string()];
+    let summary_only_group_refs = vec!["group-656492cc3b86".to_string()];
 
     for profile in [
         RenderProfile::Default,
@@ -1252,9 +1252,9 @@ fn init_order_case_01_keeps_declaration_order_evidence_expanded_and_initializer_
     let request = render_request_for_fixture(&fixture, &replay.document, RenderProfile::Verbose);
     let view = build_view_model(&request).unwrap();
     let verbose_group_refs = vec![
-        "group-4fe83b216034".to_string(),
-        "group-47fde0da878b".to_string(),
-        "group-59815819bad1".to_string(),
+        "group-017989192594".to_string(),
+        "group-ccfe0ab7aadc".to_string(),
+        "group-656492cc3b86".to_string(),
     ];
     assert_eq!(
         view.cards

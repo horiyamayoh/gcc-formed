@@ -85,7 +85,7 @@ pub struct DocumentAnalysis {
     /// Aggregate counts for the cascade analysis result.
     #[serde(default)]
     pub stats: CascadeStats,
-    /// Additive lossless evidence graph and RepairUnit analysis.
+    /// Additive lossless evidence graph and `RepairUnit` analysis.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub repair_analysis: Option<RepairUnitAnalysis>,
 }

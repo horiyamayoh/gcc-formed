@@ -97,20 +97,11 @@ fn score_root_group(
     let node = &document.diagnostics[group.node_index];
     let mut score = 0.34;
     let mut tags = BTreeSet::new();
-    let family = node
-        .analysis
-        .as_ref()
-        .and_then(|analysis| analysis.family.as_deref())
-        .unwrap_or("unknown");
-    let message = normalized_message(node);
-    let message_lower = message.to_lowercase();
+    let message_lower = normalized_message(node).to_lowercase();
 
-    if is_strong_root_family(rulepack, family, node, &message_lower) {
+    if is_strong_root(rulepack, node, &message_lower) {
         score += 0.22;
-        tags.insert("strong_root_family".to_string());
-    } else if family != "unknown" {
-        score += 0.06;
-        tags.insert("classified_family".to_string());
+        tags.insert("strong_root_structure".to_string());
     }
 
     match primary_ownership(node) {
@@ -165,12 +156,12 @@ fn score_root_group(
         tags.insert("early_invocation".to_string());
     }
 
-    if is_generic_follow_on(rulepack, node, family, &message_lower) {
+    if is_generic_follow_on(rulepack, node, &message_lower) {
         score -= 0.26;
         tags.insert("generic_follow_on".to_string());
     }
 
-    if is_candidate_note_repeat(rulepack, node, family, &message_lower) {
+    if is_candidate_note_repeat(rulepack, node, &message_lower) {
         score -= 0.18;
         tags.insert("candidate_note_repeat".to_string());
     }
@@ -180,7 +171,7 @@ fn score_root_group(
         tags.insert("no_primary_location".to_string());
     }
 
-    if is_generic_linker_wrapper(rulepack, node, family, &message_lower) {
+    if is_generic_linker_wrapper(rulepack, &message_lower) {
         score -= 0.20;
         tags.insert("generic_linker_wrapper".to_string());
     }
@@ -226,15 +217,25 @@ fn score_relation(
 ) -> Option<RelationAssessment> {
     let rulepack = checked_in_cascade_rulepack();
     let weights = rulepack.weights();
-    let parent = &groups[pair.left_index];
-    let child = &groups[pair.right_index];
+    let reverse_linker_summary = pair.reasons.contains(&CandidateReason::LinkerSummaryWindow)
+        && is_driver_summary_message(&groups[pair.left_index].keys.normalized_message_key)
+        && !is_driver_summary_message(&groups[pair.right_index].keys.normalized_message_key);
+    let (parent_index, child_index) = if reverse_linker_summary {
+        (pair.right_index, pair.left_index)
+    } else {
+        (pair.left_index, pair.right_index)
+    };
+    let parent = &groups[parent_index];
+    let child = &groups[child_index];
     let parent_node = &document.diagnostics[parent.node_index];
     let child_node = &document.diagnostics[child.node_index];
     let parent_message = normalized_message(parent_node).to_lowercase();
     let child_message = normalized_message(child_node).to_lowercase();
-    let child_policy = rulepack.family_policy(child.keys.family_key.as_str());
+    let generic_policy = rulepack.family_policy("unknown");
 
-    if parent.keys.ordinal_in_invocation >= child.keys.ordinal_in_invocation {
+    if !reverse_linker_summary
+        && parent.keys.ordinal_in_invocation >= child.keys.ordinal_in_invocation
+    {
         return None;
     }
 
@@ -250,8 +251,8 @@ fn score_relation(
     for reason in &pair.reasons {
         match reason {
             CandidateReason::SharedSymbol => {
-                cascade += 0.34;
-                duplicate += 0.36;
+                cascade += 0.44;
+                duplicate += 0.81;
                 tags.insert("shared_symbol".to_string());
                 strong += 1;
             }
@@ -273,12 +274,6 @@ fn score_relation(
                 tags.insert("shared_include_frontier".to_string());
                 strong += 1;
             }
-            CandidateReason::SharedFamilyMessage => {
-                cascade += 0.14;
-                duplicate += 0.28;
-                tags.insert("shared_normalized_message".to_string());
-                medium += 1;
-            }
             CandidateReason::TranslationUnitWindow => {
                 cascade += 0.10;
                 duplicate += 0.08;
@@ -286,16 +281,13 @@ fn score_relation(
                 medium += 1;
             }
             CandidateReason::NearbyFileBucket => {
-                cascade += 0.09;
+                cascade += 0.34;
                 duplicate += 0.10;
                 tags.insert("same_primary_file_bucket".to_string());
                 medium += 1;
             }
-            CandidateReason::FamilyPhaseWindow => {
-                cascade += 0.05;
-            }
             CandidateReason::LinkerSummaryWindow => {
-                cascade += weights.linker_summary_window_bonus;
+                cascade += weights.linker_summary_window_bonus + 0.20;
                 duplicate += 0.06;
                 tags.insert("linker_summary_window".to_string());
                 strong += 1;
@@ -303,47 +295,33 @@ fn score_relation(
         }
     }
 
-    if is_generic_follow_on(
-        rulepack,
-        child_node,
-        child.keys.family_key.as_str(),
-        &child_message,
-    ) {
-        cascade += child_policy.follow_on_cascade_bonus;
+    if is_generic_follow_on(rulepack, child_node, &child_message) {
+        cascade += generic_policy.follow_on_cascade_bonus;
         tags.insert("generic_follow_on_child".to_string());
         medium += 1;
     }
 
-    if is_candidate_note_repeat(
-        rulepack,
-        child_node,
-        child.keys.family_key.as_str(),
-        &child_message,
-    ) {
+    if is_candidate_note_repeat(rulepack, child_node, &child_message) {
         cascade += 0.08;
-        duplicate += child_policy.candidate_duplicate_bonus;
+        duplicate += generic_policy.candidate_duplicate_bonus;
         tags.insert("candidate_repeat_child".to_string());
         medium += 1;
     }
 
-    if is_generic_linker_wrapper(
-        rulepack,
-        child_node,
-        child.keys.family_key.as_str(),
-        &child_message,
-    ) {
-        cascade += child_policy.generic_wrapper_cascade_bonus;
+    if is_generic_linker_wrapper(rulepack, &child_message) {
+        cascade += generic_policy.generic_wrapper_cascade_bonus;
         tags.insert("generic_linker_wrapper_child".to_string());
         medium += 1;
     }
 
-    if is_strong_root_family(
-        rulepack,
-        parent.keys.family_key.as_str(),
-        parent_node,
-        &parent_message,
-    ) {
+    if is_strong_root(rulepack, parent_node, &parent_message) {
         cascade += 0.12;
+    }
+
+    if child_node.node_completeness == diag_core::NodeCompleteness::Partial {
+        cascade += 0.50;
+        tags.insert("partial_child".to_string());
+        medium += 1;
     }
 
     if let (Some(parent_ownership), Some(child_ownership)) = (
@@ -357,9 +335,7 @@ fn score_relation(
         medium += 1;
     }
 
-    if roots[pair.left_index].score
-        >= roots[pair.right_index].score + weights.parent_root_advantage_min
-    {
+    if roots[parent_index].score >= roots[child_index].score + weights.parent_root_advantage_min {
         cascade += 0.10;
         tags.insert("parent_root_advantage".to_string());
         medium += 1;
@@ -392,8 +368,8 @@ fn score_relation(
     };
 
     Some(RelationAssessment {
-        parent_index: pair.left_index,
-        child_index: pair.right_index,
+        parent_index,
+        child_index,
         kind,
         score,
         evidence_tags: tags,
@@ -874,54 +850,57 @@ fn would_create_cycle(
     false
 }
 
-fn is_strong_root_family(
+fn is_strong_root(
     rulepack: &diag_rulepack::CascadeRulepack,
-    family: &str,
     node: &DiagnosticNode,
     message_lower: &str,
 ) -> bool {
-    rulepack.is_strong_root(family, message_lower)
-        || family == "macro_include"
+    rulepack.is_strong_root("unknown", message_lower)
+        || message_lower.contains("undefined reference")
+        || message_lower.contains("multiple definition")
         || matches!(
             node.phase,
             diag_core::Phase::Parse | diag_core::Phase::Instantiate | diag_core::Phase::Constraints
         ) && (message_lower.contains("expected ")
             || message_lower.contains("undeclared")
-            || message_lower.contains("does not name a type")
-            || message_lower.contains("undefined reference")
-            || message_lower.contains("multiple definition"))
+            || message_lower.contains("does not name a type"))
 }
 
 fn is_generic_follow_on(
     rulepack: &diag_rulepack::CascadeRulepack,
     node: &DiagnosticNode,
-    family: &str,
     message_lower: &str,
 ) -> bool {
     matches!(
         node.severity,
         diag_core::Severity::Note | diag_core::Severity::Remark | diag_core::Severity::Info
-    ) || family == "passthrough"
-        || rulepack.is_generic_follow_on(family, message_lower)
+    ) || rulepack.is_generic_follow_on("unknown", message_lower)
 }
 
 fn is_candidate_note_repeat(
     rulepack: &diag_rulepack::CascadeRulepack,
     node: &DiagnosticNode,
-    family: &str,
     message_lower: &str,
 ) -> bool {
     node.semantic_role == diag_core::SemanticRole::Candidate
-        || rulepack.is_candidate_repeat(family, message_lower)
+        || rulepack.is_candidate_repeat("unknown", message_lower)
 }
 
 fn is_generic_linker_wrapper(
     rulepack: &diag_rulepack::CascadeRulepack,
-    _node: &DiagnosticNode,
-    family: &str,
     message_lower: &str,
 ) -> bool {
-    rulepack.is_generic_wrapper(family, message_lower)
+    rulepack.is_generic_wrapper("unknown", message_lower)
+        || message_lower.contains("collect2")
+        || message_lower.contains("ld returned")
+        || message_lower.contains("linker command failed")
+}
+
+fn is_driver_summary_message(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    message.contains("collect2")
+        || message.contains("ld returned")
+        || message.contains("linker command failed")
 }
 
 fn separate_primary_problem(

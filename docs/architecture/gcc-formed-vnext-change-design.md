@@ -618,6 +618,12 @@ template/std:: ノイズ抑制は「表示の好み」ではなく、**修正速
 現状の enrich は family ベースで confidence を付けている。[R7]  
 vNext では最低限、次を加味する。
 
+`family` は optional な表示・semantic extractor 選択用 metadata であり、RepairUnit の
+identity、must-link、visibility、support level、fallback 可否には使用しない。
+`unknown` と `passthrough` は unsupported を意味せず、保持済み location、raw message、
+compiler hierarchy を失わない honest generic rendering を選ぶ。lexical family rule の追加は
+表示または semantic fact 抽出の改善としてのみ認め、grouping の根拠にしてはならない。
+
 - source authority (`Sarif > GccJson > ResidualText`)
 - ownership classification の精度
 - primary location の確からしさ

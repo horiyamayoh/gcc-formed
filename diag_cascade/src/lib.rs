@@ -8,6 +8,7 @@
 mod analysis;
 mod logical_group;
 mod prefilter;
+mod repair_units;
 
 pub use analysis::SafeDocumentAnalyzer;
 pub use logical_group::{
@@ -15,9 +16,9 @@ pub use logical_group::{
     canonical_group_ref, derive_canonical_anchor, derive_group_keys, extract_logical_groups,
 };
 pub use prefilter::{
-    CandidatePair, CandidateReason, FAMILY_PHASE_ORDINAL_WINDOW, TRANSLATION_UNIT_ORDINAL_WINDOW,
-    candidate_pairs,
+    CandidatePair, CandidateReason, TRANSLATION_UNIT_ORDINAL_WINDOW, candidate_pairs,
 };
+pub use repair_units::seed_repair_units_without_family;
 
 use diag_backend_probe::{ProcessingPath, VersionBand};
 use diag_core::{CascadePolicySnapshot, DiagnosticDocument, FallbackGrade, SourceAuthority};
@@ -288,6 +289,96 @@ mod tests {
 
         assert!(!report.document_analysis_present);
         assert!(document.document_analysis.is_none());
+    }
+
+    #[test]
+    fn no_family_seed_keeps_unknown_visible_with_raw_location() {
+        let mut node = sample_node(
+            "unknown-root",
+            "localized unknown wording",
+            Origin::Gcc,
+            Phase::Semantic,
+            "unknown",
+            Some("src/main.c"),
+            Some(7),
+            Ownership::User,
+        );
+        node.analysis = None;
+        let mut document = sample_document(vec![node]);
+        seed_repair_units_without_family(&mut document);
+        let repair = document
+            .document_analysis
+            .as_ref()
+            .unwrap()
+            .repair_analysis
+            .as_ref()
+            .unwrap();
+        assert_eq!(repair.repair_units.len(), 1);
+        assert!(repair.repair_units[0].visible);
+        assert_eq!(
+            repair.repair_units[0].visibility_floor,
+            diag_core::VisibilityFloor::NeverHidden
+        );
+        assert_eq!(repair.repair_units[0].raw_capture_refs, vec!["stderr.raw"]);
+        assert_eq!(
+            repair.repair_units[0].primary_repair_anchors,
+            vec!["src/main.c:7:1"]
+        );
+        document.validate().unwrap();
+    }
+
+    #[test]
+    fn family_mutation_does_not_change_partition_or_visibility() {
+        let nodes = vec![
+            sample_node(
+                "a",
+                "same wording",
+                Origin::Gcc,
+                Phase::Semantic,
+                "syntax",
+                Some("src/main.c"),
+                Some(4),
+                Ownership::User,
+            ),
+            sample_node(
+                "b",
+                "same wording",
+                Origin::Gcc,
+                Phase::Semantic,
+                "syntax",
+                Some("src/main.c"),
+                Some(5),
+                Ownership::User,
+            ),
+        ];
+        let mut left = sample_document(nodes.clone());
+        let mut right = sample_document(nodes);
+        right.diagnostics[0].analysis.as_mut().unwrap().family = Some("linker".into());
+        right.diagnostics[0].message.raw_text = "localized wording variant".into();
+        right.diagnostics[1].analysis = None;
+        seed_repair_units_without_family(&mut left);
+        seed_repair_units_without_family(&mut right);
+        let project = |document: &DiagnosticDocument| {
+            document
+                .document_analysis
+                .as_ref()
+                .unwrap()
+                .repair_analysis
+                .as_ref()
+                .unwrap()
+                .repair_units
+                .iter()
+                .map(|unit| {
+                    (
+                        unit.repair_unit_ref.clone(),
+                        unit.member_evidence_refs.clone(),
+                        unit.visible,
+                        unit.visibility_floor,
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(project(&left), project(&right));
     }
 
     #[test]
@@ -713,10 +804,9 @@ mod tests {
                 && pair.right_group_ref == groups[1].group_ref
                 && pair.reasons.contains(&CandidateReason::SharedSymbol)
         }));
-        assert!(pairs.iter().any(|pair| {
+        assert!(!pairs.iter().any(|pair| {
             pair.left_group_ref == groups[2].group_ref
                 && pair.right_group_ref == groups[3].group_ref
-                && pair.reasons.contains(&CandidateReason::FamilyPhaseWindow)
         }));
     }
 

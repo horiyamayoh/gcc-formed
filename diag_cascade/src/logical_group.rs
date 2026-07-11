@@ -49,7 +49,7 @@ pub struct GroupKeySet {
     pub origin_phase_key: String,
     /// Normalized symbol identity when linker or symbol facts are present.
     pub symbol_key: Option<String>,
-    /// Family assigned during enrichment, or `unknown`.
+    /// Compatibility-only display family; never part of identity or visibility proof.
     pub family_key: String,
     /// Effective ownership label for the canonical anchor.
     pub ownership_key: String,
@@ -180,7 +180,6 @@ pub fn canonical_group_ref(keys: &GroupKeySet) -> String {
         keys.translation_unit_key.clone(),
         keys.origin_phase_key.clone(),
         keys.symbol_key.clone(),
-        keys.family_key.clone(),
         keys.ownership_key.clone(),
         keys.normalized_message_key.clone(),
         keys.template_frontier_key.clone(),

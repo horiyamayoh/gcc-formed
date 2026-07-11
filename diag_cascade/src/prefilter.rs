@@ -1,11 +1,8 @@
 use crate::logical_group::LogicalGroup;
-use diag_rulepack::checked_in_cascade_rulepack;
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Maximum ordinal distance used for same-translation-unit candidate windows.
 pub const TRANSLATION_UNIT_ORDINAL_WINDOW: usize = 2;
-/// Maximum ordinal distance used for sparse fallback matching inside one family/phase.
-pub const FAMILY_PHASE_ORDINAL_WINDOW: usize = 1;
 
 /// Strong reason why two logical groups should survive the prefilter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -16,16 +13,12 @@ pub enum CandidateReason {
     TranslationUnitWindow,
     /// Same extracted linker/symbol identity.
     SharedSymbol,
-    /// Same family plus the same normalized message core.
-    SharedFamilyMessage,
     /// Same template-instantiation frontier.
     SharedTemplateFrontier,
     /// Same macro-expansion frontier.
     SharedMacroFrontier,
     /// Same include frontier.
     SharedIncludeFrontier,
-    /// Sparse fallback for adjacent groups in the same family/phase.
-    FamilyPhaseWindow,
     /// Adjacent linker summary line paired with a more specific linker root.
     LinkerSummaryWindow,
 }
@@ -56,20 +49,6 @@ pub fn candidate_pairs(groups: &[LogicalGroup]) -> Vec<CandidatePair> {
             .enumerate()
             .filter_map(|(index, group)| group.keys.symbol_key.clone().map(|key| (key, index))),
         CandidateReason::SharedSymbol,
-        &mut pair_reasons,
-    );
-    add_exact_key_pairs(
-        groups,
-        groups.iter().enumerate().map(|(index, group)| {
-            (
-                format!(
-                    "{}::{}",
-                    group.keys.family_key, group.keys.normalized_message_key
-                ),
-                index,
-            )
-        }),
-        CandidateReason::SharedFamilyMessage,
         &mut pair_reasons,
     );
     add_exact_key_pairs(
@@ -111,7 +90,6 @@ pub fn candidate_pairs(groups: &[LogicalGroup]) -> Vec<CandidatePair> {
 
     add_nearby_file_bucket_pairs(groups, &mut pair_reasons);
     add_translation_unit_window_pairs(groups, &mut pair_reasons);
-    add_family_phase_window_pairs(groups, &mut pair_reasons);
     add_linker_summary_pairs(groups, &mut pair_reasons);
 
     pair_reasons
@@ -250,49 +228,10 @@ fn add_translation_unit_window_pairs(
     }
 }
 
-fn add_family_phase_window_pairs(
-    groups: &[LogicalGroup],
-    pair_reasons: &mut BTreeMap<(usize, usize), BTreeSet<CandidateReason>>,
-) {
-    let mut buckets = BTreeMap::<(String, String), Vec<usize>>::new();
-    for (index, group) in groups.iter().enumerate() {
-        buckets
-            .entry((
-                group.keys.origin_phase_key.clone(),
-                group.keys.family_key.clone(),
-            ))
-            .or_default()
-            .push(index);
-    }
-
-    for indices in buckets.into_values() {
-        for left_offset in 0..indices.len() {
-            let left_index = indices[left_offset];
-            for &right_index in indices.iter().skip(left_offset + 1) {
-                if groups[right_index].keys.ordinal_in_invocation
-                    - groups[left_index].keys.ordinal_in_invocation
-                    > FAMILY_PHASE_ORDINAL_WINDOW
-                {
-                    break;
-                }
-                add_pair(
-                    groups,
-                    left_index,
-                    right_index,
-                    CandidateReason::FamilyPhaseWindow,
-                    pair_reasons,
-                );
-            }
-        }
-    }
-}
-
 fn add_linker_summary_pairs(
     groups: &[LogicalGroup],
     pair_reasons: &mut BTreeMap<(usize, usize), BTreeSet<CandidateReason>>,
 ) {
-    let rulepack = checked_in_cascade_rulepack();
-
     for left_index in 0..groups.len() {
         for right_index in (left_index + 1)..groups.len() {
             if groups[right_index].keys.ordinal_in_invocation
@@ -306,10 +245,9 @@ fn add_linker_summary_pairs(
             {
                 continue;
             }
-            if !rulepack.is_linker_summary_pair(
-                groups[left_index].keys.family_key.as_str(),
-                groups[right_index].keys.family_key.as_str(),
-            ) {
+            let left_summary = is_driver_summary(&groups[left_index].keys.normalized_message_key);
+            let right_summary = is_driver_summary(&groups[right_index].keys.normalized_message_key);
+            if left_summary == right_summary {
                 continue;
             }
             add_pair(
@@ -321,6 +259,13 @@ fn add_linker_summary_pairs(
             );
         }
     }
+}
+
+fn is_driver_summary(message: &str) -> bool {
+    let message = message.to_ascii_lowercase();
+    message.contains("collect2")
+        || message.contains("ld returned")
+        || message.contains("linker command failed")
 }
 
 fn add_pair(

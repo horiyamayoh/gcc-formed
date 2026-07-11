@@ -18,6 +18,10 @@ superseded_by: []
 
 Default failure output renders exactly one block per visible `RepairUnit`. Supporting evidence may be compacted inside the block, but uncertain/unclassified evidence cannot be hidden merely because family, message, file, proximity, emission order, or root score matches. Raw disclosure remains reversible, and native GCC source emphasis is the non-regression baseline.
 
+`unknown` / `passthrough` family は通常の visible generic block として描画する。これは
+low-support や omission の合図ではなく、分類語彙に依存せず primary location、raw message、
+structured child、fix-it を提示する互換表示である。
+
 - **文書種別**: 内部仕様書（実装契約）
 - **状態**: Accepted Baseline
 - **版**: `1.0.0-alpha.1`
