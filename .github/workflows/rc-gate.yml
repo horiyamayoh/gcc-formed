@@ -50,6 +50,12 @@ jobs:
             --workflow rc-gate \
             --step-id repair-unit-quality-gate \
             --report-root "$REPORT_ROOT"
+      - name: Output-quality candidate GCC/path matrix
+        run: |
+          python3 ci/run_gate_step.py \
+            --workflow rc-gate \
+            --step-id output-quality-candidate-matrix \
+            --report-root "$REPORT_ROOT"
       - name: Gate summary
         if: always()
         run: |

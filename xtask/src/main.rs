@@ -5,8 +5,9 @@ mod commands;
 mod util;
 
 use crate::commands::{
-    build_system_smoke::*, check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*, quality::*,
-    rc_gate::*, real_project::*, release::*, repair_oracle::*, stable::*, trace_bundle::*,
+    build_system_smoke::*, check::*, ci_gate::*, corpus::*, fuzz::*, human_eval::*,
+    output_quality::*, quality::*, rc_gate::*, real_project::*, release::*, repair_oracle::*,
+    stable::*, trace_bundle::*,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 #[cfg(test)]
@@ -258,6 +259,15 @@ enum Commands {
             default_value = "eval/output-quality-single-agent-v1/evidence/qualification-report.json"
         )]
         agent_output_quality_report: PathBuf,
+    },
+    OutputQualityMatrix {
+        #[arg(long, default_value = "corpus")]
+        root: PathBuf,
+        #[arg(
+            long,
+            default_value = "target/output-quality-matrix/human-readable-contract-matrix.json"
+        )]
+        output: PathBuf,
     },
     StableRelease {
         #[arg(long)]
@@ -685,6 +695,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
             if report.overall_status == GateStatus::Fail {
                 return Err("release candidate gate failed".into());
+            }
+        }
+        Commands::OutputQualityMatrix { root, output } => {
+            let report = run_output_quality_matrix(&root, &output)?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if report.status != "pass" {
+                return Err("output-quality candidate matrix failed".into());
             }
         }
         Commands::StableRelease {

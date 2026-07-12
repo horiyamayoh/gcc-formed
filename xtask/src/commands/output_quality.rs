@@ -7,6 +7,13 @@ const SCHEMA_VERSION: u32 = 1;
 const MINIMUM_TRIALS: usize = 360;
 const MINIMUM_FAMILIES: usize = 120;
 const MINIMUM_PER_CONDITION: usize = 120;
+const REQUIRED_MATRIX_CELLS: &[(&str, &str)] = &[
+    ("gcc15", "dual_sink_structured"),
+    ("gcc13_14", "native_text_capture"),
+    ("gcc13_14", "single_sink_structured"),
+    ("gcc9_12", "native_text_capture"),
+    ("gcc9_12", "single_sink_structured"),
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct AgentOutputQualityReport {
@@ -42,6 +49,171 @@ pub(crate) struct AgentOutputQualityValidation {
     pub(crate) report_path: PathBuf,
     pub(crate) blockers: Vec<String>,
     pub(crate) report: AgentOutputQualityReport,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct OutputQualityMatrixFixture {
+    fixture_id: String,
+    version_band: String,
+    processing_path: String,
+    default_first_action_line: Option<usize>,
+    ci_first_action_line: Option<usize>,
+    displayed_block_count: usize,
+    source_or_location_visible: bool,
+    disclosure_visible: bool,
+    group_identity_preserved: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct OutputQualityMatrixReport {
+    schema_version: u32,
+    candidate_preset: String,
+    pub(crate) status: String,
+    required_cells: Vec<String>,
+    covered_cells: Vec<String>,
+    missing_cells: Vec<String>,
+    failures: Vec<String>,
+    fixtures: Vec<OutputQualityMatrixFixture>,
+    claim_boundary: String,
+}
+
+pub(crate) fn run_output_quality_matrix(
+    root: &Path,
+    output: &Path,
+) -> Result<OutputQualityMatrixReport, Box<dyn std::error::Error>> {
+    use crate::commands::corpus::{render_request_for_fixture, replay_fixture_document};
+    use diag_render::{
+        RenderProfile, ResolvedPresentationPolicy, render, render_with_presentation_policy,
+    };
+
+    let fixtures = diag_testkit::discover(root)?;
+    let mut covered = std::collections::BTreeSet::new();
+    let mut failures = Vec::new();
+    let mut records = Vec::new();
+    for fixture in fixtures.iter().filter(|fixture| fixture.is_promoted()) {
+        let band = fixture.expectations.version_band.as_str();
+        let path = fixture.expectations.processing_path.as_str();
+        if !REQUIRED_MATRIX_CELLS.contains(&(band, path)) {
+            continue;
+        }
+        let replay = match replay_fixture_document(fixture) {
+            Ok(replay) => replay,
+            Err(error) => {
+                failures.push(format!("{}: replay failed: {error}", fixture.fixture_id()));
+                continue;
+            }
+        };
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v2();
+        policy.preset_id = "repair_units_hybrid_v1".to_string();
+        let default_request =
+            render_request_for_fixture(fixture, &replay.document, RenderProfile::Default);
+        let ci_request = render_request_for_fixture(fixture, &replay.document, RenderProfile::Ci);
+        let current = render(default_request.clone())?;
+        let candidate = render_with_presentation_policy(default_request, &policy)?;
+        let candidate_ci = render_with_presentation_policy(ci_request, &policy)?;
+        let group_identity_preserved =
+            current.displayed_group_refs == candidate.displayed_group_refs;
+        let explicit_disclosure = candidate
+            .text
+            .contains("details: --formed-explain | raw: --formed-raw")
+            && candidate_ci
+                .text
+                .contains("details: --formed-explain | raw: --formed-raw");
+        let raw_already_visible = candidate.text == current.text;
+        let disclosure_visible = explicit_disclosure || raw_already_visible;
+        let source_or_location_visible = candidate.text.contains("-->")
+            || candidate.text.lines().take(12).any(|line| {
+                line.contains(".c:")
+                    || line.contains(".cpp:")
+                    || line.contains("symbol")
+                    || line.contains("from")
+                    || line.contains("library")
+                    || line.contains("cannot find")
+            });
+        let default_first_action_line = first_action_line(&candidate.text);
+        let ci_first_action_line = first_action_line(&candidate_ci.text);
+        if !group_identity_preserved {
+            failures.push(format!(
+                "{}: candidate changed displayed RepairUnit identity",
+                fixture.fixture_id()
+            ));
+        }
+        if !disclosure_visible {
+            failures.push(format!(
+                "{}: candidate lacks one-step raw/explain disclosure",
+                fixture.fixture_id()
+            ));
+        }
+        if !source_or_location_visible {
+            failures.push(format!(
+                "{}: candidate lacks source/location/symbol anchor",
+                fixture.fixture_id()
+            ));
+        }
+        if default_first_action_line.is_none_or(|line| line > 12)
+            || ci_first_action_line.is_none_or(|line| line > 12)
+        {
+            failures.push(format!(
+                "{}: first actionable evidence is outside the 12-line qualification budget",
+                fixture.fixture_id()
+            ));
+        }
+        covered.insert(format!("{band}/{path}"));
+        records.push(OutputQualityMatrixFixture {
+            fixture_id: fixture.fixture_id().to_string(),
+            version_band: band.to_string(),
+            processing_path: path.to_string(),
+            default_first_action_line,
+            ci_first_action_line,
+            displayed_block_count: candidate.displayed_group_refs.len(),
+            source_or_location_visible,
+            disclosure_visible,
+            group_identity_preserved,
+        });
+    }
+    let required_cells = REQUIRED_MATRIX_CELLS
+        .iter()
+        .map(|(band, path)| format!("{band}/{path}"))
+        .collect::<Vec<_>>();
+    let missing_cells = required_cells
+        .iter()
+        .filter(|cell| !covered.contains(*cell))
+        .cloned()
+        .collect::<Vec<_>>();
+    let report = OutputQualityMatrixReport {
+        schema_version: SCHEMA_VERSION,
+        candidate_preset: "repair_units_hybrid_v1".to_string(),
+        status: if missing_cells.is_empty() && failures.is_empty() {
+            "pass".to_string()
+        } else {
+            "fail".to_string()
+        },
+        required_cells,
+        covered_cells: covered.into_iter().collect(),
+        missing_cells,
+        failures,
+        fixtures: records,
+        claim_boundary: "deterministic candidate rendering over retained real-compiler matrix evidence; not a human behavioral study".to_string(),
+    };
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(output, serde_json::to_vec_pretty(&report)?)?;
+    Ok(report)
+}
+
+fn first_action_line(text: &str) -> Option<usize> {
+    text.lines()
+        .position(|line| {
+            let line = line.to_ascii_lowercase();
+            line.contains("error")
+                || line.contains("warning")
+                || line.contains("fatal")
+                || line.contains("help:")
+                || line.contains("undefined reference")
+                || line.contains("not declared")
+        })
+        .map(|index| index + 1)
 }
 
 pub(crate) fn load_and_validate_agent_output_quality(

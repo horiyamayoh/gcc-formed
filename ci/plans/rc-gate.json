@@ -85,6 +85,20 @@
       "gcc_version": "host",
       "artifact_paths": ["$REPORT_ROOT/gate/repair-unit-quality.json", "$REPORT_ROOT/gate/real-project-readiness.json", "$REPORT_ROOT/gate/real-project-quality.json"],
       "gate_scope": "release_candidate"
+    },
+    {
+      "id": "output-quality-candidate-matrix",
+      "order": 6,
+      "name": "Output-quality candidate GCC/path matrix",
+      "policy": "always",
+      "failure_classification": "product",
+      "command": "cargo xtask output-quality-matrix --root corpus --output \"$REPORT_ROOT/gate/human-readable-contract-matrix.json\"",
+      "fixture": "candidate:repair_units_hybrid_v1",
+      "gcc_version": "retained-real-compiler-matrix",
+      "artifact_paths": [
+        "$REPORT_ROOT/gate/human-readable-contract-matrix.json"
+      ],
+      "gate_scope": "release_candidate"
     }
   ]
 }
