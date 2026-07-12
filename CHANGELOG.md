@@ -2,13 +2,14 @@
 
 All notable user-visible changes to `gcc-formed` are recorded here.
 
-The current maturity label is `v1beta`, and the current artifact semver line is `0.2.0-beta.N`. This changelog does not imply `1.0.0-rc.N` or `1.0.0 stable` support.
+The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. It is not a published artifact until sealed qualification and release gates pass.
 
 ## [Unreleased]
 
 ### Changed
 
-- Added the opt-in `repair_units_hybrid_v1` qualification candidate with native-style numbered source gutters, severity-aware caret emphasis, and one-step `--formed-explain` / `--formed-raw` disclosure while leaving `subject_blocks_v2` as the no-configuration default until sealed qualification passes.
+- Promoted the compact `repair_units_hybrid_v1` presentation on the RC candidate branch, with native-style numbered source gutters, concise RepairUnit blocks, and one session-local `--formed-explain` / `--formed-raw` disclosure; `subject_blocks_v2` remains the immediate rollback preset.
+- Added the preregistered 120-family / 360-trial single-agent qualification harness, expanded compile/link/build-system operators, complete trial provenance verification, and RC/stable provenance integration without claiming a human behavioral study.
 - Replaced the RC human-participant artifact blocker with the ADR-0039 single-agent actual patch/build qualification packet; historical human studies remain immutable research evidence and no human behavioral-study pass is claimed.
 - Promoted `subject_blocks_v2` to the no-config beta terminal default, kept `subject_blocks_v1` and `legacy_v1` as explicit rollback presets, and preserved preset-local fail-open when an external presentation overlay cannot be loaded.
 - Reset the public contract so `GCC15`, `GCC13-14`, and `GCC9-12` now share one in-scope value claim, exact machine labels use `gcc15` / `gcc13_14` / `gcc9_12` / `gcc16_plus`, `SupportLevel` is binary (`in_scope` / `passthrough_only`), and the public JSON schema moved to `2.0.0-alpha.1` with explicit `allowed_processing_paths`.

@@ -21,7 +21,7 @@ pub struct ExcerptBlock {
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub annotations: Vec<String>,
     /// 1-based line number of the first source line in this excerpt, when known.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
+    #[serde(skip)]
     pub start_line: Option<u32>,
 }
 

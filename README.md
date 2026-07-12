@@ -18,14 +18,14 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After (default `subject_blocks_v2`): `error: [type_mismatch] type or overload mismatch` と `want:` / `got:` / `via:` から読める
+> After (default `repair_units_hybrid_v1`): concrete headline、source/caret、最初のactionを1 RepairUnit blockで読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
-- **状態**: Public Beta
-- **成熟度ラベル**: `v1beta`
-- **artifact semver 系列**: `0.2.0-beta.N`
+- **状態**: 1.0 Release Candidate（sealed qualification / release pending）
+- **成熟度ラベル**: `v1.0.0-rc`
+- **artifact semver 系列**: `1.0.0-rc.N`
 - **一般利用向け安定版**: 未提供
-- **日付**: 2026-04-13
+- **日付**: 2026-07-12
 - **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 
 `gcc-formed` は、GCC をラップし、C/C++ のコンパイルエラーやリンクエラーを**より短く、より根因に近く、より誠実に**提示するためのリポジトリである。
@@ -43,10 +43,10 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
-Presentation V2 の `subject_blocks_v2` は beta runtime default であり、no-config の terminal render は subject-first blocks を使う。  
+`repair_units_hybrid_v1` は1.0 candidate branchのno-config terminal defaultであり、具体的headline、native-style source/caret、1 visible RepairUnit = 1 block、session-local raw/explain disclosureを使う。
 RepairUnit は semantic IR / causal quality として維持する。ADR-0038 に記録した過去の no-go と inconclusive evidence は変更しない。将来の release qualification は ADR-0039 に従い、単一 pinned coding agent の actual patch/build trial と deterministic readability contract で判定する。これは human behavioral study の pass を意味しない。
 rollout は `docs / ADR -> opt-in preset -> corpus / snapshot / review -> default promotion` の gate を通した。  
-以前の beta default を pin したい場合は `subject_blocks_v1` を、legacy wording へ戻したい場合は `legacy_v1` を explicit rollback preset として使える。`[render] presentation = "subject_blocks_v1"` / `--formed-presentation=subject_blocks_v1` と `[render] presentation = "legacy_v1"` / `--formed-presentation=legacy_v1` の両方を維持する。  
+以前の beta default を pin したい場合は `subject_blocks_v2` を、さらに古い表示へ戻す場合は `subject_blocks_v1` / `legacy_v1` を explicit rollback preset として使える。
 `cascade.max_expanded_independent_roots` は visible-root cap としては deprecated であり、新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
 representative corpus は `snapshots/.../subject_blocks_v2/` や `snapshots/.../subject_blocks_v1/` のような review 用 cluster を持てるが、`render.presentation.json` は internal artifact であり public contract ではない。
 
@@ -66,7 +66,7 @@ src/main.cpp:1:6: note: declared here
       |      ^~~~~
 ```
 
-**After (default `subject_blocks_v2`)**
+**After (default `repair_units_hybrid_v1`)**
 
 ```text
 error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
@@ -88,7 +88,7 @@ helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c
 collect2: error: ld returned 1 exit status
 ```
 
-**After (default `subject_blocks_v2`)**
+**After (default `repair_units_hybrid_v1`)**
 
 ```text
 error: [linker] multiple definition of `duplicate`
@@ -132,7 +132,7 @@ README では要点だけを再掲する。
 
 Representative corpus / replay gates でも、`GCC15/DualSinkStructured`、`GCC13-14/NativeTextCapture`、`GCC13-14/SingleSinkStructured`、`GCC9-12/NativeTextCapture`、`GCC9-12/SingleSinkStructured` を別 capability path として扱う。
 
-| VersionBand | 典型的な ProcessingPath | 現在の beta support level | 位置づけ |
+| VersionBand | 典型的な ProcessingPath | 現在の RC support level | 位置づけ |
 |---|---|---|---|
 | GCC 15 | `DualSinkStructured` | `InScope` | GCC 9–15 parity contract の一部。dual-sink が既定 capability |
 | GCC 13–14 | `SingleSinkStructured` / `NativeTextCapture` | `InScope` | GCC 9–15 parity contract の一部。native text が既定 capability |
@@ -166,7 +166,7 @@ gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 上から下へ読む。
 
 1. [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)  
-   現在の public wording と beta support posture の正本
+   現在の public wording と RC support posture の正本
 2. [docs/README.md](docs/README.md)  
    文書群の authority map と配置ルール
 3. [docs/architecture/gcc-formed-vnext-change-design.md](docs/architecture/gcc-formed-vnext-change-design.md)  
@@ -220,7 +220,7 @@ vNext では、repo の主語を単一 tier から外し、次の 4 概念に分
 - [docs/specs/quality-corpus-test-gate-spec.md](docs/specs/quality-corpus-test-gate-spec.md): quality gate 契約
 - [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md): packaging / install / rollback / release engineering 契約
 - [docs/process/implementation-bootstrap-sequence.md](docs/process/implementation-bootstrap-sequence.md): 実装開始順の正本
-- [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md): 公開 beta artifact の install / rollback / exact-pin 契約
+- [docs/releases/RC-RELEASE.md](docs/releases/RC-RELEASE.md): signed RC の qualification / install / rollback / publication 契約
 - [adr-initial-set/README.md](adr-initial-set/README.md): ADR 索引
 - [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md): 成熟度ラベルと artifact semver
 - [docs/policies/GOVERNANCE.md](docs/policies/GOVERNANCE.md): 変更分類と freeze ルール
@@ -271,7 +271,7 @@ GitHub CI 相当の gate をローカルで回すときは `cargo xtask ci-gate 
 Path-aware の実装が進んだら、band ごとの replay / snapshot / quality gate を追加で回す。  
 個別の release / install / rollback / stable-promotion 手順は [docs/specs/packaging-runtime-operations-spec.md](docs/specs/packaging-runtime-operations-spec.md) と関連 runbook を正本とする。
 
-公開 beta artifact の install / rollback / exact-pin は [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md) を参照。
+RC artifact のqualification / install / rollback / publicationは [docs/releases/RC-RELEASE.md](docs/releases/RC-RELEASE.md) を参照。
 
 ## Operator Quickstart for Make / CMake
 

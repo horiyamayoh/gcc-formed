@@ -1,6 +1,6 @@
 # Support
 
-`gcc-formed` is still in the `v1beta` / `0.2.0-beta.N` line, so support remains intentionally narrow and release-boundary driven.
+`gcc-formed` is on the `v1.0.0-rc` / `1.0.0-rc.N` candidate line, so support remains intentionally narrow and release-boundary driven.
 
 ## Canonical Support Docs
 

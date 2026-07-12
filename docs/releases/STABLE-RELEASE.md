@@ -14,7 +14,7 @@ superseded_by: []
 
 # Stable Release Runbook
 
-This document defines the automation contract for a future stable cut such as `1.0.0`. It does not claim that a stable artifact is already published today; the current public line remains `v1beta` / `0.2.0-beta.N`.
+This document defines the automation contract for the future `1.0.0` stable cut. It does not claim that a stable artifact is already published; the current source line is the `v1.0.0-rc` candidate.
 
 ## Preconditions
 

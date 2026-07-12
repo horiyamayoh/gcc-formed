@@ -1,14 +1,15 @@
 ---
-doc_role: current-authority
-lifecycle_status: accepted-baseline
+doc_role: reference-only
+lifecycle_status: superseded
 audience: both
 use_for: Current release, packaging, and promotion contract.
 do_not_use_for: Historical release posture or archived artifact context.
 supersedes: []
-superseded_by: []
+superseded_by:
+  - RC-RELEASE.md
 ---
 > [!IMPORTANT]
-> Authority: `current-authority` / `accepted-baseline`
+> Authority: `reference-only` / `superseded`
 > Use for: Current release, packaging, and promotion contract.
 > Do not use for: Historical release posture or archived artifact context.
 

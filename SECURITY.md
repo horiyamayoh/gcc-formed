@@ -2,7 +2,7 @@
 
 ## Release Status
 
-`gcc-formed` is currently in the `v1beta` maturity line, and the current artifact semver line is `0.2.0-beta.N`. It is available for narrow public beta use inside the documented support boundary, but `1.0.0-rc.N` and `1.0.0` have not shipped.
+`gcc-formed` is currently on the `v1.0.0-rc` / `1.0.0-rc.N` candidate line. `1.0.0-rc.1` is not published until qualification and release gates pass; stable `1.0.0` has not shipped.
 
 ## Current Support Boundary
 
@@ -23,7 +23,8 @@ This file defines the reporting path and response expectations. It does not wide
 
 | Artifact line | Security support status |
 | --- | --- |
-| `0.2.0-beta.N` | Current `v1beta` public-beta line; best-effort coordinated fixes for the current shipped artifacts within the documented support boundary |
+| `1.0.0-rc.N` | Current RC candidate line; best-effort coordinated fixes within the documented support boundary after publication |
+| `0.2.0-beta.N` | Prior `v1beta` public-beta line; use the latest signed artifact while RC publication is pending |
 | `0.1.x` | Superseded `v1alpha` baseline; upgrade to the `0.2.0-beta.N` line for ongoing fixes |
 | `main` | Development branch; fixes may land here first without backport guarantees |
 | `< 0.1.0` | Not supported |
@@ -40,7 +41,7 @@ This file defines the reporting path and response expectations. It does not wide
 
 - Acknowledgement target: within 5 business days on a best-effort basis.
 - Triage target: severity classification and reproduction status within 10 business days when a working reproduction is provided.
-- Fix target: no SLA is promised for the current `v1beta` / `0.2.0-beta.N` baseline; coordinated fixes are handled best-effort and may ship only in the next beta or release-candidate artifact.
+- Fix target: no SLA is promised for the current RC candidate; coordinated fixes are best-effort and require the applicable qualification/release gates.
 
 ## Scope
 

@@ -52,6 +52,7 @@ rc_release_gate_scope:
   - Strict `rc-gate` retains exact-count/fidelity, required GCC/path matrix, replay, deterministic replay, fuzz, and manual contract evidence.
   - This is coding-agent task-performance evidence plus deterministic readability proxies; no human behavioral study was performed or claimed.
 rc_release_doc_paths:
+  - docs/releases/RC-RELEASE.md
   - docs/releases/RELEASE-CHECKLIST.md
   - docs/support/SUPPORT-BOUNDARY.md
   - docs/support/KNOWN-LIMITATIONS.md

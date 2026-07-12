@@ -13,6 +13,7 @@ pub(crate) struct LayoutProfile {
     raw_block_indent: &'static str,
     ansi_color: bool,
     inline_location_soft_limit: usize,
+    compact_candidate: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,6 +38,7 @@ impl LayoutProfile {
                     .width_columns
                     .map(|width| width.min(DEFAULT_INLINE_LOCATION_SOFT_LIMIT))
                     .unwrap_or(DEFAULT_INLINE_LOCATION_SOFT_LIMIT),
+                compact_candidate: true,
             },
             _ => Self {
                 path_first_primary_line: false,
@@ -48,6 +50,10 @@ impl LayoutProfile {
                     .width_columns
                     .map(|width| width.min(DEFAULT_INLINE_LOCATION_SOFT_LIMIT))
                     .unwrap_or(DEFAULT_INLINE_LOCATION_SOFT_LIMIT),
+                compact_candidate: !matches!(
+                    request.profile,
+                    RenderProfile::Verbose | RenderProfile::Debug
+                ),
             },
         }
     }
@@ -426,7 +432,8 @@ impl<'a> LegacyPresentationAdapter<'a> {
     }
 
     fn render(&self, lines: &mut Vec<String>) {
-        let hybrid = self.card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1";
+        let hybrid = self.layout.compact_candidate
+            && self.card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1";
         let location_host = self.layout.location_host(self.card);
         lines.push(
             self.layout

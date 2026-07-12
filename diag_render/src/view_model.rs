@@ -237,7 +237,11 @@ pub fn build(
                 && content_compacted)
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
             session_mode: resolved_session_mode(presentation_policy, has_failure),
-            compact_hybrid: presentation_policy.preset_id == "repair_units_hybrid_v1",
+            compact_hybrid: presentation_policy.preset_id == "repair_units_hybrid_v1"
+                && !matches!(
+                    request.profile,
+                    RenderProfile::Verbose | RenderProfile::Debug
+                ),
         },
         cards: rendered_cards,
         summary_only_groups: summary_only_cards

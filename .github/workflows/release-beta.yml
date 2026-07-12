@@ -6,7 +6,7 @@ on:
       version:
         description: Artifact semver without leading v
         required: true
-        default: 0.2.0-beta.1
+        default: 1.0.0-rc.1
   push:
     tags:
       - "v*-beta.*"

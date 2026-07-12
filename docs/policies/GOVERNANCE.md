@@ -18,7 +18,7 @@ This document operationalizes [ADR-0020](../../adr-initial-set/adr-0020-stabilit
 
 ## Current Freeze
 
-Until `1.0.0` ships, treat the current `v1beta` / `0.2.0-beta.N` contract as frozen by default.
+Until `1.0.0` ships, treat the current `v1.0.0-rc` / `1.0.0-rc.N` contract as frozen by default.
 
 - A change that touches a stable contract surface must be explicitly classified as `breaking`, `non-breaking`, or `experimental`.
 - Contract changes must update the governing docs, tests, and release-facing wording in the same change.

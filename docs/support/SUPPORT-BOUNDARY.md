@@ -14,7 +14,7 @@ superseded_by: []
 
 # Support Boundary
 
-This document is the canonical wording for the current `v1beta` / `0.2.0-beta.N` vNext support posture.  
+This document is the canonical wording for the current `v1.0.0-rc` / `1.0.0-rc.N` support posture.
 Keep `README.md`, release notes, support docs, contribution docs, and GitHub templates aligned with this wording.
 
 ---
@@ -61,7 +61,7 @@ How much native / raw compiler output is preserved in the same run.
 
 ---
 
-## 2. Current `v1beta` / `0.2.0-beta.N` support boundary
+## 2. Current `v1.0.0-rc` / `1.0.0-rc.N` support boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -70,7 +70,7 @@ How much native / raw compiler output is preserved in the same run.
 - `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
-- `subject_blocks_v2` is the current beta default terminal preset; `subject_blocks_v1` and `legacy_v1` remain supported as explicit rollback / compatibility presets via `render.presentation = "subject_blocks_v1"`, `render.presentation = "legacy_v1"`, `--formed-presentation=subject_blocks_v1`, or `--formed-presentation=legacy_v1`.
+- `repair_units_hybrid_v1` is the RC candidate default terminal preset. `subject_blocks_v2` is the immediate rollback preset; `subject_blocks_v1` and `legacy_v1` remain compatibility presets. Raw and explain remain one-operation disclosure paths.
 - `cascade.max_expanded_independent_roots` remains a deprecated compatibility knob; visible-root behavior belongs to presentation/session policy, not cascade semantics.
 - Representative corpus may carry review-only `subject_blocks_v2/render.presentation.json` or `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
@@ -79,7 +79,7 @@ How much native / raw compiler output is preserved in the same run.
 
 ---
 
-## 3. Current beta matrix
+## 3. Current RC matrix
 
 | VersionBand | Typical ProcessingPath | RawPreservationLevel | SupportLevel | Current expectation |
 |---|---|---|---|---|

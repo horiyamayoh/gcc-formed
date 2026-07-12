@@ -14,14 +14,14 @@ superseded_by: []
 
 # Release Checklist
 
-This checklist defines the minimum bar for shipping artifacts from the current `v1beta` / `0.2.0-beta.N` baseline and for deciding whether the project is ready to advance to `v1.0.0-rc` / `1.0.0-rc.N`.
+This checklist defines the minimum bar for publishing the current `v1.0.0-rc` / `1.0.0-rc.1` candidate and subsequently promoting `1.0.0` stable.
 
 ## Versioning Contract
 
-- Current maturity label: `v1beta`
-- Current artifact semver line: `0.2.0-beta.N`
-- Current public beta artifact: `0.2.0-beta.1`
-- Planned release-candidate line: `1.0.0-rc.N`
+- Current maturity label: `v1.0.0-rc`
+- Current artifact semver line: `1.0.0-rc.N`
+- Current source candidate: `1.0.0-rc.1` (not published before qualification pass)
+- Rollback baseline artifact: `0.2.0-beta.1`
 - Planned stable line: `1.0.0`
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.
 - Canonical support-boundary wording lives in `SUPPORT-BOUNDARY.md`.
@@ -45,7 +45,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - The RC single-agent output-quality packet is attached and current. Its `qualification-report.json` is `pass`, its artifact-integrity report has no missing or mismatched artifacts, and it includes the pinned model/agent/tool manifest plus no-subagent attestation.
 - Historical human-eval bundles remain research evidence but participant recruitment and a `human-eval/` packet are not RC or stable prerequisites.
 
-## Current Beta Support Boundary
+## Current RC Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -59,7 +59,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 ## Explicit Non-Goals
 
-- Do not label `0.2.0-beta.N` artifacts as `1.0.0-rc.N` or `1.0.0 stable`.
+- Do not label a failed/inconclusive or unsigned candidate as a published `1.0.0-rc.N` or `1.0.0 stable` artifact.
 - Do not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
 - Do not claim that every diagnostic family or capability path already has identical evidence across the in-scope bands.
 - Do not widen the support boundary beyond `SUPPORT-BOUNDARY.md`.
@@ -76,7 +76,7 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 
 ## Release Notes Gate
 
-- README states the current beta-baseline scope in one screen.
+- README states the current RC-candidate scope and claim boundary in one screen.
 - README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
 - `SUPPORT-BOUNDARY.md` exists and remains the canonical wording source for README summary text, release notes, limitations, security, and contributing docs.
 - `PUBLIC-SURFACE.md` exists and remains the canonical source for repo landing metadata, README top copy, and generated GitHub Release body inputs.

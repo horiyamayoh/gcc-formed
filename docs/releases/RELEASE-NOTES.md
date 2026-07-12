@@ -14,7 +14,18 @@ superseded_by: []
 
 # Release Notes
 
-This document uses artifact semver for release headings. Artifact `0.2.0-beta.1` belongs to the `v1beta` maturity line; it is not a `1.0.0-rc.N` or `1.0.0 stable` release.
+This document uses artifact semver for release headings. The source candidate is `1.0.0-rc.1`; it is not published until the sealed qualification and RC release workflow pass.
+
+## 1.0.0-rc.1 (candidate; publication pending)
+
+### Output-quality contract
+
+- Makes `repair_units_hybrid_v1` the no-configuration candidate default, with one concrete headline, native-style source/caret, compact RepairUnit evidence, and one session-local `--formed-explain` / `--formed-raw` disclosure.
+- Keeps `subject_blocks_v2` as the immediate presentation rollback, plus `subject_blocks_v1`, `legacy_v1`, raw, explain, and passthrough recovery paths.
+- Replaces mandatory human recruitment with the ADR-0039 preregistered single-agent qualification: 120 semantic families, 360 valid trials, real compiler/edit/build loops, concealed conditions, deterministic scoring, and complete artifact retention.
+- Measures pinned coding-agent task performance and deterministic readability proxies. No human behavioral study was performed, and no human-population latency, preference, or non-inferiority claim is made.
+- Retains the shared `GCC 9-15` public contract and required path-aware matrix; `GCC16+` and unknown compiler variants remain passthrough-only.
+- Publication requires a `pass` qualification packet, strict RC/exact-count/fidelity/matrix gates, a signed package, install and rollback smoke, and release provenance containing the model/tool manifest and no-subagent attestation.
 
 ## 0.2.0-beta.1
 

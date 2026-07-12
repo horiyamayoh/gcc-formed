@@ -12,7 +12,7 @@ fn public_json_writes_available_export_to_file() {
     let fixture = public_json_fixture("15.2.0");
     let public_json = fixture.temp.path().join("public.json");
 
-    Command::cargo_bin("gcc-formed")
+    let assertion = Command::cargo_bin("gcc-formed")
         .unwrap()
         .env("FORMED_BACKEND_GCC", &fixture.backend)
         .current_dir(fixture.temp.path())
@@ -22,6 +22,13 @@ fn public_json_writes_available_export_to_file() {
         .arg(&fixture.source)
         .assert()
         .failure();
+
+    assert!(
+        public_json.is_file(),
+        "public export missing; stdout={} stderr={}",
+        String::from_utf8_lossy(&assertion.get_output().stdout),
+        String::from_utf8_lossy(&assertion.get_output().stderr),
+    );
 
     let export = parse_json_file(&public_json);
     assert_eq!(
@@ -70,7 +77,14 @@ fn public_json_writes_available_export_to_stdout() {
         .assert()
         .failure();
 
-    let export: Value = serde_json::from_slice(&assert.get_output().stdout).unwrap();
+    let export: Value =
+        serde_json::from_slice(&assert.get_output().stdout).unwrap_or_else(|error| {
+            panic!(
+                "invalid public JSON ({error}); stdout={} stderr={}",
+                String::from_utf8_lossy(&assert.get_output().stdout),
+                String::from_utf8_lossy(&assert.get_output().stderr),
+            )
+        });
     assert_eq!(
         export["kind"].as_str(),
         Some("gcc_formed_public_diagnostic_export")
@@ -402,7 +416,13 @@ fn run_public_json_export(version: &str, mode: &str, extra_args: &[&str]) -> Val
     for arg in extra_args {
         command.arg(arg);
     }
-    command.arg("-c").arg(&fixture.source).assert().failure();
+    let assertion = command.arg("-c").arg(&fixture.source).assert().failure();
+    assert!(
+        public_json.is_file(),
+        "public export missing; stdout={} stderr={}",
+        String::from_utf8_lossy(&assertion.get_output().stdout),
+        String::from_utf8_lossy(&assertion.get_output().stderr),
+    );
     parse_json_file(&public_json)
 }
 

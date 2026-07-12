@@ -363,7 +363,7 @@ dependencies = [
 
 [[package]]
 name = "diag_adapter_contract"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_backend_probe",
  "diag_capture_runtime",
@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "diag_adapter_gcc"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "criterion",
  "diag_adapter_contract",
@@ -391,7 +391,7 @@ dependencies = [
 
 [[package]]
 name = "diag_backend_probe"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "serde",
  "tempfile",
@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "diag_capture_runtime"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_backend_probe",
  "diag_core",
@@ -413,7 +413,7 @@ dependencies = [
 
 [[package]]
 name = "diag_cascade"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_backend_probe",
  "diag_core",
@@ -423,7 +423,7 @@ dependencies = [
 
 [[package]]
 name = "diag_cli_front"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "diag_core"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "ordered-float",
  "regex",
@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "diag_enrich"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_core",
  "diag_rulepack",
@@ -471,7 +471,7 @@ dependencies = [
 
 [[package]]
 name = "diag_public_export"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_backend_probe",
  "diag_core",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "diag_render"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_core",
  "diag_rulepack",
@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "diag_residual_text"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "criterion",
  "diag_core",
@@ -507,7 +507,7 @@ dependencies = [
 
 [[package]]
 name = "diag_rulepack"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_backend_probe",
  "diag_core",
@@ -521,7 +521,7 @@ dependencies = [
 
 [[package]]
 name = "diag_testkit"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "assert_cmd",
  "diag_core",
@@ -536,7 +536,7 @@ dependencies = [
 
 [[package]]
 name = "diag_trace"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "diag_core",
  "flate2",
@@ -1646,7 +1646,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.2.0-beta.1"
+version = "1.0.0-rc.1"
 dependencies = [
  "clap",
  "diag_adapter_gcc",

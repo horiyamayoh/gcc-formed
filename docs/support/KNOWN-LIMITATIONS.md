@@ -14,11 +14,11 @@ superseded_by: []
 
 # Known Limitations
 
-`gcc-formed` is currently in the `v1beta` maturity line, and the current artifact line is `0.2.0-beta.N`. The current public-beta baseline is intentionally narrow.
+`gcc-formed` is on the `v1.0.0-rc` candidate line, with artifact version `1.0.0-rc.1`. Publication remains blocked until the sealed single-agent qualification and release gates pass.
 
 The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md). This file summarizes the current limits and known gaps around that contract.
 
-## Current Beta Posture
+## Current RC Posture
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -40,7 +40,7 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - `x86_64-unknown-linux-gnu` remains a compatibility smoke and exception path, not the primary shipped artifact.
 - `GCC16+`, older compilers outside `GCC 9-15`, and unknown gcc-like variants may still resolve conservatively to passthrough behavior.
 - Current runtime and self-check output already use the current vocabulary. The remaining limit is capability-dependent capture behavior, not a public hierarchy between in-scope bands. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.
-- Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
+- Default TTY non-regression is a release gate across the required compiler/path matrix. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
 - Human behavioral validation has not been performed. Release qualification measures a pinned coding agent's task performance and deterministic readability proxies; it does not establish human population edit latency, preference, or non-inferiority.
 - The checked-in interop lab covers `make -j`, `cmake --build`, one wrapper-owned backend launcher, depfile generation, response-file pass-through, and stdout-sensitive compiler probes under `eval/interop/`, but that coverage is intentionally narrow and does not prove launcher stacks in front of the wrapper or multi-launcher chains.
 
@@ -61,8 +61,7 @@ You should expect raw fallback when:
 - Perfect parity across every diagnostic family and every capability path.
 - Non-Linux production artifacts.
 - Elimination of passthrough, shadow-mode-like conservative behavior, or raw fallback.
-- Release-candidate or stable artifacts (`1.0.0-rc.N`, `1.0.0`).
-- Stable general-availability support promises beyond the documented `v1beta` / `0.2.0-beta.N` scope.
+- Stable artifact `1.0.0` or general-availability promises before the stable promotion gate passes.
 - Backlog items reserved for post-`1.0.0` expansion; see [GOVERNANCE.md](../policies/GOVERNANCE.md).
 
 ## Bug Reports

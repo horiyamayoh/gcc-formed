@@ -20,9 +20,9 @@ This document fixes the naming contract for `gcc-formed` so maturity labels, art
 
 | Axis | Current value | Meaning |
 | --- | --- | --- |
-| Maturity label | `v1beta` | Current product maturity and support posture |
-| Artifact semver line | `0.2.0-beta.N` | Current public-beta artifact series |
-| Current artifact in the line | `0.2.0-beta.1` | First public-beta artifact |
+| Maturity label | `v1.0.0-rc` | Current candidate maturity and support posture |
+| Artifact semver line | `1.0.0-rc.N` | Current release-candidate artifact series |
+| Current artifact in the line | `1.0.0-rc.1` | Candidate source version; publication requires qualification pass |
 | General-availability stable release | Not available | `1.0.0` has not shipped |
 
 ## Fixed Progression
@@ -51,6 +51,7 @@ Examples:
 - Do not use `v0.2.0-beta.1` as a maturity label.
 - Archive names, tags, and install paths may embed a `v` prefix for readability, such as `gcc-formed-v0.2.0-beta.1-linux-x86_64-musl.tar.gz`; that prefix does not change the underlying semver.
 - `1.0.0-rc.N` or `1.0.0` output-quality wording must identify single-agent task-performance evidence and deterministic readability proxies. It must not say or imply that a human behavioral study passed.
+- `1.0.0-rc.N` must not be published until its candidate SHA has a passing sealed qualification packet and strict RC gate.
 
 ## Current Reader Guidance
 

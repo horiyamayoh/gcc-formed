@@ -173,14 +173,10 @@ fn renders_with_fake_gcc13_backend_on_native_text_default_path() {
         .failure()
         .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
         .stderr(predicate::str::contains(
-            "note: some compiler details were not fully structured; original diagnostics are preserved",
+            "note: partial diagnostic; full compiler output: --formed-raw",
         ))
-        .stderr(predicate::str::contains(
-            "expected ';' before '}' token",
-        ))
-        .stderr(predicate::str::contains(
-            "want: ;",
-        ))
+        .stderr(predicate::str::contains("expected ';' before '}' token"))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("raw:\n").not())
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
@@ -235,12 +231,12 @@ fn renders_with_fake_gcc13_backend_on_native_text_ci_profile() {
         .failure()
         .stderr(predicate::str::contains(expected_gcc13_native_text_notice()))
         .stderr(predicate::str::contains(
-            "note: some compiler details were not fully structured; original diagnostics are preserved",
+            "note: partial diagnostic; full compiler output: --formed-raw",
         ))
-        .stderr(predicate::str::contains("main.c:4:1: error: [syntax] expected ';' before '}' token"))
         .stderr(predicate::str::contains(
-            "want: ;",
+            "main.c:4:1: error: [syntax] expected ';' before '}' token",
         ))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("raw:\n").not())
         .stderr(predicate::str::contains("syntax error @").not())
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
@@ -458,14 +454,10 @@ fn renders_with_fake_gcc12_backend_on_native_text_default_path() {
         .failure()
         .stderr(predicate::str::contains(expected_gcc9_native_text_notice()))
         .stderr(predicate::str::contains(
-            "note: some compiler details were not fully structured; original diagnostics are preserved",
+            "note: partial diagnostic; full compiler output: --formed-raw",
         ))
-        .stderr(predicate::str::contains(
-            "expected ';' before '}' token",
-        ))
-        .stderr(predicate::str::contains(
-            "want: ;",
-        ))
+        .stderr(predicate::str::contains("expected ';' before '}' token"))
+        .stderr(predicate::str::contains("want: ;"))
         .stderr(predicate::str::contains("showing a conservative wrapper view").not());
 
     let trace: Value =
@@ -595,15 +587,11 @@ fn missing_single_sink_json_falls_back_honestly_on_fake_gcc12_backend() {
         .arg(&source)
         .assert()
         .failure()
+        .stderr(predicate::str::contains(expected_gcc9_single_sink_notice()))
         .stderr(predicate::str::contains(
-            expected_gcc9_single_sink_notice(),
+            "note: partial diagnostic; full compiler output: --formed-raw",
         ))
-        .stderr(predicate::str::contains(
-            "note: some compiler details were not fully structured; original diagnostics are preserved",
-        ))
-        .stderr(predicate::str::contains(
-            "expected ';' before '}' token",
-        ));
+        .stderr(predicate::str::contains("expected ';' before '}' token"));
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
@@ -2028,11 +2016,9 @@ fn missing_sarif_falls_back_with_reason_coded_trace() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "note: some compiler details were not fully structured; original diagnostics are preserved",
+            "note: partial diagnostic; full compiler output: --formed-raw",
         ))
-        .stderr(predicate::str::contains(
-            "expected ';' before '}' token",
-        ));
+        .stderr(predicate::str::contains("expected ';' before '}' token"));
 
     let trace: Value =
         serde_json::from_str(&fs::read_to_string(trace_root.join("trace.json")).unwrap()).unwrap();
@@ -2141,7 +2127,7 @@ fn parse_env_dump(contents: &str) -> BTreeMap<String, String> {
 }
 
 fn expected_gcc13_native_text_notice() -> &'static str {
-    "note: some compiler details were not fully structured; original diagnostics are preserved"
+    "note: partial diagnostic; full compiler output: --formed-raw"
 }
 
 fn expected_gcc13_single_sink_notice() -> &'static str {
@@ -2153,7 +2139,7 @@ fn expected_gcc13_shadow_notice() -> &'static str {
 }
 
 fn expected_gcc9_native_text_notice() -> &'static str {
-    "note: some compiler details were not fully structured; original diagnostics are preserved"
+    "note: partial diagnostic; full compiler output: --formed-raw"
 }
 
 fn expected_gcc9_single_sink_notice() -> &'static str {

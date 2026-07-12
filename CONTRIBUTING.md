@@ -2,7 +2,7 @@
 
 ## Project Baseline
 
-`gcc-formed` is a spec-first repository with the current `v1beta` maturity label and the `0.2.0-beta.N` artifact line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
+`gcc-formed` is a spec-first repository with the current `v1.0.0-rc` maturity label and the `1.0.0-rc.N` candidate line. User-visible behavior, config, IR semantics, and release contracts should be treated as deliberate interfaces, not incidental implementation details. See [docs/policies/VERSIONING.md](docs/policies/VERSIONING.md) for the fixed maturity / semver / channel vocabulary.
 
 ## Current Support Boundary
 
@@ -58,7 +58,7 @@ python3 -B -m unittest discover -s ci -p 'test_*.py'
 
 If you touch release packaging, install flows, or release metadata, also validate the relevant `cargo xtask package`, `install`, `release-publish`, `release-promote`, and `install-release` paths in a clean worktree.
 
-The automated public-beta GitHub Release workflow also expects the repository secret `RELEASE_SIGNING_PRIVATE_KEY_HEX` to be configured before a signed prerelease tag is pushed.
+The automated prerelease GitHub workflow expects the repository secret `RELEASE_SIGNING_PRIVATE_KEY_HEX` before a signed beta or RC tag is published.
 
 ## Change Policy
 

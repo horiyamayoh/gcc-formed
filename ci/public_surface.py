@@ -13,7 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_SURFACE_DOC = REPO_ROOT / "docs" / "support" / "PUBLIC-SURFACE.md"
 SUPPORT_BOUNDARY_DOC = REPO_ROOT / "docs" / "support" / "SUPPORT-BOUNDARY.md"
-SUPPORT_BOUNDARY_HEADING = "## 2. Current `v1beta` / `0.2.0-beta.N` support boundary"
+SUPPORT_BOUNDARY_HEADING = "## 2. Current `v1.0.0-rc` / `1.0.0-rc.N` support boundary"
 
 
 def extract_front_matter(text: str) -> dict[str, object]:
