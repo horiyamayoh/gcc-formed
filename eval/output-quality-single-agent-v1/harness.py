@@ -12,8 +12,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import random
+import re
 import shutil
 import statistics
 import subprocess
@@ -92,6 +94,24 @@ def canonical_hash(value: Any) -> str:
     return sha256_bytes(encoded)
 
 
+def toolchain_hash(manifest_path: Path) -> str:
+    return canonical_hash(read_json(manifest_path).get("toolchain", {}))
+
+
+def evidence_metadata(packet_root: Path) -> dict[str, str]:
+    freeze = read_json(packet_root / "candidate-freeze.json")
+    return {
+        "candidate_sha": str(freeze["candidate_sha"]),
+        "protocol_sha256": sha256_file(packet_root / "protocol.json"),
+        "analysis_plan_sha256": sha256_file(packet_root / "analysis-plan.json"),
+        "model_agent_tool_manifest_sha256": sha256_file(
+            packet_root / "model-agent-tool-manifest.json"
+        ),
+        "toolchain_sha256": toolchain_hash(packet_root / "model-agent-tool-manifest.json"),
+        "corpus_manifest_sha256": sha256_file(packet_root / "corpus-manifest.json"),
+    }
+
+
 def files_merkle(root: Path, *, excluded: Iterable[str] = ()) -> tuple[str, list[dict[str, Any]]]:
     excluded_set = set(excluded)
     records: list[dict[str, Any]] = []
@@ -136,6 +156,8 @@ def validate_static() -> dict[str, Any]:
         errors.append("agent jobs must be exactly one")
     if manifest.get("model") != "gpt-5.6-sol" or manifest.get("reasoning_effort") != "xhigh":
         errors.append("agent manifest must pin gpt-5.6-sol/xhigh")
+    if manifest.get("tool_policy", {}).get("sandbox") != "workspace-write inside an isolated generated task directory":
+        errors.append("agent manifest sandbox must match the workspace-write launch policy")
     if attestation.get("attested") is not True or attestation.get("subagent_spawn_count") != 0:
         errors.append("no-subagent attestation is not affirmative")
     report = {
@@ -397,6 +419,11 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
     seed_commitment = sha256_bytes(seed_material.encode())
     write_json(packet_root / "seed-commitment.json", {
         "schema_version": 1,
+        "candidate_sha": args.candidate_sha,
+        "protocol_sha256": protocol_hash,
+        "analysis_plan_sha256": analysis_hash,
+        "model_agent_tool_manifest_sha256": manifest_hash,
+        "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "algorithm": "sha256",
         "attempt": args.attempt,
         "commitment": seed_commitment,
@@ -409,12 +436,19 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
         "protocol_sha256": protocol_hash,
         "analysis_plan_sha256": analysis_hash,
         "agent_manifest_sha256": manifest_hash,
+        "model_agent_tool_manifest_sha256": manifest_hash,
+        "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "candidate_presentation": args.candidate_presentation,
         "formed_binary_sha256": sha256_file(args.formed_binary) if args.formed_binary else None,
         "frozen_at_unix_seconds": int(time.time()),
     })
     control_key = {
         "schema_version": 1,
+        "candidate_sha": args.candidate_sha,
+        "protocol_sha256": protocol_hash,
+        "analysis_plan_sha256": analysis_hash,
+        "model_agent_tool_manifest_sha256": manifest_hash,
+        "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "concealed": True,
         "mapping": mapping,
         "commitment": canonical_hash(mapping),
@@ -478,6 +512,7 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
                 "condition_label": identity_to_label[identity],
                 "allowed_files": task.allowed_files,
                 "repair_token": task.repair_token,
+                "oracle_relation": "a passing repair must change an allowed file and remove or replace the sealed defective anchor",
                 "initial_source": source_records,
                 "diagnostic_sha256": sha256_bytes(diagnostic),
                 "diagnostic_bytes": len(diagnostic),
@@ -502,6 +537,10 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
     corpus_manifest = {
         "schema_version": 1,
         "candidate_sha": args.candidate_sha,
+        "protocol_sha256": protocol_hash,
+        "analysis_plan_sha256": analysis_hash,
+        "model_agent_tool_manifest_sha256": manifest_hash,
+        "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "attempt": args.attempt,
         "semantic_family_count": 120,
         "trial_count": 360,
@@ -514,12 +553,20 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
         "families": family_records,
     }
     write_json(packet_root / "corpus-manifest.json", corpus_manifest)
+    metadata = evidence_metadata(packet_root)
+    for trial in trials:
+        trial.update(metadata)
+        controller_path = packet_root / "trials" / trial["trial_id"] / "controller.json"
+        controller = read_json(controller_path)
+        controller.update(metadata)
+        write_json(controller_path, controller)
     with (packet_root / "trial-index.jsonl").open("w", encoding="utf-8") as handle:
         for trial in trials:
             handle.write(json.dumps(trial, sort_keys=True) + "\n")
     materialized_root, materialized_files = files_merkle(packet_root / "trials")
     write_json(packet_root / "materialization-freeze.json", {
         "schema_version": 1,
+        **metadata,
         "trial_artifact_merkle_root": materialized_root,
         "file_count": len(materialized_files),
         "condition_key_commitment": control_key["commitment"],
@@ -558,11 +605,19 @@ def parse_codex_events(path: Path) -> dict[str, int]:
                 event = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            rendered = json.dumps(event, sort_keys=True)
-            if any(marker in rendered for marker in ('"command_execution"', '"tool_call"', '"mcp_tool_call"')):
+            item = event.get("item") if isinstance(event.get("item"), dict) else {}
+            item_type = item.get("type")
+            if item_type == "file_change":
+                break
+            if event.get("type") != "item.completed":
+                continue
+            rendered = json.dumps(item, sort_keys=True)
+            if item_type in ("command_execution", "tool_call", "mcp_tool_call"):
                 tool_calls += 1
-            if any(marker in rendered for marker in ("src/", "include/", "Project.mk")):
-                source_bytes += len(rendered.encode())
+            command = str(item.get("command", ""))
+            if any(marker in command for marker in ("src/", "include/", "Project.mk")):
+                output = str(item.get("aggregated_output", ""))
+                source_bytes += len(output.encode())
                 for token in rendered.replace('"', " ").split():
                     if "src/" in token or "include/" in token:
                         files_opened.add(token.strip("',:;()[]{}"))
@@ -606,6 +661,15 @@ def score_trial(packet_root: Path, record: dict[str, Any], process_returncode: i
         except (ValueError, json.JSONDecodeError):
             invalid_schema = True
     event_metrics = parse_codex_events(trial_root / "transcript.jsonl")
+    transcript = (trial_root / "transcript.jsonl").read_text(errors="replace")
+    if "hit your usage limit" in transcript.lower():
+        termination_reason = "agent_transport_usage_limit"
+    elif process_returncode == 124:
+        termination_reason = "trial_timeout"
+    elif process_returncode != 0:
+        termination_reason = "agent_process_failure"
+    else:
+        termination_reason = "agent_completed"
     first_patch_path = work / ".trial" / "patch-1.diff"
     first_patch_lines = 0
     if first_patch_path.exists():
@@ -621,12 +685,15 @@ def score_trial(packet_root: Path, record: dict[str, Any], process_returncode: i
             final_source.append({"path": relative, "sha256": sha256_file(path), "bytes": path.stat().st_size})
     score = {
         "schema_version": 1,
+        **evidence_metadata(packet_root),
         "trial_id": record["trial_id"],
         "semantic_family_id": private["semantic_family_id"],
         "condition_label": private["condition_label"],
         "started": True,
         "valid": True,
         "process_returncode": process_returncode,
+        "termination_reason": termination_reason,
+        "exclusion_reason": None,
         "elapsed_ms": elapsed_ms,
         "invalid_final_schema": invalid_schema,
         "build_attempts": attempts,
@@ -682,9 +749,22 @@ def run_trials(args: argparse.Namespace) -> dict[str, Any]:
             (trial_root / "transcript.jsonl").write_bytes(error.stdout or b"")
             (trial_root / "agent-stderr.txt").write_bytes((error.stderr or b"") + b"\ntrial timeout\n")
         elapsed_ms = int((time.monotonic() - started) * 1000)
-        score_trial(packet_root, record, returncode, elapsed_ms)
+        score = score_trial(packet_root, record, returncode, elapsed_ms)
         completed_count += 1
         print(f"[{completed_count}/{len(records)}] {record['trial_id']}", flush=True)
+        if score["termination_reason"] == "agent_transport_usage_limit":
+            abort = {
+                "schema_version": 1,
+                **evidence_metadata(packet_root),
+                "status": "aborted",
+                "reason": "non-retryable agent transport usage limit",
+                "last_started_trial": record["trial_id"],
+                "started_trials": completed_count,
+            }
+            write_json(packet_root / "run-abort.json", abort)
+            raise RuntimeError(
+                "non-retryable agent transport usage limit; retained the started trial and stopped before exposing more holdout tasks"
+            )
     return {"status": "complete", "started_trials": completed_count, "packet_root": str(packet_root)}
 
 
@@ -741,32 +821,88 @@ def clustered_interval(
 def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping: dict[str, str]) -> dict[str, Any]:
     candidate_label = next(label for label, identity in mapping.items() if identity == "candidate")
     candidate_rows = [row for row in rows if row["condition_label"] == candidate_label]
+    native_label = next(label for label, identity in mapping.items() if identity == "native_gcc")
+    native_by_family = {
+        row["semantic_family_id"]: row
+        for row in rows
+        if row["condition_label"] == native_label
+    }
     checks = {
         "diagnostic_nonempty": 0,
         "primary_location_present": 0,
         "source_or_caret_present": 0,
         "raw_or_explain_disclosure_present": 0,
         "first_action_within_budget": 0,
+        "concrete_headline_present": 0,
+        "one_step_disclosure_once": 0,
+        "simple_native_first_screen_budget": 0,
+        "complex_first_action_compaction": 0,
     }
+    required = {key: 0 for key in checks}
     failures: list[dict[str, str]] = []
-    for row in candidate_rows:
-        diagnostic = (
+
+    def action_line(lines: list[str]) -> int | None:
+        markers = ("error:", "undefined reference", "not declared", "fatal:", "help:")
+        return next(
+            (index for index, line in enumerate(lines) if any(marker in line.lower() for marker in markers)),
+            None,
+        )
+
+    def diagnostic(row: dict[str, Any]) -> str:
+        return (
             packet_root / "trials" / row["trial_id"] / "work" / "DIAGNOSTIC.txt"
         ).read_text(errors="replace")
-        lines = diagnostic.splitlines()
+
+    for row in candidate_rows:
+        candidate_diagnostic = diagnostic(row)
+        lines = candidate_diagnostic.splitlines()
+        native_row = native_by_family.get(row["semantic_family_id"])
+        native_lines = diagnostic(native_row).splitlines() if native_row else []
+        candidate_action = action_line(lines)
+        native_action = action_line(native_lines)
+        controller = read_json(packet_root / "trials" / row["trial_id"] / "controller.json")
+        stratum = controller["stratum"]
+        source_line = any(re.match(r"^\s*\d+\s+\|\s+\S", line) for line in lines[:16])
+        caret_line = any(re.match(r"^\s*\|\s+.*[\^~]", line) for line in lines[:16])
+        native_source_line = any(re.match(r"^\s*\d+\s+\|\s+\S", line) for line in native_lines[:16])
+        native_caret_line = any(re.match(r"^\s*\|\s+.*[\^~]", line) for line in native_lines[:16])
+        headline = next((line for line in lines[:4] if "error:" in line.lower()), "")
+        headline_body = headline.lower().split("error:", 1)[-1].strip()
+        if headline_body.startswith("[") and "]" in headline_body:
+            headline_body = headline_body.split("]", 1)[1].strip()
         predicates = {
-            "diagnostic_nonempty": bool(diagnostic.strip()),
-            "primary_location_present": any(": error:" in line or "error:" in line for line in lines[:12]),
-            "source_or_caret_present": any("^" in line or "|" in line for line in lines[:16]),
-            "raw_or_explain_disclosure_present": (
-                "--formed-raw" in diagnostic and "--formed-explain" in diagnostic
-            ),
-            "first_action_within_budget": any(
+            "diagnostic_nonempty": bool(candidate_diagnostic.strip()),
+            "primary_location_present": any(re.search(r"[^ ]+:\d+:\d+", line) for line in lines[:12])
+            or any(
                 marker in line.lower()
                 for line in lines[:12]
-                for marker in ("help", "error", "undefined reference", "not declared")
+                for marker in ("undefined reference", "multiple definition", "symbol:", "from:")
             ),
+            "raw_or_explain_disclosure_present": (
+                "--formed-raw" in candidate_diagnostic and "--formed-explain" in candidate_diagnostic
+            ),
+            "first_action_within_budget": candidate_action is not None and candidate_action < 12,
+            "concrete_headline_present": bool(headline_body.rstrip("@")),
+            "one_step_disclosure_once": candidate_diagnostic.count("details: --formed-explain") == 1
+            and candidate_diagnostic.count("raw: --formed-raw") == 1,
         }
+        if native_source_line and native_caret_line:
+            predicates["source_or_caret_present"] = source_line and caret_line
+        for key in predicates:
+            required[key] += 1
+        if stratum == "simple_native_strong":
+            native_position = native_action if native_action is not None else len(native_lines)
+            allowance = max(4, math.ceil((native_position + 1) * 0.25))
+            predicates["simple_native_first_screen_budget"] = (
+                candidate_action is not None and candidate_action <= native_position + allowance
+            )
+            required["simple_native_first_screen_budget"] += 1
+        if stratum == "diagnostic_flood_semantic_heavy" and native_action is not None:
+            limit = math.floor(native_action * 0.80) if native_action > 0 else 0
+            predicates["complex_first_action_compaction"] = (
+                candidate_action is not None and candidate_action <= limit
+            )
+            required["complex_first_action_compaction"] += 1
         for key, passed in predicates.items():
             checks[key] += int(passed)
             if not passed:
@@ -775,7 +911,10 @@ def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping
     return {
         "schema_version": 1,
         "candidate_trial_count": total,
-        "checks": {key: {"passed": value, "required": total} for key, value in checks.items()},
+        "checks": {
+            key: {"passed": value, "required": required[key]}
+            for key, value in checks.items()
+        },
         "failures": failures,
         "overall_status": "pass" if not failures else "fail",
         "claim_boundary": "deterministic display-contract proxy; not a human behavioral study",
@@ -784,10 +923,12 @@ def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping
 
 def analyze(args: argparse.Namespace) -> dict[str, Any]:
     packet_root = args.packet_root.resolve()
+    metadata = evidence_metadata(packet_root)
     trial_records = load_index(packet_root)
     raw_root, raw_files = files_merkle(packet_root / "trials")
     write_json(packet_root / "trial-artifact-freeze.json", {
         "schema_version": 1,
+        **metadata,
         "merkle_root": raw_root,
         "file_count": len(raw_files),
         "frozen_before_condition_reveal": True,
@@ -798,6 +939,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     mapping = condition_key["mapping"]
     write_json(packet_root / "condition-key.json", {
         "schema_version": 1,
+        **metadata,
         "revealed_after_trial_artifact_freeze": True,
         "mapping": mapping,
         "commitment": condition_key["commitment"],
@@ -864,6 +1006,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     }
     utility = {
         "schema_version": 1,
+        **metadata,
         "condition_summary": condition_summary,
         "comparisons": comparisons,
         "missing_scores": missing_scores,
@@ -871,6 +1014,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     write_json(packet_root / "repair-utility-report.json", utility)
     write_json(packet_root / "efficiency-report.json", {
         "schema_version": 1,
+        **metadata,
         "condition_summary": {
             identity: {
                 key: value for key, value in summary.items()
@@ -887,6 +1031,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         },
     })
     readability = human_readable_checks(packet_root, rows, mapping)
+    readability.update(metadata)
     write_json(packet_root / "human-readable-contract-report.json", readability)
     invalid_schema = sum(bool(row["invalid_final_schema"]) for row in rows)
     leak_markers = (
@@ -903,6 +1048,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             condition_leaks += int(any(marker in transcript for marker in leak_markers))
     fidelity = {
         "schema_version": 1,
+        **metadata,
         "p0_p1_fidelity_bugs": 0,
         "high_confidence_misleading_actions": 0,
         "false_merges": 0,
@@ -963,6 +1109,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         "protocol_sha256": sha256_file(packet_root / "protocol.json"),
         "analysis_plan_sha256": sha256_file(packet_root / "analysis-plan.json"),
         "model_agent_tool_manifest_sha256": sha256_file(packet_root / "model-agent-tool-manifest.json"),
+        "toolchain_sha256": toolchain_hash(packet_root / "model-agent-tool-manifest.json"),
         "corpus_manifest_sha256": sha256_file(packet_root / "corpus-manifest.json"),
         "started_trials": len(trial_records),
         "valid_trials": len(rows),
@@ -1008,6 +1155,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
 
 def verify(args: argparse.Namespace) -> dict[str, Any]:
     packet_root = args.packet_root.resolve()
+    metadata = evidence_metadata(packet_root)
     missing = [
         name
         for name in REQUIRED_PACKET_FILES
@@ -1033,6 +1181,7 @@ def verify(args: argparse.Namespace) -> dict[str, Any]:
         mismatches.append(f"qualification verdict is {qualification.get('verdict')!r}, not 'pass'")
     report = {
         "schema_version": 1,
+        **metadata,
         "overall_status": "pass" if not missing and not mismatches else "fail",
         "missing_artifacts": sorted(set(missing)),
         "hash_mismatches": mismatches,

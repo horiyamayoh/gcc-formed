@@ -104,6 +104,19 @@ class OutputQualityHarnessTests(unittest.TestCase):
                     (trial / "transcript.jsonl").write_text("")
                     (trial / "final.patch").write_text("diff\n")
                     HARNESS.write_json(
+                        trial / "controller.json",
+                        {
+                            "schema_version": 1,
+                            "stratum": (
+                                "simple_native_strong"
+                                if family < 40
+                                else "diagnostic_flood_semantic_heavy"
+                                if family < 80
+                                else "multi_file_build_real_project"
+                            ),
+                        },
+                    )
+                    HARNESS.write_json(
                         trial / "score.json",
                         {
                             "schema_version": 1,
@@ -142,9 +155,13 @@ class OutputQualityHarnessTests(unittest.TestCase):
             )
 
             qualification = HARNESS.analyze(Namespace(packet_root=root))
+            self.assertEqual(
+                qualification["verdict"],
+                "pass",
+                HARNESS.read_json(root / "human-readable-contract-report.json"),
+            )
             integrity = HARNESS.verify(Namespace(packet_root=root))
 
-            self.assertEqual(qualification["verdict"], "pass")
             self.assertEqual(integrity["overall_status"], "pass")
 
 

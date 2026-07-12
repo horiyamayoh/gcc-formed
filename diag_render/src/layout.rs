@@ -269,7 +269,13 @@ impl LayoutProfile {
         let family = self.subject_first_family(card);
         let family_text = theme.inline(family);
         let family_tag = self.style_family_tag(&format!("[{}]", family_text));
-        let subject = theme.inline(&card.title);
+        let subject_text = if card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1"
+        {
+            card.title.lines().next().unwrap_or(card.title.as_str())
+        } else {
+            card.title.as_str()
+        };
+        let subject = theme.inline(subject_text);
         self.render_header_template(
             template,
             &self.style_severity(&card.severity),
@@ -426,18 +432,14 @@ impl<'a> LegacyPresentationAdapter<'a> {
             self.layout
                 .primary_line(self.theme, self.card, location_host),
         );
+        if hybrid {
+            self.render_compact_hybrid(lines, location_host);
+            return;
+        }
         if matches!(location_host, LocationHost::Dedicated)
             && let Some(location) = self.card.canonical_location.as_ref()
         {
-            lines.push(if hybrid {
-                format!(
-                    " {} {}",
-                    self.layout.style_location_arrow("-->"),
-                    self.theme.inline(location)
-                )
-            } else {
-                format!("--> {}", self.theme.inline(location))
-            });
+            lines.push(format!("--> {}", self.theme.inline(location)));
         }
         if let Some(confidence_notice) = self.card.confidence_notice.as_ref() {
             lines.push(confidence_notice.clone());
@@ -448,16 +450,12 @@ impl<'a> LegacyPresentationAdapter<'a> {
             self.render_legacy_evidence(lines, location_host);
         }
         for excerpt in &self.card.excerpts {
-            if hybrid {
-                self.render_hybrid_excerpt(lines, excerpt);
-            } else {
-                lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
-                for source in &excerpt.lines {
-                    lines.push(format!("| {}", self.theme.inline(source)));
-                }
-                for annotation in &excerpt.annotations {
-                    lines.push(format!("| {}", self.theme.inline(annotation)));
-                }
+            lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
+            for source in &excerpt.lines {
+                lines.push(format!("| {}", self.theme.inline(source)));
+            }
+            for annotation in &excerpt.annotations {
+                lines.push(format!("| {}", self.theme.inline(annotation)));
             }
         }
         for context in &self.card.context_lines {
@@ -489,17 +487,53 @@ impl<'a> LegacyPresentationAdapter<'a> {
                 ));
             }
         }
-        if hybrid {
-            lines.push("details: --formed-explain | raw: --formed-raw".to_string());
+    }
+
+    fn render_compact_hybrid(&self, lines: &mut Vec<String>, location_host: LocationHost) {
+        if let Some(confidence_notice) = self.card.confidence_notice.as_ref() {
+            lines.push(confidence_notice.clone());
+        }
+        let mut evidence = self.evidence_entries();
+        evidence.retain(|entry| !entry.raw);
+        for entry in evidence.into_iter().take(2) {
+            let value = entry.value.lines().next().unwrap_or(entry.value);
+            lines.push(format!(
+                "{}: {}",
+                self.layout.style_segment(entry.label, Some("36")),
+                self.theme.inline(value)
+            ));
+        }
+
+        if let Some(excerpt) = self.card.excerpts.first() {
+            self.render_hybrid_excerpt(
+                lines,
+                excerpt,
+                !matches!(location_host, LocationHost::Header),
+            );
+        } else if !matches!(location_host, LocationHost::Header)
+            && let Some(location) = self.card.canonical_location.as_ref()
+        {
+            lines.push(format!(
+                " {} {}",
+                self.layout.style_location_arrow("-->"),
+                self.theme.inline(location)
+            ));
         }
     }
 
-    fn render_hybrid_excerpt(&self, lines: &mut Vec<String>, excerpt: &crate::ExcerptBlock) {
-        lines.push(format!(
-            " {} {}",
-            self.layout.style_location_arrow("-->"),
-            self.theme.inline(&excerpt.location)
-        ));
+    fn render_hybrid_excerpt(
+        &self,
+        lines: &mut Vec<String>,
+        excerpt: &crate::ExcerptBlock,
+        show_location: bool,
+    ) {
+        if show_location {
+            lines.push(format!(
+                " {} {}",
+                self.layout.style_location_arrow("-->"),
+                self.theme.inline(&excerpt.location)
+            ));
+        }
         let line_num_width = excerpt
             .start_line
             .map(|start| {
@@ -508,11 +542,6 @@ impl<'a> LegacyPresentationAdapter<'a> {
             })
             .unwrap_or(0);
         let gutter_padding = " ".repeat(line_num_width + 1);
-        lines.push(format!(
-            "{}{}",
-            gutter_padding,
-            self.layout.style_gutter("|")
-        ));
         for (index, source) in excerpt.lines.iter().enumerate() {
             if let Some(start) = excerpt.start_line {
                 let number = start as usize + index;

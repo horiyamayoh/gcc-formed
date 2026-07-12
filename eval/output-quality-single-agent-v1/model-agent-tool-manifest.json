@@ -12,7 +12,7 @@
     "note": "provider sampling controls are not exposed by this Codex build; identical agent config is enforced instead"
   },
   "tool_policy": {
-    "sandbox": "danger-full-access inside an isolated generated task directory",
+    "sandbox": "workspace-write inside an isolated generated task directory",
     "approval_policy": "never",
     "network": false,
     "subagents": false,

@@ -23,6 +23,7 @@ pub(crate) struct AgentOutputQualityReport {
     pub(crate) protocol_sha256: String,
     pub(crate) analysis_plan_sha256: String,
     pub(crate) model_agent_tool_manifest_sha256: String,
+    pub(crate) toolchain_sha256: String,
     pub(crate) corpus_manifest_sha256: String,
     pub(crate) started_trials: usize,
     pub(crate) valid_trials: usize,
@@ -303,14 +304,22 @@ pub(crate) fn load_and_validate_agent_output_quality(
             report.human_readable_contract_status
         ));
     }
+    if !matches!(report.candidate_sha.len(), 40 | 64)
+        || !report
+            .candidate_sha
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+    {
+        blockers.push("candidate_sha is not a 40- or 64-character hex commit id".to_string());
+    }
     for (name, value) in [
-        ("candidate_sha", report.candidate_sha.as_str()),
         ("protocol_sha256", report.protocol_sha256.as_str()),
         ("analysis_plan_sha256", report.analysis_plan_sha256.as_str()),
         (
             "model_agent_tool_manifest_sha256",
             report.model_agent_tool_manifest_sha256.as_str(),
         ),
+        ("toolchain_sha256", report.toolchain_sha256.as_str()),
         (
             "corpus_manifest_sha256",
             report.corpus_manifest_sha256.as_str(),
@@ -360,6 +369,7 @@ mod tests {
             protocol_sha256: "b".repeat(64),
             analysis_plan_sha256: "c".repeat(64),
             model_agent_tool_manifest_sha256: "d".repeat(64),
+            toolchain_sha256: "1".repeat(64),
             corpus_manifest_sha256: "e".repeat(64),
             started_trials: 360,
             valid_trials: 360,
@@ -392,6 +402,19 @@ mod tests {
 
         assert_eq!(validation.status, "pass");
         assert!(validation.blockers.is_empty());
+    }
+
+    #[test]
+    fn full_length_git_sha_is_accepted_as_candidate_identity() {
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("qualification-report.json");
+        let mut report = passing_report();
+        report.candidate_sha = "a".repeat(40);
+        fs::write(&path, serde_json::to_vec(&report).unwrap()).unwrap();
+
+        let validation = load_and_validate_agent_output_quality(&path).unwrap();
+
+        assert_eq!(validation.status, "pass");
     }
 
     #[test]

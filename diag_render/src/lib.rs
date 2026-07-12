@@ -1070,7 +1070,7 @@ mod tests {
     }
 
     #[test]
-    fn hybrid_candidate_adds_native_source_gutter_and_one_step_disclosure() {
+    fn hybrid_candidate_keeps_one_location_source_gutter_and_one_disclosure() {
         let tempdir = tempfile::tempdir().unwrap();
         write_source_file(
             &tempdir,
@@ -1085,13 +1085,16 @@ mod tests {
 
         let output = render_with_presentation_policy(request, &policy).unwrap();
 
-        assert!(output.text.contains("--> src/main.c:2:13"));
+        assert!(output.text.contains("src/main.c:2:13"));
+        assert_eq!(output.text.matches("src/main.c:2:13").count(), 1);
         assert!(output.text.contains("2 |     return 0"));
+        assert!(output.text.contains("|             ^"));
         assert!(
             output
                 .text
                 .contains("details: --formed-explain | raw: --formed-raw")
         );
+        assert_eq!(output.text.matches("details: --formed-explain").count(), 1);
     }
 
     #[test]

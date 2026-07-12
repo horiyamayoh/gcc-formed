@@ -36,6 +36,9 @@ pub struct RenderSessionSummary {
     /// Internal session mode used for formatter/session behavior.
     #[serde(skip, default = "default_session_mode")]
     pub(crate) session_mode: SessionMode,
+    /// Whether the selected presentation uses the compact qualification layout.
+    #[serde(skip)]
+    pub(crate) compact_hybrid: bool,
 }
 
 /// A diagnostic group rendered only as a one-line summary.
@@ -234,6 +237,7 @@ pub fn build(
                 && content_compacted)
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
             session_mode: resolved_session_mode(presentation_policy, has_failure),
+            compact_hybrid: presentation_policy.preset_id == "repair_units_hybrid_v1",
         },
         cards: rendered_cards,
         summary_only_groups: summary_only_cards

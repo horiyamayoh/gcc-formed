@@ -19,7 +19,7 @@ pub fn emit(
     let use_block_local_budget = uses_block_local_budget(&view_model);
     let mut lines = Vec::new();
     let mut truncation_occurred = false;
-    if view_model.summary.partial_notice {
+    if view_model.summary.partial_notice && !view_model.summary.compact_hybrid {
         lines.push(policy.disclosure.partial_document_notice.to_string());
     }
 
@@ -84,7 +84,12 @@ pub fn emit(
                 .replace("{count}", &suppressed_warning_count.to_string()),
         );
     }
-    if let Some(raw_hint) = view_model.summary.raw_diagnostics_hint.as_ref() {
+    if view_model.summary.compact_hybrid {
+        if view_model.summary.partial_notice {
+            lines.push("note: partial diagnostic; full compiler output: --formed-raw".to_string());
+        }
+        lines.push(policy.disclosure.raw_diagnostics_hint.to_string());
+    } else if let Some(raw_hint) = view_model.summary.raw_diagnostics_hint.as_ref() {
         lines.push(raw_hint.clone());
     } else if hidden_group_count > 0
         && request

@@ -30,7 +30,11 @@ The controller is `harness.py`:
 ```bash
 python3 eval/output-quality-single-agent-v1/harness.py validate-static
 python3 eval/output-quality-single-agent-v1/harness.py generate-corpus \
-  --output target/output-quality/corpus --attempt 1 --candidate-sha "$sha"
+  --output target/output-quality/qualification \
+  --attempt "$attempt" \
+  --candidate-sha "$sha" \
+  --formed-binary target/debug/gcc-formed \
+  --candidate-presentation repair_units_hybrid_v1
 python3 eval/output-quality-single-agent-v1/harness.py run \
   --packet-root target/output-quality/qualification --jobs 1
 python3 eval/output-quality-single-agent-v1/harness.py analyze \
@@ -61,6 +65,10 @@ The condition key is revealed only after all started-trial artifacts are frozen
 and their Merkle root is recorded. Failed and interrupted trials remain in the
 index. A failed or inconclusive report is never rewritten; a product change
 requires a new candidate SHA and the next preregistered disjoint partition.
+The controller stops after retaining a non-retryable transport-capacity failure
+instead of starting the rest of a partition when they cannot execute. Before
+materializing the final partition, operators must run an out-of-packet pinned
+agent smoke and confirm enough transport capacity to complete all 360 trials.
 
 ## Claim boundary
 
