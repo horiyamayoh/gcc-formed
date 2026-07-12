@@ -355,7 +355,7 @@ def diagnostic_for(
     if identity != "native_gcc":
         if aliases is None:
             raise ValueError("formed binary is required for current_default and candidate")
-        extra = []
+        extra = ["--formed-presentation=subject_blocks_v2"] if identity == "current_default" else []
         if identity == "candidate" and candidate_presentation:
             extra = [f"--formed-presentation={candidate_presentation}"]
         if command[0] in ("gcc", "g++"):

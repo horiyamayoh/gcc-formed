@@ -10,8 +10,9 @@ schema_version = 1
 profile = "default"
 path_policy = "relative_to_cwd"
 debug_refs = "none"
-# current beta default is subject_blocks_v2; uncomment only when you need an explicit pin or rollback.
-# presentation = "subject_blocks_v2"  # pin the current beta default explicitly
+# 1.0 candidate default is repair_units_hybrid_v1; uncomment only for an explicit pin or rollback.
+# presentation = "repair_units_hybrid_v1"  # pin the compact RepairUnit default explicitly
+# presentation = "subject_blocks_v2"  # roll back to the previous beta default
 # presentation = "subject_blocks_v1"  # rollback to the previous beta default
 # presentation = "legacy_v1"          # rollback to legacy wording / session behavior
 # compatibility alias accepted by the current loader for built-in presets:
