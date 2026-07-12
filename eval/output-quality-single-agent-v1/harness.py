@@ -794,13 +794,13 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     })
     sealed_key_path = packet_root / "control" / "condition-key.sealed.json"
     os.chmod(sealed_key_path, 0o600)
-    key = read_json(sealed_key_path)
-    mapping = key["mapping"]
+    condition_key = read_json(sealed_key_path)
+    mapping = condition_key["mapping"]
     write_json(packet_root / "condition-key.json", {
         "schema_version": 1,
         "revealed_after_trial_artifact_freeze": True,
         "mapping": mapping,
-        "commitment": key["commitment"],
+        "commitment": condition_key["commitment"],
     })
     rows: list[dict[str, Any]] = []
     missing_scores: list[str] = []
@@ -976,7 +976,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         "fidelity_status": "fail" if fidelity_fail else "pass",
         "human_readable_contract_status": readability["overall_status"],
         "trial_artifact_merkle_root": raw_root,
-        "condition_key_commitment": key["commitment"],
+        "condition_key_commitment": condition_key["commitment"],
         "claim_boundary": "coding-agent task performance and deterministic readability proxies; no human behavioral-study claim",
     }
     write_json(packet_root / "qualification-report.json", qualification)
@@ -1008,7 +1008,11 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
 
 def verify(args: argparse.Namespace) -> dict[str, Any]:
     packet_root = args.packet_root.resolve()
-    missing = [name for name in REQUIRED_PACKET_FILES if not (packet_root / name).exists()]
+    missing = [
+        name
+        for name in REQUIRED_PACKET_FILES
+        if name != "artifact-integrity-report.json" and not (packet_root / name).exists()
+    ]
     mismatches: list[str] = []
     freeze_path = packet_root / "trial-artifact-freeze.json"
     if freeze_path.exists():

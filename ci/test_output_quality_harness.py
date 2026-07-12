@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from argparse import Namespace
 from pathlib import Path
 
 
@@ -66,6 +69,83 @@ class OutputQualityHarnessTests(unittest.TestCase):
                 )
                 self.assertNotEqual(completed.returncode, 0, task.family_id)
                 self.assertTrue(completed.stderr or completed.stdout, task.family_id)
+
+    def test_synthetic_full_packet_analyzes_and_verifies(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            for source in HARNESS.STATIC_FILES:
+                shutil.copy2(source, root / source.name)
+            analysis = json.loads((root / "analysis-plan.json").read_text())
+            analysis["bootstrap"]["replicates"] = 100
+            HARNESS.write_json(root / "analysis-plan.json", analysis)
+            HARNESS.write_json(
+                root / "candidate-freeze.json",
+                {"candidate_sha": "a" * 64, "schema_version": 1},
+            )
+            HARNESS.write_json(root / "corpus-manifest.json", {"schema_version": 1})
+            HARNESS.write_json(root / "seed-commitment.json", {"schema_version": 1})
+            mapping = {"A": "native_gcc", "B": "current_default", "C": "candidate"}
+            HARNESS.write_json(
+                root / "control" / "condition-key.sealed.json",
+                {"schema_version": 1, "mapping": mapping, "commitment": HARNESS.canonical_hash(mapping)},
+            )
+            rows = []
+            for family in range(120):
+                for label in HARNESS.LABELS:
+                    trial_id = f"T-{family:03d}-{label}"
+                    trial = root / "trials" / trial_id
+                    work = trial / "work"
+                    work.mkdir(parents=True)
+                    diagnostic_bytes = 50 if label == "C" else 100
+                    (work / "DIAGNOSTIC.txt").write_text(
+                        "src/main.c:1:1: error: bad\n1 | bad\n  | ^\n"
+                        "details: --formed-explain | raw: --formed-raw\n"
+                    )
+                    (trial / "transcript.jsonl").write_text("")
+                    (trial / "final.patch").write_text("diff\n")
+                    HARNESS.write_json(
+                        trial / "score.json",
+                        {
+                            "schema_version": 1,
+                            "trial_id": trial_id,
+                            "semantic_family_id": f"F{family + 1:03d}",
+                            "condition_label": label,
+                            "started": True,
+                            "valid": True,
+                            "process_returncode": 0,
+                            "elapsed_ms": 1,
+                            "invalid_final_schema": False,
+                            "build_attempts": 1,
+                            "first_success_attempt": 1,
+                            "first_patch_success": True,
+                            "success_within_three_loops": True,
+                            "wrong_file_or_anchor": False,
+                            "changed_files": ["src/main.c"],
+                            "first_patch_size_lines": 2,
+                            "diagnostic_bytes": diagnostic_bytes,
+                            "tool_calls": 2,
+                            "source_bytes_inspected": 20,
+                            "files_opened": 1,
+                            "final_source": [],
+                        },
+                    )
+                    rows.append(
+                        {
+                            "trial_id": trial_id,
+                            "semantic_family_id": f"F{family + 1:03d}",
+                            "condition_label": label,
+                            "status": "complete",
+                        }
+                    )
+            (root / "trial-index.jsonl").write_text(
+                "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
+            )
+
+            qualification = HARNESS.analyze(Namespace(packet_root=root))
+            integrity = HARNESS.verify(Namespace(packet_root=root))
+
+            self.assertEqual(qualification["verdict"], "pass")
+            self.assertEqual(integrity["overall_status"], "pass")
 
 
 if __name__ == "__main__":
