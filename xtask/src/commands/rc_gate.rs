@@ -461,6 +461,64 @@ pub(crate) fn run_rc_gate(
         &normalized_agent_output_quality_dir.join("validation-report.json"),
         &agent_output_quality,
     )?;
+    let source_evidence_dir = options
+        .agent_output_quality_report
+        .parent()
+        .ok_or("agent output-quality report has no evidence directory")?;
+    for name in [
+        "analysis-plan.json",
+        "artifact-integrity-report.json",
+        "candidate-freeze.json",
+        "corpus-manifest.json",
+        "default-promotion-decision.md",
+        "efficiency-report.json",
+        "fidelity-report.json",
+        "human-readable-contract-report.json",
+        "model-agent-tool-manifest.json",
+        "no-subagent-attestation.json",
+        "protocol.json",
+        "qualification-summary.md",
+        "repair-utility-report.json",
+        "seed-commitment.json",
+    ] {
+        let source = source_evidence_dir.join(name);
+        if !source.is_file() {
+            return Err(format!(
+                "required single-agent output-quality evidence is missing: {}",
+                source.display()
+            )
+            .into());
+        }
+        fs::copy(&source, normalized_agent_output_quality_dir.join(name))?;
+    }
+    let integrity: serde_json::Value = serde_json::from_slice(&fs::read(
+        source_evidence_dir.join("artifact-integrity-report.json"),
+    )?)?;
+    if integrity
+        .get("overall_status")
+        .and_then(serde_json::Value::as_str)
+        != Some("pass")
+    {
+        return Err("single-agent artifact-integrity-report.json is not pass".into());
+    }
+    let attestation: serde_json::Value = serde_json::from_slice(&fs::read(
+        source_evidence_dir.join("no-subagent-attestation.json"),
+    )?)?;
+    if attestation
+        .get("attested")
+        .and_then(serde_json::Value::as_bool)
+        != Some(true)
+        || attestation
+            .get("subagent_spawn_count")
+            .and_then(serde_json::Value::as_u64)
+            != Some(0)
+        || attestation
+            .get("delegation_count")
+            .and_then(serde_json::Value::as_u64)
+            != Some(0)
+    {
+        return Err("single-agent no-subagent attestation is not affirmative".into());
+    }
 
     let manual_metrics = load_manual_metrics_evidence(&options.metrics_manual_report)?;
     let normalized_manual_metrics_path = options.report_dir.join("metrics-manual-eval.json");

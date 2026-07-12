@@ -122,6 +122,11 @@ jobs:
           python3 ci/gate_replay_contract.py \
             --replay-report "$REPORT_ROOT/rc-gate/replay-report.json" \
             --output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"
+      - name: Output-quality candidate GCC/path matrix
+        run: |
+          cargo xtask output-quality-matrix \
+            --root corpus \
+            --output "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
       - name: Vendor dependency tree
         run: cargo xtask vendor --output-dir "$VENDOR_DIR" > "$REPORT_ROOT/release/vendor.json"
       - name: Hermetic release build
@@ -204,6 +209,11 @@ jobs:
             "$REPORT_ROOT/rc-gate/rc-gate-report.json"
             "$REPORT_ROOT/rc-gate/rollout-matrix-report.json"
             "$REPORT_ROOT/rc-gate/replay-stop-ship.json"
+            "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
+            "$REPORT_ROOT/rc-gate/agent-output-quality/qualification-report.json"
+            "$REPORT_ROOT/rc-gate/agent-output-quality/artifact-integrity-report.json"
+            "$REPORT_ROOT/rc-gate/agent-output-quality/no-subagent-attestation.json"
+            "$REPORT_ROOT/rc-gate/agent-output-quality/model-agent-tool-manifest.json"
             "$REPORT_ROOT/stable-release/stable-release-report.json"
             "$REPORT_ROOT/stable-release/stable-release-summary.md"
             "$REPORT_ROOT/stable-release/promotion-evidence.json"

@@ -183,6 +183,44 @@ def render_release_body(
                 ]),
             ]
         )
+    elif kind == "rc":
+        sections.append(
+            format_template(required_string(metadata, "rc_release_intro"), version=version)
+        )
+        sections.extend(
+            [
+                "",
+                "## Support Boundary",
+                "",
+                *support_lines,
+                "",
+                "## Release Gate Scope",
+                "",
+                *bulletize(required_list(metadata, "rc_release_gate_scope")),
+                "",
+                "## Current Docs",
+                "",
+                *render_doc_links(
+                    repository, commit, required_list(metadata, "rc_release_doc_paths")
+                ),
+                "",
+                "## Signing",
+                "",
+                f"- signing key id: `{signing_key_id or '<not supplied>'}`",
+                (
+                    "- trusted signing public key sha256: "
+                    f"`{signing_public_key_sha256 or '<not supplied>'}`"
+                ),
+                "",
+                "## Included Assets",
+                "",
+                *bulletize(required_list(metadata, "rc_included_assets")),
+                "",
+                "## Known Limits",
+                "",
+                *bulletize(required_list(metadata, "rc_known_limits")),
+            ]
+        )
     elif kind == "stable":
         sections.append(
             format_template(required_string(metadata, "stable_release_intro"), version=version)
@@ -305,7 +343,7 @@ def build_parser() -> argparse.ArgumentParser:
         "render-release-body", help="Render the GitHub Release body to stdout."
     )
     render_release_body_parser.add_argument(
-        "--kind", choices=("beta", "stable"), required=True
+        "--kind", choices=("beta", "rc", "stable"), required=True
     )
     render_release_body_parser.add_argument("--version", required=True)
     render_release_body_parser.add_argument("--repository", default=default_repository())

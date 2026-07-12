@@ -71,6 +71,22 @@ class PublicSurfaceContractTest(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIn(line, body)
 
+    def test_rc_release_body_names_single_agent_evidence_and_claim_boundary(self) -> None:
+        body = public_surface.render_release_body(
+            kind="rc",
+            version="1.0.0-rc.1",
+            repository="horiyamayoh/gcc-formed",
+            commit="deadbeef",
+            signing_key_id="rc-key",
+            signing_public_key_sha256="rc-sha256",
+            rollback_baseline_version=None,
+        )
+        self.assertIn("1.0.0-rc.1", body)
+        self.assertIn("360 valid trials", body)
+        self.assertIn("no human behavioral study", body)
+        self.assertIn("agent-output-quality/qualification-report.json", body)
+        self.assertIn("signing key id: `rc-key`", body)
+
     def test_cli_repo_metadata_and_release_body_commands_work(self) -> None:
         metadata = subprocess.run(
             ["python3", "ci/public_surface.py", "repo-metadata"],

@@ -129,7 +129,18 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
             "replay_stop_ship": load_json(rc_gate / "replay-stop-ship.json"),
             "metrics_report": load_json(rc_gate / "metrics-report.json"),
             "fuzz_report": load_json(rc_gate / "fuzz-smoke-report.json"),
-            "human_eval": load_json(rc_gate / "human-eval" / "human-eval-report.json"),
+            "agent_output_quality": load_json(
+                rc_gate / "agent-output-quality" / "qualification-report.json"
+            ),
+            "agent_output_quality_integrity": load_json(
+                rc_gate / "agent-output-quality" / "artifact-integrity-report.json"
+            ),
+            "no_subagent_attestation": load_json(
+                rc_gate / "agent-output-quality" / "no-subagent-attestation.json"
+            ),
+            "model_agent_tool_manifest": load_json(
+                rc_gate / "agent-output-quality" / "model-agent-tool-manifest.json"
+            ),
         }
 
     evidence = {
@@ -152,6 +163,20 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
     if args.workflow == "nightly-gate":
         evidence["bench_smoke"] = load_json(release / "bench-smoke.json")
         evidence["fuzz_smoke"] = load_json(release / "fuzz-smoke-report.json")
+    rc_gate = report_root / "rc-gate"
+    if rc_gate.is_dir():
+        evidence["agent_output_quality"] = load_json(
+            rc_gate / "agent-output-quality" / "qualification-report.json"
+        )
+        evidence["agent_output_quality_integrity"] = load_json(
+            rc_gate / "agent-output-quality" / "artifact-integrity-report.json"
+        )
+        evidence["no_subagent_attestation"] = load_json(
+            rc_gate / "agent-output-quality" / "no-subagent-attestation.json"
+        )
+        evidence["model_agent_tool_manifest"] = load_json(
+            rc_gate / "agent-output-quality" / "model-agent-tool-manifest.json"
+        )
     return evidence
 
 

@@ -46,6 +46,31 @@ beta_known_limits:
   - `GCC16+` and unknown gcc-like compilers remain outside the current `GCC 9-15` contract.
   - Internal capture mechanisms still vary by capability path even when the public contract is shared.
   - Raw fallback remains part of the shipped contract.
+rc_release_intro: This GitHub prerelease ships signed artifact `{version}` in the `v1.0.0-rc` maturity line after the single-agent output-quality qualification and strict RC gate passed.
+rc_release_gate_scope:
+  - The sealed single-agent packet contains 120 semantic families / 360 valid trials, a `pass` qualification report, artifact hashes, the pinned model/tool manifest, and the no-subagent attestation.
+  - Strict `rc-gate` retains exact-count/fidelity, required GCC/path matrix, replay, deterministic replay, fuzz, and manual contract evidence.
+  - This is coding-agent task-performance evidence plus deterministic readability proxies; no human behavioral study was performed or claimed.
+rc_release_doc_paths:
+  - docs/releases/RELEASE-CHECKLIST.md
+  - docs/support/SUPPORT-BOUNDARY.md
+  - docs/support/KNOWN-LIMITATIONS.md
+  - eval/output-quality-single-agent-v1/README.md
+rc_included_assets:
+  - primary archive
+  - debug archive
+  - source archive
+  - signed control-dir bundle
+  - immutable release-repo bundle
+  - `rc-gate-report.json`
+  - `agent-output-quality/qualification-report.json`
+  - `agent-output-quality/artifact-integrity-report.json`
+  - `human-readable-contract-matrix.json`
+  - `release-provenance.json`
+rc_known_limits:
+  - Human population latency, preference, and usability non-inferiority were not measured.
+  - `GCC16+` and unknown gcc-like compilers remain outside the current `GCC 9-15` contract.
+  - Raw fallback remains part of the shipped contract.
 stable_release_intro: This GitHub Release publishes stable artifact `{version}` from a single signed build and promotes the same published bits through `canary`, `beta`, and `stable` without rebuilding.
 stable_evidence_lines:
   - rollback baseline version: `{rollback_baseline_version}`

@@ -613,7 +613,7 @@ EXECUTION_CATALOG = {
             'cargo xtask rc-gate --root corpus --report-dir "$REPORT_ROOT/rc-gate" '
             '--metrics-manual-report eval/rc/metrics-manual-eval.json '
             '--issue-budget-report eval/rc/issue-budget.json --fuzz-root fuzz '
-            '--ux-signoff-report eval/rc/ux-signoff.json --allow-pending-manual-checks'
+            '--ux-signoff-report eval/rc/ux-signoff.json'
         ),
         "repair-unit-quality-gate": StepExecution(
             'cargo xtask repair-oracle --root corpus --check && '
@@ -628,6 +628,10 @@ EXECUTION_CATALOG = {
             '--output "$REPORT_ROOT/gate/replay-stop-ship.json"',
             run_condition="after_step_not_skipped",
             requires_step_id="cargo-xtask-rc-gate",
+        ),
+        "output-quality-candidate-matrix": StepExecution(
+            'cargo xtask output-quality-matrix --root corpus '
+            '--output "$REPORT_ROOT/gate/human-readable-contract-matrix.json"'
         ),
     },
 }

@@ -1,4 +1,4 @@
-name: public-beta-release
+name: prerelease
 
 on:
   workflow_dispatch:
@@ -10,18 +10,17 @@ on:
   push:
     tags:
       - "v*-beta.*"
+      - "v*-rc.*"
 
 permissions:
   contents: write
 
 jobs:
-  public-beta-release:
+  prerelease:
     runs-on: ubuntu-24.04
     env:
       TARGET_TRIPLE: x86_64-unknown-linux-musl
       ARTIFACT_SLUG: linux-x86_64-musl
-      MATURITY_LABEL: v1beta
-      RELEASE_CHANNEL: beta
       RELEASE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_HEX }}
     steps:
       - uses: actions/checkout@v5.0.0
@@ -52,6 +51,22 @@ jobs:
             echo "::error::requested release version '$requested_version' did not match Cargo.toml workspace version '$package_version'"
             exit 1
           fi
+          case "$requested_version" in
+            *-rc.*)
+              release_kind=rc
+              maturity_label=v1.0.0-rc
+              release_channel=beta
+              ;;
+            *-beta.*)
+              release_kind=beta
+              maturity_label=v1beta
+              release_channel=beta
+              ;;
+            *)
+              echo "::error::prerelease workflow requires a beta or rc semver: '$requested_version'"
+              exit 1
+              ;;
+          esac
 
           work_root="$RUNNER_TEMP/public-beta-work"
           dist_dir="$work_root/dist"
@@ -67,6 +82,9 @@ jobs:
           echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/public-beta-release-notes.md" >> "$GITHUB_ENV"
           echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"
           echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "RELEASE_KIND=$release_kind" >> "$GITHUB_ENV"
+          echo "MATURITY_LABEL=$maturity_label" >> "$GITHUB_ENV"
+          echo "RELEASE_CHANNEL=$release_channel" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
           echo "CONTROL_DIR=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
           echo "PRIMARY_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
@@ -80,9 +98,23 @@ jobs:
           fi
       - name: Prepare release directories
         run: |
-          mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/release" "$RELEASE_REPO_ROOT" "$RELEASE_ASSET_ROOT" "$WORK_ROOT" "$DIST_DIR" "$VENDOR_DIR"
+          mkdir -p "$REPORT_ROOT/replay" "$REPORT_ROOT/snapshot" "$REPORT_ROOT/release" "$REPORT_ROOT/rc-gate" "$RELEASE_REPO_ROOT" "$RELEASE_ASSET_ROOT" "$WORK_ROOT" "$DIST_DIR" "$VENDOR_DIR"
       - name: cargo xtask check
         run: cargo xtask check
+      - name: Strict RC gate
+        if: env.RELEASE_KIND == 'rc'
+        run: |
+          cargo xtask rc-gate \
+            --root corpus \
+            --report-dir "$REPORT_ROOT/rc-gate" \
+            --agent-output-quality-report eval/output-quality-single-agent-v1/evidence/qualification-report.json \
+            --fuzz-root fuzz \
+            --metrics-manual-report eval/rc/metrics-manual-eval.json \
+            --issue-budget-report eval/rc/issue-budget.json \
+            --ux-signoff-report eval/rc/ux-signoff.json
+          cargo xtask output-quality-matrix \
+            --root corpus \
+            --output "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
       - name: Representative acceptance replay
         run: cargo xtask replay --root corpus --subset representative --report-dir "$REPORT_ROOT/replay"
       - name: Path-aware replay stop-ship contract
@@ -198,7 +230,7 @@ jobs:
       - name: Write release notes
         run: |
           python3 ci/public_surface.py render-release-body \
-            --kind beta \
+            --kind "$RELEASE_KIND" \
             --version "$PACKAGE_VERSION" \
             --repository "$GITHUB_REPOSITORY" \
             --commit "$GITHUB_SHA" \
@@ -222,6 +254,17 @@ jobs:
             "$RELEASE_ASSET_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
             "$REPORT_ROOT/release/release-provenance.json"
           )
+          if [ "$RELEASE_KIND" = rc ]; then
+            assets+=(
+              "$REPORT_ROOT/rc-gate/rc-gate-report.json"
+              "$REPORT_ROOT/rc-gate/agent-output-quality/qualification-report.json"
+              "$REPORT_ROOT/rc-gate/agent-output-quality/validation-report.json"
+              "$REPORT_ROOT/rc-gate/agent-output-quality/artifact-integrity-report.json"
+              "$REPORT_ROOT/rc-gate/agent-output-quality/no-subagent-attestation.json"
+              "$REPORT_ROOT/rc-gate/agent-output-quality/model-agent-tool-manifest.json"
+              "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
+            )
+          fi
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --prerelease
