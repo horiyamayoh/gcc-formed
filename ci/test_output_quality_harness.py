@@ -41,6 +41,27 @@ class OutputQualityHarnessTests(unittest.TestCase):
                 "multi_file_build_real_project": 40,
             },
         )
+        shapes = {task.semantic_shape for task in tasks}
+        for required in (
+            "missing_header",
+            "warning_as_error",
+            "generated_header_frontier",
+            "depfile_compile",
+            "concept_constraint",
+            "ranges_constraint",
+            "include_frontier",
+            "system_header_frontier",
+            "residual_unknown",
+            "response_file",
+            "parallel_make_interleaving",
+            "library_order_link",
+            "independent_units_2",
+            "independent_units_3",
+            "independent_units_4",
+            "independent_units_5",
+            "independent_units_5_multi_tu",
+        ):
+            self.assertIn(required, shapes)
 
     def test_variants_are_source_distinct(self) -> None:
         for index in range(120):
@@ -51,7 +72,7 @@ class OutputQualityHarnessTests(unittest.TestCase):
             self.assertEqual(len(hashes), 3, f"family {index + 1} variants collided")
 
     def test_representative_native_tasks_begin_failing(self) -> None:
-        for index in range(0, 120, 10):
+        for index in [*range(10), *range(40, 50), *range(80, 90)]:
             task = HARNESS.task_for(index, index % 3, 1)
             with self.subTest(family=task.family_id), tempfile.TemporaryDirectory() as raw:
                 root = Path(raw)

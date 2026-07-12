@@ -31,19 +31,23 @@ are excluded from the sealed qualification denominator.
 
 ## Development metric result
 
-On 120 source-distinct family blocks / 360 generated diagnostics outside the
-sealed partition, the compact candidate averaged `519.85` diagnostic bytes,
-versus `629.16` for native GCC and `984.50` for `subject_blocks_v2`. The paired
+On the expanded 120-family / 360-diagnostic development corpus outside the
+sealed partition, the compact candidate averaged `557.36` diagnostic bytes,
+versus `950.25` for native GCC and `1257.04` for `subject_blocks_v2`. The paired
 family-bootstrap candidate ratios were:
 
-- native GCC: estimate `0.8263`, 97.5% interval `[0.7524, 0.9174]`;
-- `subject_blocks_v2`: estimate `0.5280`, 97.5% interval `[0.4994, 0.5619]`.
+- native GCC: estimate `0.5865`, 97.5% interval `[0.4436, 0.8165]`;
+- `subject_blocks_v2`: estimate `0.4434`, 97.5% interval `[0.3915, 0.5050]`.
 
 The strengthened deterministic display checks passed 120/120 concrete
 headlines, primary anchors, first-action budgets, and one-step disclosures;
-90/90 cases where native exposed source/caret retained both; all 40 simple
+104/104 cases where native exposed source/caret retained both; all 40 simple
 families met the native first-screen action budget; and all 40 noisy families
 placed the first action at least 20% earlier when native had pre-action text.
+Four color/opaque cases correctly selected full raw fallback instead of adding
+a misleading wrapper disclosure. The expanded operators also cover concept,
+ranges, include/system/generated-header frontiers, warning-as-error, 2–5
+independent units, multi-TU, parallel Make, response-file, and depfile shapes.
 
 These measurements were used only to choose and freeze the next candidate.
 They are not qualification evidence and make no human behavioral claim.

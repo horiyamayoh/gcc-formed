@@ -19,6 +19,41 @@
       "multi_file_build_real_project": 40
     }
   },
+  "coverage": {
+    "languages": ["c", "cpp"],
+    "independent_repair_units": [1, 2, 3, 4, 5],
+    "compile_shapes": [
+      "syntax_recovery",
+      "missing_name",
+      "type_mismatch",
+      "warning_as_error",
+      "overload",
+      "template",
+      "concept_constraint",
+      "ranges_constraint",
+      "macro",
+      "missing_header",
+      "include_frontier",
+      "generated_header_frontier",
+      "system_header_frontier",
+      "residual_unknown"
+    ],
+    "link_build_shapes": [
+      "undefined_symbol",
+      "duplicate_symbol",
+      "library_order_link",
+      "multi_translation_unit",
+      "parallel_make_interleaving",
+      "response_file",
+      "depfile_compile"
+    ],
+    "external_required_gates": [
+      "repair-unit exact-count/fidelity corpus",
+      "real-project Make/CMake corpus",
+      "interop compiler-probe/TTY/CI/redirect/locale matrix",
+      "GCC 9/12/13/14/15 path-aware matrix"
+    ]
+  },
   "attempt_policy": {
     "maximum_attempts": 3,
     "partitions": [1, 2, 3],

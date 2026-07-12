@@ -147,6 +147,23 @@ def validate_static() -> dict[str, Any]:
         errors.append("protocol must freeze 120 semantic families")
     if population.get("valid_trials_minimum") != 360:
         errors.append("protocol must freeze 360 valid trials")
+    coverage = protocol.get("coverage", {})
+    if coverage.get("independent_repair_units") != [1, 2, 3, 4, 5]:
+        errors.append("protocol must freeze one through five independent RepairUnits")
+    required_shapes = {
+        "concept_constraint",
+        "ranges_constraint",
+        "include_frontier",
+        "system_header_frontier",
+        "parallel_make_interleaving",
+        "response_file",
+        "depfile_compile",
+    }
+    declared_shapes = set(coverage.get("compile_shapes", [])) | set(
+        coverage.get("link_build_shapes", [])
+    )
+    if not required_shapes <= declared_shapes:
+        errors.append("protocol coverage is missing required compile/build shapes")
     if analysis.get("cluster") != "semantic_family_id":
         errors.append("analysis cluster must be semantic_family_id")
     if analysis.get("optional_stopping") is not False:
@@ -190,7 +207,7 @@ class GeneratedTask:
 def task_for(index: int, variant: int, attempt: int) -> GeneratedTask:
     family_id = f"F{index + 1:03d}"
     suffix = f"{index + 1}_{variant + 1}_{attempt}"
-    mode = index % 4
+    mode = index % 10
     if index < 40:
         stratum = "simple_native_strong"
         if mode == 0:
@@ -220,15 +237,69 @@ def task_for(index: int, variant: int, attempt: int) -> GeneratedTask:
                 ["g++", "-std=c++17", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.cpp", "-o", "build/app"],
                 ["src/main.cpp"], token,
             )
-        token = f"int value_{suffix} = text_{suffix}"
+        if mode == 3:
+            token = f"int value_{suffix} = text_{suffix}"
+            return GeneratedTask(
+                family_id, stratum, "type_mismatch", "cpp", variant,
+                {"src/main.cpp": (
+                    f"const char *text_{suffix} = \"x\";\n"
+                    f"int main() {{ {token}; return value_{suffix}; }}\n"
+                )},
+                ["g++", "-std=c++17", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.cpp", "-o", "build/app"],
+                ["src/main.cpp"], token,
+            )
+        if mode == 4:
+            token = f"missing_{suffix}.h"
+            return GeneratedTask(
+                family_id, stratum, "missing_header", "c", variant,
+                {
+                    "include/value.h": f"static inline int value_{suffix}(void) {{ return {variant}; }}\n",
+                    "src/main.c": f"#include \"{token}\"\nint main(void) {{ return value_{suffix}(); }}\n",
+                },
+                ["gcc", "-fdiagnostics-color=never", "-Iinclude", "src/main.c", "-o", "build/app"],
+                ["src/main.c"], token,
+            )
+        if mode == 5:
+            token = f"static int unused_{suffix} = {variant}"
+            return GeneratedTask(
+                family_id, stratum, "warning_as_error", "c", variant,
+                {"src/main.c": f"{token};\nint main(void) {{ return 0; }}\n"},
+                ["gcc", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.c", "-o", "build/app"],
+                ["src/main.c"], token,
+            )
+        if mode == 6:
+            token = f"return text_{suffix}"
+            return GeneratedTask(
+                family_id, stratum, "return_type_mismatch", "c", variant,
+                {"src/main.c": f"static const char *text_{suffix} = \"x\";\nint main(void) {{ {token}; }}\n"},
+                ["gcc", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.c", "-o", "build/app"],
+                ["src/main.c"], token,
+            )
+        if mode == 7:
+            token = f"generated/value_{suffix}.hpp"
+            return GeneratedTask(
+                family_id, stratum, "generated_header_frontier", "cpp", variant,
+                {
+                    "generated/value.hpp": f"inline int generated_{suffix}() {{ return {variant}; }}\n",
+                    "src/main.cpp": f"#include \"{token}\"\nint main() {{ return generated_{suffix}(); }}\n",
+                },
+                ["g++", "-std=c++17", "-fdiagnostics-color=never", "-I.", "src/main.cpp", "-o", "build/app"],
+                ["src/main.cpp"], token,
+            )
+        if mode == 8:
+            token = f"colored_missing_{suffix}"
+            return GeneratedTask(
+                family_id, stratum, "color_diagnostic", "c", variant,
+                {"src/main.c": f"int main(void) {{ return {token}; }}\n"},
+                ["gcc", "-fdiagnostics-color=always", "src/main.c", "-o", "build/app"],
+                ["src/main.c"], token,
+            )
+        token = f"dep_missing_{suffix}"
         return GeneratedTask(
-            family_id, stratum, "type_mismatch", "cpp", variant,
-            {"src/main.cpp": (
-                f"const char *text_{suffix} = \"x\";\n"
-                f"int main() {{ {token}; return value_{suffix}; }}\n"
-            )},
-            ["g++", "-std=c++17", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.cpp", "-o", "build/app"],
-            ["src/main.cpp"], token,
+            family_id, stratum, "depfile_compile", "c", variant,
+            {"src/main.c": f"int main(void) {{ return {token}; }}\n"},
+            ["gcc", "-fdiagnostics-color=never", "-MMD", "-MF", "build/main.d", "src/main.c", "-o", "build/app"],
+            ["src/main.c"], token,
         )
     if index < 80:
         stratum = "diagnostic_flood_semantic_heavy"
@@ -267,15 +338,72 @@ def task_for(index: int, variant: int, attempt: int) -> GeneratedTask:
                 ["gcc", "-fdiagnostics-color=never", "-Wall", "-Werror", "src/main.c", "-o", "build/app"],
                 ["src/main.c"], token,
             )
-        token = f"missing_link_{suffix}"
+        if mode == 3:
+            token = f"missing_link_{suffix}"
+            return GeneratedTask(
+                family_id, stratum, "linker_undefined", "c", variant,
+                {
+                    "src/main.c": f"int {token}(void);\nint main(void) {{ return {token}(); }}\n",
+                    "src/helper.c": f"int helper_{suffix}(void) {{ return {variant}; }}\n",
+                },
+                ["gcc", "-fdiagnostics-color=never", "src/main.c", "src/helper.c", "-o", "build/app"],
+                ["src/main.c", "src/helper.c"], token,
+            )
+        if mode == 4:
+            token = f"integral_{suffix}(\"bad\")"
+            return GeneratedTask(
+                family_id, stratum, "concept_constraint", "cpp", variant,
+                {"src/main.cpp": (
+                    "#include <concepts>\n"
+                    f"template<std::integral T> int integral_{suffix}(T value) {{ return static_cast<int>(value); }}\n"
+                    f"int main() {{ return {token}; }}\n"
+                )},
+                ["g++", "-std=c++20", "-fdiagnostics-color=never", "-fconcepts-diagnostics-depth=8", "src/main.cpp", "-o", "build/app"],
+                ["src/main.cpp"], token,
+            )
+        if mode == 5:
+            token = f"std::views::iota(0, \"bad_{suffix}\")"
+            return GeneratedTask(
+                family_id, stratum, "ranges_constraint", "cpp", variant,
+                {"src/main.cpp": f"#include <ranges>\nint main() {{ auto values = {token}; return *values.begin(); }}\n"},
+                ["g++", "-std=c++20", "-fdiagnostics-color=never", "-fconcepts-diagnostics-depth=8", "src/main.cpp", "-o", "build/app"],
+                ["src/main.cpp"], token,
+            )
+        if mode == 6:
+            token = f"detail/missing_{suffix}.hpp"
+            return GeneratedTask(
+                family_id, stratum, "include_frontier", "cpp", variant,
+                {
+                    "include/api.hpp": f"#include \"{token}\"\ninline int api_{suffix}() {{ return {variant}; }}\n",
+                    "src/main.cpp": f"#include \"api.hpp\"\nint main() {{ return api_{suffix}(); }}\n",
+                },
+                ["g++", "-std=c++20", "-fdiagnostics-color=never", "-Iinclude", "src/main.cpp", "-o", "build/app"],
+                ["include/api.hpp"], token,
+            )
+        if mode == 7:
+            token = f"values_{suffix}.at(\"bad\")"
+            return GeneratedTask(
+                family_id, stratum, "system_header_frontier", "cpp", variant,
+                {"src/main.cpp": f"#include <vector>\nint main() {{ std::vector<int> values_{suffix}{{1, 2}}; return {token}; }}\n"},
+                ["g++", "-std=c++20", "-fdiagnostics-color=never", "-ftemplate-backtrace-limit=0", "src/main.cpp", "-o", "build/app"],
+                ["src/main.cpp"], token,
+            )
+        if mode == 8:
+            count = 2 + ((index // 10) % 4)
+            names = [f"independent_{suffix}_{number}" for number in range(1, count + 1)]
+            token = names[0]
+            return GeneratedTask(
+                family_id, stratum, f"independent_units_{count}", "c", variant,
+                {"src/main.c": f"int main(void) {{ return {' + '.join(names)}; }}\n"},
+                ["gcc", "-fdiagnostics-color=never", "-fmax-errors=0", "src/main.c", "-o", "build/app"],
+                ["src/main.c"], token,
+            )
+        token = f"#error opaque qualification failure {suffix}"
         return GeneratedTask(
-            family_id, stratum, "linker_undefined", "c", variant,
-            {
-                "src/main.c": f"int {token}(void);\nint main(void) {{ return {token}(); }}\n",
-                "src/helper.c": f"int helper_{suffix}(void) {{ return {variant}; }}\n",
-            },
-            ["gcc", "-fdiagnostics-color=never", "src/main.c", "src/helper.c", "-o", "build/app"],
-            ["src/main.c", "src/helper.c"], token,
+            family_id, stratum, "residual_unknown", "c", variant,
+            {"src/main.c": f"{token}\nint main(void) {{ return 0; }}\n"},
+            ["gcc", "-fdiagnostics-color=never", "src/main.c", "-o", "build/app"],
+            ["src/main.c"], token,
         )
     stratum = "multi_file_build_real_project"
     if mode == 0:
@@ -297,25 +425,85 @@ def task_for(index: int, variant: int, attempt: int) -> GeneratedTask:
             "src/api.cpp": f"#include \"api.hpp\"\nint api_{suffix}(int value) {{ return value; }}\n",
             "src/main.cpp": f"#include \"api.hpp\"\nint main() {{ return {token}; }}\n",
         }
-    else:
+    elif mode == 3:
         token = f"unknown_project_{suffix}"
         files = {
             "include/value.h": f"int value_{suffix}(void);\n",
             "src/value.c": f"#include \"value.h\"\nint value_{suffix}(void) {{ return {token}; }}\n",
             "src/main.c": f"#include \"value.h\"\nint main(void) {{ return value_{suffix}(); }}\n",
         }
+    elif mode == 4:
+        token = f"parallel_missing_{suffix}"
+        files = {
+            "src/main.c": f"int left_{suffix}(void); int right_{suffix}(void);\nint main(void) {{ return left_{suffix}() + right_{suffix}(); }}\n",
+            "src/left.c": f"int left_{suffix}(void) {{ return {token}; }}\n",
+            "src/right.c": f"int right_{suffix}(void) {{ return {variant}; }}\n",
+        }
+    elif mode == 5:
+        token = f"response_missing_{suffix}"
+        files = {
+            "src/main.c": f"int main(void) {{ return {token}; }}\n",
+            "compile.rsp": "-fdiagnostics-color=never src/main.c -o build/app\n",
+        }
+    elif mode == 6:
+        token = f"depfile_missing_{suffix}"
+        files = {"src/main.c": f"int main(void) {{ return {token}; }}\n"}
+    elif mode == 7:
+        token = f"library_order_missing_{suffix}"
+        files = {
+            "src/main.c": f"int {token}(void);\nint main(void) {{ return {token}(); }}\n",
+            "src/library.c": f"int library_value_{suffix}(void) {{ return {variant}; }}\n",
+        }
+    elif mode == 8:
+        token = f"generated/missing_{suffix}.h"
+        files = {
+            "generated/value.h": f"static inline int generated_{suffix}(void) {{ return {variant}; }}\n",
+            "src/main.c": f"#include \"{token}\"\nint main(void) {{ return generated_{suffix}(); }}\n",
+        }
+    else:
+        token = f"unit_missing_{suffix}_1"
+        unit_names = [f"unit_{suffix}_{number}" for number in range(1, 6)]
+        files = {
+            "src/main.c": " ".join(f"int {name}(void);" for name in unit_names)
+            + f"\nint main(void) {{ return {' + '.join(f'{name}()' for name in unit_names)}; }}\n"
+        }
+        for number, name in enumerate(unit_names, 1):
+            missing = f"unit_missing_{suffix}_{number}"
+            files[f"src/unit_{number}.c"] = f"int {name}(void) {{ return {missing}; }}\n"
     compiler = "g++" if mode == 2 else "gcc"
     extension_sources = sorted(path for path in files if path.startswith("src/"))
-    command = [compiler, "-fdiagnostics-color=never", "-Iinclude", *extension_sources, "-o", "build/app"]
+    if mode == 5:
+        return GeneratedTask(
+            family_id, stratum, "response_file", "c", variant,
+            files, ["gcc", "@compile.rsp"], ["src/main.c"], token,
+        )
+    if mode == 6:
+        return GeneratedTask(
+            family_id, stratum, "depfile_multi_project", "c", variant,
+            files,
+            ["gcc", "-fdiagnostics-color=never", "-MMD", "-MF", "build/main.d", "src/main.c", "-o", "build/app"],
+            ["src/main.c"], token,
+        )
+    command = [compiler, "-fdiagnostics-color=never", "-Iinclude", "-I.", *extension_sources, "-o", "build/app"]
     makefile = (
         f"CC := {compiler}\n"
         "all:\n"
-        f"\t$(CC) -fdiagnostics-color=never -Iinclude {' '.join(extension_sources)} -o build/app\n"
+        f"\t$(CC) -fdiagnostics-color=never -Iinclude -I. {' '.join(extension_sources)} -o build/app\n"
     )
     files["Project.mk"] = makefile
+    semantic_shape = {
+        0: "make_multi_file_undefined",
+        1: "make_duplicate_symbol",
+        2: "make_api_mismatch",
+        3: "make_unknown_project",
+        4: "parallel_make_interleaving",
+        7: "library_order_link",
+        8: "generated_header_project",
+        9: "independent_units_5_multi_tu",
+    }[mode]
     return GeneratedTask(
-        family_id, stratum, "make_multi_file", "cpp" if compiler == "g++" else "c", variant,
-        files, ["make", "-f", "Project.mk", "-j1"],
+        family_id, stratum, semantic_shape, "cpp" if compiler == "g++" else "c", variant,
+        files, ["make", "-f", "Project.mk", "-j2" if mode in (4, 9) else "-j1"],
         [path for path in files if path.startswith(("src/", "include/"))], token,
     )
 
@@ -918,6 +1106,7 @@ def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping
         "first_action_within_budget": 0,
         "concrete_headline_present": 0,
         "one_step_disclosure_once": 0,
+        "raw_fallback_full_visible": 0,
         "simple_native_first_screen_budget": 0,
         "complex_first_action_compaction": 0,
     }
@@ -953,6 +1142,11 @@ def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping
         headline_body = headline.lower().split("error:", 1)[-1].strip()
         if headline_body.startswith("[") and "]" in headline_body:
             headline_body = headline_body.split("]", 1)[1].strip()
+        disclosure = "--formed-raw" in candidate_diagnostic and "--formed-explain" in candidate_diagnostic
+        raw_fallback_full = not disclosure and controller["semantic_shape"] in (
+            "color_diagnostic",
+            "residual_unknown",
+        ) and "error:" in candidate_diagnostic.lower()
         predicates = {
             "diagnostic_nonempty": bool(candidate_diagnostic.strip()),
             "primary_location_present": any(re.search(r"[^ ]+:\d+:\d+", line) for line in lines[:12])
@@ -961,14 +1155,17 @@ def human_readable_checks(packet_root: Path, rows: list[dict[str, Any]], mapping
                 for line in lines[:12]
                 for marker in ("undefined reference", "multiple definition", "symbol:", "from:")
             ),
-            "raw_or_explain_disclosure_present": (
-                "--formed-raw" in candidate_diagnostic and "--formed-explain" in candidate_diagnostic
-            ),
+            "raw_or_explain_disclosure_present": disclosure or raw_fallback_full,
             "first_action_within_budget": candidate_action is not None and candidate_action < 12,
             "concrete_headline_present": bool(headline_body.rstrip("@")),
-            "one_step_disclosure_once": candidate_diagnostic.count("details: --formed-explain") == 1
-            and candidate_diagnostic.count("raw: --formed-raw") == 1,
+            "one_step_disclosure_once": raw_fallback_full
+            or (
+                candidate_diagnostic.count("details: --formed-explain") == 1
+                and candidate_diagnostic.count("raw: --formed-raw") == 1
+            ),
         }
+        if raw_fallback_full:
+            predicates["raw_fallback_full_visible"] = True
         if native_source_line and native_caret_line:
             predicates["source_or_caret_present"] = source_line and caret_line
         for key in predicates:
