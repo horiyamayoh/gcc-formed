@@ -19,6 +19,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const HUMAN_EVAL_SCHEMA_VERSION: u32 = 4;
+#[cfg(test)]
 const MINIMUM_TASK_STUDY_FIXTURE_COUNT: usize = 10;
 const REQUIRED_TASK_STUDY_FAMILIES: &[&str] = &[
     "syntax",
@@ -254,6 +255,7 @@ pub(crate) fn run_human_eval_study_command(
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) fn human_eval_kit_is_complete(report: &HumanEvalKitReport) -> bool {
     report.task_study_fixture_count >= MINIMUM_TASK_STUDY_FIXTURE_COUNT
         && report.missing_required_families.is_empty()

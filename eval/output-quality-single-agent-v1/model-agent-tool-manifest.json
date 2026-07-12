@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "agent_identity": "OpenAI Codex CLI single coding agent",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "xhigh",
+  "agent_build": "codex-cli 0.144.0-alpha.4",
+  "service_tier": "default",
+  "sampling": {
+    "temperature": null,
+    "top_p": null,
+    "seed": null,
+    "note": "provider sampling controls are not exposed by this Codex build; identical agent config is enforced instead"
+  },
+  "tool_policy": {
+    "sandbox": "danger-full-access inside an isolated generated task directory",
+    "approval_policy": "never",
+    "network": false,
+    "subagents": false,
+    "jobs": 1,
+    "maximum_compile_test_loops": 3
+  },
+  "resource_envelope": {
+    "trial_timeout_seconds": 900,
+    "max_output_bytes": 8388608,
+    "cpu_parallelism": 1
+  },
+  "toolchain": {
+    "rustc": "1.94.1 (e408947bf 2026-03-25)",
+    "cargo": "1.94.1 (29ea6fb6a 2026-03-24)",
+    "host_gcc": "13.3.0",
+    "host_gxx": "13.3.0"
+  },
+  "instruction_sources": [
+    "AGENTS.md",
+    "eval/output-quality-single-agent-v1/trial-prompt.txt",
+    "eval/output-quality-single-agent-v1/trial-result.schema.json"
+  ],
+  "drift_policy": "any model, reasoning, agent build, instruction, tool permission, resource, or toolchain drift invalidates the qualification"
+}

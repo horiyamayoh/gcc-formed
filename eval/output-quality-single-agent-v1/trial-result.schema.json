@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "summary", "build_attempts_reported"],
+  "properties": {
+    "status": {"type": "string", "enum": ["fixed", "not_fixed", "blocked"]},
+    "summary": {"type": "string", "maxLength": 1000},
+    "build_attempts_reported": {"type": "integer", "minimum": 0, "maximum": 3}
+  }
+}

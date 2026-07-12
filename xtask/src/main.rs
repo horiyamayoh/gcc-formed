@@ -253,6 +253,11 @@ enum Commands {
         ux_signoff_report: PathBuf,
         #[arg(long)]
         allow_pending_manual_checks: bool,
+        #[arg(
+            long,
+            default_value = "eval/output-quality-single-agent-v1/evidence/qualification-report.json"
+        )]
+        agent_output_quality_report: PathBuf,
     },
     StableRelease {
         #[arg(long)]
@@ -657,6 +662,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             fuzz_report,
             ux_signoff_report,
             allow_pending_manual_checks,
+            agent_output_quality_report,
         } => {
             let report = run_rc_gate(RcGateOptions {
                 root,
@@ -667,6 +673,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 fuzz_report,
                 ux_signoff_report,
                 allow_pending_manual_checks,
+                agent_output_quality_report,
             })?;
             println!(
                 "{}",

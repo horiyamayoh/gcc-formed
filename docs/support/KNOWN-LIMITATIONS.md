@@ -41,6 +41,7 @@ The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md).
 - `GCC16+`, older compilers outside `GCC 9-15`, and unknown gcc-like variants may still resolve conservatively to passthrough behavior.
 - Current runtime and self-check output already use the current vocabulary. The remaining limit is capability-dependent capture behavior, not a public hierarchy between in-scope bands. Use `--formed-self-check` and [docs/support/OPERATOR-INTEROP.md](OPERATOR-INTEROP.md) for the current operator next step.
 - Default TTY non-regression is a release gate, but the full path-aware enforcement work is still in flight. Regressions in color, first-screen length, noise compression, or disclosure honesty should be reported with traces.
+- Human behavioral validation has not been performed. Release qualification measures a pinned coding agent's task performance and deterministic readability proxies; it does not establish human population edit latency, preference, or non-inferiority.
 - The checked-in interop lab covers `make -j`, `cmake --build`, one wrapper-owned backend launcher, depfile generation, response-file pass-through, and stdout-sensitive compiler probes under `eval/interop/`, but that coverage is intentionally narrow and does not prove launcher stacks in front of the wrapper or multi-launcher chains.
 
 ## Raw Fallback

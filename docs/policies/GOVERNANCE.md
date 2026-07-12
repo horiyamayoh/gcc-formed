@@ -93,7 +93,8 @@ These items are still in scope before `1.0.0`:
 - keep `pr-gate`, the current diagnostic blocker slice of `nightly-gate`, and release smoke evidence green
 - preserve the current support boundary, honest compatibility notices, and fail-open fallback behavior
 - fix regressions in the shipped in-scope diagnostic contract, trace integrity, signing, install, rollback, and release evidence
-- keep corpus quality gates, human-eval packet, fuzz packet, metrics packet, and stable-release evidence aligned with the shipped contract
+- keep corpus quality gates, the sealed `agent-output-quality/` packet, fuzz packet, metrics packet, and stable-release evidence aligned with the shipped contract
+- preserve historical human protocols and results without using participant recruitment as a release prerequisite
 - land any contract change only with the required ADR/docs/changelog/test updates
 
 ## Post-1.0 Backlog

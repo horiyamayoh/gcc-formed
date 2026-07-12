@@ -1,22 +1,27 @@
 ---
-doc_role: current-authority
-lifecycle_status: accepted-baseline
+doc_role: reference-only
+lifecycle_status: superseded
 audience: both
 use_for: RepairUnit default-promotion status, evaluation decision, and reconsideration conditions.
 do_not_use_for: Rejecting RepairUnit as semantic IR or weakening causal quality gates.
 supersedes: []
-superseded_by: []
+superseded_by:
+  - adr-0039-single-agent-output-quality-release-qualification.md
 ---
 > [!IMPORTANT]
-> Authority: `current-authority` / `accepted-baseline`
+> Authority: `reference-only` / `superseded`
 > Use for: RepairUnit default-promotion status, evaluation decision, and reconsideration conditions.
 > Do not use for: Rejecting RepairUnit as semantic IR or weakening causal quality gates.
 
 # ADR-0038: Keep RepairUnit out of the beta default without user evidence
 
-- Status: **Accepted**
+- Status: **Superseded for future release prerequisites by ADR-0039**
 - Date: 2026-07-12
 - Issues: #217, #218, #201
+
+The evidence, issue dispositions, and no-go decision below remain the immutable
+historical record for the release evaluated in this ADR. ADR-0039 does not turn
+that result into a pass; it replaces only the prerequisite for future releases.
 
 ## Decision
 

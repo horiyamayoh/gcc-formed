@@ -3,8 +3,8 @@ use crate::commands::corpus::{
     NativeParityReport, ReplayReport, build_replay_report, subset_name, write_replay_report,
 };
 use crate::commands::fuzz::{FuzzSmokeReport, FuzzSmokeStatus, run_fuzz_smoke};
-use crate::commands::human_eval::{
-    HumanEvalKitReport, human_eval_kit_is_complete, run_human_eval_kit,
+use crate::commands::output_quality::{
+    AgentOutputQualityValidation, load_and_validate_agent_output_quality,
 };
 use diag_backend_probe::{ProbeCache, ResolveRequest, VersionBand};
 use diag_capture_runtime::{CaptureRequest, ExecutionMode, cleanup_capture, run_capture};
@@ -49,6 +49,7 @@ pub(crate) struct RcGateOptions {
     pub(crate) fuzz_report: Option<PathBuf>,
     pub(crate) ux_signoff_report: PathBuf,
     pub(crate) allow_pending_manual_checks: bool,
+    pub(crate) agent_output_quality_report: PathBuf,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -448,8 +449,18 @@ pub(crate) fn run_rc_gate(
         &rollout_matrix_report,
     )?;
 
-    let human_eval_report_dir = options.report_dir.join("human-eval");
-    let human_eval = run_human_eval_kit(&options.root, &human_eval_report_dir)?;
+    let agent_output_quality =
+        load_and_validate_agent_output_quality(&options.agent_output_quality_report)?;
+    let normalized_agent_output_quality_dir = options.report_dir.join("agent-output-quality");
+    fs::create_dir_all(&normalized_agent_output_quality_dir)?;
+    write_json(
+        &normalized_agent_output_quality_dir.join("qualification-report.json"),
+        &agent_output_quality.report,
+    )?;
+    write_json(
+        &normalized_agent_output_quality_dir.join("validation-report.json"),
+        &agent_output_quality,
+    )?;
 
     let manual_metrics = load_manual_metrics_evidence(&options.metrics_manual_report)?;
     let normalized_manual_metrics_path = options.report_dir.join("metrics-manual-eval.json");
@@ -488,15 +499,12 @@ pub(crate) fn run_rc_gate(
         &bench_report,
         &deterministic_report,
         &rollout_matrix_report,
-        &human_eval,
-        &metrics_report,
+        &agent_output_quality,
         &issue_budget,
         &normalized_issue_budget_path,
         &fuzz_smoke,
         &fuzz,
         &normalized_fuzz_path,
-        &ux,
-        &normalized_ux_path,
         options.allow_pending_manual_checks,
     );
     let blockers = blockers_for_checks(&checks);
@@ -1559,15 +1567,12 @@ fn build_rc_gate_checks(
     bench: &BenchSmokeReport,
     deterministic: &DeterministicReplayReport,
     rollout: &RolloutMatrixReport,
-    human_eval: &HumanEvalKitReport,
-    metrics: &RcMetricsReport,
+    agent_output_quality: &AgentOutputQualityValidation,
     issue_budget: &IssueBudgetEvidence,
     issue_budget_path: &Path,
     fuzz_smoke: &FuzzSmokeReport,
     fuzz: &FuzzEvidence,
     fuzz_path: &Path,
-    ux: &UxSignoffEvidence,
-    ux_path: &Path,
     allow_pending_manual_checks: bool,
 ) -> Vec<RcGateCheck> {
     let unexpected_fallback_rate = replay.metrics.unexpected_fallback_count as f64
@@ -1666,11 +1671,9 @@ fn build_rc_gate_checks(
             manual: false,
             evidence_path: Some(PathBuf::from("deterministic-replay-report.json")),
         },
-        human_eval_kit_check(human_eval),
-        manual_metrics_check(metrics, allow_pending_manual_checks),
+        agent_output_quality_check(agent_output_quality),
         manual_issue_budget_check(issue_budget, issue_budget_path, allow_pending_manual_checks),
         fuzz_check(fuzz_smoke, fuzz, fuzz_path),
-        manual_ux_check(ux, ux_path, allow_pending_manual_checks),
     ]
 }
 
@@ -1800,38 +1803,37 @@ fn replay_failure_concern(layer: &str) -> String {
     layer.to_string()
 }
 
-fn human_eval_kit_check(report: &HumanEvalKitReport) -> RcGateCheck {
-    let status = if human_eval_kit_is_complete(report) {
+fn agent_output_quality_check(report: &AgentOutputQualityValidation) -> RcGateCheck {
+    let status = if report.status == "pass" {
         GateStatus::Pass
     } else {
         GateStatus::Fail
     };
     RcGateCheck {
-        id: "human_eval_kit".to_string(),
-        title: "Human Evaluation Kit".to_string(),
+        id: "agent_output_quality".to_string(),
+        title: "Single-Agent Output-Quality Qualification".to_string(),
         status: status.clone(),
         summary: format!(
-            "expert_fixtures={} task_study_fixtures={} c_first_task_fixtures={} missing_required_families={} missing_c_first_categories={}",
-            report.expert_review_fixture_count,
-            report.task_study_fixture_count,
-            report.c_first_task_fixture_count,
-            if report.missing_required_families.is_empty() {
+            "verdict={} started={} valid={} families={} blockers={}",
+            report.report.verdict,
+            report.report.started_trials,
+            report.report.valid_trials,
+            report.report.semantic_family_count,
+            if report.blockers.is_empty() {
                 "none".to_string()
             } else {
-                report.missing_required_families.join(",")
-            },
-            if report.missing_c_first_categories.is_empty() {
-                "none".to_string()
-            } else {
-                report.missing_c_first_categories.join(",")
+                report.blockers.join(" | ")
             }
         ),
         blocker: status == GateStatus::Fail,
         manual: false,
-        evidence_path: Some(PathBuf::from("human-eval/human-eval-report.json")),
+        evidence_path: Some(PathBuf::from(
+            "agent-output-quality/qualification-report.json",
+        )),
     }
 }
 
+#[cfg(test)]
 fn manual_metrics_check(
     metrics: &RcMetricsReport,
     allow_pending_manual_checks: bool,
@@ -1861,6 +1863,7 @@ fn manual_metrics_check(
     }
 }
 
+#[cfg(test)]
 fn manual_metrics_fields_complete(manual: &ManualMetricsEvaluation) -> bool {
     manual.high_confidence_mislead_rate.is_some()
         && manual.trc_improvement_percent.is_some()
@@ -1921,31 +1924,6 @@ fn fuzz_check(fuzz_smoke: &FuzzSmokeReport, fuzz: &FuzzEvidence, fuzz_path: &Pat
         blocker: status == GateStatus::Fail,
         manual: false,
         evidence_path: Some(relative_report_evidence_path(fuzz_path)),
-    }
-}
-
-fn manual_ux_check(
-    ux: &UxSignoffEvidence,
-    ux_path: &Path,
-    allow_pending_manual_checks: bool,
-) -> RcGateCheck {
-    let status = match ux.status {
-        ManualEvidenceStatus::Approved => GateStatus::Pass,
-        ManualEvidenceStatus::Pending => GateStatus::Pending,
-        ManualEvidenceStatus::Rejected => GateStatus::Fail,
-    };
-    RcGateCheck {
-        id: "ux_review".to_string(),
-        title: "UX Review Sign-off".to_string(),
-        status: status.clone(),
-        summary: format!(
-            "status={:?} reviewers={}",
-            ux.status,
-            ux.reviewers.join(",")
-        ),
-        blocker: check_is_blocker(&status, true, allow_pending_manual_checks),
-        manual: true,
-        evidence_path: Some(relative_report_evidence_path(ux_path)),
     }
 }
 
@@ -2704,32 +2682,6 @@ mod tests {
         );
 
         let check = manual_metrics_check(&report, false);
-
-        assert_eq!(check.status, GateStatus::Fail);
-        assert!(check.blocker);
-    }
-
-    #[test]
-    fn incomplete_human_eval_kit_blocks_rc_gate() {
-        let report = HumanEvalKitReport {
-            schema_version: 1,
-            generated_at_unix_seconds: 0,
-            root: PathBuf::from("corpus"),
-            report_dir: PathBuf::from("target/human-eval"),
-            expert_review_fixture_count: 3,
-            task_study_fixture_count: 3,
-            family_counts: BTreeMap::new(),
-            covered_required_families: vec!["syntax".to_string()],
-            missing_required_families: vec!["template".to_string()],
-            c_first_task_fixture_count: 0,
-            covered_c_first_categories: Vec::new(),
-            missing_c_first_categories: Vec::new(),
-            c_first_tasks: Vec::new(),
-            fixtures: Vec::new(),
-            task_study_matrix: Vec::new(),
-        };
-
-        let check = human_eval_kit_check(&report);
 
         assert_eq!(check.status, GateStatus::Fail);
         assert!(check.blocker);

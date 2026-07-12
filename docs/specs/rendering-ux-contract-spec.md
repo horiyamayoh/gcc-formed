@@ -1750,3 +1750,28 @@ renderer/
    - `profile`, `path_policy`, `debug_refs` をどの flag / config へ写像するか決める
 3. **Enrichment / Ranking 仕様書**
    - `analysis.headline`, `first_action_hint`, `group_ref` をどう生成するか固定する
+
+---
+
+## 20. Release qualification and claim boundary
+
+Default presentation の変更は ADR-0039 と
+`eval/output-quality-single-agent-v1/protocol.json` に従う。candidate は結果を見る
+前に SHA、presentation policy、model/agent/tool manifest、protocol hash を固定し、
+native GCC と current default の両方に対して fidelity、repair utility、efficiency、
+human-readable contract の gate を通過しなければならない。
+
+human-readable contract は少なくとも次を deterministic に検証する。
+
+- primary location、source line、caret/range が first screen にある
+- internal family label だけでなく concrete compiler-owned defect が headline にある
+- user-owned correction site が declaration/vendor/system detail より先にある
+- 1 visible RepairUnit = 1 default block
+- high-confidence で元 fact と一致する場合だけ `want/got/via` や action を断定する
+- omitted detail は `--formed-explain`、完全 raw は `--formed-raw` の一操作で到達できる
+- plain / color / TTY / CI / narrow width で hierarchy と先頭情報を失わない
+- unresolved / unknown / residual は既知として断定せず、honest fallback を維持する
+
+この contract の pass は人間 behavioral study の pass ではない。release notes、
+README、support wording は coding-agent task-performance evidence と deterministic
+readability proxy を明記し、人間の edit latency や preference 改善を主張してはならない。

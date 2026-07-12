@@ -75,6 +75,7 @@ How much native / raw compiler output is preserved in the same run.
 - Representative corpus may carry review-only `subject_blocks_v2/render.presentation.json` or `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.
 - The wrapper must not knowingly ship a default TTY experience that is less legible than native GCC without either correcting the output or conservatively falling back / explicitly disclosing the limitation.
+- Release qualification uses one preregistered, sealed, single-agent actual patch/build study plus deterministic human-readable contract checks. It does not claim that a human behavioral study passed or that human edit latency or preference improved.
 
 ---
 
@@ -107,6 +108,7 @@ A beta or release-candidate build must be held if any of the following are true 
 3. template / overload / stdlib noise is not compressed enough to justify wrapping
 4. the wrapper hides provenance, confidence, or compiler-owned facts
 5. fallback behavior becomes opaque or misleading
+6. the pinned single-agent qualification is missing, inconclusive, hash-inconsistent, or outside its preregistered safety / utility / efficiency margins
 
 ---
 

@@ -4,6 +4,7 @@ pub(crate) mod ci_gate;
 pub(crate) mod corpus;
 pub(crate) mod fuzz;
 pub(crate) mod human_eval;
+pub(crate) mod output_quality;
 pub(crate) mod quality;
 pub(crate) mod rc_gate;
 pub(crate) mod real_project;

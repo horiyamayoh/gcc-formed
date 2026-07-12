@@ -1614,3 +1614,38 @@ performance:
 - [ ] CI output は path-first か
 - [ ] fallback / passthrough 変更は明示されているか
 - [ ] future Clang shared scenario を壊していないか
+
+---
+
+## 36. Single-agent output-quality qualification
+
+ADR-0039 により、RC / stable の output-quality prerequisite は mandatory
+human recruitment ではなく `eval/output-quality-single-agent-v1/` の sealed
+qualification とする。historical `eval/repair-units-v1/` evidence は削除・再集計・
+pass への再解釈をしてはならない。
+
+qualification は最低 120 semantic family / 360 valid trial / condition ごと 120
+trial を持ち、native GCC、current default、candidate を source-distinct matched
+variant で比較する。trial は同一 pinned coding agent の fresh context、clean source
+tree、isolated build directory、最大 3 actual compile/test loop を用いる。started
+trial、transport failure、invalid final schema、wrong edit、timeout は保持し、agent
+prose を scorer が成功へ意味補正してはならない。
+
+release gate は次を順序どおり評価する。
+
+1. artifact completeness、hash、condition concealment、model/tool drift
+2. P0/P1 fidelity、false merge/split、fact loss、exit/channel/side-effect parity
+3. family/path/version sample completeness
+4. first-patch / within-three-loop utility non-inferiority
+5. wrong-file/anchor と tool/build/diagnostic-byte efficiency non-inferiority
+6. preregistered improvement criterion
+7. source/caret、first action、information budget、disclosure、fallback の deterministic contract
+
+一つでも absolute stop-ship があれば weighted score で救済してはならない。
+interval が margin を跨ぐ場合は `inconclusive` であり pass ではない。product code
+変更後は新 candidate SHA と disjoint preregistered partition を使い、過去 attempt
+と合算して救済してはならない。
+
+この evidence が測るのは coding-agent task performance と deterministic
+human-readable proxy である。human population の latency、preference、behavioral
+non-inferiority を測った、または human study が pass したと主張してはならない。

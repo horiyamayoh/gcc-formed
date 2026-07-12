@@ -42,7 +42,8 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Advancing from a stable candidate to `1.0.0` additionally requires a fresh `cargo xtask stable-release --report-dir ...` run or the `release-stable.yml` workflow, with attached `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, and `rollback-drill.json`.
 - The RC metrics packet (`metrics-report.json` + `metrics-manual-eval.json`) is attached and current.
 - The RC fuzz packet (`fuzz-smoke-report.json` + `fuzz-evidence.json`) is attached and current.
-- The RC human-eval bundle (`human-eval/README.md`, `expert-review-sheet.csv`, `task-study-sheet.csv`, template JSONs, and selected fixture artifacts) is attached and current.
+- The RC single-agent output-quality packet is attached and current. Its `qualification-report.json` is `pass`, its artifact-integrity report has no missing or mismatched artifacts, and it includes the pinned model/agent/tool manifest plus no-subagent attestation.
+- Historical human-eval bundles remain research evidence but participant recruitment and a `human-eval/` packet are not RC or stable prerequisites.
 
 ## Current Beta Support Boundary
 
@@ -94,6 +95,6 @@ This checklist defines the minimum bar for shipping artifacts from the current `
 - Release smoke retains `manifest.json`, package/install JSON output, and resolve/install-release JSON output.
 - Release smoke retains `release-provenance.json` alongside signing material and build metadata.
 - Stable release smoke retains `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, and `rollback-drill.json`, and the rollback drill shows one `current` symlink switch.
-- RC gate retains `replay-report.json`, `bench-smoke-report.json`, `deterministic-replay-report.json`, `rollout-matrix-report.json`, `human-eval/`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, and the normalized manual evidence JSON files.
+- RC gate retains `replay-report.json`, `bench-smoke-report.json`, `deterministic-replay-report.json`, `rollout-matrix-report.json`, `agent-output-quality/`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, and normalized qualification evidence.
 - The public GitHub Release ships `primary`, `debug`, and `source` archives, the full control bundle, the immutable release-repo bundle, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, and `release-provenance.json`.
 - Signing key rotation / revoke / emergency re-sign follows `SIGNING-KEY-OPERATIONS.md`.

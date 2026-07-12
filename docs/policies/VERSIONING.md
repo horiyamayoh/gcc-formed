@@ -50,6 +50,7 @@ Examples:
 - Prefer wording such as "artifact `0.2.0-beta.1` in the `v1beta` maturity line".
 - Do not use `v0.2.0-beta.1` as a maturity label.
 - Archive names, tags, and install paths may embed a `v` prefix for readability, such as `gcc-formed-v0.2.0-beta.1-linux-x86_64-musl.tar.gz`; that prefix does not change the underlying semver.
+- `1.0.0-rc.N` or `1.0.0` output-quality wording must identify single-agent task-performance evidence and deterministic readability proxies. It must not say or imply that a human behavioral study passed.
 
 ## Current Reader Guidance
 

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "issue": 219,
+  "agent_identity": "OpenAI Codex CLI single coding agent",
+  "attested": true,
+  "subagent_spawn_count": 0,
+  "delegation_count": 0,
+  "planner_critic_judge_agent_count": 0,
+  "ensemble_or_vote_count": 0,
+  "best_of_n_count": 0,
+  "fresh_contexts_are_same_pinned_agent": true,
+  "statement": "All design, implementation, trials, deterministic analysis, regression verification, qualification, and release work uses one pinned coding-agent identity. Fresh ephemeral trial contexts prevent carry-over and are not delegated agents."
+}
