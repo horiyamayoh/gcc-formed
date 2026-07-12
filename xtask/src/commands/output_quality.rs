@@ -23,6 +23,7 @@ pub(crate) struct AgentOutputQualityReport {
     pub(crate) protocol_sha256: String,
     pub(crate) analysis_plan_sha256: String,
     pub(crate) model_agent_tool_manifest_sha256: String,
+    pub(crate) no_subagent_attestation_sha256: String,
     pub(crate) toolchain_sha256: String,
     pub(crate) corpus_manifest_sha256: String,
     pub(crate) started_trials: usize,
@@ -37,6 +38,7 @@ pub(crate) struct AgentOutputQualityReport {
     pub(crate) margin_failures: Vec<String>,
     pub(crate) improvement_requirement_passed: bool,
     pub(crate) fidelity_status: String,
+    pub(crate) integrity_status: String,
     pub(crate) human_readable_contract_status: String,
     pub(crate) trial_artifact_merkle_root: String,
     pub(crate) condition_key_commitment: String,
@@ -298,6 +300,12 @@ pub(crate) fn load_and_validate_agent_output_quality(
             report.fidelity_status
         ));
     }
+    if report.integrity_status != "pass" {
+        blockers.push(format!(
+            "integrity_status={:?} expected=pass",
+            report.integrity_status
+        ));
+    }
     if report.human_readable_contract_status != "pass" {
         blockers.push(format!(
             "human_readable_contract_status={:?} expected=pass",
@@ -318,6 +326,10 @@ pub(crate) fn load_and_validate_agent_output_quality(
         (
             "model_agent_tool_manifest_sha256",
             report.model_agent_tool_manifest_sha256.as_str(),
+        ),
+        (
+            "no_subagent_attestation_sha256",
+            report.no_subagent_attestation_sha256.as_str(),
         ),
         ("toolchain_sha256", report.toolchain_sha256.as_str()),
         (
@@ -369,6 +381,7 @@ mod tests {
             protocol_sha256: "b".repeat(64),
             analysis_plan_sha256: "c".repeat(64),
             model_agent_tool_manifest_sha256: "d".repeat(64),
+            no_subagent_attestation_sha256: "2".repeat(64),
             toolchain_sha256: "1".repeat(64),
             corpus_manifest_sha256: "e".repeat(64),
             started_trials: 360,
@@ -385,6 +398,7 @@ mod tests {
             margin_failures: Vec::new(),
             improvement_requirement_passed: true,
             fidelity_status: "pass".to_string(),
+            integrity_status: "pass".to_string(),
             human_readable_contract_status: "pass".to_string(),
             trial_artifact_merkle_root: "f".repeat(64),
             condition_key_commitment: "0".repeat(64),

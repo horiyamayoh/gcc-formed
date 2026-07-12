@@ -469,17 +469,21 @@ pub(crate) fn run_rc_gate(
         "analysis-plan.json",
         "artifact-integrity-report.json",
         "candidate-freeze.json",
+        "condition-key.json",
         "corpus-manifest.json",
         "default-promotion-decision.md",
         "efficiency-report.json",
         "fidelity-report.json",
         "human-readable-contract-report.json",
         "model-agent-tool-manifest.json",
+        "materialization-freeze.json",
         "no-subagent-attestation.json",
         "protocol.json",
         "qualification-summary.md",
         "repair-utility-report.json",
         "seed-commitment.json",
+        "trial-artifact-freeze.json",
+        "trial-index.jsonl",
     ] {
         let source = source_evidence_dir.join(name);
         if !source.is_file() {

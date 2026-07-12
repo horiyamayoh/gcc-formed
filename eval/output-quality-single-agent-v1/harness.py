@@ -52,7 +52,10 @@ REQUIRED_PACKET_FILES = (
     "corpus-manifest.json",
     "seed-commitment.json",
     "candidate-freeze.json",
+    "condition-key.json",
     "trial-index.jsonl",
+    "materialization-freeze.json",
+    "trial-artifact-freeze.json",
     "artifact-integrity-report.json",
     "fidelity-report.json",
     "repair-utility-report.json",
@@ -423,6 +426,7 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
         "protocol_sha256": protocol_hash,
         "analysis_plan_sha256": analysis_hash,
         "model_agent_tool_manifest_sha256": manifest_hash,
+        "no_subagent_attestation_template_sha256": sha256_file(ATTESTATION),
         "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "algorithm": "sha256",
         "attempt": args.attempt,
@@ -437,6 +441,7 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
         "analysis_plan_sha256": analysis_hash,
         "agent_manifest_sha256": manifest_hash,
         "model_agent_tool_manifest_sha256": manifest_hash,
+        "no_subagent_attestation_template_sha256": sha256_file(ATTESTATION),
         "toolchain_sha256": toolchain_hash(AGENT_MANIFEST),
         "candidate_presentation": args.candidate_presentation,
         "formed_binary_sha256": sha256_file(args.formed_binary) if args.formed_binary else None,
@@ -554,6 +559,10 @@ def generate_corpus(args: argparse.Namespace) -> dict[str, Any]:
     }
     write_json(packet_root / "corpus-manifest.json", corpus_manifest)
     metadata = evidence_metadata(packet_root)
+    packet_attestation = read_json(packet_root / "no-subagent-attestation.json")
+    packet_attestation.update(metadata)
+    packet_attestation["template_sha256"] = sha256_file(ATTESTATION)
+    write_json(packet_root / "no-subagent-attestation.json", packet_attestation)
     for trial in trials:
         trial.update(metadata)
         controller_path = packet_root / "trials" / trial["trial_id"] / "controller.json"
@@ -622,6 +631,69 @@ def parse_codex_events(path: Path) -> dict[str, int]:
                     if "src/" in token or "include/" in token:
                         files_opened.add(token.strip("',:;()[]{}"))
     return {"tool_calls": tool_calls, "source_bytes": source_bytes, "files_opened": len(files_opened)}
+
+
+def scan_trial_integrity(
+    packet_root: Path, records: list[dict[str, Any]]
+) -> dict[str, list[str]]:
+    missing: list[str] = []
+    mismatches: list[str] = []
+    for record in records:
+        trial_id = str(record["trial_id"])
+        trial_root = packet_root / "trials" / trial_id
+        work = trial_root / "work"
+        required = [
+            trial_root / "controller.json",
+            trial_root / "agent-command.json",
+            trial_root / "transcript.jsonl",
+            trial_root / "agent-stderr.txt",
+            trial_root / "score.json",
+            trial_root / "final.patch",
+            work / "TASK.json",
+            work / "DIAGNOSTIC.txt",
+            work / "build.sh",
+        ]
+        for path in required:
+            if not path.is_file():
+                missing.append(f"{trial_id}:{path.relative_to(trial_root)}")
+        if any(not path.is_file() for path in (trial_root / "controller.json", trial_root / "score.json")):
+            continue
+        controller = read_json(trial_root / "controller.json")
+        score = read_json(trial_root / "score.json")
+        for key in ("trial_id", "semantic_family_id", "condition_label"):
+            if str(score.get(key)) != str(controller.get(key)):
+                mismatches.append(f"{trial_id}:score/controller {key} mismatch")
+        diagnostic_path = work / "DIAGNOSTIC.txt"
+        if diagnostic_path.is_file() and sha256_file(diagnostic_path) != controller.get("diagnostic_sha256"):
+            mismatches.append(f"{trial_id}:diagnostic hash mismatch")
+        for source in controller.get("initial_source", []):
+            relative = str(source["path"])
+            completed = subprocess.run(
+                ["git", "show", f"HEAD:{relative}"],
+                cwd=work,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            if completed.returncode != 0:
+                mismatches.append(f"{trial_id}:sealed initial source unavailable: {relative}")
+            elif sha256_bytes(completed.stdout) != source.get("sha256"):
+                mismatches.append(f"{trial_id}:initial source hash mismatch: {relative}")
+        final_by_path = {item["path"]: item for item in score.get("final_source", [])}
+        for relative in controller.get("allowed_files", []):
+            source_path = work / relative
+            expected = final_by_path.get(relative)
+            if source_path.is_file() and (
+                expected is None or sha256_file(source_path) != expected.get("sha256")
+            ):
+                mismatches.append(f"{trial_id}:final source hash mismatch: {relative}")
+        for attempt in range(1, int(score.get("build_attempts", 0)) + 1):
+            for stem in ("patch", "status", "stdout", "stderr", "exit"):
+                suffix = "diff" if stem == "patch" else "txt"
+                path = work / ".trial" / f"{stem}-{attempt}.{suffix}"
+                if not path.is_file():
+                    missing.append(f"{trial_id}:.trial/{path.name}")
+    return {"missing": sorted(set(missing)), "mismatches": sorted(set(mismatches))}
 
 
 def score_trial(packet_root: Path, record: dict[str, Any], process_returncode: int, elapsed_ms: int) -> dict[str, Any]:
@@ -734,6 +806,17 @@ def run_trials(args: argparse.Namespace) -> dict[str, Any]:
             "--output-schema", str(packet_root / "trial-result.schema.json"),
             "--output-last-message", str(trial_root / "agent-final.json"), "-",
         ]
+        write_json(trial_root / "agent-command.json", {
+            "schema_version": 1,
+            **evidence_metadata(packet_root),
+            "trial_id": record["trial_id"],
+            "cwd": str(work),
+            "argv": command[:-1] + ["<trial-prompt-stdin>"],
+            "trial_prompt_sha256": sha256_file(packet_root / "trial-prompt.txt"),
+            "result_schema_sha256": sha256_file(packet_root / "trial-result.schema.json"),
+            "network": False,
+            "subagents": False,
+        })
         started = time.monotonic()
         try:
             completed = subprocess.run(
@@ -925,6 +1008,7 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
     packet_root = args.packet_root.resolve()
     metadata = evidence_metadata(packet_root)
     trial_records = load_index(packet_root)
+    trial_integrity = scan_trial_integrity(packet_root, trial_records)
     raw_root, raw_files = files_merkle(packet_root / "trials")
     write_json(packet_root / "trial-artifact-freeze.json", {
         "schema_version": 1,
@@ -1061,6 +1145,8 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         "observable_unit_recall": 1.0,
         "visible_unit_precision": 1.0,
         "invalid_final_schema_trials": invalid_schema,
+        "missing_trial_artifacts": len(trial_integrity["missing"]),
+        "trial_artifact_hash_mismatches": len(trial_integrity["mismatches"]),
         "external_gate_required": "cargo xtask repair-oracle --root corpus --check and rc-gate exact-count/fidelity artifacts",
     }
     write_json(packet_root / "fidelity-report.json", fidelity)
@@ -1096,7 +1182,8 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
             ("visible_unit_precision", 1.0),
         )
     )
-    if fidelity_fail or invalid_schema or readability["overall_status"] != "pass":
+    integrity_fail = bool(trial_integrity["missing"] or trial_integrity["mismatches"])
+    if fidelity_fail or integrity_fail or invalid_schema or readability["overall_status"] != "pass":
         verdict = "fail"
     elif not sample_complete or margin_failures or not improvement:
         verdict = "inconclusive"
@@ -1110,6 +1197,9 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         "analysis_plan_sha256": sha256_file(packet_root / "analysis-plan.json"),
         "model_agent_tool_manifest_sha256": sha256_file(packet_root / "model-agent-tool-manifest.json"),
         "toolchain_sha256": toolchain_hash(packet_root / "model-agent-tool-manifest.json"),
+        "no_subagent_attestation_sha256": sha256_file(
+            packet_root / "no-subagent-attestation.json"
+        ),
         "corpus_manifest_sha256": sha256_file(packet_root / "corpus-manifest.json"),
         "started_trials": len(trial_records),
         "valid_trials": len(rows),
@@ -1121,6 +1211,9 @@ def analyze(args: argparse.Namespace) -> dict[str, Any]:
         "margin_failures": margin_failures,
         "improvement_requirement_passed": improvement,
         "fidelity_status": "fail" if fidelity_fail else "pass",
+        "integrity_status": "fail" if integrity_fail else "pass",
+        "missing_trial_artifacts": trial_integrity["missing"],
+        "trial_artifact_hash_mismatches": trial_integrity["mismatches"],
         "human_readable_contract_status": readability["overall_status"],
         "trial_artifact_merkle_root": raw_root,
         "condition_key_commitment": condition_key["commitment"],
@@ -1162,6 +1255,9 @@ def verify(args: argparse.Namespace) -> dict[str, Any]:
         if name != "artifact-integrity-report.json" and not (packet_root / name).exists()
     ]
     mismatches: list[str] = []
+    trial_integrity = scan_trial_integrity(packet_root, load_index(packet_root))
+    missing.extend(trial_integrity["missing"])
+    mismatches.extend(trial_integrity["mismatches"])
     freeze_path = packet_root / "trial-artifact-freeze.json"
     if freeze_path.exists():
         frozen = read_json(freeze_path)
@@ -1177,6 +1273,32 @@ def verify(args: argparse.Namespace) -> dict[str, Any]:
         missing.append("trial-artifact-freeze.json")
     qualification_path = packet_root / "qualification-report.json"
     qualification = read_json(qualification_path) if qualification_path.exists() else {}
+    attestation_path = packet_root / "no-subagent-attestation.json"
+    if qualification and attestation_path.is_file() and qualification.get(
+        "no_subagent_attestation_sha256"
+    ) != sha256_file(attestation_path):
+        mismatches.append("qualification report no-subagent attestation hash mismatch")
+    for name in (
+        "condition-key.json",
+        "efficiency-report.json",
+        "fidelity-report.json",
+        "human-readable-contract-report.json",
+        "qualification-report.json",
+        "repair-utility-report.json",
+        "trial-artifact-freeze.json",
+    ):
+        path = packet_root / name
+        if not path.is_file():
+            continue
+        report = read_json(path)
+        for key, expected in metadata.items():
+            if report.get(key) != expected:
+                mismatches.append(f"{name}:{key} does not match the frozen packet metadata")
+    condition_key_path = packet_root / "condition-key.json"
+    if condition_key_path.is_file():
+        condition_key = read_json(condition_key_path)
+        if canonical_hash(condition_key.get("mapping", {})) != condition_key.get("commitment"):
+            mismatches.append("condition-key.json mapping does not match its commitment")
     if qualification and qualification.get("verdict") != "pass":
         mismatches.append(f"qualification verdict is {qualification.get('verdict')!r}, not 'pass'")
     report = {

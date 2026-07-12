@@ -84,6 +84,7 @@ class OutputQualityHarnessTests(unittest.TestCase):
             )
             HARNESS.write_json(root / "corpus-manifest.json", {"schema_version": 1})
             HARNESS.write_json(root / "seed-commitment.json", {"schema_version": 1})
+            HARNESS.write_json(root / "materialization-freeze.json", {"schema_version": 1})
             mapping = {"A": "native_gcc", "B": "current_default", "C": "candidate"}
             HARNESS.write_json(
                 root / "control" / "condition-key.sealed.json",
@@ -102,11 +103,33 @@ class OutputQualityHarnessTests(unittest.TestCase):
                         "details: --formed-explain | raw: --formed-raw\n"
                     )
                     (trial / "transcript.jsonl").write_text("")
+                    (trial / "agent-stderr.txt").write_text("")
+                    HARNESS.write_json(trial / "agent-command.json", {"schema_version": 1})
                     (trial / "final.patch").write_text("diff\n")
+                    (work / "TASK.json").write_text("{}\n")
+                    (work / "build.sh").write_text("#!/bin/sh\n")
+                    attempt_root = work / ".trial"
+                    attempt_root.mkdir()
+                    for name in (
+                        "patch-1.diff",
+                        "status-1.txt",
+                        "stdout-1.txt",
+                        "stderr-1.txt",
+                        "exit-1.txt",
+                    ):
+                        (attempt_root / name).write_text("0\n")
                     HARNESS.write_json(
                         trial / "controller.json",
                         {
                             "schema_version": 1,
+                            "trial_id": trial_id,
+                            "semantic_family_id": f"F{family + 1:03d}",
+                            "condition_label": label,
+                            "diagnostic_sha256": HARNESS.sha256_file(
+                                work / "DIAGNOSTIC.txt"
+                            ),
+                            "initial_source": [],
+                            "allowed_files": [],
                             "stratum": (
                                 "simple_native_strong"
                                 if family < 40
@@ -158,7 +181,7 @@ class OutputQualityHarnessTests(unittest.TestCase):
             self.assertEqual(
                 qualification["verdict"],
                 "pass",
-                HARNESS.read_json(root / "human-readable-contract-report.json"),
+                qualification,
             )
             integrity = HARNESS.verify(Namespace(packet_root=root))
 
