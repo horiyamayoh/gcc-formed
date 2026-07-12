@@ -242,6 +242,23 @@ impl LayoutProfile {
         format!("\u{1b}[{ansi}m{text}\u{1b}[0m")
     }
 
+    fn style_gutter(&self, text: &str) -> String {
+        self.style_segment(text, Some("1;34"))
+    }
+
+    fn style_location_arrow(&self, text: &str) -> String {
+        self.style_segment(text, Some("1;34"))
+    }
+
+    fn style_annotation(&self, text: &str, severity: &str) -> String {
+        let ansi = match severity {
+            "fatal" | "error" => Some("1;31"),
+            "warning" => Some("1;33"),
+            _ => Some("1;36"),
+        };
+        self.style_segment(text, ansi)
+    }
+
     fn render_subject_first_header(
         &self,
         theme: &ThemePolicy,
@@ -403,6 +420,7 @@ impl<'a> LegacyPresentationAdapter<'a> {
     }
 
     fn render(&self, lines: &mut Vec<String>) {
+        let hybrid = self.card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1";
         let location_host = self.layout.location_host(self.card);
         lines.push(
             self.layout
@@ -411,7 +429,15 @@ impl<'a> LegacyPresentationAdapter<'a> {
         if matches!(location_host, LocationHost::Dedicated)
             && let Some(location) = self.card.canonical_location.as_ref()
         {
-            lines.push(format!("--> {}", self.theme.inline(location)));
+            lines.push(if hybrid {
+                format!(
+                    " {} {}",
+                    self.layout.style_location_arrow("-->"),
+                    self.theme.inline(location)
+                )
+            } else {
+                format!("--> {}", self.theme.inline(location))
+            });
         }
         if let Some(confidence_notice) = self.card.confidence_notice.as_ref() {
             lines.push(confidence_notice.clone());
@@ -422,12 +448,16 @@ impl<'a> LegacyPresentationAdapter<'a> {
             self.render_legacy_evidence(lines, location_host);
         }
         for excerpt in &self.card.excerpts {
-            lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
-            for source in &excerpt.lines {
-                lines.push(format!("| {}", self.theme.inline(source)));
-            }
-            for annotation in &excerpt.annotations {
-                lines.push(format!("| {}", self.theme.inline(annotation)));
+            if hybrid {
+                self.render_hybrid_excerpt(lines, excerpt);
+            } else {
+                lines.push(format!("| {}", self.theme.inline(&excerpt.location)));
+                for source in &excerpt.lines {
+                    lines.push(format!("| {}", self.theme.inline(source)));
+                }
+                for annotation in &excerpt.annotations {
+                    lines.push(format!("| {}", self.theme.inline(annotation)));
+                }
             }
         }
         for context in &self.card.context_lines {
@@ -458,6 +488,58 @@ impl<'a> LegacyPresentationAdapter<'a> {
                     self.theme.raw(raw_line)
                 ));
             }
+        }
+        if hybrid {
+            lines.push("details: --formed-explain | raw: --formed-raw".to_string());
+        }
+    }
+
+    fn render_hybrid_excerpt(&self, lines: &mut Vec<String>, excerpt: &crate::ExcerptBlock) {
+        lines.push(format!(
+            " {} {}",
+            self.layout.style_location_arrow("-->"),
+            self.theme.inline(&excerpt.location)
+        ));
+        let line_num_width = excerpt
+            .start_line
+            .map(|start| {
+                let max_line = start as usize + excerpt.lines.len().saturating_sub(1);
+                max_line.to_string().len()
+            })
+            .unwrap_or(0);
+        let gutter_padding = " ".repeat(line_num_width + 1);
+        lines.push(format!(
+            "{}{}",
+            gutter_padding,
+            self.layout.style_gutter("|")
+        ));
+        for (index, source) in excerpt.lines.iter().enumerate() {
+            if let Some(start) = excerpt.start_line {
+                let number = start as usize + index;
+                let number = format!("{number:>line_num_width$}");
+                lines.push(format!(
+                    "{} {} {}",
+                    self.layout.style_gutter(&number),
+                    self.layout.style_gutter("|"),
+                    self.theme.inline(source)
+                ));
+            } else {
+                lines.push(format!(
+                    "{}{} {}",
+                    gutter_padding,
+                    self.layout.style_gutter("|"),
+                    self.theme.inline(source)
+                ));
+            }
+        }
+        for annotation in &excerpt.annotations {
+            lines.push(format!(
+                "{}{} {}",
+                gutter_padding,
+                self.layout.style_gutter("|"),
+                self.layout
+                    .style_annotation(&self.theme.inline(annotation), &self.card.severity)
+            ));
         }
     }
 

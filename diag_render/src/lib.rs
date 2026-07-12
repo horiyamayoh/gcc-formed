@@ -561,6 +561,7 @@ mod tests {
                 display_family: Some("type_mismatch".to_string()),
                 subject: "type or overload mismatch".to_string(),
                 presentation: ResolvedCardPresentation {
+                    preset_id: "subject_blocks_v2".to_string(),
                     template_id: "contrast_block".to_string(),
                     display_family: Some("type_mismatch".to_string()),
                     semantic_shape: crate::presentation::SemanticShape::Contrast,
@@ -1065,6 +1066,31 @@ mod tests {
         assert_eq!(
             default_output.displayed_group_refs,
             explicit_output.displayed_group_refs
+        );
+    }
+
+    #[test]
+    fn hybrid_candidate_adds_native_source_gutter_and_one_step_disclosure() {
+        let tempdir = tempfile::tempdir().unwrap();
+        write_source_file(
+            &tempdir,
+            "src/main.c",
+            "int main(void) {\n    return 0\n}\n",
+        );
+        let mut request = sample_request();
+        request.cwd = Some(tempdir.path().to_path_buf());
+        request.source_excerpt_policy = SourceExcerptPolicy::ForceOn;
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v2();
+        policy.preset_id = "repair_units_hybrid_v1".to_string();
+
+        let output = render_with_presentation_policy(request, &policy).unwrap();
+
+        assert!(output.text.contains("--> src/main.c:2:13"));
+        assert!(output.text.contains("2 |     return 0"));
+        assert!(
+            output
+                .text
+                .contains("details: --formed-explain | raw: --formed-raw")
         );
     }
 

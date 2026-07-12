@@ -33,6 +33,7 @@ const SUBJECT_BLOCKS_V2_ASSET: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../config/presentation/subject_blocks_v2.toml"
 ));
+const REPAIR_UNITS_HYBRID_V1_ASSET: &str = SUBJECT_BLOCKS_V2_ASSET;
 const SUBJECT_BLOCKS_V1_ASSET: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../config/presentation/subject_blocks_v1.toml"
@@ -649,6 +650,7 @@ fn merge_config(base: ConfigFile, overlay: ConfigFile) -> ConfigFile {
 fn load_builtin_presentation_asset(preset_id: &str) -> Result<PresentationConfigFile, String> {
     let source = match preset_id {
         "subject_blocks_v2" => SUBJECT_BLOCKS_V2_ASSET,
+        "repair_units_hybrid_v1" => REPAIR_UNITS_HYBRID_V1_ASSET,
         "subject_blocks_v1" => SUBJECT_BLOCKS_V1_ASSET,
         "legacy_v1" => LEGACY_V1_ASSET,
         other => return Err(format!("unknown preset id: {other}")),
@@ -1251,7 +1253,7 @@ fn builtin_header_defaults(preset_id: &str) -> PresentationHeaderSection {
     PresentationHeaderSection {
         subject_first: Some(matches!(
             preset_id,
-            "subject_blocks_v1" | "subject_blocks_v2"
+            "subject_blocks_v1" | "subject_blocks_v2" | "repair_units_hybrid_v1"
         )),
         interactive_format: Some("{severity}: [{family}] {subject}".to_string()),
         ci_path_first_format: Some("{location}: {severity}: [{family}] {subject}".to_string()),
@@ -2024,6 +2026,23 @@ mod tests {
         assert_eq!(render_policy.location_policy.width_soft_limit, 100);
         assert_eq!(render_policy.label_width_mode, LabelWidthMode::TemplateMax);
         assert_eq!(render_policy.label("raw"), Some("raw"));
+    }
+
+    #[test]
+    fn repair_units_hybrid_v1_builtin_candidate_is_available_without_becoming_default() {
+        let parsed = ParsedArgs::parse(vec![
+            OsString::from("gcc-formed"),
+            OsString::from("--formed-presentation=repair_units_hybrid_v1"),
+        ])
+        .unwrap();
+
+        let render_policy = ConfigFile::default()
+            .resolve_presentation_policy(&parsed)
+            .to_render_policy();
+
+        assert_eq!(render_policy.preset_id, "repair_units_hybrid_v1");
+        assert!(render_policy.header.subject_first);
+        assert_eq!(DEFAULT_PRESENTATION_PRESET, "subject_blocks_v2");
     }
 
     #[test]

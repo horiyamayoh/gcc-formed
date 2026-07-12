@@ -20,6 +20,9 @@ pub struct ExcerptBlock {
     /// Caret/range annotations aligned beneath the source lines.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub annotations: Vec<String>,
+    /// 1-based line number of the first source line in this excerpt, when known.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub start_line: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,6 +92,7 @@ fn build_excerpt_block(request: &RenderRequest, location: &Location) -> Option<E
             precise_annotation_possible,
             windowed_line.columns,
         ),
+        start_line: Some(location.line().max(1)),
     })
 }
 

@@ -170,6 +170,9 @@ pub struct ResolvedFamilyPresentation {
 /// The effective presentation decision for a single rendered card.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResolvedCardPresentation {
+    /// Internal preset identity used by layout adapters; excluded from snapshots.
+    #[serde(skip)]
+    pub preset_id: String,
     pub template_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_family: Option<String>,
@@ -877,6 +880,7 @@ impl ResolvedPresentationPolicy {
         };
 
         ResolvedCardPresentation {
+            preset_id: self.preset_id.clone(),
             template_id: resolved_template_id.to_string(),
             display_family: mapping.and_then(|candidate| candidate.display_family.clone()),
             semantic_shape,
@@ -918,6 +922,7 @@ pub(crate) struct RenderSemanticCard {
 impl Default for ResolvedCardPresentation {
     fn default() -> Self {
         Self {
+            preset_id: String::new(),
             template_id: GENERIC_TEMPLATE_ID.to_string(),
             display_family: None,
             semantic_shape: SemanticShape::Generic,
