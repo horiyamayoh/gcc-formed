@@ -1357,6 +1357,12 @@ fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> Supporti
         .children
         .iter()
         .enumerate()
+        .filter(|(_, child)| {
+            matches!(
+                request.profile,
+                RenderProfile::Verbose | RenderProfile::Debug
+            ) || !is_reconciled_sink_conflict_child(node, child)
+        })
         .filter_map(|(index, child)| {
             let note = child
                 .message
@@ -1384,6 +1390,22 @@ fn summarize_generic(request: &RenderRequest, node: &DiagnosticNode) -> Supporti
     }
 
     evidence
+}
+
+fn is_reconciled_sink_conflict_child(parent: &DiagnosticNode, child: &DiagnosticNode) -> bool {
+    parent.provenance.source == diag_core::ProvenanceSource::ResidualText
+        && child.provenance.source != diag_core::ProvenanceSource::ResidualText
+        && parent.phase == diag_core::Phase::Parse
+        && child.phase == diag_core::Phase::Parse
+        && parent.message.raw_text != child.message.raw_text
+        && !parent.suggestions.is_empty()
+        && parent.suggestions == child.suggestions
+        && parent
+            .primary_location()
+            .map(|location| (location.path_raw(), location.line(), location.column()))
+            == child
+                .primary_location()
+                .map(|location| (location.path_raw(), location.line(), location.column()))
 }
 
 fn summarize_template_frames(

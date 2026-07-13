@@ -160,7 +160,7 @@
       "fingerprints": {
         "family": "c54d7ccbaece50d46c1f666b5f770c22a63fb57285a6e3afba16ddddb45a3932",
         "raw": "c654ac1e0a31e71bea1a1011ff94a0674592b95a029271a64af31bf4d3ab713c",
-        "structural": "90252c7a008476d6dbe26bb157685a7ada5e02098f2ac7d6ab8efa6b0866aaad"
+        "structural": "175d69f389b1cf4b05e9ad1d6df27042012f7aa409cd504c6b19ee95266e8d0f"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -199,17 +199,48 @@
         "source": "residual_text"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "utf16_code_unit",
+              "end_column": 19,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 19,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     }
   ],
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
     "family": "87ebf569fc8c49a7ac429657b525bcd8b8af84feb0eb2d3a4dfbbefd332fea68",
-    "raw": "547b35e33d7dc80c906bb8f71e13c1d9d58594f687ba952ae1216faae8cf0794",
-    "structural": "67be658124da15255d1e16af7e2b1e0139af5193212a8a762f528646faaf2b5c"
+    "raw": "549b06b79e9a16525e6dc8cdd170c7d87f9d39f5edad73ba58b1e05eac6d370f",
+    "structural": "5a0d227e7848cb7d5114f7ec913bccb6154da08ac9771f28b6de14d864d9d8b6"
   },
   "integrity_issues": [
+    {
+      "message": "reconciled bounded structured/native syntax wording conflict at src/main.c:2:19; exact location and fix-it anchor agree while both source messages remain preserved",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif",
+          "stderr.raw"
+        ],
+        "source": "policy"
+      },
+      "severity": "info",
+      "stage": "normalize"
+    },
     {
       "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
       "provenance": {

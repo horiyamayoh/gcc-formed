@@ -84,36 +84,43 @@
           "stderr.raw"
         ],
         "semantic_role": "root",
-        "severity": "error"
+        "severity": "error",
+        "suggestions": [
+          {
+            "applicability": "machine_applicable",
+            "edits": [
+              {
+                "end_column": 13,
+                "end_line": 2,
+                "path": "src/main.c",
+                "replacement": ";",
+                "start_column": 13,
+                "start_line": 2
+              }
+            ],
+            "label": "insert ';'"
+          }
+        ]
       }
     ],
     "repair_units": [
       {
         "lead_evidence_ref": "node:residual-compiler-0",
         "member_evidence_refs": [
-          "node:residual-compiler-0"
-        ],
-        "observability": "unresolved",
-        "proof_class": "unresolved",
-        "raw_capture_refs": [
-          "stderr.raw"
-        ],
-        "repair_unit_ref": "repair-unit:node-residual-compiler-0",
-        "visibility_floor": "never_hidden",
-        "visible": true
-      },
-      {
-        "lead_evidence_ref": "node:sarif-0-0",
-        "member_evidence_refs": [
+          "node:residual-compiler-0",
           "node:sarif-0-0"
         ],
-        "observability": "unresolved",
-        "proof_class": "unresolved",
-        "raw_capture_refs": [
-          "diagnostics.sarif"
+        "observability": "observable",
+        "proof_class": "proven",
+        "rationale_edge_refs": [
+          "same-fixit:node:residual-compiler-0->node:sarif-0-0:src/main.c:2:13:2:13:HalfOpen:;"
         ],
-        "repair_unit_ref": "repair-unit:node-sarif-0-0",
-        "visibility_floor": "never_hidden",
+        "raw_capture_refs": [
+          "diagnostics.sarif",
+          "stderr.raw"
+        ],
+        "repair_unit_ref": "repair-unit:node-residual-compiler-0+node-sarif-0-0",
+        "visibility_floor": "hidden_allowed",
         "visible": true
       }
     ],

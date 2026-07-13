@@ -113,6 +113,13 @@
       ],
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "label": "suggested edit",
+          "text": "insert ';' at src/main.c:2:19"
+        }
+      ],
       "suppression_reason": null,
       "title": "syntax error"
     }
@@ -120,6 +127,6 @@
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": null
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

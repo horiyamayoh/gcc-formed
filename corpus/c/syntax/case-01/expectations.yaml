@@ -8,7 +8,7 @@ semantic:
   family: syntax
   severity: error
   lead_group_any_of:
-    - sarif-0-0
+    - residual-compiler-0
   primary_locations:
     - path: src/main.c
       line: 2
@@ -22,7 +22,7 @@ render:
   default:
     omission_notice_required: false
     first_screenful_max_lines: 24
-    raw_diagnostics_hint_required: false
+    raw_diagnostics_hint_required: true
     required_substrings:
       - "|             ^"
   concise:
@@ -35,12 +35,15 @@ render:
     first_screenful_max_lines: 24
     path_first_required: false
     color_meaning_forbidden: true
-    raw_diagnostics_hint_required: false
+    raw_diagnostics_hint_required: true
     required_substrings:
       - "|             ^"
       - "suggested edit: insert ';' at src/main.c:2:13"
 integrity:
   allowed_issue_codes: []
+cascade:
+  expected_visible_repair_unit_count: 1
+  expected_total_repair_unit_count: 1
 performance:
   parse_time_ms_max: 50
   render_time_ms_max: 40

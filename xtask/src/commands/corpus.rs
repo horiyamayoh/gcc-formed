@@ -323,6 +323,8 @@ pub(crate) struct AntiCollisionReport {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct CascadeCountSummary {
+    pub(crate) visible_repair_unit_count: u32,
+    pub(crate) total_repair_unit_count: usize,
     pub(crate) independent_episode_count: usize,
     pub(crate) independent_root_count: u32,
     pub(crate) dependent_follow_on_count: u32,
@@ -1498,6 +1500,16 @@ pub(crate) fn cascade_count_summary(document: &DiagnosticDocument) -> CascadeCou
         return CascadeCountSummary::default();
     };
     CascadeCountSummary {
+        visible_repair_unit_count: document_analysis
+            .repair_analysis
+            .as_ref()
+            .map(|repair| repair.stats.visible_unit_count)
+            .unwrap_or_default(),
+        total_repair_unit_count: document_analysis
+            .repair_analysis
+            .as_ref()
+            .map(|repair| repair.repair_units.len())
+            .unwrap_or_default(),
         independent_episode_count: document_analysis.episode_graph.episodes.len(),
         independent_root_count: document_analysis.stats.independent_root_count,
         dependent_follow_on_count: document_analysis.stats.dependent_follow_on_count,
@@ -2036,6 +2048,25 @@ pub(crate) fn verify_cascade_expectations(
 
     let actual = cascade_count_summary(document);
     let expected = &fixture.expectations.cascade;
+
+    if let Some(count) = expected.expected_visible_repair_unit_count
+        && actual.visible_repair_unit_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.visible_repair_unit_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.visible_repair_unit_count),
+        });
+    }
+    if let Some(count) = expected.expected_total_repair_unit_count
+        && actual.total_repair_unit_count != count
+    {
+        return Err(VerificationFailure {
+            layer: "cascade.total_repair_unit_count".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: format!("expected {count}, got {}", actual.total_repair_unit_count),
+        });
+    }
 
     if let Some(count) = expected.expected_independent_episode_count
         && actual.independent_episode_count != count

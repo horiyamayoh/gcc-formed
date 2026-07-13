@@ -120,22 +120,43 @@
           "stderr.raw"
         ],
         "semantic_role": "root",
-        "severity": "error"
+        "severity": "error",
+        "suggestions": [
+          {
+            "applicability": "machine_applicable",
+            "edits": [
+              {
+                "end_column": 19,
+                "end_line": 2,
+                "path": "src/main.c",
+                "replacement": ";",
+                "start_column": 19,
+                "start_line": 2
+              }
+            ],
+            "label": "insert ';'"
+          }
+        ]
       }
     ],
     "repair_units": [
       {
         "lead_evidence_ref": "node:residual-compiler-1",
         "member_evidence_refs": [
-          "node:residual-compiler-1"
+          "node:residual-compiler-1",
+          "node:sarif-0-1"
         ],
-        "observability": "unresolved",
-        "proof_class": "unresolved",
+        "observability": "observable",
+        "proof_class": "proven",
+        "rationale_edge_refs": [
+          "same-fixit:node:residual-compiler-1->node:sarif-0-1:src/main.c:2:19:2:19:HalfOpen:;"
+        ],
         "raw_capture_refs": [
+          "diagnostics.sarif",
           "stderr.raw"
         ],
-        "repair_unit_ref": "repair-unit:node-residual-compiler-1",
-        "visibility_floor": "never_hidden",
+        "repair_unit_ref": "repair-unit:node-residual-compiler-1+node-sarif-0-1",
+        "visibility_floor": "hidden_allowed",
         "visible": true
       },
       {
@@ -149,20 +170,6 @@
           "diagnostics.sarif"
         ],
         "repair_unit_ref": "repair-unit:node-sarif-0-0",
-        "visibility_floor": "never_hidden",
-        "visible": true
-      },
-      {
-        "lead_evidence_ref": "node:sarif-0-1",
-        "member_evidence_refs": [
-          "node:sarif-0-1"
-        ],
-        "observability": "unresolved",
-        "proof_class": "unresolved",
-        "raw_capture_refs": [
-          "diagnostics.sarif"
-        ],
-        "repair_unit_ref": "repair-unit:node-sarif-0-1",
         "visibility_floor": "never_hidden",
         "visible": true
       }

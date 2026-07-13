@@ -230,8 +230,8 @@ fn ingest_bundle_with_gcc_adapter(
     };
     materialize_capture_artifacts(&mut document, bundle);
 
-    let mut residual_nodes = dedup_structured_residual_duplicates(
-        &document,
+    let mut residual_nodes = reconcile_structured_residual_diagnostics(
+        &mut document,
         classify(stderr_text, !has_authoritative_structured),
     );
     if has_authoritative_structured {
@@ -439,14 +439,108 @@ fn residual_outcome_for_contract(
     }
 }
 
-fn dedup_structured_residual_duplicates(
-    document: &DiagnosticDocument,
+fn reconcile_structured_residual_diagnostics(
+    document: &mut DiagnosticDocument,
     residual_nodes: Vec<diag_core::DiagnosticNode>,
 ) -> Vec<diag_core::DiagnosticNode> {
     residual_nodes
         .into_iter()
-        .filter(|node| !duplicates_structured_diagnostic(document, node))
+        .filter_map(|mut node| {
+            if duplicates_structured_diagnostic(document, &node) {
+                return None;
+            }
+            if let Some(structured) = document
+                .diagnostics
+                .iter()
+                .find(|structured| reconciles_bounded_syntax_sink_conflict(structured, &node))
+            {
+                node.suggestions = structured.suggestions.clone();
+                let mut capture_refs = structured.provenance.capture_refs.clone();
+                capture_refs.extend(node.provenance.capture_refs.iter().cloned());
+                capture_refs.sort();
+                capture_refs.dedup();
+                document.integrity_issues.push(IntegrityIssue {
+                    severity: IssueSeverity::Info,
+                    stage: IssueStage::Normalize,
+                    message: format!(
+                        "reconciled bounded structured/native syntax wording conflict at {}; exact location and fix-it anchor agree while both source messages remain preserved",
+                        primary_anchor_key(&node).unwrap_or_else(|| "unknown location".to_string())
+                    ),
+                    provenance: Some(Provenance {
+                        source: ProvenanceSource::Policy,
+                        capture_refs,
+                    }),
+                });
+            }
+            Some(node)
+        })
         .collect()
+}
+
+fn reconciles_bounded_syntax_sink_conflict(
+    structured: &diag_core::DiagnosticNode,
+    residual: &diag_core::DiagnosticNode,
+) -> bool {
+    if structured.provenance.source == ProvenanceSource::ResidualText
+        || residual.provenance.source != ProvenanceSource::ResidualText
+        || !matches!(structured.semantic_role, SemanticRole::Root)
+        || !matches!(residual.semantic_role, SemanticRole::Root)
+        || structured.severity != residual.severity
+        || !matches!(structured.phase, diag_core::Phase::Parse)
+        || !matches!(residual.phase, diag_core::Phase::Parse)
+        || structured.context_chains != residual.context_chains
+        || primary_anchor_key(structured) != primary_anchor_key(residual)
+    {
+        return false;
+    }
+
+    let Some(residual_message) = compiler_residual_core_message(&residual.message.raw_text) else {
+        return false;
+    };
+    if normalized_compiler_message(&structured.message.raw_text) == residual_message {
+        return false;
+    }
+    if normalized_bounded_brace_wording(&structured.message.raw_text) != residual_message {
+        return false;
+    }
+
+    let edits = structured
+        .suggestions
+        .iter()
+        .flat_map(|suggestion| suggestion.edits.iter())
+        .collect::<Vec<_>>();
+    if edits.len() != 1 {
+        return false;
+    }
+    let edit = edits[0];
+    let Some(location) = residual.primary_location() else {
+        return false;
+    };
+    edit.start_line == edit.end_line
+        && edit.start_column == edit.end_column
+        && edit.path == location.path_raw()
+        && edit.start_line == location.line()
+        && edit.start_column == location.column()
+        && !edit.replacement.is_empty()
+        && structured
+            .message
+            .raw_text
+            .contains(&format!("'{}'", edit.replacement))
+        && residual_message.contains(&format!("'{}'", edit.replacement))
+}
+
+fn normalized_bounded_brace_wording(message: &str) -> String {
+    normalized_compiler_message(message).replace("'}}' token", "'}' token")
+}
+
+fn primary_anchor_key(node: &diag_core::DiagnosticNode) -> Option<String> {
+    let location = node.primary_location()?;
+    Some(format!(
+        "{}:{}:{}",
+        location.path_raw(),
+        location.line(),
+        location.column()
+    ))
 }
 
 fn duplicates_structured_diagnostic(

@@ -1116,6 +1116,16 @@ dedup してよいのは、少なくとも以下が揃うときのみ。
 
 それ以外は **別 diagnostic として残す**。
 
+structured/native の message core が一致しない場合でも、次をすべて満たす bounded syntax conflict は、両 node と両 capture を保持したまま 1 つの RepairUnit に reconcile してよい。
+
+- 同一 invocation、severity、parse phase
+- path / line / column が完全一致する primary location
+- structured sink が宣言した単一 insertion fix-it と native caret が同じ repair anchor を指す
+- 差分が既知かつ限定された sink-specific token escaping（現在は closing brace の `'}}'` / `'}'` 差）だけである
+- context frontier が一致する
+
+この場合も structured message を native message で上書きしてはならない。adapter は両 evidence node を残し、exact fix-it edge と reconciliation integrity record を生成する。default display の lead wording は native compiler text を使ってよいが、structured fix-it と両 capture provenance は同じ RepairUnit から到達可能でなければならない。location だけの一致、異なる expected token、異なる fix-it、異なる macro/context frontier は merge 根拠にならない。
+
 ### 21.4 `collect2` と linker 本体の重複
 
 `collect2` summary は本体 linker error と重複しやすい。  

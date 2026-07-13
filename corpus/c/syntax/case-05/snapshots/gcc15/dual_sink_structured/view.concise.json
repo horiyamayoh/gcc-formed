@@ -59,13 +59,13 @@
       ],
       "family": "syntax",
       "first_action": null,
-      "group_id": "repair-unit:node-sarif-0-1",
+      "group_id": "repair-unit:node-residual-compiler-1+node-sarif-0-1",
       "matched_conditions": [
         "message_contains=expected",
         "message_contains=before",
         "phase=parse"
       ],
-      "raw_message": "expected ';' before '}}' token",
+      "raw_message": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  ",
       "rule_id": "rule.family.syntax.phase_or_message",
       "severity": "error",
       "suggestions": [
@@ -76,44 +76,12 @@
         }
       ],
       "suppression_reason": null,
-      "title": "expected ';' before '}}' token"
-    },
-    {
-      "canonical_location": "src/main.c:2:19",
-      "child_notes": [],
-      "collapsed_notices": [],
-      "confidence_label": "certain",
-      "confidence_notice": null,
-      "context_lines": [],
-      "excerpts": [
-        {
-          "annotations": [
-            "                  ^"
-          ],
-          "lines": [
-            "    return (1 + 2;"
-          ],
-          "location": "src/main.c:2:19"
-        }
-      ],
-      "family": "syntax",
-      "first_action": null,
-      "group_id": "repair-unit:node-residual-compiler-1",
-      "matched_conditions": [
-        "message_contains=expected",
-        "message_contains=before",
-        "phase=parse"
-      ],
-      "raw_message": "src/main.c:2:19: error: expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~                  ",
-      "rule_id": "rule.family.syntax.phase_or_message",
-      "severity": "error",
-      "suppression_reason": null,
       "title": "expected ';' before '}' token\n    2 |     return (1 + 2;\n      |                   ^\n      |                   ;\n    3 | }\n      | ~"
     }
   ],
   "summary": {
     "failure_kind": "compile_failure",
     "partial_notice": true,
-    "raw_diagnostics_hint": null
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
   }
 }

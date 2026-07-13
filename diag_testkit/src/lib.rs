@@ -224,6 +224,12 @@ pub struct PerformanceExpectations {
 /// Document-level cascade expectations for a fixture.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CascadeExpectations {
+    /// Exact number of visible `RepairUnit`s expected after evidence-constrained inference.
+    #[serde(default)]
+    pub expected_visible_repair_unit_count: Option<u32>,
+    /// Exact total number of `RepairUnit`s expected after evidence-constrained inference.
+    #[serde(default)]
+    pub expected_total_repair_unit_count: Option<usize>,
     /// Exact number of cascade episodes expected in document analysis.
     #[serde(default)]
     pub expected_independent_episode_count: Option<usize>,
@@ -244,7 +250,9 @@ pub struct CascadeExpectations {
 impl CascadeExpectations {
     /// Returns `true` when this block does not declare any assertions.
     pub fn is_empty(&self) -> bool {
-        self.expected_independent_episode_count.is_none()
+        self.expected_visible_repair_unit_count.is_none()
+            && self.expected_total_repair_unit_count.is_none()
+            && self.expected_independent_episode_count.is_none()
             && self.expected_independent_root_count.is_none()
             && self.expected_dependent_follow_on_count.is_none()
             && self.expected_duplicate_count.is_none()

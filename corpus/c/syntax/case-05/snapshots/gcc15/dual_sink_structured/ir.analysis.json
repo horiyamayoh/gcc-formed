@@ -199,7 +199,7 @@
       "fingerprints": {
         "family": "de0dc366aa7ecd04957c06a6b1e5df06a71e4a4a0d05641a08214f2a8c666216",
         "raw": "c654ac1e0a31e71bea1a1011ff94a0674592b95a029271a64af31bf4d3ab713c",
-        "structural": "07d1b8c7c6154b44e51c63c8842edeffef56df3af9c1d3e97ae9a2cb963f52ce"
+        "structural": "daa92af85427b92c4f69f33ce47cbfa32885ba88f0a0062074c042ce5a7c067e"
       },
       "id": "residual-compiler-1",
       "locations": [
@@ -238,7 +238,26 @@
         "source": "residual_text"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "utf16_code_unit",
+              "end_column": 19,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 19,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     }
   ],
   "document_analysis": {
@@ -335,7 +354,7 @@
       }
     ],
     "policy_profile": "default-aggressive",
-    "producer_version": "0.2.0-beta.1",
+    "producer_version": "1.0.0-rc.1",
     "repair_analysis": {
       "evidence_graph": {
         "edges": [
@@ -371,6 +390,17 @@
             "kind": "context_frontier",
             "proof_class": "proven",
             "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "same-fixit:node:residual-compiler-1->node:sarif-0-1:src/main.c:2:19:2:19:HalfOpen:;",
+            "evidence_tags": [
+              "compiler_fixit_exact_edit"
+            ],
+            "from_evidence_ref": "node:residual-compiler-1",
+            "kind": "same_fixit_span",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-1"
           },
           {
             "authority": "text_parser_derived",
@@ -448,24 +478,31 @@
           "alternate_repair_anchors": [
             "src/main.c:2:19"
           ],
-          "grounded_action_refs": [],
+          "grounded_action_refs": [
+            "fixit:node:residual-compiler-1:0:0",
+            "fixit:node:sarif-0-1:0:0"
+          ],
           "lead_evidence_ref": "node:residual-compiler-1",
           "legacy_episode_refs": [],
           "legacy_group_refs": [],
           "member_evidence_refs": [
-            "node:residual-compiler-1"
+            "node:residual-compiler-1",
+            "node:sarif-0-1"
           ],
-          "observability": "unresolved",
+          "observability": "observable",
           "primary_repair_anchors": [
-            "src/main.c:2:19"
+            "src/main.c:2:19-2:19"
           ],
-          "proof_class": "unresolved",
-          "rationale_edge_refs": [],
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "same-fixit:node:residual-compiler-1->node:sarif-0-1:src/main.c:2:19:2:19:HalfOpen:;"
+          ],
           "raw_capture_refs": [
+            "diagnostics.sarif",
             "stderr.raw"
           ],
-          "repair_unit_ref": "repair-unit:node-residual-compiler-1",
-          "visibility_floor": "never_hidden",
+          "repair_unit_ref": "repair-unit:node-residual-compiler-1+node-sarif-0-1",
+          "visibility_floor": "hidden_allowed",
           "visible": true
         },
         {
@@ -493,41 +530,15 @@
           "repair_unit_ref": "repair-unit:node-sarif-0-0",
           "visibility_floor": "never_hidden",
           "visible": true
-        },
-        {
-          "alternate_repair_anchors": [
-            "src/main.c:2:19"
-          ],
-          "grounded_action_refs": [
-            "fixit:node:sarif-0-1:0:0"
-          ],
-          "lead_evidence_ref": "node:sarif-0-1",
-          "legacy_episode_refs": [],
-          "legacy_group_refs": [],
-          "member_evidence_refs": [
-            "node:sarif-0-1"
-          ],
-          "observability": "unresolved",
-          "primary_repair_anchors": [
-            "src/main.c:2:19-2:19"
-          ],
-          "proof_class": "unresolved",
-          "rationale_edge_refs": [],
-          "raw_capture_refs": [
-            "diagnostics.sarif"
-          ],
-          "repair_unit_ref": "repair-unit:node-sarif-0-1",
-          "visibility_floor": "never_hidden",
-          "visible": true
         }
       ],
       "stats": {
         "exact_duplicate_count": 0,
-        "merged_evidence_count": 0,
+        "merged_evidence_count": 1,
         "referenced_fact_count": 3,
         "total_fact_count": 6,
-        "unresolved_evidence_count": 3,
-        "visible_unit_count": 3
+        "unresolved_evidence_count": 1,
+        "visible_unit_count": 2
       }
     },
     "stats": {
@@ -541,10 +552,22 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "d3211a06f52e9b97b80ef47b54c605482f85bf1a773cc4ae5f8025e01edf2ca1",
-    "raw": "49ccc7f0f05529112cceea30d7f8e0aa746b7522bfa734ff7c904fd0e9b2e817",
-    "structural": "bbf7dfc6edcb92e6e0d22b913de945cf2a13e42242651b69a4b36df2c440ea21"
+    "raw": "16bf79af2e69ea49a089fe6625501fa008b07a1f5f206635c3e1075befe2d657",
+    "structural": "d7f884eb1778410774c6f12a5cc8a4c5d05fa46f3e2a5144f7a5e9ae3381c236"
   },
   "integrity_issues": [
+    {
+      "message": "reconciled bounded structured/native syntax wording conflict at src/main.c:2:19; exact location and fix-it anchor agree while both source messages remain preserved",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif",
+          "stderr.raw"
+        ],
+        "source": "policy"
+      },
+      "severity": "info",
+      "stage": "normalize"
+    },
     {
       "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
       "provenance": {

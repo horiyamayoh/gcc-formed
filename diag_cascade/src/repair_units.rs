@@ -109,17 +109,43 @@ pub fn infer_repair_units(document: &mut DiagnosticDocument) {
             })
             .map(|edge| edge.to_evidence_ref.as_str())
             .collect::<BTreeSet<_>>();
-        let lead = unit_roots
-            .iter()
-            .filter(|reference| !dependent_targets.contains(reference.as_str()))
-            .min_by_key(|reference| {
-                document
-                    .diagnostics
-                    .iter()
-                    .position(|node| format!("node:{}", node.id) == **reference)
-                    .unwrap_or(usize::MAX)
+        let native_conflict_lead = unit_roots.iter().find(|reference| {
+            node_map.get(*reference).is_some_and(|node| {
+                node.provenance.source == diag_core::ProvenanceSource::ResidualText
+                    && graph.edges.iter().any(|edge| {
+                        edge.kind == EvidenceEdgeKind::SameFixitSpan
+                            && (edge.from_evidence_ref == **reference
+                                || edge.to_evidence_ref == **reference)
+                            && edge.from_evidence_ref != edge.to_evidence_ref
+                            && node_map
+                                .get(if edge.from_evidence_ref == **reference {
+                                    &edge.to_evidence_ref
+                                } else {
+                                    &edge.from_evidence_ref
+                                })
+                                .is_some_and(|other| {
+                                    other.provenance.source
+                                        != diag_core::ProvenanceSource::ResidualText
+                                        && other.message.raw_text != node.message.raw_text
+                                })
+                    })
             })
+        });
+        let lead = native_conflict_lead
             .cloned()
+            .or_else(|| {
+                unit_roots
+                    .iter()
+                    .filter(|reference| !dependent_targets.contains(reference.as_str()))
+                    .min_by_key(|reference| {
+                        document
+                            .diagnostics
+                            .iter()
+                            .position(|node| format!("node:{}", node.id) == **reference)
+                            .unwrap_or(usize::MAX)
+                    })
+                    .cloned()
+            })
             .unwrap_or_else(|| unit_roots[0].clone());
         let mut rationale_edges = graph
             .edges

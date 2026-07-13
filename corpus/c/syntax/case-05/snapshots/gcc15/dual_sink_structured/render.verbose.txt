@@ -28,6 +28,7 @@ near: } token
 | src/main.c:2:19
 |     return (1 + 2;
 |                   ^
+suggested edit: insert ';' at src/main.c:2:19
 raw:
   src/main.c:2:19: error: expected ';' before '}' token
       2 |     return (1 + 2;
@@ -35,3 +36,4 @@ raw:
         |                   ;
 debug: rule_id=rule.family.syntax.phase_or_message
 debug: matched_conditions=message_contains=expected, message_contains=before, phase=parse
+details: --formed-explain | raw: --formed-raw

@@ -2781,6 +2781,70 @@ src/main.cpp:3:5: note: declared here\n";
     }
 
     #[test]
+    fn ingest_bundle_reconciles_bounded_brace_wording_conflict_with_exact_fixit_anchor() {
+        let run = base_run_info();
+        let sarif = corpus_fixture(
+            "corpus/c/syntax/case-01/snapshots/gcc15/dual_sink_structured/diagnostics.sarif",
+        );
+        let stderr = fs::read_to_string(corpus_fixture(
+            "corpus/c/syntax/case-01/snapshots/gcc15/dual_sink_structured/stderr.raw",
+        ))
+        .unwrap();
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&sarif), &stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        let residual = report
+            .document
+            .diagnostics
+            .iter()
+            .find(|node| node.provenance.source == ProvenanceSource::ResidualText)
+            .expect("native diagnostic remains as conflict evidence");
+        assert_eq!(residual.suggestions.len(), 1);
+        assert_eq!(residual.suggestions[0].edits[0].replacement, ";");
+        assert!(report.document.integrity_issues.iter().any(|issue| {
+            issue
+                .message
+                .contains("reconciled bounded structured/native syntax wording conflict")
+        }));
+    }
+
+    #[test]
+    fn ingest_bundle_does_not_reconcile_same_location_without_matching_syntax_wording() {
+        let run = base_run_info();
+        let sarif = corpus_fixture(
+            "corpus/c/syntax/case-01/snapshots/gcc15/dual_sink_structured/diagnostics.sarif",
+        );
+        let stderr = "src/main.c:2:13: error: expected ')' before '}' token\n";
+        let report = ingest_bundle(
+            &compatibility_bundle_from_legacy_inputs(Some(&sarif), stderr, &run),
+            IngestPolicy {
+                producer: producer_for_version("0.1.0"),
+                run,
+            },
+        )
+        .unwrap();
+
+        let residual = report
+            .document
+            .diagnostics
+            .iter()
+            .find(|node| node.provenance.source == ProvenanceSource::ResidualText)
+            .expect("independent diagnostic remains visible");
+        assert!(residual.suggestions.is_empty());
+        assert!(!report.document.integrity_issues.iter().any(|issue| {
+            issue
+                .message
+                .contains("reconciled bounded structured/native syntax wording conflict")
+        }));
+    }
+
+    #[test]
     fn ingest_bundle_reports_structured_authority_for_valid_gcc_json() {
         let tempdir = tempfile::tempdir().unwrap();
         let path = tempdir.path().join("diagnostics.json");

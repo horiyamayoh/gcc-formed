@@ -122,7 +122,7 @@
       "fingerprints": {
         "family": "7ec7142fdf45dfb3cf61e5e01f2985d579425db3cf34dbe7789bb49168f91619",
         "raw": "f63457a953cdd7cfd15c61fd0ae823e6aa623d891c692662d19d348ebf2427e6",
-        "structural": "a5e14be629594f515b20d81479545c5e553944ecdfaa6943933cff46ff344f33"
+        "structural": "d704876b1affb5662c9c583de22981d73879ad496a4992f0f97d4876e3f752f1"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -161,7 +161,26 @@
         "source": "residual_text"
       },
       "semantic_role": "root",
-      "severity": "error"
+      "severity": "error",
+      "suggestions": [
+        {
+          "applicability": "machine_applicable",
+          "edits": [
+            {
+              "boundary": "half_open",
+              "column_origin": 1,
+              "column_unit": "utf16_code_unit",
+              "end_column": 13,
+              "end_line": 2,
+              "path": "src/main.c",
+              "replacement": ";",
+              "start_column": 13,
+              "start_line": 2
+            }
+          ],
+          "label": "insert ';'"
+        }
+      ]
     }
   ],
   "document_analysis": {
@@ -236,7 +255,7 @@
       }
     ],
     "policy_profile": "default-aggressive",
-    "producer_version": "0.2.0-beta.1",
+    "producer_version": "1.0.0-rc.1",
     "repair_analysis": {
       "evidence_graph": {
         "edges": [
@@ -261,6 +280,17 @@
             "kind": "context_frontier",
             "proof_class": "proven",
             "to_evidence_ref": "capture:diagnostics.sarif"
+          },
+          {
+            "authority": "compiler_declared",
+            "edge_ref": "same-fixit:node:residual-compiler-0->node:sarif-0-0:src/main.c:2:13:2:13:HalfOpen:;",
+            "evidence_tags": [
+              "compiler_fixit_exact_edit"
+            ],
+            "from_evidence_ref": "node:residual-compiler-0",
+            "kind": "same_fixit_span",
+            "proof_class": "proven",
+            "to_evidence_ref": "node:sarif-0-0"
           }
         ],
         "evidence": [
@@ -307,60 +337,41 @@
           "alternate_repair_anchors": [
             "src/main.c:2:13"
           ],
-          "grounded_action_refs": [],
+          "grounded_action_refs": [
+            "fixit:node:residual-compiler-0:0:0",
+            "fixit:node:sarif-0-0:0:0"
+          ],
           "lead_evidence_ref": "node:residual-compiler-0",
           "legacy_episode_refs": [],
           "legacy_group_refs": [],
           "member_evidence_refs": [
-            "node:residual-compiler-0"
-          ],
-          "observability": "unresolved",
-          "primary_repair_anchors": [
-            "src/main.c:2:13"
-          ],
-          "proof_class": "unresolved",
-          "rationale_edge_refs": [],
-          "raw_capture_refs": [
-            "stderr.raw"
-          ],
-          "repair_unit_ref": "repair-unit:node-residual-compiler-0",
-          "visibility_floor": "never_hidden",
-          "visible": true
-        },
-        {
-          "alternate_repair_anchors": [
-            "src/main.c:2:13"
-          ],
-          "grounded_action_refs": [
-            "fixit:node:sarif-0-0:0:0"
-          ],
-          "lead_evidence_ref": "node:sarif-0-0",
-          "legacy_episode_refs": [],
-          "legacy_group_refs": [],
-          "member_evidence_refs": [
+            "node:residual-compiler-0",
             "node:sarif-0-0"
           ],
-          "observability": "unresolved",
+          "observability": "observable",
           "primary_repair_anchors": [
             "src/main.c:2:13-2:13"
           ],
-          "proof_class": "unresolved",
-          "rationale_edge_refs": [],
-          "raw_capture_refs": [
-            "diagnostics.sarif"
+          "proof_class": "proven",
+          "rationale_edge_refs": [
+            "same-fixit:node:residual-compiler-0->node:sarif-0-0:src/main.c:2:13:2:13:HalfOpen:;"
           ],
-          "repair_unit_ref": "repair-unit:node-sarif-0-0",
-          "visibility_floor": "never_hidden",
+          "raw_capture_refs": [
+            "diagnostics.sarif",
+            "stderr.raw"
+          ],
+          "repair_unit_ref": "repair-unit:node-residual-compiler-0+node-sarif-0-0",
+          "visibility_floor": "hidden_allowed",
           "visible": true
         }
       ],
       "stats": {
         "exact_duplicate_count": 0,
-        "merged_evidence_count": 0,
+        "merged_evidence_count": 1,
         "referenced_fact_count": 2,
         "total_fact_count": 4,
-        "unresolved_evidence_count": 2,
-        "visible_unit_count": 2
+        "unresolved_evidence_count": 0,
+        "visible_unit_count": 1
       }
     },
     "stats": {
@@ -374,10 +385,22 @@
   "document_id": "<document>",
   "fingerprints": {
     "family": "cc4e7a776947b8c8590333bd7ba58809c03d1a8050cff95eab17c61fc638330b",
-    "raw": "6f82b3c7d1dae72ae2c77ed33e26019351d419a0d5f2392cd29bfc126e719b66",
-    "structural": "ce879e1b24713207be1c44d626f3adcc3f7273862ea4bd2974d2270c1acb697b"
+    "raw": "9585090a82fccc7eef26c09abfcc881517895153f66875558a79de821adc54b7",
+    "structural": "38bd3daaff553420a655a819c82f3f63008a29b69598a63cd7e5f751c963e15b"
   },
   "integrity_issues": [
+    {
+      "message": "reconciled bounded structured/native syntax wording conflict at src/main.c:2:13; exact location and fix-it anchor agree while both source messages remain preserved",
+      "provenance": {
+        "capture_refs": [
+          "diagnostics.sarif",
+          "stderr.raw"
+        ],
+        "source": "policy"
+      },
+      "severity": "info",
+      "stage": "normalize"
+    },
     {
       "message": "structured and native-text diagnostic sinks disagree; preserving both evidence sets",
       "provenance": {
