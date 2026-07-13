@@ -237,7 +237,7 @@ pub fn build(
                 && content_compacted)
                 .then_some(policy.disclosure.raw_diagnostics_hint.to_string()),
             session_mode: resolved_session_mode(presentation_policy, has_failure),
-            compact_hybrid: presentation_policy.preset_id == "repair_units_hybrid_v1"
+            compact_hybrid: is_compact_hybrid_preset(&presentation_policy.preset_id)
                 && !matches!(
                     request.profile,
                     RenderProfile::Verbose | RenderProfile::Debug
@@ -274,16 +274,21 @@ fn build_card(
     } else {
         select_title(node, confidence)
     };
+    let canonical_location = canonical_location(request, node);
     let first_action = if repair_unit_card {
         None
     } else {
-        select_first_action(node, confidence)
+        select_first_action(
+            node,
+            confidence,
+            &presentation_policy.preset_id,
+            canonical_location.as_deref(),
+        )
     };
     let family = node
         .analysis
         .as_ref()
         .and_then(|analysis| analysis.family.as_ref().map(|c| c.to_string()));
-    let canonical_location = canonical_location(request, node);
     let excerpts = load_excerpt(request, node);
     let supporting_evidence = summarize_supporting_evidence(request, node);
     let semantic_card = build_semantic_card(
@@ -762,14 +767,34 @@ fn select_title(node: &DiagnosticNode, confidence: DisclosureConfidence) -> Stri
     }
 }
 
-fn select_first_action(node: &DiagnosticNode, confidence: DisclosureConfidence) -> Option<String> {
-    if confidence.allows_first_action() {
+fn select_first_action(
+    node: &DiagnosticNode,
+    confidence: DisclosureConfidence,
+    preset_id: &str,
+    canonical_location: Option<&str>,
+) -> Option<String> {
+    let grounded = if confidence.allows_first_action() {
         node.analysis
             .as_ref()
             .and_then(|analysis| analysis.first_action_hint.as_ref().map(|c| c.to_string()))
     } else {
         None
-    }
+    };
+    grounded.or_else(|| {
+        (preset_id == "repair_units_hybrid_v2").then(|| match canonical_location {
+            Some(location) => format!("inspect {location} and correct the reported error"),
+            None => {
+                "inspect the first reported user-owned location and correct the error".to_string()
+            }
+        })
+    })
+}
+
+pub(crate) fn is_compact_hybrid_preset(preset_id: &str) -> bool {
+    matches!(
+        preset_id,
+        "repair_units_hybrid_v1" | "repair_units_hybrid_v2"
+    )
 }
 
 fn confidence_label(confidence: DisclosureConfidence) -> &'static str {

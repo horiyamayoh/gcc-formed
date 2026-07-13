@@ -1098,6 +1098,25 @@ mod tests {
     }
 
     #[test]
+    fn hybrid_v2_candidate_keeps_a_conservative_action_for_residual_diagnostics() {
+        let mut request = sample_request();
+        let analysis = request.document.diagnostics[0].analysis.as_mut().unwrap();
+        analysis.first_action_hint = None;
+        analysis.set_confidence_bucket(diag_core::Confidence::Low);
+        let mut policy = ResolvedPresentationPolicy::subject_blocks_v2();
+        policy.preset_id = "repair_units_hybrid_v2".to_string();
+
+        let output = render_with_presentation_policy(request, &policy).unwrap();
+
+        assert!(
+            output
+                .text
+                .contains("help: inspect src/main.c:2:13 and correct the reported error")
+        );
+        assert_eq!(output.text.matches("help: inspect").count(), 1);
+    }
+
+    #[test]
     fn explicit_legacy_presentation_policy_remains_available() {
         let request = sample_request();
         let default_output = render(request.clone()).unwrap();

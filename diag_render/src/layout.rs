@@ -275,8 +275,9 @@ impl LayoutProfile {
         let family = self.subject_first_family(card);
         let family_text = theme.inline(family);
         let family_tag = self.style_family_tag(&format!("[{}]", family_text));
-        let subject_text = if card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1"
-        {
+        let subject_text = if crate::view_model::is_compact_hybrid_preset(
+            &card.semantic_card.presentation.preset_id,
+        ) {
             card.title.lines().next().unwrap_or(card.title.as_str())
         } else {
             card.title.as_str()
@@ -433,7 +434,9 @@ impl<'a> LegacyPresentationAdapter<'a> {
 
     fn render(&self, lines: &mut Vec<String>) {
         let hybrid = self.layout.compact_candidate
-            && self.card.semantic_card.presentation.preset_id == "repair_units_hybrid_v1";
+            && crate::view_model::is_compact_hybrid_preset(
+                &self.card.semantic_card.presentation.preset_id,
+            );
         let location_host = self.layout.location_host(self.card);
         lines.push(
             self.layout
