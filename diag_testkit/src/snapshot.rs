@@ -81,6 +81,9 @@ pub fn compare_snapshot_contents(
 pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String, String> {
     match path.file_name().and_then(|value| value.to_str()) {
         Some("render.debug.txt") => Ok(normalize_render_debug_snapshot_contents(contents)),
+        Some(file_name) if is_render_text_snapshot_name(file_name) => {
+            Ok(normalize_render_text_snapshot_contents(contents))
+        }
         Some(file_name) if is_view_snapshot_name(file_name) => {
             normalize_view_snapshot_contents(path, contents)
         }
@@ -94,6 +97,18 @@ pub fn normalize_snapshot_contents(path: &Path, contents: &str) -> Result<String
         }
         _ => Ok(normalize_snapshot_text(contents)),
     }
+}
+
+fn is_render_text_snapshot_name(file_name: &str) -> bool {
+    file_name.starts_with("render.") && file_name.ends_with(".txt")
+}
+
+fn normalize_render_text_snapshot_contents(contents: &str) -> String {
+    normalize_snapshot_text(contents)
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn is_view_snapshot_name(file_name: &str) -> bool {
@@ -1169,6 +1184,18 @@ fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
 mod tests {
     use super::{SnapshotDiffKind, compare_snapshot_contents, normalize_snapshot_contents};
     use std::path::Path;
+
+    #[test]
+    fn render_snapshot_comparison_ignores_line_end_whitespace() {
+        let comparison = compare_snapshot_contents(
+            Path::new("render.default.txt"),
+            "5 |     free(ptr);\nraw: preserved\n",
+            "5 |     free(ptr);   \nraw: preserved",
+        )
+        .unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+    }
 
     #[test]
     fn normalizes_sarif_snapshots_before_compare() {

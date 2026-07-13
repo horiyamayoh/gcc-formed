@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "release_candidate": "1.0.0-rc.N",
-  "status": "pending",
+  "release_candidate": "1.0.0-rc.1",
+  "status": "approved",
   "open_p0": 0,
   "open_p1": 0,
-  "updated_at": "2026-04-09",
+  "updated_at": "2026-07-13",
   "notes": [
-    "Replace this placeholder with the current P0/P1 bug triage result before RC sign-off."
+    "GitHub open-issue triage found only issue #219, with no P0 or P1 label; open_p0=0 and open_p1=0 at RC sign-off."
   ]
 }

@@ -1113,8 +1113,48 @@ fn compare_rollout_matrix_cases(
 }
 
 fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
-    [
-        (
+    let case = |version_band: &str,
+                requested_mode: Option<&str>,
+                requested_processing_path: Option<&str>,
+                hard_conflict: bool,
+                selected_mode: &str,
+                processing_path: &str,
+                support_level: &str,
+                fallback_reason: Option<&str>,
+                scope_notice: Option<String>| RolloutMatrixCase {
+        version_band: version_band.to_string(),
+        requested_mode: requested_mode.map(str::to_string),
+        requested_processing_path: requested_processing_path.map(str::to_string),
+        hard_conflict,
+        selected_mode: selected_mode.to_string(),
+        processing_path: processing_path.to_string(),
+        support_level: support_level.to_string(),
+        fallback_reason: fallback_reason.map(str::to_string),
+        scope_notice,
+    };
+    let shadow_notice = |band: &str, path: &str| {
+        format!(
+            "gcc-formed: version band={band}; support level=in_scope; selected mode=shadow; processing path={path}; fallback reason=shadow_mode; shadow capture is active under the shared GCC 9-15 in-scope contract and emits capability-specific debug metadata without changing the public contract."
+        )
+    };
+    let passthrough_notice = |band: &str, reason: &str| {
+        format!(
+            "gcc-formed: version band={band}; support level=in_scope; selected mode=passthrough; processing path=passthrough; fallback reason={reason}; wrapper enrichment was bypassed and conservative raw diagnostics will be preserved."
+        )
+    };
+    let single_sink_notice = |band: &str| {
+        format!(
+            "gcc-formed: version band={band}; support level=in_scope; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and same-run native diagnostics may not be preserved on this backend capability profile."
+        )
+    };
+    let unsupported_notice = |band: &str| {
+        format!(
+            "gcc-formed: version band={band}; support level=passthrough_only; selected mode=passthrough; processing path=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed."
+        )
+    };
+
+    vec![
+        case(
             "gcc15",
             None,
             None,
@@ -1125,7 +1165,7 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             None,
             None,
         ),
-        (
+        case(
             "gcc15",
             Some("shadow"),
             None,
@@ -1134,9 +1174,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "dual_sink_structured",
             "in_scope",
             Some("shadow_mode"),
-            None,
+            Some(shadow_notice("gcc15", "dual_sink_structured")),
         ),
-        (
+        case(
             "gcc15",
             Some("passthrough"),
             None,
@@ -1145,9 +1185,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough",
             "in_scope",
             Some("user_opt_out"),
-            None,
+            Some(passthrough_notice("gcc15", "user_opt_out")),
         ),
-        (
+        case(
             "gcc15",
             Some("render"),
             None,
@@ -1156,9 +1196,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough",
             "in_scope",
             Some("incompatible_sink"),
-            None,
+            Some(passthrough_notice("gcc15", "incompatible_sink")),
         ),
-        (
+        case(
             "gcc13_14",
             None,
             None,
@@ -1167,11 +1207,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "native_text_capture",
             "in_scope",
             None,
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=in_scope default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            None,
         ),
-        (
+        case(
             "gcc13_14",
             Some("shadow"),
             None,
@@ -1180,11 +1218,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "native_text_capture",
             "in_scope",
             Some("shadow_mode"),
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=in_scope default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(shadow_notice("gcc13_14", "native_text_capture")),
         ),
-        (
+        case(
             "gcc13_14",
             Some("render"),
             None,
@@ -1193,11 +1229,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "native_text_capture",
             "in_scope",
             None,
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=in_scope default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            None,
         ),
-        (
+        case(
             "gcc13_14",
             Some("render"),
             Some("single_sink_structured"),
@@ -1206,11 +1240,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "single_sink_structured",
             "in_scope",
             None,
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=in_scope default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(single_sink_notice("gcc13_14")),
         ),
-        (
+        case(
             "gcc13_14",
             Some("passthrough"),
             None,
@@ -1219,11 +1251,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough",
             "in_scope",
             Some("user_opt_out"),
-            Some(
-                "gcc-formed: version band=gcc13_14 support level=in_scope default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(passthrough_notice("gcc13_14", "user_opt_out")),
         ),
-        (
+        case(
             "gcc9_12",
             None,
             None,
@@ -1232,11 +1262,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "native_text_capture",
             "in_scope",
             None,
-            Some(
-                "gcc-formed: version band=gcc9_12 support level=in_scope default processing path=native_text_capture; selected mode=render; native-text capture is the default first-class product path and explicit single_sink_structured JSON selection remains opt-in; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            None,
         ),
-        (
+        case(
             "gcc9_12",
             Some("shadow"),
             None,
@@ -1245,11 +1273,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "native_text_capture",
             "in_scope",
             Some("shadow_mode"),
-            Some(
-                "gcc-formed: version band=gcc9_12 support level=in_scope default processing path=native_text_capture; selected mode=shadow; fallback reason=shadow_mode; conservative native-text shadow capture is enabled, explicit single_sink_structured JSON selection remains opt-in, and operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(shadow_notice("gcc9_12", "native_text_capture")),
         ),
-        (
+        case(
             "gcc9_12",
             Some("render"),
             Some("single_sink_structured"),
@@ -1258,11 +1284,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "single_sink_structured",
             "in_scope",
             None,
-            Some(
-                "gcc-formed: version band=gcc9_12 support level=in_scope default processing path=native_text_capture; selected mode=render; processing path=single_sink_structured; explicit structured JSON capture is active and raw native diagnostics may not be preserved in the same run; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(single_sink_notice("gcc9_12")),
         ),
-        (
+        case(
             "gcc9_12",
             Some("passthrough"),
             None,
@@ -1271,11 +1295,20 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough",
             "in_scope",
             Some("user_opt_out"),
-            Some(
-                "gcc-formed: version band=gcc9_12 support level=in_scope default processing path=native_text_capture; selected mode=passthrough; fallback reason=user_opt_out; native-text render was bypassed and conservative raw diagnostics will be preserved; operator next step=for C-first Make / CMake builds, set CC=gcc-formed and CXX=g++-formed; prefer native_text_capture for ordinary runs, opt into single_sink_structured when you need JSON, keep at most one wrapper-owned backend launcher behind the wrapper, and fall back to raw gcc/g++ or --formed-mode=passthrough if the topology is not proven.",
-            ),
+            Some(passthrough_notice("gcc9_12", "user_opt_out")),
         ),
-        (
+        case(
+            "gcc16_plus",
+            None,
+            None,
+            false,
+            "passthrough",
+            "passthrough",
+            "passthrough_only",
+            Some("unsupported_version_band"),
+            Some(unsupported_notice("gcc16_plus")),
+        ),
+        case(
             "unknown",
             None,
             None,
@@ -1284,36 +1317,9 @@ fn expected_rollout_matrix_cases() -> Vec<RolloutMatrixCase> {
             "passthrough",
             "passthrough_only",
             Some("unsupported_version_band"),
-            Some(
-                "gcc-formed: version band=out_of_scope support level=passthrough_only default processing path=passthrough; selected mode=passthrough; fallback reason=unsupported_version_band; this compiler version is outside the current GCC 9-15 contract and conservative raw diagnostics will be preserved; operator next step=use raw gcc/g++ or --formed-mode=passthrough until an in-scope VersionBand is confirmed.",
-            ),
+            Some(unsupported_notice("unknown")),
         ),
     ]
-    .into_iter()
-    .map(
-        |(
-            version_band,
-            requested_mode,
-            requested_processing_path,
-            hard_conflict,
-            selected_mode,
-            processing_path,
-            support_level,
-            fallback_reason,
-            scope_notice,
-        )| RolloutMatrixCase {
-            version_band: version_band.to_string(),
-            requested_mode: requested_mode.map(str::to_string),
-            requested_processing_path: requested_processing_path.map(str::to_string),
-            hard_conflict,
-            selected_mode: selected_mode.to_string(),
-            processing_path: processing_path.to_string(),
-            support_level: support_level.to_string(),
-            fallback_reason: fallback_reason.map(str::to_string),
-            scope_notice: scope_notice.map(str::to_string),
-        },
-    )
-    .collect()
 }
 
 fn rollout_case_key(case: &RolloutMatrixCase) -> String {
@@ -2600,7 +2606,7 @@ mod tests {
     fn expected_rollout_matrix_cases_match_current_band_and_path_contract() {
         let cases = expected_rollout_matrix_cases();
 
-        assert_eq!(cases.len(), 14);
+        assert_eq!(cases.len(), 15);
         assert!(cases.iter().any(|case| {
             case.version_band == "gcc13_14"
                 && case.requested_mode.is_none()
