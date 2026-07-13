@@ -1,0 +1,50 @@
+{
+  "cards": [
+    {
+      "canonical_location": "src/main.cpp:4:22",
+      "child_notes": [
+        "candidate: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+        "template argument deduction/substitution failed:"
+      ],
+      "collapsed_notices": [
+        "omitted 7 additional note(s)"
+      ],
+      "confidence_label": "certain",
+      "confidence_notice": null,
+      "context_lines": [
+        "template: /usr/local/include/c++/14.4.0/ranges:967:5 candidate: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'",
+        "template: /usr/local/include/c++/14.4.0/ranges:967:5 template argument deduction/substitution failed:",
+        "template: /usr/local/include/c++/14.4.0/ranges:976:5 template argument deduction/substitution failed:",
+        "omitted 1 template frames"
+      ],
+      "excerpts": [
+        {
+          "annotations": [
+            "                     ^"
+          ],
+          "lines": [
+            "    auto result = 42 | std::views::take(2);"
+          ],
+          "location": "src/main.cpp:4:22"
+        }
+      ],
+      "family": "ranges_views",
+      "first_action": null,
+      "group_id": "repair-unit:node-sarif-0-0+node-sarif-0-0-related-0+node-sarif-0-0-related-1+node-sarif-0-0-related-2+node-sarif-0-0-related-3+node-sarif-0-0-related-4+node-sarif-0-0-related-5+node-sarif-0-0-related-6+node-sarif-0-0-related-7+node-sarif-0-0-related-8",
+      "matched_conditions": [
+        "message_contains=std::ranges::",
+        "child_message_contains=std::ranges::"
+      ],
+      "raw_message": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')",
+      "rule_id": "rule.family.ranges_views.structured_or_message",
+      "severity": "error",
+      "suppression_reason": null,
+      "title": "no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')"
+    }
+  ],
+  "summary": {
+    "failure_kind": "compile_failure",
+    "partial_notice": false,
+    "raw_diagnostics_hint": "details: --formed-explain | raw: --formed-raw"
+  }
+}

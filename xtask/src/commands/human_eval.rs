@@ -310,8 +310,14 @@ fn build_fixture_report_bundle(
         artifact_diffs.push(diff);
     }
 
-    write_fixture_report_bundle(report_dir, fixture, &artifacts, &artifact_diffs)
-        .map_err(|error| format!("write fixture bundle {}: {error}", fixture.fixture_id()))?;
+    write_fixture_report_bundle(
+        report_dir,
+        fixture,
+        &fixture.snapshot_root(),
+        &artifacts,
+        &artifact_diffs,
+    )
+    .map_err(|error| format!("write fixture bundle {}: {error}", fixture.fixture_id()))?;
     copy_fixture_inputs(fixture, report_dir)?;
 
     let fixture_dir = report_dir.join("fixtures").join(fixture.fixture_id());

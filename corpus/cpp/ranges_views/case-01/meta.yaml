@@ -35,4 +35,5 @@ last_reviewed: '2026-04-14'
 reviewers:
   - codex
 promotion_status: curated
-known_version_drift_notes: []
+known_version_drift_notes:
+  - GCC 14 libstdc++ emits a different internal ranges adaptor constraint tree than GCC 13; compiler-gcc14 preserves that exact evidence without weakening the shared gcc13_14 public contract.

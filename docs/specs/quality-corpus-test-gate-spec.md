@@ -688,6 +688,8 @@ corpus/
 
 `snapshots/gcc15/` の implicit root layout は legacy compatibility residue としてのみ許容する。新規 fixture と normalized fixture は `snapshots/<version_band>/<processing_path>/` を正とし、presentation-specific artifact がある場合も `snapshots/<version_band>/<processing_path>/<preset>/` にネストすること。
 
+同一 `VersionBand` 内で compiler major による標準ライブラリ内部診断の semantic drift が実証され、band 共通 golden への normalization が公開契約の回帰を隠す場合に限り、`snapshots/<version_band>/<processing_path>/compiler-gcc<major>/` に完全な exact-golden overlay を置いてよい。overlay は public `VersionBand`、`CapabilityProfile`、`ProcessingPath`、semantic expectation を変更してはならず、`meta.yaml` の `known_version_drift_notes` に根拠を記録しなければならない。overlay がない compiler major は band 共通 golden を使用する。
+
 ### 12.3 `invoke.yaml` で持つべき項目
 
 - language / standard

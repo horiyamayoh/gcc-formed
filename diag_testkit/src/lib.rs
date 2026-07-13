@@ -446,6 +446,16 @@ impl Fixture {
         declared
     }
 
+    /// Returns an exact-golden overlay for a compiler major when one is checked in.
+    ///
+    /// The overlay does not change the fixture's public version band. It only
+    /// preserves compiler-internal diagnostic drift within a shared band.
+    pub fn compiler_snapshot_root(&self, compiler_major: &str) -> PathBuf {
+        let base = self.snapshot_root();
+        let overlay = base.join(format!("compiler-gcc{compiler_major}"));
+        if overlay.is_dir() { overlay } else { base }
+    }
+
     /// Returns the expected structured artifact filename, if applicable for the processing path.
     pub fn authoritative_structured_artifact_name(&self) -> Option<&'static str> {
         match self.expectations.processing_path.as_str() {
@@ -1144,6 +1154,10 @@ tags: [syntax]
 
         let fixture = discover(tempdir.path()).unwrap().pop().unwrap();
         assert_eq!(fixture.snapshot_root(), snapshot_root);
+        assert_eq!(fixture.compiler_snapshot_root("13"), snapshot_root);
+        let compiler_overlay = snapshot_root.join("compiler-gcc14");
+        fs::create_dir_all(&compiler_overlay).unwrap();
+        assert_eq!(fixture.compiler_snapshot_root("14"), compiler_overlay);
         assert_eq!(fixture.authoritative_structured_artifact_name(), None);
         validate_fixture(&fixture).unwrap();
     }

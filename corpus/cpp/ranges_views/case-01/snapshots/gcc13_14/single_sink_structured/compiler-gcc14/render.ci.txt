@@ -1,0 +1,13 @@
+src/main.cpp:4:22: error: [ranges_views] no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')
+raw : no match for 'operator|' (operand types are 'int' and 'std::ranges::views::__adaptor::_Partial<std::ranges::views::_Take, int>')
+| src/main.cpp:4:22
+|     auto result = 42 | std::views::take(2);
+|                      ^
+template: /usr/local/include/c++/14.4.0/ranges:967:5 candidate: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'
+template: /usr/local/include/c++/14.4.0/ranges:967:5 template argument deduction/substitution failed:
+template: /usr/local/include/c++/14.4.0/ranges:976:5 template argument deduction/substitution failed:
+omitted 1 template frames
+note: candidate: 'template<class _Self, class _Range>  requires (__is_range_adaptor_closure<_Self>) && (__adaptor_invocable<_Self, _Range>) constexpr auto std::ranges::views::__adaptor::operator|(_Range&&, _Self&&)'
+note: template argument deduction/substitution failed:
+note: omitted 7 additional note(s)
+details: --formed-explain | raw: --formed-raw

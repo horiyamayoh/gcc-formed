@@ -860,13 +860,18 @@ pub(crate) fn collect_acceptance_fixture_summary(
                 classify_snapshot_artifact_diff(fixture, relative, &path, contents, false)?;
             artifact_diffs.push(diff);
         }
-        write_fixture_report_bundle(report_dir, fixture, &artifacts, &artifact_diffs).map_err(
-            |error| VerificationFailure {
-                layer: "report.bundle".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: error,
-            },
-        )?;
+        write_fixture_report_bundle(
+            report_dir,
+            fixture,
+            &fixture.snapshot_root(),
+            &artifacts,
+            &artifact_diffs,
+        )
+        .map_err(|error| VerificationFailure {
+            layer: "report.bundle".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error,
+        })?;
     }
 
     Ok(AcceptanceFixtureSummary {
@@ -1157,7 +1162,11 @@ pub(crate) fn materialize_fixture_snapshots(
             summary: error.errors.join("; "),
         })?;
 
-    let snapshot_root = fixture.snapshot_root();
+    let compiler_major = gcc_major_from_docker_image(docker_image);
+    let snapshot_root = compiler_major
+        .as_deref()
+        .map(|major| fixture.compiler_snapshot_root(major))
+        .unwrap_or_else(|| fixture.snapshot_root());
     fs::create_dir_all(&snapshot_root).map_err(|error| VerificationFailure {
         layer: "snapshot".to_string(),
         fixture_id: fixture.fixture_id().to_string(),
@@ -1258,13 +1267,18 @@ pub(crate) fn materialize_fixture_snapshots(
     }
 
     if let Some(report_dir) = report_dir {
-        write_fixture_report_bundle(report_dir, fixture, &artifacts, &artifact_diffs).map_err(
-            |error| VerificationFailure {
-                layer: "report.bundle".to_string(),
-                fixture_id: fixture.fixture_id().to_string(),
-                summary: error,
-            },
-        )?;
+        write_fixture_report_bundle(
+            report_dir,
+            fixture,
+            &snapshot_root,
+            &artifacts,
+            &artifact_diffs,
+        )
+        .map_err(|error| VerificationFailure {
+            layer: "report.bundle".to_string(),
+            fixture_id: fixture.fixture_id().to_string(),
+            summary: error,
+        })?;
     }
 
     for (relative, contents) in artifacts {
@@ -1297,6 +1311,13 @@ pub(crate) fn materialize_fixture_snapshots(
         },
         check_failure: pending_failure,
     })
+}
+
+fn gcc_major_from_docker_image(docker_image: &str) -> Option<String> {
+    let tag = docker_image.rsplit_once(':')?.1;
+    let major = tag.split(['.', '-', '@']).next()?;
+    (!major.is_empty() && major.chars().all(|character| character.is_ascii_digit()))
+        .then(|| major.to_string())
 }
 
 pub(crate) fn load_existing_ingress(
@@ -3358,6 +3379,7 @@ pub(crate) fn write_snapshot_report(
 pub(crate) fn write_fixture_report_bundle(
     report_dir: &Path,
     fixture: &Fixture,
+    expected_snapshot_root: &Path,
     actual_artifacts: &BTreeMap<String, String>,
     artifact_diffs: &[SnapshotArtifactDiff],
 ) -> Result<(), String> {
@@ -3386,7 +3408,7 @@ pub(crate) fn write_fixture_report_bundle(
         }
         fs::write(&normalized_actual_path, normalized_actual).map_err(|error| error.to_string())?;
 
-        let expected_path = fixture.snapshot_root().join(relative);
+        let expected_path = expected_snapshot_root.join(relative);
         if expected_path.exists() {
             let expected_contents =
                 fs::read_to_string(&expected_path).map_err(|error| error.to_string())?;
@@ -3715,6 +3737,20 @@ mod tests {
     use std::collections::BTreeMap;
     use std::fs;
     use std::path::PathBuf;
+
+    #[test]
+    fn parses_numeric_gcc_major_from_docker_image_tag() {
+        assert_eq!(
+            gcc_major_from_docker_image("gcc:14"),
+            Some("14".to_string())
+        );
+        assert_eq!(
+            gcc_major_from_docker_image("registry.example/gcc:14.3"),
+            Some("14".to_string())
+        );
+        assert_eq!(gcc_major_from_docker_image("gcc:latest"), None);
+        assert_eq!(gcc_major_from_docker_image("gcc"), None);
+    }
 
     fn fixture_with_tags(
         fixture_id: &str,
