@@ -1,0 +1,55 @@
+{
+  "analysis_plan_sha256": "58153208d74d1adf87b387e990c89a4d88d594d42820632d26f8f0fc2c91ea15",
+  "candidate_sha": "efa3dfc64905baf5fcd96811d35e50e1ed8387c9",
+  "candidate_trial_count": 120,
+  "checks": {
+    "complex_first_action_compaction": {
+      "passed": 40,
+      "required": 40
+    },
+    "concrete_headline_present": {
+      "passed": 120,
+      "required": 120
+    },
+    "diagnostic_nonempty": {
+      "passed": 120,
+      "required": 120
+    },
+    "first_action_within_budget": {
+      "passed": 120,
+      "required": 120
+    },
+    "one_step_disclosure_once": {
+      "passed": 120,
+      "required": 120
+    },
+    "primary_location_present": {
+      "passed": 120,
+      "required": 120
+    },
+    "raw_fallback_full_visible": {
+      "passed": 4,
+      "required": 4
+    },
+    "raw_or_explain_disclosure_present": {
+      "passed": 120,
+      "required": 120
+    },
+    "simple_native_first_screen_budget": {
+      "passed": 40,
+      "required": 40
+    },
+    "source_or_caret_present": {
+      "passed": 104,
+      "required": 104
+    }
+  },
+  "claim_boundary": "deterministic display-contract proxy; not a human behavioral study",
+  "corpus_manifest_sha256": "15bb3396af39b4d1f2112a336af948dfdb5953f6e0f2404fd452d0bdc4826054",
+  "failures": [],
+  "model_agent_tool_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "overall_status": "pass",
+  "protocol_sha256": "1e2c6e4f7c3cff50f1b8aab84eec22e25a8d55c70994efa94fc5eb93353555ef",
+  "schema_version": 1,
+  "toolchain_sha256": "9f3e4925d1c01d0cf5a21ea8a40841462ab397e621f3f6b81a7e59601ea66ee3"
+}

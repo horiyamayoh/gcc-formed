@@ -51,3 +51,8 @@ trial with jobs fixed to one. Subagents, delegation, ensembles, judge agents,
 best-of-N, and result-based threshold changes are prohibited. The evidence
 measures coding-agent task performance and deterministic readability contract
 proxies; it is not a human behavioral study.
+
+Attempt 1 was inconclusive and remains immutable. After correcting the
+candidate's basename-only editable path, attempt 2 passed all preregistered
+gates. See `ATTEMPT-1-INCONCLUSIVE.md`, `ATTEMPT-2-PASS.md`, and the byte-exact
+checked-in summaries under `evidence/`.

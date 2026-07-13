@@ -14,13 +14,13 @@ superseded_by: []
 
 # Release Notes
 
-This document uses artifact semver for release headings. The source candidate is `1.0.0-rc.1`; it is not published until the sealed qualification and RC release workflow pass.
+This document uses artifact semver for release headings. The source candidate is `1.0.0-rc.1`; its sealed qualification passed and publication now depends on the signed RC release workflow.
 
 ## 1.0.0-rc.1 (candidate; publication pending)
 
 ### Output-quality contract
 
-- Makes `repair_units_hybrid_v1` the no-configuration candidate default, with one concrete headline, native-style source/caret, compact RepairUnit evidence, and one session-local `--formed-explain` / `--formed-raw` disclosure.
+- Makes the qualified `repair_units_hybrid_v2` the no-configuration default, with one concrete headline, native-style source/caret, editable cwd-relative paths, compact RepairUnit evidence, and one session-local `--formed-explain` / `--formed-raw` disclosure.
 - Keeps `subject_blocks_v2` as the immediate presentation rollback, plus `subject_blocks_v1`, `legacy_v1`, raw, explain, and passthrough recovery paths.
 - Replaces mandatory human recruitment with the ADR-0039 preregistered single-agent qualification: 120 semantic families, 360 valid trials, real compiler/edit/build loops, concealed conditions, deterministic scoring, and complete artifact retention.
 - Measures pinned coding-agent task performance and deterministic readability proxies. No human behavioral study was performed, and no human-population latency, preference, or non-inferiority claim is made.

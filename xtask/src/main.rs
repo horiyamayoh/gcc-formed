@@ -256,7 +256,7 @@ enum Commands {
         allow_pending_manual_checks: bool,
         #[arg(
             long,
-            default_value = "eval/output-quality-single-agent-v1/evidence/qualification-report.json"
+            default_value = "eval/output-quality-single-agent-v2/evidence/qualification-report.json"
         )]
         agent_output_quality_report: PathBuf,
     },

@@ -1379,7 +1379,7 @@ Presentation V2 の rollout は次の順で進める。
 
 interactive default と CI preset は同一のタイミングで promote しなくてもよい。
 
-current RC candidate runtime default は `repair_units_hybrid_v1` であり、no-config terminal render はcompact RepairUnit blocksとnative-style source/caretを使う。直前のbeta default `subject_blocks_v2`、以前の `subject_blocks_v1`、legacy wordingの `legacy_v1` はexplicit rollback / compatibility presetとして維持する。
+qualified RC runtime default は `repair_units_hybrid_v2` であり、no-config terminal render はcompact RepairUnit blocks、native-style source/caret、editable cwd-relative pathを使う。直前のbeta default `subject_blocks_v2`、以前の `subject_blocks_v1`、legacy wordingの `legacy_v1` はexplicit rollback / compatibility presetとして維持する。
 `cascade.max_expanded_independent_roots` は visible-root cap meaning では deprecated であり、互換用途を除く新しい visible-root behavior は `render.presentation` または `render.presentation_file.session.visible_root_mode` で表現する。  
 corpus replay / snapshot review のために `subject_blocks_v2/render.presentation.json` や `subject_blocks_v1/render.presentation.json` のような internal artifact を持ってよいが、それは public machine contract ではない。
 
@@ -1756,7 +1756,7 @@ renderer/
 ## 20. Release qualification and claim boundary
 
 Default presentation の変更は ADR-0039 と
-`eval/output-quality-single-agent-v1/protocol.json` に従う。candidate は結果を見る
+`eval/output-quality-single-agent-v2/protocol.json` に従う。candidate は結果を見る
 前に SHA、presentation policy、model/agent/tool manifest、protocol hash を固定し、
 native GCC と current default の両方に対して fidelity、repair utility、efficiency、
 human-readable contract の gate を通過しなければならない。

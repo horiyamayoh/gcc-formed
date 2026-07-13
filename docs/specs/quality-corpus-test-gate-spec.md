@@ -1620,7 +1620,7 @@ performance:
 ## 36. Single-agent output-quality qualification
 
 ADR-0039 により、RC / stable の output-quality prerequisite は mandatory
-human recruitment ではなく `eval/output-quality-single-agent-v1/` の sealed
+human recruitment ではなく `eval/output-quality-single-agent-v2/` の sealed
 qualification とする。historical `eval/repair-units-v1/` evidence は削除・再集計・
 pass への再解釈をしてはならない。
 

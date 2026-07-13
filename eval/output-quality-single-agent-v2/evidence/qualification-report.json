@@ -1,0 +1,32 @@
+{
+  "analysis_plan_sha256": "58153208d74d1adf87b387e990c89a4d88d594d42820632d26f8f0fc2c91ea15",
+  "candidate_sha": "efa3dfc64905baf5fcd96811d35e50e1ed8387c9",
+  "claim_boundary": "coding-agent task performance and deterministic readability proxies; no human behavioral-study claim",
+  "condition_counts": {
+    "candidate": 120,
+    "current_default": 120,
+    "native_gcc": 120
+  },
+  "condition_key_commitment": "73d7862f7a903a8b43a9e9d69f1db31b9f8df9a3362a60ffa0d67c501a200767",
+  "corpus_manifest_sha256": "15bb3396af39b4d1f2112a336af948dfdb5953f6e0f2404fd452d0bdc4826054",
+  "excluded_trials": 0,
+  "fidelity_status": "pass",
+  "human_readable_contract_status": "pass",
+  "improvement_requirement_passed": true,
+  "integrity_status": "pass",
+  "invalid_final_schema_trials": 0,
+  "margin_failures": [],
+  "missing_scores": [],
+  "missing_trial_artifacts": [],
+  "model_agent_tool_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "no_subagent_attestation_sha256": "d875e7ceb7ae5fa9bf2ae100a35f2b68cc03e081a0477d34e1c7015aadf9e1ff",
+  "protocol_sha256": "1e2c6e4f7c3cff50f1b8aab84eec22e25a8d55c70994efa94fc5eb93353555ef",
+  "schema_version": 1,
+  "semantic_family_count": 120,
+  "started_trials": 360,
+  "toolchain_sha256": "9f3e4925d1c01d0cf5a21ea8a40841462ab397e621f3f6b81a7e59601ea66ee3",
+  "trial_artifact_hash_mismatches": [],
+  "trial_artifact_merkle_root": "8d4ffe765730d46c4a496ccd2d3c98a92a4b7e5d1666d8ac99d9b38c39dfd676",
+  "valid_trials": 360,
+  "verdict": "pass"
+}

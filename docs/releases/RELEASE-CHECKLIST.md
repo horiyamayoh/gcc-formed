@@ -20,7 +20,7 @@ This checklist defines the minimum bar for publishing the current `v1.0.0-rc` / 
 
 - Current maturity label: `v1.0.0-rc`
 - Current artifact semver line: `1.0.0-rc.N`
-- Current source candidate: `1.0.0-rc.1` (not published before qualification pass)
+- Current source candidate: `1.0.0-rc.1` (qualification passed; signed publication pending)
 - Rollback baseline artifact: `0.2.0-beta.1`
 - Planned stable line: `1.0.0`
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.

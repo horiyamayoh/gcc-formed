@@ -2,13 +2,13 @@
 
 All notable user-visible changes to `gcc-formed` are recorded here.
 
-The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. It is not a published artifact until sealed qualification and release gates pass.
+The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. Its sealed qualification passed; publication still requires the signed RC release gates.
 
 ## [Unreleased]
 
 ### Changed
 
-- Promoted the compact `repair_units_hybrid_v1` presentation on the RC candidate branch, with native-style numbered source gutters, concise RepairUnit blocks, and one session-local `--formed-explain` / `--formed-raw` disclosure; `subject_blocks_v2` remains the immediate rollback preset.
+- Qualified and promoted the compact `repair_units_hybrid_v2` presentation, with native-style numbered source gutters, editable cwd-relative paths, concise RepairUnit blocks, and one session-local `--formed-explain` / `--formed-raw` disclosure; `subject_blocks_v2` remains the immediate rollback preset.
 - Added the preregistered 120-family / 360-trial single-agent qualification harness, expanded compile/link/build-system operators, complete trial provenance verification, and RC/stable provenance integration without claiming a human behavioral study.
 - Replaced the RC human-participant artifact blocker with the ADR-0039 single-agent actual patch/build qualification packet; historical human studies remain immutable research evidence and no human behavioral-study pass is claimed.
 - Promoted `subject_blocks_v2` to the no-config beta terminal default, kept `subject_blocks_v1` and `legacy_v1` as explicit rollback presets, and preserved preset-local fail-open when an external presentation overlay cannot be loaded.

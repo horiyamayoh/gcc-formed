@@ -18,14 +18,14 @@ superseded_by: []
 
 > **30秒サマリ**
 > Before: `error: no matching function for call to 'combine(int, const char [2])'`
-> After (default `repair_units_hybrid_v1`): concrete headline、source/caret、最初のactionを1 RepairUnit blockで読める
+> After (default `repair_units_hybrid_v2`): concrete headline、source/caret、最初のactionを1 RepairUnit blockで読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
-- **状態**: 1.0 Release Candidate（sealed qualification / release pending）
+- **状態**: 1.0 Release Candidate（sealed qualification passed / release pending）
 - **成熟度ラベル**: `v1.0.0-rc`
 - **artifact semver 系列**: `1.0.0-rc.N`
 - **一般利用向け安定版**: 未提供
-- **日付**: 2026-07-12
+- **日付**: 2026-07-13
 - **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 
 `gcc-formed` は、GCC をラップし、C/C++ のコンパイルエラーやリンクエラーを**より短く、より根因に近く、より誠実に**提示するためのリポジトリである。
@@ -43,7 +43,7 @@ AI コーディングエージェント向けの入口は [AGENTS.md](AGENTS.md)
 既存の corpus snapshot と fail-open fixture から短く抜粋する。  
 README では価値の方向が 30 秒で伝わることを優先し、細部は出典の artifact を参照する。
 
-`repair_units_hybrid_v1` は1.0 candidate branchのno-config terminal defaultであり、具体的headline、native-style source/caret、1 visible RepairUnit = 1 block、session-local raw/explain disclosureを使う。
+`repair_units_hybrid_v2` は sealed single-agent qualification を通過した1.0 no-config terminal defaultであり、具体的headline、native-style source/caret、editable cwd-relative path、1 visible RepairUnit = 1 block、session-local raw/explain disclosureを使う。
 RepairUnit は semantic IR / causal quality として維持する。ADR-0038 に記録した過去の no-go と inconclusive evidence は変更しない。将来の release qualification は ADR-0039 に従い、単一 pinned coding agent の actual patch/build trial と deterministic readability contract で判定する。これは human behavioral study の pass を意味しない。
 rollout は `docs / ADR -> opt-in preset -> corpus / snapshot / review -> default promotion` の gate を通した。  
 以前の beta default を pin したい場合は `subject_blocks_v2` を、さらに古い表示へ戻す場合は `subject_blocks_v1` / `legacy_v1` を explicit rollback preset として使える。
@@ -66,7 +66,7 @@ src/main.cpp:1:6: note: declared here
       |      ^~~~~
 ```
 
-**After (default `repair_units_hybrid_v1`)**
+**After (default `repair_units_hybrid_v2`)**
 
 ```text
 error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
@@ -88,7 +88,7 @@ helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c
 collect2: error: ld returned 1 exit status
 ```
 
-**After (default `repair_units_hybrid_v1`)**
+**After (default `repair_units_hybrid_v2`)**
 
 ```text
 error: [linker] multiple definition of `duplicate`

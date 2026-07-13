@@ -56,7 +56,7 @@ rc_release_doc_paths:
   - docs/releases/RELEASE-CHECKLIST.md
   - docs/support/SUPPORT-BOUNDARY.md
   - docs/support/KNOWN-LIMITATIONS.md
-  - eval/output-quality-single-agent-v1/README.md
+  - eval/output-quality-single-agent-v2/README.md
 rc_included_assets:
   - primary archive
   - debug archive

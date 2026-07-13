@@ -70,7 +70,7 @@ How much native / raw compiler output is preserved in the same run.
 - `VersionBand` and `ProcessingPath` remain observability metadata; they do not encode unequal user value inside `GCC 9-15`.
 - `GCC16+`, `<=8`, and unknown gcc-like compilers are `PassthroughOnly` until separately evidenced.
 - Internal capture mechanisms and raw-preservation details may differ by capability and invocation.
-- `repair_units_hybrid_v1` is the RC candidate default terminal preset. `subject_blocks_v2` is the immediate rollback preset; `subject_blocks_v1` and `legacy_v1` remain compatibility presets. Raw and explain remain one-operation disclosure paths.
+- `repair_units_hybrid_v2` is the qualified RC default terminal preset. `subject_blocks_v2` is the immediate rollback preset; `subject_blocks_v1` and `legacy_v1` remain compatibility presets. Raw and explain remain one-operation disclosure paths.
 - `cascade.max_expanded_independent_roots` remains a deprecated compatibility knob; visible-root behavior belongs to presentation/session policy, not cascade semantics.
 - Representative corpus may carry review-only `subject_blocks_v2/render.presentation.json` or `subject_blocks_v1/render.presentation.json` artifacts, but those artifacts are internal and not part of the public machine-readable surface.
 - Raw fallback remains part of the shipped contract when the wrapper cannot produce a clearly better, trustworthy result.

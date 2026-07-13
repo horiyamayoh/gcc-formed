@@ -1,0 +1,2543 @@
+{
+  "analysis_plan_sha256": "58153208d74d1adf87b387e990c89a4d88d594d42820632d26f8f0fc2c91ea15",
+  "attempt": 2,
+  "candidate_sha": "efa3dfc64905baf5fcd96811d35e50e1ed8387c9",
+  "condition_counts": {
+    "A": 120,
+    "B": 120,
+    "C": 120
+  },
+  "families": [
+    {
+      "semantic_family_id": "F121",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-00e367d5198c87329fcf",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ac3890c5c4ac9efda64f",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c64b042ba32416fe20aa",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F122",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-afba9977f286e78e4774",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-3f935e7d4553227ac14e",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fd45fca75a8498e8bc52",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F123",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3a237ec6bc894be34a55",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-4f8f0edabb37681bb6a6",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-67d6a2f2f7a274f019c6",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F124",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-de4ac911ff5af5f09c00",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8d6f382e6831da85dd35",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a6894b64bc90efa6dc1f",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F125",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1dbf2a5331d0b7359e71",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-c8f33c6dceeaca494b4b",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fde64cd86ad7995e3ce0",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F126",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-bbfaf9981158c1f8b27b",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-3272cf49fa44dc14c170",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8c52442e399288bf6a65",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F127",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-ec50549e6eb4a6034d6a",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-7e885541ee648dc56fb2",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c77db13b3dc3bde5c89a",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F128",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-44ebb26633c3018e130e",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8402786785cc90cce0db",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-de1f7ab5d9b97791da9e",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F129",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9f9fb5e451c90187d4a3",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-7ed81ab39453b66397af",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-45b25a809f63d4832e57",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F130",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-66645261c0c7d3828efb",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-27d0b6cfa6f6c8a03dc5",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-55b390ebc2e2198be442",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F131",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3313618afe7386c1e4e7",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-c8f96a922fa1bc8d07ba",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-9211f9cd87cda19a7e23",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F132",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-95ad7ff043c588bcd148",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ad3b7b43f90e1aefe4fb",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a762c7e9d1c1f807f690",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F133",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-34a8e2ad91661b3420e1",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-9aacec3fe1b533b3bf24",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0bbd50f66d955c2bb85d",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F134",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-39c6a7be093868c9b8d4",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-f7fd79aa1701e6142ce6",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-31942ccf6277e5cd737d",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F135",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-65ea97c6c7a845fd9e5b",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-d3e9836ed3c9dd15dc8d",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-b8ec111ab4af39d4867d",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F136",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-65de1e03dfc2f85cf0e1",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b13fd7875ead8c895e9d",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-577b46b3ba5575ed3e92",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F137",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1d0262f398d0fee61e6a",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-4d676e34052941d7c9d3",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-9fbe7081d8b792ec4e89",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F138",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9395770aa6b4e5c02491",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-90781cb82a9ac3f85007",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-cc34e64439eee3aeab0b",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F139",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-0fc7df95e2f1e071ade1",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-62e55f296da512cb03ce",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8d4dc12d1260ed235286",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F140",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-cca2436a953667bebd1d",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8b362562b6445b5d6888",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-02febf18863e2598f237",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F141",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-d8120ba8891bf7465500",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-2520367840044c369250",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-ee3ab26174f0590e5619",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F142",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-fe490596e90fd773fe55",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-bdd244d513c772540ef4",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0237e14ac217caaad0e9",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F143",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-dff760640165f0cb957b",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-12cc77764f97bf1c6f25",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-6b4a34630de3d523df9d",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F144",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9369f9a95a3274a2d1cb",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-18cfbfda02fdbb728fe8",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0c9efbc83362da563bcb",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F145",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-0fced1c53be34f270897",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-fa8dbb362560a9e86e00",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8382063f5d6ae435933a",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F146",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-2b9a03bd7e24f226eb33",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-5c6e20efc423e7a5902c",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-84530a9c8fa715504e8f",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F147",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-82daa36af5aa04fa75b0",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-1814d447aaccfe71f5f2",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-02f4a23b7b2ca002c575",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F148",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-f9502bb5f248e90e0d90",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-1313dd9c6a6fb9c4ac4d",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-bc54a6e558e4cc604a92",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F149",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-67081d1debb37c58189d",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-489a79c64a72ccfd5d89",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-b404db62d557156195c2",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F150",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-e09ecfbf6d9ab41e0af6",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-cc9d7ac4dbc3b2cb6e7f",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8cea71e70f01650e9dcc",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F151",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1ac90c9f8e7ee5048aa7",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-03011c4f630138c87f25",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-3963eadfda0384850adf",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F152",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-c2ae36f5b94b3e84ed81",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-743b1bd9604ae17a125d",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-f73de860e4fe1dcc97e3",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F153",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-d26630211678640b4e67",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-382b3058b5e3cbe4e433",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-779fa539c77da6458520",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F154",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-686a21d94cc623f0de63",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-a7ced3f21b0e9c89fdd3",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-b57baecd8be91f34e843",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F155",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-dfb4834a6508a575cb10",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b467051c6efe7dc86070",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-be27ea9bd184ff84f08e",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F156",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-61ab481e2c6261715655",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-de073ecf8bce701a5d0f",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0d202627accdd6db4947",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F157",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-2be5e76acf6f9a1a4613",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0b143e5c6cc25d0be4b6",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c4c9e9bb831a39e47516",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F158",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-cd0f3ac790e099372df6",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-9ec1081fadeb4325debe",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-5975d1f6e49385ebf745",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F159",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1dabb569f7ebbc672ccc",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-10dc020eb3040115eb29",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c0ebfda15d38c6d18535",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F160",
+      "stratum": "simple_native_strong",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-0c40f6a94dce88a11fa3",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-5c5008ed5c863130be7a",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0b93092f9e9d76b09a0d",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F161",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-d64d38b2835155237f59",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-bf06e229d37b44167a93",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-ffd47a6b79dfdf06f6ed",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F162",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-88590a0134dbf10d72e1",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8e8ae642d1a9820d5723",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a2cd8495c976cca80d79",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F163",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-6e3da0d0938961cc7e82",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-3fb4cf6f54f6e9e4495f",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-6cf5f5b7c99a787b5916",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F164",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-788146fafc72074beb88",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-1da4f5ee6a3a906a0ccc",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-5b850a4fdd64dd19ec02",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F165",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-e4573472bcadbe9e5861",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-50e9ee0f6c7d738a7fda",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-2607504b6006f9e45b22",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F166",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1a17a634ffe6b0cf7cbe",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-da312e31a47e80a51f35",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-43424260efd49baa469f",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F167",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-99862ca46340e09f84b0",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-d5507c07e824617c2fbf",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-6db4b80c4a11152c41cd",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F168",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-47c4b965b6777f545e9f",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-71cf088dcc88c80b4661",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c449f9034c32a07b67c6",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F169",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-aac516376b21ed0860de",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b5190fac50f9d8e9d4da",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-e324cc5b7fe5d04da3ec",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F170",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-6a0fee878c00ea4c8d7d",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-e16fd6f2e3369a0d229b",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-418373e49bb75504e986",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F171",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-016445213109082e507e",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-f0b9f7437a246f8a3976",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-87cdf6f041fa5bd7391b",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F172",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-e765d16c578518e0e96a",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ab183177924f808b4718",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-1ec9550afcff4f29ca32",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F173",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-c393360822f08b3d4253",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-12bb5b797c9bf386ccb5",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-34e0e00bc5ac9b6c5c0e",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F174",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1ecef88a0f8c29aa8b43",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-656fb2c4f6ef29bbf772",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-ddfc78982df73f7ad7f7",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F175",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-e6780c092ce0b9b075f3",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b8904353848780072674",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-96cb7032601b625191d9",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F176",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-4276d374b10d468470d8",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8da3df6a3dcd1f59aa67",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-e8646ec96fae1b14b190",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F177",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-46b6de75a96664d3bc50",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-d14497c0ddb5201502e2",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-b67e7a506bf3c8d99060",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F178",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-fc35e3e73614b5ad1c58",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-10b71560c887773cfb4d",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-5ed327c2ff44f68f5ede",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F179",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-74ad918931692df4913e",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-f245c57fb509cb6fdce3",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-204ad12a18ff5f05cc83",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F180",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-fee283b42dd82fd75499",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0f681678e191e9761377",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-f1da3f0ab08e00b65710",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F181",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-d645d2f48fbd08bfe03f",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-2591451734a11337042b",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-22e59f3989cfa7c3a41a",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F182",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-2c0bcf1ff7010313be22",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0a38d64afaed4fc4b03b",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-d93748b112001ea9dc4f",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F183",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-6d663ff72cbd7b10f08b",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-aae51690b25c196d0579",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-767eeb2343f8e774e13a",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F184",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-ff1ab32993b13d6e153b",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8a9087e270af3b98c03c",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-bebf8c3cb44e917674e4",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F185",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-ee7048af5ea3f60b8559",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-009d02e20860063a3d7b",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-b531bd81dfbee8381376",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F186",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-76cb14573389de72182e",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-1b674bd1fa75e8f0b2f7",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c3585680011583a6fbf3",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F187",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-b2123113091f1aebbe43",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b6843ef4a0cbf41eb95a",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-be53683949b3ac6780c8",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F188",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-e3f97018de4154e78de9",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-c626663f323fa6897233",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-36ca69d646aeb85984cd",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F189",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-bf72168e571af16a6802",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ed59be85692b833bbb04",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-bd7b4459f0b959ba2f83",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F190",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-996c34dca060cbceeeb5",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-27ba53975eba12be357a",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-709f4feefeb0f424c3ae",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F191",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-fca901817a23852fe185",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-947bd025ce9dfc58345f",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-93326da59781b046631f",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F192",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-72ba0d70e15b5b685820",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-d1384ec9c480a40303eb",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-4bfc9345bfad0d6c6314",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F193",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-b88bca15ca41eba1cdd9",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-8e5a0c8deb543e5a4976",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-eef79759e11af63e9603",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F194",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-8edb37191ed97d98b7b1",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-59a685994383e7e3bcf9",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a32c0bf948fefb51e448",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F195",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9d9176092737941a57d6",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-eb2016eecf55fabd4858",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-e42e3542bda3aff186d4",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F196",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-18879ee2cdd2307c5679",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-7157385eea5a15fa03d2",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-9450edb14ba84a3c1e5d",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F197",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-177e5c5f32a784fb68ff",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-007039b1ad7430f01fe3",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-f4cb3250ebd6c554738c",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F198",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-09f8fca2a91a7a021df8",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-cfe9c4a71c30d4b91b8c",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-200205f499e42d9f7ff1",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F199",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-dbdddf907ecefaf7120f",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-e44085977862ac39debc",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-3917af197d45d2c2cb1c",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F200",
+      "stratum": "diagnostic_flood_semantic_heavy",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-d5f44571aa79e63a534d",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b331282ffc1e16fafdb4",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-67ab60ddaf720c9d0332",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F201",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-948d6ef575cfdf6bd613",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-55dd7a20e96a3e95e2b2",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-44b75866dcb9d5eddd07",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F202",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-8516045698514efd25da",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-e968cc1491cd7d325639",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fb5e0b62ea8cdd12b3b6",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F203",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-b0c8aa8a6b2c51b47c0c",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-e3dc70de586b0b5aad35",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-631623a047a83d600823",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F204",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3fa645dd67c407674b68",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0ba3cefef210e1691657",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a16c8fa5ebb90f6e5042",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F205",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3ac759a54a61a632275f",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-330ef6b95615ec12f24d",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-de84fc63f4fdd24c0ccc",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F206",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-7f76b1566ebccc895823",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-cb584131d8e67a128fe2",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fad11a18ce74ce81360d",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F207",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-8aa6b27ad2d7025b4539",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-379cec91c86e531ecf88",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-3dbff2d2847294ffadfa",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F208",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-930dcdc57fb290291889",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-40f5d55e0e30cac58429",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-c1119f8e0e20768a9a5c",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F209",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-493dbee240e7d63ed5e4",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-6a7d55ba29afa9b68684",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-cbb687d0fb9b58c7679d",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F210",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-ba0afb12f4ba6f98a745",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-3ab7408b14f794aae2fa",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0c5f84fe83e8486c83e5",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F211",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-fae02871490940adebd6",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b22055791eb3137f6f52",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-65d76f65977bfaac5d6f",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F212",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-7406941eac4246e9c0bb",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0fe3aa69108866dcb437",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-90dda6ace1693351251e",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F213",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-728cdb9d9643b0447ca2",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-55e84f67babfc0643909",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a70fd194f0b3c6cac6ee",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F214",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-dbacb1a3786b54c69aa0",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-f62ccc195382a26e7cad",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8545665e66ac08821b34",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F215",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-18753c6e5cd0d0ba53fc",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-23f8cab6843baa9ed108",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fb6537c392f4b83cfd19",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F216",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3c68dcea069e401cef02",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-21c896d86cd8df4cb669",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-bc3bb53c26d15fd6b945",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F217",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-da7fe71d723f04cfa0c9",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-503a48198d7c1296b7b2",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-936d5fb8d265a8a73369",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F218",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-30affd0283cd22618a81",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-a3f4b01c405ee0f01751",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-189507ecc486e7ce493d",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F219",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-08c1f6ab4d7dee6e550f",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-b8eb1c55c442eb79d82d",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-236652b48a9b5da94d8e",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F220",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-bb4c41d8799d0a88c3a7",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-22a5d02b18a8c62c493c",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-d6da6e668f5f1c2bc130",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F221",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3163d1536e313c5471e1",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-decece71394ec9b3f0df",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-7b9a2c7c28cee79a7985",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F222",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-6f37e3c04d73a6b926ce",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-4eb8ed0cb09a036ef41c",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-d22ed8d304aa5903c7d4",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F223",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-71814af35f3a88cd682d",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-5144f28048a923fc2011",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-3de88971d837d6cec5c4",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F224",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-534bde188e6bd860652c",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-c96a860e8c631c8f3d5f",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-e5981971102962e3edb8",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F225",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9d4a1678a769a262c7f1",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-e9d5406451b811abe164",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-a4d00b70fadb05de6ffe",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F226",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-216674df9131ebab8479",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-0b11354fb785b6302dc4",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fe5302463e886ce9f4cf",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F227",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-077cedb6d8adde220432",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-f97883fba3ddf1ac51c0",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fe77890dd7aaec5d65e8",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F228",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-836e6252a12866d1b126",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-97dec72971eade7767bc",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-8c3fe0b1624f81ba133d",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F229",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-46a07f9927f92bfaa2c7",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-010318c03239d612528b",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-31dd08877801502ccc12",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F230",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-12bc44092da7ef84f03c",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-bc837d79e1dff62f897e",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0fd3fcedd89d838d6f17",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F231",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-beb5d76c6123e36bce1d",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-74c24705741969b2f274",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-cd80aa1ecc40bf670fc3",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F232",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-20e26d3de17d7d0559b0",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-49e1f7ad83ff512b382a",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-11db4bdc54918df9820b",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F233",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-cae5c04883ae8a2f96b5",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ea9aab717ca67e5f36b5",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-7d9bae39955b96ca0c02",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F234",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9605057d6ce035bda58b",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-ac39ba4812db4254c8cd",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-44746c754eee0e22c076",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F235",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-3ac23ee4db258a15aec5",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-56d08d8904b03257843b",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-2ae6bd1abacbbfd48130",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F236",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1601e74f0997dc318eb1",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-528e49275890d3a86974",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-623b480669087b04cfc1",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F237",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-6ebb61743c237a1709e8",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-55d0fbca60b27cbb95a8",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-0725d7b0a13ca910ade1",
+          "variant": 1
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F238",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-9573fcdf9abe306f37c0",
+          "variant": 0
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-eddefefda3b4173a2f0e",
+          "variant": 1
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-eedd253cbe0de738d8d1",
+          "variant": 2
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F239",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-17124100381b35a58eb1",
+          "variant": 1
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-5bd1c5446984fb14fcc8",
+          "variant": 2
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-ce95bc33bf5151dcb9dc",
+          "variant": 0
+        }
+      ]
+    },
+    {
+      "semantic_family_id": "F240",
+      "stratum": "multi_file_build_real_project",
+      "variants": [
+        {
+          "condition_label": "A",
+          "trial_id": "T-1c044734f37a4bf6284f",
+          "variant": 2
+        },
+        {
+          "condition_label": "B",
+          "trial_id": "T-d5df16b74af9829ac773",
+          "variant": 0
+        },
+        {
+          "condition_label": "C",
+          "trial_id": "T-fa12db390f7dda12c6bb",
+          "variant": 1
+        }
+      ]
+    }
+  ],
+  "model_agent_tool_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "protocol_sha256": "1e2c6e4f7c3cff50f1b8aab84eec22e25a8d55c70994efa94fc5eb93353555ef",
+  "schema_version": 1,
+  "semantic_family_count": 120,
+  "stratum_family_counts": {
+    "diagnostic_flood_semantic_heavy": 40,
+    "multi_file_build_real_project": 40,
+    "simple_native_strong": 40
+  },
+  "toolchain_sha256": "9f3e4925d1c01d0cf5a21ea8a40841462ab397e621f3f6b81a7e59601ea66ee3",
+  "trial_count": 360
+}

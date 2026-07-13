@@ -1,0 +1,14 @@
+{
+  "agent_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "analysis_plan_sha256": "58153208d74d1adf87b387e990c89a4d88d594d42820632d26f8f0fc2c91ea15",
+  "attempt": 2,
+  "candidate_presentation": "repair_units_hybrid_v2",
+  "candidate_sha": "efa3dfc64905baf5fcd96811d35e50e1ed8387c9",
+  "formed_binary_sha256": "cb08895d7dd13acdc642e56128a57bcd794e8e352922c9386e4ab7d3474b0bae",
+  "frozen_at_unix_seconds": 1783928202,
+  "model_agent_tool_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "no_subagent_attestation_template_sha256": "33df59db6598e41c6f40b21b177a392c14a308518f57edd974a36903d3e278c3",
+  "protocol_sha256": "1e2c6e4f7c3cff50f1b8aab84eec22e25a8d55c70994efa94fc5eb93353555ef",
+  "schema_version": 1,
+  "toolchain_sha256": "9f3e4925d1c01d0cf5a21ea8a40841462ab397e621f3f6b81a7e59601ea66ee3"
+}

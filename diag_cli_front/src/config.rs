@@ -24,7 +24,7 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_PRESENTATION_PRESET: &str = "subject_blocks_v2";
+const DEFAULT_PRESENTATION_PRESET: &str = "repair_units_hybrid_v2";
 const PRESENTATION_SCHEMA_KIND: &str = "cc_formed_presentation";
 const PRESENTATION_SCHEMA_VERSION_V1: u32 = 1;
 const PRESENTATION_SCHEMA_VERSION_V2: u32 = 2;
@@ -1865,13 +1865,13 @@ mod tests {
         let config = ConfigFile::load_from_paths([], Some(&user)).unwrap();
         let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved.preset_id, "subject_blocks_v2");
+        assert_eq!(resolved.preset_id, "repair_units_hybrid_v2");
         assert!(resolved.fell_back_to_default);
         assert!(
             resolved
                 .warnings
                 .iter()
-                .any(|warning| warning.contains("using built-in preset 'subject_blocks_v2'"))
+                .any(|warning| warning.contains("using built-in preset 'repair_units_hybrid_v2'"))
         );
         assert_eq!(resolved.policy.header.subject_first, Some(true));
     }
@@ -1943,21 +1943,21 @@ mod tests {
     }
 
     #[test]
-    fn existing_config_without_presentation_keys_keeps_subject_blocks_v2_default() {
+    fn existing_config_without_presentation_keys_uses_qualified_hybrid_v2_default() {
         let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
 
-        assert_eq!(resolved.preset_id, "subject_blocks_v2");
+        assert_eq!(resolved.preset_id, "repair_units_hybrid_v2");
         assert!(!resolved.fell_back_to_default);
         assert!(resolved.warnings.is_empty());
     }
 
     #[test]
-    fn resolved_presentation_policy_converts_to_subject_blocks_v2_render_policy() {
+    fn resolved_presentation_policy_converts_to_qualified_hybrid_v2_policy() {
         let resolved = ConfigFile::default().resolve_presentation_policy(&ParsedArgs::default());
 
         let render_policy = resolved.to_render_policy();
 
-        assert_eq!(render_policy.preset_id, "subject_blocks_v2");
+        assert_eq!(render_policy.preset_id, "repair_units_hybrid_v2");
         assert_eq!(render_policy.session_mode, SessionMode::AllVisibleBlocks);
         assert!(render_policy.header.subject_first);
         assert_eq!(render_policy.default_template_id, "generic_block");
@@ -2034,7 +2034,7 @@ mod tests {
     }
 
     #[test]
-    fn repair_units_hybrid_presets_are_available_but_not_default_before_qualification() {
+    fn repair_units_hybrid_v2_is_the_qualified_release_default() {
         let parsed = ParsedArgs::parse(vec![
             OsString::from("gcc-formed"),
             OsString::from("--formed-presentation=repair_units_hybrid_v1"),
@@ -2047,7 +2047,7 @@ mod tests {
 
         assert_eq!(render_policy.preset_id, "repair_units_hybrid_v1");
         assert!(render_policy.header.subject_first);
-        assert_eq!(DEFAULT_PRESENTATION_PRESET, "subject_blocks_v2");
+        assert_eq!(DEFAULT_PRESENTATION_PRESET, "repair_units_hybrid_v2");
 
         let parsed_v2 = ParsedArgs::parse(vec![
             OsString::from("gcc-formed"),
@@ -2088,14 +2088,12 @@ mod tests {
         let config: ConfigFile = toml::from_str(example).unwrap();
         let resolved = config.resolve_presentation_policy(&ParsedArgs::default());
 
-        assert!(
-            example.contains("subject_blocks_v2 remains the default until qualification passes")
-        );
+        assert!(example.contains("qualified default is repair_units_hybrid_v2"));
         assert!(example.contains("# presentation = \"repair_units_hybrid_v1\""));
         assert!(example.contains("# presentation = \"subject_blocks_v2\""));
         assert!(example.contains("# presentation = \"subject_blocks_v1\""));
         assert!(example.contains("# presentation = \"legacy_v1\""));
-        assert_eq!(resolved.preset_id, "subject_blocks_v2");
+        assert_eq!(resolved.preset_id, "repair_units_hybrid_v2");
         assert!(!resolved.fell_back_to_default);
     }
 

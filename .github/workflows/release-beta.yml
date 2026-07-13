@@ -107,7 +107,7 @@ jobs:
           cargo xtask rc-gate \
             --root corpus \
             --report-dir "$REPORT_ROOT/rc-gate" \
-            --agent-output-quality-report eval/output-quality-single-agent-v1/evidence/qualification-report.json \
+            --agent-output-quality-report eval/output-quality-single-agent-v2/evidence/qualification-report.json \
             --fuzz-root fuzz \
             --metrics-manual-report eval/rc/metrics-manual-eval.json \
             --issue-budget-report eval/rc/issue-budget.json \

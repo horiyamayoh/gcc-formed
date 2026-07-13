@@ -63,7 +63,7 @@ is not a `1.0.0` release blocker.
 
 ## Required evidence and gate
 
-The current authority root is `eval/output-quality-single-agent-v1/`. It must
+The current authority root is `eval/output-quality-single-agent-v2/`. It must
 contain the frozen protocol, analysis plan, model/agent/tool manifest,
 no-subagent attestation, corpus and seed commitments, candidate freeze, trial
 index, integrity report, fidelity report, repair-utility report, efficiency

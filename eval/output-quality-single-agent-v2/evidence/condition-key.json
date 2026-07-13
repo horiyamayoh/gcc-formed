@@ -1,0 +1,16 @@
+{
+  "analysis_plan_sha256": "58153208d74d1adf87b387e990c89a4d88d594d42820632d26f8f0fc2c91ea15",
+  "candidate_sha": "efa3dfc64905baf5fcd96811d35e50e1ed8387c9",
+  "commitment": "73d7862f7a903a8b43a9e9d69f1db31b9f8df9a3362a60ffa0d67c501a200767",
+  "corpus_manifest_sha256": "15bb3396af39b4d1f2112a336af948dfdb5953f6e0f2404fd452d0bdc4826054",
+  "mapping": {
+    "A": "native_gcc",
+    "B": "current_default",
+    "C": "candidate"
+  },
+  "model_agent_tool_manifest_sha256": "427ce40f295d5a62fc799af4481be7bdb67454a8764b3817c2d169bbca1ceeb1",
+  "protocol_sha256": "1e2c6e4f7c3cff50f1b8aab84eec22e25a8d55c70994efa94fc5eb93353555ef",
+  "revealed_after_trial_artifact_freeze": true,
+  "schema_version": 1,
+  "toolchain_sha256": "9f3e4925d1c01d0cf5a21ea8a40841462ab397e621f3f6b81a7e59601ea66ee3"
+}

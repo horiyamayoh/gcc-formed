@@ -86,7 +86,8 @@ pub(crate) fn run_output_quality_matrix(
 ) -> Result<OutputQualityMatrixReport, Box<dyn std::error::Error>> {
     use crate::commands::corpus::{render_request_for_fixture, replay_fixture_document};
     use diag_render::{
-        RenderProfile, ResolvedPresentationPolicy, render, render_with_presentation_policy,
+        PathPolicy, RenderProfile, ResolvedPresentationPolicy, render,
+        render_with_presentation_policy,
     };
 
     let fixtures = diag_testkit::discover(root)?;
@@ -107,13 +108,17 @@ pub(crate) fn run_output_quality_matrix(
             }
         };
         let mut policy = ResolvedPresentationPolicy::subject_blocks_v2();
-        policy.preset_id = "repair_units_hybrid_v1".to_string();
-        let default_request =
+        policy.preset_id = "repair_units_hybrid_v2".to_string();
+        let current_request =
             render_request_for_fixture(fixture, &replay.document, RenderProfile::Default);
-        let ci_request = render_request_for_fixture(fixture, &replay.document, RenderProfile::Ci);
-        let current = render(default_request.clone())?;
-        let candidate = render_with_presentation_policy(default_request, &policy)?;
-        let candidate_ci = render_with_presentation_policy(ci_request, &policy)?;
+        let mut candidate_request = current_request.clone();
+        candidate_request.path_policy = PathPolicy::RelativeToCwd;
+        let mut candidate_ci_request =
+            render_request_for_fixture(fixture, &replay.document, RenderProfile::Ci);
+        candidate_ci_request.path_policy = PathPolicy::RelativeToCwd;
+        let current = render(current_request)?;
+        let candidate = render_with_presentation_policy(candidate_request, &policy)?;
+        let candidate_ci = render_with_presentation_policy(candidate_ci_request, &policy)?;
         let group_identity_preserved =
             current.displayed_group_refs == candidate.displayed_group_refs;
         let explicit_disclosure = candidate
@@ -185,7 +190,7 @@ pub(crate) fn run_output_quality_matrix(
         .collect::<Vec<_>>();
     let report = OutputQualityMatrixReport {
         schema_version: SCHEMA_VERSION,
-        candidate_preset: "repair_units_hybrid_v1".to_string(),
+        candidate_preset: "repair_units_hybrid_v2".to_string(),
         status: if missing_cells.is_empty() && failures.is_empty() {
             "pass".to_string()
         } else {
