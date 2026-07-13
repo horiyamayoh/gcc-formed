@@ -79,6 +79,10 @@ jobs:
           echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/stable-release-repo-root" >> "$GITHUB_ENV"
           echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/stable-release-assets" >> "$GITHUB_ENV"
           echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/stable-release-notes.md" >> "$GITHUB_ENV"
+          echo "EXPECTED_PUBLICATION_PATH=$RUNNER_TEMP/stable-release/expected-publication.json" >> "$GITHUB_ENV"
+          echo "PUBLICATION_DECISION_PATH=$RUNNER_TEMP/stable-release/stable-publication-decision.json" >> "$GITHUB_ENV"
+          echo "EXISTING_RELEASE_PATH=$RUNNER_TEMP/stable-release/existing-release.json" >> "$GITHUB_ENV"
+          echo "EXISTING_RELEASE_ASSET_ROOT=$RUNNER_TEMP/stable-release-existing-assets" >> "$GITHUB_ENV"
           echo "PAYLOAD_SOURCE_ROOT=$RUNNER_TEMP/stable-release-payload-source" >> "$GITHUB_ENV"
           echo "WORKFLOW_DEFINITION_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
           echo "PACKAGE_VERSION=$rc_version" >> "$GITHUB_ENV"
@@ -247,7 +251,7 @@ jobs:
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
             --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
             > "$RELEASE_NOTES_PATH"
-      - name: Publish GitHub release
+      - name: Plan append-only stable publication
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -277,13 +281,132 @@ jobs:
             "$REPORT_ROOT/release/release-commit-chain.json"
             "$REPORT_ROOT/release/release-provenance.json"
           )
+          build_args=()
+          for asset in "${assets[@]}"; do
+            build_args+=(--asset "$asset")
+          done
+          python3 ci/stable_publication.py build \
+            --release-tag "$RELEASE_TAG" \
+            --release-name "gcc-formed ${STABLE_VERSION}" \
+            --tag-target-sha "$RC_COMMIT" \
+            --notes-file "$RELEASE_NOTES_PATH" \
+            --release-provenance "$REPORT_ROOT/release/release-provenance.json" \
+            "${build_args[@]}" \
+            --output "$EXPECTED_PUBLICATION_PATH"
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
-            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            mkdir -p "$EXISTING_RELEASE_ASSET_ROOT"
+            gh release view "$RELEASE_TAG" \
+              --json assets,body,tagName,targetCommitish,name,isDraft,isPrerelease \
+              > "$EXISTING_RELEASE_PATH"
+            resolved_tag_target_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_TAG}" --jq '.sha')"
+            python3 - "$EXISTING_RELEASE_PATH" "$resolved_tag_target_sha" <<'PY'
+          import json
+          import sys
+
+          path = sys.argv[1]
+          payload = json.load(open(path, "r", encoding="utf-8"))
+          payload["resolvedTagTargetSha"] = sys.argv[2]
+          with open(path, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, indent=2)
+              handle.write("\n")
+          PY
+            while IFS=$'\t' read -r asset_api_url asset_name; do
+              [ -n "$asset_api_url" ] || continue
+              if [ "$(basename "$asset_name")" != "$asset_name" ]; then
+                echo "::error::unsafe GitHub Release asset name '$asset_name'"
+                exit 1
+              fi
+              asset_id="${asset_api_url##*/}"
+              gh api "repos/${GITHUB_REPOSITORY}/releases/assets/${asset_id}" \
+                -H "Accept: application/octet-stream" \
+                > "$EXISTING_RELEASE_ASSET_ROOT/$asset_name"
+            done < <(python3 - "$EXISTING_RELEASE_PATH" <<'PY'
+          import json
+          import sys
+
+          for asset in json.load(open(sys.argv[1], "r", encoding="utf-8"))["assets"]:
+              if not str(asset.get("digest", "")).startswith("sha256:"):
+                  print(f'{asset["apiUrl"]}\t{asset["name"]}')
+          PY
+            )
+            if python3 - "$EXISTING_RELEASE_PATH" <<'PY'
+          import json
+          import sys
+
+          assets = json.load(open(sys.argv[1], "r", encoding="utf-8"))["assets"]
+          raise SystemExit(0 if any(asset["name"] == "release-provenance.json" for asset in assets) else 1)
+          PY
+            then
+              if [ ! -f "$EXISTING_RELEASE_ASSET_ROOT/release-provenance.json" ]; then
+                gh release download "$RELEASE_TAG" \
+                  --dir "$EXISTING_RELEASE_ASSET_ROOT" \
+                  --pattern "release-provenance.json"
+              fi
+              existing_provenance_args=(
+                --existing-provenance "$EXISTING_RELEASE_ASSET_ROOT/release-provenance.json"
+              )
+            else
+              existing_provenance_args=()
+            fi
+            python3 ci/stable_publication.py decide \
+              --expected-manifest "$EXPECTED_PUBLICATION_PATH" \
+              --existing-inventory "$EXISTING_RELEASE_PATH" \
+              --existing-assets-dir "$EXISTING_RELEASE_ASSET_ROOT" \
+              "${existing_provenance_args[@]}" \
+              --output "$PUBLICATION_DECISION_PATH"
           else
-            gh release create "$RELEASE_TAG" "${assets[@]}" --target "$RC_COMMIT" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+              existing_tag_target_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_TAG}" --jq '.sha')"
+              existing_tag_args=(--existing-tag-target-sha "$existing_tag_target_sha")
+            else
+              existing_tag_args=()
+            fi
+            python3 ci/stable_publication.py decide \
+              --expected-manifest "$EXPECTED_PUBLICATION_PATH" \
+              "${existing_tag_args[@]}" \
+              --output "$PUBLICATION_DECISION_PATH"
           fi
+      - name: Publish GitHub release append-only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          decision="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["decision"])' "$PUBLICATION_DECISION_PATH")"
+          case "$decision" in
+            create)
+              mapfile -t upload_paths < <(python3 - "$EXPECTED_PUBLICATION_PATH" <<'PY'
+          import json
+          import sys
+
+          for asset in json.load(open(sys.argv[1], "r", encoding="utf-8"))["assets"]:
+              print(asset["source_path"])
+          PY
+              )
+              gh release create "$RELEASE_TAG" "${upload_paths[@]}" \
+                --target "$RC_COMMIT" \
+                --title "gcc-formed ${STABLE_VERSION}" \
+                --notes-file "$RELEASE_NOTES_PATH" \
+                --latest
+              ;;
+            upload_missing)
+              mapfile -t upload_paths < <(python3 - "$PUBLICATION_DECISION_PATH" <<'PY'
+          import json
+          import sys
+
+          for path in json.load(open(sys.argv[1], "r", encoding="utf-8"))["missing_asset_paths"]:
+              print(path)
+          PY
+              )
+              gh release upload "$RELEASE_TAG" "${upload_paths[@]}"
+              ;;
+            noop)
+              echo "stable release already matches exactly; no GitHub Release write required"
+              ;;
+            *)
+              echo "::error::unexpected stable publication decision '$decision'"
+              exit 1
+              ;;
+          esac
       - name: Upload stable release evidence
         if: always()
         uses: actions/upload-artifact@v6.0.0

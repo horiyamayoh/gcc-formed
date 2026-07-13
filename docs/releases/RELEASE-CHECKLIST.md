@@ -50,6 +50,10 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 - Product/source gates ran from the detached payload-source worktree, not the dispatch checkout.
 - Any qualification-to-payload difference has an exact commit-range/file/hash manifest and contains only policy-allowed Markdown documentation; runtime, corpus, eval/oracle, gate, workflow, and packaging changes require requalification.
 - `release-provenance.json.release_integrity` agrees with the commit-chain report and does not derive role-specific SHA fields by overriding `GITHUB_SHA`.
+- `expected-publication.json` covers the resolved tag target, release body hash, stable/payload/rollback/signing/typed-chain inputs, and every public asset name/size/SHA-256.
+- `stable-publication-decision.json` is `create`, `noop`, or narrowly `upload_missing`; `reject` has no GitHub Release write. The report retains the existing inventory hash and mismatch details.
+- Stable publication contains no `gh release edit` and no asset `--clobber`. Missing-asset recovery uploads only validator-returned paths after existing provenance and every existing asset match.
+- Corrections are published as a new maintenance release that references the old evidence; the original stable tag, body, and assets remain unchanged.
 - Historical human-eval bundles remain research evidence but participant recruitment and a `human-eval/` packet are not RC or stable prerequisites.
 
 ## Current Stable Support Boundary
@@ -102,6 +106,7 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 - Release smoke retains `manifest.json`, package/install JSON output, and resolve/install-release JSON output.
 - Release smoke retains `release-provenance.json` alongside signing material and build metadata.
 - Stable release smoke retains `stable-release-report.json`, `stable-release-summary.md`, `promotion-evidence.json`, `rollback-drill.json`, and `release-commit-chain.json`, and the rollback drill shows one `current` symlink switch.
+- Actions evidence retains `expected-publication.json`, `stable-publication-decision.json`, the canonical existing-inventory SHA-256, and any mismatch details even when publication is rejected.
 - RC gate retains `replay-report.json`, `bench-smoke-report.json`, `deterministic-replay-report.json`, `rollout-matrix-report.json`, `agent-output-quality/`, `fuzz-smoke-report.json`, `fuzz-evidence.json`, `metrics-report.json`, and normalized qualification evidence.
 - The public GitHub Release ships `primary`, `debug`, and `source` archives, the full control bundle, the immutable release-repo bundle, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, and `release-provenance.json`.
 - Signing key rotation / revoke / emergency re-sign follows `SIGNING-KEY-OPERATIONS.md`.

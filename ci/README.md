@@ -48,6 +48,13 @@ $REPORT_ROOT/
 
 `ci/test_release_provenance.py` と `ci/test_gate_scripts.py` は、この release provenance 連携が workflow order と current multi-band vocabulary に従っているかを固定する。workflow step の並び、release provenance の workflow 別 artifact routing、manifest / published-release metadata の `maturity_label` vocabulary、そして legacy `support_tier` / `gcc15_primary` の再混入を contract test で検知する。
 
+`ci/stable_publication.py` は stable GitHub Release の expected manifest と既存
+inventory を比較し、`create` / `noop` / `upload_missing` / `reject` を決定する。
+tag/body/input/asset mismatch は write 前に fail closed し、既存 asset の clobber と
+release body edit を許可しない。`ci/test_stable_publication.py` は exact rerun、欠落
+asset recovery、1-byte mismatch、rollback/signing/typed-chain mismatch を synthetic
+inventory で固定する。
+
 ## Build Environment Schema
 
 `build-environment.json` は schema version `1` を使い、少なくとも次を持つ。

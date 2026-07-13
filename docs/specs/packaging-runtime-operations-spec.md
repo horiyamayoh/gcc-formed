@@ -735,6 +735,28 @@ generic `GITHUB_SHA` の上書きで role を表現してはならない。relat
 report は evidence artifact として保持するが、GitHub Release や channel pointer への
 write は行わない。
 
+#### 13.1.2 stable publication state machine
+
+stable GitHub Release publication は `append-only-stable-publication-v1` に従う。
+workflow は local expected manifest を作り、既存 release がある場合は write 前に
+GitHub の tag/release/asset inventory と既存 `release-provenance.json` を読む。
+
+| State | 必須条件 | 許可する write |
+| --- | --- | --- |
+| `create` | release/tag が未公開で expected manifest が完全 | new release と expected assets の初回作成 |
+| `noop` | tag、body、identity inputs、全 asset digest が完全一致 | なし |
+| `upload_missing` | 既存 provenance と全既存 asset が完全一致し、非-authority asset だけ欠落 | validator が列挙した欠落 asset の upload のみ |
+| `reject` | body/input/tag/asset mismatch、extra asset、既存 provenance 欠落、digest 不明 | なし |
+
+既存同名 asset に対する `--clobber`、release body の edit、tag target の変更は禁止する。
+asset digest を API で取得できない場合は信頼できる download hash が必要であり、どちらも
+得られなければ reject する。inventory と expected manifest の canonical SHA-256、decision、
+mismatch details、missing asset paths は Actions evidence に保持する。
+
+公開後の訂正や追加 evidence は元 release を編集せず、新しい maintenance release で
+公開する。元 stable tag/body/assets を保持し、maintenance release notes と provenance から
+訂正対象と旧 digest を参照する。既存 stable asset と同名の訂正を upload してはならない。
+
 ### 13.2 secondary channel
 
 secondary channel として以下を将来的に許容する。

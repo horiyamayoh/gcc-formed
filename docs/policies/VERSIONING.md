@@ -73,6 +73,15 @@ Current truth table:
 
 For maintenance releases, the public release identity advances to the published final version (`1.0.1`, `1.0.2`, ...). `payload_identity.product_version` advances only when new payload bits are built and signed; a same-bits promotion retains its qualified payload semver and digest. A maintenance workflow must publish the relationship explicitly and must not rewrite an already published payload, tag, archive, manifest, checksum, or signature.
 
+Published stable GitHub Releases are append-only audit records. A rerun may be a
+no-op or upload an asset that is provably absent, but it must never edit the
+existing release body or replace an existing same-name asset. Before any write,
+the workflow compares the resolved tag target, release identity and body hash,
+payload source/version, signing metadata, rollback baseline, typed commit chain,
+and the complete asset name/size/SHA-256 inventory. Any mismatch is a hard
+failure. Corrections use a new maintenance release; the original stable tag,
+body, and assets remain unchanged.
+
 ## Release commit identity contract
 
 Release evidence uses four role-specific commit identities. These fields are not

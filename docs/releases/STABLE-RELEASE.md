@@ -57,6 +57,25 @@ verifier accepts only Markdown documentation. Runtime, corpus, eval/oracle,
 gate, workflow, packaging, symlink, rename, and generated-artifact changes stop
 the release and require requalification.
 
+## Append-only publication and reruns
+
+`release-stable.yml` builds `expected-publication.json` before it performs a
+GitHub Release write. The manifest binds the resolved tag target, release name
+and body hash, stable and payload identities, rollback baseline, signing
+metadata, typed commit chain, and every expected asset name, size, and SHA-256.
+
+- **First publish:** when the release does not exist, decision `create` creates it once.
+- **Exact rerun:** an exact existing tag/body/input/asset match yields `noop` and performs no write.
+- **Partial recovery:** if existing `release-provenance.json` and every existing asset match but another asset is absent, `upload_missing` uploads only the returned missing paths without `--clobber`.
+- **Mismatch:** a different tag target, body, release/payload identity, RC source, rollback baseline, signing key, typed SHA chain, asset byte/size/name, extra asset, or unverifiable digest yields `reject` before any release write.
+
+An existing release body is never edited and an existing same-name asset is
+never replaced. A failed rerun retains `stable-publication-decision.json` and
+the normalized inventory hash in the Actions evidence artifact. If public
+evidence needs correction or addition after publication, create a maintenance
+release whose notes/provenance reference the original asset and digest. Do not
+amend `v1.0.0` in place.
+
 The GitHub Release body for a stable cut is generated from [PUBLIC-SURFACE.md](../support/PUBLIC-SURFACE.md) plus the canonical support wording in [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) via `python3 ci/public_surface.py render-release-body --kind stable ...`. Do not hand-edit workflow-local release-note prose.
 
 ## Local Dry Run
@@ -111,6 +130,8 @@ Every stable cut must retain these files:
 - `rollback-drill.json`
 - `release-provenance.json`
 - `release-commit-chain.json`
+- `expected-publication.json`
+- `stable-publication-decision.json`
 
 These evidence files must agree on the candidate version, target triple, signing metadata, promoted channel pointers, and rollback baseline version.
 

@@ -800,6 +800,8 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn('cargo xtask package', release_stable)
         self.assertIn('ci/verify_same_bits_promotion.py', release_stable)
         self.assertIn('ci/verify_release_commit_chain.py', release_stable)
+        self.assertIn('ci/stable_publication.py build', release_stable)
+        self.assertIn('ci/stable_publication.py decide', release_stable)
         self.assertIn('--qualification-report "$REPORT_ROOT/release/qualification-report.json"', release_stable)
         self.assertIn('--payload-source-sha "$rc_commit"', release_stable)
         self.assertIn('--gate-source-sha "$rc_commit"', release_stable)
@@ -810,6 +812,10 @@ class CheckedInWorkflowTest(unittest.TestCase):
             4,
         )
         self.assertNotIn('GITHUB_SHA: ${{ env.RC_COMMIT }}', release_stable)
+        self.assertNotIn("--clobber", release_stable)
+        self.assertNotIn("gh release edit", release_stable)
+        self.assertIn('gh release upload "$RELEASE_TAG" "${upload_paths[@]}"', release_stable)
+        self.assertIn('decision="$(python3 -c', release_stable)
         self.assertIn('gh release download "v${ROLLBACK_BASELINE_VERSION}"', release_stable)
         self.assertIn('--expected-commit "$rc_commit"', release_stable)
         self.assertIn('--target "$RC_COMMIT"', release_stable)
@@ -844,7 +850,8 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertLess(step_names.index("Path-aware replay stop-ship contract"), step_names.index("Assemble GitHub Release bundles"))
         self.assertLess(step_names.index("Assemble GitHub Release bundles"), step_names.index("Write release provenance"))
         self.assertLess(step_names.index("Write release provenance"), step_names.index("Write release notes"))
-        self.assertLess(step_names.index("Write release notes"), step_names.index("Publish GitHub release"))
+        self.assertLess(step_names.index("Write release notes"), step_names.index("Plan append-only stable publication"))
+        self.assertLess(step_names.index("Plan append-only stable publication"), step_names.index("Publish GitHub release append-only"))
 
 
 class MajorEvidencePolicyTest(unittest.TestCase):

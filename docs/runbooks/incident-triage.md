@@ -86,6 +86,8 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 4. Compare `release-commit-chain.json` with `release-provenance.json.release_integrity`. Record all four typed SHA roles, the policy version, verdict, and diff-manifest hash.
 5. If the verdict is `fail`, preserve the report and stop publication; do not edit a tag, release body, asset, or channel pointer while investigating. A runtime/corpus/eval/oracle/gate/workflow/packaging diff requires requalification, not a broader allowlist.
 6. Legacy v1.0.0 evidence without a typed gate SHA is `unverified`. Do not reinterpret it as pass or mutate the published assets; use it only as historical input to the incident record.
+7. For a stable publication rerun, inspect `stable-publication-decision.json`. A `reject` decision is authoritative: preserve its inventory hash and mismatches, and perform no manual `release edit`, asset delete, or `--clobber` upload.
+8. If an expected asset is absent, permit recovery only when the decision is `upload_missing`, and upload exactly the returned paths. For any correction to existing public evidence, prepare a new maintenance release that references the old asset/digest.
 
 ## 4. Initial Severity Decision
 
