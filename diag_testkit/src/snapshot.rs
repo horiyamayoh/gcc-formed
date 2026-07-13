@@ -9,6 +9,7 @@ use std::path::Path;
 //
 // Allowed normalization is intentionally narrow:
 // - temporary object paths and random suffixes
+// - system C++ include versions within a declared VersionBand
 // - quote-style drift
 // - line/column drift in volatile text and SARIF regions
 // - non-semantic SARIF wrapper fields and transient capture metadata
@@ -319,11 +320,37 @@ fn normalize_named_ref_in_text_line(
 
 fn normalize_snapshot_text(contents: &str) -> String {
     let contents = normalize_transient_object_paths(contents);
+    let contents = normalize_system_cxx_include_versions(&contents);
     let contents = normalize_gcc_docs_versioned_urls(&contents);
     let contents = normalize_gcc_quote_style(&contents);
     let contents = normalize_volatile_compiler_text(&contents);
     let contents = normalize_transient_line_numbers(&contents);
     normalize_related_location_ordinals(&contents)
+}
+
+fn normalize_system_cxx_include_versions(contents: &str) -> String {
+    let marker = "/usr/local/include/c++/";
+    let mut normalized = String::with_capacity(contents.len());
+    let mut remaining = contents;
+
+    while let Some(start) = remaining.find(marker) {
+        normalized.push_str(&remaining[..start + marker.len()]);
+        let tail = &remaining[start + marker.len()..];
+        let version_len = tail
+            .chars()
+            .take_while(|ch| ch.is_ascii_digit() || *ch == '.')
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if version_len == 0 || !tail[version_len..].starts_with('/') {
+            remaining = tail;
+            continue;
+        }
+        normalized.push_str("<version>");
+        remaining = &tail[version_len..];
+    }
+
+    normalized.push_str(remaining);
+    normalized
 }
 
 fn normalize_related_location_ordinals(contents: &str) -> String {
@@ -1193,6 +1220,17 @@ mod tests {
             "5 |     free(ptr);   \nraw: preserved",
         )
         .unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+    }
+
+    #[test]
+    fn snapshot_comparison_normalizes_system_cxx_include_version_within_band() {
+        let expected = r#"{"path":"/usr/local/include/c++/13.4.0/ranges"}"#;
+        let actual = r#"{"path":"/usr/local/include/c++/14.4.0/ranges"}"#;
+
+        let comparison =
+            compare_snapshot_contents(Path::new("stderr.raw"), expected, actual).unwrap();
 
         assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
     }
