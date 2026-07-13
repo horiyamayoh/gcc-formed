@@ -73,6 +73,28 @@ Current truth table:
 
 For maintenance releases, the public release identity advances to the published final version (`1.0.1`, `1.0.2`, ...). `payload_identity.product_version` advances only when new payload bits are built and signed; a same-bits promotion retains its qualified payload semver and digest. A maintenance workflow must publish the relationship explicitly and must not rewrite an already published payload, tag, archive, manifest, checksum, or signature.
 
+## Release commit identity contract
+
+Release evidence uses four role-specific commit identities. These fields are not
+runtime or artifact versions and must not be collapsed into a generic CI SHA.
+
+| Field | Authority | Meaning |
+| --- | --- | --- |
+| `qualification_candidate_sha` | sealed output-quality report | source and evidence candidate that passed qualification |
+| `payload_source_sha` | signed RC tag plus RC provenance | source commit that produced the immutable promoted payload |
+| `gate_source_sha` | isolated product-gate worktree | source commit whose product tests, fixtures, oracle, and gate implementation executed |
+| `workflow_definition_sha` | workflow checkout | release orchestration revision; it may differ from payload source but does not substitute for product gates |
+
+Policy `release-commit-chain-v1` requires payload and product gate source to be
+the same commit. Qualification candidate and payload source are normally the
+same commit. A difference is permitted only with an exact machine-readable
+manifest whose commit range and old/new file SHA-256 evidence match Git and
+whose changes are documentation-only. Runtime crates, corpus fixtures, eval
+evidence/oracles, CI and gate code, workflows, symlinks, generated artifacts,
+and packaging logic cannot be allowlisted; they require a fresh qualification.
+`release-provenance.json` records all four roles, the policy version, relation
+verdict, and optional diff-manifest SHA-256.
+
 ## Wording Rules
 
 - Use maturity labels when describing support posture or lifecycle state.
@@ -82,6 +104,7 @@ For maintenance releases, the public release identity advances to the published 
 - Archive names, tags, and install paths may embed a `v` prefix for readability, such as `gcc-formed-v0.2.0-beta.1-linux-x86_64-musl.tar.gz`; that prefix does not change the underlying semver.
 - `1.0.0-rc.N` or `1.0.0` output-quality wording must identify single-agent task-performance evidence and deterministic readability proxies. It must not say or imply that a human behavioral study passed.
 - `1.0.0-rc.N` must not be published until its candidate SHA has a passing sealed qualification packet and strict RC gate.
+- A stable or maintenance release must stop before publication unless its typed release commit-chain verdict is `pass`.
 
 ## Current Reader Guidance
 

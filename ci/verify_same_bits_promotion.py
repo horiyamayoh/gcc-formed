@@ -45,7 +45,15 @@ def main() -> int:
         if not rc_evidence.get(required):
             failures.append(f"RC provenance missing required field evidence: release.{required}")
 
-    provenance_commit = provenance.get("github", {}).get("sha")
+    qualification_candidate_sha = rc_evidence.get("agent_output_quality", {}).get(
+        "candidate_sha"
+    )
+    if not qualification_candidate_sha:
+        failures.append("RC provenance missing qualification candidate SHA")
+
+    provenance_commit = provenance.get("source_identity", {}).get(
+        "payload_source_sha"
+    ) or provenance.get("github", {}).get("sha")
     if provenance_commit != args.expected_commit:
         failures.append(
             f"RC provenance commit {provenance_commit!r} != checkout {args.expected_commit!r}"
@@ -81,6 +89,8 @@ def main() -> int:
         "rc_provenance_path": str(args.rc_provenance),
         "rc_provenance_sha256": sha256(args.rc_provenance),
         "candidate_commit": args.expected_commit,
+        "qualification_candidate_sha": qualification_candidate_sha,
+        "payload_source_sha": args.expected_commit,
         "payload_version": args.expected_payload_version,
         "required_rc_field_evidence": [
             "package",

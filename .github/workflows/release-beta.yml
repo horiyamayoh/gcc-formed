@@ -225,6 +225,8 @@ jobs:
             --target-triple "$TARGET_TRIPLE" \
             --release-channel "$RELEASE_CHANNEL" \
             --maturity-label "$MATURITY_LABEL" \
+            --payload-source-sha "$GITHUB_SHA" \
+            --workflow-definition-sha "$GITHUB_SHA" \
             --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes

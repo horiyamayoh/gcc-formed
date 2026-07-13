@@ -799,6 +799,17 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn('cargo xtask hermetic-release-check', release_stable)
         self.assertNotIn('cargo xtask package', release_stable)
         self.assertIn('ci/verify_same_bits_promotion.py', release_stable)
+        self.assertIn('ci/verify_release_commit_chain.py', release_stable)
+        self.assertIn('--qualification-report "$REPORT_ROOT/release/qualification-report.json"', release_stable)
+        self.assertIn('--payload-source-sha "$rc_commit"', release_stable)
+        self.assertIn('--gate-source-sha "$rc_commit"', release_stable)
+        self.assertIn('--workflow-definition-sha "$WORKFLOW_DEFINITION_SHA"', release_stable)
+        self.assertIn('git worktree add --detach "$PAYLOAD_SOURCE_ROOT" "$rc_commit"', release_stable)
+        self.assertGreaterEqual(
+            release_stable.count('cd "$PAYLOAD_SOURCE_ROOT"'),
+            4,
+        )
+        self.assertNotIn('GITHUB_SHA: ${{ env.RC_COMMIT }}', release_stable)
         self.assertIn('gh release download "v${ROLLBACK_BASELINE_VERSION}"', release_stable)
         self.assertIn('--expected-commit "$rc_commit"', release_stable)
         self.assertIn('--target "$RC_COMMIT"', release_stable)

@@ -704,6 +704,36 @@ primary channel は **immutable versioned binary archive を置く内部 artifac
 4. promote（canary → beta → stable）は artifact 再build ではなく metadata の昇格で行う
 5. stable cut workflow は signed RC GitHub prerelease の immutable control / `.release-repo.tar.gz` bundle を seed に使い、RC provenance の commit と payload hash を検証し、same bits を stable GitHub Release asset と release-repo bundle の両方へ再公開しなければならない
 6. stable release identity `1.0.0` と immutable payload semver `1.0.0-rc.N` は provenance に別々に記録する。payload の embedded version、archive、manifest、checksum、signature を stable 名へ書き換えてはならない
+7. stable workflow は `qualification_candidate_sha`、`payload_source_sha`、`gate_source_sha`、`workflow_definition_sha` を別 authority として記録し、`release-commit-chain-v1` の machine verdict が `pass` になるまで publish してはならない
+
+#### 13.1.1 release commit chain
+
+通常の release relation は qualification candidate = payload source = gate
+source である。workflow definition は release orchestration revision として
+別 commit を許可するが、product/source gate の代用にはならない。stable workflow
+は signed RC tag の detached worktree を作成し、その worktree で `cargo xtask
+check`、strict RC gate、replay stop-ship contract、output-quality matrix を実行する。
+
+qualification candidate と payload source が異なる場合、release は既定で停止する。
+例外 manifest は policy version、resolved commit range、全 changed path、change
+status、before/after blob SHA-256 を持ち、Git diff と完全一致しなければならない。
+許可対象は Markdown documentation のみである。`diag_*` / `xtask`、`corpus`、
+`eval`、`ci`、`.github/workflows`、oracle、packaging/release logic、symlink、rename、
+submodule または生成物の変更は qualification-affecting として拒否し、新しい
+candidate qualification を要求する。
+
+`release-commit-chain.json` と `release-provenance.json.release_integrity` は次を保持する。
+
+- 4 つの role-specific SHA
+- `relation_policy_version`
+- `relation_verdict`
+- resolved `commit_range`
+- changed-file/hash evidence
+- optional `diff_manifest_sha256`
+
+generic `GITHUB_SHA` の上書きで role を表現してはならない。relation mismatch の
+report は evidence artifact として保持するが、GitHub Release や channel pointer への
+write は行わない。
 
 ### 13.2 secondary channel
 

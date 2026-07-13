@@ -14,6 +14,10 @@ on:
       rollback_baseline_version:
         description: Previously published artifact semver used for rollback drill
         required: true
+      allowed_diff_manifest:
+        description: Optional repository-relative manifest for documentation-only qualification-to-payload differences
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -28,6 +32,8 @@ jobs:
       RELEASE_CHANNEL: stable
     steps:
       - uses: actions/checkout@v5.0.0
+        with:
+          fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@1.94.1
         with:
@@ -39,23 +45,10 @@ jobs:
           DISPATCH_RC_VERSION: ${{ github.event.inputs.rc_version }}
           DISPATCH_ROLLBACK_BASELINE_VERSION: ${{ github.event.inputs.rollback_baseline_version }}
         run: |
-          source_version="$(python3 - <<'PY'
-          import tomllib
-
-          with open("Cargo.toml", "rb") as handle:
-              cargo = tomllib.load(handle)
-          print(cargo["workspace"]["package"]["version"])
-          PY
-          )"
-
           requested_version="$DISPATCH_VERSION"
           rc_version="$DISPATCH_RC_VERSION"
           rollback_baseline_version="$DISPATCH_ROLLBACK_BASELINE_VERSION"
 
-          if [ "$rc_version" != "$source_version" ]; then
-            echo "::error::RC payload version '$rc_version' did not match Cargo.toml workspace version '$source_version'"
-            exit 1
-          fi
           if printf '%s' "$requested_version" | grep -q -- '-'; then
             echo "::error::stable workflow requires a final semver without prerelease suffix: '$requested_version'"
             exit 1
@@ -86,6 +79,8 @@ jobs:
           echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/stable-release-repo-root" >> "$GITHUB_ENV"
           echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/stable-release-assets" >> "$GITHUB_ENV"
           echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/stable-release-notes.md" >> "$GITHUB_ENV"
+          echo "PAYLOAD_SOURCE_ROOT=$RUNNER_TEMP/stable-release-payload-source" >> "$GITHUB_ENV"
+          echo "WORKFLOW_DEFINITION_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
           echo "PACKAGE_VERSION=$rc_version" >> "$GITHUB_ENV"
           echo "STABLE_VERSION=$requested_version" >> "$GITHUB_ENV"
           echo "ROLLBACK_BASELINE_VERSION=$rollback_baseline_version" >> "$GITHUB_ENV"
@@ -101,9 +96,12 @@ jobs:
       - name: Fetch immutable signed RC payload and release repository
         env:
           GH_TOKEN: ${{ github.token }}
+          ALLOWED_DIFF_MANIFEST: ${{ github.event.inputs.allowed_diff_manifest }}
         run: |
           rc_commit="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_RELEASE_TAG}" --jq '.object.sha')"
           echo "RC_COMMIT=$rc_commit" >> "$GITHUB_ENV"
+          echo "GATE_SOURCE_SHA=$rc_commit" >> "$GITHUB_ENV"
+          git fetch --no-tags origin "$rc_commit"
           gh release download "$RC_RELEASE_TAG" \
             --dir "$RELEASE_SEED_ROOT" \
             --pattern "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz" \
@@ -131,11 +129,54 @@ jobs:
             --expected-commit "$rc_commit" \
             --expected-payload-version "$PACKAGE_VERSION" \
             --output "$REPORT_ROOT/release/rc-payload-verification.json"
+          python3 - "$RELEASE_SEED_ROOT/release-provenance.json" "$REPORT_ROOT/release/qualification-report.json" <<'PY'
+          import json
+          import sys
+
+          source = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+          report = source["release"]["agent_output_quality"]
+          with open(sys.argv[2], "w", encoding="utf-8") as handle:
+              json.dump(report, handle, indent=2)
+              handle.write("\n")
+          PY
+          qualification_candidate_sha="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1], "r", encoding="utf-8"))["candidate_sha"])' "$REPORT_ROOT/release/qualification-report.json")"
+          git fetch --no-tags origin "$qualification_candidate_sha"
+          commit_chain_args=(
+            --repository-root "$GITHUB_WORKSPACE"
+            --qualification-report "$REPORT_ROOT/release/qualification-report.json"
+            --payload-source-sha "$rc_commit"
+            --gate-source-sha "$rc_commit"
+            --workflow-definition-sha "$WORKFLOW_DEFINITION_SHA"
+            --output "$REPORT_ROOT/release/release-commit-chain.json"
+          )
+          if [ -n "$ALLOWED_DIFF_MANIFEST" ]; then
+            case "$ALLOWED_DIFF_MANIFEST" in
+              /*|*..*) echo "::error::allowed_diff_manifest must be a safe repository-relative path"; exit 1 ;;
+            esac
+            commit_chain_args+=(--allowed-diff-manifest "$GITHUB_WORKSPACE/$ALLOWED_DIFF_MANIFEST")
+          fi
+          python3 ci/verify_release_commit_chain.py "${commit_chain_args[@]}"
+          git worktree add --detach "$PAYLOAD_SOURCE_ROOT" "$rc_commit"
+          payload_source_version="$(python3 - "$PAYLOAD_SOURCE_ROOT/Cargo.toml" <<'PY'
+          import sys
+          import tomllib
+
+          with open(sys.argv[1], "rb") as handle:
+              print(tomllib.load(handle)["workspace"]["package"]["version"])
+          PY
+          )"
+          if [ "$payload_source_version" != "$PACKAGE_VERSION" ]; then
+            echo "::error::RC payload version '$PACKAGE_VERSION' did not match payload-source Cargo.toml '$payload_source_version'"
+            exit 1
+          fi
           rm -rf "$RELEASE_REPO_ROOT/targets/$TARGET_TRIPLE/versions/v${PACKAGE_VERSION}"
       - name: cargo xtask check
-        run: cargo xtask check
+        run: |
+          cd "$PAYLOAD_SOURCE_ROOT"
+          cargo xtask check
       - name: Strict RC gate
         run: |
+          cd "$PAYLOAD_SOURCE_ROOT"
           cargo xtask rc-gate \
             --root corpus \
             --report-dir "$REPORT_ROOT/rc-gate" \
@@ -145,11 +186,13 @@ jobs:
             --ux-signoff-report eval/rc/ux-signoff.json
       - name: Path-aware replay stop-ship contract
         run: |
+          cd "$PAYLOAD_SOURCE_ROOT"
           python3 ci/gate_replay_contract.py \
             --replay-report "$REPORT_ROOT/rc-gate/replay-report.json" \
             --output "$REPORT_ROOT/rc-gate/replay-stop-ship.json"
       - name: Output-quality candidate GCC/path matrix
         run: |
+          cd "$PAYLOAD_SOURCE_ROOT"
           cargo xtask output-quality-matrix \
             --root corpus \
             --output "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
@@ -178,8 +221,6 @@ jobs:
           cp -R "$RELEASE_REPO_ROOT" "$release_repo_dir"
           tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
       - name: Write release provenance
-        env:
-          GITHUB_SHA: ${{ env.RC_COMMIT }}
         run: |
           python3 ci/release_provenance.py \
             --workflow stable-release \
@@ -192,6 +233,7 @@ jobs:
             --release-channel "$RELEASE_CHANNEL" \
             --maturity-label "$MATURITY_LABEL" \
             --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
+            --release-commit-chain-report "$REPORT_ROOT/release/release-commit-chain.json" \
             --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256"
       - name: Write release notes
@@ -232,6 +274,7 @@ jobs:
             "$REPORT_ROOT/stable-release/promotion-evidence.json"
             "$REPORT_ROOT/stable-release/rollback-drill.json"
             "$REPORT_ROOT/release/rc-payload-verification.json"
+            "$REPORT_ROOT/release/release-commit-chain.json"
             "$REPORT_ROOT/release/release-provenance.json"
           )
 

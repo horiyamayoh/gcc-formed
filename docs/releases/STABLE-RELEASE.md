@@ -30,11 +30,13 @@ This document defines the automation contract used for the published [`1.0.0` st
 Stable release automation must prove all of the following in one run:
 
 1. Download the canonical `x86_64-unknown-linux-musl` payload and release repository from the signed RC GitHub prerelease; do not rebuild or re-sign it.
-2. Verify the RC provenance commit equals the RC release tag commit and the payload version, manifest, checksums, and detached signature agree. Release-orchestration-only maintenance may run from a later workflow checkout without changing the promoted source commit.
-3. Seed the immutable release repository from the RC `.release-repo.tar.gz` bundle.
-4. Re-publish the unchanged RC control directory into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
-5. Install the rollback baseline by exact version, install the candidate through the attested `stable` channel with checksum/signature pins, then roll back with one `current` symlink switch.
-6. Publish stable GitHub Release `v1.0.0` with the exact RC payload assets (which retain their honest `1.0.0-rc.N` payload filenames), final release-repo bundle, and stable-cut evidence.
+2. Verify the RC provenance commit equals the RC release tag commit and the payload version, manifest, checksums, and detached signature agree.
+3. Resolve and record `qualification_candidate_sha`, `payload_source_sha`, `gate_source_sha`, and `workflow_definition_sha`. Require a `release-commit-chain-v1` pass before any publication write.
+4. Run product/source gates from a detached worktree at `payload_source_sha`. Release-orchestration-only maintenance may run from a later workflow checkout, which remains separately recorded as `workflow_definition_sha`.
+5. Seed the immutable release repository from the RC `.release-repo.tar.gz` bundle.
+6. Re-publish the unchanged RC control directory into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
+7. Install the rollback baseline by exact version, install the candidate through the attested `stable` channel with checksum/signature pins, then roll back with one `current` symlink switch.
+8. Publish stable GitHub Release `v1.0.0` with the exact RC payload assets (which retain their honest `1.0.0-rc.N` payload filenames), final release-repo bundle, and stable-cut evidence.
 
 `1.0.0` is the stable release and channel identity. The promoted immutable
 payload retains its `1.0.0-rc.N` semver because changing an embedded version,
@@ -47,6 +49,13 @@ payload `product_version=1.0.0-rc.1`, build commit, and archive SHA-256. Direct
 archive execution does not infer the stable identity.
 
 The canonical automation entrypoint is `cargo xtask stable-release`.
+
+The workflow accepts an optional repository-relative `allowed_diff_manifest`.
+It is not a general allowlist: the manifest must exactly reproduce the resolved
+qualification-to-payload commit range and every before/after blob hash, and the
+verifier accepts only Markdown documentation. Runtime, corpus, eval/oracle,
+gate, workflow, packaging, symlink, rename, and generated-artifact changes stop
+the release and require requalification.
 
 The GitHub Release body for a stable cut is generated from [PUBLIC-SURFACE.md](../support/PUBLIC-SURFACE.md) plus the canonical support wording in [SUPPORT-BOUNDARY.md](../support/SUPPORT-BOUNDARY.md) via `python3 ci/public_surface.py render-release-body --kind stable ...`. Do not hand-edit workflow-local release-note prose.
 
@@ -101,5 +110,18 @@ Every stable cut must retain these files:
 - `promotion-evidence.json`
 - `rollback-drill.json`
 - `release-provenance.json`
+- `release-commit-chain.json`
 
 These evidence files must agree on the candidate version, target triple, signing metadata, promoted channel pointers, and rollback baseline version.
+
+## Published v1.0.0 historical commit chain
+
+The published v1.0.0 evidence predates `release-commit-chain-v1` and is therefore
+classified as `unverified`, not retroactively rewritten or inferred as pass. It
+records qualification candidate `efa3dfc64905baf5fcd96811d35e50e1ed8387c9`,
+RC payload source `c1573e9434638037e8e22122451bafd8aff62a71`, and stable
+workflow checkout `b918e44afc4c095a44afab6139d5ecc84cd91ec3`; no typed
+`gate_source_sha` was recorded. The public v1.0.0 tag, assets, hashes, signatures,
+and channel mapping remain immutable. Future stable or maintenance publication
+must produce a new typed pass verdict rather than upgrading this historical
+evidence by assertion.

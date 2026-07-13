@@ -83,6 +83,9 @@ Use the bug report’s `VersionBand` field first. If current runtime output stil
 1. Confirm the install root, target triple, and access checks from `--formed-self-check`.
 2. For end-user recovery, follow [rollback.md](rollback.md).
 3. For stable-cut evidence or channel-promotion questions, also inspect [STABLE-RELEASE.md](../releases/STABLE-RELEASE.md).
+4. Compare `release-commit-chain.json` with `release-provenance.json.release_integrity`. Record all four typed SHA roles, the policy version, verdict, and diff-manifest hash.
+5. If the verdict is `fail`, preserve the report and stop publication; do not edit a tag, release body, asset, or channel pointer while investigating. A runtime/corpus/eval/oracle/gate/workflow/packaging diff requires requalification, not a broader allowlist.
+6. Legacy v1.0.0 evidence without a typed gate SHA is `unverified`. Do not reinterpret it as pass or mutate the published assets; use it only as historical input to the incident record.
 
 ## 4. Initial Severity Decision
 

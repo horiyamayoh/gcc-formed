@@ -35,6 +35,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--release-channel", default=None)
     parser.add_argument("--maturity-label", default=None)
     parser.add_argument("--rollback-baseline-version", default=None)
+    parser.add_argument("--release-commit-chain-report", type=Path, default=None)
+    parser.add_argument("--payload-source-sha", default=None)
+    parser.add_argument("--workflow-definition-sha", default=None)
     parser.add_argument("--signing-key-id", default=None)
     parser.add_argument("--signing-public-key-sha256", default=None)
     parser.add_argument("--matrix-gcc-image", default=None)
@@ -124,6 +127,7 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
             "rc_payload_verification": load_json(
                 release / "rc-payload-verification.json"
             ),
+            "release_commit_chain": load_json(release / "release-commit-chain.json"),
             "stable_release_command": load_json(release / "stable-release-command.json"),
             "stable_release_report": load_json(stable / "stable-release-report.json"),
             "promotion_evidence": load_json(stable / "promotion-evidence.json"),
@@ -194,6 +198,37 @@ def build_payload(args: argparse.Namespace) -> dict:
         "github": build_github_metadata(),
         "release": build_release_evidence(args, report_root),
     }
+    if args.workflow == "stable-release":
+        if args.release_commit_chain_report is None:
+            raise ValueError("stable-release requires --release-commit-chain-report")
+        release_integrity = load_json(args.release_commit_chain_report)
+        if release_integrity is None:
+            raise ValueError("release commit-chain report does not exist")
+        if release_integrity.get("relation_verdict") != "pass":
+            raise ValueError("release commit-chain relation_verdict must be pass")
+        for field in (
+            "qualification_candidate_sha",
+            "payload_source_sha",
+            "gate_source_sha",
+            "workflow_definition_sha",
+            "relation_policy_version",
+        ):
+            if not release_integrity.get(field):
+                raise ValueError(f"release commit-chain report missing {field}")
+        if payload["release"].get("release_commit_chain") != release_integrity:
+            raise ValueError(
+                "release commit-chain report does not match report-root release evidence"
+            )
+        payload["release_integrity"] = release_integrity
+    elif args.payload_source_sha or args.workflow_definition_sha:
+        if not args.payload_source_sha or not args.workflow_definition_sha:
+            raise ValueError(
+                "payload and workflow source identities must be supplied together"
+            )
+        payload["source_identity"] = {
+            "payload_source_sha": args.payload_source_sha,
+            "workflow_definition_sha": args.workflow_definition_sha,
+        }
     release_scope = build_release_scope(args)
     if release_scope is not None:
         payload["release_scope"] = release_scope

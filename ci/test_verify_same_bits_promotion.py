@@ -32,20 +32,29 @@ class SameBitsPromotionTest(unittest.TestCase):
                 json.dumps(
                     {
                         "workflow": "public-beta-release",
-                        "github": {"sha": "a" * 40},
+                        "github": {"sha": "b" * 40},
+                        "source_identity": {
+                            "payload_source_sha": "a" * 40,
+                            "workflow_definition_sha": "b" * 40,
+                        },
                         "release_scope": {"package_version": "1.0.0-rc.1"},
                         "release": {
-                            key: {"status": "pass"}
-                            for key in (
-                                "package",
-                                "install",
-                                "install_release",
-                                "replay_stop_ship",
-                                "agent_output_quality",
-                                "agent_output_quality_integrity",
-                                "no_subagent_attestation",
-                                "model_agent_tool_manifest",
-                            )
+                            **{
+                                key: {"status": "pass"}
+                                for key in (
+                                    "package",
+                                    "install",
+                                    "install_release",
+                                    "replay_stop_ship",
+                                    "agent_output_quality_integrity",
+                                    "no_subagent_attestation",
+                                    "model_agent_tool_manifest",
+                                )
+                            },
+                            "agent_output_quality": {
+                                "status": "pass",
+                                "candidate_sha": "a" * 40,
+                            },
                         },
                     }
                 ),
@@ -71,7 +80,10 @@ class SameBitsPromotionTest(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            self.assertEqual(json.loads(output.read_text())["status"], "pass")
+            report = json.loads(output.read_text())
+            self.assertEqual(report["status"], "pass")
+            self.assertEqual(report["qualification_candidate_sha"], "a" * 40)
+            self.assertEqual(report["payload_source_sha"], "a" * 40)
 
     def test_rejects_different_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -91,17 +103,22 @@ class SameBitsPromotionTest(unittest.TestCase):
                         "github": {"sha": "b" * 40},
                         "release_scope": {"package_version": "1.0.0-rc.1"},
                         "release": {
-                            key: {"status": "pass"}
-                            for key in (
-                                "package",
-                                "install",
-                                "install_release",
-                                "replay_stop_ship",
-                                "agent_output_quality",
-                                "agent_output_quality_integrity",
-                                "no_subagent_attestation",
-                                "model_agent_tool_manifest",
-                            )
+                            **{
+                                key: {"status": "pass"}
+                                for key in (
+                                    "package",
+                                    "install",
+                                    "install_release",
+                                    "replay_stop_ship",
+                                    "agent_output_quality_integrity",
+                                    "no_subagent_attestation",
+                                    "model_agent_tool_manifest",
+                                )
+                            },
+                            "agent_output_quality": {
+                                "status": "pass",
+                                "candidate_sha": "a" * 40,
+                            },
                         },
                     }
                 ),

@@ -170,6 +170,10 @@ class ReleaseProvenanceTest(unittest.TestCase):
                 "sig-1",
                 "--signing-public-key-sha256",
                 "abcd1234",
+                "--payload-source-sha",
+                "a" * 40,
+                "--workflow-definition-sha",
+                "b" * 40,
                 env=self.github_env(RELEASE_TAG="v0.2.0-beta.1"),
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
@@ -179,6 +183,8 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release_scope"]["release_channel"], "beta")
             self.assertEqual(payload["release_scope"]["maturity_label"], "v1beta")
             self.assertEqual(payload["release_scope"]["signing_key_id"], "sig-1")
+            self.assertEqual(payload["source_identity"]["payload_source_sha"], "a" * 40)
+            self.assertEqual(payload["source_identity"]["workflow_definition_sha"], "b" * 40)
             self.assertEqual(payload["release"]["install_release"]["kind"], "install-release")
             self.assertEqual(payload["release"]["snapshot_report"]["kind"], "snapshot")
             self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
@@ -208,6 +214,20 @@ class ReleaseProvenanceTest(unittest.TestCase):
                 {"kind": "replay-stop-ship", "status": "fail"},
             )
             write_json(report_root / "rc-gate" / "rc-gate-report.json", {"kind": "rc-gate"})
+            commit_chain = report_root / "release" / "release-commit-chain.json"
+            write_json(
+                commit_chain,
+                {
+                    "schema_version": 1,
+                    "relation_policy_version": "release-commit-chain-v1",
+                    "relation_verdict": "pass",
+                    "qualification_candidate_sha": "a" * 40,
+                    "payload_source_sha": "b" * 40,
+                    "gate_source_sha": "b" * 40,
+                    "workflow_definition_sha": "c" * 40,
+                    "diff_manifest_sha256": "d" * 64,
+                },
+            )
 
             completed = self.run_release_provenance(
                 "--workflow",
@@ -234,6 +254,8 @@ class ReleaseProvenanceTest(unittest.TestCase):
                 "sig-2",
                 "--signing-public-key-sha256",
                 "efgh5678",
+                "--release-commit-chain-report",
+                str(commit_chain),
                 env=self.github_env(RELEASE_TAG="v1.0.0"),
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
@@ -246,14 +268,36 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["release_scope"]["stable_release_version"], "1.0.0")
             self.assertEqual(payload["release_scope"]["promoted_from_tag"], "v1.0.0-rc.1")
             self.assertEqual(payload["release"]["rc_payload_verification"]["status"], "pass")
+            self.assertEqual(payload["release"]["release_commit_chain"]["relation_verdict"], "pass")
             self.assertEqual(payload["release"]["stable_release_command"]["kind"], "command")
             self.assertEqual(payload["release"]["promotion_evidence"]["kind"], "promotion")
             self.assertEqual(payload["release"]["rc_gate"]["kind"], "rc-gate")
             self.assertEqual(payload["release"]["rollout_matrix_report"]["kind"], "rollout-matrix-report")
             self.assertEqual(payload["release"]["replay_stop_ship"]["kind"], "replay-stop-ship")
+            self.assertEqual(payload["release_integrity"]["relation_verdict"], "pass")
+            self.assertEqual(payload["release_integrity"]["qualification_candidate_sha"], "a" * 40)
+            self.assertEqual(payload["release_integrity"]["payload_source_sha"], "b" * 40)
+            self.assertEqual(payload["release_integrity"]["gate_source_sha"], "b" * 40)
+            self.assertEqual(payload["release_integrity"]["workflow_definition_sha"], "c" * 40)
+            self.assertEqual(payload["release_integrity"]["diff_manifest_sha256"], "d" * 64)
             self.assertNotIn("release_publish", payload["release"])
             self.assertNotIn("install_release", payload["release"])
             self.assert_current_multi_band_vocabulary(payload)
+
+            write_json(commit_chain, {"relation_verdict": "fail"})
+            rejected = self.run_release_provenance(
+                "--workflow",
+                "stable-release",
+                "--report-root",
+                str(report_root),
+                "--output",
+                str(output_path),
+                "--release-commit-chain-report",
+                str(commit_chain),
+                env=self.github_env(RELEASE_TAG="v1.0.0"),
+            )
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("relation_verdict must be pass", rejected.stderr)
 
 
 class ReleaseManifestVocabularyTest(unittest.TestCase):
