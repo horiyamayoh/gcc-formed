@@ -808,6 +808,8 @@ mod tests {
     use super::*;
     use std::fs;
     use std::path::Path;
+    #[cfg(unix)]
+    use std::time::Duration;
 
     fn direct_topology() -> ActiveBackendTopology {
         ActiveBackendTopology {
@@ -1252,7 +1254,7 @@ exit 0
         .unwrap();
         make_executable(&backend);
 
-        let probe = probe_backend(&backend, "gcc-formed".to_string()).unwrap();
+        let probe = probe_test_backend(&backend).unwrap();
 
         assert!(probe.add_output_sarif_supported);
         assert_eq!(
@@ -1283,7 +1285,7 @@ exit 0
         .unwrap();
         make_executable(&backend);
 
-        let probe = probe_backend(&backend, "gcc-formed".to_string()).unwrap();
+        let probe = probe_test_backend(&backend).unwrap();
 
         assert!(!probe.add_output_sarif_supported);
         assert_eq!(
@@ -1448,6 +1450,21 @@ exit 0
             unknown.allowed_processing_paths,
             BTreeSet::from([ProcessingPath::Passthrough])
         );
+    }
+
+    #[cfg(unix)]
+    fn probe_test_backend(path: &Path) -> Result<ProbeResult, ProbeError> {
+        for attempt in 0..5 {
+            match probe_backend(path, "gcc-formed".to_string()) {
+                Err(ProbeError::VersionProbe { source, .. })
+                    if source.raw_os_error() == Some(26) && attempt < 4 =>
+                {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                result => return result,
+            }
+        }
+        unreachable!("the final fake-backend probe attempt always returns")
     }
 
     #[cfg(unix)]
