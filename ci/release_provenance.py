@@ -29,6 +29,8 @@ def parse_args() -> argparse.Namespace:
         help="Path to the release-provenance.json output file.",
     )
     parser.add_argument("--package-version", default=None)
+    parser.add_argument("--stable-release-version", default=None)
+    parser.add_argument("--promoted-from-tag", default=None)
     parser.add_argument("--target-triple", default=None)
     parser.add_argument("--release-channel", default=None)
     parser.add_argument("--maturity-label", default=None)
@@ -89,6 +91,8 @@ def build_release_scope(args: argparse.Namespace) -> dict | None:
     scope = compact_dict(
         {
             "package_version": args.package_version,
+            "stable_release_version": args.stable_release_version,
+            "promoted_from_tag": args.promoted_from_tag,
             "target_triple": args.target_triple,
             "release_channel": args.release_channel,
             "maturity_label": args.maturity_label,
@@ -117,7 +121,9 @@ def build_release_evidence(args: argparse.Namespace, report_root: Path) -> dict:
         stable = stable_root(report_root)
         rc_gate = report_root / "rc-gate"
         return {
-            "package": load_json(release / "package.json"),
+            "rc_payload_verification": load_json(
+                release / "rc-payload-verification.json"
+            ),
             "stable_release_command": load_json(release / "stable-release-command.json"),
             "stable_release_report": load_json(stable / "stable-release-report.json"),
             "promotion_evidence": load_json(stable / "promotion-evidence.json"),

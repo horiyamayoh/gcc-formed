@@ -702,7 +702,8 @@ primary channel は **immutable versioned binary archive を置く内部 artifac
 2. `latest` のような mutable alias は convenience であり、製品契約の主語にしない
 3. CI は immutable version + checksum を pin する
 4. promote（canary → beta → stable）は artifact 再build ではなく metadata の昇格で行う
-5. stable cut workflow は prior GitHub Release の immutable `.release-repo.tar.gz` bundle を seed に使い、same bits を GitHub Release asset と release-repo bundle の両方へ再公開しなければならない
+5. stable cut workflow は signed RC GitHub prerelease の immutable control / `.release-repo.tar.gz` bundle を seed に使い、RC provenance の commit と payload hash を検証し、same bits を stable GitHub Release asset と release-repo bundle の両方へ再公開しなければならない
+6. stable release identity `1.0.0` と immutable payload semver `1.0.0-rc.N` は provenance に別々に記録する。payload の embedded version、archive、manifest、checksum、signature を stable 名へ書き換えてはならない
 
 ### 13.2 secondary channel
 

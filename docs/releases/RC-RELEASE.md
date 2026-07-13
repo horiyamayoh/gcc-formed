@@ -56,4 +56,5 @@ Use `subject_blocks_v2` for the immediate presentation rollback,
 `--formed-raw` for byte-faithful compiler output, or the signed
 `0.2.0-beta.1` package as the artifact rollback baseline. Stable promotion
 uses [STABLE-RELEASE.md](STABLE-RELEASE.md) only after RC field evidence is
-green.
+green. That workflow consumes this RC's immutable signed payload directly; it
+does not rebuild, rename, or re-sign the payload for the stable release.

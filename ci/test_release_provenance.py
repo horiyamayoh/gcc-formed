@@ -192,6 +192,10 @@ class ReleaseProvenanceTest(unittest.TestCase):
             output_path = report_root / "release" / "release-provenance.json"
             write_json(report_root / "release" / "stable-release-command.json", {"kind": "command"})
             write_json(
+                report_root / "release" / "rc-payload-verification.json",
+                {"kind": "same-bits", "status": "pass"},
+            )
+            write_json(
                 report_root / "stable-release" / "promotion-evidence.json",
                 {"kind": "promotion"},
             )
@@ -213,7 +217,11 @@ class ReleaseProvenanceTest(unittest.TestCase):
                 "--output",
                 str(output_path),
                 "--package-version",
+                "1.0.0-rc.1",
+                "--stable-release-version",
                 "1.0.0",
+                "--promoted-from-tag",
+                "v1.0.0-rc.1",
                 "--target-triple",
                 "x86_64-unknown-linux-musl",
                 "--release-channel",
@@ -234,6 +242,10 @@ class ReleaseProvenanceTest(unittest.TestCase):
             self.assertEqual(payload["workflow"], "stable-release")
             self.assertEqual(payload["release_scope"]["rollback_baseline_version"], "0.2.0-beta.1")
             self.assertEqual(payload["release_scope"]["release_channel"], "stable")
+            self.assertEqual(payload["release_scope"]["package_version"], "1.0.0-rc.1")
+            self.assertEqual(payload["release_scope"]["stable_release_version"], "1.0.0")
+            self.assertEqual(payload["release_scope"]["promoted_from_tag"], "v1.0.0-rc.1")
+            self.assertEqual(payload["release"]["rc_payload_verification"]["status"], "pass")
             self.assertEqual(payload["release"]["stable_release_command"]["kind"], "command")
             self.assertEqual(payload["release"]["promotion_evidence"]["kind"], "promotion")
             self.assertEqual(payload["release"]["rc_gate"]["kind"], "rc-gate")

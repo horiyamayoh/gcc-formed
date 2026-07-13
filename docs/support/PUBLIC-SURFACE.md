@@ -72,7 +72,7 @@ rc_known_limits:
   - Human population latency, preference, and usability non-inferiority were not measured.
   - `GCC16+` and unknown gcc-like compilers remain outside the current `GCC 9-15` contract.
   - Raw fallback remains part of the shipped contract.
-stable_release_intro: This GitHub Release publishes stable artifact `{version}` from a single signed build and promotes the same published bits through `canary`, `beta`, and `stable` without rebuilding.
+stable_release_intro: This GitHub Release establishes stable release `{version}` by promoting the previously signed RC payload through `canary`, `beta`, and `stable` without rebuilding, renaming, or re-signing it. The immutable payload retains its RC semver and hashes; provenance records both identities.
 stable_evidence_lines:
   - rollback baseline version: `{rollback_baseline_version}`
   - signing key id: `{signing_key_id}`
@@ -81,6 +81,7 @@ stable_evidence_lines:
   - promotion evidence: `promotion-evidence.json`
   - rollback drill: `rollback-drill.json`
   - provenance bundle: `release-provenance.json`
+  - RC payload verification: `rc-payload-verification.json`
   - rollout matrix report: `rollout-matrix-report.json`
   - path-aware replay stop-ship report: `replay-stop-ship.json`
   - rc gate report: `rc-gate-report.json`

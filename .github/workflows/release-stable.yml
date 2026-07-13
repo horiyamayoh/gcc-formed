@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Stable artifact semver without leading v
+        description: Stable GitHub Release semver without leading v
         required: true
         default: 1.0.0
+      rc_version:
+        description: Signed release-candidate payload semver promoted without rebuilding
+        required: true
+        default: 1.0.0-rc.1
       rollback_baseline_version:
         description: Previously published artifact semver used for rollback drill
         required: true
@@ -20,9 +24,8 @@ jobs:
     env:
       TARGET_TRIPLE: x86_64-unknown-linux-musl
       ARTIFACT_SLUG: linux-x86_64-musl
-      MATURITY_LABEL: v1beta
+      MATURITY_LABEL: v1.0.0
       RELEASE_CHANNEL: stable
-      RELEASE_SIGNING_PRIVATE_KEY_HEX: ${{ secrets.RELEASE_SIGNING_PRIVATE_KEY_HEX }}
     steps:
       - uses: actions/checkout@v5.0.0
       - name: Install Rust toolchain
@@ -33,9 +36,10 @@ jobs:
       - name: Resolve runtime paths and stable release versions
         env:
           DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_RC_VERSION: ${{ github.event.inputs.rc_version }}
           DISPATCH_ROLLBACK_BASELINE_VERSION: ${{ github.event.inputs.rollback_baseline_version }}
         run: |
-          package_version="$(python3 - <<'PY'
+          source_version="$(python3 - <<'PY'
           import tomllib
 
           with open("Cargo.toml", "rb") as handle:
@@ -45,16 +49,24 @@ jobs:
           )"
 
           requested_version="$DISPATCH_VERSION"
+          rc_version="$DISPATCH_RC_VERSION"
           rollback_baseline_version="$DISPATCH_ROLLBACK_BASELINE_VERSION"
 
-          if [ "$requested_version" != "$package_version" ]; then
-            echo "::error::requested stable version '$requested_version' did not match Cargo.toml workspace version '$package_version'"
+          if [ "$rc_version" != "$source_version" ]; then
+            echo "::error::RC payload version '$rc_version' did not match Cargo.toml workspace version '$source_version'"
             exit 1
           fi
           if printf '%s' "$requested_version" | grep -q -- '-'; then
             echo "::error::stable workflow requires a final semver without prerelease suffix: '$requested_version'"
             exit 1
           fi
+          case "$rc_version" in
+            *-rc.*) ;;
+            *)
+              echo "::error::same-bits stable promotion requires an RC payload semver: '$rc_version'"
+              exit 1
+              ;;
+          esac
           if [ -z "$rollback_baseline_version" ]; then
             echo "::error::rollback_baseline_version is required"
             exit 1
@@ -66,46 +78,47 @@ jobs:
 
           work_root="$RUNNER_TEMP/stable-release-work"
           dist_dir="$work_root/dist"
-          vendor_dir="$work_root/vendor"
-          signing_key_path="$work_root/release-signing.key"
 
           echo "REPORT_ROOT=$RUNNER_TEMP/stable-release" >> "$GITHUB_ENV"
           echo "WORK_ROOT=$work_root" >> "$GITHUB_ENV"
           echo "DIST_DIR=$dist_dir" >> "$GITHUB_ENV"
-          echo "VENDOR_DIR=$vendor_dir" >> "$GITHUB_ENV"
           echo "RELEASE_SEED_ROOT=$RUNNER_TEMP/stable-release-seed" >> "$GITHUB_ENV"
           echo "RELEASE_REPO_ROOT=$RUNNER_TEMP/stable-release-repo-root" >> "$GITHUB_ENV"
           echo "RELEASE_ASSET_ROOT=$RUNNER_TEMP/stable-release-assets" >> "$GITHUB_ENV"
           echo "RELEASE_NOTES_PATH=$RUNNER_TEMP/stable-release-notes.md" >> "$GITHUB_ENV"
-          echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"
-          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$rc_version" >> "$GITHUB_ENV"
+          echo "STABLE_VERSION=$requested_version" >> "$GITHUB_ENV"
           echo "ROLLBACK_BASELINE_VERSION=$rollback_baseline_version" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v${package_version}" >> "$GITHUB_ENV"
-          echo "CONTROL_DIR=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
-          echo "PRIMARY_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
-          echo "DEBUG_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
-          echo "SOURCE_ARCHIVE=$dist_dir/gcc-formed-v${package_version}-${ARTIFACT_SLUG}/gcc-formed-v${package_version}-source.tar.gz" >> "$GITHUB_ENV"
-      - name: Ensure signing key is configured
-        run: |
-          if [ -z "$RELEASE_SIGNING_PRIVATE_KEY_HEX" ]; then
-            echo "::error::RELEASE_SIGNING_PRIVATE_KEY_HEX repository secret is required for stable releases"
-            exit 1
-          fi
+          echo "RELEASE_TAG=v${requested_version}" >> "$GITHUB_ENV"
+          echo "RC_RELEASE_TAG=v${rc_version}" >> "$GITHUB_ENV"
+          echo "CONTROL_DIR=$dist_dir/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}" >> "$GITHUB_ENV"
+          echo "PRIMARY_ARCHIVE=$dist_dir/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}.tar.gz" >> "$GITHUB_ENV"
+          echo "DEBUG_ARCHIVE=$dist_dir/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}.debug.tar.gz" >> "$GITHUB_ENV"
+          echo "SOURCE_ARCHIVE=$dist_dir/gcc-formed-v${rc_version}-${ARTIFACT_SLUG}/gcc-formed-v${rc_version}-source.tar.gz" >> "$GITHUB_ENV"
       - name: Prepare stable release directories
         run: |
-          mkdir -p "$REPORT_ROOT/release" "$REPORT_ROOT/rc-gate" "$RELEASE_SEED_ROOT" "$RELEASE_ASSET_ROOT" "$WORK_ROOT" "$DIST_DIR" "$VENDOR_DIR"
-      - name: Seed immutable release repo from previous GitHub Release
+          mkdir -p "$REPORT_ROOT/release" "$REPORT_ROOT/rc-gate" "$RELEASE_SEED_ROOT" "$RELEASE_ASSET_ROOT" "$WORK_ROOT" "$DIST_DIR"
+      - name: Fetch immutable signed RC payload and release repository
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "v${ROLLBACK_BASELINE_VERSION}" \
+          gh release download "$RC_RELEASE_TAG" \
             --dir "$RELEASE_SEED_ROOT" \
-            --pattern "gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
-          bundle="$RELEASE_SEED_ROOT/gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
-          tar -xzf "$bundle" -C "$RELEASE_SEED_ROOT"
+            --pattern "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz" \
+            --pattern "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz" \
+            --pattern "release-provenance.json"
+          tar -xzf "$RELEASE_SEED_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz" -C "$DIST_DIR"
+          tar -xzf "$RELEASE_SEED_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz" -C "$RELEASE_SEED_ROOT"
           mv \
-            "$RELEASE_SEED_ROOT/gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo" \
+            "$RELEASE_SEED_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo" \
             "$RELEASE_REPO_ROOT"
+          python3 ci/verify_same_bits_promotion.py \
+            --rc-provenance "$RELEASE_SEED_ROOT/release-provenance.json" \
+            --control-dir "$CONTROL_DIR" \
+            --expected-commit "$GITHUB_SHA" \
+            --expected-payload-version "$PACKAGE_VERSION" \
+            --output "$REPORT_ROOT/release/rc-payload-verification.json"
+          rm -rf "$RELEASE_REPO_ROOT/targets/$TARGET_TRIPLE/versions/v${PACKAGE_VERSION}"
       - name: cargo xtask check
         run: cargo xtask check
       - name: Strict RC gate
@@ -127,24 +140,6 @@ jobs:
           cargo xtask output-quality-matrix \
             --root corpus \
             --output "$REPORT_ROOT/rc-gate/human-readable-contract-matrix.json"
-      - name: Vendor dependency tree
-        run: cargo xtask vendor --output-dir "$VENDOR_DIR" > "$REPORT_ROOT/release/vendor.json"
-      - name: Hermetic release build
-        run: cargo xtask hermetic-release-check --vendor-dir "$VENDOR_DIR" --bin gcc-formed --target-triple "$TARGET_TRIPLE" > "$REPORT_ROOT/release/hermetic-release.json"
-      - name: Write release signing key
-        run: |
-          printf '%s\n' "$RELEASE_SIGNING_PRIVATE_KEY_HEX" > "$SIGNING_KEY_PATH"
-          chmod 0600 "$SIGNING_KEY_PATH"
-      - name: Signed package generation
-        run: |
-          cargo xtask package \
-            --binary "target/hermetic-release/${TARGET_TRIPLE}/release/gcc-formed" \
-            --target-triple "$TARGET_TRIPLE" \
-            --out-dir "$DIST_DIR" \
-            --release-channel "$RELEASE_CHANNEL" \
-            --maturity-label "$MATURITY_LABEL" \
-            --signing-private-key "$SIGNING_KEY_PATH" \
-            > "$REPORT_ROOT/release/package.json"
       - name: Stable release promotion and rollback drill
         run: |
           cargo xtask stable-release \
@@ -175,6 +170,8 @@ jobs:
             --report-root "$REPORT_ROOT" \
             --output "$REPORT_ROOT/release/release-provenance.json" \
             --package-version "$PACKAGE_VERSION" \
+            --stable-release-version "$STABLE_VERSION" \
+            --promoted-from-tag "$RC_RELEASE_TAG" \
             --target-triple "$TARGET_TRIPLE" \
             --release-channel "$RELEASE_CHANNEL" \
             --maturity-label "$MATURITY_LABEL" \
@@ -185,7 +182,7 @@ jobs:
         run: |
           python3 ci/public_surface.py render-release-body \
             --kind stable \
-            --version "$PACKAGE_VERSION" \
+            --version "$STABLE_VERSION" \
             --repository "$GITHUB_REPOSITORY" \
             --commit "$GITHUB_SHA" \
             --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
@@ -218,14 +215,15 @@ jobs:
             "$REPORT_ROOT/stable-release/stable-release-summary.md"
             "$REPORT_ROOT/stable-release/promotion-evidence.json"
             "$REPORT_ROOT/stable-release/rollback-drill.json"
+            "$REPORT_ROOT/release/rc-payload-verification.json"
             "$REPORT_ROOT/release/release-provenance.json"
           )
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+            gh release edit "$RELEASE_TAG" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
           else
-            gh release create "$RELEASE_TAG" "${assets[@]}" --title "gcc-formed ${PACKAGE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+            gh release create "$RELEASE_TAG" "${assets[@]}" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
           fi
       - name: Upload stable release evidence
         if: always()

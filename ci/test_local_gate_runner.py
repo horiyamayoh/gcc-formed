@@ -58,7 +58,7 @@ class LocalGateRunnerTest(unittest.TestCase):
             )
             self.assertEqual(
                 env["CONTROL_DIR"],
-                str(report_root / "work" / "dist" / "gcc-formed-v0.2.0-beta.1-linux-x86_64-musl"),
+                str(report_root / "work" / "dist" / "gcc-formed-v1.0.0-rc.1-linux-x86_64-musl"),
             )
 
     def test_ci_execution_env_defaults_stay_inside_runner_temp_work_root(self) -> None:
@@ -80,7 +80,7 @@ class LocalGateRunnerTest(unittest.TestCase):
             self.assertEqual(env["SIGNING_KEY_PATH"], str(work_root / "release-signing.key"))
             self.assertEqual(
                 env["CONTROL_DIR"],
-                str(work_root / "dist" / "gcc-formed-v0.2.0-beta.1-linux-x86_64-musl"),
+                str(work_root / "dist" / "gcc-formed-v1.0.0-rc.1-linux-x86_64-musl"),
             )
 
     def test_run_single_workflow_fail_fast_still_runs_always_steps(self) -> None:

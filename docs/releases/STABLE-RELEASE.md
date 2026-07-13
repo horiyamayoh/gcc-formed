@@ -18,7 +18,8 @@ This document defines the automation contract for the future `1.0.0` stable cut.
 
 ## Preconditions
 
-- `Cargo.toml` workspace version already matches the intended stable artifact semver, for example `1.0.0`.
+- `Cargo.toml` workspace version matches the signed RC payload semver, for example `1.0.0-rc.1`.
+- The signed RC GitHub prerelease and its control/release-repository bundles exist.
 - The stable candidate passes a strict `cargo xtask rc-gate` run with no blockers.
 - `RELEASE_SIGNING_PRIVATE_KEY_HEX` is configured for the GitHub workflow or a local Ed25519 signing key is available for `cargo xtask package`.
 - A previously published GitHub Release exists for the rollback baseline version, and its `.release-repo.tar.gz` bundle is available.
@@ -28,12 +29,17 @@ This document defines the automation contract for the future `1.0.0` stable cut.
 
 Stable release automation must prove all of the following in one run:
 
-1. Build the canonical `x86_64-unknown-linux-musl` payload exactly once.
-2. Sign the candidate control directory exactly once.
-3. Seed the immutable release repository from a previously published `.release-repo.tar.gz` bundle.
-4. Publish the candidate into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
+1. Download the canonical `x86_64-unknown-linux-musl` payload and release repository from the signed RC GitHub prerelease; do not rebuild or re-sign it.
+2. Verify the RC provenance commit equals the stable workflow checkout and the payload version, manifest, checksums, and detached signature agree.
+3. Seed the immutable release repository from the RC `.release-repo.tar.gz` bundle.
+4. Re-publish the unchanged RC control directory into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
 5. Install the rollback baseline version, install the candidate by exact version/checksum/signature pin, then roll back with one `current` symlink switch.
-6. Publish the same signed control-dir contents, final release-repo bundle, and stable-cut evidence to GitHub Releases.
+6. Publish stable GitHub Release `v1.0.0` with the exact RC payload assets (which retain their honest `1.0.0-rc.N` payload filenames), final release-repo bundle, and stable-cut evidence.
+
+`1.0.0` is the stable release and channel identity. The promoted immutable
+payload retains its `1.0.0-rc.N` semver because changing an embedded version,
+archive, manifest, checksum, or signature would no longer be a same-bits
+promotion. Provenance records both identities explicitly.
 
 The canonical automation entrypoint is `cargo xtask stable-release`.
 

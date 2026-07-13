@@ -32,11 +32,17 @@ This document fixes the naming contract for `gcc-formed` so maturity labels, art
 | Alpha baseline | `v1alpha` | `0.1.x` |
 | Public beta | `v1beta` | `0.2.0-beta.N` |
 | Release candidate | `v1.0.0-rc` | `1.0.0-rc.N` |
-| Stable release | `v1.0.0 stable` | `1.0.0` |
+| Stable release | `v1.0.0 stable` | release identity `1.0.0`; immutable promoted payload retains qualified `1.0.0-rc.N` semver |
 
 ## Release Channels Are Separate
 
 Repository channels such as `canary`, `beta`, and `stable` are distribution pointers. They are not maturity labels and they do not override artifact semver.
+
+For the first stable cut, `v1.0.0` is a release identity over the exact signed
+RC payload. The payload keeps its `1.0.0-rc.N` embedded version, archive names,
+manifest, checksums, and signature. Rewriting any of those to say `1.0.0`
+would contradict the required same-bits promotion. Stable provenance therefore
+records `stable_release_version=1.0.0` separately from `package_version`.
 
 Examples:
 

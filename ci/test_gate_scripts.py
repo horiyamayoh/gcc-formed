@@ -790,12 +790,15 @@ class CheckedInWorkflowTest(unittest.TestCase):
             with self.subTest(workflow=workflow_name):
                 self.assertIn(work_root_snippet, workflow)
                 self.assertIn('echo "DIST_DIR=$dist_dir" >> "$GITHUB_ENV"', workflow)
-                self.assertIn('echo "VENDOR_DIR=$vendor_dir" >> "$GITHUB_ENV"', workflow)
-                self.assertIn('echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"', workflow)
-                self.assertIn('--out-dir "$DIST_DIR"', workflow)
-                self.assertIn('cargo xtask vendor --output-dir "$VENDOR_DIR"', workflow)
-                self.assertIn('cargo xtask hermetic-release-check --vendor-dir "$VENDOR_DIR"', workflow)
                 self.assertIn('tar -czf "$control_bundle" -C "$DIST_DIR"', workflow)
+        self.assertIn('echo "VENDOR_DIR=$vendor_dir" >> "$GITHUB_ENV"', release_beta)
+        self.assertIn('echo "SIGNING_KEY_PATH=$signing_key_path" >> "$GITHUB_ENV"', release_beta)
+        self.assertIn('--out-dir "$DIST_DIR"', release_beta)
+        self.assertIn('cargo xtask vendor --output-dir "$VENDOR_DIR"', release_beta)
+        self.assertIn('cargo xtask hermetic-release-check --vendor-dir "$VENDOR_DIR"', release_beta)
+        self.assertNotIn('cargo xtask hermetic-release-check', release_stable)
+        self.assertNotIn('cargo xtask package', release_stable)
+        self.assertIn('ci/verify_same_bits_promotion.py', release_stable)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
         step_names = self.extract_step_names(".github/workflows/release-beta.yml")
