@@ -21,6 +21,8 @@ use tar::{Archive, Builder, Header};
 pub const DEFAULT_PRODUCT_NAME: &str = "gcc-formed";
 /// Default maturity label for the current release cycle.
 pub const DEFAULT_MATURITY_LABEL: &str = "v1beta";
+/// Canonical filename for installer-attested runtime identity metadata.
+pub const INSTALL_IDENTITY_FILE: &str = "install-identity.json";
 /// Canonical filename for trace-bundle manifests.
 pub const TRACE_BUNDLE_MANIFEST_FILE: &str = "bundle.manifest.json";
 /// Canonical filename for machine-readable replay input.
@@ -101,9 +103,63 @@ pub struct BuildManifest {
     pub maturity_label: String,
     /// Release channel (e.g. "stable", "dev").
     pub release_channel: String,
+    /// Public release identity, only when an installer attestation is available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_identity: Option<ReleaseIdentity>,
+    /// Immutable payload/build identity.
+    #[serde(default)]
+    pub payload_identity: PayloadIdentity,
     /// Checksums for the packaged artifacts.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub checksums: Vec<ChecksumEntry>,
+}
+
+/// Public distribution identity attested by a verified channel install.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReleaseIdentity {
+    /// Public release version, which may differ from the payload semver.
+    pub version: String,
+    /// Distribution channel that supplied the release.
+    pub channel: String,
+    /// Attestation source. Runtime accepts only `verified_channel_pointer`.
+    pub attestation_source: String,
+    /// Signing key id verified by the installer.
+    pub signing_key_id: String,
+    /// SHA-256 of the verified signing public key.
+    pub signing_public_key_sha256: String,
+}
+
+/// Immutable identity of the packaged binary payload.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct PayloadIdentity {
+    /// Cargo package semver embedded in the payload.
+    pub product_version: String,
+    /// Build commit embedded in the payload.
+    pub git_commit: String,
+    /// SHA-256 of the primary archive, when an installer supplied it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub primary_archive_sha256: Option<String>,
+}
+
+/// Runtime view of public release and immutable payload identity.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuntimeIdentity {
+    /// Attested public release identity, or `None` when context is unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_identity: Option<ReleaseIdentity>,
+    /// Immutable payload identity, always available at least from build metadata.
+    pub payload_identity: PayloadIdentity,
+}
+
+/// Installer-owned sidecar used to attest runtime distribution context.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InstalledIdentityRecord {
+    /// Sidecar schema version.
+    pub schema_version: u32,
+    /// SHA-256 fingerprint over `identity`, written after installer verification.
+    pub identity_sha256: String,
+    /// Runtime identity captured after archive and signature verification.
+    pub identity: RuntimeIdentity,
 }
 
 /// A single file checksum entry within a build manifest.
@@ -185,6 +241,18 @@ pub struct TraceEnvelope {
 pub struct TraceVersionSummary {
     /// Wrapper binary version.
     pub wrapper_version: String,
+    /// Public release identity when attested by the install context.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_identity: Option<ReleaseIdentity>,
+    /// Immutable payload/build identity.
+    #[serde(default)]
+    pub payload_identity: PayloadIdentity,
+    /// Build-time maturity label retained by the immutable payload.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub build_maturity_label: String,
+    /// Build-time release channel retained by the immutable payload.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub build_release_channel: String,
     /// Target triple the wrapper was built for.
     pub build_target_triple: String,
     /// IR specification version.
@@ -952,16 +1020,18 @@ pub fn build_manifest_for_target(
     release_channel: &str,
 ) -> BuildManifest {
     let descriptor = describe_target(target_triple);
+    let product_version = env!("CARGO_PKG_VERSION").to_string();
+    let git_commit = option_env!("FORMED_GIT_COMMIT")
+        .unwrap_or("unknown")
+        .to_string();
     BuildManifest {
         product_name: DEFAULT_PRODUCT_NAME.to_string(),
-        product_version: env!("CARGO_PKG_VERSION").to_string(),
+        product_version: product_version.clone(),
         artifact_target_triple: descriptor.target_triple,
         artifact_os: descriptor.os,
         artifact_arch: descriptor.arch,
         artifact_libc_family: descriptor.libc_family,
-        git_commit: option_env!("FORMED_GIT_COMMIT")
-            .unwrap_or("unknown")
-            .to_string(),
+        git_commit: git_commit.clone(),
         build_profile: option_env!("FORMED_BUILD_PROFILE")
             .unwrap_or("dev")
             .to_string(),
@@ -981,19 +1051,100 @@ pub fn build_manifest_for_target(
         renderer_spec_version: RENDERER_SPEC_VERSION.to_string(),
         maturity_label: maturity_label.to_string(),
         release_channel: release_channel.to_string(),
+        release_identity: None,
+        payload_identity: PayloadIdentity {
+            product_version,
+            git_commit,
+            primary_archive_sha256: None,
+        },
         checksums: Vec::new(),
     }
 }
 
 /// Builds a [`BuildManifest`] using the compile-time target triple and default metadata.
 pub fn default_build_manifest(lockfile_hash: String, vendor_hash: String) -> BuildManifest {
-    build_manifest_for_target(
+    let mut manifest = build_manifest_for_target(
         lockfile_hash,
         vendor_hash,
         build_target_triple(),
-        DEFAULT_MATURITY_LABEL,
-        option_env!("FORMED_RELEASE_CHANNEL").unwrap_or("dev"),
+        build_maturity_label(),
+        build_release_channel(),
+    );
+    let identity = current_runtime_identity();
+    manifest.release_identity = identity.release_identity;
+    manifest.payload_identity = identity.payload_identity;
+    manifest
+}
+
+/// Build-time maturity label embedded in the immutable payload.
+pub fn build_maturity_label() -> &'static str {
+    option_env!("FORMED_MATURITY_LABEL").unwrap_or(DEFAULT_MATURITY_LABEL)
+}
+
+/// Build-time release channel embedded in the immutable payload.
+pub fn build_release_channel() -> &'static str {
+    option_env!("FORMED_RELEASE_CHANNEL").unwrap_or("dev")
+}
+
+/// Resolves runtime identity from build metadata plus a validated install sidecar.
+pub fn current_runtime_identity() -> RuntimeIdentity {
+    runtime_identity_for_executable(
+        &env::current_exe().unwrap_or_default(),
+        env!("CARGO_PKG_VERSION"),
+        option_env!("FORMED_GIT_COMMIT").unwrap_or("unknown"),
     )
+}
+
+/// Resolves runtime identity for a specific executable path.
+pub fn runtime_identity_for_executable(
+    executable: &Path,
+    product_version: &str,
+    git_commit: &str,
+) -> RuntimeIdentity {
+    let fallback = RuntimeIdentity {
+        release_identity: None,
+        payload_identity: PayloadIdentity {
+            product_version: product_version.to_string(),
+            git_commit: git_commit.to_string(),
+            primary_archive_sha256: None,
+        },
+    };
+    let Some(version_root) = executable.parent().and_then(Path::parent) else {
+        return fallback;
+    };
+    let Ok(payload) = fs::read_to_string(version_root.join(INSTALL_IDENTITY_FILE)) else {
+        return fallback;
+    };
+    let Ok(record) = serde_json::from_str::<InstalledIdentityRecord>(&payload) else {
+        return fallback;
+    };
+    if record.schema_version != 1
+        || record.identity_sha256 != diag_core::fingerprint_for(&record.identity)
+        || record.identity.payload_identity.product_version != product_version
+        || record.identity.payload_identity.git_commit != git_commit
+        || !record
+            .identity
+            .payload_identity
+            .primary_archive_sha256
+            .as_deref()
+            .is_some_and(valid_sha256)
+    {
+        return fallback;
+    }
+    if let Some(release) = record.identity.release_identity.as_ref()
+        && (release.version.is_empty()
+            || release.channel.is_empty()
+            || release.attestation_source != "verified_channel_pointer"
+            || release.signing_key_id.is_empty()
+            || !valid_sha256(&release.signing_public_key_sha256))
+    {
+        return fallback;
+    }
+    record.identity
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 #[cfg(test)]
@@ -1003,6 +1154,71 @@ mod tests {
     use std::ffi::OsString;
     use std::path::PathBuf;
     use std::thread;
+
+    #[test]
+    fn runtime_identity_requires_a_valid_matching_install_attestation() {
+        let root = env::temp_dir().join(format!("formed-identity-test-{}", trace_id()));
+        let version_root = root.join("v1.0.0-rc.1");
+        let executable = version_root.join("bin/gcc-formed");
+        fs::create_dir_all(executable.parent().unwrap()).unwrap();
+        fs::write(&executable, b"fixture").unwrap();
+        let record = InstalledIdentityRecord {
+            schema_version: 1,
+            identity_sha256: String::new(),
+            identity: RuntimeIdentity {
+                release_identity: Some(ReleaseIdentity {
+                    version: "1.0.0".to_string(),
+                    channel: "stable".to_string(),
+                    attestation_source: "verified_channel_pointer".to_string(),
+                    signing_key_id: "ed25519:test".to_string(),
+                    signing_public_key_sha256: "a".repeat(64),
+                }),
+                payload_identity: PayloadIdentity {
+                    product_version: "1.0.0-rc.1".to_string(),
+                    git_commit: "abc123".to_string(),
+                    primary_archive_sha256: Some("b".repeat(64)),
+                },
+            },
+        };
+        let mut record = record;
+        record.identity_sha256 = diag_core::fingerprint_for(&record.identity);
+        fs::write(
+            version_root.join(INSTALL_IDENTITY_FILE),
+            serde_json::to_vec(&record).unwrap(),
+        )
+        .unwrap();
+
+        let resolved = runtime_identity_for_executable(&executable, "1.0.0-rc.1", "abc123");
+        assert_eq!(resolved, record.identity);
+
+        let degraded =
+            runtime_identity_for_executable(&executable, "1.0.0-rc.1", "different-commit");
+        assert!(degraded.release_identity.is_none());
+        assert!(degraded.payload_identity.primary_archive_sha256.is_none());
+
+        let mut tampered = record;
+        tampered.identity.release_identity.as_mut().unwrap().version = "9.9.9".to_string();
+        fs::write(
+            version_root.join(INSTALL_IDENTITY_FILE),
+            serde_json::to_vec(&tampered).unwrap(),
+        )
+        .unwrap();
+        let degraded = runtime_identity_for_executable(&executable, "1.0.0-rc.1", "abc123");
+        assert!(degraded.release_identity.is_none());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn direct_archive_context_does_not_infer_a_stable_release() {
+        let identity = runtime_identity_for_executable(
+            Path::new("/tmp/direct-archive/bin/gcc-formed"),
+            "1.0.0-rc.1",
+            "abc123",
+        );
+        assert!(identity.release_identity.is_none());
+        assert_eq!(identity.payload_identity.product_version, "1.0.0-rc.1");
+        assert!(identity.payload_identity.primary_archive_sha256.is_none());
+    }
 
     #[test]
     fn retention_policy_matches_wrapper_expectations() {
@@ -1051,6 +1267,14 @@ mod tests {
             wrapper_verdict: Some("fallback".to_string()),
             version_summary: Some(TraceVersionSummary {
                 wrapper_version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: PayloadIdentity {
+                    product_version: "0.2.0-beta.1".to_string(),
+                    git_commit: "unknown".to_string(),
+                    primary_archive_sha256: None,
+                },
+                build_maturity_label: "v1beta".to_string(),
+                build_release_channel: "dev".to_string(),
                 build_target_triple: "x86_64-unknown-linux-musl".to_string(),
                 ir_spec_version: "v1alpha".to_string(),
                 adapter_spec_version: "v1alpha".to_string(),

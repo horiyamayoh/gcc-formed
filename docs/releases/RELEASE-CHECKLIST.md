@@ -24,6 +24,8 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 - Rollback baseline artifact: `0.2.0-beta.1`
 - Published stable release: [v1.0.0](https://github.com/horiyamayoh/gcc-formed/releases/tag/v1.0.0)
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.
+- Stable channel pointer records public `release_identity=1.0.0`; installer evidence simultaneously retains payload `product_version=1.0.0-rc.1`, build commit, archive SHA-256, and verified signing key.
+- Direct archive and exact-version installs do not infer a stable release identity.
 - Canonical support-boundary wording lives in `SUPPORT-BOUNDARY.md`.
 
 ## Release Blockers
@@ -36,6 +38,7 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 - Representative acceptance replay is green and the report artifacts are attached.
 - Representative matrix snapshot check is green and the report artifacts are attached.
 - Signed package generation, install, rollback/uninstall, and install-release smoke all pass.
+- Identity matrix tests cover development/direct archive/exact-version/stable-channel contexts, tampered metadata fail-closed-to-unknown behavior, and additive public JSON decode.
 - The public GitHub Release exists and includes the minimum beta asset set.
 - Release artifacts include `release-provenance.json`.
 - Advancing to `1.0.0-rc.N` additionally requires a fresh `cargo xtask rc-gate --report-dir ...` run with no blockers and attached `rc-gate-report.json` / `rc-gate-summary.md`.

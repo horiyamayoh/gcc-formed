@@ -1,5 +1,9 @@
 use clap::ValueEnum;
-use diag_trace::{BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, build_manifest_for_target};
+use diag_trace::{
+    BuildManifest, ChecksumEntry, DEFAULT_PRODUCT_NAME, INSTALL_IDENTITY_FILE,
+    InstalledIdentityRecord, PayloadIdentity, ReleaseIdentity, RuntimeIdentity,
+    build_manifest_for_target,
+};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -69,6 +73,7 @@ pub(crate) struct ReleasePromoteOptions {
     pub(crate) target_triple: String,
     pub(crate) version: String,
     pub(crate) channel: String,
+    pub(crate) release_identity_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -77,6 +82,7 @@ pub(crate) struct ReleasePromoteOutput {
     pub(crate) target_triple: String,
     pub(crate) version: String,
     pub(crate) channel: String,
+    pub(crate) release_identity_version: Option<String>,
     pub(crate) channel_metadata_path: PathBuf,
     pub(crate) primary_archive_sha256: String,
 }
@@ -268,6 +274,8 @@ pub(crate) struct ReleaseChannelPointer {
     pub(crate) channel: String,
     pub(crate) target_triple: String,
     pub(crate) version: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) release_identity_version: Option<String>,
     pub(crate) primary_archive_sha256: String,
     pub(crate) manifest_sha256: String,
     pub(crate) shasums_sha256: String,
@@ -477,6 +485,7 @@ pub(crate) fn run_release_promote_at(
         channel: options.channel.clone(),
         target_triple: options.target_triple.clone(),
         version: release.product_version.clone(),
+        release_identity_version: options.release_identity_version.clone(),
         primary_archive_sha256: release.primary_archive_sha256.clone(),
         manifest_sha256: release.manifest_sha256.clone(),
         shasums_sha256: release.shasums_sha256.clone(),
@@ -490,6 +499,7 @@ pub(crate) fn run_release_promote_at(
         target_triple: options.target_triple.clone(),
         version: release.product_version,
         channel: options.channel.clone(),
+        release_identity_version: options.release_identity_version.clone(),
         channel_metadata_path,
         primary_archive_sha256: release.primary_archive_sha256,
     })
@@ -572,6 +582,25 @@ pub(crate) fn run_install_release_at(
             dry_run: false,
         },
     )?;
+    if let Some(channel) = requested_channel.as_deref() {
+        let pointer =
+            read_release_channel_pointer(&repository_root, &options.target_triple, channel)?;
+        if let (Some(release_version), Some(key_id), Some(public_key_sha256)) = (
+            pointer.release_identity_version.as_deref(),
+            install.signing_key_id.as_deref(),
+            install.signing_public_key_sha256.as_deref(),
+        ) {
+            attest_installed_release_identity(
+                &install
+                    .install_root
+                    .join(version_dir_name(&install.installed_version)),
+                release_version,
+                channel,
+                key_id,
+                public_key_sha256,
+            )?;
+        }
+    }
     Ok(InstallReleaseOutput {
         install_root: install.install_root,
         bin_dir: install.bin_dir,
@@ -655,6 +684,7 @@ pub(crate) fn run_install_at(
     )?;
 
     let archive_path = find_primary_archive(&control_dir)?;
+    let primary_archive_sha256 = sha256_file(&archive_path)?;
     let install_parent = install_root
         .parent()
         .map(PathBuf::from)
@@ -704,6 +734,17 @@ pub(crate) fn run_install_at(
     assert_binary_reports_version(
         &extracted_root.join("bin/gcc-formed"),
         &staged_manifest.product_version,
+    )?;
+    write_install_identity(
+        &extracted_root,
+        RuntimeIdentity {
+            release_identity: None,
+            payload_identity: PayloadIdentity {
+                product_version: staged_manifest.product_version.clone(),
+                git_commit: staged_manifest.git_commit.clone(),
+                primary_archive_sha256: Some(primary_archive_sha256),
+            },
+        },
     )?;
     if !options.dry_run {
         fs::create_dir_all(&install_root)?;
@@ -1677,6 +1718,17 @@ pub(crate) fn resolve_published_release(
                 )
                 .into());
             }
+            if pointer
+                .release_identity_version
+                .as_deref()
+                .is_some_and(str::is_empty)
+            {
+                return Err(format!(
+                    "channel pointer release identity was empty for {}",
+                    pointer.channel
+                )
+                .into());
+            }
             let release =
                 verify_published_release(repository_root, target_triple, &pointer.version)?;
             if pointer.primary_archive_sha256 != release.primary_archive_sha256 {
@@ -1740,6 +1792,42 @@ pub(crate) fn read_build_manifest(
     path: &Path,
 ) -> Result<BuildManifest, Box<dyn std::error::Error>> {
     Ok(serde_json::from_str(&fs::read_to_string(path)?)?)
+}
+
+fn write_install_identity(
+    version_root: &Path,
+    identity: RuntimeIdentity,
+) -> Result<(), Box<dyn std::error::Error>> {
+    fs::write(
+        version_root.join(INSTALL_IDENTITY_FILE),
+        serde_json::to_vec_pretty(&InstalledIdentityRecord {
+            schema_version: 1,
+            identity_sha256: diag_core::fingerprint_for(&identity),
+            identity,
+        })?,
+    )?;
+    Ok(())
+}
+
+fn attest_installed_release_identity(
+    version_root: &Path,
+    version: &str,
+    channel: &str,
+    signing_key_id: &str,
+    signing_public_key_sha256: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let path = version_root.join(INSTALL_IDENTITY_FILE);
+    let mut record: InstalledIdentityRecord = read_json_file(&path)?;
+    record.identity.release_identity = Some(ReleaseIdentity {
+        version: version.to_string(),
+        channel: channel.to_string(),
+        attestation_source: "verified_channel_pointer".to_string(),
+        signing_key_id: signing_key_id.to_string(),
+        signing_public_key_sha256: signing_public_key_sha256.to_string(),
+    });
+    record.identity_sha256 = diag_core::fingerprint_for(&record.identity);
+    fs::write(path, serde_json::to_vec_pretty(&record)?)?;
+    Ok(())
 }
 
 pub(crate) fn ensure_target_aware_install_root(

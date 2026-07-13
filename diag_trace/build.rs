@@ -3,6 +3,14 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
+    for key in [
+        "FORMED_RELEASE_CHANNEL",
+        "RELEASE_CHANNEL",
+        "FORMED_MATURITY_LABEL",
+        "MATURITY_LABEL",
+    ] {
+        println!("cargo:rerun-if-env-changed={key}");
+    }
     println!(
         "cargo:rustc-env=FORMED_BUILD_PROFILE={}",
         env::var("PROFILE").unwrap_or_else(|_| "dev".to_string())
@@ -43,7 +51,15 @@ fn main() {
     );
     println!(
         "cargo:rustc-env=FORMED_RELEASE_CHANNEL={}",
-        env::var("FORMED_RELEASE_CHANNEL").unwrap_or_else(|_| "dev".to_string())
+        env::var("FORMED_RELEASE_CHANNEL")
+            .or_else(|_| env::var("RELEASE_CHANNEL"))
+            .unwrap_or_else(|_| "dev".to_string())
+    );
+    println!(
+        "cargo:rustc-env=FORMED_MATURITY_LABEL={}",
+        env::var("FORMED_MATURITY_LABEL")
+            .or_else(|_| env::var("MATURITY_LABEL"))
+            .unwrap_or_else(|_| "v1beta".to_string())
     );
 }
 

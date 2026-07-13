@@ -163,6 +163,7 @@ jobs:
             --bin-dir "$RUNNER_TEMP/stable-bin" \
             --report-dir "$REPORT_ROOT/stable-release" \
             --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
+            --release-identity-version "$STABLE_VERSION" \
             > "$REPORT_ROOT/release/stable-release-command.json"
       - name: Capture signing metadata
         run: |

@@ -98,6 +98,13 @@ The export must not expose raw internal IR nodes wholesale. It must remain a pro
 - `name`
 - `version`
 
+`version` は後方互換のため immutable payload semver を保持する。producer は additive optional field として次を含めてよい:
+
+- `release_identity`: attested public version、channel、`attestation_source`
+- `payload_identity`: `product_version`、build `git_commit`、利用可能な場合の `primary_archive_sha256`
+
+`release_identity` が欠落していることは stable ではないという推測ではなく、配布 context が `unknown/not-attested` であることを表す。consumer は `producer.version` を public release identity と読み替えてはならない。direct archive execution では release identity を生成しない。
+
 ### 4.2 `invocation`
 
 `invocation` must contain:
@@ -244,6 +251,7 @@ The canonical snapshot artifact for this surface is `public.export.json`.
 - The public JSON surface must not silently inherit internal-only field names just because they exist in the internal IR.
 - The public JSON surface must remain presentation-independent even when terminal text becomes subject-first, preset-driven, or otherwise configurable.
 - Consumers should ignore unknown additive fields and anchor on the documented required fields first.
+- `producer.release_identity` と `producer.payload_identity` は optional additive field であり、旧 payload の decode と既存 `producer.name` / `producer.version` の意味を維持する。
 
 Report bundles may emit `public.export.schema-shape-fingerprint.txt` as a schema-shape compatibility sentinel. That sidecar is for review and gate logic; the golden snapshot remains `public.export.json`.
 

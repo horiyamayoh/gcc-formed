@@ -453,6 +453,14 @@ mod tests {
             wrapper_verdict: Some("rendered".to_string()),
             version_summary: Some(TraceVersionSummary {
                 wrapper_version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: diag_trace::PayloadIdentity {
+                    product_version: "0.2.0-beta.1".to_string(),
+                    git_commit: "unknown".to_string(),
+                    primary_archive_sha256: None,
+                },
+                build_maturity_label: "v1beta".to_string(),
+                build_release_channel: "dev".to_string(),
                 build_target_triple: "x86_64-unknown-linux-musl".to_string(),
                 ir_spec_version: diag_core::IR_SPEC_VERSION.to_string(),
                 adapter_spec_version: diag_core::ADAPTER_SPEC_VERSION.to_string(),

@@ -301,8 +301,13 @@ fn trace_capabilities(capabilities: &RenderCapabilities) -> TraceCapabilities {
 }
 
 fn trace_version_summary() -> TraceVersionSummary {
+    let identity = diag_trace::current_runtime_identity();
     TraceVersionSummary {
         wrapper_version: env!("CARGO_PKG_VERSION").to_string(),
+        release_identity: identity.release_identity,
+        payload_identity: identity.payload_identity,
+        build_maturity_label: diag_trace::build_maturity_label().to_string(),
+        build_release_channel: diag_trace::build_release_channel().to_string(),
         build_target_triple: build_target_triple().to_string(),
         ir_spec_version: diag_core::IR_SPEC_VERSION.to_string(),
         adapter_spec_version: diag_core::ADAPTER_SPEC_VERSION.to_string(),

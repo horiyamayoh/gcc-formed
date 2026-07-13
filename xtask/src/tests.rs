@@ -522,6 +522,7 @@ fn rewrite_packaged_fixture_version(
 ) {
     let mut control_manifest = read_build_manifest(&package.manifest_path).unwrap();
     control_manifest.product_version = version.to_string();
+    control_manifest.payload_identity.product_version = version.to_string();
     write_file(
         &package.manifest_path,
         serde_json::to_vec_pretty(&control_manifest)
@@ -551,6 +552,7 @@ fn rewrite_packaged_fixture_version(
     let staged_manifest_path = extracted_root.join("manifest.json");
     let mut staged_manifest = read_build_manifest(&staged_manifest_path).unwrap();
     staged_manifest.product_version = version.to_string();
+    staged_manifest.payload_identity.product_version = version.to_string();
     let staged_build_info_path = extracted_root.join("build-info.txt");
     let staged_build_info = fs::read_to_string(&staged_build_info_path).unwrap();
     let rewritten_staged_build_info = staged_build_info
@@ -3296,6 +3298,7 @@ fn release_publish_promote_and_resolve_keep_same_bits() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             version: version.to_string(),
             channel: "canary".to_string(),
+            release_identity_version: None,
         },
     )
     .unwrap();
@@ -3306,6 +3309,7 @@ fn release_publish_promote_and_resolve_keep_same_bits() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             version: version.to_string(),
             channel: "stable".to_string(),
+            release_identity_version: None,
         },
     )
     .unwrap();
@@ -3412,6 +3416,7 @@ fn install_release_supports_exact_version_and_checksum_pin() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             version: version.to_string(),
             channel: "stable".to_string(),
+            release_identity_version: None,
         },
     )
     .unwrap();
@@ -3502,6 +3507,7 @@ fn install_release_from_channel_reports_exact_installed_version() {
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             version: version.to_string(),
             channel: "stable".to_string(),
+            release_identity_version: Some("1.0.0".to_string()),
         },
     )
     .unwrap();
@@ -3531,6 +3537,27 @@ fn install_release_from_channel_reports_exact_installed_version() {
     assert_eq!(install.requested_channel.as_deref(), Some("stable"));
     assert_eq!(install.resolved_version, version);
     assert_eq!(install.installed_version, version);
+    let identity_path = install
+        .install_root
+        .join(version_dir_name(version))
+        .join(diag_trace::INSTALL_IDENTITY_FILE);
+    let identity: diag_trace::InstalledIdentityRecord =
+        serde_json::from_str(&fs::read_to_string(identity_path).unwrap()).unwrap();
+    let release_identity = identity.identity.release_identity.unwrap();
+    assert_eq!(release_identity.version, "1.0.0");
+    assert_eq!(release_identity.channel, "stable");
+    assert_eq!(
+        release_identity.attestation_source,
+        "verified_channel_pointer"
+    );
+    assert_eq!(
+        identity.identity.payload_identity.product_version,
+        "1.0.0-rc.1"
+    );
+    assert_eq!(
+        identity.identity.payload_identity.primary_archive_sha256,
+        Some(stable_pointer.primary_archive_sha256)
+    );
 }
 
 #[test]
@@ -3629,6 +3656,7 @@ fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollb
             target_triple: "x86_64-unknown-linux-gnu".to_string(),
             version: baseline_version.to_string(),
             channel: "stable".to_string(),
+            release_identity_version: None,
         },
     )
     .unwrap();
@@ -3664,6 +3692,7 @@ fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollb
             bin_dir: candidate_sandbox.path().join("stable-bin"),
             report_dir: candidate_sandbox.path().join("stable-report"),
             rollback_baseline_version: Some(baseline_version.to_string()),
+            release_identity_version: "1.0.0".to_string(),
         },
     )
     .unwrap();
@@ -3676,6 +3705,7 @@ fn stable_release_report_proves_metadata_only_promotion_and_single_symlink_rollb
     assert_eq!(report.canary.resolve.resolved_version, candidate_version);
     assert_eq!(report.beta.resolve.resolved_version, candidate_version);
     assert_eq!(report.stable.resolve.resolved_version, candidate_version);
+    assert_eq!(report.release_identity_version, "1.0.0");
     assert_eq!(report.rollback_drill.baseline_version, baseline_version);
     assert_eq!(report.rollback_drill.candidate_version, candidate_version);
     assert_eq!(

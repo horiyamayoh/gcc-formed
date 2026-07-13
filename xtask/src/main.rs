@@ -111,6 +111,8 @@ enum Commands {
         version: String,
         #[arg(long)]
         channel: String,
+        #[arg(long)]
+        release_identity_version: Option<String>,
     },
     ReleasePublish {
         #[arg(long)]
@@ -284,6 +286,8 @@ enum Commands {
         report_dir: PathBuf,
         #[arg(long)]
         rollback_baseline_version: Option<String>,
+        #[arg(long)]
+        release_identity_version: String,
     },
     SelfCheck,
 }
@@ -451,12 +455,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             target_triple,
             version,
             channel,
+            release_identity_version,
         } => {
             let promote = run_release_promote(ReleasePromoteOptions {
                 repository_root,
                 target_triple,
                 version,
                 channel,
+                release_identity_version,
             })?;
             println!(
                 "{}",
@@ -465,6 +471,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "target_triple": promote.target_triple,
                     "version": promote.version,
                     "channel": promote.channel,
+                    "release_identity_version": promote.release_identity_version,
                     "channel_metadata_path": promote.channel_metadata_path,
                     "primary_archive_sha256": promote.primary_archive_sha256,
                 }))?
@@ -712,6 +719,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             bin_dir,
             report_dir,
             rollback_baseline_version,
+            release_identity_version,
         } => {
             let report = run_stable_release(StableReleaseOptions {
                 control_dir,
@@ -721,6 +729,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 bin_dir,
                 report_dir,
                 rollback_baseline_version,
+                release_identity_version,
             })?;
             println!(
                 "{}",

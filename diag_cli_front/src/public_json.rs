@@ -5,7 +5,8 @@ use diag_backend_probe::{ProbeResult, ProcessingPath};
 use diag_capture_runtime::ExecutionMode;
 use diag_public_export::{
     PublicDiagnosticExport, PublicExportContext, PublicExportInvocation, PublicExportProducer,
-    PublicExportTool, PublicExportUnavailableReason, unavailable_export,
+    PublicExportTool, PublicExportUnavailableReason, PublicPayloadIdentity, PublicReleaseIdentity,
+    unavailable_export,
 };
 use std::ffi::OsString;
 use std::fs;
@@ -70,6 +71,8 @@ pub(crate) fn export_context_for_unavailable(
         producer: PublicExportProducer {
             name: env!("CARGO_PKG_NAME").to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            release_identity: None,
+            payload_identity: None,
         },
         invocation: PublicExportInvocation {
             invocation_id: None,
@@ -101,6 +104,31 @@ pub(crate) fn export_context_for_unavailable(
         source_authority: None,
         fallback_grade: None,
         fallback_reason,
+    }
+    .with_runtime_identity_from_install()
+}
+
+pub(crate) trait RuntimeExportIdentity {
+    fn with_runtime_identity_from_install(self) -> Self;
+}
+
+impl RuntimeExportIdentity for PublicExportContext {
+    fn with_runtime_identity_from_install(self) -> Self {
+        let identity = diag_trace::current_runtime_identity();
+        self.with_runtime_identity(
+            identity
+                .release_identity
+                .map(|release| PublicReleaseIdentity {
+                    version: release.version,
+                    channel: release.channel,
+                    attestation_source: release.attestation_source,
+                }),
+            PublicPayloadIdentity {
+                product_version: identity.payload_identity.product_version,
+                git_commit: identity.payload_identity.git_commit,
+                primary_archive_sha256: identity.payload_identity.primary_archive_sha256,
+            },
+        )
     }
 }
 

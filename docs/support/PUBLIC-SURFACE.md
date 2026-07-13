@@ -116,6 +116,7 @@ stable_included_assets:
   - `replay-stop-ship.json`
   - `release-provenance.json`
 stable_known_limits:
+  - Runtime reports public release identity only for a verified channel install; direct archive execution honestly reports the release context as not attested while retaining payload identity.
   - Current release notes must not claim that `GCC16+` or unknown gcc-like compilers are already inside the `GCC 9-15` contract.
   - Internal capture mechanisms still vary by capability path even when the public contract is shared.
   - Raw fallback remains part of the shipped contract when it is the most trustworthy choice.
@@ -139,6 +140,8 @@ It owns these surfaces:
 
 `docs/support/SUPPORT-BOUNDARY.md` remains the canonical source for current support wording.  
 This document does not redefine support posture. It defines the metadata and short-form prose that must stay synchronized with that support posture.
+
+Stable-facing version wording must name both `release identity 1.0.0 stable` and immutable `payload identity 1.0.0-rc.1`. It must not imply that same-bits promotion rewrote the Cargo prerelease version inside the published payload.
 
 ## Canonical Surface Set
 

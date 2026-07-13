@@ -46,6 +46,25 @@ pub enum PublicExportUnavailableReason {
 pub struct PublicExportProducer {
     pub name: String,
     pub version: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_identity: Option<PublicReleaseIdentity>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub payload_identity: Option<PublicPayloadIdentity>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PublicReleaseIdentity {
+    pub version: String,
+    pub channel: String,
+    pub attestation_source: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PublicPayloadIdentity {
+    pub product_version: String,
+    pub git_commit: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub primary_archive_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -215,6 +234,8 @@ impl PublicExportContext {
             producer: PublicExportProducer {
                 name: document.producer.name.clone(),
                 version: document.producer.version.clone(),
+                release_identity: None,
+                payload_identity: None,
             },
             invocation: PublicExportInvocation {
                 invocation_id: Some(document.run.invocation_id.clone()),
@@ -244,6 +265,16 @@ impl PublicExportContext {
         I: IntoIterator<Item = ProcessingPath>,
     {
         self.allowed_processing_paths = paths.into_iter().collect();
+        self
+    }
+
+    pub fn with_runtime_identity(
+        mut self,
+        release_identity: Option<PublicReleaseIdentity>,
+        payload_identity: PublicPayloadIdentity,
+    ) -> Self {
+        self.producer.release_identity = release_identity;
+        self.producer.payload_identity = Some(payload_identity);
         self
     }
 }
@@ -503,6 +534,33 @@ fn label<T: Serialize>(value: T) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn producer_identity_fields_are_additive_for_old_consumers_and_fixtures() {
+        let old: PublicExportProducer =
+            serde_json::from_str(r#"{"name":"gcc-formed","version":"1.0.0-rc.1"}"#).unwrap();
+        assert!(old.release_identity.is_none());
+        assert!(old.payload_identity.is_none());
+
+        let producer = PublicExportProducer {
+            name: "gcc-formed".to_string(),
+            version: "1.0.0-rc.1".to_string(),
+            release_identity: Some(PublicReleaseIdentity {
+                version: "1.0.0".to_string(),
+                channel: "stable".to_string(),
+                attestation_source: "verified_channel_pointer".to_string(),
+            }),
+            payload_identity: Some(PublicPayloadIdentity {
+                product_version: "1.0.0-rc.1".to_string(),
+                git_commit: "abc123".to_string(),
+                primary_archive_sha256: Some("a".repeat(64)),
+            }),
+        };
+        let encoded = serde_json::to_value(producer).unwrap();
+        assert_eq!(encoded["version"], "1.0.0-rc.1");
+        assert_eq!(encoded["release_identity"]["version"], "1.0.0");
+        assert_eq!(encoded["payload_identity"]["product_version"], "1.0.0-rc.1");
+    }
     use diag_core::{
         DocumentCompleteness, LanguageMode, Location, LocationRole, MessageText, NodeCompleteness,
         Origin, Phase, ProducerInfo, Provenance, ProvenanceSource, SemanticRole, Severity,
@@ -638,6 +696,8 @@ mod tests {
             producer: PublicExportProducer {
                 name: "gcc-formed".to_string(),
                 version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: None,
             },
             invocation: PublicExportInvocation {
                 invocation_id: Some("inv-1".to_string()),
@@ -721,6 +781,8 @@ mod tests {
             producer: PublicExportProducer {
                 name: "gcc-formed".to_string(),
                 version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: None,
             },
             invocation: PublicExportInvocation {
                 invocation_id: Some("inv-2".to_string()),
@@ -854,6 +916,8 @@ mod tests {
             producer: PublicExportProducer {
                 name: "gcc-formed".to_string(),
                 version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: None,
             },
             invocation: PublicExportInvocation {
                 invocation_id: None,

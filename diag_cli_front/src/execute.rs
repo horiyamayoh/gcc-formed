@@ -4,8 +4,8 @@ use crate::config::ConfigFile;
 use crate::error::CliError;
 use crate::mode::is_compiler_introspection;
 use crate::public_json::{
-    ensure_public_json_stdout_safe, export_context_for_unavailable, unavailable_export_with_reason,
-    write_public_json,
+    RuntimeExportIdentity, ensure_public_json_stdout_safe, export_context_for_unavailable,
+    unavailable_export_with_reason, write_public_json,
 };
 use crate::render::{
     CommonTraceContext, IngestTraceMetadata, PassthroughTraceWriteRequest, TraceWriteRequest,
@@ -97,7 +97,8 @@ fn real_main() -> Result<i32, CliError> {
             wrapper_surface(),
             unavailable_processing_path(true, plan.mode(), plan.processing_path()),
             plan.mode_decision.fallback_reason,
-        );
+        )
+        .with_runtime_identity_from_install();
         let export = unavailable_export_with_reason(
             &export_context,
             PublicExportUnavailableReason::IntrospectionLike,
@@ -211,7 +212,8 @@ fn real_main() -> Result<i32, CliError> {
             plan.mode_decision
                 .fallback_reason
                 .or(ingest_trace.fallback_reason),
-        );
+        )
+        .with_runtime_identity_from_install();
         let export = export_from_document(&document, &shadow_export_context);
         write_public_json(parsed.public_json.as_ref(), &export)?;
         maybe_write_trace(TraceWriteRequest {
@@ -286,7 +288,8 @@ fn real_main() -> Result<i32, CliError> {
         ingest_trace.source_authority,
         ingest_trace.fallback_grade,
         effective_fallback_reason,
-    );
+    )
+    .with_runtime_identity_from_install();
     let export = export_from_document(&document, &public_export_context);
     write_public_json(parsed.public_json.as_ref(), &export)?;
 

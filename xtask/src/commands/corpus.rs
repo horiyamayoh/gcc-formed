@@ -3879,6 +3879,8 @@ mod tests {
             producer: PublicExportProducer {
                 name: "gcc-formed".to_string(),
                 version: "0.2.0-beta.1".to_string(),
+                release_identity: None,
+                payload_identity: None,
             },
             invocation: PublicExportInvocation {
                 invocation_id: Some("inv-1".to_string()),

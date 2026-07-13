@@ -143,6 +143,18 @@ Representative corpus / replay gates でも、`GCC15/DualSinkStructured`、`GCC1
 operator guidance は [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md)、既知の制約は [docs/support/KNOWN-LIMITATIONS.md](docs/support/KNOWN-LIMITATIONS.md) を参照する。  
 Trace bundle の収集と replay は [docs/runbooks/trace-bundle-collection.md](docs/runbooks/trace-bundle-collection.md) / [docs/runbooks/trace-bundle-replay.md](docs/runbooks/trace-bundle-replay.md) を正本とする。
 
+## Version 確認と bug report
+
+`gcc-formed --version` は drop-in compatibility のため backend GCC の version introspection へ転送される。wrapper 自身の concise payload semver は `gcc-formed --formed-version`、stable distribution context と immutable payload version/commit/archive hash の組は `gcc-formed --formed-version=verbose` で確認する。直接 archive を展開しただけの実行では stable を推測せず `release identity: unknown (not attested)` と表示する。
+
+bug report には次の 1 コマンドの JSON 出力を添付する（path や環境情報は必要に応じて redaction する）。これは release identity、payload identity、backend GCC version、VersionBand、ProcessingPath、SupportLevel をまとめて収集する。
+
+```bash
+gcc-formed --formed-self-check > gcc-formed-self-check.json
+```
+
+identity の authority と same-bits maintenance rule は [VERSIONING.md](docs/policies/VERSIONING.md) を参照する。
+
 ## Public Machine-Readable Export
 
 CI、agent、wrapper integration が診断を機械可読で消費するときは、terminal text や internal trace を scrape せず、`--formed-public-json` を使う。

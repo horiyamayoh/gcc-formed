@@ -29,7 +29,32 @@ pub(crate) fn handle_wrapper_introspection(
         }
         WrapperIntrospection::VersionVerbose => {
             let manifest = build_manifest()?;
+            if let Some(release) = manifest.release_identity.as_ref() {
+                println!("release identity: {} {}", release.version, release.channel);
+                println!(
+                    "release identity attestation: {}",
+                    release.attestation_source
+                );
+            } else {
+                println!("release identity: unknown (not attested)");
+            }
             println!("product version: {}", manifest.product_version);
+            println!(
+                "payload product version: {}",
+                manifest.payload_identity.product_version
+            );
+            println!(
+                "payload git commit: {}",
+                manifest.payload_identity.git_commit
+            );
+            println!(
+                "payload archive sha256: {}",
+                manifest
+                    .payload_identity
+                    .primary_archive_sha256
+                    .as_deref()
+                    .unwrap_or("unknown")
+            );
             println!("target triple: {}", manifest.artifact_target_triple);
             println!("git commit: {}", manifest.git_commit);
             println!("build profile: {}", manifest.build_profile);
@@ -37,6 +62,7 @@ pub(crate) fn handle_wrapper_introspection(
             println!("cargo version: {}", manifest.cargo_version);
             println!("build timestamp: {}", manifest.build_timestamp);
             println!("maturity label: {}", manifest.maturity_label);
+            println!("build release channel: {}", manifest.release_channel);
             println!("IR spec version: {}", manifest.ir_spec_version);
             println!("adapter spec version: {}", manifest.adapter_spec_version);
             println!("renderer spec version: {}", manifest.renderer_spec_version);
@@ -126,6 +152,10 @@ fn self_check(paths: &WrapperPaths) -> Result<serde_json::Value, CliError> {
             "target_triple": manifest.artifact_target_triple,
             "target_triple_matches_build": target_matches_build,
             "maturity_label": manifest.maturity_label,
+            "build_release_channel": manifest.release_channel,
+            "release_identity_status": if manifest.release_identity.is_some() { "attested" } else { "not_attested" },
+            "release_identity": manifest.release_identity,
+            "payload_identity": manifest.payload_identity,
         },
         "paths": {
             "config_path": paths.config_path,

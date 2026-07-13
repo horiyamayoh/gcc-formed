@@ -23,6 +23,7 @@ pub(crate) struct StableReleaseOptions {
     pub(crate) bin_dir: PathBuf,
     pub(crate) report_dir: PathBuf,
     pub(crate) rollback_baseline_version: Option<String>,
+    pub(crate) release_identity_version: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -70,6 +71,7 @@ pub(crate) struct StableReleaseReport {
     pub(crate) schema_version: u32,
     pub(crate) generated_at_unix_seconds: u64,
     pub(crate) candidate_version: String,
+    pub(crate) release_identity_version: String,
     pub(crate) target_triple: String,
     pub(crate) control_dir: PathBuf,
     pub(crate) repository_root: PathBuf,
@@ -128,6 +130,7 @@ pub(crate) fn run_stable_release_at(
         &options.target_triple,
         &candidate_version,
         "canary",
+        None,
     )?;
     let beta = promote_and_resolve(
         base_dir,
@@ -135,6 +138,7 @@ pub(crate) fn run_stable_release_at(
         &options.target_triple,
         &candidate_version,
         "beta",
+        None,
     )?;
     let stable = promote_and_resolve(
         base_dir,
@@ -142,6 +146,7 @@ pub(crate) fn run_stable_release_at(
         &options.target_triple,
         &candidate_version,
         "stable",
+        Some(&options.release_identity_version),
     )?;
 
     let no_rebuild_evidence = build_no_rebuild_evidence(
@@ -179,6 +184,7 @@ pub(crate) fn run_stable_release_at(
         schema_version: STABLE_RELEASE_SCHEMA_VERSION,
         generated_at_unix_seconds: unix_now_seconds(),
         candidate_version,
+        release_identity_version: options.release_identity_version.clone(),
         target_triple: options.target_triple.clone(),
         control_dir,
         repository_root,
@@ -216,6 +222,7 @@ fn promote_and_resolve(
     target_triple: &str,
     version: &str,
     channel: &str,
+    release_identity_version: Option<&str>,
 ) -> Result<StableChannelReport, Box<dyn std::error::Error>> {
     let promote = run_release_promote_at(
         base_dir,
@@ -224,6 +231,7 @@ fn promote_and_resolve(
             target_triple: target_triple.to_string(),
             version: version.to_string(),
             channel: channel.to_string(),
+            release_identity_version: release_identity_version.map(str::to_string),
         },
     )?;
     let resolve = run_release_resolve_at(
@@ -407,8 +415,8 @@ fn run_rollback_drill(
             target_triple: target_triple.to_string(),
             install_root: install_root.to_path_buf(),
             bin_dir: bin_dir.to_path_buf(),
-            channel: None,
-            version: Some(candidate_release.resolved_version.clone()),
+            channel: Some("stable".to_string()),
+            version: None,
             expected_primary_sha256: Some(candidate_release.primary_archive_sha256.clone()),
             expected_signing_key_id: candidate_release.signing_key_id.clone(),
             expected_signing_public_key_sha256: candidate_release.signing_public_key_sha256.clone(),

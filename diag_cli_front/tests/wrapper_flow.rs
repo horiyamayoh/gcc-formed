@@ -13,6 +13,80 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 
 #[test]
+fn direct_build_reports_payload_identity_without_inventing_stable_context() {
+    Command::cargo_bin("gcc-formed")
+        .unwrap()
+        .arg("--formed-version=verbose")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(
+            "release identity: unknown (not attested)",
+        ))
+        .stdout(predicate::str::contains(
+            "payload product version: 1.0.0-rc.1",
+        ))
+        .stdout(predicate::str::contains("payload git commit:"))
+        .stdout(predicate::str::contains("payload archive sha256: unknown"));
+}
+
+#[test]
+fn attested_stable_install_reports_release_and_payload_identities_together() {
+    let source_binary = PathBuf::from(env!("CARGO_BIN_EXE_gcc-formed"));
+    let embedded: Value = serde_json::from_slice(
+        &std::process::Command::new(&source_binary)
+            .arg("--formed-dump-build-manifest")
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let version_root = temp.path().join("v1.0.0-rc.1");
+    let installed_binary = version_root.join("bin/gcc-formed");
+    fs::create_dir_all(installed_binary.parent().unwrap()).unwrap();
+    fs::copy(&source_binary, &installed_binary).unwrap();
+    let identity = diag_trace::RuntimeIdentity {
+        release_identity: Some(diag_trace::ReleaseIdentity {
+            version: "1.0.0".to_string(),
+            channel: "stable".to_string(),
+            attestation_source: "verified_channel_pointer".to_string(),
+            signing_key_id: "ed25519:test".to_string(),
+            signing_public_key_sha256: "a".repeat(64),
+        }),
+        payload_identity: diag_trace::PayloadIdentity {
+            product_version: embedded["product_version"].as_str().unwrap().to_string(),
+            git_commit: embedded["git_commit"].as_str().unwrap().to_string(),
+            primary_archive_sha256: Some("b".repeat(64)),
+        },
+    };
+    fs::write(
+        version_root.join(diag_trace::INSTALL_IDENTITY_FILE),
+        serde_json::to_vec(&diag_trace::InstalledIdentityRecord {
+            schema_version: 1,
+            identity_sha256: diag_core::fingerprint_for(&identity),
+            identity,
+        })
+        .unwrap(),
+    )
+    .unwrap();
+
+    let output = std::process::Command::new(installed_binary)
+        .arg("--formed-version=verbose")
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("release identity: 1.0.0 stable"));
+    assert!(stdout.contains("release identity attestation: verified_channel_pointer"));
+    assert!(stdout.contains("payload product version: 1.0.0-rc.1"));
+    assert!(stdout.contains(&format!(
+        "payload git commit: {}",
+        embedded["git_commit"].as_str().unwrap()
+    )));
+    assert!(stdout.contains(&format!("payload archive sha256: {}", "b".repeat(64))));
+}
+
+#[test]
 fn formed_raw_alias_is_byte_faithful_and_preserves_exit_status() {
     let temp = fixture("15.2.0");
     let backend = temp.path().join("fake-gcc");
@@ -83,6 +157,11 @@ fn render_mode_writes_public_json_to_file() {
     assert_eq!(export["schema_version"], "2.1.0-alpha.1");
     assert_eq!(export["kind"], "gcc_formed_public_diagnostic_export");
     assert_eq!(export["status"], "available");
+    assert!(export["producer"]["release_identity"].is_null());
+    assert_eq!(
+        export["producer"]["payload_identity"]["product_version"],
+        "1.0.0-rc.1"
+    );
     assert_eq!(export["execution"]["version_band"], "gcc15");
     assert_eq!(
         export["execution"]["processing_path"],
@@ -947,6 +1026,11 @@ fn retains_trace_bundle_with_invocation_record_and_decision_log() {
         trace["version_summary"]["wrapper_version"].as_str(),
         Some(env!("CARGO_PKG_VERSION"))
     );
+    assert!(trace["version_summary"]["release_identity"].is_null());
+    assert_eq!(
+        trace["version_summary"]["payload_identity"]["product_version"],
+        env!("CARGO_PKG_VERSION")
+    );
     assert_eq!(
         trace["version_summary"]["adapter_spec_version"].as_str(),
         Some(diag_core::ADAPTER_SPEC_VERSION)
@@ -1402,6 +1486,15 @@ fn self_check_reports_target_aware_paths_and_backend_status() {
     assert_eq!(report["binary"], "ok");
     assert_eq!(report["manifest"]["target_triple_matches_build"], true);
     assert_eq!(report["manifest"]["maturity_label"], "v1beta");
+    assert_eq!(
+        report["manifest"]["release_identity_status"],
+        "not_attested"
+    );
+    assert!(report["manifest"]["release_identity"].is_null());
+    assert_eq!(
+        report["manifest"]["payload_identity"]["product_version"],
+        env!("CARGO_PKG_VERSION")
+    );
     assert!(report["manifest"]["support_tier"].is_null());
     assert_eq!(report["paths"]["state_root_access"], "ok");
     assert_eq!(report["paths"]["runtime_root_access"], "ok");

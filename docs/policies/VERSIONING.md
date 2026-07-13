@@ -49,6 +49,30 @@ Examples:
 - `0.2.0-beta.1` may be published to a `beta` channel inside a release repository while the product maturity remains `v1beta`.
 - `0.2.0-beta.3` is still a beta artifact even if it is the current `stable` channel target for an internal rollout.
 
+## Runtime identity contract
+
+Runtime and support surfaces use two identities and must never collapse them:
+
+| Field | Authority | Example | Meaning |
+| --- | --- | --- | --- |
+| `release_identity` | verified release-repository channel pointer plus the installer-verified signing key | `version=1.0.0`, `channel=stable` | Public distribution context from which this install was obtained |
+| `payload_identity` | embedded build manifest plus verified primary-archive digest | `product_version=1.0.0-rc.1`, commit, SHA-256 | Immutable bits that were qualified, signed, installed, and may be rolled back to |
+
+The installer writes `install-identity.json` only after checksum, manifest, and signature verification. Runtime accepts a release identity only when that record matches the embedded payload version and commit, has a valid archive digest, and names `verified_channel_pointer` as its attestation source. A missing, malformed, or mismatched record yields `release_identity = unknown/not-attested`; a direct archive extraction must never infer `stable` from filenames, Cargo prerelease text, an environment variable, or the current date. Payload identity remains reportable independently.
+
+Current truth table:
+
+| Context | Release identity | Payload identity |
+| --- | --- | --- |
+| development build | unknown / not attested | embedded Cargo version + build commit; archive hash unknown |
+| direct RC or stable-asset archive extraction | unknown / not attested | embedded `1.0.0-rc.1` + build commit; archive hash unknown unless installed through a verifier |
+| exact-version repository install | unknown / not attested | verified payload version + commit + archive hash |
+| signed stable-channel install | attested `1.0.0 stable` | verified `1.0.0-rc.1` + build commit + archive hash |
+
+`--formed-version` remains the concise payload-semver output for existing scripts. `--formed-version=verbose`, `--formed-self-check`, `--formed-dump-build-manifest`, trace version summaries, and public JSON producer metadata report the two identities additively. Plain `gcc-formed --version` remains GCC-compatible compiler introspection forwarded to the backend and is not a wrapper-version command.
+
+For maintenance releases, the public release identity advances to the published final version (`1.0.1`, `1.0.2`, ...). `payload_identity.product_version` advances only when new payload bits are built and signed; a same-bits promotion retains its qualified payload semver and digest. A maintenance workflow must publish the relationship explicitly and must not rewrite an already published payload, tag, archive, manifest, checksum, or signature.
+
 ## Wording Rules
 
 - Use maturity labels when describing support posture or lifecycle state.
