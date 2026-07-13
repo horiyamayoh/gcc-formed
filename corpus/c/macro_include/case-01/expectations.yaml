@@ -14,13 +14,22 @@ render:
     required_substrings:
       - "In file included from src/wrapper.h:1,"
       - "note: in expansion of macro 'CALL_BAD'"
+    forbidden_substrings:
+      - "[linker]"
   ci:
     first_screenful_max_lines: 20
     color_meaning_forbidden: true
     required_substrings:
       - "src/config.h:1:20: error: 'missing_symbol' undeclared"
+    forbidden_substrings:
+      - "[linker]"
   debug:
     first_screenful_max_lines: 39
+    forbidden_substrings:
+      - "[linker]"
+cascade:
+  expected_visible_repair_unit_count: 1
+  expected_total_repair_unit_count: 1
 performance:
   parse_time_ms_max: 50
   render_time_ms_max: 40

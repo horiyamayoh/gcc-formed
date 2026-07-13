@@ -47,6 +47,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     let mut grouped = BTreeMap::<String, GroupedResidual>::new();
     let mut compiler_nodes = Vec::new();
     let mut passthrough = Vec::new();
+    let mut neutral_passthrough = Vec::new();
     let mut compiler_block = None::<CompilerResidualBlock>;
     let mut compiler_preamble = Vec::<String>::new();
     let compiler_diagnostic = Regex::new(
@@ -55,6 +56,8 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     .expect("regex");
     let compiler_preamble_line =
         Regex::new(r"^(?P<path>.+?): (?P<message>In .+|At global scope:)$").expect("regex");
+    let include_preamble_line =
+        Regex::new(r"^(?:In file included from |\s*from ).+:\d+(?::\d+)?(?:,|:)?$").expect("regex");
     let linker_matchers = compiled_linker_seeds();
 
     for line in stderr.lines().filter(|line| !line.trim().is_empty()) {
@@ -70,7 +73,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
             continue;
         }
 
-        if compiler_preamble_line.is_match(line) {
+        if compiler_preamble_line.is_match(line) || include_preamble_line.is_match(line) {
             compiler_preamble.push(line.to_string());
             continue;
         }
@@ -85,7 +88,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
             continue;
         }
 
-        flush_pending_compiler_preamble(&mut passthrough, &mut compiler_preamble);
+        flush_pending_compiler_preamble(&mut neutral_passthrough, &mut compiler_preamble);
         flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
         if let Some(linker_match) = match_linker_group(line, &linker_matchers) {
@@ -106,7 +109,7 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
 
         passthrough.push(line.to_string());
     }
-    flush_pending_compiler_preamble(&mut passthrough, &mut compiler_preamble);
+    flush_pending_compiler_preamble(&mut neutral_passthrough, &mut compiler_preamble);
     flush_compiler_block(&mut compiler_nodes, &mut passthrough, &mut compiler_block);
 
     let mut nodes = compiler_nodes;
@@ -122,6 +125,9 @@ pub fn classify(stderr: &str, include_passthrough: bool) -> Vec<DiagnosticNode> 
     }
     if include_passthrough && !passthrough.is_empty() {
         nodes.push(passthrough_node(&passthrough));
+    }
+    if include_passthrough && !neutral_passthrough.is_empty() {
+        nodes.push(neutral_passthrough_node(&neutral_passthrough));
     }
     nodes
 }
@@ -689,6 +695,20 @@ fn passthrough_node(lines: &[String]) -> DiagnosticNode {
         }),
         fingerprints: None,
     }
+}
+
+fn neutral_passthrough_node(lines: &[String]) -> DiagnosticNode {
+    let mut node = passthrough_node(lines);
+    node.id = "residual-compiler-preamble".to_string();
+    node.origin = Origin::Unknown;
+    node.phase = Phase::Unknown;
+    node.severity = Severity::Unknown;
+    if let Some(analysis) = node.analysis.as_mut() {
+        analysis
+            .matched_conditions
+            .push("compiler_preamble=orphaned".into());
+    }
+    node
 }
 
 fn render_template(template: &str, values: &BTreeMap<String, String>) -> String {
@@ -1688,6 +1708,51 @@ totally unstructured compiler output\n";
         assert_eq!(nodes.len(), 1);
         assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
         assert_eq!(nodes[0].node_completeness, NodeCompleteness::Passthrough);
+        assert_eq!(nodes[0].origin, Origin::ExternalTool);
+        assert_eq!(nodes[0].phase, Phase::Link);
+        assert_eq!(nodes[0].severity, Severity::Error);
+    }
+
+    #[test]
+    fn attaches_multiline_include_preamble_to_following_compiler_diagnostic() {
+        let stderr = "\
+In file included from src/wrapper.h:1,\n\
+                 from src/main.c:1:\n\
+src/main.c: In function 'main':\n\
+src/config.h:1:20: error: 'missing_symbol' undeclared\n";
+        let nodes = classify(stderr, true);
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Root);
+        assert!(
+            nodes[0]
+                .message
+                .raw_text
+                .contains("In file included from src/wrapper.h:1,")
+        );
+        assert!(nodes[0].message.raw_text.contains("from src/main.c:1:"));
+        assert!(!matches!(nodes[0].semantic_role, SemanticRole::Passthrough));
+    }
+
+    #[test]
+    fn orphaned_include_preamble_fails_open_as_neutral_passthrough() {
+        let nodes = classify(
+            "In file included from src/wrapper.h:1,\n                 from src/main.c:1:\n",
+            true,
+        );
+
+        assert_eq!(nodes.len(), 1);
+        assert_eq!(nodes[0].semantic_role, SemanticRole::Passthrough);
+        assert_eq!(nodes[0].origin, Origin::Unknown);
+        assert_eq!(nodes[0].phase, Phase::Unknown);
+        assert_eq!(nodes[0].severity, Severity::Unknown);
+        assert_eq!(
+            nodes[0]
+                .analysis
+                .as_ref()
+                .and_then(|analysis| analysis.family.as_deref()),
+            Some("passthrough")
+        );
     }
 
     #[test]

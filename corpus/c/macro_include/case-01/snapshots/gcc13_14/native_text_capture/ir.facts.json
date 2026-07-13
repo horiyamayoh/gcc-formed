@@ -188,9 +188,9 @@
         }
       ],
       "fingerprints": {
-        "family": "cfd1e9db4e7f85ddeab95f2ce1afa59a44d6619adbe216b588259390ec461ec6",
-        "raw": "d60c7383c1d3b13055bea03ac3072413b6c09c0f57528c4ff166b178f438492d",
-        "structural": "7ded77eaa9f3f7cb1e7a1e866e880762e55c51bf288b1e28b70e18f44746c7f6"
+        "family": "e199084b2fd4545d0a1ca671d462d5e6fd286d59ef10e94fca129036d171a4f6",
+        "raw": "559cf8e3c3db4ad81ac30aa961c56f14dc10ee2d52575246aaa3010926679c6b",
+        "structural": "036c2a4099934d1c00b444d18b0ffb7704e780352b7ce25c46ce077551334386"
       },
       "id": "residual-compiler-0",
       "locations": [
@@ -217,7 +217,7 @@
         }
       ],
       "message": {
-        "raw_text": "src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~"
+        "raw_text": "src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)\nIn file included from src/wrapper.h:1,\n                 from src/main.c:1:\nsrc/main.c: In function 'main':\n    1 | #define CALL_BAD() missing_symbol\n      |                    ^~~~~~~~~~~~~~"
       },
       "node_completeness": "partial",
       "origin": "gcc",
@@ -230,36 +230,14 @@
       },
       "semantic_role": "root",
       "severity": "error"
-    },
-    {
-      "fingerprints": {
-        "family": "b5b75e9723e54ebdb540d4c68c69378d839d1f8d24904a6e2a4a3c6c83a0e69c",
-        "raw": "a21af6e689720e22061693d2bc300f49a871e72e331f8143ff7bfeda8e651b4a",
-        "structural": "066f81fdb183413d55a136e29d7815ad9058552a2e930632c3800b3d9ffe9d0d"
-      },
-      "id": "residual-passthrough",
-      "message": {
-        "raw_text": "In file included from src/wrapper.h:1,\n                 from src/main.c:1:"
-      },
-      "node_completeness": "passthrough",
-      "origin": "external_tool",
-      "phase": "link",
-      "provenance": {
-        "capture_refs": [
-          "stderr.raw"
-        ],
-        "source": "residual_text"
-      },
-      "semantic_role": "passthrough",
-      "severity": "error"
     }
   ],
   "document_completeness": "partial",
   "document_id": "<document>",
   "fingerprints": {
-    "family": "4cc946843e77bfde9cc37743f0ede094603ced7a71e8e1a7773f22e3a4af7edc",
-    "raw": "ee181c99533f3370814e378d0b485757f85cb57b1b1b49a80397d03c7a41bb34",
-    "structural": "d8def20649ee6673e88fcfc181da11a24c32486d9929199aab68a6af0757e1f3"
+    "family": "a69f50eee46e418afc253e05b3768b9e53f8c2beb44287e16aea3f2de18b700f",
+    "raw": "adcfdedcbd371e48245506adbd86a244c7e3e05281a5442e75963c94abaec345",
+    "structural": "e8b1c59de0efe4790b1a975cba71cefce10da35b588caf0bed8ddf97455925e3"
   },
   "producer": {
     "name": "gcc-formed",

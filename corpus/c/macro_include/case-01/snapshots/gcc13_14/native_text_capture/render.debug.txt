@@ -1,5 +1,7 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 error: [compiler.residual] 'missing_symbol' undeclared (first use in this function)
+In file included from src/wrapper.h:1,
+                 from src/main.c:1:
 src/main.c: In function 'main':
     1 | #define CALL_BAD() missing_symbol
       |                    ^~~~~~~~~~~~~~
@@ -15,25 +17,15 @@ note: src/config.h:1:20: note: each undeclared identifier is reported only once 
 note: omitted 1 additional note(s)
 raw:
   src/config.h:1:20: error: 'missing_symbol' undeclared (first use in this function)
+  In file included from src/wrapper.h:1,
+                   from src/main.c:1:
   src/main.c: In function 'main':
       1 | #define CALL_BAD() missing_symbol
         |                    ^~~~~~~~~~~~~~
 debug: rule_id=rule.family.ingress_specific_override
-debug: matched_conditions=context=macro_expansion, context=include, child_note_kind=macro_expansion, child_message_contains=macro, existing_specific_family=compiler.residual
+debug: matched_conditions=context=macro_expansion, context=include, child_note_kind=macro_expansion, message_contains=include, message_contains=included from, child_message_contains=macro, existing_specific_family=compiler.residual
 debug: suppression_reason=preserved_specific_family_from_ingress
 explain: repair_unit=repair-unit:node-residual-compiler-0 proof=Unresolved visibility=NeverHidden
 explain: member=node:residual-compiler-0 target=DiagnosticNode { node_ref: "residual-compiler-0" } unresolved=false
-explain: raw_capture=stderr.raw
-
-error: [linker] In file included from src/wrapper.h:1,
-                 from src/main.c:1:
-raw : In file included from src/wrapper.h:1,
-raw:
-  In file included from src/wrapper.h:1,
-                   from src/main.c:1:
-debug: rule_id=rule.family.linker.structured_or_message
-debug: matched_conditions=phase=link
-explain: repair_unit=repair-unit:node-residual-passthrough proof=Unresolved visibility=NeverHidden
-explain: member=node:residual-passthrough target=DiagnosticNode { node_ref: "residual-passthrough" } unresolved=true
 explain: raw_capture=stderr.raw
 details: --formed-explain | raw: --formed-raw

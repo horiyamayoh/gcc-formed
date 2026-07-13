@@ -1085,6 +1085,15 @@ grouping:
 - `node_completeness = passthrough`
 - raw capture ref を持つ residual node または document residual として保持する
 
+### 20.7 GCC include preamble attachment
+
+`In file included from <path>:<line>,` と、インデントされた `from <path>:<line>:` continuation は、後続の compiler diagnostic に属する ordered include preamble として bounded に認識する。
+
+- 認識した preamble は後続 root の raw span / include context chain へ 1 回だけ attach し、独立 residual root を生成してはならない
+- multiline continuation の順序と exact stderr bytes への到達性を保持する
+- 後続 compiler diagnosticへ安全に attach できない orphaned / malformed preamble は、`origin=unknown`、`phase=unknown`、`severity=unknown` の passthrough として fail-openする
+- `undefined reference`、`multiple definition`、`collect2` 等の linker evidence がない text に `origin=linker`、`phase=link`、linker family/actionを付与してはならない
+
 ---
 
 ## 21. merge / dedup 規則

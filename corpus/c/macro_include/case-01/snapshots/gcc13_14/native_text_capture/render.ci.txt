@@ -1,5 +1,7 @@
 note: some compiler details were not fully structured; original diagnostics are preserved
 src/config.h:1:20: error: [compiler.residual] 'missing_symbol' undeclared (first use in this function)
+In file included from src/wrapper.h:1,
+                 from src/main.c:1:
 src/main.c: In function 'main':
     1 | #define CALL_BAD() missing_symbol
       |                    ^~~~~~~~~~~~~~
@@ -13,8 +15,4 @@ macro: src/main.c:3:25 in expansion of macro 'CALL_BAD'
 note: src/main.c:3:25: note: in expansion of macro 'CALL_BAD'
 note: src/config.h:1:20: note: each undeclared identifier is reported only once for each function it appears in
 note: omitted 1 additional note(s)
-
-error: [linker] In file included from src/wrapper.h:1,
-                 from src/main.c:1:
-raw : In file included from src/wrapper.h:1,
 details: --formed-explain | raw: --formed-raw

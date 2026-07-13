@@ -2323,6 +2323,21 @@ src/main.c:3:25: note: in expansion of macro 'FETCH_VALUE'\n";
         .unwrap();
 
         assert_eq!(report.source_authority, SourceAuthority::ResidualText);
+        assert_eq!(
+            report.document.diagnostics.len(),
+            1,
+            "unexpected residual roots: {:#?}",
+            report.document.diagnostics
+        );
+        assert!(!report.document.diagnostics.iter().any(|node| {
+            node.origin == Origin::Linker
+                || node.phase == Phase::Link
+                || node
+                    .analysis
+                    .as_ref()
+                    .and_then(|analysis| analysis.family.as_deref())
+                    == Some("linker")
+        }));
         let root = report
             .document
             .diagnostics
