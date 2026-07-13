@@ -250,10 +250,10 @@ fn real_main() -> Result<i32, CliError> {
         profile: plan.profile,
         capabilities: plan.capabilities.clone(),
         cwd: Some(cwd),
-        path_policy: config
-            .render
-            .path_policy
-            .unwrap_or(PathPolicy::ShortestUnambiguous),
+        path_policy: path_policy_for_presentation(
+            config.render.path_policy,
+            &presentation_policy.preset_id,
+        ),
         warning_visibility: WarningVisibility::Auto,
         debug_refs: plan.debug_refs,
         type_display_policy: TypeDisplayPolicy::CompactSafe,
@@ -368,6 +368,19 @@ fn passthrough_inherit(
     Ok(exit_code_from_process_status(&status))
 }
 
+fn path_policy_for_presentation(
+    configured: Option<PathPolicy>,
+    presentation_preset: &str,
+) -> PathPolicy {
+    configured.unwrap_or_else(|| {
+        if presentation_preset == "repair_units_hybrid_v2" {
+            PathPolicy::RelativeToCwd
+        } else {
+            PathPolicy::ShortestUnambiguous
+        }
+    })
+}
+
 pub(crate) fn exit_code_from_status(status: &ExitStatusInfo) -> i32 {
     status
         .code
@@ -423,6 +436,22 @@ mod tests {
             success: false,
         };
         assert_eq!(exit_code_from_status(&status), 143);
+    }
+
+    #[test]
+    fn hybrid_v2_uses_editable_relative_paths_without_overriding_user_policy() {
+        assert_eq!(
+            path_policy_for_presentation(None, "repair_units_hybrid_v2"),
+            PathPolicy::RelativeToCwd
+        );
+        assert_eq!(
+            path_policy_for_presentation(None, "subject_blocks_v2"),
+            PathPolicy::ShortestUnambiguous
+        );
+        assert_eq!(
+            path_policy_for_presentation(Some(PathPolicy::Absolute), "repair_units_hybrid_v2"),
+            PathPolicy::Absolute
+        );
     }
 
     #[derive(Debug)]
