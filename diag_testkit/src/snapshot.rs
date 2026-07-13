@@ -1204,9 +1204,9 @@ fn normalize_message_text_for_snapshot_compare(message: &mut diag_core::MessageT
 }
 
 fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
-    location.file.path_raw = normalize_transient_object_paths(location.path_raw());
+    location.file.path_raw = normalize_snapshot_text(location.path_raw());
     if let Some(display_path) = location.file.display_path.as_mut() {
-        *display_path = normalize_transient_object_paths(display_path);
+        *display_path = normalize_snapshot_text(display_path);
     }
 }
 
@@ -1243,6 +1243,18 @@ mod tests {
             normalized_context_frame_value(&frame("13.4.0")),
             normalized_context_frame_value(&frame("14.4.0"))
         );
+
+        let expected = include_str!(
+            "../../corpus/cpp/ranges_views/case-01/snapshots/gcc13_14/single_sink_structured/ir.analysis.json"
+        );
+        let actual = expected.replace(
+            "/usr/local/include/c++/13.4.0/",
+            "/usr/local/include/c++/14.4.0/",
+        );
+        let comparison =
+            compare_snapshot_contents(Path::new("ir.analysis.json"), expected, &actual).unwrap();
+
+        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
     }
 
     #[test]
