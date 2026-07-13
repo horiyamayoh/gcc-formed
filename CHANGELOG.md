@@ -2,7 +2,7 @@
 
 All notable user-visible changes to `gcc-formed` are recorded here.
 
-The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. Its sealed qualification passed; publication still requires the signed RC release gates.
+The current public release identity is `1.0.0` in the `v1.0.0 stable` maturity line. It is a same-bits promotion of the signed, qualified `1.0.0-rc.1` payload.
 
 ## [Unreleased]
 
@@ -11,7 +11,7 @@ The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. I
 - Qualified and promoted the compact `repair_units_hybrid_v2` presentation, with native-style numbered source gutters, editable cwd-relative paths, concise RepairUnit blocks, and one session-local `--formed-explain` / `--formed-raw` disclosure; `subject_blocks_v2` remains the immediate rollback preset.
 - Added the preregistered 120-family / 360-trial single-agent qualification harness, expanded compile/link/build-system operators, complete trial provenance verification, and RC/stable provenance integration without claiming a human behavioral study.
 - Replaced the RC human-participant artifact blocker with the ADR-0039 single-agent actual patch/build qualification packet; historical human studies remain immutable research evidence and no human behavioral-study pass is claimed.
-- Promoted `subject_blocks_v2` to the no-config beta terminal default, kept `subject_blocks_v1` and `legacy_v1` as explicit rollback presets, and preserved preset-local fail-open when an external presentation overlay cannot be loaded.
+- Promoted `repair_units_hybrid_v2` to the no-config stable terminal default, kept `subject_blocks_v2`, `subject_blocks_v1`, and `legacy_v1` as explicit rollback presets, and preserved preset-local fail-open when an external presentation overlay cannot be loaded.
 - Reset the public contract so `GCC15`, `GCC13-14`, and `GCC9-12` now share one in-scope value claim, exact machine labels use `gcc15` / `gcc13_14` / `gcc9_12` / `gcc16_plus`, `SupportLevel` is binary (`in_scope` / `passthrough_only`), and the public JSON schema moved to `2.0.0-alpha.1` with explicit `allowed_processing_paths`.
 - Added `docs/support/PUBLIC-SURFACE.md` plus `ci/public_surface.py`, so repo About metadata, README top copy, and beta/stable GitHub Release bodies are now generated from one versioned current-authority contract instead of workflow-local heredocs.
 - Hardened the release provenance and workflow contract tests so they now check workflow ordering, workflow-specific evidence routing, `maturity_label` manifest/release-metadata vocabulary, and legacy vocabulary regressions for public-beta and stable release paths.
@@ -33,7 +33,7 @@ The current source candidate is `1.0.0-rc.1` in the `v1.0.0-rc` maturity line. I
 - Added `cargo xtask fuzz-smoke`, checked-in `fuzz/` adversarial seeds, and automatic `fuzz-smoke-report.json` / `fuzz-evidence.json` generation so nightly and rc-gate can enforce `fuzz crash 0` without a manual `fuzz-status.json` handoff.
 - Added `cargo xtask human-eval-kit` and automatic `rc-gate/human-eval/` bundle generation so representative expert review sheets, task-study sheets, counterbalance order, and manual evidence templates are reproducible from the curated corpus instead of assembled ad hoc per RC.
 - Hardened compatibility-path UX so GCC 13/14 and out-of-scope compilers now print exact support-tier / selected-mode / fallback-reason banners, and `--formed-self-check` / `rc-gate` pin those notices in the rollout matrix to catch wording drift.
-- Added `cargo xtask stable-release`, `release-stable.yml`, `docs/releases/STABLE-RELEASE.md`, and stable evidence artifacts so a future `1.0.0` cut can seed a prior release-repo bundle, promote one signed candidate through `canary` / `beta` / `stable` without rebuilding, and retain an auditable rollback drill showing a single `current` symlink switch.
+- Added and exercised `cargo xtask stable-release`, `release-stable.yml`, `docs/releases/STABLE-RELEASE.md`, and stable evidence artifacts for the published `1.0.0` same-bits promotion, including an auditable rollback drill showing a single `current` symlink switch.
 - Added `SUPPORT.md`, maintainer runbooks for incident triage / trace bundle collection / rollback, and bug-template links so support routing no longer depends on chat history or maintainer tribal knowledge.
 - Added `docs/policies/GOVERNANCE.md`, strengthened `ADR-0020`, and expanded the PR template so stable-prep changes must declare `breaking` / `non-breaking` / `experimental` classification and keep post-`1.0.0` backlog items out of the current shipped contract unless they go through explicit ADR review.
 - Extended `cargo xtask check` to run the Python `ci/test_*.py` suite as well, so CI helper scripts and governance/support contract docs are checked through the same local and CI gate instead of relying on separate ad hoc commands.

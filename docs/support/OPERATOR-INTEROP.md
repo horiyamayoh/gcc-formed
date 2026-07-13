@@ -91,11 +91,11 @@ Public JSON and self-check spell `SupportLevel` with the stable machine labels `
 
 The release doc keeps rollback and uninstall close to the install instructions:
 
-- [docs/releases/PUBLIC-BETA-RELEASE.md](../releases/PUBLIC-BETA-RELEASE.md)
+- [docs/releases/STABLE-RELEASE.md](../releases/STABLE-RELEASE.md)
 
 ## Topology Policy
 
-Versioned beta policy for this issue scope:
+Versioned stable topology policy:
 
 | Topology | Status | Guidance |
 |---|---|---|

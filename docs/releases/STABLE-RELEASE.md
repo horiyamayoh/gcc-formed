@@ -33,13 +33,18 @@ Stable release automation must prove all of the following in one run:
 2. Verify the RC provenance commit equals the RC release tag commit and the payload version, manifest, checksums, and detached signature agree. Release-orchestration-only maintenance may run from a later workflow checkout without changing the promoted source commit.
 3. Seed the immutable release repository from the RC `.release-repo.tar.gz` bundle.
 4. Re-publish the unchanged RC control directory into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
-5. Install the rollback baseline version, install the candidate by exact version/checksum/signature pin, then roll back with one `current` symlink switch.
+5. Install the rollback baseline by exact version, install the candidate through the attested `stable` channel with checksum/signature pins, then roll back with one `current` symlink switch.
 6. Publish stable GitHub Release `v1.0.0` with the exact RC payload assets (which retain their honest `1.0.0-rc.N` payload filenames), final release-repo bundle, and stable-cut evidence.
 
 `1.0.0` is the stable release and channel identity. The promoted immutable
 payload retains its `1.0.0-rc.N` semver because changing an embedded version,
 archive, manifest, checksum, or signature would no longer be a same-bits
 promotion. Provenance records both identities explicitly.
+
+The verified stable-channel install writes runtime identity metadata so operator
+surfaces can report `release_identity=1.0.0 stable` together with immutable
+payload `product_version=1.0.0-rc.1`, build commit, and archive SHA-256. Direct
+archive execution does not infer the stable identity.
 
 The canonical automation entrypoint is `cargo xtask stable-release`.
 
@@ -49,7 +54,8 @@ The GitHub Release body for a stable cut is generated from [PUBLIC-SURFACE.md](.
 
 ```bash
 baseline_version="0.2.0-beta.1"
-candidate_version="1.0.0"
+payload_version="1.0.0-rc.1"
+release_identity_version="1.0.0"
 artifact_dir="$(mktemp -d)"
 repo_root="$artifact_dir/release-repo"
 install_root="$artifact_dir/install/x86_64-unknown-linux-musl"
@@ -74,13 +80,14 @@ cargo xtask package \
   --signing-private-key "$signing_private_key"
 
 cargo xtask stable-release \
-  --control-dir "dist/gcc-formed-v${candidate_version}-linux-x86_64-musl" \
+  --control-dir "dist/gcc-formed-v${payload_version}-linux-x86_64-musl" \
   --repository-root "$repo_root" \
   --target-triple x86_64-unknown-linux-musl \
   --install-root "$install_root" \
   --bin-dir "$bin_dir" \
   --report-dir target/stable-release \
-  --rollback-baseline-version "$baseline_version"
+  --rollback-baseline-version "$baseline_version" \
+  --release-identity-version "$release_identity_version"
 ```
 
 If the seeded repository already has a trustworthy `stable` channel pointer, `--rollback-baseline-version` may be omitted locally. The GitHub workflow keeps it explicit so the rollback target is auditable from the workflow inputs.

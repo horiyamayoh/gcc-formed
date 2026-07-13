@@ -48,7 +48,7 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 - The RC single-agent output-quality packet is attached and current. Its `qualification-report.json` is `pass`, its artifact-integrity report has no missing or mismatched artifacts, and it includes the pinned model/agent/tool manifest plus no-subagent attestation.
 - Historical human-eval bundles remain research evidence but participant recruitment and a `human-eval/` packet are not RC or stable prerequisites.
 
-## Current RC Support Boundary
+## Current Stable Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -80,7 +80,7 @@ This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` cand
 ## Release Notes Gate
 
 - README states the current stable scope, immutable payload identity, and claim boundary in one screen.
-- README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
+- README links to `STABLE-RELEASE.md` for the current install / rollback / stable-promotion contract; `PUBLIC-BETA-RELEASE.md` remains historical release-line guidance.
 - `SUPPORT-BOUNDARY.md` exists and remains the canonical wording source for README summary text, release notes, limitations, security, and contributing docs.
 - `PUBLIC-SURFACE.md` exists and remains the canonical source for repo landing metadata, README top copy, and generated GitHub Release body inputs.
 - README links to [VERSIONING.md](../policies/VERSIONING.md) and distinguishes maturity labels from artifact semver.

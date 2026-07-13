@@ -42,7 +42,7 @@ README_REQUIRED_SNIPPETS = [
     "[AGENTS.md](AGENTS.md)",
     "[docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)",
     "[docs/process/EXECUTION-MODEL.md](docs/process/EXECUTION-MODEL.md)",
-    "[docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md)",
+    "[docs/releases/STABLE-RELEASE.md](docs/releases/STABLE-RELEASE.md)",
     "**GCC 15・GCC 13–14・GCC 9–12 は 1 つの in-scope public contract を共有する。**",
     "**VersionBand と ProcessingPath は observability metadata であり、GCC 9–15 の価値序列を表さない。**",
     "**raw fallback は shipped contract の一部である。**",

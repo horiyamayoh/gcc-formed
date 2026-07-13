@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "examples": [
+    {
+      "id": "overload-before",
+      "path": "corpus/cpp/overload/case-01/snapshots/gcc15/dual_sink_structured/stderr.raw"
+    },
+    {
+      "id": "overload-after",
+      "path": "corpus/cpp/overload/case-01/snapshots/gcc15/dual_sink_structured/render.default.txt"
+    },
+    {
+      "id": "linker-before",
+      "path": "corpus/c/linker/case-01/snapshots/gcc15/dual_sink_structured/stderr.raw"
+    },
+    {
+      "id": "linker-after",
+      "path": "corpus/c/linker/case-01/snapshots/gcc15/dual_sink_structured/render.default.txt"
+    }
+  ]
+}

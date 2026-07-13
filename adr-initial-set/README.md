@@ -16,7 +16,7 @@ superseded_by: []
 
 - **文書種別**: Architecture Decision Record（ADR）索引
 - **状態**: Accepted Baseline
-- **版**: `v1beta`
+- **版**: `v1.0.0 stable`
 - **日付**: 2026-04-13
 - **対象**: `gcc-formed` / 将来の `cc-formed`
 - **関連文書**:

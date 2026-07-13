@@ -2,7 +2,7 @@
 
 `gcc-formed` treats the corpus as a product contract, not a loose collection of examples.
 
-## Current Beta-Bar Target
+## Current Stable Corpus Target
 
 - Keep the hand-authored corpus between 80 and 120 fixtures.
 - Preserve the composition quota from `quality-corpus-test-gate-spec.md`.

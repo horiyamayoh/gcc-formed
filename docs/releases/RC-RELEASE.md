@@ -15,7 +15,7 @@ superseded_by: []
 
 # Release Candidate Runbook
 
-The current source candidate is `1.0.0-rc.1`. It may be published only from
+The immutable payload used by stable `1.0.0` is `1.0.0-rc.1`. It was published only from
 the exact qualified product commit after the evidence-only commit has added the
 verified qualification summaries consumed by `cargo xtask rc-gate`.
 

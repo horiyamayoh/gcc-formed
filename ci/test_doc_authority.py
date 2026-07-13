@@ -49,6 +49,11 @@ BANNED_CURRENT_AUTHORITY_PHRASES = [
     "Tier B",
     "Tier C",
     "Representative GCC 15 snapshot check",
+    "Current RC Support Boundary",
+    "RC support posture",
+    "Versioned beta policy for this issue scope",
+    "The current source candidate is `1.0.0-rc.1`",
+    "publication still requires the signed RC release gates",
 ]
 
 ALLOWED_BANNED_PHRASE_DOCS = {

@@ -35,7 +35,7 @@ This document uses artifact semver for release headings. Stable identity `1.0.0`
 
 ## 0.2.0-beta.1
 
-### Current `v1beta` Support Boundary
+### Historical `v1beta` Support Boundary
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -55,7 +55,7 @@ This document uses artifact semver for release headings. Stable identity `1.0.0`
 - Ships the first public-beta artifact line as `0.2.0-beta.1` in the `v1beta` maturity line.
 - Publishes a public GitHub prerelease with the signed primary/debug/source archives, `manifest.json`, `build-info.txt`, `SHA256SUMS`, `SHA256SUMS.sig`, a full control-dir bundle, an immutable release-repo bundle, and `release-provenance.json`.
 - Adds a dedicated public-beta release workflow and `ADR-0024` so GitHub Releases, immutable release repositories, promote metadata, and support-boundary wording are governed by one policy.
-- Adds `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and `ADR-0025` so a future stable cut can seed a prior release-repo bundle, promote one signed candidate from `canary` to `beta` to `stable` without rebuilding, and retain rollback drill artifacts.
+- At beta publication time, added `cargo xtask stable-release`, `release-stable.yml`, `STABLE-RELEASE.md`, and `ADR-0025` so a later stable cut could seed a prior release-repo bundle, promote one signed candidate from `canary` to `beta` to `stable` without rebuilding, and retain rollback drill artifacts.
 - Adds `SUPPORT.md` plus incident/trace/rollback runbooks so beta users and maintainers can route bug reports and recovery steps from docs instead of relying on ad hoc guidance.
 - Adds `GOVERNANCE.md` and strengthens `ADR-0020` / PR review prompts so stable-prep changes must be classified as `breaking`, `non-breaking`, or `experimental`, and post-`1.0.0` backlog expansion cannot drift into the shipped support boundary by accident.
 - Routes the Python `ci/test_*.py` contract suite through `cargo xtask check`, so CI helper scripts and governance/support docs now fail the same standard gate as the Rust workspace tests.

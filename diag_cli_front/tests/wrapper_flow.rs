@@ -44,7 +44,10 @@ fn attested_stable_install_reports_release_and_payload_identities_together() {
     let version_root = temp.path().join("v1.0.0-rc.1");
     let installed_binary = version_root.join("bin/gcc-formed");
     fs::create_dir_all(installed_binary.parent().unwrap()).unwrap();
-    fs::copy(&source_binary, &installed_binary).unwrap();
+    let staged_binary = version_root.join("bin/gcc-formed.staged");
+    fs::copy(&source_binary, &staged_binary).unwrap();
+    fs::File::open(&staged_binary).unwrap().sync_all().unwrap();
+    fs::rename(staged_binary, &installed_binary).unwrap();
     let identity = diag_trace::RuntimeIdentity {
         release_identity: Some(diag_trace::ReleaseIdentity {
             version: "1.0.0".to_string(),

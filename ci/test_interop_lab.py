@@ -163,7 +163,7 @@ class InteropLabTest(unittest.TestCase):
             "FORMED_BACKEND_LAUNCHER",
             "--formed-mode=passthrough",
             "docs/support/OPERATOR-INTEROP.md",
-            "docs/releases/PUBLIC-BETA-RELEASE.md",
+            "docs/releases/STABLE-RELEASE.md",
         ]:
             with self.subTest(snippet=snippet):
                 self.assertIn(snippet, readme)

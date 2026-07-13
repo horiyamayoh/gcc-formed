@@ -52,49 +52,64 @@ representative corpus は `snapshots/.../subject_blocks_v2/` や `snapshots/.../
 
 ### 1. テンプレートエラー（C++）
 
-出典: [GCC raw](corpus/cpp/overload/case-01/snapshots/gcc15/stderr.raw) / [default render](corpus/cpp/overload/case-01/snapshots/gcc15/render.default.txt)
+出典: [GCC raw](corpus/cpp/overload/case-01/snapshots/gcc15/dual_sink_structured/stderr.raw) / [default render](corpus/cpp/overload/case-01/snapshots/gcc15/dual_sink_structured/render.default.txt)
 
 **Before (GCC raw)**
 
+<!-- canonical-example: overload-before -->
 ```text
 src/main.cpp: In function 'int main()':
-src/main.cpp:5:10: error: too few arguments to function 'void takes(int, int)'
+src/main.cpp:5:10: error: no matching function for call to 'takes(int)'
     5 |     takes(1);
       |     ~~~~~^~~
-src/main.cpp:1:6: note: declared here
-    1 | void takes(int, int) {}
+src/main.cpp:5:10: note: there are 2 candidates
+src/main.cpp:1:6: note: candidate 1: 'void takes(int, int)'
+    1 | void takes(int, int);
       |      ^~~~~
+src/main.cpp:1:6: note: candidate expects 2 arguments, 1 provided
+src/main.cpp:2:6: note: candidate 2: 'void takes(double, double)'
+    2 | void takes(double, double);
+      |      ^~~~~
+src/main.cpp:2:6: note: candidate expects 2 arguments, 1 provided
 ```
 
 **After (default `repair_units_hybrid_v2`)**
 
+<!-- canonical-example: overload-after -->
 ```text
-error: [type_mismatch] type or overload mismatch @ src/main.cpp:5:5
-help: compare the expected type and actual argument at the call site
+error: [type_mismatch] no matching function for call to 'takes(int)' @ src/main.cpp:5:5
 want: int, int
 got : int
 via : void takes(int, int) @ src/main.cpp:1:6  +3 candidates
+| src/main.cpp:5:5
+|     takes(1);
+|     ^
 details: --formed-explain | raw: --formed-raw
 ```
 
 ### 2. リンカーエラー（C）
 
-出典: [GCC raw](corpus/c/linker/case-01/snapshots/gcc15/stderr.raw) / [default render](corpus/c/linker/case-01/snapshots/gcc15/render.default.txt)
+出典: [GCC raw](corpus/c/linker/case-01/snapshots/gcc15/dual_sink_structured/stderr.raw) / [default render](corpus/c/linker/case-01/snapshots/gcc15/dual_sink_structured/render.default.txt)
 
 **Before (GCC raw)**
 
+<!-- canonical-example: linker-before -->
 ```text
+/usr/bin/ld: /tmp/ccLjS5gK.o: in function `duplicate':
 helper.c:(.text+0x0): multiple definition of `duplicate'; /tmp/cczB1U1i.o:main.c:(.text+0x0): first defined here
 collect2: error: ld returned 1 exit status
 ```
 
 **After (default `repair_units_hybrid_v2`)**
 
+<!-- canonical-example: linker-after -->
 ```text
-error: [linker] multiple definition of `duplicate`
-help  : remove the duplicate definition or make the symbol internal to one translation unit
-symbol: duplicate
-from  : helper.c:(.text+0x0)
+note: some compiler details were not fully structured; original diagnostics are preserved
+error: [linker] helper.c:(.text+0x0): multiple definition of `duplicate'; <temp-object>:main.c:(.text+0x0): first defined here
+symbol : duplicate
+from   : helper.c:(.text+0x0)
+now    : helper.c:(.text+0x0)
+prev   : <temp-object>:main.c:(.text+0x0)
 details: --formed-explain | raw: --formed-raw
 ```
 
@@ -132,7 +147,7 @@ README では要点だけを再掲する。
 
 Representative corpus / replay gates でも、`GCC15/DualSinkStructured`、`GCC13-14/NativeTextCapture`、`GCC13-14/SingleSinkStructured`、`GCC9-12/NativeTextCapture`、`GCC9-12/SingleSinkStructured` を別 capability path として扱う。
 
-| VersionBand | 典型的な ProcessingPath | 現在の RC support level | 位置づけ |
+| VersionBand | 典型的な ProcessingPath | 現在の stable SupportLevel | 位置づけ |
 |---|---|---|---|
 | GCC 15 | `DualSinkStructured` | `InScope` | GCC 9–15 parity contract の一部。dual-sink が既定 capability |
 | GCC 13–14 | `SingleSinkStructured` / `NativeTextCapture` | `InScope` | GCC 9–15 parity contract の一部。native text が既定 capability |
@@ -178,7 +193,7 @@ gcc-formed --formed-public-json=- -c src/main.c | jq '.execution.version_band'
 上から下へ読む。
 
 1. [docs/support/SUPPORT-BOUNDARY.md](docs/support/SUPPORT-BOUNDARY.md)  
-   現在の public wording と RC support posture の正本
+   現在の public wording と stable support posture の正本
 2. [docs/README.md](docs/README.md)  
    文書群の authority map と配置ルール
 3. [docs/architecture/gcc-formed-vnext-change-design.md](docs/architecture/gcc-formed-vnext-change-design.md)  
@@ -323,7 +338,7 @@ If the wrapper is not yet proven for a build, fall back to raw `gcc` / `g++` for
 
 `--formed-self-check` and the runtime notices use the same current-vocabulary operator guidance. The self-check output keeps a shared `summary`, `representative_limitations`, `actionable_next_steps`, and `c_first_focus_areas`; the same band-specific next-step wording is documented in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md).
 
-The full topology policy is in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md); rollback and raw-fallback instructions remain in [docs/releases/PUBLIC-BETA-RELEASE.md](docs/releases/PUBLIC-BETA-RELEASE.md).
+The full topology policy is in [docs/support/OPERATOR-INTEROP.md](docs/support/OPERATOR-INTEROP.md); stable release, install, rollback, and raw-fallback instructions are in [docs/releases/STABLE-RELEASE.md](docs/releases/STABLE-RELEASE.md).
 
 ---
 
