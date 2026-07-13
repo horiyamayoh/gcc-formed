@@ -102,6 +102,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          rc_commit="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_RELEASE_TAG}" --jq '.object.sha')"
+          echo "RC_COMMIT=$rc_commit" >> "$GITHUB_ENV"
           gh release download "$RC_RELEASE_TAG" \
             --dir "$RELEASE_SEED_ROOT" \
             --pattern "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.control.tar.gz" \
@@ -112,10 +114,21 @@ jobs:
           mv \
             "$RELEASE_SEED_ROOT/gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo" \
             "$RELEASE_REPO_ROOT"
+          baseline_seed="$RELEASE_SEED_ROOT/rollback-baseline"
+          baseline_bundle="gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo.tar.gz"
+          baseline_repo="$baseline_seed/gcc-formed-v${ROLLBACK_BASELINE_VERSION}-${ARTIFACT_SLUG}.release-repo"
+          mkdir -p "$baseline_seed"
+          gh release download "v${ROLLBACK_BASELINE_VERSION}" \
+            --dir "$baseline_seed" \
+            --pattern "$baseline_bundle"
+          tar -xzf "$baseline_seed/$baseline_bundle" -C "$baseline_seed"
+          cp -R \
+            "$baseline_repo/targets/$TARGET_TRIPLE/versions/v${ROLLBACK_BASELINE_VERSION}" \
+            "$RELEASE_REPO_ROOT/targets/$TARGET_TRIPLE/versions/"
           python3 ci/verify_same_bits_promotion.py \
             --rc-provenance "$RELEASE_SEED_ROOT/release-provenance.json" \
             --control-dir "$CONTROL_DIR" \
-            --expected-commit "$GITHUB_SHA" \
+            --expected-commit "$rc_commit" \
             --expected-payload-version "$PACKAGE_VERSION" \
             --output "$REPORT_ROOT/release/rc-payload-verification.json"
           rm -rf "$RELEASE_REPO_ROOT/targets/$TARGET_TRIPLE/versions/v${PACKAGE_VERSION}"
@@ -164,6 +177,8 @@ jobs:
           cp -R "$RELEASE_REPO_ROOT" "$release_repo_dir"
           tar -czf "$release_repo_bundle" -C "$RUNNER_TEMP" "gcc-formed-v${PACKAGE_VERSION}-${ARTIFACT_SLUG}.release-repo"
       - name: Write release provenance
+        env:
+          GITHUB_SHA: ${{ env.RC_COMMIT }}
         run: |
           python3 ci/release_provenance.py \
             --workflow stable-release \
@@ -184,7 +199,7 @@ jobs:
             --kind stable \
             --version "$STABLE_VERSION" \
             --repository "$GITHUB_REPOSITORY" \
-            --commit "$GITHUB_SHA" \
+            --commit "$RC_COMMIT" \
             --signing-key-id "$RELEASE_SIGNING_KEY_ID" \
             --signing-public-key-sha256 "$RELEASE_SIGNING_PUBLIC_KEY_SHA256" \
             --rollback-baseline-version "$ROLLBACK_BASELINE_VERSION" \
@@ -223,7 +238,7 @@ jobs:
             gh release edit "$RELEASE_TAG" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
           else
-            gh release create "$RELEASE_TAG" "${assets[@]}" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
+            gh release create "$RELEASE_TAG" "${assets[@]}" --target "$RC_COMMIT" --title "gcc-formed ${STABLE_VERSION}" --notes-file "$RELEASE_NOTES_PATH" --latest
           fi
       - name: Upload stable release evidence
         if: always()

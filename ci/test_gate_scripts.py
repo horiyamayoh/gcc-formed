@@ -799,6 +799,9 @@ class CheckedInWorkflowTest(unittest.TestCase):
         self.assertNotIn('cargo xtask hermetic-release-check', release_stable)
         self.assertNotIn('cargo xtask package', release_stable)
         self.assertIn('ci/verify_same_bits_promotion.py', release_stable)
+        self.assertIn('gh release download "v${ROLLBACK_BASELINE_VERSION}"', release_stable)
+        self.assertIn('--expected-commit "$rc_commit"', release_stable)
+        self.assertIn('--target "$RC_COMMIT"', release_stable)
 
     def test_release_beta_workflow_orders_release_provenance_after_assets(self) -> None:
         step_names = self.extract_step_names(".github/workflows/release-beta.yml")
