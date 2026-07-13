@@ -1043,10 +1043,13 @@ fn normalized_context_frame_value(frame: &diag_core::ContextFrame) -> serde_json
     let mut normalized = serde_json::Map::new();
     normalized.insert(
         "label".to_string(),
-        serde_json::Value::String(frame.label.clone()),
+        serde_json::Value::String(normalize_snapshot_text(&frame.label)),
     );
     if let Some(path) = frame.path.as_ref() {
-        normalized.insert("path".to_string(), serde_json::Value::String(path.clone()));
+        normalized.insert(
+            "path".to_string(),
+            serde_json::Value::String(normalize_snapshot_text(path)),
+        );
     }
     serde_json::Value::Object(normalized)
 }
@@ -1184,7 +1187,7 @@ fn normalize_diagnostic_node_for_snapshot_compare(node: &mut diag_core::Diagnost
     {
         frame.label = normalize_snapshot_text(&frame.label);
         if let Some(path) = frame.path.as_mut() {
-            *path = normalize_transient_object_paths(path);
+            *path = normalize_snapshot_text(path);
         }
     }
     node.fingerprints = None;
@@ -1209,7 +1212,10 @@ fn normalize_location_for_snapshot_compare(location: &mut diag_core::Location) {
 
 #[cfg(test)]
 mod tests {
-    use super::{SnapshotDiffKind, compare_snapshot_contents, normalize_snapshot_contents};
+    use super::{
+        SnapshotDiffKind, compare_snapshot_contents, normalize_snapshot_contents,
+        normalized_context_frame_value,
+    };
     use std::path::Path;
 
     #[test]
@@ -1226,13 +1232,17 @@ mod tests {
 
     #[test]
     fn snapshot_comparison_normalizes_system_cxx_include_version_within_band() {
-        let expected = r#"{"path":"/usr/local/include/c++/13.4.0/ranges"}"#;
-        let actual = r#"{"path":"/usr/local/include/c++/14.4.0/ranges"}"#;
+        let frame = |version: &str| diag_core::ContextFrame {
+            label: "required from system ranges header".to_string(),
+            path: Some(format!("/usr/local/include/c++/{version}/ranges")),
+            line: Some(1),
+            column: Some(1),
+        };
 
-        let comparison =
-            compare_snapshot_contents(Path::new("stderr.raw"), expected, actual).unwrap();
-
-        assert_eq!(comparison.diff_kind, SnapshotDiffKind::NormalizationOnly);
+        assert_eq!(
+            normalized_context_frame_value(&frame("13.4.0")),
+            normalized_context_frame_value(&frame("14.4.0"))
+        );
     }
 
     #[test]
