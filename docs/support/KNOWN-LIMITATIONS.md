@@ -14,11 +14,11 @@ superseded_by: []
 
 # Known Limitations
 
-`gcc-formed` is on the `v1.0.0-rc` candidate line, with artifact version `1.0.0-rc.1`. Publication remains blocked until the sealed single-agent qualification and release gates pass.
+`gcc-formed` is on the `v1.0.0 stable` line. Stable identity `1.0.0` uses the signed, qualified `1.0.0-rc.1` payload unchanged.
 
 The exact public wording is fixed in [SUPPORT-BOUNDARY.md](SUPPORT-BOUNDARY.md). This file summarizes the current limits and known gaps around that contract.
 
-## Current RC Posture
+## Current Stable Posture
 
 - Linux first.
 - `x86_64-unknown-linux-musl` is the primary production artifact.
@@ -61,7 +61,6 @@ You should expect raw fallback when:
 - Perfect parity across every diagnostic family and every capability path.
 - Non-Linux production artifacts.
 - Elimination of passthrough, shadow-mode-like conservative behavior, or raw fallback.
-- Stable artifact `1.0.0` or general-availability promises before the stable promotion gate passes.
 - Backlog items reserved for post-`1.0.0` expansion; see [GOVERNANCE.md](../policies/GOVERNANCE.md).
 
 ## Bug Reports

@@ -20,10 +20,10 @@ This document fixes the naming contract for `gcc-formed` so maturity labels, art
 
 | Axis | Current value | Meaning |
 | --- | --- | --- |
-| Maturity label | `v1.0.0-rc` | Current candidate maturity and support posture |
-| Artifact semver line | `1.0.0-rc.N` | Current release-candidate artifact series |
-| Current artifact in the line | `1.0.0-rc.1` | Candidate source version; publication requires qualification pass |
-| General-availability stable release | Not available | `1.0.0` has not shipped |
+| Maturity label | `v1.0.0 stable` | Current stable maturity and support posture |
+| Stable release identity | `1.0.0` | Published general-availability release |
+| Immutable payload semver | `1.0.0-rc.1` | Signed qualified RC payload promoted without rebuilding or rewriting |
+| General-availability stable release | [v1.0.0](https://github.com/horiyamayoh/gcc-formed/releases/tag/v1.0.0) | Published 2026-07-13 |
 
 ## Fixed Progression
 

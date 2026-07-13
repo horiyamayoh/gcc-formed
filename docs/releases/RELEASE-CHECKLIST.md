@@ -14,15 +14,15 @@ superseded_by: []
 
 # Release Checklist
 
-This checklist defines the minimum bar for publishing the current `v1.0.0-rc` / `1.0.0-rc.1` candidate and subsequently promoting `1.0.0` stable.
+This checklist records the minimum bar satisfied by the signed `1.0.0-rc.1` candidate and its same-bits promotion to `1.0.0` stable.
 
 ## Versioning Contract
 
-- Current maturity label: `v1.0.0-rc`
-- Current artifact semver line: `1.0.0-rc.N`
-- Current source candidate: `1.0.0-rc.1` (qualification passed; signed publication pending)
+- Current maturity label: `v1.0.0 stable`
+- Current stable identity: `1.0.0`
+- Immutable promoted payload: `1.0.0-rc.1` (qualification, signing, publication, and same-bits promotion passed)
 - Rollback baseline artifact: `0.2.0-beta.1`
-- Planned stable line: `1.0.0`
+- Published stable release: [v1.0.0](https://github.com/horiyamayoh/gcc-formed/releases/tag/v1.0.0)
 - Release repository channels such as `canary`, `beta`, and `stable` are distribution pointers, not maturity labels.
 - Canonical support-boundary wording lives in `SUPPORT-BOUNDARY.md`.
 
@@ -76,7 +76,7 @@ This checklist defines the minimum bar for publishing the current `v1.0.0-rc` / 
 
 ## Release Notes Gate
 
-- README states the current RC-candidate scope and claim boundary in one screen.
+- README states the current stable scope, immutable payload identity, and claim boundary in one screen.
 - README links to `PUBLIC-BETA-RELEASE.md` for install / rollback / exact-pin instructions.
 - `SUPPORT-BOUNDARY.md` exists and remains the canonical wording source for README summary text, release notes, limitations, security, and contributing docs.
 - `PUBLIC-SURFACE.md` exists and remains the canonical source for repo landing metadata, README top copy, and generated GitHub Release body inputs.

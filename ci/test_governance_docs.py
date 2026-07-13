@@ -12,7 +12,7 @@ GOVERNANCE_HEADINGS = [
     "### Breaking",
     "### Non-Breaking",
     "### Experimental",
-    "## Pre-1.0 Must-Have Backlog",
+    "## Stable Maintenance Requirements",
     "## Post-1.0 Backlog",
     "## Reviewer Checklist",
 ]

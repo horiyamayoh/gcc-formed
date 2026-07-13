@@ -21,10 +21,10 @@ superseded_by: []
 > After (default `repair_units_hybrid_v2`): concrete headline、source/caret、最初のactionを1 RepairUnit blockで読める
 > Fail-open: 改善しきれない run は raw diagnostics をそのまま返す
 
-- **状態**: 1.0 Release Candidate（sealed qualification passed / release pending）
-- **成熟度ラベル**: `v1.0.0-rc`
-- **artifact semver 系列**: `1.0.0-rc.N`
-- **一般利用向け安定版**: 未提供
+- **状態**: 1.0 stable（signed RC same-bits promotion published）
+- **成熟度ラベル**: `v1.0.0 stable`
+- **artifact semver**: stable identity `1.0.0` / immutable payload `1.0.0-rc.1`
+- **一般利用向け安定版**: [v1.0.0](https://github.com/horiyamayoh/gcc-formed/releases/tag/v1.0.0)
 - **日付**: 2026-07-13
 - **位置づけ**: doctrine-driven / spec-first / multi-path diagnostic UX wrapper
 

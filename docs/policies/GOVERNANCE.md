@@ -14,11 +14,11 @@ superseded_by: []
 
 # Change Governance
 
-This document operationalizes [ADR-0020](../../adr-initial-set/adr-0020-stability-promises.md) for the current stable-prep governance freeze. Use it to classify changes, decide whether an ADR update is required, and keep the pre-`1.0.0` backlog separate from post-`1.0.0` expansion work.
+This document operationalizes [ADR-0020](../../adr-initial-set/adr-0020-stability-promises.md) for the stable governance freeze. Use it to classify changes, decide whether an ADR update is required, and keep the shipped `1.0.0` contract separate from later expansion work.
 
 ## Current Freeze
 
-Until `1.0.0` ships, treat the current `v1.0.0-rc` / `1.0.0-rc.N` contract as frozen by default.
+Since `1.0.0` shipped, treat the published `v1.0.0 stable` contract as frozen by default.
 
 - A change that touches a stable contract surface must be explicitly classified as `breaking`, `non-breaking`, or `experimental`.
 - Contract changes must update the governing docs, tests, and release-facing wording in the same change.
@@ -81,14 +81,14 @@ Rules:
 
 - it must be labeled `experimental` in docs and user-facing help
 - it must be disabled by default
-- it must not silently replace the current stable-prep path
+- it must not silently replace the current stable path
 - it must be excluded from `SUPPORT-BOUNDARY.md` and release promises until promoted through normal ADR review
 
 An experimental feature may change or be removed before `1.0.0`. After `1.0.0`, it still must remain opt-in until it has a reviewed promotion plan.
 
-## Pre-1.0 Must-Have Backlog
+## Stable Maintenance Requirements
 
-These items are still in scope before `1.0.0`:
+These items remain required for stable maintenance:
 
 - keep `pr-gate`, the current diagnostic blocker slice of `nightly-gate`, and release smoke evidence green
 - preserve the current support boundary, honest compatibility notices, and fail-open fallback behavior
@@ -99,7 +99,7 @@ These items are still in scope before `1.0.0`:
 
 ## Post-1.0 Backlog
 
-These remain explicitly out of scope for the current frozen contract and should not be smuggled into `v1beta` or the first stable release:
+These remain explicitly out of scope for the current frozen contract and must not be smuggled into a `1.0.x` maintenance release:
 
 - non-Linux production artifacts
 - exhaustive per-family parity evidence across every in-scope GCC band

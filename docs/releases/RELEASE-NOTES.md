@@ -14,9 +14,15 @@ superseded_by: []
 
 # Release Notes
 
-This document uses artifact semver for release headings. The source candidate is `1.0.0-rc.1`; its sealed qualification passed and publication now depends on the signed RC release workflow.
+This document uses artifact semver for release headings. Stable identity `1.0.0` is a same-bits promotion of the signed `1.0.0-rc.1` payload.
 
-## 1.0.0-rc.1 (candidate; publication pending)
+## 1.0.0 (stable; published 2026-07-13)
+
+- Promotes the signed `1.0.0-rc.1` payload without rebuilding, renaming, or re-signing it.
+- Publishes qualification, full raw trial packets, strict RC, GCC/path matrix, install, promotion, and rollback evidence with the release.
+- Verifies rollback to `0.2.0-beta.1` with one `current` symlink switch.
+
+## 1.0.0-rc.1 (signed release candidate; published 2026-07-13)
 
 ### Output-quality contract
 

@@ -14,7 +14,7 @@ superseded_by: []
 
 # Stable Release Runbook
 
-This document defines the automation contract for the future `1.0.0` stable cut. It does not claim that a stable artifact is already published; the current source line is the `v1.0.0-rc` candidate.
+This document defines the automation contract used for the published [`1.0.0` stable cut](https://github.com/horiyamayoh/gcc-formed/releases/tag/v1.0.0). The stable identity promotes the signed `1.0.0-rc.1` payload without rebuilding or rewriting it.
 
 ## Preconditions
 
@@ -30,7 +30,7 @@ This document defines the automation contract for the future `1.0.0` stable cut.
 Stable release automation must prove all of the following in one run:
 
 1. Download the canonical `x86_64-unknown-linux-musl` payload and release repository from the signed RC GitHub prerelease; do not rebuild or re-sign it.
-2. Verify the RC provenance commit equals the stable workflow checkout and the payload version, manifest, checksums, and detached signature agree.
+2. Verify the RC provenance commit equals the RC release tag commit and the payload version, manifest, checksums, and detached signature agree. Release-orchestration-only maintenance may run from a later workflow checkout without changing the promoted source commit.
 3. Seed the immutable release repository from the RC `.release-repo.tar.gz` bundle.
 4. Re-publish the unchanged RC control directory into that repository and promote the same published bits through `canary`, `beta`, and `stable` without rebuilding.
 5. Install the rollback baseline version, install the candidate by exact version/checksum/signature pin, then roll back with one `current` symlink switch.

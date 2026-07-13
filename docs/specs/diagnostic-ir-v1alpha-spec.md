@@ -45,7 +45,7 @@ Validation rejects dangling/self references, duplicate evidence/edge/unit refs, 
 ---
 
 > **Authority**
-> This is the current Diagnostic IR contract. `v1alpha` in this document names the schema/version lineage, not the current product maturity line. The product maturity is governed by the current release policy (`v1.0.0-rc` while the 1.0 candidate is being qualified).
+> This is the current Diagnostic IR contract. `v1alpha` in this document names the schema/version lineage, not the current product maturity line. The product maturity is governed by the current release policy (`v1.0.0 stable`; immutable payload `1.0.0-rc.1`).
 
 ## 1. この文書の目的
 
