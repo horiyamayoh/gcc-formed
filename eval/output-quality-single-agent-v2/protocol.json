@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "protocol_id": "gcc-formed-output-quality-single-agent-v2",
+  "frozen_at": "2026-07-13T04:30:00Z",
+  "issue": 219,
+  "supersedes_for_future_trials": "gcc-formed-output-quality-single-agent-v1",
+  "historical_v1_result": "fail; immutable and not pooled with v2",
+  "conditions": {
+    "count": 3,
+    "concealed_labels": ["A", "B", "C"],
+    "identities": ["native_gcc", "current_default", "candidate"],
+    "allocation": "family-blocked latin square over three source-distinct variants"
+  },
+  "population": {
+    "semantic_families": 120,
+    "family_ids": "F121-F240; source-disjoint from v1 F001-F120",
+    "valid_trials_minimum": 360,
+    "per_condition_minimum": 120,
+    "strata": {
+      "simple_native_strong": 40,
+      "diagnostic_flood_semantic_heavy": 40,
+      "multi_file_build_real_project": 40
+    }
+  },
+  "coverage": {
+    "languages": ["c", "cpp"],
+    "independent_repair_units": [1, 2, 3, 4, 5],
+    "compile_shapes": ["syntax_recovery", "missing_name", "type_mismatch", "warning_as_error", "overload", "template", "concept_constraint", "ranges_constraint", "macro", "missing_header", "include_frontier", "generated_header_frontier", "system_header_frontier", "residual_unknown"],
+    "link_build_shapes": ["undefined_symbol", "duplicate_symbol", "library_order_link", "multi_translation_unit", "parallel_make_interleaving", "response_file", "depfile_compile"],
+    "external_required_gates": ["repair-unit exact-count/fidelity corpus", "real-project Make/CMake corpus", "interop compiler-probe/TTY/CI/redirect/locale matrix", "GCC 9/12/13/14/15 path-aware matrix"]
+  },
+  "attempt_policy": {
+    "maximum_attempts": 3,
+    "partitions": [1, 2, 3],
+    "same_partition_retry": false,
+    "aggregate_attempts": false,
+    "aggregate_protocol_versions": false,
+    "product_change_requires_new_candidate_sha": true
+  },
+  "trial_policy": {
+    "fresh_ephemeral_context": true,
+    "clean_task_tree": true,
+    "isolated_build_directory": true,
+    "maximum_compile_test_loops": 3,
+    "all_started_trials_retained": true,
+    "invalid_final_schema_is_trial_failure": true,
+    "transport_and_infrastructure_failures_retained": true,
+    "prose_semantic_rescue": false,
+    "condition_identity_disclosure": false,
+    "compiler_stdout_exposed_as_diagnostic": false
+  },
+  "oracle_policy": {
+    "passing_build_required": true,
+    "existing_allowed_file_edit": true,
+    "missing_header_creation_is_allowed_when_path_ends_with_sealed_repair_token": true,
+    "untracked_files_are_recorded_individually": true,
+    "protected_file_change_is_failure": true
+  },
+  "agent_policy": {"single_named_identity": true, "subagents": false, "delegation": false, "planner_critic_judge_agents": false, "ensemble": false, "best_of_n": false, "model_voting": false, "subjective_preference_primary_evidence": false, "jobs": 1},
+  "primary_endpoints": ["first_patch_success", "success_within_three_loops", "wrong_file_or_anchor_rate", "tool_calls_to_success", "compile_loops_to_success", "diagnostic_bytes_before_first_patch"],
+  "stop_ship": {"p0_p1_fidelity_bugs": 0, "high_confidence_misleading_actions": 0, "false_merges": 0, "false_splits": 0, "hidden_or_orphan_independent_evidence": 0, "exit_channel_side_effect_regressions": 0, "inaccessible_raw_or_explain": 0, "condition_leaks": 0, "hash_mismatches": 0, "missing_trial_artifacts": 0, "raw_fact_coverage": 1.0, "observable_unit_recall": 1.0, "visible_unit_precision": 1.0},
+  "non_inferiority": {"interval": "one-sided family-clustered 97.5 percent bootstrap", "success_margin_points": -0.05, "efficiency_ratio_upper": 1.1, "comparators": ["native_gcc", "current_default"]},
+  "improvement": {"required": true, "minimum_efficiency_improvement": 0.1, "alternative": "family-clustered statistically higher task success than current_default"},
+  "seed": {"commitment_algorithm": "sha256", "derivation": "sha256(protocol_id || candidate_sha || attempt || family_id || variant)", "reroll_after_candidate_freeze": false},
+  "claim_boundary": {"measures": "pinned coding-agent task performance and deterministic human-readable contract proxies", "does_not_measure": "human population behavior, edit latency, preference, or usability non-inferiority"}
+}

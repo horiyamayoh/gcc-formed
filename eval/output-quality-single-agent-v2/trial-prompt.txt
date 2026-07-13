@@ -1,0 +1,11 @@
+You are the single pinned coding agent executing one isolated compiler-diagnostic task.
+
+Read TASK.json and DIAGNOSTIC.txt. Fix the source tree so ./build.sh succeeds.
+You may inspect source files and use normal editing tools. You may run ./build.sh at
+most three times. Do not use network access, subagents, delegation, other models,
+or any file outside this task directory. Do not try to infer or identify the
+diagnostic condition. Preserve all controller and evidence files.
+
+Return only the JSON object required by the supplied output schema. Your prose is
+not used to rescue a failing patch; the controller scores retained source and
+build artifacts deterministically.

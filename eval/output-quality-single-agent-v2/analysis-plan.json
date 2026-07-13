@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "protocol_id": "gcc-formed-output-quality-single-agent-v2",
+  "frozen_at": "2026-07-13T04:30:00Z",
+  "analysis_population": "all started v2 trials; no v1 result is pooled",
+  "cluster": "semantic_family_id",
+  "bootstrap": {"replicates": 20000, "seed": 21920260713, "resampling_unit": "semantic_family_id", "one_sided_confidence": 0.975, "paired_by_family": true},
+  "inclusion": {
+    "include_started": true,
+    "valid_requires": ["initial source hash matches manifest", "condition diagnostic hash matches manifest", "agent process started with pinned manifest", "tool transcript retained", "final source and build artifacts retained", "oracle scorer completed"],
+    "permitted_exclusions": ["controller failed before agent process start", "compiler or filesystem infrastructure unavailable before condition exposure"],
+    "failures_not_excluded": ["timeout", "invalid final JSON", "agent abort", "wrong edit", "build failure", "transport failure after agent start", "tool failure after agent start"]
+  },
+  "success": {
+    "first_patch": "first post-diagnostic build/test passes and either edits an allowed existing anchor or creates the missing header ending in the sealed repair token",
+    "within_three_loops": "a passing build/test occurs in attempts one through three and oracle safety checks pass",
+    "wrong_file_or_anchor": "patch changes a protected path or neither edits an allowed anchor nor creates the sealed missing-header path"
+  },
+  "efficiency": {"tool_calls": "agent tool-call events through first successful build or termination", "compile_loops": "build/test attempts through success, capped at three", "diagnostic_bytes": "condition diagnostic byte length before first patch", "source_bytes": "bytes read before first patch", "files_opened": "distinct source files read before first patch", "patch_size": "added plus deleted lines in first observed patch"},
+  "decision_order": ["integrity and concealment", "absolute fidelity stop-ship", "sample and matrix completeness", "utility non-inferiority versus native", "utility non-inferiority versus current default", "efficiency non-inferiority versus both controls", "required improvement", "human-readable deterministic contract"],
+  "verdicts": ["pass", "fail", "inconclusive"],
+  "inconclusive_rules": ["a required interval crosses its frozen margin", "valid sample or condition minimum is not met", "a required compiler/path cell is missing without a stop-ship violation"],
+  "optional_stopping": false,
+  "post_result_rule_changes": false
+}
